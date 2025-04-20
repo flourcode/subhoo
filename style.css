@@ -248,12 +248,13 @@ a:hover { color: color-mix(in srgb, var(--app-accent-color) 70%, var(--color-on-
     margin-bottom: 8px; /* REDUCED */
     padding-bottom: 8px; /* REDUCED */
 }
+/* Modified rule in style.css */
 .title-section h1 {
     margin: 0; /* Ensure no default top/bottom margin from browser */
     font-size: 2.4rem;
-    font-weight: 700;
+    font-weight: 700; /* Keep weight 700 */
     color: var(--app-accent-color);
-    font-family: var(--font-headings);
+    font-family: 'Outfit', sans-serif; /* Apply Outfit font here */
     letter-spacing: -0.01em;
     line-height: 1.1;
     /* Removed h1 default margin-bottom implicitly */
