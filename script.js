@@ -138,7 +138,6 @@ if (exportExpiringBtn) {
         console.error("Error attaching initial event listeners:", e);
     }
 	initializeColorScale();
-    restoreThemePreference();
     await discoverAgencies();
     window.appInitialized = true;
 });
@@ -799,38 +798,6 @@ function populateSubFilter() {
 //     console.log(`Populated Subcontractor filter with ${sortedSubs.length} options`);
 }
 
-// Restore theme preference from localStorage
-function restoreThemePreference() {
-    const themeToggle = document.getElementById('theme-toggle');
-    const iconSpan = themeToggle ? themeToggle.querySelector('.material-symbols-outlined') : null; // Get the span inside
-
-    if (!themeToggle || !iconSpan) {
-        console.error("Theme toggle button or icon span not found!");
-        return;
-    }
-
-    const storedTheme = localStorage.getItem('theme');
-    // Default to dark if no preference or if system prefers dark
-    const prefersDark = storedTheme === 'dark' || (!storedTheme && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
-    const isLightMode = storedTheme === 'light' || (!storedTheme && !prefersDark && window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches);
-
-    if (isLightMode) {
-        document.body.classList.add('light-mode');
-        iconSpan.textContent = 'dark_mode'; // Show moon icon in light mode
-        themeToggle.setAttribute('aria-label', 'Switch to Dark Mode');
-        themeToggle.setAttribute('aria-pressed', 'false'); // Or 'true' if you consider light the 'pressed' state initially
-        updateThemeColor('#F4F2F6');
-    } else {
-        // Default to dark mode
-        document.body.classList.remove('light-mode');
-        iconSpan.textContent = 'light_mode'; // Show sun icon in dark mode
-        themeToggle.setAttribute('aria-label', 'Switch to Light Mode');
-        themeToggle.setAttribute('aria-pressed', 'true'); // Or 'false' if you consider dark the 'pressed' state initially
-        updateThemeColor('#252327');
-    }
-
-//     console.log("Theme preference restored:", isLightMode ? 'light' : 'dark');
-}
 
 // Update theme-color meta tag for mobile browser UI
 function updateThemeColor(color) {
@@ -2949,14 +2916,12 @@ function toggleTheme(event) {
             iconSpan.textContent = 'dark_mode'; // Show moon icon
             themeToggle.setAttribute('aria-label', 'Switch to Dark Mode');
             themeToggle.setAttribute('aria-pressed', 'false');
-            updateThemeColor('#FCFCFF');
-            localStorage.setItem('theme', 'light');
+            updateThemeColor('#F4F2F6');
         } else {
             iconSpan.textContent = 'light_mode'; // Show sun icon
             themeToggle.setAttribute('aria-label', 'Switch to Light Mode');
             themeToggle.setAttribute('aria-pressed', 'true');
-            updateThemeColor('#1A1B1F');
-            localStorage.setItem('theme', 'dark');
+            updateThemeColor('#252327');
         }
     }
 
