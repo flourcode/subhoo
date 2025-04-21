@@ -539,7 +539,7 @@ body.light-mode .filter-select { background-color: var(--color-surface-container
 .footer-section li { margin-bottom: 4px; }
 .footer-section a, .footer-bottom a { color: var(--app-accent-color); }
 .footer-section a:hover, .footer-bottom a:hover { color: color-mix(in srgb, var(--app-accent-color) 70%, var(--color-on-surface) 30%); text-decoration: underline; }
-.footer-bottom { margin-top: 30px; padding-top: 15px; text-align: center; font-size: 0.8rem; color: var(--color-on-surface-variant); border-top: 1px solid var(--color-outline-variant); }
+.footer-bottom { margin-top: 30px; padding-top: 15px; text-align: center; font-size: 0.8rem; color: var(--color-on-surface-variant); }
 
 /* ========================================= */
 /* Misc & Helpers                            */
@@ -904,9 +904,8 @@ body.light-mode .filter-select { background-color: var(--color-surface-container
 /* Styling for the Shoutouts section in the footer */
 .shoutouts-container {
   text-align: center;
-  margin-top: 20px; /* Add space above the shoutouts */
+  margin-top: 10px; /* Add space above the shoutouts */
   padding-top: 15px; /* Add padding similar to footer-bottom */
-  border-top: 1px solid var(--color-outline-variant); /* Optional: Add a separator line */
   max-width: 800px; /* Constrain width */
   margin-left: auto; /* Center the container */
   margin-right: auto; /* Center the container */
@@ -924,6 +923,7 @@ body.light-mode .filter-select { background-color: var(--color-surface-container
 .shoutouts-grid {
   display: flex; /* Use flexbox for layout */
   justify-content: center; /* Center items horizontally */
+  border-top: 1px solid var(--color-outline-variant); /* Optional: Add a separator line */
   align-items: flex-start; /* Align items to the top */
   flex-wrap: wrap; /* Allow items to wrap onto the next line */
   gap: 20px 30px; /* Vertical gap | Horizontal gap between items */
@@ -958,5 +958,5 @@ body.light-mode .filter-select { background-color: var(--color-surface-container
 }
 
 .shoutout-attribution a:hover {
-  text-decoration: underline;
+  text-decoration: none;
 }
