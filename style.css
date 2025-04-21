@@ -904,37 +904,42 @@ body.light-mode .filter-select { background-color: var(--color-surface-container
 /* Styling for the Shoutouts section in the footer */
 .shoutouts-container {
   text-align: center;
-  margin-top: 10px; /* Add space above the shoutouts */
-  padding-top: 15px; /* Add padding similar to footer-bottom */
-  max-width: 800px; /* Constrain width */
-  margin-left: auto; /* Center the container */
-  margin-right: auto; /* Center the container */
+  margin-top: 20px; 
+  padding-top: 15px; 
+  /* border-top: 1px solid var(--color-outline-variant); */ /* REMOVED this line */
+  max-width: 800px; 
+  margin-left: auto; 
+  margin-right: auto; 
 }
 
 .shoutouts-container h4 {
   font-size: 0.9rem;
   font-weight: 500;
   color: var(--color-on-surface-variant);
-  margin-bottom: 15px;
-  text-transform: none; /* Override default h4 uppercase if needed */
-  letter-spacing: normal; /* Override default h4 letter-spacing if needed */
+  margin-bottom: 10px; /* Slightly reduced margin */
+  padding-bottom: 10px; /* ADDED: Space below text before border */
+  border-bottom: 1px solid var(--color-outline-variant); /* ADDED: Border below heading */
+  display: inline-block; /* Keeps border only as wide as text */
+  text-transform: none; 
+  letter-spacing: normal; 
 }
 
 .shoutouts-grid {
-  display: flex; /* Use flexbox for layout */
-  justify-content: center; /* Center items horizontally */
-  border-top: 1px solid var(--color-outline-variant); /* Optional: Add a separator line */
-  align-items: flex-start; /* Align items to the top */
-  flex-wrap: wrap; /* Allow items to wrap onto the next line */
-  gap: 20px 30px; /* Vertical gap | Horizontal gap between items */
-  padding: 0 10px; /* Add slight padding */
+  display: flex; 
+  justify-content: center; 
+  align-items: flex-start; 
+  flex-wrap: wrap; 
+  gap: 20px 30px; 
+  padding: 0 10px; 
+  padding-top: 15px; /* ADDED: Space below border before grid starts */
 }
 
+/* .shoutout-item, .shoutout-topic, .shoutout-attribution rules remain the same */
 .shoutout-item {
   display: flex;
-  flex-direction: column; /* Stack topic above attribution */
-  align-items: center; /* Center text within the item */
-  min-width: 90px; /* Ensure items have some minimum width */
+  flex-direction: column; 
+  align-items: center; 
+  min-width: 90px; 
 }
 
 .shoutout-topic {
@@ -951,9 +956,8 @@ body.light-mode .filter-select { background-color: var(--color-surface-container
   line-height: 1.3;
 }
 
-/* Style links within attributions if needed */
 .shoutout-attribution a {
-  color: var(--app-accent-color); /* Inherit link color */
+  color: var(--app-accent-color); 
   text-decoration: none;
 }
 
