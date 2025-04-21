@@ -1,8 +1,55 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Privacy Policy - Subhoo</title> <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Privacy Policy - Subhoo.com</title>
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Subhoo's privacy policy outlines how we collect, use, and protect your information while using our federal contractor intelligence platform.">
+    <meta name="keywords" content="privacy policy, subhoo privacy, federal contracting data privacy, data protection">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://subhoo.com/privacy.html">
+    
+    <!-- Preconnect to External Domains -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://www.googletagmanager.com">
+    
+    <!-- Preload Critical Resources -->
+    <link rel="preload" href="style.css" as="style">
+    
+    <!-- Favicon -->
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <meta name="theme-color" content="#252327" class="theme-color">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://subhoo.com/privacy.html" />
+    <meta property="og:title" content="Privacy Policy - Subhoo" />
+    <meta property="og:description" content="Subhoo's privacy policy outlines how we collect, use, and protect your information while using our federal contractor intelligence platform." />
+    <meta property="og:image" content="https://subhoo.com/subhoo.png">
+    <meta property="og:locale" content="en_US">
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Privacy Policy - Subhoo" />
+    <meta name="twitter:description" content="Subhoo's privacy policy outlines how we collect, use, and protect your information while using our federal contractor intelligence platform." />
+    <meta name="twitter:image" content="https://subhoo.com/subhoo.png" />
+    
+    <!-- Security Headers -->
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Outfit:wght@700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined&text=dark_mode%0Alight_mode%0Aclose%0Aopen_in_new&display=swap" rel="stylesheet">
+    
+    <!-- Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-VPHMB6JQHL"></script>
     <script>
         window.dataLayer = window.dataLayer || [];
@@ -10,137 +57,338 @@
         gtag('js', new Date());
         gtag('config', 'G-VPHMB6JQHL');
     </script>
-
-    <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Outfit:wght@700;800&display=swap" rel="stylesheet">
-	<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined&text=dark_mode%0Alight_mode%0Aclose%0Aopen_in_new&display=swap" rel="stylesheet">
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
-    <link rel="manifest" href="/site.webmanifest">
-
-    <meta name="description" content="Subhoo provides 100% free teaming intelligence for federal sales and BD professionals. Explore active subcontracting relationships and total deal flow data from USASpending.gov.">
-    <meta name="keywords" content="federal contracting, subcontractor intelligence, USASpending, government contracts, prime contractors, federal sales, business development">
-    <link rel="canonical" href="https://subhoo.com/">
-    <meta name="theme-color" content="#252327" class="theme-color">
-
-    <meta property="og:title" content="Subhoo - Federal SubContractor Intelligence" />
-    <meta property="og:description" content="100% free teaming intelligence for federal sales and BD professionals. Explore active subcontracting relationships and total deal flow data from USASpending.gov." />
-    <meta name="image" property="og:image" content="https://subhoo.com/subhoo.png">
-    <meta property="og:url" content="https://subhoo.com/" />
-    <meta property="og:type" content="website" />
-
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Subhoo - Federal SubContractor Intelligence" />
-    <meta name="twitter:description" content="100% free teaming intelligence for federal sales and BD professionals. Explore active subcontracting relationships and total deal flow." />
-    <meta name="twitter:image" content="https://subhoo.com/subhoo.png" />
-
-    <script src="https://d3js.org/d3.v7.min.js" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/d3-sankey@0.12.3/dist/d3-sankey.min.js" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js" defer></script>
-	<script src="https://unpkg.com/topojson@3" defer></script>
-    <script src="script.js" defer></script>
+    
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "Privacy Policy",
+      "url": "https://subhoo.com/privacy.html",
+      "description": "Subhoo's privacy policy outlines how we collect, use, and protect your information.",
+      "isPartOf": {
+        "@type": "WebSite",
+        "name": "Subhoo",
+        "url": "https://subhoo.com/"
+      }
+    }
+    </script>
+    
+    <style>
+        /* Privacy Policy Specific Styles */
+        .privacy-page {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px 0 60px;
+        }
+        
+        .privacy-header {
+            margin-bottom: 40px;
+            text-align: center;
+        }
+        
+        .privacy-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: var(--app-accent-color);
+        }
+        
+        .privacy-header p {
+            font-size: 1rem;
+            color: var(--color-on-surface-variant);
+            max-width: 700px;
+            margin: 0 auto;
+        }
+        
+        .privacy-section {
+            margin-bottom: 40px;
+            background-color: var(--color-surface-container-low);
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: var(--elevation-1);
+        }
+        
+        .privacy-section:hover {
+            box-shadow: var(--elevation-2);
+        }
+        
+        .privacy-section h2 {
+            color: var(--color-on-surface);
+            font-size: 1.5rem;
+            margin-top: 0;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--color-outline-variant);
+        }
+        
+        .privacy-section h3 {
+            color: var(--app-accent-color);
+            font-size: 1.2rem;
+            margin-top: 24px;
+            margin-bottom: 12px;
+        }
+        
+        .privacy-section p, .privacy-section ul, .privacy-section ol {
+            margin-top: 0;
+            margin-bottom: 16px;
+        }
+        
+        .privacy-section ul, .privacy-section ol {
+            padding-left: 24px;
+        }
+        
+        .privacy-section li {
+            margin-bottom: 8px;
+        }
+        
+        .privacy-section p:last-child, 
+        .privacy-section ul:last-child, 
+        .privacy-section ol:last-child,
+        .privacy-section li:last-child {
+            margin-bottom: 0;
+        }
+        
+        .privacy-contact {
+            background-color: var(--color-surface-container);
+            padding: 24px;
+            border-radius: 12px;
+            text-align: center;
+            margin-top: 40px;
+            box-shadow: var(--elevation-1);
+        }
+        
+        .privacy-contact h2 {
+            margin-top: 0;
+            color: var(--app-accent-color);
+        }
+        
+        .update-date {
+            text-align: right;
+            font-style: italic;
+            color: var(--color-on-surface-variant);
+            font-size: 0.85rem;
+            margin-top: 8px;
+        }
+        
+        @media (max-width: 768px) {
+            .privacy-header h1 {
+                font-size: 2rem;
+            }
+            
+            .privacy-section {
+                padding: 20px;
+            }
+        }
+    </style>
 </head>
 <body>
     <div class="container">
         <header class="app-header">
             <div class="title-section">
-                 <h1><a href="friam.html" style="color: inherit; text-decoration: none;">Subhoo.</a></h1>
-                <p>Government Contractor Intelligence</p>
+                <h1><a href="index.html" style="color: inherit; text-decoration: none;">Subhoo.</a></h1>
+                <p>Government Subcontractor Intelligence</p>
             </div>
             <div class="controls">
-                 <button id="theme-toggle" class="btn icon-btn" aria-label="Switch Theme" aria-pressed="false" title="Switch Theme">
-                    <span class="material-symbols-outlined" aria-hidden="true">dark_mode</span>
+                <button id="theme-toggle" class="btn icon-btn" aria-label="Switch to Light Mode" aria-pressed="false" title="Switch Theme"> 
+                    <span class="material-symbols-outlined" aria-hidden="true">light_mode</span>
                 </button>
             </div>
         </header>
 
-        <main>
-            <h1>Privacy Policy</h1>
-            <p><em>Last Updated: April 20, 2025</em></p>
+        <main class="privacy-page">
+            <section class="privacy-header">
+                <h1>Privacy Policy</h1>
+                <p>This Privacy Policy explains how Subhoo collects, uses, and protects your information when you use our website.</p>
+            </section>
 
-            <h2>Introduction</h2>
-            <p>Welcome to Subhoo. We are committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website [Your Website URL, e.g., subhoo.com]. Please read this privacy policy carefully. If you do not agree with the terms of this privacy policy, please do not access the site.</p>
+            <section class="privacy-section">
+                <h2>Overview</h2>
+                <p>At Subhoo, we respect your privacy and are committed to protecting it. This Privacy Policy outlines our practices regarding the collection, use, and disclosure of your information when you use our service, and informs you about your privacy rights and how the law protects you.</p>
+                <p>We use your data only as described in this Privacy Policy. By using the website, you agree to the collection and use of information in accordance with this policy.</p>
+            </section>
 
-            <h2>Information We Collect</h2>
-            <p>Subhoo primarily visualizes publicly available data from USAspending.gov. We do not require user accounts or directly collect personally identifiable information (PII) such as your name, email address, or precise location for basic use of the site.</p>
-            <p>We may collect non-personal information that your browser automatically sends whenever you visit our site, such as your IP address (potentially anonymized), browser type, browser version, the pages of our site that you visit, the time and date of your visit, the time spent on those pages, and other standard statistics ('Log Data'). We may use analytics tools (like server logs or privacy-respecting analytics platforms) to help us analyze this data to improve our service.</p>
-            <p>If you contact us directly via email (e.g., through the "Get in touch" link), we will receive your email address and any information you voluntarily provide in your message.</p>
+            <section class="privacy-section">
+                <h2>Information We Collect</h2>
+                
+                <h3>Information You Provide</h3>
+                <p>Subhoo is primarily a data visualization platform that does not require user accounts or collect personal information for basic usage. However, we may collect information you voluntarily provide when you:</p>
+                <ul>
+                    <li>Contact us via email</li>
+                    <li>Submit feedback or suggestions</li>
+                    <li>Report technical issues</li>
+                </ul>
+                
+                <h3>Automatically Collected Information</h3>
+                <p>When you visit our website, certain information is automatically collected, including:</p>
+                <ul>
+                    <li><strong>Usage Data:</strong> Information about how you interact with our website including pages visited, time spent, actions taken, and search queries.</li>
+                    <li><strong>Technical Data:</strong> IP address, browser type and version, device type, operating system, and other technological identifiers.</li>
+                    <li><strong>Cookies and Similar Technologies:</strong> We use cookies and similar tracking technologies to enhance your experience and analyze usage patterns.</li>
+                </ul>
+            </section>
 
-            <h2>How We Use Information</h2>
-            <p>The limited information collected is used solely for the following purposes:</p>
-            <ul>
-                <li>To operate and maintain the website.</li>
-                <li>To monitor usage and analyze trends to improve the website's functionality and user experience.</li>
-                <li>To respond to your direct inquiries or feedback if you contact us.</li>
-                <li>To ensure the security and integrity of our website.</li>
-            </ul>
+            <section class="privacy-section">
+                <h2>How We Use Your Information</h2>
+                <p>We use the information we collect for the following purposes:</p>
+                <ul>
+                    <li><strong>To Provide and Maintain Our Service:</strong> Including monitoring usage and analyzing trends to improve the user experience.</li>
+                    <li><strong>To Respond to Your Inquiries:</strong> When you contact us with questions, feedback, or technical issues.</li>
+                    <li><strong>To Improve Our Website:</strong> We analyze usage patterns to enhance functionality, fix bugs, and develop new features.</li>
+                    <li><strong>For Analytics:</strong> We use data analysis tools to understand how users interact with our service.</li>
+                </ul>
+            </section>
 
-             <h2>Data Hosting & Third Parties</h2>
-             <p>This website is hosted on [Mention Your Hosting - AWS Amplify or GitHub Pages]. These hosting providers may collect standard server logs including IP addresses for security and operational purposes, subject to their respective privacy policies.</p>
-             <p>We utilize publicly available data from USAspending.gov. We do not share any collected Log Data with third parties for marketing purposes.</p>
+            <section class="privacy-section">
+                <h2>Data Retention</h2>
+                <p>We retain your personal information only for as long as necessary to fulfill the purposes outlined in this Privacy Policy, including to meet any legal, accounting, or reporting requirements.</p>
+                <p>Usage data and analytics information may be retained for a longer period for statistical analysis and historical reference, but this data is anonymized and aggregated whenever possible.</p>
+            </section>
 
-             <h2>Data Security</h2>
-             <p>We use administrative, technical, and physical security measures to help protect any information we might incidentally collect. While we have taken reasonable steps to secure the information, please be aware that despite our efforts, no security measures are perfect or impenetrable, and no method of data transmission can be guaranteed against any interception or other type of misuse.</p>
+            <section class="privacy-section">
+                <h2>Data Security</h2>
+                <p>We implement appropriate security measures to protect your personal information from unauthorized access, alteration, disclosure, or destruction. However, no method of transmission over the Internet or electronic storage is 100% secure, and we cannot guarantee absolute security.</p>
+                <p>The security measures we employ include:</p>
+                <ul>
+                    <li>Secure HTTPS connections</li>
+                    <li>Regular security assessments</li>
+                    <li>Limited access to personal information by authorized personnel only</li>
+                </ul>
+            </section>
 
-            <h2>Cookies</h2>
-            <p>Subhoo itself does not currently set essential cookies for core functionality like user logins (as there are none). However, our hosting provider or embedded third-party services (if any were added in the future) might use cookies. You can instruct your browser to refuse all cookies or to indicate when a cookie is being sent. </p>
+            <section class="privacy-section">
+                <h2>Third-Party Services</h2>
+                <p>We use certain third-party services to support our website functionality:</p>
+                <ul>
+                    <li><strong>Google Analytics:</strong> We use Google Analytics to analyze website traffic and improve our service. Google Analytics collects standard internet log information and visitor behavior information. This information is processed in a way that does not identify users. For more information about Google Analytics, visit the <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">Google Privacy Policy</a>.</li>
+                    <li><strong>Content Delivery Networks (CDNs):</strong> We use CDNs to deliver static content efficiently. These services may collect IP addresses and technical information to provide their services.</li>
+                </ul>
+                <p>These third-party services have their own privacy policies addressing how they use such information.</p>
+            </section>
 
+            <section class="privacy-section">
+                <h2>Cookies Policy</h2>
+                <p>Cookies are small text files stored on your device when you visit a website. We use cookies to enhance your experience and understand usage patterns.</p>
+                
+                <h3>Types of Cookies We Use</h3>
+                <ul>
+                    <li><strong>Essential Cookies:</strong> Necessary for the website to function properly.</li>
+                    <li><strong>Preference Cookies:</strong> Enable the website to remember your preferences (like dark/light mode).</li>
+                    <li><strong>Analytics Cookies:</strong> Help us understand how visitors interact with our website by collecting anonymous information.</li>
+                </ul>
+                
+                <h3>Managing Cookies</h3>
+                <p>Most web browsers allow you to control cookies through their settings. You can usually find these settings in the "Options" or "Preferences" menu of your browser. You can delete existing cookies, allow or block all cookies, or block cookies from particular sites.</p>
+            </section>
 
-            <h2>Changes to This Privacy Policy</h2>
-            <p>We may update this Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page and updating the "Last Updated" date. You are advised to review this Privacy Policy periodically for any changes.</p>
+            <section class="privacy-section">
+                <h2>Your Privacy Rights</h2>
+                <p>Depending on your location, you may have certain rights regarding your personal information, including:</p>
+                <ul>
+                    <li><strong>Right to Access:</strong> You can request copies of your personal information.</li>
+                    <li><strong>Right to Rectification:</strong> You can request that we correct inaccurate information.</li>
+                    <li><strong>Right to Erasure:</strong> You can request that we delete your personal information in certain circumstances.</li>
+                    <li><strong>Right to Restrict Processing:</strong> You can request that we restrict the processing of your information under certain conditions.</li>
+                    <li><strong>Right to Object to Processing:</strong> You have the right to object to our processing of your personal data in certain circumstances.</li>
+                    <li><strong>Right to Data Portability:</strong> You can request that we transfer your data to another organization or directly to you.</li>
+                </ul>
+                <p>To exercise any of these rights, please contact us using the information provided in the "Contact Us" section.</p>
+            </section>
 
-            <h2>Contact Us</h2>
-            <p>If you have any questions about this Privacy Policy, please contact us at: [Your Contact Email Address]</p>
+            <section class="privacy-section">
+                <h2>Children's Privacy</h2>
+                <p>Our website is not directed at individuals under the age of 18, and we do not knowingly collect personal information from children. If you believe we have inadvertently collected information from a child, please contact us immediately.</p>
+            </section>
 
+            <section class="privacy-section">
+                <h2>Changes to This Privacy Policy</h2>
+                <p>We may update our Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page and updating the "Last Updated" date.</p>
+                <p>We encourage you to review this Privacy Policy periodically for any changes. Changes to this Privacy Policy are effective when they are posted on this page.</p>
+                <p class="update-date">Last Updated: April 21, 2025</p>
+            </section>
+
+            <section class="privacy-contact">
+                <h2>Contact Us</h2>
+                <p>If you have any questions about this Privacy Policy or our privacy practices, please contact us at:</p>
+                <p><a href="mailto:privacy@subhoo.com">privacy@subhoo.com</a></p>
+            </section>
         </main>
-        </div> <footer class="footer">
-        <div class="footer-content">
-            <div class="connect-card">
-                 <div class="connect-card-content">
-                     <img src="markgs.jpg" alt="Mark Profile Picture" class="profile-pic">
-                     <div class="user-info">
-                         <h3 class="user-name">Let's Connect!</h3>
-                         <p class="user-location">Mark Flournoy</p>
-                         <p class="user-skills">Let me hear your suggestions and great ideas.</p>
-                     </div>
-                 </div>
-                 <div class="action-buttons">
-                    <a href="mailto:mark@subhoo.com" class="btn btn-primary">Get in touch</a>
-                    <a href="https://www.linkedin.com/in/markflournoy/" class="btn" target="_blank" rel="noopener noreferrer">LinkedIn</a>
-                 </div>
+
+        <footer class="footer">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>About Subhoo</h3>
+                    <p>Subhoo shows you the hidden partnerships behind Federal Primes and Subcontractors so you can, follow the money, find your next teaming partner, or see who's working with your competitors. Pick an agency to start. All data is sourced from USASpending.gov and updated monthly.</p>
+                </div>
+                <div class="footer-section">
+                    <h3>How to Use</h3>
+                    <ul>
+                        <li>Select an agency</li>
+                        <li>Choose a visualization type</li>
+                        <li>Use filters to refine data</li>
+                        <li>Click nodes/map areas to focus</li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>Data Source</h3>
+                    <p>All data from <a href="https://www.usaspending.gov" target="_blank" rel="noopener noreferrer">USAspending.gov</a>. Updated periodically.</p>
+                </div>
+                <div class="footer-section">
+                    <h3>Resources</h3>
+                    <ul>
+                        <li><a href="https://www.usaspending.gov/explorer" target="_blank" rel="noopener noreferrer">USAspending Explorer</a></li>
+                        <li><a href="https://sam.gov/content/home" target="_blank" rel="noopener noreferrer">SAM.gov</a></li>
+                    </ul>
+                </div>
             </div>
-            <div class="footer-section">
-                 <h3>About Subhoo</h3>
-                 <p>Subhoo visualizes federal subcontracting relationships using data from USAspending.gov, aiding transparency and analysis.</p>
-             </div>
-             <div class="footer-section">
-                 <h3>How to Use</h3>
-                 <ul>
-                     <li>Select an agency</li>
-                     <li>Choose a visualization type</li>
-                     <li>Use filters to refine data</li>
-                     <li>Click nodes/map areas to focus</li>
-                 </ul>
-             </div>
-             <div class="footer-section">
-                 <h3>Data Source</h3>
-                 <p>All data from <a href="https://www.usaspending.gov" target="_blank" rel="noopener noreferrer">USAspending.gov</a>. Updated periodically.</p>
-             </div>
-              <div class="footer-section">
-                 <h3>Resources</h3>
-                 <ul>
-                     <li><a href="https://www.usaspending.gov/explorer" target="_blank" rel="noopener noreferrer">USAspending Explorer</a></li>
-                     <li><a href="https://sam.gov/content/home" target="_blank" rel="noopener noreferrer">SAM.gov</a></li>
-                 </ul>
-             </div>
-         </div>
-         <div class="footer-bottom">
-             <p>&copy; 2025 Subhoo | Data sourced from USAspending.gov</p>
-             <p><a href="privacy.html">Privacy</a> | <a href="about.html">About</a> | <a href="friam.html">Home</a></p>
-             <p>Inspirational Credits<br>Dark Mode: @dongkyup<br>
-                 5 Whys?: @rodstedt</p>
-         </div>
-    </footer>
-    </body>
+            <div class="footer-bottom">
+                <p>&copy; 2025 Subhoo | Data sourced from USAspending.gov</p>
+                <p><a href="index.html">Home</a> | <a href="privacy.html">Privacy</a> | <a href="about.html">About</a></p>
+                <p>Inspirational Credits<br>Dark Mode: <a href="#">@dongkyup</a><br>
+                    5 Whys?: <a href="#">@rodstedt</a></p>
+            </div>
+        </footer>
+
+        <script>
+            // Theme toggle functionality
+            document.addEventListener('DOMContentLoaded', function() {
+                const themeToggle = document.getElementById('theme-toggle');
+                const themeIcon = themeToggle.querySelector('.material-symbols-outlined');
+                const themeColor = document.querySelector('meta.theme-color');
+                
+                // Check for saved theme preference or use device preference
+                const savedTheme = localStorage.getItem('theme');
+                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                
+                if ((savedTheme === 'dark') || (!savedTheme && prefersDark)) {
+                    document.body.classList.remove('light-mode');
+                    themeIcon.textContent = 'light_mode';
+                    themeToggle.setAttribute('aria-label', 'Switch to Light Mode');
+                    themeColor.setAttribute('content', '#252327');
+                } else {
+                    document.body.classList.add('light-mode');
+                    themeIcon.textContent = 'dark_mode';
+                    themeToggle.setAttribute('aria-label', 'Switch to Dark Mode');
+                    themeColor.setAttribute('content', '#F4F2F6');
+                }
+                
+                // Toggle theme when button is clicked
+                themeToggle.addEventListener('click', function() {
+                    document.body.classList.toggle('light-mode');
+                    
+                    if (document.body.classList.contains('light-mode')) {
+                        themeIcon.textContent = 'dark_mode';
+                        themeToggle.setAttribute('aria-label', 'Switch to Dark Mode');
+                        localStorage.setItem('theme', 'light');
+                        themeColor.setAttribute('content', '#F4F2F6');
+                    } else {
+                        themeIcon.textContent = 'light_mode';
+                        themeToggle.setAttribute('aria-label', 'Switch to Light Mode');
+                        localStorage.setItem('theme', 'dark');
+                        themeColor.setAttribute('content', '#252327');
+                    }
+                });
+            });
+        </script>
+    </div>
+</body>
 </html>
