@@ -299,6 +299,13 @@ a:hover { color: color-mix(in srgb, var(--app-accent-color) 70%, var(--color-on-
 .filter-separator { color: var(--color-outline); margin: 0 4px; align-self: center; }
 #breadcrumb { display: none !important; }
 
+.filter-group {
+  margin-bottom: 20px;
+}
+
+.filter-section .filter-group:last-child {
+  margin-bottom: 0; 
+}
 /* ========================================= */
 /* Stats Cards                               */
 /* ========================================= */
