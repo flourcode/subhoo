@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Subhoo.com - Federal Prime-to-Sub Contractor Relationships</title>
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Subhoo provides 100% free teaming intelligence for federal sales and BD professionals. Explore active subcontracting relationships and total deal flow data from USASpending.gov.">
+    <meta name="keywords" content="federal contracting, subcontractor intelligence, USASpending, government contracts, prime contractors, federal sales, business development">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://subhoo.com/">
+    
+    <!-- Preconnect to External Domains -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://www.googletagmanager.com">
+    <link rel="preconnect" href="https://d3js.org">
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link rel="preconnect" href="https://unpkg.com">
+    
+    <!-- Preload Critical Resources -->
+    <link rel="preload" href="style.css" as="style">
+    
+    <!-- Favicon -->
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <meta name="theme-color" content="#252327" class="theme-color">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://subhoo.com/" />
+    <meta property="og:title" content="Subhoo - Federal SubContractor Intelligence" />
+    <meta property="og:description" content="100% free teaming intelligence for federal sales and BD professionals. Explore active subcontracting relationships and total deal flow data from USASpending.gov." />
+    <meta property="og:image" content="https://subhoo.com/subhoo.png">
+    <meta property="og:locale" content="en_US">
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Subhoo - Federal SubContractor Intelligence" />
+    <meta name="twitter:description" content="100% free teaming intelligence for federal sales and BD professionals. Explore active subcontracting relationships and total deal flow." />
+    <meta name="twitter:image" content="https://subhoo.com/subhoo.png" />
+    
+    <!-- Security Headers -->
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Outfit:wght@700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono&display=swap" rel="stylesheet">
+	<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined&text=dark_mode%0Alight_mode%0Ashare%0Aclose%0Aopen_in_new%0Agroups%0Astorefront%0Acorporate_fare%0Aaccount_balance&display=swap" rel="stylesheet">
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-VPHMB6JQHL"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-VPHMB6JQHL');
+    </script>
+    
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "Subhoo",
+      "url": "https://subhoo.com/",
+      "description": "Federal Prime-to-Sub Contractor Relationships",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://subhoo.com/search?q={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
+    
+    <!-- JavaScript Libraries (Deferred) -->
+    <script src="https://d3js.org/d3.v7.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3-sankey@0.12.3/dist/d3-sankey.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js" defer></script>
+    <script src="https://unpkg.com/topojson@3" defer></script>
+    <script src="script.js" defer></script>
+</head>
+<body>
+    <div class="container">
+        <header class="app-header">
+            <div class="title-section">
+                 <h1><a href="https://subhoo.com" style="color: inherit; text-decoration: none;">Subhoo.</a></h1>
+                <p>Government Contractor Intelligence</p>
+            </div>
+            <div class="controls">
+                 <button id="share-button" class="btn icon-btn" aria-label="Share this page" title="Share this page">
+                    <span class="material-symbols-outlined" aria-hidden="true">share</span>
+                </button>
+                 <button id="theme-toggle" class="btn icon-btn" aria-label="Switch to Light Mode" aria-pressed="false" title="Switch Theme">
+                     <span class="material-symbols-outlined" aria-hidden="true">light_mode</span> 
+                 </button>
+            </div>
+        </header>
+
+        <section class="content-section" aria-labelledby="how-to-heading">
+             <main>
+                <h1 id="how-to-heading">How to Use Subhoo (for Sales & BD Prospecting)</h1>
+
+                <p>Subhoo visually maps the hidden partnerships between Federal Primes and Subcontractors using public data from USAspending.gov. For Sales & BD pros, this means you can quickly identify potential teaming partners, analyze competitor relationships, follow the money from agency offices to subs, target your outreach, and go into meetings prepared.</p>
+                <p>Here’s a step-by-step guide to leveraging Subhoo for pipeline generation:</p>
+
+                <h2>Step 1: Select Your Target Agency</h2>
+                <p>Use the <strong>Select agency</strong> dropdown menu in the sidebar to focus your analysis on a specific agency (e.g., Army, HHS, DHS) where you are pursuing opportunities.</p>
+
+                <h2>Step 2: Choose Your Initial View</h2>
+                <p>Click the buttons under <strong>Select chart type</strong> in the sidebar:</p>
+                <ul>
+                    <li><strong>Contract Flow (Sankey):</strong> Default view. Great for seeing the overall flow of money and identifying the biggest players (nodes) and funding flows (links).</li>
+                    <li><strong>Network:</strong> Shows relationships as connected circles. Useful for spotting clusters of activity and influential connectors. Node size often relates to contract value.</li>
+                    <li><strong>Map:</strong> Visualizes subcontract value by Place of Performance state. Helpful for geographic targeting.</li>
+                </ul>
+
+                <h2>Step 3: Understand the Big Picture (Stats Cards)</h2>
+                <p>Review the four cards below the header. They show the total filtered subcontract value, top Primes awarding subs, top Subs receiving awards, and the primary NAICS code distribution for your current view.</p>
+
+                <h2>Step 4: Refine Your Focus (Filters)</h2>
+                <p>Use the sidebar filters to narrow down the data:</p>
+                <ul>
+                    <li><strong>Visible Node Levels:</strong> Under "Display options", toggle buttons (Agency, Dept, Office, Prime, Sub) to hide/show levels in the Sankey/Network charts.</li>
+                    <li><strong>Minimum Contract Value:</strong> Use the slider under "Display options" to filter out smaller subcontracts and focus on higher-value relationships.</li>
+                    <li><strong>Select agency / Office:</strong> Use the second dropdown under "Select agency" to drill down into a specific funding *Office* within the selected Agency.</li>
+                    <li><strong>Optional Filters:</strong> Filter by a specific Prime Contractor (shows only their subs), or by NAICS Code (shows only subcontracts where the Prime contract matches that industry).</li>
+                    <li><strong>Search:</strong> Use the keyword search bar to find specific Primes, Subs, or NAICS keywords within the current agency's data.</li>
+                </ul>
+
+                <h2>Step 5: Dive Deep into Relationships</h2>
+                <p>Interact directly with the visualizations:</p>
+                <ul>
+                    <li><strong>Hover:</strong> Move your mouse over nodes and links (Sankey/Network) or states (Map) to see tooltips with names and values.</li>
+                    <li><strong>Click Nodes/States:</strong> Click on an element (Agency, Office, Prime, Sub, or State) to focus the view and data tables on just that item and its direct connections. Use the "All Data" breadcrumb link (that appears above the stats cards) to reset the focus.</li>
+                    <li><strong>Info Panel:</strong> Clicking often opens a panel on the right with more details and links to USAspending.gov.</li>
+                </ul>
+
+                <h2>Step 6: Analyze Detailed Data (Tables)</h2>
+                <p>Scroll down below the visualization:</p>
+                <ul>
+                    <li><strong>Detailed Subaward Data Table:</strong> Shows the filtered subaward details. Click column headers to sort. Click the "View" link to go directly to the contract on USAspending.gov.</li>
+                    <li><strong>Analysis Tables:</strong> Show the Top Primes, Top Subs, and Top NAICS Codes based on the *entire dataset* for the selected agency (not affected by the value slider).</li>
+                </ul>
+
+                <h2>Step 7: Identify Timely Opportunities (Expiring Contracts)</h2>
+                <p>Check the <strong>Expiring Contracts (&gt; $200K ~6 Mo)</strong> table. It lists contracts where the Prime's potential end date is near, highlighting potential re-competes or needs for new subcontractors. Sort by date, load more results, and use the links to verify on USAspending.gov.</p>
+
+                <h2>Step 8: Export Data</h2>
+                <p>Click the <strong>Export... CSV</strong> buttons above the main data table or the expiring contracts table to download the currently filtered data for offline use or CRM import.</p>
+
+                <h2>Step 9: Reset & Explore More</h2>
+                <p>Click the <strong>Reset all filters</strong> button at the bottom of the sidebar to clear all selections and start a new search.</p>
+
+                <h2>Step 10: Theme & Sharing</h2>
+                <p>Use the sun/moon icon in the header to toggle light/dark mode. Use the share icon to send the current page link to others.</p>
+
+            </main>
+        </section> 
+<div class="footer-content">
+            
+            <div class="connect-card">
+                <div class="connect-card-content">
+                    <img src="markgs.jpg" alt="Mark Profile Picture" class="profile-pic">
+                    <div class="user-info">
+                        <h3 class="user-name">Hi, I'm Mark. Let's Connect!</h3>
+                        <p class="user-skills">Let me hear your suggestions and great ideas.</p>
+                    </div>
+                </div>
+                <div class="action-buttons">
+                    <a href="mailto:mark@subhoo.com" class="btn btn-primary">Get in touch</a>
+                    <a href="https://www.linkedin.com/in/markflournoy/" class="btn" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+                </div>
+            </div>
+
+            <div class="footer-section footer-summary-box">
+                <p class="footer-summary-what">
+                    Subhoo shows hidden partnerships between Federal Primes and Subs. Follow the money, find partners, or track competitors. <strong>Pick an agency above to start.</strong>
+                </p>
+                
+                <h4 class="footer-summary-heading">Who it's for:</h4>
+                <hr class="footer-summary-hr">
+                <ul class="footer-summary-list who-list">
+                    <li><span class="material-symbols-outlined" aria-hidden="true">groups</span> Sales & BD Teams <span class="detail">(Find Partners)</span></li>
+                    <li><span class="material-symbols-outlined" aria-hidden="true">storefront</span> Small Biz <span class="detail">(Target Primes)</span></li>
+                    <li><span class="material-symbols-outlined" aria-hidden="true">corporate_fare</span> Primes <span class="detail">(Analyze Competition)</span></li>
+                    <li><span class="material-symbols-outlined" aria-hidden="true">account_balance</span> Feds <span class="detail">(Track Goals)</span></li>
+                </ul>
+
+                <h4 class="footer-summary-heading">How to use:</h4>
+                <hr class="footer-summary-hr">
+                <ol class="footer-summary-list how-list">
+                    <li>Select Agency</li>
+                    <li>Choose Visualization</li>
+                    <li>Filter Data</li>
+                    <li>Explore & Export</li>
+                </ol>
+            </div>
+            <div class="footer-section">
+                <h3>Resources</h3>
+                <ul>
+                    <li><a href="https://www.usaspending.gov/explorer" target="_blank" rel="noopener noreferrer">USAspending Explorer</a></li>
+                    <li><a href="https://sam.gov/content/home" target="_blank" rel="noopener noreferrer">SAM.gov</a></li>
+                </ul>
+
+                <h4 class="footer-subheading">Recommended Reads</h4>
+                <ul>
+                    <li><a href="https://www.amazon.com/s?k=Fanatical+Prospecting+Jeb+Blount" target="_blank" rel="noopener noreferrer">Fanatical Prospecting</a></li>
+                    <li><a href="https://www.amazon.com/s?k=Little+Red+Book+of+Selling+Jeffrey+Gitomer" target="_blank" rel="noopener noreferrer">Little Red Book of Selling</a></li>
+                </ul>
+            </div>
+
+        </div>
+        <div class="footer-bottom">
+    <p>&copy; 2025 Subhoo | Built on AWS | Data from USAspending.gov</p>
+    <p><a href="https://subhoo.com">Home</a> | <a href="https://subhoo.com/privacy.html">Privacy</a> | <a href="https://subhoo.com/about.html">About</a> | <a href="https://subhoo.com/terms.html">Terms</a></p>
+                 <div class="shoutouts-container">
+                 <h4>A few Shoutouts</h4>
+                 <div class="shoutouts-grid">
+                     <div class="shoutout-item">
+                         <span class="shoutout-topic">Dark Mode</span>
+                         <span class="shoutout-attribution"><a href="#">@dongkyup</a></span> 
+                     </div>
+                     <div class="shoutout-item">
+                         <span class="shoutout-topic">So What?!</span>
+                         <span class="shoutout-attribution"><a href="#">@rodstedt</a></span>
+                     </div>
+                     <div class="shoutout-item">
+                         <span class="shoutout-topic">Why?</span>
+                         <span class="shoutout-attribution"><a href="#">@mpben</a></span>
+                     </div>
+                     <div class="shoutout-item">
+                         <span class="shoutout-topic">Think Big</span>
+                         <span class="shoutout-attribution"><a href="#">@ecbrown</a></span>
+                     </div>
+                     <div class="shoutout-item">
+                         <span class="shoutout-topic">Dive Deep</span>
+                         <span class="shoutout-attribution"><a href="#">@datkd</a></span>
+                     </div>
+					 <div class="shoutout-item">
+                         <span class="shoutout-topic">True Believer</span>
+                         <span class="shoutout-attribution"><a href="#">@dave</a></span>
+                     </div>
+                 </div>
+             </div><br>
+
+</div>
+    </footer>
+
+    <div id="viz-announcer" class="sr-only" aria-live="polite"></div>
+
+</body>
+</html>
