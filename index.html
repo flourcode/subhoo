@@ -100,7 +100,33 @@
                  </button>
             </div>
         </header>
-
+        <section class="intro-summary-section">
+            <p class="intro-what">
+                Subhoo shows hidden partnerships between Federal Primes and Subs. Follow the money, find partners, or track competitors. <strong>Pick an agency below to start.</strong>
+            </p>
+            <div class="intro-columns">
+                <div class="intro-who">
+                    <h4>Who it's for:</h4>
+                    <ul>
+                        <li><span class="material-symbols-outlined" aria-hidden="true">groups</span> BD Teams <span class="detail">(Find Partners)</span></li>
+                        <li><span class="material-symbols-outlined" aria-hidden="true">storefront</span> Small Biz <span class="detail">(Target Primes)</span></li>
+                        <li><span class="material-symbols-outlined" aria-hidden="true">corporate_fare</span> Primes <span class="detail">(Analyze Competition)</span></li>
+                        <li><span class="material-symbols-outlined" aria-hidden="true">account_balance</span> Feds <span class="detail">(Track Goals)</span></li>
+                    </ul>
+                </div>
+                <div class="intro-how">
+                    <h4>How to use:</h4>
+                    <ol>
+                        <li>Select Agency</li>
+                        <li>Choose Visualization</li>
+                        <li>Filter Data</li>
+                        <li>Explore & Export</li>
+                    </ol>
+                </div>
+            </div>
+        </section>
+        <section class="active-filters-display" id="active-filters" aria-labelledby="active-filters-heading" aria-live="polite" aria-atomic="true">
+           
         <section class="active-filters-display" id="active-filters" aria-labelledby="active-filters-heading" aria-live="polite" aria-atomic="true">
           <h1 id="active-filters-heading" class="visually-hidden">Currently Applied Filters</h1>
           <h2 class="agency-filter-title">Loading Agency...</h2>
@@ -155,97 +181,104 @@
 
 <aside class="sidebar" aria-labelledby="filters-heading">
     <h2 id="filters-heading" class="visually-hidden">Filter Panel</h2>
-
-      <section class="filter-section" aria-labelledby="agency-office-heading">
-        <h3 id="agency-office-heading">Select Agency or Office</h3>
-        <div class="filter-row">
-            <div class="filter-column">
-                 <label for="agency-selector" class="visually-hidden">Funding Agency:</label>
-                <select id="agency-selector" class="filter-select" aria-label="Select Funding Agency">
-                     <option value="">All Funding Agencies</option>
-                    </select>
-            </div>
-            <div class="filter-column">
-                 <label for="office-filter" class="visually-hidden">Office:</label>
-                <select id="office-filter" class="filter-select" aria-label="Filter by Office">
-                    <option value="">All Offices</option>
-                </select>
-            </div>
-            <div class="filter-column hidden-filter" aria-hidden="true">
-                 <label for="subagency-filter">SubAgency:</label>
-                 <select id="subagency-filter" class="filter-select" aria-label="Filter by SubAgency" tabindex="-1">
-                     <option value="">All SubAgencies</option>
-                 </select>
-            </div>
-        </div>
-    </section>
-
-    <section class="filter-section" aria-labelledby="contractor-filters-heading">
-        <h3 id="contractor-filters-heading">Optional Filters</h3>
-        <div class="filter-row">
-		             <div class="filter-column">
-                  <label for="prime-filter" class="visually-hidden">Prime Contractor:</label>
-                  <select id="prime-filter" class="filter-select" aria-label="Filter by Prime Contractor">
-                      <option value="">All Primes</option>
-                      </select>
-             </div>
-             <div class="filter-column">
-                 <label for="naics-filter" class="visually-hidden">NAICS Code:</label>
-                <select id="naics-filter" class="filter-select" aria-label="Filter by NAICS Code">
-                    <option value="">All NAICS Codes</option>
-                    </select>
-             </div>
-             <div class="filter-column hidden-filter" aria-hidden="true">
-                <label for="sub-filter">Subcontractor:</label>
-                <select id="sub-filter" class="filter-select" aria-label="Filter by Subcontractor" tabindex="-1">
-                    <option value="">All Subs</option>
-                 </select>
-            </div>
-        </div>
-    </section>
-<section class="filter-section" data-section="search" aria-labelledby="search-filter-heading">
-        <h3 id="search-filter-heading">Keyword Search</h3>
-         <div class="filter-row">
-             <div class="filter-column full-width">
-                 <label for="data-search" class="visually-hidden">Keyword Search:</label>
-                  <div class="search-container">
-                      <input type="search" id="data-search" class="filter-select" placeholder="Search name, NAICS..." aria-label="Search contract data">
-                      </div>
-             </div>
-         </div>
-    </section>
-    <section class="filter-section" data-section="display" aria-labelledby="display-options-heading">
-        <h3 id="display-options-heading">Choose Chart Type</h3>
+    <section class="filter-section">
         <div class="filter-group viz-section">
-             <label id="viz-toggle-label" class="visually-hidden">Visualization Type:</label>
+              <h3 id="agency-select-heading">Chart Type</h3>
+             <label id="viz-toggle-label" class="visually-hidden">Visualization type:</label>
             <nav class="visualization-toggle" aria-labelledby="viz-toggle-label">
                 <button class="viz-toggle-btn active" data-viz="sankey" aria-pressed="true">Contract Flow</button>
                 <button class="viz-toggle-btn" data-viz="network" aria-pressed="false">Network</button>
                 <button class="viz-toggle-btn" data-viz="choropleth" aria-pressed="false">Map</button>
             </nav>
         </div>
-        <div class="filter-group level-filter">
-             <h3 id="level-filter-heading">Show or Hide Nodes</h3>
-			 <label id="level-filter-label" class="visually-hidden">Agency Levels</label>
+	</section>
+    <section class="filter-section" aria-labelledby="agency-select-heading">
+        <h3 id="agency-select-heading">Select Agency</h3>
+        <div class="filter-row">
+            <div class="filter-column">
+                <label for="agency-selector" class="visually-hidden">Agency:</label>
+                <select id="agency-selector" class="filter-select" aria-label="Select Funding Agency">
+                    <option value="">All Funding Agencies</option>
+                </select>
+            </div>
+            <div class="filter-column">
+                <label for="office-filter" class="visually-hidden">Office:</label>
+                <select id="office-filter" class="filter-select" aria-label="Filter by Office">
+                    <option value="">All Offices</option>
+                </select>
+            </div>
+            <div class="filter-column hidden-filter" aria-hidden="true">
+                <label for="subagency-filter">SubAgency:</label>
+                <select id="subagency-filter" class="filter-select" aria-label="Filter by SubAgency" tabindex="-1">
+                    <option value="">All SubAgencies</option>
+                </select>
+            </div>
+        </div>
+    </section>
+
+    <section class="filter-section" aria-labelledby="optional-filters-heading">
+        <h3 id="optional-filters-heading">Optional Filters</h3>
+         <div class="filter-row">
+            <div class="filter-column">
+                <label for="prime-filter" class="visually-hidden">Primes:</label>
+                <select id="prime-filter" class="filter-select" aria-label="Filter by Prime Contractor">
+                    <option value="">All Primes</option>
+                </select>
+            </div>
+            <div class="filter-column">
+                <label for="naics-filter" class="visually-hidden">NAICS codes:</label>
+                <select id="naics-filter" class="filter-select" aria-label="Filter by NAICS Code">
+                    <option value="">All NAICS Codes</option>
+                </select>
+            </div>
+             <div class="filter-column hidden-filter" aria-hidden="true">
+                <label for="sub-filter">Subcontractor:</label>
+                <select id="sub-filter" class="filter-select" aria-label="Filter by Subcontractor" tabindex="-1">
+                    <option value="">All Subs</option>
+                </select>
+            </div>
+        </div>
+    </section>
+    
+    <section class="filter-section" data-section="search" aria-labelledby="search-filter-heading">
+        <h3 id="search-filter-heading">Search</h3>
+        <div class="filter-row">
+             <div class="filter-column full-width">
+                 <label for="data-search" class="visually-hidden">Keyword search:</label>
+                 <div class="search-container">
+                     <input type="search" id="data-search" class="filter-select" placeholder="Search name, NAICS..." aria-label="Search contract data">
+                 </div>
+             </div>
+         </div>
+    </section>
+	<section class="filter-section">
+        <div class="filter-group viz-section">
+              <h3 id="agency-select-heading">Visible Nodes</h3>
+             <label id="level-filter-label" class="visually-hidden">Agency levels</label>
             <div class="btn-group" id="level-filters" role="group" aria-labelledby="level-filter-label">
-                <button class="btn active" data-level="agency" aria-pressed="false">Agency</button>
+                <button class="btn active" data-level="agency" aria-pressed="true">Agency</button>
                 <button class="btn active" data-level="subagency" aria-pressed="true">Dept</button>
                 <button class="btn active" data-level="office" aria-pressed="true">Office</button>
                 <button class="btn active" data-level="prime" aria-pressed="true">Prime</button>
                 <button class="btn active" data-level="sub" aria-pressed="true">Sub</button>
             </div>
         </div>
-        <div class="filter-group range-filter">
-		 <h3 id="level-filter-heading">Modify Minimum Contract Value</h3>
-             <label for="min-value" class="visually-hidden">Minimum Subcontract Value:</label>
+		</section>
+       <section class="filter-section">
+        <div class="filter-group viz-section">
+              <h3 id="agency-select-heading">Min Contract Value</h3>
+             <label for="min-value" class="visually-hidden">Minimum subcontract value:</label>
             <div class="range-inputs">
                 <input type="range" id="min-value" min="0" max="100000000" step="100000" value="2000000" aria-label="Minimum Subcontract Value">
                 <span class="range-value" id="min-value-display" aria-live="polite">$2,000,000</span>
             </div>
         </div>
     </section>
-
-    <button id="reset-filters" class="reset-btn btn">Reset All Filters</button>
+<section class="filter-section">
+        <div class="filter-group viz-section">
+    <button id="reset-filters" class="reset-btn btn">Reset all filters</button> 
+	</div>
+	</section>
 </aside>
         </main>
 
