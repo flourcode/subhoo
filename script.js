@@ -3472,7 +3472,7 @@ function getTopPerformanceStates(limit = 3) {
     return sortedStates;
 }
 
-// Table Display Functions
+// --- Corrected displayTopNTable Function ---
 function displayTopNTable(nodes, containerId, title, topN = 5) {
     const container = document.getElementById(containerId);
     if (!container) {
@@ -3480,30 +3480,26 @@ function displayTopNTable(nodes, containerId, title, topN = 5) {
         return;
     }
     
-    // Ensure nodes is an array, even if null/undefined
     const validNodes = Array.isArray(nodes) ? nodes : [];
-    const topNodes = validNodes.slice(0, topN); // Already sorted by processData
+    const topNodes = validNodes.slice(0, topN); 
     const agencyDisplayName = getAgencyDisplayName();
     let tableHTML = `<h3>${title} for ${agencyDisplayName}</h3>`;
     
     if (topNodes.length === 0) {
         tableHTML += `<p class="empty-message">No data available.</p>`;
     } else {
-        // Calculate max value for percentage calculation
-        const maxValue = topNodes.length > 0 ? topNodes[0].value : 1; // Assumes sorted descending
+        const maxValue = topNodes.length > 0 ? topNodes[0].value : 1; 
 
-        // Added "Relative Value" column header
         tableHTML += `<table class="analysis-table"><thead><tr><th>Rank</th><th>Name</th><th>Value</th><th class="relative-value-header">Relative Value</th></tr></thead><tbody>`; 
         
         topNodes.forEach((node, index) => {
-            // Calculate percentage width for the spark bar
-            const percentage = maxValue > 0 ? Math.min(100, (node.value / maxValue) * 100) : 0; // Cap at 100%
+            const percentage = maxValue > 0 ? Math.min(100, (node.value / maxValue) * 100) : 0; 
             
             tableHTML += `<tr>
                             <td>${index + 1}</td>
                             <td>${truncateText(node.name || 'N/A', 40)}</td>
                             <td>${formatCurrency(node.value || 0)}</td>
-                            {/* Added spark bar cell */}
+                            {/* Spark bar cell - Comments REMOVED from actual HTML */}
                             <td class="spark-bar-cell"> 
                                 <div class="spark-bar" style="width: ${percentage}%;" title="${formatCurrency(node.value || 0)}"></div>
                             </td>
@@ -3514,7 +3510,7 @@ function displayTopNTable(nodes, containerId, title, topN = 5) {
     
     container.innerHTML = tableHTML;
 }
-
+// --- Corrected displayNaicsTable Function ---
 function displayNaicsTable(naicsData, containerId, title, topN = 5) {
     const container = document.getElementById(containerId);
     if (!container) {
@@ -3523,29 +3519,26 @@ function displayNaicsTable(naicsData, containerId, title, topN = 5) {
     }
     
     const validNaics = Array.isArray(naicsData) ? naicsData : [];
-    const topNaics = validNaics.slice(0, topN); // Assumes sorted descending
+    const topNaics = validNaics.slice(0, topN); 
     const agencyDisplayName = getAgencyDisplayName();
     let tableHTML = `<h3>${title} for ${agencyDisplayName}</h3>`;
     
     if (topNaics.length === 0) {
         tableHTML += `<p class="empty-message">No NAICS data available.</p>`;
     } else {
-        // Calculate max value for percentage calculation
         const maxValue = topNaics.length > 0 ? topNaics[0].value : 1; 
 
-         // Added "Relative Value" column header
         tableHTML += `<table class="analysis-table"><thead><tr><th>Rank</th><th>NAICS</th><th>Value</th><th class="relative-value-header">Relative Value</th></tr></thead><tbody>`;
         
         topNaics.forEach((item, index) => {
-             // Calculate percentage width for the spark bar
-            const percentage = maxValue > 0 ? Math.min(100, (item.value / maxValue) * 100) : 0; // Cap at 100%
+            const percentage = maxValue > 0 ? Math.min(100, (item.value / maxValue) * 100) : 0; 
 
             tableHTML += `<tr>
                             <td>${index + 1}</td>
-                            {/* Keep NAICS Code + Description */}
+                            {/* NAICS Code + Description - Comments REMOVED from actual HTML */}
                             <td>${item.code || 'N/A'}&nbsp;-&nbsp;${item.desc ? `<span class="naics-desc">${truncateText(item.desc, 60)}</span>` : ''}</td>
                             <td>${formatCurrency(item.value || 0)}</td>
-                            {/* Added spark bar cell */}
+                            {/* Spark bar cell - Comments REMOVED from actual HTML */}
                             <td class="spark-bar-cell">
                                 <div class="spark-bar" style="width: ${percentage}%;" title="${formatCurrency(item.value || 0)}"></div>
                             </td>

@@ -514,34 +514,6 @@ body.light-mode .filter-select { background-color: var(--color-surface-container
 @keyframes notification-slide-out { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(20px); } }
 
 /* ========================================= */
-/* Footer Styling                            */
-/* ========================================= */
-.footer {
-    margin-top: 40px;
-    padding: 30px 0; /* CHANGED: Removed left/right padding */
-    background-color: var(--color-surface-container-low);
-    color: var(--color-on-surface);
-    /* Footer spans full width, alignment handled by footer-content */
-}
-
-/* Keep your .footer-content rule as you provided it: */
-.footer-content {
-    max-width: 1800px;
-    margin: 0 auto;
-    padding: 0px 24px; /* This now aligns content with .container padding */
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 30px;
-}
-.footer-section h3 { margin-top: 0; margin-bottom: 15px; font-size: 1.1rem; font-weight: 600; color: var(--color-on-surface); border-bottom: none; padding-bottom: 0; }
-.footer-section p, .footer-section ul { margin: 0 0 15px; line-height: 1.5; font-size: 0.9rem; color: var(--color-on-surface-variant); }
-.footer-section ul { padding-left: 20px; }
-.footer-section li { margin-bottom: 4px; }
-.footer-section a, .footer-bottom a { color: var(--app-accent-color); }
-.footer-section a:hover, .footer-bottom a:hover { color: color-mix(in srgb, var(--app-accent-color) 70%, var(--color-on-surface) 30%); text-decoration: underline; }
-.footer-bottom { margin-top: 30px; padding-top: 15px; text-align: center; font-size: 0.8rem; color: var(--color-on-surface-variant); }
-
-/* ========================================= */
 /* Misc & Helpers                            */
 /* ========================================= */
 .empty-message, .error-message { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; max-width: 80%; padding: 20px; font-size: 0.9rem; font-style: italic; color: var(--color-on-surface-variant); }
@@ -901,84 +873,7 @@ body.light-mode .filter-select { background-color: var(--color-surface-container
     font-style: italic; /* Optional: make it italic */
     max-width: 95%; /* Prevent it hitting edges */
 }
-/* Styling for the Shoutouts section in the footer */
-.shoutouts-container {
-  text-align: center;
-  margin-top: 20px; 
-  padding-top: 15px; 
-  /* border-top: 1px solid var(--color-outline-variant); */ /* REMOVED this line */
-  max-width: 800px; 
-  margin-left: auto; 
-  margin-right: auto; 
-}
 
-.shoutouts-container h4 {
-  font-size: 0.9rem;
-  font-weight: 500;
-  color: var(--color-on-surface-variant);
-  margin-bottom: 10px; /* Slightly reduced margin */
-  padding-bottom: 10px; /* ADDED: Space below text before border */
-  border-bottom: 1px solid var(--color-outline-variant); /* ADDED: Border below heading */
-  display: inline-block; /* Keeps border only as wide as text */
-  text-transform: none; 
-  letter-spacing: normal; 
-}
-
-.shoutouts-grid {
-  display: flex; 
-  justify-content: center; 
-  align-items: flex-start; 
-  flex-wrap: wrap; 
-  gap: 20px 30px; 
-  padding: 0 10px; 
-  padding-top: 15px; /* ADDED: Space below border before grid starts */
-}
-
-/* .shoutout-item, .shoutout-topic, .shoutout-attribution rules remain the same */
-.shoutout-item {
-  display: flex;
-  flex-direction: column; 
-  align-items: center; 
-  min-width: 90px; 
-}
-
-.shoutout-topic {
-  font-size: 0.8rem;
-  font-weight: 500;
-  color: var(--color-on-surface);
-  line-height: 1.3;
-}
-
-.shoutout-attribution {
-  font-size: 0.75rem;
-  color: var(--color-on-surface-variant);
-  margin-top: 4px;
-  line-height: 1.3;
-}
-
-
-.shoutout-attribution a {
-  color: var(--app-accent-color); 
-  text-decoration: none;
-}
-
-.shoutout-attribution a:hover {
-  text-decoration: none;
-}
-/* Style for subheadings within footer sections */
-.footer-subheading {
-  font-size: 0.9em; /* Slightly smaller than h3 */
-  font-weight: 600;
-  color: var(--color-on-surface); /* Or --color-on-surface-variant */
-  margin-top: 20px; /* Space above the subheading */
-  margin-bottom: 8px; /* Space below the subheading */
-  display: block; /* Ensure it takes its own line */
-}
-
-/* Optional: Adjust spacing for the list following the subheading */
-.footer-subheading + ul {
-  margin-top: 0; 
-}
 /* Ensure filter section headings use default capitalization */
 .sidebar .filter-section h3 {
   text-transform: none; /* Override any uppercase transform */
@@ -1020,21 +915,94 @@ body.light-mode .filter-select { background-color: var(--color-surface-container
   -moz-osx-font-smoothing: grayscale;
   font-feature-settings: 'liga'; /* Enable ligatures */
 }
-/* Ensure footer grid aligns items at the start (top) */
-.footer-content {
-  /* display: grid; */ /* Assuming this exists */
-  /* grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); */ /* Assuming this exists */
-  /* gap: 30px; */ /* Assuming this exists */
-  align-items: start; /* ADD or MODIFY: Aligns columns to the top */
+/* ========================================= */
+/* Footer Styling                          */
+/* ========================================= */
+.footer {
+    margin-top: 40px;
+    padding: 30px 0; 
+    background-color: var(--color-surface-container-low);
+    color: var(--color-on-surface);
 }
 
-/* Styling for the new summary box in the footer */
+.footer-content {
+    max-width: 1800px;
+    margin: 0 auto;
+    padding: 0px 24px; 
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 30px;
+    align-items: start; /* Aligns columns to the top */
+}
+
+.footer-section h3 { 
+    margin-top: 0; 
+    margin-bottom: 15px; 
+    font-size: 1.1rem; 
+    font-weight: 600; 
+    color: var(--color-on-surface); 
+    border-bottom: none; 
+    padding-bottom: 0; 
+}
+
+.footer-section p, 
+.footer-section ul { 
+    margin: 0 0 15px; 
+    line-height: 1.5; 
+    font-size: 0.9rem; 
+    color: var(--color-on-surface-variant); 
+}
+
+.footer-section ul { 
+    padding-left: 20px; 
+}
+
+.footer-section li { 
+    margin-bottom: 4px; 
+}
+
+.footer-section a, 
+.footer-bottom a { 
+    color: var(--app-accent-color); 
+}
+
+.footer-section a:hover, 
+.footer-bottom a:hover { 
+    color: color-mix(in srgb, var(--app-accent-color) 70%, var(--color-on-surface) 30%); 
+    text-decoration: underline; 
+}
+
+.footer-bottom { 
+    margin-top: 30px; 
+    padding-top: 15px; 
+    text-align: center; 
+    font-size: 0.8rem; 
+    color: var(--color-on-surface-variant); 
+    /* border-top: 1px solid var(--color-outline-variant); /* Optional: Kept from original */
+}
+
+/* Style for subheadings within footer sections (e.g., Recommended Reads) */
+.footer-subheading {
+  font-size: 0.9em; 
+  font-weight: 600;
+  color: var(--color-on-surface); 
+  margin-top: 20px; 
+  margin-bottom: 8px; 
+  display: block; 
+}
+
+/* Optional: Adjust spacing for the list following the subheading */
+.footer-subheading + ul {
+  margin-top: 0; 
+} 
+
+/* Styling for the summary box in the footer */
 .footer-summary-box {
-  background-color: var(--color-surface-container-high); /* Use a slightly elevated surface */
+  background-color: var(--color-surface-container-high); /* Elevated surface */
   border: 1px solid var(--color-outline-variant);
-  border-radius: 16px; /* Match other cards */
-  padding: 20px 25px; /* Adjust padding */
-  height: 100%; /* Make box fill grid cell height */
+  border-radius: 16px; 
+  padding: 20px 25px; 
+  height: 100%; /* Fill grid cell height */
   display: flex;
   flex-direction: column;
 }
@@ -1051,81 +1019,130 @@ body.light-mode .filter-select { background-color: var(--color-surface-container
   font-size: 0.85rem;
   font-weight: 600;
   color: var(--color-on-surface);
-  margin: 16px 0 0 0; /* Margin top for spacing, remove bottom */
+  margin: 16px 0 0 0; /* Top margin only */
   padding: 0;
   text-transform: none;
   letter-spacing: normal;
-  text-align: left; /* Ensure left alignment */
+  text-align: left; 
 }
 
 /* Style the horizontal rule separator */
 .footer-summary-box hr.footer-summary-hr {
-  border: none; /* Remove default HR border */
-  height: 1px; /* Define thickness */
-  background-color: var(--color-outline-variant); /* Use theme color */
-  margin: 6px 0 10px 0; /* Adjust vertical spacing around HR */
-  width: 100%; /* Make it full width within the box */
+  border: none; 
+  height: 1px; 
+  background-color: var(--color-outline-variant); 
+  margin: 6px 0 10px 0; /* Vertical spacing */
+  width: 100%; 
 }
 
-/* Base list styling */
+/* Base list styling within summary box */
 .footer-summary-box .footer-summary-list {
   font-size: 0.85rem;
   padding: 0;
-  margin: 0 0 10px 0; /* Margin below lists */
-  list-style-position: outside; /* Ensure markers are outside */
+  margin: 0 0 10px 0; 
+  list-style-position: outside; 
   text-align: left;
 }
 
 /* Specific styling for "Who it's for" list (icons) */
 .footer-summary-box ul.who-list {
-   list-style: none; /* Remove default bullets */
+   list-style: none; 
 }
 
 .footer-summary-box ul.who-list li {
   display: flex;
   align-items: center;
-  margin-bottom: 5px; /* Spacing between items */
+  margin-bottom: 5px; 
   color: var(--color-on-surface-variant);
 }
 
 .footer-summary-box ul.who-list li .material-symbols-outlined {
   font-size: 18px; 
-  margin-right: 8px; /* Space between icon and text */
-  vertical-align: middle; /* Better vertical alignment */
+  margin-right: 8px; 
+  vertical-align: middle; 
   color: var(--app-accent-color); 
 }
 
 .footer-summary-box ul.who-list li .detail {
     font-size: 0.9em; 
-	color: var(--color-on-surface-variant);
+    color: var(--color-on-surface-variant); /* Adjusted from --color-outline */
     margin-left: 4px;
 }
 
 /* Specific styling for "How to use" list (numbers) */
 .footer-summary-box ol.how-list {
-   list-style: decimal; /* Ensure numbered list style */
-   padding-left: 20px; /* Indent the numbered list */
+   list-style: decimal; 
+   padding-left: 20px; /* Indent numbers */
 }
 
 .footer-summary-box ol.how-list li {
-   margin-bottom: 5px; /* Spacing between items */
+   margin-bottom: 5px; 
    color: var(--color-on-surface-variant);
 }
 
-/* Ensure H3 in other footer sections don't have excessive top margin */
-.footer-section h3 {
-    margin-top: 0; /* Override potential higher default */
+/* --- Shoutouts Styling (Assuming it exists from previous steps) --- */
+.shoutouts-container {
+  text-align: center;
+  margin-top: 20px; 
+  padding-top: 15px; 
+  border-top: 1px solid var(--color-outline-variant); /* Keep border here if desired */
+  max-width: 800px; 
+  margin-left: auto; 
+  margin-right: auto; 
 }
 
-/* Ensure H4 subheading for Recommended Reads looks okay */
-.footer-subheading {
-  font-size: 0.9em; 
-  font-weight: 600;
-  color: var(--color-on-surface); 
-  margin-top: 20px; 
-  margin-bottom: 8px; 
-  display: block; 
+.shoutouts-container h4 {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--color-on-surface-variant);
+  margin-bottom: 15px;
+  padding-bottom: 10px; 
+  /* border-bottom: 1px solid var(--color-outline-variant); */ /* Removed from here */
+  display: inline-block; 
+  text-transform: none; 
+  letter-spacing: normal; 
 }
+
+.shoutouts-grid {
+  display: flex; 
+  justify-content: center; 
+  align-items: flex-start; 
+  flex-wrap: wrap; 
+  gap: 20px 30px; 
+  padding: 0 10px; 
+  /* padding-top: 15px; */ /* Removed padding above grid */
+}
+
+.shoutout-item {
+  display: flex;
+  flex-direction: column; 
+  align-items: center; 
+  min-width: 90px; 
+}
+
+.shoutout-topic {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--color-on-surface);
+  line-height: 1.3;
+}
+
+.shoutout-attribution {
+  font-size: 0.75rem;
+  color: var(--color-on-surface-variant);
+  margin-top: 4px;
+  line-height: 1.3;
+}
+
+.shoutout-attribution a {
+  color: var(--app-accent-color); 
+  text-decoration: none;
+}
+
+.shoutout-attribution a:hover {
+  text-decoration: underline;
+}
+/* --- End Shoutouts Styling --- */
 /* How-To Guide Card Section (Adjusted for new position) */
 .how-to-card {
   margin-top: 30px; /* Space above the card (after analysis tables) */
