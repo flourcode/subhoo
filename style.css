@@ -1270,8 +1270,36 @@ body.light-mode .filter-select { background-color: var(--color-surface-container
 .expiring-chart-container .bar {
     transition: fill 0.2s ease-in-out; /* Smooth hover effect */
 }
+/* --- Spark Bar Styling for Analysis Tables --- */
 
-/* Styling for chart bars on hover (alternative method) */
-/* .expiring-chart-container .bar:hover { */
-    /* fill: var(--accent-dark); You can use CSS hover too */
-/* } */
+/* Style the new header cell */
+.analysis-table th.relative-value-header {
+  text-align: left; /* Or center if preferred */
+  white-space: nowrap;
+}
+
+/* Style the table cell containing the spark bar */
+.analysis-table td.spark-bar-cell {
+  padding: 8px 10px; /* Adjust padding as needed */
+  vertical-align: middle; /* Align bar vertically */
+  min-width: 100px; /* Give the cell minimum width */
+  width: 15%; /* Suggest a relative width, adjust as needed */
+}
+
+/* Style the spark bar div itself */
+.spark-bar {
+  height: 12px; /* Height of the bar */
+  background-color: var(--app-accent-color); /* Use theme accent color */
+  border-radius: 2px; /* Slightly rounded corners */
+  min-width: 1px; /* Ensure even tiny values show a sliver */
+  max-width: 100%; /* Ensure it doesn't overflow cell */
+  display: block; /* Make it a block element */
+  transition: background-color 0.2s ease; /* Optional: transition for hover */
+}
+
+/* Optional: Darken bar slightly on row hover */
+.analysis-table tbody tr:hover .spark-bar {
+  background-color: color-mix(in srgb, var(--app-accent-color) 75%, var(--color-on-surface) 25%);
+}
+
+/* --- End Spark Bar Styling --- */

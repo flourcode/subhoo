@@ -3480,16 +3480,34 @@ function displayTopNTable(nodes, containerId, title, topN = 5) {
         return;
     }
     
-    const topNodes = nodes.slice(0, topN);
+    // Ensure nodes is an array, even if null/undefined
+    const validNodes = Array.isArray(nodes) ? nodes : [];
+    const topNodes = validNodes.slice(0, topN); // Already sorted by processData
     const agencyDisplayName = getAgencyDisplayName();
     let tableHTML = `<h3>${title} for ${agencyDisplayName}</h3>`;
     
     if (topNodes.length === 0) {
         tableHTML += `<p class="empty-message">No data available.</p>`;
     } else {
-        tableHTML += `<table class="analysis-table"><thead><tr><th>Rank</th><th>Name</th><th>Value</th></tr></thead><tbody>`;
+        // Calculate max value for percentage calculation
+        const maxValue = topNodes.length > 0 ? topNodes[0].value : 1; // Assumes sorted descending
+
+        // Added "Relative Value" column header
+        tableHTML += `<table class="analysis-table"><thead><tr><th>Rank</th><th>Name</th><th>Value</th><th class="relative-value-header">Relative Value</th></tr></thead><tbody>`; 
+        
         topNodes.forEach((node, index) => {
-            tableHTML += `<tr><td>${index + 1}</td><td>${truncateText(node.name || 'N/A', 40)}</td><td>${formatCurrency(node.value || 0)}</td></tr>`;
+            // Calculate percentage width for the spark bar
+            const percentage = maxValue > 0 ? Math.min(100, (node.value / maxValue) * 100) : 0; // Cap at 100%
+            
+            tableHTML += `<tr>
+                            <td>${index + 1}</td>
+                            <td>${truncateText(node.name || 'N/A', 40)}</td>
+                            <td>${formatCurrency(node.value || 0)}</td>
+                            {/* Added spark bar cell */}
+                            <td class="spark-bar-cell"> 
+                                <div class="spark-bar" style="width: ${percentage}%;" title="${formatCurrency(node.value || 0)}"></div>
+                            </td>
+                          </tr>`;
         });
         tableHTML += `</tbody></table>`;
     }
@@ -3504,17 +3522,35 @@ function displayNaicsTable(naicsData, containerId, title, topN = 5) {
         return;
     }
     
-    const topNaics = naicsData.slice(0, topN);
+    const validNaics = Array.isArray(naicsData) ? naicsData : [];
+    const topNaics = validNaics.slice(0, topN); // Assumes sorted descending
     const agencyDisplayName = getAgencyDisplayName();
     let tableHTML = `<h3>${title} for ${agencyDisplayName}</h3>`;
     
     if (topNaics.length === 0) {
         tableHTML += `<p class="empty-message">No NAICS data available.</p>`;
     } else {
-        tableHTML += `<table class="analysis-table"><thead><tr><th>Rank</th><th>NAICS</th><th>Value</th></tr></thead><tbody>`;
+        // Calculate max value for percentage calculation
+        const maxValue = topNaics.length > 0 ? topNaics[0].value : 1; 
+
+         // Added "Relative Value" column header
+        tableHTML += `<table class="analysis-table"><thead><tr><th>Rank</th><th>NAICS</th><th>Value</th><th class="relative-value-header">Relative Value</th></tr></thead><tbody>`;
+        
         topNaics.forEach((item, index) => {
-            tableHTML += `<tr><td>${index + 1}</td><td>${item.code || 'N/A'}&nbsp;-&nbsp;${item.desc ? `<span class="naics-desc">${truncateText(item.desc, 60)}</span>` : ''}</td><td>${formatCurrency(item.value || 0)}</td></tr>`;
-	});
+             // Calculate percentage width for the spark bar
+            const percentage = maxValue > 0 ? Math.min(100, (item.value / maxValue) * 100) : 0; // Cap at 100%
+
+            tableHTML += `<tr>
+                            <td>${index + 1}</td>
+                            {/* Keep NAICS Code + Description */}
+                            <td>${item.code || 'N/A'}&nbsp;-&nbsp;${item.desc ? `<span class="naics-desc">${truncateText(item.desc, 60)}</span>` : ''}</td>
+                            <td>${formatCurrency(item.value || 0)}</td>
+                            {/* Added spark bar cell */}
+                            <td class="spark-bar-cell">
+                                <div class="spark-bar" style="width: ${percentage}%;" title="${formatCurrency(item.value || 0)}"></div>
+                            </td>
+                          </tr>`;
+	    });
         tableHTML += `</tbody></table>`;
     }
     
