@@ -3499,7 +3499,6 @@ function displayTopNTable(nodes, containerId, title, topN = 5) {
                             <td>${index + 1}</td>
                             <td>${truncateText(node.name || 'N/A', 40)}</td>
                             <td>${formatCurrency(node.value || 0)}</td>
-                            {/* Spark bar cell - Comments REMOVED from actual HTML */}
                             <td class="spark-bar-cell"> 
                                 <div class="spark-bar" style="width: ${percentage}%;" title="${formatCurrency(node.value || 0)}"></div>
                             </td>
@@ -3535,10 +3534,9 @@ function displayNaicsTable(naicsData, containerId, title, topN = 5) {
 
             tableHTML += `<tr>
                             <td>${index + 1}</td>
-                            {/* NAICS Code + Description - Comments REMOVED from actual HTML */}
+ 
                             <td>${item.code || 'N/A'}&nbsp;-&nbsp;${item.desc ? `<span class="naics-desc">${truncateText(item.desc, 60)}</span>` : ''}</td>
                             <td>${formatCurrency(item.value || 0)}</td>
-                            {/* Spark bar cell - Comments REMOVED from actual HTML */}
                             <td class="spark-bar-cell">
                                 <div class="spark-bar" style="width: ${percentage}%;" title="${formatCurrency(item.value || 0)}"></div>
                             </td>
