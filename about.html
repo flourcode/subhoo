@@ -4,52 +4,43 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>About Subhoo - Federal Prime-to-Sub Contractor Relationships</title>
-    
-    <!-- SEO Meta Tags -->
+
     <meta name="description" content="Learn about Subhoo, the free tool showing federal prime-to-sub contractor relationships. Discover our mission, data sources, and how we help BD professionals find teaming partners.">
     <meta name="keywords" content="federal contracting, subcontractor intelligence, USASpending, government contracts, prime contractors, federal sales, business development, about subhoo">
     <meta name="robots" content="index, follow">
     <link rel="canonical" href="https://subhoo.com/about.html">
-    
-    <!-- Preconnect to External Domains -->
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://www.googletagmanager.com">
-    
-    <!-- Preload Critical Resources -->
+
     <link rel="preload" href="style.css" as="style">
-    
-    <!-- Favicon -->
+
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
     <link rel="manifest" href="/site.webmanifest">
     <meta name="theme-color" content="#252327" class="theme-color">
-    
-    <!-- Open Graph / Facebook -->
+
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://subhoo.com/about.html" />
     <meta property="og:title" content="About Subhoo - Federal Subcontractor Intelligence" />
     <meta property="og:description" content="Learn about Subhoo, the free tool showing federal prime-to-sub contractor relationships. Discover our mission, data sources, and how we help BD professionals find teaming partners." />
     <meta property="og:image" content="https://subhoo.com/subhoo.png">
     <meta property="og:locale" content="en_US">
-    
-    <!-- Twitter -->
+
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="About Subhoo - Federal Subcontractor Intelligence" />
     <meta name="twitter:description" content="Learn about Subhoo, the free tool showing federal prime-to-sub contractor relationships. Discover our mission, data sources, and how we help BD professionals find teaming partners." />
     <meta name="twitter:image" content="https://subhoo.com/subhoo.png" />
-    
-    <!-- Security Headers -->
+
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
-    
-    <!-- Stylesheets -->
+
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Outfit:wght@700;800&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined&text=dark_mode%0Alight_mode%0Aclose%0Aopen_in_new&display=swap" rel="stylesheet">
-    
-    <!-- Google Analytics -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined&text=dark_mode%0Alight_mode%0Aclose%0Aopen_in_new%0Agroups%0Astorefront%0Acorporate_fare%0Aaccount_balance&display=swap" rel="stylesheet">
+
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-VPHMB6JQHL"></script>
     <script>
         window.dataLayer = window.dataLayer || [];
@@ -57,12 +48,11 @@
         gtag('js', new Date());
         gtag('config', 'G-VPHMB6JQHL');
     </script>
-    
-    <!-- Structured Data -->
+
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
-      "@type": "WebPage",
+      "@type": "WebPage", // Or Organization if more appropriate for About page
       "name": "About Subhoo",
       "url": "https://subhoo.com/about.html",
       "description": "Learn about Subhoo, the free tool showing federal prime-to-sub contractor relationships, our mission, and data sources.",
@@ -71,8 +61,175 @@
         "name": "Subhoo",
         "url": "https://subhoo.com/"
       }
+      // Consider adding publisher/author if relevant
     }
     </script>
+
+    <style>
+        /* Styles similar to privacy.html or about.html */
+        .about-page {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px 0 60px;
+        }
+
+        .about-hero {
+            margin-bottom: 40px;
+            text-align: center;
+        }
+
+        .about-hero h1 { /* Match other page H1 */
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: var(--app-accent-color);
+        }
+
+        .about-hero p.subtitle {
+             font-size: 1.1rem;
+             color: var(--color-on-surface-variant);
+             margin-top: -5px;
+        }
+
+        /* Style for the main content block and other sections */
+        .about-section {
+            margin-bottom: 30px;
+            background-color: var(--color-surface-container-low);
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: var(--elevation-1);
+            transition: box-shadow 0.2s ease;
+        }
+        .about-section:hover {
+            box-shadow: var(--elevation-2);
+        }
+
+         /* Styling for headings within the main block */
+         .about-section h2 {
+             color: var(--color-on-surface);
+             font-size: 1.5rem;
+             margin-top: 0; /* Remove top margin for first heading in section */
+             margin-bottom: 20px;
+             padding-bottom: 10px;
+             border-bottom: 1px solid var(--color-outline-variant);
+         }
+         /* Add margin-top back for subsequent H2s within the same section */
+         .about-section h2 + h2,
+         .about-section h2 + div, /* Adjust if elements other than H2 follow H2 */
+         .about-section div + h2,
+         .about-section p + h2 {
+             margin-top: 30px; /* Space before the next heading */
+         }
+
+
+         .about-section h3 {
+             color: var(--app-accent-color);
+             font-size: 1.2rem;
+             margin-top: 24px;
+             margin-bottom: 12px;
+         }
+
+         .about-section p,
+         .about-section ul {
+            margin-top: 0;
+            margin-bottom: 16px;
+            color: var(--color-on-surface-variant);
+            line-height: 1.6;
+         }
+
+        .about-section ul {
+            list-style: disc;
+            padding-left: 25px;
+        }
+
+        .about-section li {
+            margin-bottom: 8px;
+        }
+
+        .about-section p:last-child,
+        .about-section ul:last-child,
+        .about-section li:last-child {
+            margin-bottom: 0;
+        }
+
+        /* Benefits Grid */
+         .benefits-grid {
+             display: grid;
+             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+             gap: 20px;
+             margin-top: 10px; /* Space after the H2 */
+         }
+         .benefit-card {
+             background-color: var(--color-surface-container); /* Slightly different bg */
+             padding: 16px;
+             border-radius: 8px;
+             box-shadow: var(--elevation-0); /* No extra shadow */
+             border: 1px solid var(--color-outline-variant);
+         }
+          .benefit-card h3 {
+              color: var(--app-accent-color);
+              font-size: 1.1rem;
+              margin-top: 0;
+              margin-bottom: 8px;
+          }
+          .benefit-card p {
+              font-size: 0.9rem;
+              margin-bottom: 0;
+              color: var(--color-on-surface-variant);
+          }
+
+         /* FAQ Container */
+         .faq-container {
+             margin-top: 10px; /* Space after the H2 */
+         }
+         .faq-item {
+             margin-bottom: 20px;
+         }
+         .faq-item h3 {
+             margin-bottom: 5px; /* Less space after FAQ question */
+         }
+         .faq-item p {
+             margin-bottom: 0;
+         }
+
+
+        /* Connect section styling */
+        .connect-section {
+             /* Inherits .about-section styles (background, padding, etc.) */
+         }
+         /* Re-use connect-card styles from index.html (assuming they are in style.css) */
+         /* If connect-card styles are NOT in style.css, copy them here: */
+        .connect-card {
+             background-color: var(--color-surface-container-high);
+             padding: 20px 24px;
+             border-radius: 16px;
+             box-shadow: var(--elevation-2);
+             max-width: 500px;
+             margin: 20px auto 0; /* Center card and add space above */
+             border: 1px solid var(--color-outline-variant);
+         }
+         .connect-card-content { display: flex; align-items: center; gap: 20px; margin-bottom: 20px; }
+         .profile-pic { width: 72px; height: 72px; border-radius: 50%; object-fit: cover; border: 2px solid var(--color-outline); flex-shrink: 0; }
+         .user-info { display: flex; flex-direction: column; gap: 4px; }
+         .user-name { font-size: 1.2rem; font-weight: 600; color: var(--color-on-surface); margin: 0; line-height: 1.2; font-family: var(--font-headings); }
+         .user-location, .user-skills { font-size: 0.9rem; color: var(--color-on-surface-variant); margin: 0; line-height: 1.4; }
+         .action-buttons { display: flex; gap: 12px; flex-wrap: wrap; }
+         .action-buttons .btn { padding: 8px 16px; font-size: 0.8rem; }
+
+
+        @media (max-width: 768px) {
+            .about-hero h1 { font-size: 2rem; }
+            .about-section { padding: 20px; }
+            .benefit-card { padding: 12px; }
+            .benefit-card h3 { font-size: 1rem; }
+             .connect-card-content { flex-direction: column; align-items: flex-start; text-align: left; }
+
+        }
+         @media (max-width: 480px) {
+             .benefits-grid { grid-template-columns: 1fr; }
+         }
+
+    </style>
+
 </head>
 <body>
     <div class="container">
@@ -82,25 +239,25 @@
                 <p>Government Subcontractor Intelligence</p>
             </div>
             <div class="controls">
-                <button id="theme-toggle" class="btn icon-btn" aria-label="Switch to Light Mode" aria-pressed="false" title="Switch Theme"> 
+                <button id="theme-toggle" class="btn icon-btn" aria-label="Switch to Light Mode" aria-pressed="false" title="Switch Theme">
                     <span class="material-symbols-outlined" aria-hidden="true">light_mode</span>
                 </button>
             </div>
         </header>
 
         <main class="about-page">
+
             <section class="about-hero">
                 <h1>About Subhoo</h1>
                 <p class="subtitle">Illuminating Federal Contracting Relationships</p>
             </section>
 
             <section class="about-section">
+
                 <h2>Our Mission</h2>
                 <p>Subhoo was created with a simple but powerful mission: to bring transparency to the complex world of federal contracting relationships. We believe that understanding the connections between prime contractors and subcontractors should be accessible to everyone in the government contracting ecosystem.</p>
                 <p>By visualizing the flow of federal dollars from agencies through primes to subcontractors, we help business development professionals identify potential teaming partners, track competitor relationships, and find new opportunities that might otherwise remain hidden.</p>
-            </section>
 
-            <section class="about-section">
                 <h2>Data & Methodology</h2>
                 <p>All data presented on Subhoo comes directly from <a href="https://www.usaspending.gov" target="_blank" rel="noopener noreferrer">USAspending.gov</a>, the official source for spending data for the U.S. Government. We focus specifically on subcontracting data, which reveals the relationships between prime contractors and their subcontractors.</p>
                 <p>Our approach includes:</p>
@@ -111,9 +268,7 @@
                     <li><strong>Filtering Capabilities:</strong> Our powerful filtering system allows you to focus on specific agencies, contractors, or NAICS codes.</li>
                 </ul>
                 <p>For data accuracy questions or to report discrepancies, please refer to the original source data on USAspending.gov.</p>
-            </section>
 
-            <section class="about-section">
                 <h2>Who Benefits from Subhoo</h2>
                 <div class="benefits-grid">
                     <div class="benefit-card">
@@ -133,16 +288,12 @@
                         <p>Gain visibility into how prime contractors are distributing work and meeting small business subcontracting goals.</p>
                     </div>
                 </div>
-            </section>
 
-            <section class="about-section">
                 <h2>Why We Created Subhoo</h2>
                 <p>After years working in the federal contracting space, I noticed a significant gap in the availability of subcontracting intelligence. While prime contract awards are widely reported and analyzed, the critical subcontractor relationships that drive much of the actual work remained largely hidden from view.</p>
                 <p>Subhoo was built to solve this problem by making subcontracting data not just accessible, but genuinely useful through intuitive visualizations and powerful filtering tools. Our goal is to level the playing field for all participants in the federal marketplace.</p>
                 <p>As a 100% free resource, Subhoo is my contribution to improving the efficiency and transparency of the federal contracting ecosystem.</p>
-            </section>
 
-            <section class="about-section">
                 <h2>Frequently Asked Questions</h2>
                 <div class="faq-container">
                     <div class="faq-item">
@@ -166,9 +317,8 @@
                         <p>We welcome your feedback! Please use the "Get in touch" link in the footer to send your suggestions, report any issues, or ask questions.</p>
                     </div>
                 </div>
-            </section>
 
-            <section class="about-section connect-section">
+            </section> <section class="about-section connect-section">
                 <h2>Get Involved</h2>
                 <p>Subhoo is constantly evolving. If you have suggestions for new features, data visualizations, or improvements to the existing platform, I'd love to hear from you.</p>
                 <div class="connect-card">
@@ -185,84 +335,79 @@
                     </div>
                 </div>
             </section>
+
         </main>
 
         <footer class="footer">
             <div class="footer-content">
-                <div class="footer-section">
-                    <h3>About Subhoo</h3>
-                    <p>Subhoo shows you the hidden partnerships behind Federal Primes and Subcontractors so you can, follow the money, find your next teaming partner, or see who's working with your competitors. Pick an agency to start. All data is sourced from USASpending.gov and updated monthly.</p>
-                </div>
-                <div class="footer-section">
-                    <h3>How to Use</h3>
-                    <ul>
-                        <li>Select an agency</li>
-                        <li>Choose a visualization type</li>
-                        <li>Use filters to refine data</li>
-                        <li>Click nodes/map areas to focus</li>
-                    </ul>
-                </div>
-                <div class="footer-section">
-                    <h3>Data Source</h3>
-                    <p>All data from <a href="https://www.usaspending.gov" target="_blank" rel="noopener noreferrer">USAspending.gov</a>. Updated periodically.</p>
-                </div>
-                <div class="footer-section">
-                    <h3>Resources</h3>
-                    <ul>
-                        <li><a href="https://www.usaspending.gov/explorer" target="_blank" rel="noopener noreferrer">USAspending Explorer</a></li>
-                        <li><a href="https://sam.gov/content/home" target="_blank" rel="noopener noreferrer">SAM.gov</a></li>
-                    </ul>
-                </div>
+                 <div class="footer-section">
+                     <h3>About Subhoo</h3>
+                     <p>Subhoo shows you the hidden partnerships behind Federal Primes and Subcontractors so you can, follow the money, find your next teaming partner, or see who's working with your competitors. Pick an agency to start. All data is sourced from USASpending.gov and updated monthly.</p>
+                 </div>
+                 <div class="footer-section">
+                     <h3>How to Use</h3>
+                     <ul>
+                         <li>Select an agency</li>
+                         <li>Choose a visualization type</li>
+                         <li>Use filters to refine data</li>
+                         <li>Click nodes/map areas to focus</li>
+                     </ul>
+                 </div>
+                 <div class="footer-section">
+                     <h3>Data Source</h3>
+                     <p>All data from <a href="https://www.usaspending.gov" target="_blank" rel="noopener noreferrer">USAspending.gov</a>. Updated periodically.</p>
+                 </div>
+                 <div class="footer-section">
+                     <h3>Resources</h3>
+                     <ul>
+                         <li><a href="https://www.usaspending.gov/explorer" target="_blank" rel="noopener noreferrer">USAspending Explorer</a></li>
+                         <li><a href="https://sam.gov/content/home" target="_blank" rel="noopener noreferrer">SAM.gov</a></li>
+                     </ul>
+                 </div>
+             </div>
+             <div class="footer-bottom">
+                 <p>&copy; 2025 Subhoo | Data sourced from USAspending.gov</p>
+                 <p><a href="https://subhoo.com">Home</a> | <a href="https://subhoo.com/howto.html">How To Subhoo</a> | <a href="https://subhoo.com/privacy.html">Privacy</a> | <a href="https://subhoo.com/about.html">About</a> | <a href="https://subhoo.com/terms.html">Terms</a></p>
+                 <p>Inspirational Credits<br>Dark Mode: <a href="#">@dongkyup</a><br> 5 Whys?: <a href="#">@rodstedt</a></p>
             </div>
-            <div class="footer-bottom">
-    <p>&copy; 2025 Subhoo | Data sourced from USAspending.gov</p>
-    <p><a href="https://subhoo.com">Home</a> | <a href="https://subhoo.com/privacy.html">Privacy</a> | <a href="https://subhoo.com/about.html">About</a> | <a href="https://subhoo.com/terms.html">Terms</a></p>
-    <p>Inspirational Credits<br>Dark Mode: <a href="#">@dongkyup</a><br>
-        5 Whys?: <a href="#">@rodstedt</a></p>
-</div>
         </footer>
 
-        <script>
-            // Theme toggle functionality
-            document.addEventListener('DOMContentLoaded', function() {
-                const themeToggle = document.getElementById('theme-toggle');
-                const themeIcon = themeToggle.querySelector('.material-symbols-outlined');
-                const themeColor = document.querySelector('meta.theme-color');
-                
-                // Check for saved theme preference or use device preference
-                const savedTheme = localStorage.getItem('theme');
-                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                
-                if ((savedTheme === 'dark') || (!savedTheme && prefersDark)) {
-                    document.body.classList.remove('light-mode');
-                    themeIcon.textContent = 'light_mode';
-                    themeToggle.setAttribute('aria-label', 'Switch to Light Mode');
-                    themeColor.setAttribute('content', '#252327');
-                } else {
-                    document.body.classList.add('light-mode');
-                    themeIcon.textContent = 'dark_mode';
-                    themeToggle.setAttribute('aria-label', 'Switch to Dark Mode');
-                    themeColor.setAttribute('content', '#F4F2F6');
-                }
-                
-                // Toggle theme when button is clicked
-                themeToggle.addEventListener('click', function() {
-                    document.body.classList.toggle('light-mode');
-                    
-                    if (document.body.classList.contains('light-mode')) {
-                        themeIcon.textContent = 'dark_mode';
-                        themeToggle.setAttribute('aria-label', 'Switch to Dark Mode');
-                        localStorage.setItem('theme', 'light');
-                        themeColor.setAttribute('content', '#F4F2F6');
-                    } else {
-                        themeIcon.textContent = 'light_mode';
-                        themeToggle.setAttribute('aria-label', 'Switch to Light Mode');
-                        localStorage.setItem('theme', 'dark');
-                        themeColor.setAttribute('content', '#252327');
-                    }
-                });
+    </div> <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const themeToggle = document.getElementById('theme-toggle');
+             if (!themeToggle) return;
+
+            const themeIcon = themeToggle.querySelector('.material-symbols-outlined');
+            const themeColorMeta = document.querySelector('meta[name="theme-color"]');
+
+             const applyTheme = (theme) => {
+                 if (theme === 'light') {
+                     document.body.classList.add('light-mode');
+                     if (themeIcon) themeIcon.textContent = 'dark_mode';
+                     themeToggle.setAttribute('aria-label', 'Switch to Dark Mode');
+                     themeToggle.setAttribute('aria-pressed', 'false');
+                     if (themeColorMeta) themeColorMeta.setAttribute('content', '#F4F2F6');
+                 } else {
+                     document.body.classList.remove('light-mode');
+                     if (themeIcon) themeIcon.textContent = 'light_mode';
+                     themeToggle.setAttribute('aria-label', 'Switch to Light Mode');
+                     themeToggle.setAttribute('aria-pressed', 'true');
+                     if (themeColorMeta) themeColorMeta.setAttribute('content', '#252327');
+                 }
+             };
+
+            const savedTheme = localStorage.getItem('theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const initialTheme = savedTheme || (prefersDark ? 'dark' : 'light');
+            applyTheme(initialTheme);
+
+            themeToggle.addEventListener('click', function() {
+                const currentTheme = document.body.classList.contains('light-mode') ? 'light' : 'dark';
+                const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+                applyTheme(newTheme);
+                localStorage.setItem('theme', newTheme);
             });
-        </script>
-    </div>
+        });
+    </script>
 </body>
 </html>
