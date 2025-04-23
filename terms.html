@@ -4,52 +4,43 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Terms and Conditions - Subhoo.com</title>
-    
-    <!-- SEO Meta Tags -->
+
     <meta name="description" content="Terms and conditions for using Subhoo's federal contractor intelligence platform. Learn about acceptable use, data licensing, and disclaimers.">
     <meta name="keywords" content="terms of service, terms and conditions, subhoo terms, federal contracting data terms, user agreement">
     <meta name="robots" content="index, follow">
     <link rel="canonical" href="https://subhoo.com/terms.html">
-    
-    <!-- Preconnect to External Domains -->
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://www.googletagmanager.com">
-    
-    <!-- Preload Critical Resources -->
+
     <link rel="preload" href="style.css" as="style">
-    
-    <!-- Favicon -->
+
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
     <link rel="manifest" href="/site.webmanifest">
     <meta name="theme-color" content="#252327" class="theme-color">
-    
-    <!-- Open Graph / Facebook -->
+
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://subhoo.com/terms.html" />
     <meta property="og:title" content="Terms and Conditions - Subhoo" />
     <meta property="og:description" content="Terms and conditions for using Subhoo's federal contractor intelligence platform. Learn about acceptable use, data licensing, and disclaimers." />
     <meta property="og:image" content="https://subhoo.com/subhoo.png">
     <meta property="og:locale" content="en_US">
-    
-    <!-- Twitter -->
+
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Terms and Conditions - Subhoo" />
     <meta name="twitter:description" content="Terms and conditions for using Subhoo's federal contractor intelligence platform. Learn about acceptable use, data licensing, and disclaimers." />
     <meta name="twitter:image" content="https://subhoo.com/subhoo.png" />
-    
-    <!-- Security Headers -->
+
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
-    
-    <!-- Stylesheets -->
+
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Outfit:wght@700;800&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined&text=dark_mode%0Alight_mode%0Aclose%0Aopen_in_new&display=swap" rel="stylesheet">
-    
-    <!-- Google Analytics -->
+
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-VPHMB6JQHL"></script>
     <script>
         window.dataLayer = window.dataLayer || [];
@@ -57,124 +48,146 @@
         gtag('js', new Date());
         gtag('config', 'G-VPHMB6JQHL');
     </script>
-    
-    <!-- Structured Data -->
+
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
-      "@type": "WebPage",
+      "@type": "WebPage", // Or potentially "LegalService" or similar if more fitting
       "name": "Terms and Conditions",
       "url": "https://subhoo.com/terms.html",
       "description": "Terms and conditions for using Subhoo's federal contractor intelligence platform.",
+       "mainEntity": { // Example for Legal context
+            "@type": "WebSite",
+            "name": "Subhoo",
+            "url": "https://subhoo.com/"
+       },
       "isPartOf": {
         "@type": "WebSite",
         "name": "Subhoo",
         "url": "https://subhoo.com/"
-      }
+      },
+       "datePublished": "2025-04-21", // Add date published
+       "dateModified": "2025-04-21" // Use Last Updated date
     }
     </script>
-    
+
     <style>
-        /* Terms and Conditions Specific Styles */
         .terms-page {
             max-width: 1000px;
             margin: 0 auto;
             padding: 20px 0 60px;
         }
-        
+
         .terms-header {
             margin-bottom: 40px;
             text-align: center;
         }
-        
+
         .terms-header h1 {
             font-size: 2.5rem;
             margin-bottom: 10px;
             color: var(--app-accent-color);
         }
-        
+
         .terms-header p {
             font-size: 1rem;
             color: var(--color-on-surface-variant);
             max-width: 700px;
             margin: 0 auto;
         }
-        
+
+        /* Style for the main content block and contact section */
         .terms-section {
-            margin-bottom: 40px;
+            margin-bottom: 30px; /* Consistent spacing */
             background-color: var(--color-surface-container-low);
             padding: 24px;
             border-radius: 12px;
             box-shadow: var(--elevation-1);
+            transition: box-shadow 0.2s ease;
         }
-        
         .terms-section:hover {
             box-shadow: var(--elevation-2);
         }
-        
+         .terms-section:last-of-type {
+             margin-bottom: 0; /* Remove bottom margin from last section */
+         }
+
         .terms-section h2 {
             color: var(--color-on-surface);
             font-size: 1.5rem;
-            margin-top: 0;
+            margin-top: 0; /* Remove top margin for first heading */
             margin-bottom: 20px;
             padding-bottom: 10px;
             border-bottom: 1px solid var(--color-outline-variant);
         }
-        
+         /* Add margin-top back for subsequent H2s within the same section */
+         .terms-section p + h2,
+         .terms-section ul + h2,
+         .terms-section div + h2,
+         .terms-section h3 + h2,
+         .terms-section ol + h2 { /* Add more selectors if needed */
+             margin-top: 30px;
+         }
+
         .terms-section h3 {
             color: var(--app-accent-color);
             font-size: 1.2rem;
             margin-top: 24px;
             margin-bottom: 12px;
         }
-        
+
         .terms-section p, .terms-section ul, .terms-section ol {
             margin-top: 0;
             margin-bottom: 16px;
+            color: var(--color-on-surface-variant); /* Apply default text color */
+            line-height: 1.6;
         }
-        
+
         .terms-section ul, .terms-section ol {
             padding-left: 24px;
         }
-        
+
         .terms-section li {
             margin-bottom: 8px;
         }
-        
-        .terms-section p:last-child, 
-        .terms-section ul:last-child, 
+
+        .terms-section p:last-child,
+        .terms-section ul:last-child,
         .terms-section ol:last-child,
         .terms-section li:last-child {
             margin-bottom: 0;
         }
-        
+
         .terms-contact {
-            background-color: var(--color-surface-container);
-            padding: 24px;
-            border-radius: 12px;
-            text-align: center;
-            margin-top: 40px;
-            box-shadow: var(--elevation-1);
+            /* Use .terms-section styles */
+             margin-top: 40px; /* Keep space above contact */
+             text-align: center;
         }
-        
+
         .terms-contact h2 {
             margin-top: 0;
             color: var(--app-accent-color);
+             border-bottom: none;
+             padding-bottom: 0;
+             margin-bottom: 16px;
         }
-        
+         .terms-contact p {
+             color: var(--color-on-surface);
+         }
+
         .update-date {
+            display: block;
             text-align: right;
             font-style: italic;
             color: var(--color-on-surface-variant);
             font-size: 0.85rem;
-            margin-top: 8px;
+            margin-top: 20px;
         }
-        
+
         @media (max-width: 768px) {
             .terms-header h1 {
                 font-size: 2rem;
             }
-            
             .terms-section {
                 padding: 20px;
             }
@@ -189,38 +202,33 @@
                 <p>Government Subcontractor Intelligence</p>
             </div>
             <div class="controls">
-                <button id="theme-toggle" class="btn icon-btn" aria-label="Switch to Light Mode" aria-pressed="false" title="Switch Theme"> 
+                <button id="theme-toggle" class="btn icon-btn" aria-label="Switch to Light Mode" aria-pressed="false" title="Switch Theme">
                     <span class="material-symbols-outlined" aria-hidden="true">light_mode</span>
                 </button>
             </div>
         </header>
 
         <main class="terms-page">
+
             <section class="terms-header">
                 <h1>Terms and Conditions</h1>
                 <p>Please read these terms and conditions carefully before using the Subhoo website.</p>
             </section>
 
             <section class="terms-section">
+
                 <h2>1. Agreement to Terms</h2>
                 <p>By accessing or using the Subhoo website at <a href="https://subhoo.com">https://subhoo.com</a> ("the Service"), you agree to be bound by these Terms and Conditions ("Terms"). If you disagree with any part of the Terms, you may not access the Service.</p>
-            </section>
 
-            <section class="terms-section">
                 <h2>2. Intellectual Property</h2>
                 <p>The Subhoo website, including its original content, features, functionality, and visualizations (collectively, "Content"), is owned by Subhoo and is protected by copyright, trademark, and other intellectual property laws.</p>
-                
                 <h3>2.1 Website Design and Interface</h3>
                 <p>The design, layout, look, appearance, and graphics of the Subhoo website are proprietary to Subhoo. Unauthorized reproduction or distribution of the website design is prohibited.</p>
-                
                 <h3>2.2 Visualizations and Analysis</h3>
                 <p>The visualizations, charts, graphs, and analysis methodologies displayed on Subhoo are protected by intellectual property rights. You may use these visualizations for personal or internal business purposes, but you may not reproduce, distribute, or create derivative works based on these visualizations without proper attribution to Subhoo.</p>
-                
                 <h3>2.3 Underlying Data</h3>
                 <p>The underlying data presented on Subhoo is sourced from USAspending.gov and is subject to their terms of use. This public data is made available by the U.S. government and may be used in accordance with applicable open data policies.</p>
-            </section>
 
-            <section class="terms-section">
                 <h2>3. User License</h2>
                 <p>Subhoo grants you a limited, non-exclusive, non-transferable, non-sublicensable license to access and use the Service for personal, non-commercial, or internal business intelligence purposes. This license does not include:</p>
                 <ul>
@@ -231,9 +239,7 @@
                     <li>Transferring the materials to another person or "mirroring" the materials on any other server</li>
                 </ul>
                 <p>This license shall automatically terminate if you violate any of these restrictions and may be terminated by Subhoo at any time.</p>
-            </section>
 
-            <section class="terms-section">
                 <h2>4. User Conduct</h2>
                 <p>When using the Subhoo website, you agree to:</p>
                 <ul>
@@ -243,9 +249,7 @@
                     <li>Not use the Service to harvest or collect user data, including email addresses, for any purpose including sending unsolicited communications</li>
                     <li>Not use any automated system, including "robots," "spiders," "offline readers," etc., to access the Service in a manner that sends more request messages to Subhoo servers than a human can reasonably produce in the same period of time</li>
                 </ul>
-            </section>
 
-            <section class="terms-section">
                 <h2>5. Data Usage and Export</h2>
                 <p>Subhoo provides functionality to export certain data and visualizations through the Service. When using these export features, you agree to:</p>
                 <ul>
@@ -255,11 +259,8 @@
                     <li>Not redistribute large portions of the raw data exported from Subhoo</li>
                 </ul>
                 <p>The export feature is provided as a convenience, and Subhoo reserves the right to limit or modify export capabilities at any time.</p>
-            </section>
 
-            <section class="terms-section">
                 <h2>6. Disclaimer of Warranties and Limitation of Liability</h2>
-                
                 <h3>6.1 Disclaimer of Warranties</h3>
                 <p>The Service is provided on an "AS IS" and "AS AVAILABLE" basis, without any warranties of any kind, either express or implied. Subhoo expressly disclaims all warranties of any kind, whether express or implied, including but not limited to the implied warranties of merchantability, fitness for a particular purpose, and non-infringement.</p>
                 <p>Subhoo makes no warranty that:</p>
@@ -269,16 +270,12 @@
                     <li>The results that may be obtained from the use of the Service will be accurate or reliable</li>
                     <li>The quality of any information or other material obtained through the Service will meet your expectations</li>
                 </ul>
-                
                 <h3>6.2 Data Accuracy</h3>
                 <p>While Subhoo strives to provide accurate information, we do not guarantee the accuracy, completeness, or timeliness of the data presented. The data is sourced from USAspending.gov and is presented as provided by that source. Subhoo is not responsible for any errors or omissions in the underlying data.</p>
-                
                 <h3>6.3 Limitation of Liability</h3>
                 <p>In no event shall Subhoo, its owners, operators, affiliates, or content providers be liable for any loss or damage, including without limitation, direct, indirect, consequential, incidental, special, or punitive damages arising from or related to your use of the Service, even if Subhoo has been advised of the possibility of such damages.</p>
                 <p>You specifically acknowledge that Subhoo shall not be liable for any decisions made based on the data or information provided through the Service, including but not limited to business, financial, or contracting decisions.</p>
-            </section>
 
-            <section class="terms-section">
                 <h2>7. Service Availability and Modifications</h2>
                 <p>Subhoo reserves the right to:</p>
                 <ul>
@@ -287,110 +284,99 @@
                     <li>Limit or restrict access to the Service during periods of maintenance or updates</li>
                 </ul>
                 <p>Subhoo shall not be liable to you or to any third party for any modification, suspension, or discontinuance of the Service.</p>
-            </section>
 
-            <section class="terms-section">
                 <h2>8. Links to Third-Party Websites</h2>
                 <p>The Subhoo website may contain links to third-party websites that are not owned or controlled by Subhoo. We have no control over, and assume no responsibility for, the content, privacy policies, or practices of any third-party websites or services.</p>
                 <p>These links are provided for convenience only and do not imply endorsement, sponsorship, or approval by Subhoo of the linked websites or their content. You acknowledge and agree that Subhoo shall not be responsible or liable, directly or indirectly, for any damage or loss caused or alleged to be caused by or in connection with the use of or reliance on any such content, goods, or services available on or through any such third-party websites.</p>
-            </section>
 
-            <section class="terms-section">
                 <h2>9. Governing Law</h2>
                 <p>These Terms shall be governed and construed in accordance with the laws of the United States and the State of Virginia, without regard to its conflict of law provisions.</p>
                 <p>Our failure to enforce any right or provision of these Terms will not be considered a waiver of those rights. If any provision of these Terms is held to be invalid or unenforceable by a court, the remaining provisions of these Terms will remain in effect.</p>
-            </section>
 
-            <section class="terms-section">
                 <h2>10. Changes to Terms</h2>
                 <p>Subhoo reserves the right to modify or replace these Terms at any time at our sole discretion. If a revision is material, we will provide at least 30 days' notice prior to any new terms taking effect. What constitutes a material change will be determined at our sole discretion.</p>
                 <p>By continuing to access or use our Service after any revisions become effective, you agree to be bound by the revised terms. If you do not agree to the new terms, you are no longer authorized to use the Service.</p>
-                <p class="update-date">Last Updated: April 21, 2025</p>
-            </section>
 
-            <section class="terms-contact">
+                <p class="update-date">Last Updated: April 21, 2025</p>
+
+            </section> <section class="terms-section terms-contact">
                 <h2>Contact Us</h2>
                 <p>If you have any questions about these Terms and Conditions, please contact us at:</p>
                 <p><a href="mailto:terms@subhoo.com">terms@subhoo.com</a></p>
             </section>
+
         </main>
 
         <footer class="footer">
-            <div class="footer-content">
-                <div class="footer-section">
-                    <h3>About Subhoo</h3>
-                    <p>Subhoo shows you the hidden partnerships behind Federal Primes and Subcontractors so you can, follow the money, find your next teaming partner, or see who's working with your competitors. Pick an agency to start. All data is sourced from USASpending.gov and updated monthly.</p>
-                </div>
-                <div class="footer-section">
-                    <h3>How to Use</h3>
-                    <ul>
-                        <li>Select an agency</li>
-                        <li>Choose a visualization type</li>
-                        <li>Use filters to refine data</li>
-                        <li>Click nodes/map areas to focus</li>
-                    </ul>
-                </div>
-                <div class="footer-section">
-                    <h3>Data Source</h3>
-                    <p>All data from <a href="https://www.usaspending.gov" target="_blank" rel="noopener noreferrer">USAspending.gov</a>. Updated periodically.</p>
-                </div>
-                <div class="footer-section">
-                    <h3>Resources</h3>
-                    <ul>
-                        <li><a href="https://www.usaspending.gov/explorer" target="_blank" rel="noopener noreferrer">USAspending Explorer</a></li>
-                        <li><a href="https://sam.gov/content/home" target="_blank" rel="noopener noreferrer">SAM.gov</a></li>
-                    </ul>
-                </div>
-            </div>
-            <div class="footer-bottom">
-    <p>&copy; 2025 Subhoo | Data sourced from USAspending.gov</p>
-    <p><a href="https://subhoo.com">Home</a> | <a href="https://subhoo.com/privacy.html">Privacy</a> | <a href="https://subhoo.com/about.html">About</a> | <a href="https://subhoo.com/terms.html">Terms</a></p>
-    <p>Inspirational Credits<br>Dark Mode: <a href="#">@dongkyup</a><br>
-        5 Whys?: <a href="#">@rodstedt</a></p>
-</div>
+             <div class="footer-content">
+                 <div class="footer-section">
+                      <h3>About Subhoo</h3>
+                      <p>Subhoo shows you the hidden partnerships behind Federal Primes and Subcontractors so you can, follow the money, find your next teaming partner, or see who's working with your competitors. Pick an agency to start. All data is sourced from USASpending.gov and updated monthly.</p>
+                  </div>
+                  <div class="footer-section">
+                      <h3>How to Use</h3>
+                      <ul>
+                          <li>Select an agency</li>
+                          <li>Choose a visualization type</li>
+                          <li>Use filters to refine data</li>
+                          <li>Click nodes/map areas to focus</li>
+                      </ul>
+                  </div>
+                  <div class="footer-section">
+                      <h3>Data Source</h3>
+                      <p>All data from <a href="https://www.usaspending.gov" target="_blank" rel="noopener noreferrer">USAspending.gov</a>. Updated periodically.</p>
+                  </div>
+                  <div class="footer-section">
+                      <h3>Resources</h3>
+                      <ul>
+                          <li><a href="https://www.usaspending.gov/explorer" target="_blank" rel="noopener noreferrer">USAspending Explorer</a></li>
+                          <li><a href="https://sam.gov/content/home" target="_blank" rel="noopener noreferrer">SAM.gov</a></li>
+                      </ul>
+                  </div>
+             </div>
+              <div class="footer-bottom">
+                  <p>&copy; 2025 Subhoo | Data sourced from USAspending.gov</p>
+                  <p><a href="https://subhoo.com">Home</a> | <a href="https://subhoo.com/howto.html">How To Subhoo</a> | <a href="https://subhoo.com/privacy.html">Privacy</a> | <a href="https://subhoo.com/about.html">About</a> | <a href="https://subhoo.com/terms.html">Terms</a></p>
+                  <p>Inspirational Credits<br>Dark Mode: <a href="#">@dongkyup</a><br> 5 Whys?: <a href="#">@rodstedt</a></p>
+             </div>
         </footer>
 
-        <script>
-            // Theme toggle functionality
-            document.addEventListener('DOMContentLoaded', function() {
-                const themeToggle = document.getElementById('theme-toggle');
-                const themeIcon = themeToggle.querySelector('.material-symbols-outlined');
-                const themeColor = document.querySelector('meta.theme-color');
-                
-                // Check for saved theme preference or use device preference
-                const savedTheme = localStorage.getItem('theme');
-                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                
-                if ((savedTheme === 'dark') || (!savedTheme && prefersDark)) {
-                    document.body.classList.remove('light-mode');
-                    themeIcon.textContent = 'light_mode';
-                    themeToggle.setAttribute('aria-label', 'Switch to Light Mode');
-                    themeColor.setAttribute('content', '#252327');
-                } else {
-                    document.body.classList.add('light-mode');
-                    themeIcon.textContent = 'dark_mode';
-                    themeToggle.setAttribute('aria-label', 'Switch to Dark Mode');
-                    themeColor.setAttribute('content', '#F4F2F6');
-                }
-                
-                // Toggle theme when button is clicked
-                themeToggle.addEventListener('click', function() {
-                    document.body.classList.toggle('light-mode');
-                    
-                    if (document.body.classList.contains('light-mode')) {
-                        themeIcon.textContent = 'dark_mode';
-                        themeToggle.setAttribute('aria-label', 'Switch to Dark Mode');
-                        localStorage.setItem('theme', 'light');
-                        themeColor.setAttribute('content', '#F4F2F6');
-                    } else {
-                        themeIcon.textContent = 'light_mode';
-                        themeToggle.setAttribute('aria-label', 'Switch to Light Mode');
-                        localStorage.setItem('theme', 'dark');
-                        themeColor.setAttribute('content', '#252327');
-                    }
-                });
+    </div> <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const themeToggle = document.getElementById('theme-toggle');
+             if (!themeToggle) return;
+
+            const themeIcon = themeToggle.querySelector('.material-symbols-outlined');
+            const themeColorMeta = document.querySelector('meta[name="theme-color"]');
+
+             const applyTheme = (theme) => {
+                 if (theme === 'light') {
+                     document.body.classList.add('light-mode');
+                     if (themeIcon) themeIcon.textContent = 'dark_mode';
+                     themeToggle.setAttribute('aria-label', 'Switch to Dark Mode');
+                     themeToggle.setAttribute('aria-pressed', 'false');
+                     if (themeColorMeta) themeColorMeta.setAttribute('content', '#F4F2F6');
+                 } else {
+                     document.body.classList.remove('light-mode');
+                     if (themeIcon) themeIcon.textContent = 'light_mode';
+                     themeToggle.setAttribute('aria-label', 'Switch to Light Mode');
+                     themeToggle.setAttribute('aria-pressed', 'true');
+                     if (themeColorMeta) themeColorMeta.setAttribute('content', '#252327');
+                 }
+             };
+
+            const savedTheme = localStorage.getItem('theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const initialTheme = savedTheme || (prefersDark ? 'dark' : 'light');
+            applyTheme(initialTheme);
+
+            themeToggle.addEventListener('click', function() {
+                const currentTheme = document.body.classList.contains('light-mode') ? 'light' : 'dark';
+                const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+                applyTheme(newTheme);
+                localStorage.setItem('theme', newTheme);
             });
-        </script>
-    </div>
+        });
+    </script>
 </body>
 </html>
