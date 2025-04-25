@@ -2751,90 +2751,107 @@ function getTopNaicsForState(stateAbbr, limit = 3) {
     return sortedNaics;
 }
 /**
- * Analyzes processed data to generate actionable insights.
- * @param {object} pData - The processedData object.
+ * Analyzes processed data to generate actionable insights for salespeople.
+ * Focuses on sub-friendly primes and top 3 expiring contracts with links.
+ * @param {object} pData - The processedData object from processData().
  * @param {array} expiring - The allExpiringContracts array.
  * @param {number} totalVal - The total filtered contract value from pData.stats.
- * @returns {string[]} - An array of insight strings.
+ * @returns {string[]} - An array of insight strings (HTML supported).
  */
 function generateInsights(pData, expiring, totalVal) {
     const insights = [];
     const thresholdPercent = 15; // Example: Highlight if > 15% concentration
-    const lowPartnerThreshold = 3; // Example: Flag if prime has < 3 subs
+    const topExpiringCount = 3; // Show top 3 expiring
 
-    if (!pData || !pData.stats || !pData.nodes || totalVal <= 0) {
-        return ["Insufficient data for insights."];
+    // Ensure necessary data structures exist
+    if (!pData || !pData.stats || !pData.nodes || !pData.nodes.prime || !pData.nodes.sub || !pData.links || !pData.links.contractorToSubcontractor || totalVal <= 0) {
+        console.warn("generateInsights: Missing required processedData components.");
+        return ["Insufficient data available for generating insights."];
     }
 
     try {
-        // --- Concentration Insights ---
+        // --- Concentration Insight (Top Prime/Sub Value) ---
+        // Note: Removed the specific NAICS concentration insight as requested.
+
         const topPrime = pData.unfilteredNodes?.prime?.[0];
         if (topPrime && topPrime.value / totalVal > thresholdPercent / 100) {
-            insights.push(`Observation: <strong>${truncateText(topPrime.name, 30)}</strong> represents over ${thresholdPercent}% (${formatCurrency(topPrime.value)}) of the total subaward value in this view.`);
+            insights.push(`Observation: Prime <strong>${truncateText(topPrime.name, 30)}</strong> is associated with over ${thresholdPercent}% (${formatCurrency(topPrime.value)}) of the total subaward value in this view.`);
         }
 
         const topSub = pData.unfilteredNodes?.sub?.[0];
         if (topSub && topSub.value / totalVal > thresholdPercent / 100) {
-            insights.push(`Observation: <strong>${truncateText(topSub.name, 30)}</strong> received over ${thresholdPercent}% (${formatCurrency(topSub.value)}) of the total subaward value in this view.`);
+            insights.push(`Observation: Sub <strong>${truncateText(topSub.name, 30)}</strong> received over ${thresholdPercent}% (${formatCurrency(topSub.value)}) of the total subaward value in this view.`);
         }
 
-         const topNaics = pData.stats?.primaryNaics;
-         if (topNaics && topNaics.code !== 'N/A' && topNaics.value / totalVal > thresholdPercent / 100) {
-             insights.push(`Observation: NAICS <strong>${topNaics.code}</strong> (${truncateText(topNaics.desc, 30)}) accounts for over ${thresholdPercent}% (${formatCurrency(topNaics.value)}) of the value.`);
-         }
 
-        // --- Relationship Insights (using filtered data for context) ---
+        // --- "Sub Friendly" Prime Insight (Most Unique Partners) ---
         const primes = pData.nodes?.prime || [];
-        const subs = pData.nodes?.sub || [];
         const links = pData.links?.contractorToSubcontractor || [];
 
-         // Find prime with fewest unique subs (in current filtered view)
-         if (primes.length > 0 && links.length > 0) {
-             let primePartners = {};
-             links.forEach(link => {
-                 if (!primePartners[link.source]) primePartners[link.source] = new Set();
-                 primePartners[link.source].add(link.target);
-             });
-             primes.forEach(pNode => {
-                 const partnerCount = primePartners[pNode.id]?.size || 0;
-                 pNode.subCount = partnerCount; // Add count to node data temporarily
-             });
-             // Find primes with few partners (adjust threshold as needed)
-             const lowPartnerPrimes = primes.filter(p => p.subCount > 0 && p.subCount < lowPartnerThreshold).sort((a,b) => a.subCount - b.subCount);
-             if (lowPartnerPrimes.length > 0) {
-                 insights.push(`Opportunity?: <strong>${truncateText(lowPartnerPrimes[0].name, 30)}</strong> has few (${lowPartnerPrimes[0].subCount}) unique subs in this view, potentially indicating reliance on fewer partners.`);
-             }
-         }
+        if (primes.length > 0 && links.length > 0) {
+            let primePartners = {};
+            links.forEach(link => {
+                // Ensure link has valid source/target before processing
+                if (link && link.source && link.target) {
+                    if (!primePartners[link.source]) primePartners[link.source] = new Set();
+                    primePartners[link.source].add(link.target);
+                }
+            });
+
+            let maxSubs = 0;
+            let mostFriendlyPrimes = [];
+
+            primes.forEach(pNode => {
+                const partnerCount = primePartners[pNode.id]?.size || 0;
+                if (partnerCount > maxSubs) {
+                    maxSubs = partnerCount;
+                    mostFriendlyPrimes = [pNode.name]; // Start new list
+                } else if (partnerCount === maxSubs && maxSubs > 0) {
+                    mostFriendlyPrimes.push(pNode.name); // Add ties
+                }
+            });
+
+            if (maxSubs > 0) {
+                const primeList = mostFriendlyPrimes.map(name => `<strong>${truncateText(name, 30)}</strong>`).join(', ');
+                insights.push(`Partnering Insight: ${primeList} worked with the most unique subs (${maxSubs}) in this filtered view.`);
+            }
+        }
 
 
-        // --- Expiring Contracts Insights ---
+        // --- Expiring Contracts Insights (Top 3 with Links) ---
         if (expiring && expiring.length > 0) {
-            // Find the highest value expiring contract soonest
+            // Sort by end date ascending, then amount descending
             const sortedExpiring = [...expiring].sort((a, b) => {
                 if (a.endDate < b.endDate) return -1;
                 if (a.endDate > b.endDate) return 1;
-                return b.amount - a.amount; // If same date, highest value first
+                return b.amount - a.amount; // Higher amount first if same date
             });
-            const nextExpiring = sortedExpiring[0];
-            if (nextExpiring) {
-                insights.push(`Expiring Soon: Check <strong>${truncateText(nextExpiring.prime, 25)}</strong>'s contract ending ~<strong>${nextExpiring.endDateStr}</strong> (Sub: ${truncateText(nextExpiring.sub, 25)}, ${formatCurrency(nextExpiring.amount)}).`);
-            }
-        } else {
-             insights.push("No contracts identified as potentially expiring (> $200K) in the next ~6 months for this agency.");
-        }
 
-        // --- Add more complex insights as needed ---
-         // E.g., Top Teaming Pair, % Small Business, etc.
+            insights.push(`<strong>Top ${topExpiringCount} Potential Expirations (Next ~6 Mo):</strong>`); // Add a heading
+
+            sortedExpiring.slice(0, topExpiringCount).forEach((item, index) => {
+                const isValidLink = item.permalink && item.permalink !== '#' && typeof item.permalink === 'string' && item.permalink.startsWith('http');
+                const linkHTML = isValidLink
+                    ? `<a href="${item.permalink}" class="detail-link" target="_blank" rel="noopener noreferrer" style="margin-left: 5px;" title="View on USAspending.gov">View</a>`
+                    : ''; // Empty string if no valid link
+
+                insights.push(
+                     `${index + 1}. ~${item.endDateStr}: <strong>${truncateText(item.prime, 25)}</strong> / ${truncateText(item.sub, 25)} (${formatCurrency(item.amount)}) ${linkHTML}`
+                 );
+            });
+
+        } else {
+             insights.push(`No contracts identified as potentially expiring (> ${formatCurrency(expiringAmountThreshold)}) in the next ~6 months for this agency.`);
+        }
 
     } catch (error) {
         console.error("Error generating insights:", error);
         insights.push("Could not generate all insights due to an error.");
     }
 
-
+    // Return final list, or a default message
     return insights.length > 0 ? insights : ["No specific insights generated for the current view."];
 }
-
 /**
  * Displays the generated insights in the UI.
  * @param {string[]} insightsArray - An array of insight strings.
