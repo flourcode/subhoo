@@ -83,7 +83,7 @@
     <script src="https://cdn.jsdelivr.net/npm/d3-sankey@0.12.3/dist/d3-sankey.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js" defer></script>
     <script src="https://unpkg.com/topojson@3" defer></script>
-    <script src="script.js" defer></script>
+    <script src="testscript.js" defer></script>
 </head>
 <body>
     <div class="container">
@@ -151,6 +151,13 @@
 
                 <div class="legend" id="legend" aria-label="Chart Legend">
                     </div>
+					<div id="insights-display" class="insights-container" aria-live="polite" aria-atomic="true">
+                    <h4>Key Observations:</h4>
+                    <ul id="insights-list">
+                        <li class="placeholder">Generating insights...</li>
+                    </ul>
+                </div>
+					
             </div>
 
 <aside class="sidebar" aria-labelledby="filters-heading">
@@ -310,6 +317,9 @@
          <button id="load-more-expiring" class="btn" style="display: none;">Load More</button>
      </div>
  </div>
+
+        <section class="analysis-section" aria-labelledby="analysis-heading">
+            </section>
             <div class="analysis-tables-grid">
                 <div class="analysis-table-container" id="top-primes-container" role="region" aria-label="Top Prime Contractors Table">
                     <span class="chart-placeholder">Loading...</span>
@@ -322,7 +332,7 @@
                 </div>
             </div>
         </section>
-    </div> <div class="info-panel" id="info-panel" role="dialog" aria-modal="true" aria-labelledby="info-panel-title" aria-hidden="true" style="display: none;">
+    </div> <div class="info-panel" id="info-panel" role="dialog" aria-modal="true" aria-labelledby="info-panel-title" aria-hidden="true" >
         <button class="info-panel-close icon-btn" id="info-panel-close" aria-label="Close details panel">
              <span class="material-symbols-outlined" aria-hidden="true">close</span>
         </button>
