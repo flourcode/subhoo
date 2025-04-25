@@ -2752,7 +2752,7 @@ function getTopNaicsForState(stateAbbr, limit = 3) {
 }
 /**
  * Analyzes processed data to generate actionable insights for salespeople.
- * Focuses on sub-friendly primes and top 3 expiring contracts with links.
+ * Focuses on sub-friendly primes and top expiring contracts with links.
  * @param {object} pData - The processedData object from processData().
  * @param {array} expiring - The allExpiringContracts array.
  * @param {number} totalVal - The total filtered contract value from pData.stats.
@@ -2761,7 +2761,7 @@ function getTopNaicsForState(stateAbbr, limit = 3) {
 function generateInsights(pData, expiring, totalVal) {
     const insights = [];
     const thresholdPercent = 15; // Example: Highlight if > 15% concentration
-    const topExpiringCount = 3; // Show top 3 expiring
+    const topExpiringCount = 3; // Still use this to limit the *number* of items processed
 
     // Ensure necessary data structures exist
     if (!pData || !pData.stats || !pData.nodes || !pData.nodes.prime || !pData.nodes.sub || !pData.links || !pData.links.contractorToSubcontractor || totalVal <= 0) {
@@ -2771,8 +2771,6 @@ function generateInsights(pData, expiring, totalVal) {
 
     try {
         // --- Concentration Insight (Top Prime/Sub Value) ---
-        // Note: Removed the specific NAICS concentration insight as requested.
-
         const topPrime = pData.unfilteredNodes?.prime?.[0];
         if (topPrime && topPrime.value / totalVal > thresholdPercent / 100) {
             insights.push(`Observation: Prime <strong>${truncateText(topPrime.name, 30)}</strong> is associated with over ${thresholdPercent}% (${formatCurrency(topPrime.value)}) of the total subaward value in this view.`);
@@ -2783,7 +2781,6 @@ function generateInsights(pData, expiring, totalVal) {
             insights.push(`Observation: Sub <strong>${truncateText(topSub.name, 30)}</strong> received over ${thresholdPercent}% (${formatCurrency(topSub.value)}) of the total subaward value in this view.`);
         }
 
-
         // --- "Sub Friendly" Prime Insight (Most Unique Partners) ---
         const primes = pData.nodes?.prime || [];
         const links = pData.links?.contractorToSubcontractor || [];
@@ -2791,7 +2788,6 @@ function generateInsights(pData, expiring, totalVal) {
         if (primes.length > 0 && links.length > 0) {
             let primePartners = {};
             links.forEach(link => {
-                // Ensure link has valid source/target before processing
                 if (link && link.source && link.target) {
                     if (!primePartners[link.source]) primePartners[link.source] = new Set();
                     primePartners[link.source].add(link.target);
@@ -2805,9 +2801,9 @@ function generateInsights(pData, expiring, totalVal) {
                 const partnerCount = primePartners[pNode.id]?.size || 0;
                 if (partnerCount > maxSubs) {
                     maxSubs = partnerCount;
-                    mostFriendlyPrimes = [pNode.name]; // Start new list
+                    mostFriendlyPrimes = [pNode.name];
                 } else if (partnerCount === maxSubs && maxSubs > 0) {
-                    mostFriendlyPrimes.push(pNode.name); // Add ties
+                    mostFriendlyPrimes.push(pNode.name);
                 }
             });
 
@@ -2817,26 +2813,31 @@ function generateInsights(pData, expiring, totalVal) {
             }
         }
 
-
-        // --- Expiring Contracts Insights (Top 3 with Links) ---
+        // --- Expiring Contracts Insights (Top 3 with Links, no numbers) ---
         if (expiring && expiring.length > 0) {
-            // Sort by end date ascending, then amount descending
             const sortedExpiring = [...expiring].sort((a, b) => {
-                if (a.endDate < b.endDate) return -1;
-                if (a.endDate > b.endDate) return 1;
-                return b.amount - a.amount; // Higher amount first if same date
+                 const timeA = a.endDate instanceof Date && !isNaN(a.endDate) ? a.endDate.getTime() : Infinity;
+                 const timeB = b.endDate instanceof Date && !isNaN(b.endDate) ? b.endDate.getTime() : Infinity;
+                 if (timeA < timeB) return -1;
+                 if (timeA > timeB) return 1;
+                 return (b.amount || 0) - (a.amount || 0);
             });
 
-            insights.push(`<strong>Top ${topExpiringCount} Potential Expirations (Next ~6 Mo):</strong>`); // Add a heading
+            // **MODIFIED HEADING:** Removed the count
+            insights.push(`<strong>Potential Contract Expirations (Next ~6 Mo):</strong>`);
 
-            sortedExpiring.slice(0, topExpiringCount).forEach((item, index) => {
+            const topExpiringItems = sortedExpiring.slice(0, topExpiringCount); // Still slice top 3
+
+            topExpiringItems.forEach((item) => { // Removed 'index' parameter as it's not used
+
                 const isValidLink = item.permalink && item.permalink !== '#' && typeof item.permalink === 'string' && item.permalink.startsWith('http');
                 const linkHTML = isValidLink
                     ? `<a href="${item.permalink}" class="detail-link" target="_blank" rel="noopener noreferrer" style="margin-left: 5px;" title="View on USAspending.gov">View</a>`
-                    : ''; // Empty string if no valid link
+                    : '';
 
+                // **MODIFIED LIST ITEM:** Removed index+1 prefix, added a dash
                 insights.push(
-                     `${index + 1}. ~${item.endDateStr}: <strong>${truncateText(item.prime, 25)}</strong> / ${truncateText(item.sub, 25)} (${formatCurrency(item.amount)}) ${linkHTML}`
+                     `- ~${item.endDateStr}: <strong>${truncateText(item.prime, 25)}</strong> / ${truncateText(item.sub, 25)} (${formatCurrency(item.amount)}) ${linkHTML}`
                  );
             });
 
@@ -2849,7 +2850,6 @@ function generateInsights(pData, expiring, totalVal) {
         insights.push("Could not generate all insights due to an error.");
     }
 
-    // Return final list, or a default message
     return insights.length > 0 ? insights : ["No specific insights generated for the current view."];
 }
 /**
