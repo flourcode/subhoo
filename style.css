@@ -384,8 +384,8 @@ body.light-mode .filter-select { background-color: var(--color-surface-container
 .filter-select:focus { outline: none; border-color: var(--app-accent-color); box-shadow: 0 0 0 2px color-mix(in srgb, var(--app-accent-color) 20%, transparent); }
 .search-container { position: relative; }
 #data-search { padding-right: 30px; }
-.search-clear-btn { position: absolute; right: 5px; top: 50%; transform: translateY(-50%); background: none; border: none; font-size: 1.2rem; color: var(--color-on-surface-variant); cursor: pointer; padding: 4px; line-height: 1; display: none; z-index: 2; }
-.search-clear-btn:hover { color: var(--color-on-surface); }
+/* .search-clear-btn { position: absolute; right: 5px; top: 50%; transform: translateY(-50%); background: none; border: none; font-size: 1.2rem; color: var(--color-on-surface-variant); cursor: pointer; padding: 4px; line-height: 1; display: none; z-index: 2; }
+.search-clear-btn:hover { color: var(--color-on-surface); } */
 .viz-section { margin-bottom: 16px; }
 .visualization-toggle { display: flex; justify-content: flex-start; gap: 6px; flex-wrap: wrap; padding-bottom: 4px; }
 .viz-toggle-btn { background-color: var(--color-surface-container-high); color: var(--app-accent-color); border: 1px solid var(--app-accent-color); border-radius: 16px; padding: 6px 12px; font-size: 0.75rem; min-height: 32px; box-shadow: var(--elevation-1); text-transform: uppercase; font-weight: 500; letter-spacing: 0.03em; white-space: nowrap; position: relative; overflow: hidden; cursor: pointer; transition: all 0.2s ease; }
