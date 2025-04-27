@@ -4192,12 +4192,14 @@ async function discoverAgencies() {
         { value: 'usda',     label: 'USDA' },         // Dept of Agriculture
         // --- Other Independent / Significant ---
         { value: 'gsa',      label: 'GSA' },          // General Services Administration
-        { value: 'nasa',     label: 'NASA' }
+        { value: 'nasa',     label: 'NASA' },
     ];
     
     const primeAgencies = [
-        { value: 'epa_primes', label: 'EPA - Prime Contracts' },
+        { value: 'usmc_primes', label: 'Marine Corps - Prime Contracts' },
+		{ value: 'epa_primes', label: 'EPA - Prime Contracts' },
 		{ value: 'dhs_primes', label: 'DHS - Prime Contracts' },
+		{ value: 'uscc_primes', label: 'CyberCom - Prime Contracts' },
         // Add other prime contract datasets as they become available
     ];
     
