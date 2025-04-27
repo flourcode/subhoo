@@ -4210,6 +4210,7 @@ async function discoverAgencies() {
     
     const primeAgencies = [
         { value: 'epa_primes', label: 'EPA - Prime Contracts' },
+		{ value: 'dhs_primes', label: 'DHS - Prime Contracts' },
         // Add other prime contract datasets as they become available
     ];
     
@@ -4219,7 +4220,7 @@ async function discoverAgencies() {
         { value: '', label: '--- Subaward Data ---', disabled: true },
         ...subawardAgencies,
         // Group header for prime contract data
-        { value: '', label: '--- Prime Contract Data ---', disabled: true },
+        { value: '', label: '--- Prime Contracts (Huge Files!) ---', disabled: true },
         ...primeAgencies
     ];
 
