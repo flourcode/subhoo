@@ -160,11 +160,11 @@ document.addEventListener('DOMContentLoaded', async function() {
         console.warn('Share button element (#share-button) not found when attaching listener.');
     }
     // --- End Share Button Logic ---
-    const mainCsvInput = document.getElementById('forecastFileInput'); // USE YOUR ACTUAL FILE INPUT ID
+    const mainCsvInput = document.getElementById('mainCsvFileInput'); // Use the ID from Step 1
     if (mainCsvInput) {
         mainCsvInput.addEventListener('change', handleMainCsvUpload);
     } else {
-        console.warn("Main CSV file input element not found!");
+        console.warn("Main CSV file input element (#mainCsvFileInput) not found! Upload functionality will be inactive.");
     }
 const exportExpiringBtn = document.getElementById('export-expiring-csv');
 if (exportExpiringBtn) {
@@ -4990,6 +4990,199 @@ const containerNode = container.node();
        .text(d => d.name);
 }
 /**
+ * Handles the main CSV file upload, detects type, and routes parsing.
+ * @param {Event} event - The file input change event.
+ */
+function handleMainCsvUpload(event) {
+    const file = event.target.files[0];
+    const statusMsgEl = document.getElementById('csv-status-message'); // Get status element
+    if (statusMsgEl) statusMsgEl.textContent = ''; // Clear previous status
+
+    if (file) {
+        console.log(`File selected: ${file.name}, size: ${file.size}`);
+        if (statusMsgEl) statusMsgEl.textContent = `Processing ${file.name}...`;
+        showLoading(); // Show main loading indicator
+
+        // Reset previous data
+        rawData = [];
+        rawPrimeData = [];
+        processedData = null;
+        currentFocusNode = null; // Reset focus
+        // Clear existing displays before parsing
+        clearDataDisplays();
+
+
+        // Use PapaParse preview to get headers first
+        Papa.parse(file, {
+            preview: 1, // Only read the first row (plus header)
+            header: true,
+            skipEmptyLines: true,
+            encoding: "UTF-8", // Specify encoding
+            complete: function(results) {
+                // Pass results and the original file object to the detection function
+                detectAndRouteData(results, file);
+            },
+            error: (error) => {
+                console.error('Error reading CSV headers:', error);
+                showNotification(`Error reading headers from file: ${error.message}`, "error");
+                if (statusMsgEl) statusMsgEl.textContent = `Error reading headers.`;
+                hideLoading();
+            }
+        });
+
+        // Clear the file input value to allow uploading the same file again if needed
+        event.target.value = null;
+    }
+}
+
+/**
+ * Detects CSV type based on headers and routes to the appropriate full parser.
+ * @param {object} results - The PapaParse results object from previewing the header.
+ * @param {File} file - The original File object being parsed.
+ */
+function detectAndRouteData(results, file) {
+    const headers = results?.meta?.fields;
+    const statusMsgEl = document.getElementById('csv-status-message');
+
+    if (!headers || headers.length === 0) {
+        console.error("Could not read headers from CSV file.");
+        showNotification("Error reading CSV headers.", "error");
+         if (statusMsgEl) statusMsgEl.textContent = `Error reading headers.`;
+        hideLoading();
+        return;
+    }
+    console.log("Detected Headers:", headers);
+
+    // --- Detection Logic ---
+    // Case-insensitive check
+    const lowerCaseHeaders = headers.map(h => h.toLowerCase());
+    const hasSubawardee = lowerCaseHeaders.includes('subawardee_name');
+    const hasSubAmount = lowerCaseHeaders.includes('subaward_amount');
+    const hasRecipientName = lowerCaseHeaders.includes('recipient_name');
+    const hasObligation = lowerCaseHeaders.includes('federal_action_obligation') || lowerCaseHeaders.includes('total_dollars_obligated') || lowerCaseHeaders.includes('current_total_value_of_award');
+    const hasAwardID = lowerCaseHeaders.includes('award_id_piid'); // More specific to prime
+
+    let fileType = 'unknown';
+    // Prioritize subaward detection if its key fields are present
+    if (hasSubawardee && hasSubAmount) {
+        fileType = 'subawards';
+    } else if (hasRecipientName && hasObligation && hasAwardID && !hasSubawardee) {
+        // More confident it's prime if recipient_name/obligation/piid are present AND subawardee is absent
+        fileType = 'primes';
+    }
+    // Add more robust checks here if needed based on your specific file variations
+
+    console.log(`Detected file type as: ${fileType}`);
+    if (statusMsgEl) statusMsgEl.textContent = `Detected ${fileType} format. Parsing full file...`;
+
+    // --- Trigger Full Parse with Correct Handler ---
+    if (fileType === 'subawards') {
+        Papa.parse(file, {
+            header: true,
+            dynamicTyping: true,
+            skipEmptyLines: true,
+            encoding: "UTF-8",
+            complete: handleSubawardParsedData, // Route to subaward handler
+            error: (error) => {
+                console.error('Error parsing Subaward CSV:', error);
+                showNotification(`Error parsing Subaward file: ${error.message}`, "error");
+                 if (statusMsgEl) statusMsgEl.textContent = `Error parsing Subaward file.`;
+                hideLoading();
+            }
+        });
+    } else if (fileType === 'primes') {
+        Papa.parse(file, {
+            header: true,
+            dynamicTyping: false, // Turn OFF dynamicTyping for prime, parse numbers manually later
+            skipEmptyLines: true,
+            encoding: "UTF-8",
+            complete: handlePrimeParsedData, // Route to prime handler
+            error: (error) => {
+                console.error('Error parsing Prime CSV:', error);
+                showNotification(`Error parsing Prime file: ${error.message}`, "error");
+                 if (statusMsgEl) statusMsgEl.textContent = `Error parsing Prime file.`;
+                hideLoading();
+            }
+        });
+    } else {
+        console.error("Could not determine CSV type from headers.");
+        showNotification("Cannot determine CSV type. Please use a USAspending Prime Award or Subaward export.", "error");
+         if (statusMsgEl) statusMsgEl.textContent = `Unknown CSV format.`;
+        hideLoading();
+    }
+}
+
+/**
+ * Handles the completion of parsing for a Subaward CSV file.
+ * Assigns data to rawData and triggers processing.
+ * @param {object} results - The PapaParse results object.
+ */
+function handleSubawardParsedData(results) {
+    console.log("Handling parsed Subaward data.");
+    const statusMsgEl = document.getElementById('csv-status-message');
+    currentDisplayMode = 'subawards';
+    rawData = results.data || [];
+    rawPrimeData = []; // Clear prime data holder
+
+    if (results.errors?.length > 0) {
+        console.warn("Subaward CSV Errors:", results.errors);
+        showNotification(`Subaward CSV parsed with ${results.errors.length} errors.`, 'warning');
+    }
+    if (rawData.length === 0) {
+        showNotification('No valid subaward data found in the file.', 'error');
+        if (statusMsgEl) statusMsgEl.textContent = `No subaward data found.`;
+    } else {
+         if (statusMsgEl) statusMsgEl.textContent = `Loaded ${rawData.length} subaward records.`;
+    }
+
+    // Reset filters or keep current selection? Let's reset relevant ones.
+    resetSpecificFilters(['prime', 'sub', 'naics', 'office', 'subagency', 'search']); // Reset filters that depend on data content
+    populateFilterDropdowns(); // Repopulate filters based on this new data
+    processData(); // Call your main data processing function
+    updateUITitlesForDataType(currentDisplayMode); // Update UI Titles
+    // hideLoading(); // Hide loading indicator (often done after processData/viz update)
+}
+
+/**
+ * Handles the completion of parsing for a Prime Award CSV file.
+ * Stores raw prime data, calls the adapter, assigns adapted data to rawData,
+ * and triggers processing.
+ * @param {object} results - The PapaParse results object.
+ */
+function handlePrimeParsedData(results) {
+    console.log("Handling parsed Prime Award data.");
+    const statusMsgEl = document.getElementById('csv-status-message');
+    currentDisplayMode = 'primes';
+    rawPrimeData = results.data || []; // Store the original prime data
+    rawData = []; // Clear subaward data holder
+
+    if (results.errors?.length > 0) {
+        console.warn("Prime CSV Errors:", results.errors);
+        showNotification(`Prime CSV parsed with ${results.errors.length} errors.`, 'warning');
+    }
+    if (rawPrimeData.length === 0) {
+        showNotification('No valid prime award data found in the file.', 'error');
+         if (statusMsgEl) statusMsgEl.textContent = `No prime award data found.`;
+        processData(); // Call processData even with no data to clear displays
+        updateUITitlesForDataType(currentDisplayMode);
+        hideLoading();
+        return;
+    }
+
+    // Adapt the prime data structure to match what processData expects
+    rawData = adaptPrimeDataToSubDataStructure(rawPrimeData); // Overwrite global rawData
+
+    if (statusMsgEl) statusMsgEl.textContent = `Loaded and adapted ${rawData.length} prime award records.`;
+
+    // Reset filters and repopulate based on *adapted* data
+    resetSpecificFilters(['prime', 'sub', 'naics', 'office', 'subagency', 'search']);
+    populateFilterDropdowns();
+    processData(); // Call main processing function with adapted data
+    updateUITitlesForDataType(currentDisplayMode); // Update UI Titles
+    // hideLoading();
+}
+
+/**
  * Transforms data parsed from a prime award CSV into a structure
  * similar to the subaward CSV format expected by processData.
  * Uses current_total_value_of_award for amount and maps permalink.
@@ -5005,226 +5198,194 @@ function adaptPrimeDataToSubDataStructure(rawPrimeDataSource) {
     return rawPrimeDataSource.map(primeRow => {
         // Create a new object using the keys expected by processData
         const adaptedRow = {
-            // --- Direct Maps ---
+            // Direct Maps:
             prime_awardee_name: primeRow.recipient_name || 'Unknown Prime Contractor',
             prime_award_awarding_agency_name: primeRow.awarding_agency_name || 'Unknown Agency',
             prime_award_awarding_sub_agency_name: primeRow.awarding_sub_agency_name || 'Unknown Sub-Agency',
             prime_award_awarding_office_name: primeRow.awarding_office_name || 'Unknown Office',
             prime_award_naics_code: primeRow.naics_code,
             prime_award_naics_description: primeRow.naics_description,
-            // Using current end date from prime file for potential end date field
             prime_award_period_of_performance_potential_end_date: primeRow.period_of_performance_current_end_date,
             subaward_primary_place_of_performance_state_code: primeRow.primary_place_of_performance_state_code,
+            usaspending_permalink: primeRow.usaspending_permalink || null,
 
-            // --- Updated Value Mapping ---
-            // Map 'subaward_amount' to prime award's 'current_total_value_of_award'
-            subaward_amount: primeRow.current_total_value_of_award, // Keep original type for now
+            // Value Mapping:
+            subaward_amount: primeRow.current_total_value_of_award, // Use current total award value
 
-            // --- Updated Permalink Mapping ---
-            usaspending_permalink: primeRow.usaspending_permalink || null, // Use the permalink from the prime file
+            // Fields Missing Equivalents:
+            subawardee_name: null,
+            subaward_description: primeRow.transaction_description || primeRow.prime_award_base_transaction_description || 'Prime Award Transaction',
+            subawardee_business_types: null,
 
-            // --- Fields Missing Equivalents in Prime Data (Set default/null) ---
-            subawardee_name: null, // No direct equivalent
-            subaward_description: primeRow.transaction_description || primeRow.prime_award_base_transaction_description || null,
-            subawardee_business_types: null, // Prime file uses individual flags
-
-            // --- Include other potentially useful prime fields using original names---
+            // Include other potentially useful prime fields (optional):
             prime_award_unique_key: primeRow.contract_award_unique_key,
             prime_award_piid: primeRow.award_id_piid,
             prime_federal_action_obligation: primeRow.federal_action_obligation,
             prime_total_obligated: primeRow.total_dollars_obligated,
+            // Add prime business type flags if needed later
+            prime_small_business_flag: primeRow.small_business, // Example
         };
-        // Ensure amount is a number after potential initial string parsing
+        // Ensure amount is a number
         if (typeof adaptedRow.subaward_amount !== 'number' || isNaN(adaptedRow.subaward_amount)) {
              adaptedRow.subaward_amount = parseFloat(String(adaptedRow.subaward_amount || '0').replace(/[^0-9.-]+/g, '')) || 0;
         }
+         // Parse potential end date string into Date object or null
+         adaptedRow.endDate = parsePotentialEndDate(adaptedRow.prime_award_period_of_performance_potential_end_date);
+
         return adaptedRow;
     });
 }
-/**
- * Handles the completion of parsing for a Subaward CSV file.
- * Assigns data to rawData and triggers processing.
- * @param {object} results - The PapaParse results object.
- */
-function handleSubawardParsedData(results) {
-    console.log("Handling parsed Subaward data.");
-    currentDisplayMode = 'subawards';
-    // Use the original global variable name your processData expects
-    rawData = results.data || [];
-    // Clear the other raw data holder
-    rawPrimeData = [];
-
-    if (results.errors?.length > 0) {
-        console.warn("Subaward CSV Errors:", results.errors);
-        showNotification(`Subaward CSV parsed with ${results.errors.length} errors.`, 'warning');
-    }
-    if (rawData.length === 0) {
-        showNotification('No valid subaward data found in the file.', 'error');
-    }
-
-    populateFilterDropdowns(); // Ensure filters are populated based on this data
-    processData(); // Call your main data processing function
-    updateUITitlesForDataType(currentDisplayMode); // Update UI Titles
-    hideLoading(); // Hide loading indicator
-}
 
 /**
- * Handles the completion of parsing for a Prime Award CSV file.
- * Stores raw prime data, calls the adapter, assigns adapted data to rawData,
- * and triggers processing.
- * @param {object} results - The PapaParse results object.
- */
-function handlePrimeParsedData(results) {
-    console.log("Handling parsed Prime Award data.");
-    currentDisplayMode = 'primes';
-    rawPrimeData = results.data || []; // Store the original prime data temporarily
-    // Clear the subaward data holder
-    rawData = [];
-
-    if (results.errors?.length > 0) {
-        console.warn("Prime CSV Errors:", results.errors);
-        showNotification(`Prime CSV parsed with ${results.errors.length} errors.`, 'warning');
-    }
-    if (rawPrimeData.length === 0) {
-        showNotification('No valid prime award data found in the file.', 'error');
-        processData(); // Call processData even with no data to clear displays
-        updateUITitlesForDataType(currentDisplayMode);
-        hideLoading();
-        return;
-    }
-
-    // Adapt the prime data structure to match what processData expects
-    rawData = adaptPrimeDataToSubDataStructure(rawPrimeData); // Overwrite global rawData
-
-    populateFilterDropdowns(); // Populate filters based on *adapted* data
-    processData(); // Call your main data processing function with adapted data
-    updateUITitlesForDataType(currentDisplayMode); // Update UI Titles
-    hideLoading(); // Hide loading indicator
-}
-/**
- * Detects CSV type based on headers and routes to the appropriate full parser.
- * @param {object} results - The PapaParse results object from previewing the header.
- * @param {File} file - The original File object being parsed.
- */
-function detectAndRouteData(results, file) {
-    const headers = results?.meta?.fields;
-    if (!headers || headers.length === 0) {
-        console.error("Could not read headers from CSV file.");
-        showNotification("Error reading CSV headers.", "error");
-        hideLoading();
-        return;
-    }
-    console.log("Detected Headers:", headers);
-
-    // --- Detection Logic ---
-    // Check for key subaward headers vs prime headers
-    const hasSubawardee = headers.includes('subawardee_name');
-    const hasSubAmount = headers.includes('subaward_amount');
-    const hasRecipientName = headers.includes('recipient_name');
-    const hasObligation = headers.includes('federal_action_obligation') || headers.includes('total_dollars_obligated') || headers.includes('current_total_value_of_award');
-
-    let fileType = 'unknown';
-    if (hasSubawardee && hasSubAmount) {
-        fileType = 'subawards';
-    } else if (hasRecipientName && hasObligation && !hasSubawardee) {
-        fileType = 'primes';
-    }
-    // Add more robust checks if needed
-
-    console.log(`Detected file type as: ${fileType}`);
-
-    // --- Trigger Full Parse with Correct Handler ---
-    if (fileType === 'subawards') {
-        Papa.parse(file, {
-            header: true,
-            dynamicTyping: true,
-            skipEmptyLines: true,
-            complete: handleSubawardParsedData, // Route to subaward handler
-            error: (error) => {
-                console.error('Error parsing Subaward CSV:', error);
-                showNotification(`Error parsing Subaward file: ${error.message}`, "error");
-                hideLoading();
-            }
-        });
-    } else if (fileType === 'primes') {
-        Papa.parse(file, {
-            header: true,
-            dynamicTyping: true, // Be mindful of large numbers or codes if enabling this
-            skipEmptyLines: true,
-            complete: handlePrimeParsedData, // Route to prime handler
-            error: (error) => {
-                console.error('Error parsing Prime CSV:', error);
-                showNotification(`Error parsing Prime file: ${error.message}`, "error");
-                hideLoading();
-            }
-        });
-    } else {
-        console.error("Could not determine CSV type from headers.");
-        showNotification("Could not determine CSV type. Please upload a valid Subaward or Prime Award file.", "error");
-        hideLoading();
-    }
-}
-/**
- * Handles the main CSV file upload, detects type, and routes parsing.
- * Replaces previous specific file upload handlers if needed.
- */
-function handleMainCsvUpload(event) {
-    const file = event.target.files[0];
-    if (file) {
-        console.log(`File selected: ${file.name}, size: ${file.size}`);
-        showLoading(); // Show loading indicator immediately
-
-        // Reset previous data before parsing new file
-        rawData = [];
-        rawPrimeData = [];
-        processedData = null;
-        // Optionally reset filters or keep them? Let's keep them for now.
-
-        // Use PapaParse preview to get headers first
-        Papa.parse(file, {
-            preview: 1, // Only read the first row (plus header)
-            header: true,
-            skipEmptyLines: true,
-            complete: function(results) {
-                // Pass results and the original file object to the detection function
-                detectAndRouteData(results, file);
-            },
-            error: (error) => {
-                console.error('Error reading CSV headers:', error);
-                showNotification(`Error reading headers from file: ${error.message}`, "error");
-                hideLoading();
-            }
-        });
-
-        // Clear the file input value to allow uploading the same file again if needed
-        event.target.value = null;
-    }
-}
-/**
- * Updates various UI titles based on the current display mode.
+ * Updates various UI titles and elements based on the current display mode.
  * @param {string} dataType - 'primes' or 'subawards'.
  */
 function updateUITitlesForDataType(dataType) {
-    const dataTableTitle = document.getElementById('data-table-heading'); // Assuming you added this ID or similar
-    const vizTitle = document.getElementById('visualization-heading'); // Example ID if you have one
+    const dataTableContainer = document.getElementById('data-table-container');
+    const dataTableTitle = dataTableContainer?.querySelector('h3'); // Find title within container
+    const subFilterElement = document.getElementById('sub-filter')?.parentElement; // Get the filter column div
     const statsPrimeTitle = document.getElementById('prime-chart-title');
     const statsSubTitle = document.getElementById('sub-chart-title');
+    const valueSliderLabel = document.querySelector('label[for="min-value"]'); // Or target a specific element
+    const valueSliderContainer = document.querySelector('.range-filter'); // The whole slider section
+    const activeFiltersContainer = document.getElementById('active-filters');
+
 
     if (dataType === 'primes') {
-        if (dataTableTitle) dataTableTitle.textContent = 'Prime Award Transaction Details';
-        if (vizTitle) vizTitle.textContent = 'Prime Award Visualization';
+        if (dataTableTitle) dataTableTitle.textContent = 'Prime Award Details';
         if (statsPrimeTitle) statsPrimeTitle.textContent = 'Top Recipients (Prime Awards)';
-        if (statsSubTitle) statsSubTitle.textContent = 'Top Awarding Offices (Prime Awards)'; // Change meaning
-        // Potentially hide/show certain filters or analysis tables relevant only to one type
-        document.getElementById('sub-filter')?.parentElement?.classList.add('hidden-filter'); // Hide sub filter for prime data
+        if (statsSubTitle) statsSubTitle.textContent = 'Top Awarding Offices (Prime Awards)';
+        // Hide Subcontractor specific filters/elements
+        if (subFilterElement) subFilterElement.classList.add('hidden-filter');
+        // Optionally hide Min Value Slider if using prime total value? Or relabel?
+        // if (valueSliderContainer) valueSliderContainer.style.display = 'none';
+        if (activeFiltersContainer) { // Update the filter display title/label
+             const valueLabel = activeFiltersContainer.querySelector('.filter-label');
+             if (valueLabel && valueLabel.textContent.includes('Subcontracts')) {
+                 valueLabel.textContent = `Showing Awards > ${formatCurrencyWithSuffix(minContractValue)}`;
+             }
+        }
 
     } else { // Default to subawards
         if (dataTableTitle) dataTableTitle.textContent = 'Detailed Subaward Data';
-        if (vizTitle) vizTitle.textContent = 'Subaward Visualization';
-        if (statsPrimeTitle) statsPrimeTitle.textContent = `Top Primes w/ Subs`; // Reset using correct count later
-        if (statsSubTitle) statsSubTitle.textContent = `Total Subs`; // Reset using correct count later
-         // Ensure sub filter is visible
-         document.getElementById('sub-filter')?.parentElement?.classList.remove('hidden-filter');
+        if (statsPrimeTitle) statsPrimeTitle.textContent = `Top Primes w/ Subs`;
+        if (statsSubTitle) statsSubTitle.textContent = `Top Subs`;
+        // Show Subcontractor filter
+        if (subFilterElement) subFilterElement.classList.remove('hidden-filter');
+        // Ensure Min Value Slider is visible
+        // if (valueSliderContainer) valueSliderContainer.style.display = 'block'; // Or 'flex' etc.
+        if (activeFiltersContainer) { // Reset filter display title/label
+             const valueLabel = activeFiltersContainer.querySelector('.filter-label');
+             if (valueLabel && valueLabel.textContent.includes('Awards')) {
+                 valueLabel.textContent = `Showing Subcontracts > ${formatCurrencyWithSuffix(minContractValue)}`;
+             }
+        }
     }
-    // Note: The actual counts in the stats card titles are updated within updateStatsDisplay
+    // Note: Counts in stats card titles are updated via updateStatsDisplay using processedData stats
+}
+
+/**
+ * Helper to clear data-dependent UI elements before loading new data.
+ */
+function clearDataDisplays() {
+    console.log("Clearing data displays...");
+    // Clear Tables
+    const dataTableContainer = document.getElementById('data-table-container');
+    const expiringTableContainer = document.getElementById('expiring-table-content');
+    const topPrimesContainer = document.getElementById('top-primes-container');
+    const topSubsContainer = document.getElementById('top-subs-container');
+    const naicsContainer = document.getElementById('naics-container');
+
+    const placeholder = '<span class="chart-placeholder">Loading data...</span>';
+    if (dataTableContainer) dataTableContainer.innerHTML = placeholder;
+    if (expiringTableContainer) expiringTableContainer.innerHTML = '<p class="empty-message">Loading data...</p>';
+    if (topPrimesContainer) topPrimesContainer.innerHTML = placeholder;
+    if (topSubsContainer) topSubsContainer.innerHTML = placeholder;
+    if (naicsContainer) naicsContainer.innerHTML = placeholder;
+
+    // Clear Visualizations
+    d3.select('#chart').html('');
+    d3.select('#network-chart').html('');
+    d3.select('#map-chart').html('');
+
+    // Clear Insights
+    const insightsList = document.getElementById('insights-list');
+    if (insightsList) insightsList.innerHTML = '<li class="placeholder">Loading data...</li>';
+
+    // Clear Stats Cards (except titles)
+    const totalValEl = document.getElementById('total-value');
+    const naicsDonut = document.getElementById('naics-donut-chart');
+    const primesBar = document.getElementById('top-primes-bar-chart');
+    const subsBar = document.getElementById('top-subs-bar-chart');
+    if (totalValEl) totalValEl.textContent = '$0';
+    if (naicsDonut) naicsDonut.innerHTML = '<span class="chart-placeholder">Loading...</span>';
+    if (primesBar) primesBar.innerHTML = '<span class="chart-placeholder">Loading...</span>';
+    if (subsBar) subsBar.innerHTML = '<span class="chart-placeholder">Loading...</span>';
+
+    // Clear expiring chart
+    d3.select('#expiring-value-by-month-chart').html('<span class="chart-placeholder">Loading...</span>');
+
+    // Hide load more / export buttons
+    const loadMoreBtn = document.getElementById('load-more-expiring');
+    if (loadMoreBtn) loadMoreBtn.style.display = 'none';
+    const exportExpBtn = document.getElementById('export-expiring-csv');
+    if (exportExpBtn) exportExpBtn.style.display = 'none';
+     const exportTableBtn = document.getElementById('export-csv');
+    if (exportTableBtn) exportTableBtn.disabled = true;
+
+}
+
+/**
+ * Resets specific filter dropdowns and their corresponding state variables.
+ * @param {string[]} filterKeys - Array of keys like 'prime', 'sub', 'naics', 'office', 'subagency', 'search'.
+ */
+function resetSpecificFilters(filterKeys = []) {
+    console.log("Resetting specific filters:", filterKeys);
+    if (filterKeys.includes('search')) {
+        currentSearchTerm = '';
+        const searchInput = document.getElementById('data-search'); if (searchInput) searchInput.value = '';
+        const clearButton = document.getElementById('search-clear-btn'); if (clearButton) clearButton.style.display = 'none';
+    }
+    if (filterKeys.includes('subagency')) {
+        currentSubAgencyFilter = '';
+        const subAgencyFilter = document.getElementById('subagency-filter'); if (subAgencyFilter) subAgencyFilter.value = "";
+    }
+    if (filterKeys.includes('office')) {
+        currentOfficeFilter = '';
+        const officeFilter = document.getElementById('office-filter'); if (officeFilter) officeFilter.value = "";
+    }
+    if (filterKeys.includes('naics')) {
+        currentNaicsFilter = '';
+        const naicsFilter = document.getElementById('naics-filter'); if (naicsFilter) naicsFilter.value = "";
+    }
+    if (filterKeys.includes('prime')) {
+        currentPrimeFilter = '';
+        const primeFilter = document.getElementById('prime-filter'); if (primeFilter) primeFilter.value = "";
+    }
+    if (filterKeys.includes('sub')) {
+        currentSubFilter = '';
+        const subFilter = document.getElementById('sub-filter'); if (subFilter) subFilter.value = "";
+    }
+}
+
+// Helper function to parse potential end dates (used by adaptPrimeData and updateExpiringContracts)
+function parsePotentialEndDate(potentialEndDateStr) {
+     if (!potentialEndDateStr || typeof potentialEndDateStr !== 'string') {
+         return null;
+     }
+     let potentialEndDate;
+     // Prioritize YYYY-MM-DD
+     if (potentialEndDateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+         potentialEndDate = new Date(potentialEndDateStr + 'T00:00:00Z'); // Assume UTC if no timezone
+     }
+     // Try MM/DD/YYYY
+     else if (potentialEndDateStr.match(/^\d{1,2}\/\d{1,2}\/\d{4}$/)) {
+          potentialEndDate = new Date(potentialEndDateStr);
+     }
+     // Generic fallback
+     else {
+          potentialEndDate = new Date(potentialEndDateStr);
+     }
+     // Return Date object if valid, otherwise null
+     return !isNaN(potentialEndDate) ? potentialEndDate : null;
 }

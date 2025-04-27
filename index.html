@@ -287,15 +287,20 @@
                  </div>
              </div>
          </section>
-		 
 		 <section class="csv-upload-section" aria-labelledby="csv-upload-heading" style="margin-bottom: 24px; padding: 16px; background-color: var(--color-surface-container); border-radius: 12px; box-shadow: var(--elevation-1);">
-    <h3 id="csv-upload-heading" style="margin-top: 0; margin-bottom: 10px; font-size: 1.1rem;">Upload Prime Award Data (Large Files)</h3>
+    <h3 id="csv-upload-heading" style="margin-top: 0; margin-bottom: 10px; font-size: 1.1rem;">Upload Prime or Subaward Data</h3>
     <p style="font-size: 0.85rem; color: var(--color-on-surface-variant); margin-top: 0; margin-bottom: 12px;">Select a CSV file exported from USAspending (Prime Award or Subaward format).</p>
     <div class="file-input-container">
         <label for="mainCsvFileInput" class="visually-hidden">Select CSV File:</label>
         <input type="file" id="mainCsvFileInput" accept=".csv" class="filter-select" style="cursor: pointer;">
-        </div>
+    </div>
      <p id="csv-status-message" style="font-size: 0.8rem; margin-top: 8px; color: var(--color-on-surface-variant);"></p>
+</section>
+<section class="data-table-section" aria-labelledby="data-table-heading">
+    <h2 id="data-table-heading" class="visually-hidden">Detailed Data</h2>
+    <div id="data-table-container" class="data-table-container">
+        <span class="chart-placeholder">Select an agency or upload a CSV file.</span>
+    </div>
 </section>
         <section class="data-table-section" aria-labelledby="data-table-heading">
             <h2 id="data-table-heading" class="visually-hidden">Detailed Subaward Data</h2>
