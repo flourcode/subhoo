@@ -3385,7 +3385,8 @@ function changeAgency() {
     const naicsFilter = document.getElementById('naics-filter'); if (naicsFilter) naicsFilter.value = "";
     const primeFilter = document.getElementById('prime-filter'); if (primeFilter) primeFilter.value = "";
     const subFilter = document.getElementById('sub-filter'); if (subFilter) subFilter.value = "";
-    const searchInput = document.getElementById('data-search'); if (searchInput) searchInput.value = ""; const searchClearBtn = document.getElementById('search-clear-btn'); if (searchClearBtn) searchClearBtn.style.display = 'none';
+    const searchInput = document.getElementById('data-search'); if (searchInput) searchInput.value = ""; 
+	const searchClearBtn = document.getElementById('search-clear-btn'); if (searchClearBtn) searchClearBtn.style.display = 'none';
 
     // Clear map focus etc.
     d3.select('#map-chart .states path.focused-state').classed('focused-state', false).attr('stroke', '#fff').attr('stroke-width', 0.5);
