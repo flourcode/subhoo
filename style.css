@@ -322,7 +322,7 @@ a:hover { color: color-mix(in srgb, var(--app-accent-color) 70%, var(--color-on-
     color: var(--app-accent-color);
     font-family: var(--font-monospace);
     font-weight: 800; /* Using the weight you originally wanted */
-    font-size: 3rem;
+    font-size: 4.8rem;
     line-height: 1.1;
     font-feature-settings: "tnum"; /* For tabular numbers */
 
