@@ -1579,11 +1579,14 @@ function prepareVizData(overrideMinValue = null) { // Added override parameter
 //     console.log(`Final prepared data (using ${formatCurrency(effectiveMinValue)}): Nodes=${finalNodes.length}, Links=${finalLinks.length}`);
     return { nodes: finalNodes, links: finalLinks };
 }
-// *** Updated signature to accept dataShownBelowMinValue ***
-function drawSankeyDiagram(data) {
-//     console.log("Drawing Sankey with:", { nodes: data?.nodes?.length || 0, links: data?.links?.length || 0 });
+
+function drawSankeyDiagram(data, dataShownBelowMinValue = false) {
+    // console.log("Drawing Sankey with:", { nodes: data?.nodes?.length || 0, links: data?.links?.length || 0 });
     const chartElement = d3.select('#chart');
     chartElement.html(''); // Clear previous content
+
+    // Check if we're displaying prime contract data
+    const isPrimeData = currentAgency && currentAgency.endsWith('_primes');
 
     // Simple check - if we have no rawData yet, show loading message instead of error
     if (!rawData || rawData.length === 0) {
@@ -1616,23 +1619,8 @@ function drawSankeyDiagram(data) {
         console.warn("drawSankeyDiagram: No valid data to draw.");
         return; // Stop execution
     }
-	// Check if we're displaying prime contract data
-    const isPrimeData = currentAgency.endsWith('_primes');
     
-    // If this is prime data, we might want to adjust the display
-    if (isPrimeData) {
-        // For example, you might hide the "sub" level nodes
-        // Or adjust the node colors/labels to indicate these are prime contracts
-        
-        // Example: Add a "Prime Contracts" label to the visualization
-        svg.append("text")
-           .attr("x", width / 2)
-           .attr("y", 20)
-           .attr("text-anchor", "middle")
-           .attr("class", "prime-data-indicator")
-           .text("Prime Contract Data - No Subcontractors");
-    }
-    // --- Rest of the Sankey drawing logic (as fetched previously) ---
+    // --- Rest of the Sankey drawing logic ---
     // Proceed with drawing if data is valid
     const chartContainer = document.getElementById('chart');
     const containerRect = chartContainer.getBoundingClientRect();
@@ -1655,10 +1643,36 @@ function drawSankeyDiagram(data) {
         .append('g')
         .attr('transform', `translate(${margin.left},${margin.top})`);
 
+    // Add prime data indicator if showing prime contract data
+    if (isPrimeData) {
+        svg.append("text")
+           .attr("x", innerWidth / 2)
+           .attr("y", 15) 
+           .attr("text-anchor", "middle")
+           .attr("class", "prime-data-indicator")
+           .attr("fill", "var(--color-on-surface-variant)")
+           .attr("font-size", "12px")
+           .attr("font-style", "italic")
+           .text("Prime Contract Data - No Subcontractors");
+    }
+
+    // Show notification if data is below minimum value
+    if (dataShownBelowMinValue) {
+        svg.append("text")
+           .attr("x", innerWidth / 2)
+           .attr("y", isPrimeData ? 35 : 15) // Position below prime data message if present
+           .attr("text-anchor", "middle")
+           .attr("class", "min-value-override-indicator")
+           .attr("fill", "var(--color-on-surface-variant)")
+           .attr("font-size", "12px")
+           .attr("font-style", "italic")
+           .text(`Showing contracts below minimum filter (${formatCurrency(minContractValue)}) to display data`);
+    }
+
     const sankey = d3.sankey()
         .nodeId(d => d.id)
         .nodeWidth(isMobileDevice() ? 10 : 15)
-		.nodeSort(null)
+        .nodeSort(null)
         .nodePadding(isMobileDevice() ? 6 : 10)
         .extent([[0, 0], [innerWidth, innerHeight]]);
 
@@ -1672,21 +1686,21 @@ function drawSankeyDiagram(data) {
         graph.links = graph.links.filter(l => nodeIds.has(l.source) && nodeIds.has(l.target));
 
         sankeyData = sankey(graph);
-//         console.log("Sankey layout calculated.");
+        // console.log("Sankey layout calculated.");
     } catch(e) {
         console.error("Error calculating Sankey layout:", e);
         chartElement.html(`<div class="error-message">Error calculating layout: ${e.message}. Try different filters.</div>`);
         return;
     }
 
-     // Create definitions for gradients
+    // Create definitions for gradients
     const defs = svg.append("defs");
 
     // Create a gradient for each link
     sankeyData.links.forEach((link, i) => {
         const gradientId = `link-gradient-${i}`;
-        const sourceColor = monochromaticPurpleScale(link.source.type) || '#999'; // Use new scale
-		const targetColor = monochromaticPurpleScale(link.target.type) || '#999'; // Use new scale
+        const sourceColor = monochromaticPurpleScale(link.source.type) || '#999'; // Use scale
+        const targetColor = monochromaticPurpleScale(link.target.type) || '#999'; // Use scale
         const gradient = defs.append("linearGradient")
             .attr("id", gradientId)
             .attr("gradientUnits", "userSpaceOnUse")
@@ -1749,8 +1763,8 @@ function drawSankeyDiagram(data) {
         })
         .on('mouseout', function(event, d) { // Pass 'd' for consistency
             // Reset node styling, considering focus state
-             const isFocused = currentFocusNode && d.id === currentFocusNode.id;
-             d3.select(this).select('rect')
+            const isFocused = currentFocusNode && d.id === currentFocusNode.id;
+            d3.select(this).select('rect')
                 .attr('stroke-width', isFocused ? 2 : 1)
                 .attr('stroke', isFocused ? 'var(--app-accent-color)' : 'var(--sankey-node-stroke)');
             d3.selectAll('.link').style('stroke-opacity', 0.3);
@@ -1765,51 +1779,52 @@ function drawSankeyDiagram(data) {
         .attr('height', d => Math.max(1, d.y1 - d.y0))
         .attr('width', d => d.x1 - d.x0)
         .attr('fill', d => monochromaticPurpleScale(d.type))
-         // Stroke considers focus state correctly on init
+        // Stroke considers focus state correctly on init
         .attr('stroke', d => currentFocusNode && d.id === currentFocusNode.id ? 'var(--app-accent-color)' : 'var(--sankey-node-stroke)')
         .attr('stroke-width', d => currentFocusNode && d.id === currentFocusNode.id ? 2 : 1)
         .attr('fill-opacity', 0.95);
 
-// Append text labels
-nodeGroup.append('text')
-    .attr('x', d => d.x0 < innerWidth / 2 ? (d.x1 - d.x0 + 6) : -6) // Position based on node side
-    .attr('y', d => (d.y1 - d.y0) / 2) // Center vertically in the node
-    .attr('dy', '0.35em') // Vertical alignment adjustment
-    .attr('text-anchor', d => d.x0 < innerWidth / 2 ? 'start' : 'end') // Align text start/end based on node side
-    .attr('fill', 'var(--sankey-node-label-fill, #ccc)') // Use CSS variable for color
-    .attr('font-family', 'var(--font-primary)')
-    // Slightly larger font size, closer to simple.html
-    .attr('font-size', isMobileDevice() ? '9px' : '11px') 
-    .style('pointer-events', 'none') // Text should not block mouse events on the node
-    .style('user-select', 'none') // Prevent text selection
-    .text(d => {
-        // Prioritize acronym if available for agency/subagency
-        const useAcronym = (d.type === 'agency' || d.type === 'subagency') && d.acronym;
-        let displayName = useAcronym ? d.acronym : (d.name || ''); // Use name, ensure it's a string
+    // Append text labels
+    nodeGroup.append('text')
+        .attr('x', d => d.x0 < innerWidth / 2 ? (d.x1 - d.x0 + 6) : -6) // Position based on node side
+        .attr('y', d => (d.y1 - d.y0) / 2) // Center vertically in the node
+        .attr('dy', '0.35em') // Vertical alignment adjustment
+        .attr('text-anchor', d => d.x0 < innerWidth / 2 ? 'start' : 'end') // Align text start/end based on node side
+        .attr('fill', 'var(--sankey-node-label-fill, #ccc)') // Use CSS variable for color
+        .attr('font-family', 'var(--font-primary)')
+        // Slightly larger font size, closer to simple.html
+        .attr('font-size', isMobileDevice() ? '9px' : '11px') 
+        .style('pointer-events', 'none') // Text should not block mouse events on the node
+        .style('user-select', 'none') // Prevent text selection
+        .text(d => {
+            // Prioritize acronym if available for agency/subagency
+            const useAcronym = (d.type === 'agency' || d.type === 'subagency') && d.acronym;
+            let displayName = useAcronym ? d.acronym : (d.name || ''); // Use name, ensure it's a string
 
-        // --- Revised Truncation Logic (Closer to simple.html) ---
-        // Define a single length limit based on device type (adjust these values as needed)
-        const lengthLimit = isMobileDevice() ? 18 : 30; 
+            // --- Revised Truncation Logic (Closer to simple.html) ---
+            // Define a single length limit based on device type (adjust these values as needed)
+            const lengthLimit = isMobileDevice() ? 18 : 30; 
 
-        // Apply truncation if name exceeds limit (and it's not an acronym we decided to keep short)
-        if (!useAcronym && displayName.length > lengthLimit) {
-            // Simple substring truncation
-            displayName = displayName.substring(0, lengthLimit - 1) + '…'; 
-        }
-        
-        return displayName;
-    })
-    .each(function(d) { // Still remove text entirely if node is too small vertically
-        const nodeHeight = d.y1 - d.y0;
-        // Use consistent or slightly adjusted thresholds
-        const minHeightThreshold = isMobileDevice() ? 8 : 10; 
-        if (nodeHeight < minHeightThreshold) {
-            d3.select(this).remove(); // Remove the text element
-        }
-    });
+            // Apply truncation if name exceeds limit (and it's not an acronym we decided to keep short)
+            if (!useAcronym && displayName.length > lengthLimit) {
+                // Simple substring truncation
+                displayName = displayName.substring(0, lengthLimit - 1) + '…'; 
+            }
+            
+            return displayName;
+        })
+        .each(function(d) { // Still remove text entirely if node is too small vertically
+            const nodeHeight = d.y1 - d.y0;
+            // Use consistent or slightly adjusted thresholds
+            const minHeightThreshold = isMobileDevice() ? 8 : 10; 
+            if (nodeHeight < minHeightThreshold) {
+                d3.select(this).remove(); // Remove the text element
+            }
+        });
 
-//     console.log("Sankey diagram draw complete.");
+    // console.log("Sankey diagram draw complete.");
 }
+
 // Reverted drawNetworkGraph function (before zoom-to-fit logic)
 // Signature includes dataShownBelowMinValue for compatibility, though not used within this reverted version.
 function drawNetworkGraph(data, dataShownBelowMinValue = false) {
