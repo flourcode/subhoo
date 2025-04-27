@@ -1825,16 +1825,15 @@ function drawSankeyDiagram(data, dataShownBelowMinValue = false) {
     // console.log("Sankey diagram draw complete.");
 }
 
-// Reverted drawNetworkGraph function (before zoom-to-fit logic)
-// Signature includes dataShownBelowMinValue for compatibility, though not used within this reverted version.
 function drawNetworkGraph(data, dataShownBelowMinValue = false) {
-    // Use 'data' instead of calling prepareVizData() again
-//     console.log("Drawing Network Graph with previous logic...");
+    // console.log("Drawing Network Graph with previous logic...");
     const chartElement = d3.select('#network-chart');
     chartElement.html(''); // Clear previous
+
+    // Check if we're displaying prime contract data
     const isPrimeData = currentAgency && currentAgency.endsWith('_primes');
 
-    // Note: Notification for dataShownBelowMinValue is NOT included in this reverted version
+    // Add notifications if needed
     if (dataShownBelowMinValue || isPrimeData) {
         // Create a container for notification messages
         const notificationContainer = chartElement.append('div')
@@ -1869,30 +1868,11 @@ function drawNetworkGraph(data, dataShownBelowMinValue = false) {
     }
 
     // Use the passed 'data' object
-    const nodes = data.nodes;
-    const links = data.links;
+    const graphNodes = data.nodes;  // Renamed from 'nodes' to 'graphNodes'
+    const graphLinks = data.links;  // Renamed from 'links' to 'graphLinks'
 
     // Check if data is valid for drawing
-    if (!nodes || nodes.length === 0) {
-        console.warn("drawNetworkGraph: No nodes remain after filtering.");
-        chartElement.html(`
-             <div class="formatted-empty-message">
-                 <strong class="message-title">No Data for Network Graph</strong>
-                 <p class="message-details">No data matches the current filter combination${minContractValue > 0 ? ` above ${formatCurrency(minContractValue)}` : ''}.</p>
-                 <p class="message-suggestions">Suggestions:</p><ul>
-                     ${minContractValue > 0 ? '<li>Lower the \'Minimum Contract Value\' slider.</li>' : ''}
-                     <li>Adjust 'Visible Node Levels'.</li><li>Adjust or clear the 'Search' term / other filters.</li>
-                     <li>Clear any active node focus (click 'All Data').</li><li>Click 'Reset All Filters'.</li></ul></div>`);
-        return; // Stop execution
-    }
-    // Note: Notification for dataShownBelowMinValue is NOT included in this reverted version
-
-    // Use the passed 'data' object
-    const nodes = data.nodes;
-    const links = data.links;
-
-    // Check if data is valid for drawing
-    if (!nodes || nodes.length === 0) {
+    if (!graphNodes || graphNodes.length === 0) {
         console.warn("drawNetworkGraph: No nodes remain after filtering.");
         chartElement.html(`
              <div class="formatted-empty-message">
@@ -1943,8 +1923,8 @@ function drawNetworkGraph(data, dataShownBelowMinValue = false) {
     // Apply zoom behavior to the SVG
     svg.call(zoom);
 
-    // Reset zoom button (Added here, as it was present in user's previous full code)
-     const resetButton = chartElement.append('button')
+    // Reset zoom button
+    const resetButton = chartElement.append('button')
         .attr('class', 'reset-zoom-btn')
         .text('Reset View')
         .style('position', 'absolute').style('top', '10px').style('right', '10px').style('z-index', '10').style('display', 'none')
@@ -1955,17 +1935,20 @@ function drawNetworkGraph(data, dataShownBelowMinValue = false) {
             svg.transition().duration(750).call(zoom.transform, d3.zoomIdentity); // Resets to default view
         });
 
-
     // Node radius scale
-    const maxValue = d3.max(nodes, d => d.value) || 1;
+    const maxValue = d3.max(graphNodes, d => d.value) || 1;
     const nodeRadiusScale = d3.scaleSqrt()
         .domain([0, maxValue])
         .range([ isMobileDevice() ? 3 : 4, isMobileDevice() ? 12 : 15 ]);
 
     // Force simulation setup
     // Ensure links use node objects for simulation if needed, shallow copy data
-    const simulationNodes = nodes.map(n => ({...n}));
-    const simulationLinks = links.map(l => ({...l, source: simulationNodes.find(n => n.id === l.source), target: simulationNodes.find(n => n.id === l.target) }));
+    const simulationNodes = graphNodes.map(n => ({...n}));
+    const simulationLinks = graphLinks.map(l => ({
+        ...l, 
+        source: simulationNodes.find(n => n.id === (typeof l.source === 'object' ? l.source.id : l.source)),
+        target: simulationNodes.find(n => n.id === (typeof l.target === 'object' ? l.target.id : l.target))
+    })).filter(l => l.source && l.target); // Filter out any invalid links
 
     const simulation = d3.forceSimulation(simulationNodes)
         .force('link', d3.forceLink(simulationLinks).id(d => d.id).distance(isMobileDevice() ? 45 : 75).strength(0.6))
@@ -1985,7 +1968,10 @@ function drawNetworkGraph(data, dataShownBelowMinValue = false) {
         .on('mouseover', function(event, d) {
             d3.select(this).attr('stroke-opacity', 0.9);
             // Need to pass original link data (without source/target objects) to tooltip if it expects IDs
-            const originalLinkData = links.find(origL => origL.source === d.source.id && origL.target === d.target.id) || d;
+            const originalLinkData = graphLinks.find(origL => 
+                (typeof origL.source === 'object' ? origL.source.id : origL.source) === d.source.id && 
+                (typeof origL.target === 'object' ? origL.target.id : origL.target) === d.target.id
+            ) || d;
             showLinkTooltip(event, originalLinkData);
         })
         .on('mouseout', function() {
@@ -2016,13 +2002,15 @@ function drawNetworkGraph(data, dataShownBelowMinValue = false) {
              d3.select(this).attr('stroke-width', 3).attr('stroke', 'var(--app-accent-color)');
              showNodeTooltip(event, d);
              link.attr('stroke-opacity', l => {
-                 const sid = l.source.id; const tid = l.target.id;
+                 const sid = l.source.id; 
+                 const tid = l.target.id;
                  return (sid === d.id || tid === d.id) ? 0.9 : 0.1;
              });
              node.attr('opacity', n => {
                  if (n.id === d.id) return 1;
                  const isConnected = simulationLinks.some(l => { // Check simulationLinks
-                     const sid = l.source.id; const tid = l.target.id;
+                     const sid = l.source.id; 
+                     const tid = l.target.id;
                      return (sid === d.id && tid === n.id) || (tid === d.id && sid === n.id);
                  });
                  return isConnected ? 0.8 : 0.3;
@@ -2035,7 +2023,10 @@ function drawNetworkGraph(data, dataShownBelowMinValue = false) {
              node.attr('opacity', 1);
          })
         .on('keydown', function(event, d) {
-            if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); nodeClicked(event, d); }
+            if (event.key === 'Enter' || event.key === ' ') { 
+                event.preventDefault(); 
+                nodeClicked(event, d); 
+            }
         });
 
     // Draw labels (optional)
@@ -2053,7 +2044,10 @@ function drawNetworkGraph(data, dataShownBelowMinValue = false) {
         .text(d => (window.innerWidth <= 768) ? truncateText(d.name, 10) : d.name)
         .attr("dominant-baseline", "middle")
         .attr("dx", d => nodeRadiusScale(d.value) + (isMobileDevice() ? 4 : 5))
-        .style("display", d => { const r = nodeRadiusScale(d.value); return isMobileDevice() ? (r < 4 ? "none" : "block") : (r < 2 ? "none" : "block"); });
+        .style("display", d => { 
+            const r = nodeRadiusScale(d.value); 
+            return isMobileDevice() ? (r < 4 ? "none" : "block") : (r < 2 ? "none" : "block"); 
+        });
         // Positions will be set by the tick handler
 
     // Simulation tick function to update positions
@@ -2087,9 +2081,25 @@ function drawNetworkGraph(data, dataShownBelowMinValue = false) {
 
     // Double-tap zoom (remains the same)
     let lastTap = 0;
-    svg.on('touchend', function(event) { /* ... keep existing ... */ if (event.defaultPrevented) return; const currentTime = new Date().getTime(); const tapLength = currentTime - lastTap; if (tapLength < 400 && tapLength > 0) { event.preventDefault(); const touchPoint = d3.pointer(event, svg.node()); const currentTransform = d3.zoomTransform(svg.node()); if (currentTransform.k < 2) { svg.transition().duration(500).call(zoom.transform, d3.zoomIdentity.translate(width / 2, height / 2).scale(2.5).translate(-touchPoint[0], -touchPoint[1])); } else { svg.transition().duration(500).call(zoom.transform, d3.zoomIdentity); } } lastTap = currentTime; });
+    svg.on('touchend', function(event) { 
+        /* ... keep existing ... */ 
+        if (event.defaultPrevented) return; 
+        const currentTime = new Date().getTime(); 
+        const tapLength = currentTime - lastTap; 
+        if (tapLength < 400 && tapLength > 0) { 
+            event.preventDefault(); 
+            const touchPoint = d3.pointer(event, svg.node()); 
+            const currentTransform = d3.zoomTransform(svg.node()); 
+            if (currentTransform.k < 2) { 
+                svg.transition().duration(500).call(zoom.transform, d3.zoomIdentity.translate(width / 2, height / 2).scale(2.5).translate(-touchPoint[0], -touchPoint[1])); 
+            } else { 
+                svg.transition().duration(500).call(zoom.transform, d3.zoomIdentity); 
+            } 
+        } 
+        lastTap = currentTime; 
+    });
 
-//     console.log("Reverted Network graph draw complete.");
+    // console.log("Network graph draw complete.");
 }
 function drawChoroplethMap() {
     // Note: This function uses rawData and applies filters internally.
