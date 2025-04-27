@@ -340,7 +340,7 @@ function setupSearchFilter() {
         return;
     }
     
-    // Remove ALL existing clear buttons to start fresh
+    // First, remove ALL existing clear buttons to start fresh
     const existingButtons = searchContainer.querySelectorAll('.search-clear-btn, #search-clear-btn, button[aria-label="Clear search"]');
     existingButtons.forEach(button => button.remove());
     
@@ -351,7 +351,7 @@ function setupSearchFilter() {
     clearButton.innerHTML = '&times;';
     clearButton.setAttribute('aria-label', 'Clear search');
     
-    // Apply styles for a white clear button
+    // Apply styles for the clear button
     Object.assign(clearButton.style, {
         position: 'absolute',
         right: '12px',
@@ -401,7 +401,6 @@ function setupSearchFilter() {
         clearTimeout(window.searchDebounceTimeout);
         window.searchDebounceTimeout = setTimeout(() => {
             currentSearchTerm = this.value.trim().toLowerCase();
-//             console.log(`Search triggered for: "${currentSearchTerm}"`);
             if (rawData && rawData.length > 0) {
                 processData();
             }
@@ -413,8 +412,6 @@ function setupSearchFilter() {
     
     // Add the event listener
     searchInput.addEventListener('input', inputHandler);
-    
-//     console.log("Search filter setup complete with single clear button");
 }
 function setupTopNFilter() {
     // Look for existing top-n-selector, create it if it doesn't exist
