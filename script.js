@@ -4197,6 +4197,8 @@ async function discoverAgencies() {
     
     const primeAgencies = [
         { value: 'usmc_primes', label: 'Marine Corps - Prime Contracts' },
+		{ value: 'socom_primes', label: 'USSOCOM - Prime Contracts' },
+		{ value: 'va_primes', label: 'VA - Prime Contracts' },
 		{ value: 'epa_primes', label: 'EPA - Prime Contracts' },
 		{ value: 'dhs_primes', label: 'DHS - Prime Contracts' },
 		{ value: 'uscc_primes', label: 'CyberCom - Prime Contracts' },
