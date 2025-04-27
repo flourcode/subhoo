@@ -1694,20 +1694,6 @@ function drawSankeyDiagram(data, dataShownBelowMinValue = false) {
         .append('g')
         .attr('transform', `translate(${margin.left},${margin.top})`);
 
-    // Add prime data indicator if showing prime contract data
-    if (isPrimeData) {
-        svg.append("text")
-           .attr("x", innerWidth / 2)
-           .attr("y", 15) 
-           .attr("text-anchor", "middle")
-           .attr("class", "prime-data-indicator")
-           .attr("fill", "var(--color-on-surface-variant)")
-           .attr("font-size", "12px")
-           .attr("font-style", "italic")
-           .text("Prime Contract Data - No Subcontractors");
-    }
-
-
     const sankey = d3.sankey()
         .nodeId(d => d.id)
         .nodeWidth(isMobileDevice() ? 10 : 15)
