@@ -4132,7 +4132,7 @@ async function discoverAgencies() {
     if (!agencySelector) return;
     agencySelector.innerHTML = '';
 
-    // *** Assume all agencies listed here have a corresponding CSV file ***
+    // *** Define agencies in organized arrays ***
     const subawardAgencies = [
         // --- Department of Defense (DoD) ---
         { value: 'army',     label: 'Army' },
@@ -4171,11 +4171,12 @@ async function discoverAgencies() {
         // Add other prime contract datasets as they become available
     ];
     
-    // Combine both types
+    // Combine both types with group headers
     const allAgencies = [
-        // Optional: Add a group header
+        // Group header for subaward data
         { value: '', label: '--- Subaward Data ---', disabled: true },
         ...subawardAgencies,
+        // Group header for prime contract data
         { value: '', label: '--- Prime Contract Data ---', disabled: true },
         ...primeAgencies
     ];
@@ -4193,10 +4194,9 @@ async function discoverAgencies() {
         });
 
         // Find a valid initial agency (must have a value and not be disabled)
-        const initialAgency = allAgencies.find(a => 
-            a.value === currentAgency && !a.disabled
-        ) ? currentAgency : 
-            allAgencies.find(a => a.value && !a.disabled)?.value || '';
+        const validAgencies = allAgencies.filter(a => a.value && !a.disabled);
+        const initialAgency = validAgencies.find(a => a.value === currentAgency) ? 
+            currentAgency : (validAgencies.length > 0 ? validAgencies[0].value : '');
 
         currentAgency = initialAgency; // Update global state 
         agencySelector.value = initialAgency; // Set dropdown value
@@ -4205,7 +4205,6 @@ async function discoverAgencies() {
         console.error("No agencies available to populate dropdown.");
     }
 }
-
 // Show/Hide loading indicator
 function showLoading() {
     const loader = document.getElementById('loading');
