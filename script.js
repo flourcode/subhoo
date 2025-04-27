@@ -1656,18 +1656,6 @@ function drawSankeyDiagram(data, dataShownBelowMinValue = false) {
            .text("Prime Contract Data - No Subcontractors");
     }
 
-    // Show notification if data is below minimum value
-    if (dataShownBelowMinValue) {
-        svg.append("text")
-           .attr("x", innerWidth / 2)
-           .attr("y", isPrimeData ? 35 : 15) // Position below prime data message if present
-           .attr("text-anchor", "middle")
-           .attr("class", "min-value-override-indicator")
-           .attr("fill", "var(--color-on-surface-variant)")
-           .attr("font-size", "12px")
-           .attr("font-style", "italic")
-           .text(`Showing contracts below minimum filter (${formatCurrency(minContractValue)}) to display data`);
-    }
 
     const sankey = d3.sankey()
         .nodeId(d => d.id)
@@ -4003,17 +3991,20 @@ function processData() {
     // Update analysis tables
     displayTopNTable(processedData.unfilteredNodes.prime, 'top-primes-container', 'Top Prime Contractors', 10);
     
-    // Only show subcontractor table for subaward data
-    if (isPrimeData) {
-        // For prime data, display placeholder in sub table
-        document.getElementById('top-subs-container').innerHTML = `
-            <h3>Subcontractor Data</h3>
-            <p class="empty-message">No subcontractor data available for prime contracts.</p>
-        `;
-    } else {
-        // For subaward data, display normal sub table
-        displayTopNTable(processedData.unfilteredNodes.sub, 'top-subs-container', 'Top Subcontractors', 10);
-    }
+if (isPrimeData) {
+    // For prime data, keep the heading but don't show a notification
+    document.getElementById('top-subs-container').innerHTML = `
+        <h3>Subcontractor Data</h3>
+        <!-- Empty element to maintain spacing but hide notification -->
+        <div style="height: 20px;"></div>
+    `;
+    
+    // Alternative option: Hide the entire container
+    // document.getElementById('top-subs-container').style.display = 'none';
+} else {
+    // For subaward data, display normal sub table
+    displayTopNTable(processedData.unfilteredNodes.sub, 'top-subs-container', 'Top Subcontractors', 10);
+}
     
     displayNaicsTable(processedData.unfilteredNaics, 'naics-container', 'Top NAICS Codes', 7);
     updateActiveFiltersDisplay();
