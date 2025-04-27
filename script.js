@@ -1386,70 +1386,125 @@ function applyFiltersAndDraw() {
     // 4. Update breadcrumb (if focus node is active)
     updateBreadcrumb();
 }
-/**
- * Prepares node and link data for visualizations based on current filters.
- * Applies minimum value, active levels, focus node, and Top N filters.
- * @param {number | null} [overrideMinValue=null] - If provided, use this value instead of the global minContractValue for filtering.
- * @returns {{nodes: Array, links: Array}} - The prepared nodes and links for the visualization.
- */
-function prepareVizData(overrideMinValue = null) { // Added override parameter
+
+function prepareVizData(overrideMinValue = null) {
     if (!processedData || !processedData.nodes || !processedData.links) {
         console.warn("prepareVizData: No processed data available.");
         return { nodes: [], links: [] }; // Return empty data
     }
 
+    // Check if this is prime contract data
+    const isPrimeData = currentAgency && currentAgency.endsWith('_primes');
+    
     // Determine the effective minimum value to use for filtering this time
     // Use override if provided, otherwise use global (slider) value
     const effectiveMinValue = overrideMinValue !== null ? overrideMinValue : minContractValue;
 
     // Log which value is being used for clarity, especially if overriding
     if (overrideMinValue !== null) {
-//         console.log(`Preparing viz data with OVERRIDE min value: ${formatCurrency(effectiveMinValue)}`);
+        // console.log(`Preparing viz data with OVERRIDE min value: ${formatCurrency(effectiveMinValue)}`);
     } else {
         // Use the specific logic for choropleth's base minimum if no override
         // This ensures choropleth always starts aggregation from its base unless explicitly overridden elsewhere
         const baseMinValue = (currentVizType === 'choropleth') ? CHOROPLETH_MIN_VALUE : minContractValue;
-//         console.log(`Preparing viz data. Using effective min value: ${formatCurrency(baseMinValue)} (Viz: ${currentVizType}, Slider: ${formatCurrency(minContractValue)})`);
-        // Re-assign effectiveMinValue ONLY if it's choropleth and no override was passed
-        if (currentVizType === 'choropleth' && overrideMinValue === null) {
-             // effectiveMinValue = CHOROPLETH_MIN_VALUE; // Correction: This reassignment is not needed, baseMinValue covers it for logging.
-             // The initial effectiveMinValue calculation already uses minContractValue, which is correct unless overridden.
-             // The actual Choropleth data aggregation should handle its own base minimum independently if needed.
-             // This function primarily prepares data for Sankey/Network/Treemap based on the slider or override.
-        }
+        // console.log(`Preparing viz data. Using effective min value: ${formatCurrency(baseMinValue)} (Viz: ${currentVizType}, Slider: ${formatCurrency(minContractValue)})`);
     }
-
 
     // 1. Initial Filtering (Min Value, Active Levels) on base processed data
     // Filter nodes based on the effectiveMinValue and activeLevels
     const nodesByLevelValue = {};
     Object.keys(processedData.nodes).forEach(nodeType => {
         if (Array.isArray(processedData.nodes[nodeType])) {
-            nodesByLevelValue[nodeType] = processedData.nodes[nodeType].filter(node =>
-                // *** Use effectiveMinValue here ***
-                node && typeof node.value === 'number' && node.value >= effectiveMinValue && activeLevels.includes(node.type)
-            );
-        } else { nodesByLevelValue[nodeType] = []; }
+            // For prime contract data with min value 0 and "All Offices" view,
+            // keep all prime nodes without value filtering
+            if (isPrimeData && effectiveMinValue === 0 && !currentOfficeFilter && nodeType === 'prime') {
+                nodesByLevelValue[nodeType] = processedData.nodes[nodeType].filter(node =>
+                    node && activeLevels.includes(node.type)
+                );
+            } else {
+                // Standard filtering for all other cases
+                nodesByLevelValue[nodeType] = processedData.nodes[nodeType].filter(node =>
+                    node && typeof node.value === 'number' && 
+                    node.value >= effectiveMinValue && 
+                    activeLevels.includes(node.type)
+                );
+            }
+        } else { 
+            nodesByLevelValue[nodeType] = []; 
+        }
     });
+    
     const initialFilteredNodes = Object.values(nodesByLevelValue).flat();
     const initialFilteredNodeIds = new Set(initialFilteredNodes.map(node => node.id));
 
-    // Filter links based on the effectiveMinValue and if both source/target nodes passed the initial filter
-    const initialFilteredLinks = [];
-    Object.values(processedData.links).flat().forEach(link => {
-        // *** Use effectiveMinValue here ***
-        if (link && typeof link.value === 'number' && link.value >= effectiveMinValue &&
-            initialFilteredNodeIds.has(link.source) && initialFilteredNodeIds.has(link.target)) {
-            initialFilteredLinks.push({ ...link }); // Clone link data
-        }
-    });
+    // 2. Link filtering with special handling for prime data "All Offices" view
+    let initialFilteredLinks = [];
+    
+    // Special handling for prime data with "All Offices" view and min value 0
+    if (isPrimeData && effectiveMinValue === 0 && !currentOfficeFilter) {
+        // First, collect all links that connect to each prime node
+        const primeLinks = new Map(); // Map of primeId -> array of links
+        
+        Object.values(processedData.links).flat().forEach(link => {
+            // Find links that connect to prime nodes
+            if (link && link.details && link.details.targetType === 'prime') {
+                const primeId = link.target;
+                if (!primeLinks.has(primeId)) {
+                    primeLinks.set(primeId, []);
+                }
+                primeLinks.get(primeId).push({...link}); // Clone link
+            }
+        });
+        
+        // For each prime node, include all links if the prime node exists in initial filtered set
+        primeLinks.forEach((links, primeId) => {
+            if (initialFilteredNodeIds.has(primeId)) {
+                // Include all links connecting to this prime
+                links.forEach(link => {
+                    // Only add if source node is also in filtered node set
+                    if (initialFilteredNodeIds.has(link.source)) {
+                        initialFilteredLinks.push(link);
+                    }
+                });
+            }
+        });
+        
+        // Add any other non-prime links that meet standard criteria
+        Object.values(processedData.links).flat().forEach(link => {
+            if (link && link.details && link.details.targetType !== 'prime' &&
+                initialFilteredNodeIds.has(link.source) && 
+                initialFilteredNodeIds.has(link.target)) {
+                
+                // Check if this link is already included
+                const linkKey = `${link.source}|${link.target}`;
+                const isDuplicate = initialFilteredLinks.some(l => 
+                    `${l.source}|${l.target}` === linkKey
+                );
+                
+                if (!isDuplicate) {
+                    initialFilteredLinks.push({...link});
+                }
+            }
+        });
+    } else {
+        // Standard filtering for all other cases
+        Object.values(processedData.links).flat().forEach(link => {
+            if (link && typeof link.value === 'number' && 
+                link.value >= effectiveMinValue &&
+                initialFilteredNodeIds.has(link.source) && 
+                initialFilteredNodeIds.has(link.target)) {
+                
+                initialFilteredLinks.push({...link});
+            }
+        });
+    }
 
     // 2. Focus Node Filtering (if active) - This filter is independent of value
     // It operates on the nodes/links already filtered by effectiveMinValue
     let focusFilteredNodes = initialFilteredNodes;
     let focusFilteredLinks = initialFilteredLinks;
     if (currentFocusNode) {
-//         console.log("Applying focus filter for node:", currentFocusNode.id);
+        // console.log("Applying focus filter for node:", currentFocusNode.id);
         const focusId = currentFocusNode.id;
         // Check if the focus node itself survived the initial effectiveMinValue/level filtering
         const focusNodeExists = initialFilteredNodes.some(n => n.id === focusId);
@@ -1494,7 +1549,7 @@ function prepareVizData(overrideMinValue = null) { // Added override parameter
             focusFilteredLinks = initialFilteredLinks.filter(link =>
                 nodeIdsToKeep.has(link.source) && nodeIdsToKeep.has(link.target)
             );
-//             console.log(`Focus filter applied. Nodes: ${focusFilteredNodes.length}, Links: ${focusFilteredLinks.length}`);
+            // console.log(`Focus filter applied. Nodes: ${focusFilteredNodes.length}, Links: ${focusFilteredLinks.length}`);
         } else {
             console.warn(`Focus node ${focusId} not found after initial filters (value/level).`);
             // If focus node itself was filtered out, the focus view should be empty
@@ -1510,7 +1565,7 @@ function prepareVizData(overrideMinValue = null) { // Added override parameter
 
     // Apply Top N only for relevant visualizations
     if (topNFilterValue > 0 && ['sankey', 'network', 'treemap'].includes(currentVizType)) {
-//         console.log(`Applying Top ${topNFilterValue} subcontract filter.`);
+        // console.log(`Applying Top ${topNFilterValue} subcontract filter.`);
         // Isolate subcontract links (already filtered by effectiveMinValue and potentially focus)
         const subcontractLinks = finalLinks.filter(link => link.details?.targetType === 'sub');
 
@@ -1518,7 +1573,7 @@ function prepareVizData(overrideMinValue = null) { // Added override parameter
             // Sort and slice
             subcontractLinks.sort((a, b) => b.value - a.value);
             const topNSubLinks = subcontractLinks.slice(0, topNFilterValue);
-//             console.log(`Kept Top ${topNSubLinks.length} subcontract links.`);
+            // console.log(`Kept Top ${topNSubLinks.length} subcontract links.`);
 
             // Only restructure if the Top N filter actually removes some sub-links
             if (topNSubLinks.length < subcontractLinks.length) {
@@ -1552,8 +1607,8 @@ function prepareVizData(overrideMinValue = null) { // Added override parameter
                         }
                     });
                 }
-                if(iterations === maxIterations) console.warn("Top N Ancestor tracing hit max iterations.");
-//                 console.log(`Total nodes in Top N flow (including ancestors): ${nodesInTopNFlow.size}`);
+                if (iterations === maxIterations) console.warn("Top N Ancestor tracing hit max iterations.");
+                // console.log(`Total nodes in Top N flow (including ancestors): ${nodesInTopNFlow.size}`);
 
                 // Filter final nodes: Must be in the traced flow
                 finalNodes = focusFilteredNodes.filter(n => nodesInTopNFlow.has(n.id));
@@ -1563,11 +1618,11 @@ function prepareVizData(overrideMinValue = null) { // Added override parameter
                     (link.details?.targetType !== 'sub' && nodesInTopNFlow.has(link.source) && nodesInTopNFlow.has(link.target)) // It's another type of link fully within the traced flow
                 );
             } else {
-//                 console.log(`Top N (${topNFilterValue}) includes all ${subcontractLinks.length} subcontracts already filtered. No change needed for Top N.`);
+                // console.log(`Top N (${topNFilterValue}) includes all ${subcontractLinks.length} subcontracts already filtered. No change needed for Top N.`);
                 // No need to re-filter nodes/links if Top N didn't change anything
             }
         } else {
-//             console.log("No subcontract links found after other filters to apply Top N to.");
+            // console.log("No subcontract links found after other filters to apply Top N to.");
             // If no subcontract links remain after other filters, Top N results in empty subcontracts for Sankey/Network/Treemap
              if (['sankey', 'network', 'treemap'].includes(currentVizType)) {
                  finalNodes = focusFilteredNodes.filter(n => n.type !== 'sub'); // Keep non-sub nodes that passed previous filters
@@ -1576,10 +1631,9 @@ function prepareVizData(overrideMinValue = null) { // Added override parameter
         }
     } // End Top N Filter logic
 
-//     console.log(`Final prepared data (using ${formatCurrency(effectiveMinValue)}): Nodes=${finalNodes.length}, Links=${finalLinks.length}`);
+    // console.log(`Final prepared data (using ${formatCurrency(effectiveMinValue)}): Nodes=${finalNodes.length}, Links=${finalLinks.length}`);
     return { nodes: finalNodes, links: finalLinks };
 }
-
 function drawSankeyDiagram(data, dataShownBelowMinValue = false) {
     // console.log("Drawing Sankey with:", { nodes: data?.nodes?.length || 0, links: data?.links?.length || 0 });
     const chartElement = d3.select('#chart');
