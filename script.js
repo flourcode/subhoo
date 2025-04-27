@@ -5711,7 +5711,7 @@ function adaptPrimeContractData(primeData) {
             
             // Specially handled fields
             subawardee_name: null, // Prime data doesn't have subcontractors
-            subaward_amount: row.current_total_value_of_award || 0,
+            subaward_amount: row.federal_action_obligation || 0,
             subaward_primary_place_of_performance_state_code: row.primary_place_of_performance_state_code || 'Unknown',
             subaward_place_of_performance_cd_current: row.prime_award_transaction_place_of_performance_cd_current || 'Unknown',
             usaspending_permalink: row.usaspending_permalink || '#',
