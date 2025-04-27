@@ -1053,7 +1053,7 @@ function updateDataTable() {
     tableHeader.className = 'data-table-header';
     const agencyDisplayName = getAgencyDisplayName(); // Helper function assumed to exist
     tableHeader.innerHTML = `
-        <h3>Detailed Subaward Data for ${agencyDisplayName}</h3>
+        <h3>Detailed Award Data for ${agencyDisplayName}</h3>
         <div class="data-table-controls">
             <span id="data-count">Loading...</span>
             <button id="export-csv" class="btn btn-text">Download Contracts List (CSV)</button>
