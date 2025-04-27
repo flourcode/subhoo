@@ -1832,7 +1832,59 @@ function drawNetworkGraph(data, dataShownBelowMinValue = false) {
 //     console.log("Drawing Network Graph with previous logic...");
     const chartElement = d3.select('#network-chart');
     chartElement.html(''); // Clear previous
+    const isPrimeData = currentAgency && currentAgency.endsWith('_primes');
 
+    // Note: Notification for dataShownBelowMinValue is NOT included in this reverted version
+    if (dataShownBelowMinValue || isPrimeData) {
+        // Create a container for notification messages
+        const notificationContainer = chartElement.append('div')
+            .attr('class', 'viz-notifications')
+            .style('position', 'absolute')
+            .style('top', '10px')
+            .style('left', '0')
+            .style('right', '0')
+            .style('text-align', 'center')
+            .style('z-index', '10');
+            
+        // Add prime data indicator if showing prime contract data
+        if (isPrimeData) {
+            notificationContainer.append('div')
+               .attr('class', 'prime-data-indicator')
+               .style('color', 'var(--color-on-surface-variant)')
+               .style('font-size', '12px')
+               .style('font-style', 'italic')
+               .style('margin-bottom', '5px')
+               .text("Prime Contract Data - No Subcontractors");
+        }
+        
+        // Add min value override notification
+        if (dataShownBelowMinValue) {
+            notificationContainer.append('div')
+               .attr('class', 'min-value-override-indicator')
+               .style('color', 'var(--color-on-surface-variant)')
+               .style('font-size', '12px')
+               .style('font-style', 'italic')
+               .text(`Showing contracts below minimum filter (${formatCurrency(minContractValue)}) to display data`);
+        }
+    }
+
+    // Use the passed 'data' object
+    const nodes = data.nodes;
+    const links = data.links;
+
+    // Check if data is valid for drawing
+    if (!nodes || nodes.length === 0) {
+        console.warn("drawNetworkGraph: No nodes remain after filtering.");
+        chartElement.html(`
+             <div class="formatted-empty-message">
+                 <strong class="message-title">No Data for Network Graph</strong>
+                 <p class="message-details">No data matches the current filter combination${minContractValue > 0 ? ` above ${formatCurrency(minContractValue)}` : ''}.</p>
+                 <p class="message-suggestions">Suggestions:</p><ul>
+                     ${minContractValue > 0 ? '<li>Lower the \'Minimum Contract Value\' slider.</li>' : ''}
+                     <li>Adjust 'Visible Node Levels'.</li><li>Adjust or clear the 'Search' term / other filters.</li>
+                     <li>Clear any active node focus (click 'All Data').</li><li>Click 'Reset All Filters'.</li></ul></div>`);
+        return; // Stop execution
+    }
     // Note: Notification for dataShownBelowMinValue is NOT included in this reverted version
 
     // Use the passed 'data' object
@@ -2042,15 +2094,36 @@ function drawNetworkGraph(data, dataShownBelowMinValue = false) {
 function drawChoroplethMap() {
     // Note: This function uses rawData and applies filters internally.
     const effectiveMinValue = CHOROPLETH_MIN_VALUE;
-//     console.log(`Drawing Choropleth map. Slider: ${formatCurrency(minContractValue)}, Base Aggregation Min: ${formatCurrency(effectiveMinValue)}`);
+    // console.log(`Drawing Choropleth map. Slider: ${formatCurrency(minContractValue)}, Base Aggregation Min: ${formatCurrency(effectiveMinValue)}`);
 
     const chartElement = d3.select('#map-chart');
     chartElement.html('');
+
+    // Check if we're displaying prime contract data
+    const isPrimeData = currentAgency && currentAgency.endsWith('_primes');
 
     if (!rawData || rawData.length === 0) {
         console.warn("Cannot draw choropleth map: No rawData available");
         chartElement.html(`<div class="formatted-empty-message">...</div>`); // Placeholder
         return;
+    }
+
+    // Add prime data indicator if showing prime contract data
+    if (isPrimeData) {
+        chartElement.append('div')
+           .attr('class', 'prime-data-indicator')
+           .style('position', 'absolute')
+           .style('top', '10px')
+           .style('left', '0')
+           .style('right', '0')
+           .style('text-align', 'center')
+           .style('color', 'var(--color-on-surface-variant)')
+           .style('font-size', '12px')
+           .style('font-style', 'italic')
+           .style('z-index', '10')
+           .style('background-color', 'rgba(0, 0, 0, 0.1)')
+           .style('padding', '3px')
+           .text("Prime Contract Data - No Subcontractors");
     }
 
     // --- Data Aggregation ---
@@ -2060,20 +2133,52 @@ function drawChoroplethMap() {
     rawData.forEach(row => {
         let includeRow = true;
         // Apply filters (Search, SubAgency, Office, NAICS, Prime, Sub)
-        if (currentSearchTerm) { const fields = [ row['prime_award_awarding_agency_name'], row['prime_award_awarding_sub_agency_name'], row['prime_award_awarding_office_name'], row['prime_awardee_name'], row['subawardee_name'], row['prime_award_naics_code']?.toString(), row['prime_award_naics_description'] ]; if (!fields.some(f => f?.toLowerCase().includes(currentSearchTerm))) includeRow = false; }
+        if (currentSearchTerm) { 
+            const fields = [ // Ensure all relevant fields are included
+                row['prime_award_awarding_agency_name'],
+                row['prime_award_awarding_sub_agency_name'], 
+                row['prime_award_awarding_office_name'],    
+                row['prime_awardee_name'],
+                isPrimeData ? null : row['subawardee_name'], // Only include subcontractor for subaward data
+                row['prime_award_naics_code']?.toString(),
+                row['prime_award_naics_description']
+            ].filter(Boolean); // Filter out null values (important for prime data)
+            
+            if (!fields.some(f => f && typeof f === 'string' && f.toLowerCase().includes(currentSearchTerm))) {
+                includeRow = false;
+            } 
+        }
+        
         if (includeRow && currentSubAgencyFilter && row['prime_award_awarding_sub_agency_name'] !== currentSubAgencyFilter) includeRow = false;
         if (includeRow && currentOfficeFilter && row['prime_award_awarding_office_name'] !== currentOfficeFilter) includeRow = false;
         if (includeRow && currentNaicsFilter && row['prime_award_naics_code']?.toString() !== currentNaicsFilter) includeRow = false;
         if (includeRow && currentPrimeFilter && row['prime_awardee_name'] !== currentPrimeFilter) includeRow = false;
-        if (includeRow && currentSubFilter && row['subawardee_name'] !== currentSubFilter) includeRow = false;
+        
+        // Only apply Sub filter for subaward data
+        if (!isPrimeData && includeRow && currentSubFilter && row['subawardee_name'] !== currentSubFilter) includeRow = false;
+        
         if (!includeRow) return;
 
-        const subawardValue = typeof row.subaward_amount === 'number' ? row.subaward_amount : parseFloat(String(row.subaward_amount || '0').replace(/[^0-9.-]+/g, '')) || 0;
+        const subawardValue = typeof row.subaward_amount === 'number' ? 
+            row.subaward_amount : 
+            parseFloat(String(row.subaward_amount || '0').replace(/[^0-9.-]+/g, '')) || 0;
+            
         if (subawardValue < effectiveMinValue) return; // Apply base min for aggregation
 
-        const stateCode = row.subaward_primary_place_of_performance_state_code || row.place_of_performance_state || row.pop_state || row.prime_award_pop_state;
-        const countryCode = row.subaward_primary_place_of_performance_country_code || row.place_of_performance_country || 'USA';
-        if (stateCode && typeof stateCode === 'string' && stateCode.length === 2 && (countryCode === 'USA' || countryCode === 'US')) {
+        // Handle both prime and subaward field mappings for state code
+        const stateCode = row.subaward_primary_place_of_performance_state_code || 
+                          row.primary_place_of_performance_state_code ||
+                          row.place_of_performance_state || 
+                          row.pop_state || 
+                          row.prime_award_pop_state;
+                          
+        const countryCode = row.subaward_primary_place_of_performance_country_code || 
+                            row.primary_place_of_performance_country_code ||
+                            row.place_of_performance_country || 
+                            'USA';
+                            
+        if (stateCode && typeof stateCode === 'string' && stateCode.length === 2 && 
+            (countryCode === 'USA' || countryCode === 'US')) {
              const stateKey = stateCode.toUpperCase();
              statePerformance[stateKey] = (statePerformance[stateKey] || 0) + subawardValue;
              totalAggregatedValue += subawardValue;
@@ -2081,11 +2186,22 @@ function drawChoroplethMap() {
         }
     });
 
-//     console.log(`Choropleth aggregated ${validRecords} records across ${Object.keys(statePerformance).length} states. Total value: ${formatCurrency(totalAggregatedValue)}`);
+    // console.log(`Choropleth aggregated ${validRecords} records across ${Object.keys(statePerformance).length} states. Total value: ${formatCurrency(totalAggregatedValue)}`);
 
     if (Object.keys(statePerformance).length === 0) {
         console.warn("drawChoroplethMap: No aggregated state data after filtering.");
-        chartElement.html(`<div class="formatted-empty-message">...</div>`); // Placeholder
+        chartElement.html(`
+            <div class="formatted-empty-message">
+                <strong class="message-title">No State Data Available</strong>
+                <p class="message-details">No geographic data matches the current filter combination${minContractValue > 0 ? ` above ${formatCurrency(minContractValue)}` : ''}.</p>
+                <p class="message-suggestions">Suggestions:</p>
+                <ul>
+                    ${minContractValue > 0 ? '<li>Lower the \'Minimum Contract Value\' slider.</li>' : ''}
+                    <li>Adjust or clear the 'Search' term / other filters.</li>
+                    <li>Click 'Reset All Filters'.</li>
+                </ul>
+            </div>
+        `);
         return;
     }
 
@@ -2097,13 +2213,39 @@ function drawChoroplethMap() {
         loadingMsg.remove();
         const chartContainer = document.getElementById('map-chart');
         const containerRect = chartContainer.getBoundingClientRect();
-        const width = containerRect.width; const height = containerRect.height;
-        if (width <= 0 || height <= 0) { console.error("Map container invalid"); return; }
+        const width = containerRect.width; 
+        const height = containerRect.height;
+        
+        if (width <= 0 || height <= 0) { 
+            console.error("Map container invalid"); 
+            return; 
+        }
 
-        const svg = chartElement.append('svg').attr('width', width).attr('height', height).attr('viewBox', `0 0 ${width} ${height}`).attr('preserveAspectRatio', 'xMidYMid meet').style('display', 'block').style('width', '100%').style('height', '100%');
+        const svg = chartElement.append('svg')
+            .attr('width', width)
+            .attr('height', height)
+            .attr('viewBox', `0 0 ${width} ${height}`)
+            .attr('preserveAspectRatio', 'xMidYMid meet')
+            .style('display', 'block')
+            .style('width', '100%')
+            .style('height', '100%');
+            
         const mapGroup = svg.append('g').attr('class', 'map-container');
         const zoom = d3.zoom().scaleExtent([0.5, 8]).on('zoom', event => mapGroup.attr('transform', event.transform));
         svg.call(zoom);
+
+        // Re-add prime data indicator to the SVG if using prime contract data
+        if (isPrimeData) {
+            svg.append("text")
+               .attr("x", width / 2)
+               .attr("y", 15)
+               .attr("text-anchor", "middle")
+               .attr("class", "prime-data-indicator")
+               .attr("fill", "var(--color-on-surface-variant)")
+               .attr("font-size", "12px")
+               .attr("font-style", "italic")
+               .text("Prime Contract Data - No Subcontractors");
+        }
 
         const statesGeoJson = topojson.feature(us, us.objects.states);
         const projection = d3.geoAlbersUsa().fitSize([width, height], statesGeoJson); // Center as before
@@ -2111,39 +2253,127 @@ function drawChoroplethMap() {
 
         // Color Scale
         const dataValues = Object.values(statePerformance);
-        const colorScale = d3.scaleQuantile().domain(dataValues.length > 0 ? dataValues : [0, 1]).range(monochromaticPurpleScale.range());
+        const colorScale = d3.scaleQuantile()
+            .domain(dataValues.length > 0 ? dataValues : [0, 1])
+            .range(monochromaticPurpleScale.range());
 
-        const stateAbbreviations = { /* ... your full state code mapping ... */ "01":"AL", "02":"AK", "04":"AZ", "05":"AR", "06":"CA", "08":"CO", "09":"CT", "10":"DE", "11":"DC", "12":"FL", "13":"GA", "15":"HI", "16":"ID", "17":"IL", "18":"IN", "19":"IA", "20":"KS", "21":"KY", "22":"LA", "23":"ME", "24":"MD", "25":"MA", "26":"MI", "27":"MN", "28":"MS", "29":"MO", "30":"MT", "31":"NE", "32":"NV", "33":"NH", "34":"NJ", "35":"NM", "36":"NY", "37":"NC", "38":"ND", "39":"OH", "40":"OK", "41":"OR", "42":"PA", "44":"RI", "45":"SC", "46":"SD", "47":"TN", "48":"TX", "49":"UT", "50":"VT", "51":"VA", "53":"WA", "54":"WV", "55":"WI", "56":"WY", "72":"PR"};
+        const stateAbbreviations = { 
+            "01":"AL", "02":"AK", "04":"AZ", "05":"AR", "06":"CA", "08":"CO", "09":"CT", 
+            "10":"DE", "11":"DC", "12":"FL", "13":"GA", "15":"HI", "16":"ID", "17":"IL", 
+            "18":"IN", "19":"IA", "20":"KS", "21":"KY", "22":"LA", "23":"ME", "24":"MD", 
+            "25":"MA", "26":"MI", "27":"MN", "28":"MS", "29":"MO", "30":"MT", "31":"NE", 
+            "32":"NV", "33":"NH", "34":"NJ", "35":"NM", "36":"NY", "37":"NC", "38":"ND", 
+            "39":"OH", "40":"OK", "41":"OR", "42":"PA", "44":"RI", "45":"SC", "46":"SD", 
+            "47":"TN", "48":"TX", "49":"UT", "50":"VT", "51":"VA", "53":"WA", "54":"WV", 
+            "55":"WI", "56":"WY", "72":"PR"
+        };
 
         // --- Draw States ---
-        mapGroup.append('g').attr("class", "states").selectAll('path')
+        mapGroup.append('g')
+            .attr("class", "states")
+            .selectAll('path')
             .data(statesGeoJson.features)
             .join('path')
             .attr('d', path)
-            .attr('fill', d => { /* ... fill logic ... */ const stateAbbr = stateAbbreviations[d.id]; const value = statePerformance[stateAbbr] || 0; return value > 0 ? colorScale(value) : '#eee'; })
-            .attr('stroke', '#fff').attr('stroke-width', 0.5).attr('tabindex', 0).attr('role', 'button')
-            .attr('aria-label', d => { /* ... aria label ... */ const stateAbbr = stateAbbreviations[d.id]; const value = statePerformance[stateAbbr] || 0; return `${getStateFullName(stateAbbr)}: ${formatCurrency(value)}`; })
+            .attr('fill', d => { 
+                const stateAbbr = stateAbbreviations[d.id]; 
+                const value = statePerformance[stateAbbr] || 0; 
+                return value > 0 ? colorScale(value) : '#eee'; 
+            })
+            .attr('stroke', '#fff')
+            .attr('stroke-width', 0.5)
+            .attr('tabindex', 0)
+            .attr('role', 'button')
+            .attr('aria-label', d => { 
+                const stateAbbr = stateAbbreviations[d.id]; 
+                const value = statePerformance[stateAbbr] || 0; 
+                return `${getStateFullName(stateAbbr)}: ${formatCurrency(value)}`; 
+            })
             .classed('focused-state', d => stateAbbreviations[d.id] === currentMapFocusState)
-            .on('mouseover', function(event, d) { /* ... mouseover logic ... */ d3.select(this).raise().attr('stroke', '#000').attr('stroke-width', 1.5); const stateAbbr = stateAbbreviations[d.id]; const value = statePerformance[stateAbbr] || 0; if (value > 0 || !stateAbbr) { showMapTooltip(event, stateAbbr || d.properties.name, value); } else { const tooltip = d3.select('#tooltip'); tooltip.html(`<h4>${getStateFullName(stateAbbr)}</h4><p><em>No contracts match current filters</em></p>`).classed('visible', true).attr('aria-hidden', 'false'); positionTooltip(tooltip, event); } })
-            .on('mouseout', function(event, d) { /* ... mouseout logic ... */ if (stateAbbreviations[d.id] !== currentMapFocusState) { d3.select(this).attr('stroke', '#fff').attr('stroke-width', 0.5); } else { d3.select(this).attr('stroke', 'var(--app-accent-color)').attr('stroke-width', 2); } hideTooltip(); })
-            .on('click', function(event, d) { /* ... click handler ... */ const clickedStateAbbr = stateAbbreviations[d.id]; if (!clickedStateAbbr) return; console.log(`--- Map State Click: ${clickedStateAbbr} ---`); mapGroup.selectAll('path.focused-state').classed('focused-state', false).attr('stroke', '#fff').attr('stroke-width', 0.5); if (currentMapFocusState === clickedStateAbbr) { currentMapFocusState = null; console.log(`   Cleared map state focus.`); closeInfoPanel(); } else { currentMapFocusState = clickedStateAbbr; console.log(`   Set currentMapFocusState to: ${currentMapFocusState}`); d3.select(this).classed('focused-state', true).attr('stroke', 'var(--app-accent-color)').attr('stroke-width', 2).raise(); const value = statePerformance[clickedStateAbbr] || 0; if (value > 0) { showEnhancedStateInfoPanel(clickedStateAbbr, value); } } updateBreadcrumb(); updateDataTable(); });
+            .on('mouseover', function(event, d) { 
+                d3.select(this).raise().attr('stroke', '#000').attr('stroke-width', 1.5); 
+                const stateAbbr = stateAbbreviations[d.id]; 
+                const value = statePerformance[stateAbbr] || 0; 
+                
+                if (value > 0 || !stateAbbr) { 
+                    showMapTooltip(event, stateAbbr || d.properties.name, value); 
+                } else { 
+                    const tooltip = d3.select('#tooltip'); 
+                    tooltip.html(`<h4>${getStateFullName(stateAbbr)}</h4><p><em>No contracts match current filters</em></p>`)
+                        .classed('visible', true)
+                        .attr('aria-hidden', 'false'); 
+                    positionTooltip(tooltip, event); 
+                } 
+            })
+            .on('mouseout', function(event, d) { 
+                if (stateAbbreviations[d.id] !== currentMapFocusState) { 
+                    d3.select(this)
+                        .attr('stroke', '#fff')
+                        .attr('stroke-width', 0.5); 
+                } else { 
+                    d3.select(this)
+                        .attr('stroke', 'var(--app-accent-color)')
+                        .attr('stroke-width', 2); 
+                } 
+                hideTooltip(); 
+            })
+            .on('click', function(event, d) { 
+                const clickedStateAbbr = stateAbbreviations[d.id]; 
+                if (!clickedStateAbbr) return; 
+                
+                // console.log(`--- Map State Click: ${clickedStateAbbr} ---`); 
+                
+                mapGroup.selectAll('path.focused-state')
+                    .classed('focused-state', false)
+                    .attr('stroke', '#fff')
+                    .attr('stroke-width', 0.5); 
+                    
+                if (currentMapFocusState === clickedStateAbbr) { 
+                    currentMapFocusState = null; 
+                    // console.log(`   Cleared map state focus.`); 
+                    closeInfoPanel(); 
+                } else { 
+                    currentMapFocusState = clickedStateAbbr; 
+                    // console.log(`   Set currentMapFocusState to: ${currentMapFocusState}`); 
+                    
+                    d3.select(this)
+                        .classed('focused-state', true)
+                        .attr('stroke', 'var(--app-accent-color)')
+                        .attr('stroke-width', 2)
+                        .raise(); 
+                        
+                    const value = statePerformance[clickedStateAbbr] || 0; 
+                    if (value > 0) { 
+                        showEnhancedStateInfoPanel(clickedStateAbbr, value); 
+                    } 
+                } 
+                
+                updateBreadcrumb(); 
+                updateDataTable(); 
+            });
 
         // Draw state borders
-        mapGroup.append('path').datum(topojson.mesh(us, us.objects.states, (a, b) => a !== b)).attr('fill', 'none').attr('stroke', '#fff').attr('stroke-width', 0.5).attr('stroke-linejoin', 'round').attr('d', path);
+        mapGroup.append('path')
+            .datum(topojson.mesh(us, us.objects.states, (a, b) => a !== b))
+            .attr('fill', 'none')
+            .attr('stroke', '#fff')
+            .attr('stroke-width', 0.5)
+            .attr('stroke-linejoin', 'round')
+            .attr('d', path);
 
-       // --- Draw Legend (Smaller) ---
-const legendItemHeight = 18;
-const legendRectSize = 14;
-const legendFontSize = '9px';
-const legendTitleFontSize = '10px';
-const colorRangeArray = monochromaticPurpleScale.range(); // Get the array first
-const legendYOffset = height - (colorRangeArray.length * legendItemHeight) - 30; // CORRECTED: Use .length
+        // --- Draw Legend (Smaller) ---
+        const legendItemHeight = 18;
+        const legendRectSize = 14;
+        const legendFontSize = '9px';
+        const legendTitleFontSize = '10px';
+        const colorRangeArray = monochromaticPurpleScale.range(); // Get the array first
+        const legendYOffset = height - (colorRangeArray.length * legendItemHeight) - 30; // CORRECTED: Use .length
 
         const legendGroup = svg.append('g')
             .attr('class', 'legend choropleth-legend')
             .attr('transform', `translate(15, ${legendYOffset})`); // Position from calculated Y offset
 
-        const legendTitle = "Contract Value (Filtered)";
+        const legendTitle = isPrimeData ? "Prime Contract Value" : "Contract Value (Filtered)";
         legendGroup.append('text')
             .attr('class', 'legend-title')
             .attr('x', 0)
@@ -2178,28 +2408,30 @@ const legendYOffset = height - (colorRangeArray.length * legendItemHeight) - 30;
             .style('fill', 'var(--color-on-surface)')
             .text((d, i) => {
                 const colorRange = monochromaticPurpleScale.range(); // Get the range array
-    const numColors = colorRange.length;
+                const numColors = colorRange.length;
 
-    // (Keep the existing lowerBound/upperBound logic)
-    const lowerBound = i === 0 ? minValue : quantiles[i - 1];
-    const upperBound = i < quantiles.length ? quantiles[i] : maxValue;
+                // (Keep the existing lowerBound/upperBound logic)
+                const lowerBound = i === 0 ? minValue : quantiles[i - 1];
+                const upperBound = i < quantiles.length ? quantiles[i] : maxValue;
 
-    if (quantiles.length === 0) { return `All Values`; } // Handle case with no quantiles
-    if (i === 0) return `< ${formatCurrency(upperBound)}`;
-    // Use the length of the actual range being used for the comparison
-    if (i === numColors - 1) return `≥ ${formatCurrency(lowerBound)}`;
-    if (upperBound <= lowerBound) return `≥ ${formatCurrency(lowerBound)}`;
-    return `${formatCurrency(lowerBound)} - ${formatCurrency(upperBound)}`;
-});
-
-//         console.log("Choropleth map drawn with smaller legend.");
+                if (quantiles.length === 0) { return `All Values`; } // Handle case with no quantiles
+                if (i === 0) return `< ${formatCurrency(upperBound)}`;
+                // Use the length of the actual range being used for the comparison
+                if (i === numColors - 1) return `≥ ${formatCurrency(lowerBound)}`;
+                if (upperBound <= lowerBound) return `≥ ${formatCurrency(lowerBound)}`;
+                return `${formatCurrency(lowerBound)} - ${formatCurrency(upperBound)}`;
+            });
 
     }).catch(error => {
         console.error("Error processing or rendering map GeoJSON data:", error);
-        chartElement.html(`<div class="error-message">...</div>`); // Placeholder
+        chartElement.html(`
+            <div class="error-message">
+                <p>Error loading map data: ${error.message}</p>
+                <p>Please try refreshing the page.</p>
+            </div>
+        `);
     });
 }
-
 function getDisplayName(node) {
     // Use acronym for agencies/subagencies if available
     if ((node.type === 'agency' || node.type === 'subagency') && node.acronym) {
@@ -2712,84 +2944,7 @@ function showMapTooltip(event, stateAbbr, value) {
     tooltip.html(content).classed('visible', true).attr('aria-hidden', 'false'); 
     positionTooltip(tooltip, event);
 }
-function getTopContractorsForState(stateAbbr, limit = 3, type = 'all') {
-    if (!rawData || rawData.length === 0) return [];
-    const contractors = {};
 
-    rawData.forEach(row => {
-        const popState = row.place_of_performance_state || row.pop_state || row.prime_award_pop_state || row.subaward_primary_place_of_performance_state_code;
-        // Ensure popState is valid and matches the target state
-        if (!popState || typeof popState !== 'string' || popState.toUpperCase().trim() !== stateAbbr) return;
-
-        const contractValue = typeof row.subaward_amount === 'number' ? row.subaward_amount : parseFloat(String(row.subaward_amount || '0').replace(/[^0-9.-]+/g, '')) || 0;
-
-        // Apply current filters
-        let includeRow = true;
-
-        // Search Filter
-        if (currentSearchTerm) {
-            const fields = [
-                 row['prime_award_awarding_agency_name'], row['prime_award_awarding_sub_agency_name'], row['prime_award_awarding_office_name'],
-                 row['prime_awardee_name'], row['subawardee_name'],
-                 row['prime_award_naics_code']?.toString(), row['prime_award_naics_description']
-            ];
-             if (!fields.some(field => field && typeof field === 'string' && field.toLowerCase().includes(currentSearchTerm))) {
-                 includeRow = false;
-             }
-        }
-
-        // SubAgency Filter Check
-        if (includeRow && currentSubAgencyFilter && row['prime_award_awarding_sub_agency_name'] !== currentSubAgencyFilter) {
-            includeRow = false;
-        }
-
-        // Office Filter Check
-        if (includeRow && currentOfficeFilter && row['prime_award_awarding_office_name'] !== currentOfficeFilter) {
-            includeRow = false;
-        }
-
-        // NAICS Filter Check
-        if (includeRow && currentNaicsFilter && row['prime_award_naics_code']?.toString() !== currentNaicsFilter) {
-            includeRow = false;
-        }
-
-        // Prime Filter Check
-        if (includeRow && currentPrimeFilter && row['prime_awardee_name'] !== currentPrimeFilter) {
-            includeRow = false;
-        }
-
-        // Sub Filter Check
-        if (includeRow && currentSubFilter && row['subawardee_name'] !== currentSubFilter) {
-            includeRow = false;
-        }
-
-        // Min Value Check (Use $0 for map helpers)
-        if (contractValue <= 0) { // Exclude zero or negative
-            includeRow = false;
-        }
-
-
-        if (!includeRow) return; // Skip row if any filter excludes it
-
-        // Aggregate contractor values if row is included
-        const primeContractor = row.prime_awardee_name?.trim() || 'Unknown Prime';
-        const subContractor = row.subawardee_name?.trim() || 'Unknown Sub';
-
-        if ((type === 'all' || type === 'prime') && primeContractor !== 'Unknown Prime') {
-            contractors[primeContractor] = (contractors[primeContractor] || 0) + contractValue;
-        }
-        if ((type === 'all' || type === 'sub') && subContractor !== 'Unknown Sub') {
-            contractors[subContractor] = (contractors[subContractor] || 0) + contractValue;
-        }
-    });
-
-    // Convert aggregated data to array, sort, and slice
-    const sortedContractors = Object.entries(contractors)
-        .map(([name, value]) => ({ name, value }))
-        .sort((a, b) => b.value - a.value)
-        .slice(0, limit);
-    return sortedContractors;
-}
 function getContractCountForState(stateAbbr) {
     if (!rawData || rawData.length === 0) return 0;
     const uniqueContracts = new Set();
@@ -4058,10 +4213,10 @@ function hideLoading() {
     }
 }
 
-// Helper function to get top states by contract value
 function getTopPerformanceStates(limit = 3) {
     if (!rawData || rawData.length === 0) return [];
     
+    const isPrimeData = currentAgency && currentAgency.endsWith('_primes');
     const statePerformance = {};
     
     // Always use CHOROPLETH_MIN_VALUE for map-related functions
@@ -4073,7 +4228,9 @@ function getTopPerformanceStates(limit = 3) {
         // Use CHOROPLETH_MIN_VALUE here for map stats
         if (contractValue < CHOROPLETH_MIN_VALUE) return;
         
+        // Handle both prime and subaward field mappings
         const stateCode = row.subaward_primary_place_of_performance_state_code || 
+                          row.primary_place_of_performance_state_code ||
                           row.place_of_performance_state || 
                           row.pop_state || 
                           row.prime_award_pop_state;
@@ -4090,6 +4247,110 @@ function getTopPerformanceStates(limit = 3) {
         .slice(0, limit);
         
     return sortedStates;
+}
+function getTopContractorsForState(stateAbbr, limit = 3, type = 'all') {
+    if (!rawData || rawData.length === 0) return [];
+    
+    // Check if we're displaying prime contract data
+    const isPrimeData = currentAgency && currentAgency.endsWith('_primes');
+    const contractors = {};
+
+    rawData.forEach(row => {
+        // Handle both prime and subaward field mappings for state code
+        const popState = row.subaward_primary_place_of_performance_state_code || 
+                         row.primary_place_of_performance_state_code ||
+                         row.place_of_performance_state || 
+                         row.pop_state || 
+                         row.prime_award_pop_state;
+                         
+        // Ensure popState is valid and matches the target state
+        if (!popState || typeof popState !== 'string' || popState.toUpperCase().trim() !== stateAbbr) return;
+
+        const contractValue = typeof row.subaward_amount === 'number' ? 
+            row.subaward_amount : 
+            parseFloat(String(row.subaward_amount || '0').replace(/[^0-9.-]+/g, '')) || 0;
+
+        // Apply current filters
+        let includeRow = true;
+        
+        // Search Filter - Handle both data types
+        if (currentSearchTerm) {
+            const fields = [
+                row['prime_award_awarding_agency_name'],
+                row['prime_award_awarding_sub_agency_name'],
+                row['prime_award_awarding_office_name'],
+                row['prime_awardee_name'],
+                isPrimeData ? null : row['subawardee_name'], // Only include for subaward data
+                row['prime_award_naics_code']?.toString(),
+                row['prime_award_naics_description']
+            ].filter(Boolean); // Filter out null values
+            
+            if (!fields.some(field => field && typeof field === 'string' && field.toLowerCase().includes(currentSearchTerm))) {
+                includeRow = false;
+            }
+        }
+
+        // SubAgency Filter Check
+        if (includeRow && currentSubAgencyFilter && row['prime_award_awarding_sub_agency_name'] !== currentSubAgencyFilter) {
+            includeRow = false;
+        }
+
+        // Office Filter Check
+        if (includeRow && currentOfficeFilter && row['prime_award_awarding_office_name'] !== currentOfficeFilter) {
+            includeRow = false;
+        }
+
+        // NAICS Filter Check
+        if (includeRow && currentNaicsFilter && row['prime_award_naics_code']?.toString() !== currentNaicsFilter) {
+            includeRow = false;
+        }
+
+        // Prime Filter Check
+        if (includeRow && currentPrimeFilter && row['prime_awardee_name'] !== currentPrimeFilter) {
+            includeRow = false;
+        }
+
+        // Sub Filter Check - only apply for subaward data
+        if (!isPrimeData && includeRow && currentSubFilter && row['subawardee_name'] !== currentSubFilter) {
+            includeRow = false;
+        }
+
+        // Min Value Check (Use $0 for map helpers)
+        if (contractValue <= 0) { // Exclude zero or negative
+            includeRow = false;
+        }
+
+        if (!includeRow) return; // Skip row if any filter excludes it
+
+        // Aggregate contractor values if row is included
+        const primeContractor = row.prime_awardee_name?.trim() || 'Unknown Prime';
+        
+        // For prime data, we only have prime contractors
+        const subContractor = isPrimeData ? null : (row.subawardee_name?.trim() || 'Unknown Sub');
+
+        // Always process prime contractors
+        if ((type === 'all' || type === 'prime') && primeContractor !== 'Unknown Prime') {
+            contractors[primeContractor] = (contractors[primeContractor] || 0) + contractValue;
+        }
+        
+        // Only process subcontractors for subaward data
+        if (!isPrimeData && (type === 'all' || type === 'sub') && subContractor !== 'Unknown Sub') {
+            contractors[subContractor] = (contractors[subContractor] || 0) + contractValue;
+        }
+    });
+
+    // If requesting only sub contractors but this is prime data, return empty array
+    if (isPrimeData && type === 'sub') {
+        return [];
+    }
+
+    // Convert aggregated data to array, sort, and slice
+    const sortedContractors = Object.entries(contractors)
+        .map(([name, value]) => ({ name, value }))
+        .sort((a, b) => b.value - a.value)
+        .slice(0, limit);
+        
+    return sortedContractors;
 }
 
 // --- Corrected displayTopNTable Function ---
