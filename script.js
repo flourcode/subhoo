@@ -756,13 +756,12 @@ function populateOfficeFilter() {
     });
 //     console.log(`Populated Office filter with ${sortedOffices.length} options`);
 }
-// Add this helper function to update the total value card
 function updateTotalValueCard(value, stateName = null) {
     const totalValueElement = document.getElementById('total-value');
     if (!totalValueElement) return;
     
-    // Update the value display
-    totalValueElement.textContent = formatCurrency(value);
+    // Use formatCurrencyWithSuffix instead of formatCurrency
+    totalValueElement.textContent = formatCurrencyWithSuffix(value);
     
     // Find the heading element (typically h4) that's the sibling of the value
     const headingElement = totalValueElement.parentElement.querySelector('h4');
@@ -3771,7 +3770,34 @@ function formatCurrency(value) {
         maximumFractionDigits: 0
     }).format(value);
 }
+function formatCurrencyWithSuffix(value) {
+    if (typeof value !== 'number' || isNaN(value)) {
+        // Try converting if it's a string-like number
+        try {
+            const cleanedValue = String(value).replace(/[^\d.-]+/g, ''); // Allow negative sign and decimal
+            value = parseFloat(cleanedValue);
+            if (isNaN(value)) return '$0'; // Failed conversion
+        } catch(e) {
+            return '$0'; // Error during conversion
+        }
+    }
 
+    if (Math.abs(value) >= 1000000000) {
+        return `$${(value / 1000000000).toFixed(1)}B`; // One decimal place for billions
+    } else if (Math.abs(value) >= 1000000) {
+        return `$${(value / 1000000).toFixed(1)}M`; // One decimal place for millions
+    } else if (Math.abs(value) >= 1000) {
+        return `$${(value / 1000).toFixed(1)}K`; // One decimal place for thousands
+    } else {
+        // Format values less than 1000 or negative values close to 0
+        return new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+        }).format(value);
+    }
+}
 function truncateText(text, maxLength) {
     if (!text) return '';
     // Adjust maxLength check to avoid negative substring index if maxLength is small
