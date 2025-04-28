@@ -1204,6 +1204,8 @@ function getFilteredTableData() {
                 row['prime_award_awarding_office_name'],    // Keep for search
                 row['prime_awardee_name'],
                 row['subawardee_name'],
+				row['subaward_description'],
+				row['prime_award_base_transaction_description'],
                 row['prime_award_naics_code']?.toString(),
                 row['prime_award_naics_description']
             ];
