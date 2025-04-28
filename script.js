@@ -3046,18 +3046,36 @@ function addInfoItem(container, label, value) {
     container.appendChild(dt); 
     container.appendChild(dd); 
 }
-
+// Enhanced state info panel function that uses our consistent state code extraction
 function showEnhancedStateInfoPanel(stateAbbr, value) {
+    console.log(`Showing enhanced state info panel for state: ${stateAbbr} with value: ${formatCurrency(value)}`);
+    
     const infoPanel = document.getElementById('info-panel'); 
-    if (!infoPanel) return;
+    if (!infoPanel) {
+        console.error("Info panel not found in the DOM");
+        return;
+    }
     
     const titleElement = document.getElementById('info-panel-title'), 
           contentElement = document.getElementById('info-panel-content'), 
           linkElement = document.getElementById('info-panel-link');
-    if (!titleElement || !contentElement || !linkElement) return;
+    
+    if (!titleElement || !contentElement || !linkElement) {
+        console.error("Info panel elements not found");
+        return;
+    }
     
     // Check if we're displaying prime contract data
     const isPrimeData = currentAgency && currentAgency.endsWith('_primes');
+    
+    // Debug: Check how many records we find for this state
+    let stateCount = 0;
+    rawData.forEach(row => {
+        if (getNormalizedStateCode(row) === stateAbbr) {
+            stateCount++;
+        }
+    });
+    console.log(`Found ${stateCount} records with state code: ${stateAbbr}`);
     
     const stateName = getStateFullName(stateAbbr); 
     // Adjust title based on data type
@@ -3068,33 +3086,54 @@ function showEnhancedStateInfoPanel(stateAbbr, value) {
     const contractCount = getContractCountForState(stateAbbr); 
     addInfoItem(contentElement, 'Total Contracts', contractCount.toLocaleString());
     
+    console.log(`getContractCountForState returned ${contractCount} contracts for state ${stateAbbr}`);
+    
+    // Get and display top contractors
     const topPrimes = getTopContractorsForState(stateAbbr, 5, 'prime'); 
+    console.log(`getTopContractorsForState returned ${topPrimes.length} prime contractors for state ${stateAbbr}`);
+    
     if (topPrimes.length > 0) { 
         addInfoSection(contentElement, 'Top Prime Contractors'); 
         topPrimes.forEach(c => addInfoItem(contentElement, c.name, formatCurrency(c.value))); 
+    } else {
+        console.log("No top prime contractors found for state");
     }
     
     // Only show subcontractors section for subaward data
     if (!isPrimeData) {
         const topSubs = getTopContractorsForState(stateAbbr, 5, 'sub'); 
+        console.log(`getTopContractorsForState returned ${topSubs.length} sub contractors for state ${stateAbbr}`);
+        
         if (topSubs.length > 0) { 
             addInfoSection(contentElement, 'Top Subcontractors'); 
             topSubs.forEach(c => addInfoItem(contentElement, c.name, formatCurrency(c.value))); 
+        } else {
+            console.log("No top subcontractors found for state");
         }
     }
     
+    // Get and display top NAICS codes
     const topNaics = getTopNaicsForState(stateAbbr, 3); 
+    console.log(`getTopNaicsForState returned ${topNaics.length} NAICS codes for state ${stateAbbr}`);
+    
     if (topNaics.length > 0) { 
         addInfoSection(contentElement, 'Primary Industry Categories'); 
         topNaics.forEach(n => addInfoItem(contentElement, `${n.code}`, `${n.desc} (${formatCurrency(n.value)})`)); 
+    } else {
+        console.log("No top NAICS codes found for state");
     }
     
     const usaSpendingUrl = `https://www.usaspending.gov/state/${stateName.toLowerCase().replace(/\s+/g, '-')}`;
     linkElement.href = usaSpendingUrl; 
     linkElement.style.display = 'inline-flex';
+    
+    // Make panel visible and interactive
     infoPanel.classList.add('visible');
-    infoPanel.removeAttribute('inert'); // Make panel accessible/interactive
+    infoPanel.removeAttribute('inert');
+    
+    console.log("Info panel displayed successfully");
 }
+
 function showMapTooltip(event, stateAbbr, value) {
     const tooltip = d3.select('#tooltip'); 
     if (!tooltip.node()) return;
@@ -3117,13 +3156,11 @@ function getContractCountForState(stateAbbr) {
     const uniqueContracts = new Set();
 
     rawData.forEach(row => {
-        // Use appropriate fields for state code based on data type
-        const popState = isPrimeData
-            ? (row.primary_place_of_performance_state_code || row.place_of_performance_state || row.pop_state)
-            : (row.subaward_primary_place_of_performance_state_code || row.place_of_performance_state || row.pop_state || row.prime_award_pop_state);
+        // Use our consistent state code extraction function
+        const popState = getNormalizedStateCode(row);
             
         // Ensure popState is valid and matches the target state
-        if (!popState || typeof popState !== 'string' || popState.toUpperCase().trim() !== stateAbbr) return;
+        if (popState !== stateAbbr) return;
 
         // Apply current filters
         let includeRow = true;
@@ -3190,6 +3227,8 @@ function getContractCountForState(stateAbbr) {
 
     return uniqueContracts.size; // Return the count of unique contracts matching filters for the state
 }
+
+// Fix for getTopNaicsForState to use the consistent state code extraction
 function getTopNaicsForState(stateAbbr, limit = 3) {
     if (!rawData || rawData.length === 0) return [];
     
@@ -3199,13 +3238,11 @@ function getTopNaicsForState(stateAbbr, limit = 3) {
     const naicsCodes = {};
 
     rawData.forEach(row => {
-        // Use appropriate fields for state code based on data type
-        const popState = isPrimeData
-            ? (row.primary_place_of_performance_state_code || row.place_of_performance_state || row.pop_state)
-            : (row.subaward_primary_place_of_performance_state_code || row.place_of_performance_state || row.pop_state || row.prime_award_pop_state);
+        // Use our consistent state code extraction function
+        const popState = getNormalizedStateCode(row);
         
         // Ensure popState is valid and matches the target state
-        if (!popState || typeof popState !== 'string' || popState.toUpperCase().trim() !== stateAbbr) return;
+        if (popState !== stateAbbr) return;
 
         // Apply current filters (excluding NAICS itself)
         let includeRow = true;
@@ -4447,13 +4484,11 @@ function getTopContractorsForState(stateAbbr, limit = 3, type = 'all') {
     const contractors = {};
 
     rawData.forEach(row => {
-        // Handle both prime and subaward field mappings for state code
-        const popState = isPrimeData
-            ? (row.primary_place_of_performance_state_code || row.place_of_performance_state || row.pop_state)
-            : (row.subaward_primary_place_of_performance_state_code || row.place_of_performance_state || row.pop_state || row.prime_award_pop_state);
+        // Use our consistent state code extraction function
+        const popState = getNormalizedStateCode(row);
                          
         // Ensure popState is valid and matches the target state
-        if (!popState || typeof popState !== 'string' || popState.toUpperCase().trim() !== stateAbbr) return;
+        if (popState !== stateAbbr) return;
 
         const contractValue = typeof row.subaward_amount === 'number' ? 
             row.subaward_amount : 
@@ -4541,6 +4576,7 @@ function getTopContractorsForState(stateAbbr, limit = 3, type = 'all') {
         
     return sortedContractors;
 }
+
 // --- Corrected displayTopNTable Function ---
 function displayTopNTable(nodes, containerId, title, topN = 5) {
     const container = document.getElementById(containerId);
