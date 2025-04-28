@@ -1032,7 +1032,7 @@ function updateVisualization(vizType) {
     }
 }
 function updateDataTable() {
-//     console.log("Updating data table view...");
+    console.log("Updating data table view...");
     const tableContainer = document.getElementById('data-table-container');
     if (!tableContainer) { console.error("Data table container element not found."); return; }
     tableContainer.innerHTML = ''; // Clear previous table content
@@ -1073,14 +1073,47 @@ function updateDataTable() {
     table.className = 'data-table';
     tableWrapper.appendChild(table);
 
+    // Log debug info about current filters BEFORE getting filtered data
+    console.log("Current filters before getFilteredTableData:");
+    console.log(`  - CurrentMapFocusState: ${currentMapFocusState || 'None'}`);
+    console.log(`  - CurrentAgency: ${currentAgency || 'None'} (isPrimeData: ${currentAgency && currentAgency.endsWith('_primes')})`);
+    console.log(`  - MinContractValue: ${minContractValue}`);
+    console.log(`  - Search Term: "${currentSearchTerm || ''}"`);
+    
     // Get filtered data for the table
     let tableData = getFilteredTableData(); // Applies all relevant filters
+
+    // Log how many rows were returned after filtering
+    console.log(`Retrieved ${tableData.length} rows after filtering`);
+    
+    // If no data, check for state filtering specifically
+    if (tableData.length === 0 && currentMapFocusState) {
+        console.log(`No rows found with state filter: ${currentMapFocusState}. Checking raw data for this state...`);
+        
+        // Check if any raw data rows actually have the state we're looking for
+        const isPrimeData = currentAgency && currentAgency.endsWith('_primes');
+        
+        // Count how many rows in raw data match the state
+        let matchCount = 0;
+        rawData.forEach(row => {
+            // Use both field variants for state code
+            const popState = isPrimeData
+                ? (row.primary_place_of_performance_state_code || row.place_of_performance_state || row.pop_state)
+                : (row.subaward_primary_place_of_performance_state_code || row.place_of_performance_state || row.pop_state || row.prime_award_pop_state);
+            
+            if (popState && typeof popState === 'string' && popState.toUpperCase().trim() === currentMapFocusState) {
+                matchCount++;
+            }
+        });
+        
+        console.log(`Found ${matchCount} raw data rows with state code: ${currentMapFocusState}`);
+    }
 
     // Sort data if a sort key is active
     if (tableSortKey && tableData.length > 0) {
         const sortColDef = displayColumns.find(c => c.key === tableSortKey);
         if (sortColDef && sortColDef.sortable) {
-//             console.log(`Sorting table display by ${tableSortKey} (${tableSortDirection})`);
+            console.log(`Sorting table display by ${tableSortKey} (${tableSortDirection})`);
             tableData.sort(compareValues(tableSortKey, tableSortDirection));
         }
     }
@@ -1112,7 +1145,7 @@ function updateDataTable() {
     // Check if there's data AFTER filtering
     if (!tableData || tableData.length === 0) {
         // If no data, the tbody will simply remain empty.
-//         console.log("updateDataTable: No data to display in the table for current filters.");
+        console.log("updateDataTable: No data to display in the table for current filters.");
     } else {
         // Populate table rows if data exists
         const limitedData = tableData.slice(0, displayLimit);
@@ -1166,16 +1199,15 @@ function updateDataTable() {
         const newExportBtn = exportBtn.cloneNode(true);
         exportBtn.parentNode.replaceChild(newExportBtn, exportBtn);
         newExportBtn.addEventListener('click', () => {
-//             console.log("Exporting full filtered data.");
+            console.log("Exporting full filtered data.");
             exportTableAsCSV(tableData, `${currentAgency}_subawards_export.csv`);
         });
         // Disable button if there's no data to export
         newExportBtn.disabled = (!tableData || tableData.length === 0);
     }
 
-//     console.log(`Data table updated: ${displayedRowCount} rows displayed (sorted by ${tableSortKey || 'default'}).`);
+    console.log(`Data table updated: ${displayedRowCount} rows displayed (sorted by ${tableSortKey || 'default'}).`);
 }
-
 function getFilteredTableData() {
     if (!rawData || rawData.length === 0) {
         console.warn("No raw data available for table");
@@ -1185,39 +1217,68 @@ function getFilteredTableData() {
     // Check if we're displaying prime contract data
     const isPrimeData = currentAgency && currentAgency.endsWith('_primes');
     
+    console.log(`--- Filtering table data (isPrimeData: ${isPrimeData}) ---`);
+    console.log(`   Search: "${currentSearchTerm}"`);
+    console.log(`   MinVal Slider: ${formatCurrency(minContractValue)}`);
+    console.log(`   StateFocus: ${currentMapFocusState || 'None'}`);
+    console.log(`   NodeFocus: ${currentFocusNode?.id || 'None'}`);
+    console.log(`   SubAgency: ${currentSubAgencyFilter || 'None'}`);
+    console.log(`   Office: ${currentOfficeFilter || 'None'}`);
+    console.log(`   NAICS: ${currentNaicsFilter || 'None'}`);
+    console.log(`   Prime: ${currentPrimeFilter || 'None'}`);
+    console.log(`   Sub: ${currentSubFilter || 'None'}`);
+
     let filtered = rawData;
     let initialRowCount = rawData.length;
 
+    // Define a helper function that can extract state code from either data type
     const getNormalizedStateCode = (row) => {
-        // Handle different field names for state code in prime vs subaward data
-        const stateCodeSource = isPrimeData
-            ? (row.primary_place_of_performance_state_code || row.place_of_performance_state || row.pop_state)
-            : (row.subaward_primary_place_of_performance_state_code || row.place_of_performance_state || row.pop_state || row.prime_award_pop_state);
+        // For prime contract data, use these fields
+        if (isPrimeData) {
+            const stateCode = row.primary_place_of_performance_state_code || 
+                             row.place_of_performance_state || 
+                             row.pop_state;
             
-        if (typeof stateCodeSource === 'string') { 
-            return stateCodeSource.toUpperCase().trim(); 
+            if (typeof stateCode === 'string') {
+                return stateCode.toUpperCase().trim();
+            }
         } 
-        return null;
+        // For subaward data, use these fields
+        else {
+            const stateCode = row.subaward_primary_place_of_performance_state_code || 
+                             row.place_of_performance_state || 
+                             row.pop_state || 
+                             row.prime_award_pop_state;
+            
+            if (typeof stateCode === 'string') {
+                return stateCode.toUpperCase().trim();
+            }
+        }
+        
+        return null; // No valid state code found
     };
 
-    // Apply Search Filter
+    // Apply filters sequentially
     if (currentSearchTerm) {
         filtered = filtered.filter(row => {
+            // Create an array of fields to search, accounting for data type
             const fields = [ 
                 row['prime_award_awarding_agency_name'],
-                row['prime_award_awarding_sub_agency_name'], 
-                row['prime_award_awarding_office_name'],    
+                row['prime_award_awarding_sub_agency_name'],
+                row['prime_award_awarding_office_name'],
                 row['prime_awardee_name'],
-                // Only include subawardee_name for subaward data, not for prime data
-                !isPrimeData ? row['subawardee_name'] : null, 
+                // Only include subawardee_name for subaward data
+                !isPrimeData ? row['subawardee_name'] : null,
                 row['subaward_description'],
                 row['prime_award_base_transaction_description'],
                 row['prime_award_naics_code']?.toString(),
                 row['prime_award_naics_description']
-            ].filter(Boolean); // Filter out null values from the array
+            ].filter(Boolean); // Filter out null/undefined values
             
+            // Ensure field is not null/undefined and is a string before calling toLowerCase
             return fields.some(field => field && typeof field === 'string' && field.toLowerCase().includes(currentSearchTerm));
         });
+        console.log(`   Rows after Search filter: ${filtered.length} (from ${initialRowCount})`);
         initialRowCount = filtered.length;
     }
 
@@ -1226,6 +1287,7 @@ function getFilteredTableData() {
         filtered = filtered.filter(row => {
             return row['prime_award_awarding_sub_agency_name'] === currentSubAgencyFilter;
         });
+        console.log(`   Rows after SubAgency filter: ${filtered.length} (from ${initialRowCount})`);
         initialRowCount = filtered.length;
     }
 
@@ -1234,61 +1296,88 @@ function getFilteredTableData() {
         filtered = filtered.filter(row => {
             return row['prime_award_awarding_office_name'] === currentOfficeFilter;
         });
+        console.log(`   Rows after Office filter: ${filtered.length} (from ${initialRowCount})`);
         initialRowCount = filtered.length;
     }
 
     // Apply NAICS Filter
     if (currentNaicsFilter) {
          filtered = filtered.filter(row => row['prime_award_naics_code']?.toString() === currentNaicsFilter);
+         console.log(`   Rows after NAICS filter: ${filtered.length} (from ${initialRowCount})`); 
          initialRowCount = filtered.length;
-    }
-    
+     }
+     
     // Apply Prime Contractor Filter
     if (currentPrimeFilter) {
          filtered = filtered.filter(row => row['prime_awardee_name'] === currentPrimeFilter);
+         console.log(`   Rows after Prime filter: ${filtered.length} (from ${initialRowCount})`); 
          initialRowCount = filtered.length;
     }
     
     // Apply Subcontractor Filter - only for subaward data
     if (currentSubFilter && !isPrimeData) {
          filtered = filtered.filter(row => row['subawardee_name'] === currentSubFilter);
+         console.log(`   Rows after Sub filter: ${filtered.length} (from ${initialRowCount})`); 
          initialRowCount = filtered.length;
     }
     
     // Apply Map State Focus Filter OR Minimum Value Filter
     if (currentMapFocusState) {
-        // console.log(`   Applying State focus filter: ${currentMapFocusState}`);
-        filtered = filtered.filter(row => getNormalizedStateCode(row) === currentMapFocusState);
-        initialRowCount = filtered.length;
-        // console.log(`   Minimum Value filter SKIPPED due to State focus.`);
+         console.log(`   Applying State focus filter: ${currentMapFocusState}`);
+         
+         // Count before filtering to see if we're finding any matches
+         let matchCount = 0;
+         filtered.forEach(row => {
+             const stateCode = getNormalizedStateCode(row);
+             if (stateCode === currentMapFocusState) {
+                 matchCount++;
+             }
+         });
+         console.log(`   Found ${matchCount} rows with state code matching ${currentMapFocusState}`);
+         
+         filtered = filtered.filter(row => {
+             const stateCode = getNormalizedStateCode(row);
+             return stateCode === currentMapFocusState;
+         });
+         
+         console.log(`   Rows after State focus filter: ${filtered.length} (from ${initialRowCount})`); 
+         initialRowCount = filtered.length;
+         console.log(`   Minimum Value filter SKIPPED due to State focus.`);
     } else { 
-        // Apply Minimum Value Filter
-        // console.log(`   Applying Minimum Value filter: >= ${formatCurrency(minContractValue)}`);
-        filtered = filtered.filter(row => (typeof row.subaward_amount === 'number' ? row.subaward_amount : parseFloat(String(row.subaward_amount || '0').replace(/[^0-9.-]+/g, '')) || 0) >= minContractValue);
-        initialRowCount = filtered.length;
+         // Apply Minimum Value Filter
+         console.log(`   Applying Minimum Value filter: >= ${formatCurrency(minContractValue)}`);
+         filtered = filtered.filter(row => {
+             const value = typeof row.subaward_amount === 'number' ? 
+                 row.subaward_amount : 
+                 parseFloat(String(row.subaward_amount || '0').replace(/[^0-9.-]+/g, '')) || 0;
+             return value >= minContractValue;
+         });
+         console.log(`   Rows after Min Value filter: ${filtered.length} (from ${initialRowCount})`); 
+         initialRowCount = filtered.length;
     }
     
     // Apply Node Focus Filter (Includes subagency check)
     if (currentFocusNode) {
-        // console.log(`   Applying Node focus filter: ${currentFocusNode.id}`);
-        filtered = filtered.filter(row => {
-            // Construct potential IDs safely, checking if components exist
-            const agencyPart = row.prime_award_awarding_agency_name ? `agency-${row.prime_award_awarding_agency_name}` : null;
-            const subAgencyPart = row.prime_award_awarding_sub_agency_name ? `subagency-${row.prime_award_awarding_sub_agency_name}` : null;
-            const officePart = row.prime_award_awarding_office_name ? `office-${row.prime_award_awarding_office_name}` : null;
-            const primePart = row.prime_awardee_name ? `prime-${row.prime_awardee_name}` : null;
-            
-            // Only include sub part for subaward data
-            const subPart = !isPrimeData && row.subawardee_name ? `sub-${row.subawardee_name}` : null;
+         console.log(`   Applying Node focus filter: ${currentFocusNode.id}`);
+         filtered = filtered.filter(row => {
+             // Construct potential IDs safely, checking if components exist
+             const agencyPart = row.prime_award_awarding_agency_name ? `agency-${row.prime_award_awarding_agency_name}` : null;
+             const subAgencyPart = row.prime_award_awarding_sub_agency_name ? `subagency-${row.prime_award_awarding_sub_agency_name}` : null;
+             const officePart = row.prime_award_awarding_office_name ? `office-${row.prime_award_awarding_office_name}` : null;
+             const primePart = row.prime_awardee_name ? `prime-${row.prime_awardee_name}` : null;
+             
+             // Only include sub part for subaward data
+             const subPart = !isPrimeData && row.subawardee_name ? `sub-${row.subawardee_name}` : null;
 
-            const potentialMatchIDs = [ agencyPart, subAgencyPart, officePart, primePart, subPart ].filter(Boolean); // Filter out nulls
+             const potentialMatchIDs = [ agencyPart, subAgencyPart, officePart, primePart, subPart ].filter(Boolean); // Filter out nulls
 
-            return potentialMatchIDs.includes(currentFocusNode.id);
-        });
-        initialRowCount = filtered.length;
+             return potentialMatchIDs.includes(currentFocusNode.id);
+         });
+         console.log(`   Rows after Node focus filter: ${filtered.length} (from ${initialRowCount})`);
+         initialRowCount = filtered.length;
     }
     
-    // console.log(`--- getFilteredTableData FINAL returning ${filtered.length} rows. ---`);
+    console.log(`--- getFilteredTableData FINAL returning ${filtered.length} rows. ---`);
     return filtered;
 }
 function isNodeConnectedToFocus(node) { // Used for info panel
@@ -2315,92 +2404,97 @@ function drawChoroplethMap() {
             "55":"WI", "56":"WY", "72":"PR"
         };
 
-        // --- Draw States ---
-        mapGroup.append('g')
-            .attr("class", "states")
-            .selectAll('path')
-            .data(statesGeoJson.features)
-            .join('path')
-            .attr('d', path)
-            .attr('fill', d => { 
-                const stateAbbr = stateAbbreviations[d.id]; 
-                const value = statePerformance[stateAbbr] || 0; 
-                return value > 0 ? colorScale(value) : '#eee'; 
-            })
-            .attr('stroke', '#fff')
-            .attr('stroke-width', 0.5)
-            .attr('tabindex', 0)
-            .attr('role', 'button')
-            .attr('aria-label', d => { 
-                const stateAbbr = stateAbbreviations[d.id]; 
-                const value = statePerformance[stateAbbr] || 0; 
-                return `${getStateFullName(stateAbbr)}: ${formatCurrency(value)}`; 
-            })
-            .classed('focused-state', d => stateAbbreviations[d.id] === currentMapFocusState)
-            .on('mouseover', function(event, d) { 
-                d3.select(this).raise().attr('stroke', '#000').attr('stroke-width', 1.5); 
-                const stateAbbr = stateAbbreviations[d.id]; 
-                const value = statePerformance[stateAbbr] || 0; 
-                
-                if (value > 0 || !stateAbbr) { 
-                    showMapTooltip(event, stateAbbr || d.properties.name, value); 
-                } else { 
-                    const tooltip = d3.select('#tooltip'); 
-                    tooltip.html(`<h4>${getStateFullName(stateAbbr)}</h4><p><em>No contracts match current filters</em></p>`)
-                        .classed('visible', true)
-                        .attr('aria-hidden', 'false'); 
-                    positionTooltip(tooltip, event); 
-                } 
-            })
-            .on('mouseout', function(event, d) { 
-                if (stateAbbreviations[d.id] !== currentMapFocusState) { 
-                    d3.select(this)
-                        .attr('stroke', '#fff')
-                        .attr('stroke-width', 0.5); 
-                } else { 
-                    d3.select(this)
-                        .attr('stroke', 'var(--app-accent-color)')
-                        .attr('stroke-width', 2); 
-                } 
-                hideTooltip(); 
-            })
-.on('click', function(event, d) { 
-    const clickedStateAbbr = stateAbbreviations[d.id]; 
-    if (!clickedStateAbbr) return; 
-    
-    // console.log(`--- Map State Click: ${clickedStateAbbr} ---`); 
-    
-    mapGroup.selectAll('path.focused-state')
-        .classed('focused-state', false)
-        .attr('stroke', '#fff')
-        .attr('stroke-width', 0.5); 
+mapGroup.append('g')
+    .attr("class", "states")
+    .selectAll('path')
+    .data(statesGeoJson.features)
+    .join('path')
+    .attr('d', path)
+    .attr('fill', d => { 
+        const stateAbbr = stateAbbreviations[d.id]; 
+        const value = statePerformance[stateAbbr] || 0; 
+        return value > 0 ? colorScale(value) : '#eee'; 
+    })
+    .attr('stroke', '#fff')
+    .attr('stroke-width', 0.5)
+    .attr('tabindex', 0)
+    .attr('role', 'button')
+    .attr('aria-label', d => { 
+        const stateAbbr = stateAbbreviations[d.id]; 
+        const value = statePerformance[stateAbbr] || 0; 
+        return `${getStateFullName(stateAbbr)}: ${formatCurrency(value)}`; 
+    })
+    .classed('focused-state', d => stateAbbreviations[d.id] === currentMapFocusState)
+    .on('mouseover', function(event, d) { 
+        d3.select(this).raise().attr('stroke', '#000').attr('stroke-width', 1.5); 
+        const stateAbbr = stateAbbreviations[d.id]; 
+        const value = statePerformance[stateAbbr] || 0; 
         
-    if (currentMapFocusState === clickedStateAbbr) { 
-        currentMapFocusState = null; 
-        // console.log(`   Cleared map state focus.`); 
-        closeInfoPanel(); 
-    } else { 
-        currentMapFocusState = clickedStateAbbr; 
-        // console.log(`   Set currentMapFocusState to: ${currentMapFocusState}`); 
-        
-        d3.select(this)
-            .classed('focused-state', true)
-            .attr('stroke', 'var(--app-accent-color)')
-            .attr('stroke-width', 2)
-            .raise(); 
-            
-        const value = statePerformance[clickedStateAbbr] || 0; 
-        if (value > 0) { 
-            showEnhancedStateInfoPanel(clickedStateAbbr, value); 
+        if (value > 0 || !stateAbbr) { 
+            showMapTooltip(event, stateAbbr || d.properties.name, value); 
+        } else { 
+            const tooltip = d3.select('#tooltip'); 
+            tooltip.html(`<h4>${getStateFullName(stateAbbr)}</h4><p><em>No contracts match current filters</em></p>`)
+                .classed('visible', true)
+                .attr('aria-hidden', 'false'); 
+            positionTooltip(tooltip, event); 
         } 
-    } 
-    
-    updateBreadcrumb(); 
-    
-    // This is where the table needs to update with state-filtered data
-    // Make sure we properly handle both prime contract and subaward data
-    updateDataTable(); 
-});
+    })
+    .on('mouseout', function(event, d) { 
+        if (stateAbbreviations[d.id] !== currentMapFocusState) { 
+            d3.select(this)
+                .attr('stroke', '#fff')
+                .attr('stroke-width', 0.5); 
+        } else { 
+            d3.select(this)
+                .attr('stroke', 'var(--app-accent-color)')
+                .attr('stroke-width', 2); 
+        } 
+        hideTooltip(); 
+    })
+    .on('click', function(event, d) { 
+        const clickedStateAbbr = stateAbbreviations[d.id]; 
+        if (!clickedStateAbbr) return; 
+        
+        console.log(`--- Map State Click: ${clickedStateAbbr} ---`); 
+        console.log(`   Current agency: ${currentAgency}, isPrimeData: ${currentAgency && currentAgency.endsWith('_primes')}`);
+        
+        mapGroup.selectAll('path.focused-state')
+            .classed('focused-state', false)
+            .attr('stroke', '#fff')
+            .attr('stroke-width', 0.5); 
+            
+        if (currentMapFocusState === clickedStateAbbr) { 
+            // Clicked same state - clear focus
+            console.log(`   Clearing state focus from ${clickedStateAbbr}`);
+            currentMapFocusState = null; 
+            closeInfoPanel(); 
+        } else { 
+            // Clicked new state - set focus
+            currentMapFocusState = clickedStateAbbr; 
+            console.log(`   Set currentMapFocusState to: ${currentMapFocusState}`); 
+            
+            d3.select(this)
+                .classed('focused-state', true)
+                .attr('stroke', 'var(--app-accent-color)')
+                .attr('stroke-width', 2)
+                .raise(); 
+                
+            const value = statePerformance[clickedStateAbbr] || 0; 
+            if (value > 0) { 
+                showEnhancedStateInfoPanel(clickedStateAbbr, value); 
+            } 
+        } 
+        
+        // Always update the breadcrumb
+        updateBreadcrumb(); 
+        
+        // Force the data table to update - this is where filtering by state happens
+        console.log(`   Updating data table for state: ${currentMapFocusState || 'None'}`);
+        // Force a refilter and redraw
+        updateDataTable();
+    });
+
 
         // Draw state borders
         mapGroup.append('path')
