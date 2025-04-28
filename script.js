@@ -1038,8 +1038,8 @@ function updateDataTable() {
         { key: 'prime_award_awarding_office_name', header: 'Office', truncate: 30, sortable: true },
         { key: 'prime_awardee_name', header: 'Prime Contractor', truncate: 40, sortable: true },
         { key: 'subawardee_name', header: 'Subcontractor', truncate: 40, sortable: true },
-        { key: 'subaward_amount', header: 'Sub Amount', format: 'currency', align: 'right', sortable: true },
-        { key: 'subaward_description', header: 'Sub Description', truncate: 50, sortable: false },
+        { key: 'subaward_amount', header: 'Amount', format: 'currency', align: 'right', sortable: true },
+        { key: 'subaward_description', header: 'Description', truncate: 50, sortable: false },
         { key: 'prime_award_naics_code', header: 'NAICS', sortable: true, align: 'left'},
         { key: 'subawardee_business_types', header: 'Biz Types', truncate: 20, sortable: true },
         { key: 'usaspending_permalink', header: 'USAspending Link', format: 'link', align: 'center', sortable: false }
@@ -4788,8 +4788,8 @@ const expiringTableColumns = [
     { key: 'office', header: 'Office', sortable: true, truncate: 30 },           // Added truncate
     { key: 'prime', header: 'Prime Contractor', sortable: true, truncate: 35 }, // Added truncate
     { key: 'sub', header: 'Subcontractor', sortable: true, truncate: 35 },    // Added truncate
-    { key: 'amount', header: 'Sub Amount', sortable: true, align: 'right', format: 'currency' },
-    { key: 'subAwardDesc', header: 'Sub Description', sortable: false, truncate: 50 }, // Added truncate
+    { key: 'amount', header: 'Amount', sortable: true, align: 'right', format: 'currency' },
+    { key: 'subAwardDesc', header: 'Description', sortable: false, truncate: 50 }, // Added truncate
     { key: 'naicsCode', header: 'NAICS', sortable: true },
     { key: 'permalink', header: 'USAspending Link', sortable: false, align: 'center', format: 'link'}
 ];
