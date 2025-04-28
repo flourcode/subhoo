@@ -5697,8 +5697,40 @@ function adaptPrimeContractData(primeData) {
         return [];
     }
     
-    return primeData.map(row => {
-        // For each prime contract, create an adapted record
+    // Step 1: Deduplicate by contract ID
+    const uniqueContracts = new Map();
+    
+    primeData.forEach(row => {
+        // Use a unique identifier for the contract
+        const contractId = row.award_id_piid || row.contract_award_unique_key || row.award_id;
+        
+        if (!contractId) {
+            // Skip rows without a valid contract ID
+            return;
+        }
+        
+        // Process the federal_action_obligation
+        const obligation = typeof row.federal_action_obligation === 'number' 
+            ? row.federal_action_obligation 
+            : parseFloat(String(row.federal_action_obligation || '0').replace(/[^0-9.-]+/g, '')) || 0;
+            
+        // If this is a negative obligation (deobligation), we might want to skip it
+        if (obligation < 0) {
+            return;
+        }
+        
+        // If this contract is already in our map, avoid adding it again
+        if (!uniqueContracts.has(contractId)) {
+            // Store the row with its obligation amount
+            uniqueContracts.set(contractId, {...row, processed_obligation: obligation});
+        }
+    });
+    
+    // Step 2: Map only the unique contracts to your adapted format
+    return Array.from(uniqueContracts.values()).map(row => {
+        // Use the processed obligation amount
+        const contractAmount = row.processed_obligation || 0;
+        
         return {
             // Direct field mappings
             prime_awardee_name: row.recipient_name || 'Unknown Prime Contractor',
@@ -5711,17 +5743,18 @@ function adaptPrimeContractData(primeData) {
             
             // Specially handled fields
             subawardee_name: null, // Prime data doesn't have subcontractors
-            subaward_amount: row.total_dollars_obligated || 0,
+            subaward_amount: contractAmount,
             subaward_primary_place_of_performance_state_code: row.primary_place_of_performance_state_code || 'Unknown',
             subaward_place_of_performance_cd_current: row.prime_award_transaction_place_of_performance_cd_current || 'Unknown',
             usaspending_permalink: row.usaspending_permalink || '#',
             
             // Derived fields
-            subaward_description: row.transaction_description || row.prime_award_base_transaction_description || 'No description available',
+            subaward_description: row.transaction_description || row.award_description || row.prime_award_base_transaction_description || 'No description available',
             subawardee_business_types: 'Prime Contract', // Flag to indicate this is a prime
             
-            // Add a field to distinguish prime contracts from subawards
-            is_prime_contract: true
+            // Add fields to help with debugging and analysis
+            is_prime_contract: true,
+            contract_id: row.award_id_piid || row.contract_award_unique_key || row.award_id || 'unknown'
         };
     });
 }
