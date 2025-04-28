@@ -756,7 +756,29 @@ function populateOfficeFilter() {
     });
 //     console.log(`Populated Office filter with ${sortedOffices.length} options`);
 }
-
+// Add this helper function to update the total value card
+function updateTotalValueCard(value, stateName = null) {
+    const totalValueElement = document.getElementById('total-value');
+    if (!totalValueElement) return;
+    
+    // Update the value display
+    totalValueElement.textContent = formatCurrency(value);
+    
+    // Find the heading element (typically h4) that's the sibling of the value
+    const headingElement = totalValueElement.parentElement.querySelector('h4');
+    if (headingElement) {
+        if (stateName) {
+            // If state is provided, update heading to show state name
+            headingElement.textContent = `${stateName} Contract Value`;
+            // Add a subtle animation to highlight the change
+            totalValueElement.classList.add('value-updated');
+            setTimeout(() => totalValueElement.classList.remove('value-updated'), 500);
+        } else {
+            // Reset to default heading
+            headingElement.textContent = 'Contract Value';
+        }
+    }
+}
 function populateNaicsFilter() {
     const naicsFilter = document.getElementById('naics-filter');
     if (!naicsFilter) return;
@@ -2480,6 +2502,7 @@ mapGroup.append('g')
             console.log(`   Clearing state focus from ${clickedStateAbbr}`);
             currentMapFocusState = null; 
             closeInfoPanel(); 
+			updateTotalValueCard(processedData.stats.totalContractValue);
         } else { 
             // Clicked new state - set focus
             currentMapFocusState = clickedStateAbbr; 
@@ -2493,7 +2516,8 @@ mapGroup.append('g')
                 
             const value = statePerformance[clickedStateAbbr] || 0; 
             if (value > 0) { 
-                showEnhancedStateInfoPanel(clickedStateAbbr, value); 
+                showEnhancedStateInfoPanel(clickedStateAbbr, value);
+				updateTotalValueCard(value, getStateFullName(clickedStateAbbr));
             } 
         } 
         
@@ -3623,6 +3647,9 @@ function resetFilters(triggerRedraw = true) {
     if (rawData && rawData.length > 0 && triggerRedraw) { console.log("Reset Filters triggering redraw..."); processData(); }
     else if (triggerRedraw) { updateActiveFiltersDisplay(); updateDataTable(); }
     if (triggerRedraw) showNotification('All filters have been reset.', 'info');
+	if (processedData && processedData.stats) {
+        updateTotalValueCard(processedData.stats.totalContractValue);
+    }
 }
 // Theme toggle functionality
 function toggleTheme(event) {
