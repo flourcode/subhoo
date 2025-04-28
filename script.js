@@ -5709,27 +5709,27 @@ function adaptPrimeContractData(primeData) {
             return;
         }
         
-        // Process the federal_action_obligation
-        const obligation = typeof row.federal_action_obligation === 'number' 
-            ? row.federal_action_obligation 
-            : parseFloat(String(row.federal_action_obligation || '0').replace(/[^0-9.-]+/g, '')) || 0;
+        // Process the current_total_value_of_award
+        const contractValue = typeof row.current_total_value_of_award === 'number' 
+            ? row.current_total_value_of_award 
+            : parseFloat(String(row.current_total_value_of_award || '0').replace(/[^0-9.-]+/g, '')) || 0;
             
-        // If this is a negative obligation (deobligation), we might want to skip it
-        if (obligation < 0) {
+        // If this is a negative value, we might want to skip it
+        if (contractValue < 0) {
             return;
         }
         
         // If this contract is already in our map, avoid adding it again
         if (!uniqueContracts.has(contractId)) {
-            // Store the row with its obligation amount
-            uniqueContracts.set(contractId, {...row, processed_obligation: obligation});
+            // Store the row with its contract value
+            uniqueContracts.set(contractId, {...row, processed_contract_value: contractValue});
         }
     });
     
     // Step 2: Map only the unique contracts to your adapted format
     return Array.from(uniqueContracts.values()).map(row => {
-        // Use the processed obligation amount
-        const contractAmount = row.processed_obligation || 0;
+        // Use the processed contract value amount
+        const contractAmount = row.processed_contract_value || 0;
         
         return {
             // Direct field mappings
