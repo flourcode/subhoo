@@ -2048,7 +2048,7 @@ function drawNetworkGraph(data, dataShownBelowMinValue = false) {
                .style('font-size', '12px')
                .style('font-style', 'italic')
                .style('margin-bottom', '5px')
-               .text("Prime Contract Data - No Subcontractors");
+               .text("");
         }
         
         // Add min value override notification
@@ -2328,7 +2328,7 @@ function drawChoroplethMap() {
            .style('z-index', '10')
            .style('background-color', 'rgba(0, 0, 0, 0.1)')
            .style('padding', '3px')
-           .text("Prime Contract Data - No Subcontractors");
+           .text("");
     }
 
 // Create empty statePerformance object
@@ -2412,7 +2412,7 @@ if (Object.keys(statePerformance).length > 0) {
                .attr("fill", "var(--color-on-surface-variant)")
                .attr("font-size", "12px")
                .attr("font-style", "italic")
-               .text("Prime Contract Data - No Subcontractors");
+               .text("");
         }
 
         const statesGeoJson = topojson.feature(us, us.objects.states);
