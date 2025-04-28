@@ -4201,6 +4201,8 @@ async function discoverAgencies() {
 		{ value: 'va_primes', label: 'VA - Prime Contracts' },
 		{ value: 'dhs_primes', label: 'DHS - Prime Contracts' },
 		{ value: 'epa_primes', label: 'EPA - Prime Contracts' },
+		{ value: 'army_primes', label: 'Army - Prime Contracts' },
+		{ value: 'navy_primes', label: 'Navy - Prime Contracts' },
         { value: 'usmc_primes', label: 'Marine Corps - Prime Contracts' },
 		{ value: 'socom_primes', label: 'USSOCOM - Prime Contracts' },
         // Add other prime contract datasets as they become available
