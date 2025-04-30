@@ -711,3 +711,74 @@ td.number { text-align: right; font-variant-numeric: tabular-nums; }
     padding: 8px;
     background-color: var(--color-surface-container-low);
 }
+/* Ensure charts are left-aligned on mobile and readable */
+
+/* TAV/TCV Chart container alignment */
+#bento-tavtcv .chart-container {
+    justify-content: flex-start; /* Align to the left instead of center */
+    align-items: flex-start; /* Align to the top */
+    overflow-x: auto; /* Enable horizontal scrolling if needed */
+    padding-left: 0; /* Remove left padding */
+}
+
+/* Ensure canvas is properly positioned */
+#bento-tavtcv canvas {
+    margin-left: 0; /* Remove any margin */
+    transform-origin: left top; /* When scaling, keep the left side fixed */
+}
+
+/* Contract Leaders table left alignment */
+#bento-leaders .chart-container {
+    justify-content: flex-start;
+    align-items: flex-start;
+}
+
+/* Mobile-specific adjustments */
+@media (max-width: 768px) {
+    /* Chart container - ensure proper overflow and alignment */
+    .chart-container {
+        align-items: flex-start !important;
+        justify-content: flex-start !important;
+        overflow-x: auto !important;
+        overflow-y: auto !important;
+        width: 100% !important;
+    }
+    
+    /* Make chart labels readable on small screens */
+    #tavTcvChart {
+        min-width: 480px; /* Ensure minimum width to prevent squeezing */
+    }
+    
+    /* Contract leaders table on mobile */
+    #contract-leaders-table-container .table-wrapper {
+        min-width: 480px; /* Minimum width to prevent squeezing */
+    }
+    
+    /* Chunky bars even on small screens */
+    #tavTcvChart {
+        height: 400px !important; /* Force height on mobile */
+    }
+    
+    /* Improve scrolling experience with subtle indicators */
+    .chart-container::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 30px;
+        height: 100%;
+        background: linear-gradient(to left, var(--color-surface), transparent);
+        opacity: 0.7;
+        pointer-events: none;
+    }
+}
+
+/* Adjust Chart.js positioning for all screen sizes */
+canvas.chartjs-render-monitor {
+    left: 0 !important; /* Always align to left */
+}
+
+/* Helper class you can add to debugging */
+.debug-outline {
+    border: 2px solid red !important;
+}
