@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QBR Sales Performance Charts (DOJ Primes)</title>
+    <title>Sales QBR Dashboard</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
@@ -11,31 +11,32 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 
     <style>
-        /* Dark Mode with Purple Accents */
+        /* Modern Light Theme with #FFFFF3, #1f231d, and #95b9c0 */
         :root {
-            --bg-dark: #121212;
-            --bg-card: #1e1e1e;
-            --bg-hover: #2d2d2d;
-            --color-text-primary: #e4e4e4;
-            --color-text-secondary: #a0a0a0;
-            --color-text-muted: #757575;
-            --color-border: #333333;
-            --color-purple-primary: #9d4edd;
-            --color-purple-light: #c77dff;
-            --color-purple-dark: #7b2cbf;
-            --color-table-header: #2a2a2a;
-            --color-table-row-even: #222222;
-            --color-table-row-odd: #1a1a1a;
-            --color-charts-blue: #a0c4ff;
-            --color-charts-red: #ffadad;
-            --color-success: #4ade80;
-            --color-error: #f87171;
-            --color-info: #60a5fa;
+            --bg-light: #FFFFF3;
+            --bg-card: #FFFFFF;
+            --color-text-primary: #1f231d;
+            --color-text-secondary: #3c4139;
+            --color-text-muted: #717971;
+            --color-border: #e5e7e3;
+            --color-accent: #95b9c0;
+            --color-accent-light: #b3ced3;
+            --color-accent-dark: #7a9ca2;
+            --color-table-header: #eef6f7;
+            --color-table-row-even: #f7fcfc;
+            --color-table-row-odd: #ffffff;
+            --color-charts-primary: #95b9c0;
+            --color-charts-secondary: #7a9ca2;
+            --color-success: #80b192;
+            --color-error: #e88e8e;
+            --color-info: #95b9c0;
+            --shadow-sm: 0 1px 2px 0 rgba(31, 35, 29, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(31, 35, 29, 0.1), 0 2px 4px -1px rgba(31, 35, 29, 0.06);
         }
         
         body {
             font-family: 'Inter', sans-serif;
-            background-color: var(--bg-dark);
+            background-color: var(--bg-light);
             color: var(--color-text-primary);
         }
         
@@ -49,6 +50,7 @@
             overflow-x: auto;
             background-color: var(--bg-card);
             border-radius: 0.5rem;
+            box-shadow: var(--shadow-md);
         }
         
         .loading-placeholder, .error-placeholder, .no-data-placeholder {
@@ -81,7 +83,7 @@
             background-color: var(--color-table-header);
             font-weight: 600;
             font-size: 0.875rem;
-            color: var(--color-purple-light);
+            color: var(--color-text-primary);
             position: sticky;
             top: 0;
             z-index: 10;
@@ -96,7 +98,8 @@
         }
         
         tbody tr:hover {
-            background-color: var(--bg-hover);
+            background-color: var(--color-accent-light);
+            color: var(--color-text-primary);
         }
         
         td.number {
@@ -106,8 +109,8 @@
         
         /* Simple spinner */
         .spinner {
-            border: 4px solid var(--bg-hover);
-            border-top: 4px solid var(--color-purple-primary);
+            border: 4px solid var(--color-accent-light);
+            border-top: 4px solid var(--color-accent);
             border-radius: 50%;
             width: 30px;
             height: 30px;
@@ -139,7 +142,7 @@
         
         .filter-container button {
             padding: 0.5rem 1rem;
-            background-color: var(--color-purple-primary);
+            background-color: var(--color-accent);
             color: white;
             border: none;
             border-radius: 0.375rem;
@@ -148,34 +151,35 @@
         }
         
         .filter-container button:hover {
-            background-color: var(--color-purple-dark);
+            background-color: var(--color-accent-dark);
         }
         
         #arr-result {
             font-size: 1.5rem;
             font-weight: 700;
-            color: var(--color-purple-light);
+            color: var(--color-accent-dark);
         }
         
         /* Status Banner */
         .status-banner {
-            background-color: rgba(157, 78, 221, 0.1);
-            border-left: 4px solid var(--color-purple-primary);
+            background-color: rgba(149, 185, 192, 0.1);
+            border-left: 4px solid var(--color-accent);
             padding: 1rem;
             margin-bottom: 1.5rem;
             border-radius: 0.375rem;
             display: flex;
             align-items: center;
             justify-content: space-between;
+            box-shadow: var(--shadow-sm);
         }
         
         .status-banner.error {
-            background-color: rgba(248, 113, 113, 0.1);
+            background-color: rgba(232, 142, 142, 0.1);
             border-left-color: var(--color-error);
         }
         
         .status-banner.success {
-            background-color: rgba(74, 222, 128, 0.1);
+            background-color: rgba(128, 177, 146, 0.1);
             border-left-color: var(--color-success);
         }
         
@@ -184,9 +188,9 @@
             color: var(--color-text-primary);
         }
         
-        .refresh-button {
+        .button {
             padding: 0.375rem 0.75rem;
-            background-color: var(--color-purple-primary);
+            background-color: var(--color-accent);
             color: white;
             border: none;
             border-radius: 0.25rem;
@@ -195,119 +199,202 @@
             transition: background-color 0.2s;
         }
         
-        .refresh-button:hover {
-            background-color: var(--color-purple-dark);
+        .button:hover {
+            background-color: var(--color-accent-dark);
         }
         
-        .refresh-button:disabled {
+        .button:disabled {
             background-color: var(--color-text-muted);
             cursor: not-allowed;
         }
         
         /* Cards */
-        .bg-white {
-            background-color: var(--bg-card) !important;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        .card {
+            background-color: var(--bg-card);
+            box-shadow: var(--shadow-md);
+            border-radius: 0.5rem;
             border: 1px solid var(--color-border);
         }
         
-        /* Text colors */
-        .text-gray-700, .text-gray-800 {
-            color: var(--color-text-primary) !important;
+        /* Dashboard header */
+        .dashboard-header {
+            background-color: var(--color-accent);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow-md);
         }
         
-        .text-gray-500, .text-gray-600 {
-            color: var(--color-text-secondary) !important;
+        .dashboard-header h1 {
+            color: white;
+            margin-bottom: 0.5rem;
         }
         
-        /* Override Chart.js defaults */
-        canvas {
-            filter: brightness(0.9);
+        /* Dataset selector */
+        .dataset-selector {
+            display: flex;
+            align-items: center;
+            background-color: var(--bg-card);
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 1.5rem;
+        }
+        
+        .dataset-selector label {
+            font-weight: 600;
+            color: var(--color-text-primary);
+            margin-right: 1rem;
+        }
+        
+        .dataset-selector select {
+            flex-grow: 1;
+            padding: 0.5rem;
+            border: 1px solid var(--color-border);
+            border-radius: 0.375rem;
+            background-color: var(--bg-card);
+            color: var(--color-text-primary);
         }
     </style>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/inter-ui/3.19.3/inter.min.css" rel="stylesheet">
 </head>
-<body class="bg-gray-100 p-6 md:p-10">
-
-    <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">Sales QBR Dashboard (DOJ Primes)</h1>
-    
-    <!-- Status banner -->
-    <div id="status-banner" class="status-banner">
-        <p id="status-message">Loading data from S3...</p>
-        <button id="refresh-button" class="refresh-button" disabled>Refresh Data</button>
+<body>
+    <!-- Dashboard Header -->
+    <div class="dashboard-header">
+        <h1 class="text-3xl font-bold" id="dashboard-title">Sales QBR Dashboard</h1>
+        <p class="text-lg" id="dashboard-subtitle">Select an agency dataset to begin</p>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
+    <!-- Dataset Selector -->
+    <div class="container mx-auto px-4">
+        <div class="dataset-selector">
+            <label for="dataset-select">Select Dataset:</label>
+            <select id="dataset-select" class="w-full md:w-auto">
+                <option value="">Choose a dataset...</option>
+                <!-- Options will be populated dynamically -->
+            </select>
+        </div>
+        
+        <!-- Status Banner -->
+        <div id="status-banner" class="status-banner">
+            <p id="status-message">Please select a dataset to load</p>
+            <button id="refresh-button" class="button" disabled>Refresh Data</button>
+        </div>
 
-        <div class="bg-white p-6 rounded-lg shadow-md">
-            <h2 class="text-xl font-semibold text-gray-700 mb-4">Contract Leaders (by Prime Recipient)</h2>
-            <div id="contract-leaders-table-container" class="chart-container">
-                <div class="loading-placeholder">
-                    <div class="spinner"></div>
-                    Loading Leader Data...
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
+            <div class="card p-6">
+                <h2 class="text-xl font-semibold text-gray-700 mb-4">Contract Leaders (by Prime Recipient)</h2>
+                <div id="contract-leaders-table-container" class="chart-container">
+                    <div class="loading-placeholder">
+                        <div class="spinner"></div>
+                        Select a dataset to view leaders
+                    </div>
+                </div>
+            </div>
+
+            <div class="card p-6">
+                <h2 class="text-xl font-semibold text-gray-700 mb-4">TAV vs TCV Tracker (Top 5 Contracts by TCV)</h2>
+                <p class="text-sm text-gray-500 mb-3">Comparing Total Obligated Value to Current Total Value</p>
+                <div id="tav-tcv-chart-container" class="chart-container">
+                    <div class="loading-placeholder">
+                        <div class="spinner"></div>
+                        Select a dataset to view chart
+                    </div>
+                    <canvas id="tavTcvChart"></canvas>
                 </div>
             </div>
         </div>
 
-        <div class="bg-white p-6 rounded-lg shadow-md">
-            <h2 class="text-xl font-semibold text-gray-700 mb-4">TAV vs TCV Tracker (Top 5 Contracts by TCV)</h2>
-            <p class="text-sm text-gray-500 mb-3">Assuming TAV = Total Obligated, TCV = Current Total Value</p>
-            <div id="tav-tcv-chart-container" class="chart-container">
-                 <div class="loading-placeholder">
-                    <div class="spinner"></div>
-                    Loading TAV/TCV Data...
+        <div class="card p-6 mb-10">
+            <h2 class="text-xl font-semibold text-gray-700 mb-4">ARR Estimator</h2>
+            <div class="filter-container flex flex-wrap items-center gap-4 mb-6">
+                <div>
+                    <label for="sub-agency-filter">Sub-Agency:</label>
+                    <select id="sub-agency-filter">
+                        <option value="">All Sub-Agencies</option>
+                    </select>
                 </div>
-                <canvas id="tavTcvChart"></canvas>
+                <div>
+                    <label for="naics-filter">NAICS:</label>
+                    <select id="naics-filter">
+                        <option value="">All NAICS</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="arr-start-date">Start Date:</label>
+                    <input type="date" id="arr-start-date">
+                </div>
+                <div>
+                    <label for="arr-end-date">End Date:</label>
+                    <input type="date" id="arr-end-date">
+                </div>
+                <div>
+                    <button id="arr-calculate-button" class="button">Calculate Avg. ARR</button>
+                </div>
             </div>
-        </div>
-
-    </div>
-
-    <div class="bg-white p-6 rounded-lg shadow-md mb-10">
-        <h2 class="text-xl font-semibold text-gray-700 mb-4">ARR Estimator</h2>
-        <div class="filter-container flex flex-wrap items-center gap-4 mb-6">
-            <div>
-                <label for="sub-agency-filter">Sub-Agency:</label>
-                <select id="sub-agency-filter">
-                    <option value="">All Sub-Agencies</option>
-                </select>
+            <div class="text-center">
+                <span class="text-gray-600">Estimated Average Annual Recurring Revenue (ARR) for Filtered Contracts:</span>
+                <div id="arr-result" class="mt-2">--</div>
+                <div id="arr-loading" class="loading-placeholder" style="display: none;">
+                    <div class="spinner"></div>
+                    Calculating ARR...
+                </div>
+                <div id="arr-error" class="error-placeholder text-red-600" style="display: none;"></div>
+                <div id="arr-no-data" class="no-data-placeholder" style="display: none;">No contracts match the selected criteria.</div>
             </div>
-            <div>
-                <label for="naics-filter">NAICS:</label>
-                <select id="naics-filter">
-                    <option value="">All NAICS</option>
-                </select>
-            </div>
-            <div>
-                <label for="arr-start-date">Start Date:</label>
-                <input type="date" id="arr-start-date">
-            </div>
-            <div>
-                <label for="arr-end-date">End Date:</label>
-                <input type="date" id="arr-end-date">
-            </div>
-            <div>
-                <button id="arr-calculate-button">Calculate Avg. ARR</button>
-            </div>
-        </div>
-        <div class="text-center">
-            <span class="text-gray-600">Estimated Average Annual Recurring Revenue (ARR) for Filtered Contracts:</span>
-            <div id="arr-result" class="mt-2">--</div>
-            <div id="arr-loading" class="loading-placeholder" style="display: none;">
-                <div class="spinner"></div>
-                Calculating ARR...
-            </div>
-            <div id="arr-error" class="error-placeholder text-red-600" style="display: none;"></div>
-            <div id="arr-no-data" class="no-data-placeholder" style="display: none;">No contracts match the selected criteria.</div>
         </div>
     </div>
 
     <script>
         // Constants
-        const DATA_URL = 'https://subhoodata.s3.us-east-1.amazonaws.com/data/doj_primes.csv'; // S3 URL from original code
+        const S3_BASE_URL = 'https://subhoodata.s3.us-east-1.amazonaws.com/data/';
+        const DATASETS = [
+            { id: 'airforce', name: 'Air Force' },
+            { id: 'army_primes', name: 'Army (Primes)' },
+            { id: 'army', name: 'Army (All)' },
+            { id: 'cbp', name: 'Customs & Border Protection' },
+            { id: 'darpa', name: 'DARPA' },
+            { id: 'dhs_primes', name: 'DHS (Primes)' },
+            { id: 'dhs', name: 'DHS (All)' },
+            { id: 'disa', name: 'DISA' },
+            { id: 'dla', name: 'DLA' },
+            { id: 'doc', name: 'Department of Commerce' },
+            { id: 'doe', name: 'Department of Energy' },
+            { id: 'doi', name: 'Department of Interior' },
+            { id: 'doj_primes', name: 'DOJ (Primes)' },
+            { id: 'doj', name: 'DOJ (All)' },
+            { id: 'dol', name: 'Department of Labor' },
+            { id: 'dos', name: 'Department of State' },
+            { id: 'dot', name: 'Department of Transportation' },
+            { id: 'epa_primes', name: 'EPA (Primes)' },
+            { id: 'epa', name: 'EPA (All)' },
+            { id: 'faa', name: 'FAA' },
+            { id: 'fas', name: 'FAS' },
+            { id: 'gsa', name: 'GSA' },
+            { id: 'hhs', name: 'HHS' },
+            { id: 'md', name: 'MD' },
+            { id: 'mda', name: 'MDA' },
+            { id: 'nasa', name: 'NASA' },
+            { id: 'navy_primes', name: 'Navy (Primes)' },
+            { id: 'navy', name: 'Navy (All)' },
+            { id: 'socom_primes', name: 'SOCOM (Primes)' },
+            { id: 'socom', name: 'SOCOM (All)' },
+            { id: 'ssa', name: 'Social Security Administration' },
+            { id: 'treasury', name: 'Treasury' },
+            { id: 'uscc_primes', name: 'USCC (Primes)' },
+            { id: 'uscc', name: 'USCC (All)' },
+            { id: 'usda', name: 'USDA' },
+            { id: 'usmc_primes', name: 'USMC (Primes)' },
+            { id: 'usmc', name: 'USMC (All)' },
+            { id: 'va_primes', name: 'VA (Primes)' },
+            { id: 'va', name: 'VA (All)' }
+        ];
+        
         let rawData = []; // To store loaded data
         let tavTcvChartInstance = null; // Store chart instance
         let isLoading = false;
+        let currentDataset = null;
 
         // --- Utility Functions ---
         function formatCurrency(value) {
@@ -476,6 +563,27 @@
              }
          }
 
+        // --- Initialize Dataset Selector ---
+        function initializeDatasetSelector() {
+            const datasetSelect = document.getElementById('dataset-select');
+            
+            // Populate the dropdown with dataset options
+            DATASETS.forEach(dataset => {
+                const option = document.createElement('option');
+                option.value = dataset.id;
+                option.textContent = dataset.name;
+                datasetSelect.appendChild(option);
+            });
+            
+            // Add event listener to load selected dataset
+            datasetSelect.addEventListener('change', function() {
+                const selectedDatasetId = this.value;
+                if (selectedDatasetId) {
+                    const selectedDataset = DATASETS.find(d => d.id === selectedDatasetId);
+                    loadDataset(selectedDataset);
+                }
+            });
+        }
 
         // --- Chart 1: Contract Type Leaders ---
         function processContractLeaders(data) {
@@ -624,15 +732,15 @@
                         {
                             label: 'TAV (Obligated)',
                             data: tavData,
-                            backgroundColor: 'rgba(160, 196, 255, 0.7)',  // Purple-blue
-                            borderColor: 'rgba(160, 196, 255, 1)',
+                            backgroundColor: 'rgba(149, 185, 192, 0.7)',  // Main accent color
+                            borderColor: 'rgba(149, 185, 192, 1)',
                             borderWidth: 1
                         },
                         {
                             label: 'TCV (Current Total)',
                             data: tcvData,
-                            backgroundColor: 'rgba(199, 125, 255, 0.7)',  // Purple
-                            borderColor: 'rgba(199, 125, 255, 1)',
+                            backgroundColor: 'rgba(122, 156, 162, 0.7)',  // Darker accent color
+                            borderColor: 'rgba(122, 156, 162, 1)',
                             borderWidth: 1
                         }
                     ]
@@ -665,7 +773,6 @@
                  }
             });
         }
-
 
         // --- Filters and Dynamic Chart Updates ---
         function populateFilters(data) {
@@ -786,7 +893,7 @@
             }, 50);
         }
 
-        // --- Load Data from S3 URL ---
+        // --- Load Dataset Functions ---
         function updateStatusBanner(message, type = 'info') {
             const banner = document.getElementById('status-banner');
             const statusMessage = document.getElementById('status-message');
@@ -806,20 +913,61 @@
             // Enable/disable refresh button
             refreshButton.disabled = isLoading;
         }
+        
+        function updateDashboardTitle(dataset) {
+            const dashboardTitle = document.getElementById('dashboard-title');
+            const dashboardSubtitle = document.getElementById('dashboard-subtitle');
+            
+            if (dataset) {
+                dashboardTitle.textContent = `${dataset.name} Sales QBR Dashboard`;
+                dashboardSubtitle.textContent = `Analyzing contract data for ${dataset.name}`;
+            } else {
+                dashboardTitle.textContent = 'Sales QBR Dashboard';
+                dashboardSubtitle.textContent = 'Select an agency dataset to begin';
+            }
+        }
 
-        async function loadDataFromS3() {
-            if (isLoading) return;
+        function loadDataset(dataset) {
+            if (!dataset || isLoading) return;
+            
+            currentDataset = dataset;
             isLoading = true;
             
-            // Update UI to loading state
-            updateStatusBanner('Loading data from S3...', 'info');
-            setLoading('contract-leaders-table-container', true, 'Loading Data...');
-            setLoading('tav-tcv-chart-container', true, 'Loading Data...');
+            // Update UI elements
+            updateDashboardTitle(dataset);
+            updateStatusBanner(`Loading ${dataset.name} data...`, 'info');
+            
+            // Set loading states for chart containers
+            setLoading('contract-leaders-table-container', true, `Loading ${dataset.name} leader data...`);
+            setLoading('tav-tcv-chart-container', true, `Loading ${dataset.name} TAV/TCV data...`);
             document.getElementById('arr-result').textContent = '--';
             
+            // Reset filter values
+            document.getElementById('sub-agency-filter').innerHTML = '<option value="">All Sub-Agencies</option>';
+            document.getElementById('naics-filter').innerHTML = '<option value="">All NAICS</option>';
+            document.getElementById('arr-start-date').value = '';
+            document.getElementById('arr-end-date').value = '';
+            
+            // Enable refresh button and set it to reload the current dataset
+            const refreshButton = document.getElementById('refresh-button');
+            refreshButton.disabled = false;
+            
+            // Fetch the data from S3
+            fetchDataFromS3(dataset);
+        }
+        
+        function refreshCurrentDataset() {
+            if (currentDataset) {
+                loadDataset(currentDataset);
+            }
+        }
+        
+        async function fetchDataFromS3(dataset) {
             try {
-                console.log(`Fetching data from: ${DATA_URL}`);
-                const response = await fetch(DATA_URL, {
+                const csvUrl = `${S3_BASE_URL}${dataset.id}.csv`;
+                console.log(`Fetching data from: ${csvUrl}`);
+                
+                const response = await fetch(csvUrl, {
                     method: 'GET',
                     mode: 'cors', // Important for cross-origin requests
                     cache: 'no-cache', // Avoid caching issues
@@ -851,7 +999,7 @@
                         }
                         
                         // Process the data
-                        processCSVData(results.data);
+                        processDataset(dataset, results.data);
                     },
                     error: function(error) {
                         throw new Error(`Error parsing CSV: ${error.message}`);
@@ -859,17 +1007,17 @@
                 });
                 
             } catch (error) {
-                console.error('Error loading data:', error);
-                updateStatusBanner(`Error loading data: ${error.message}`, 'error');
+                console.error('Error loading dataset:', error);
+                updateStatusBanner(`Error loading ${dataset.name} data: ${error.message}`, 'error');
                 displayError('contract-leaders-table-container', `Failed to load data: ${error.message}`);
                 displayError('tav-tcv-chart-container', `Failed to load data: ${error.message}`);
                 isLoading = false;
             }
         }
         
-        function processCSVData(data) {
+        function processDataset(dataset, data) {
             try {
-                console.log("Processing CSV data...");
+                console.log(`Processing ${dataset.name} data...`);
                 
                 // Clean and process the data
                 rawData = data.map((row, index) => {
@@ -895,16 +1043,16 @@
                     }
                 }).filter(Boolean); // Remove null entries
                 
-                console.log(`Successfully processed ${rawData.length} rows of data`);
+                console.log(`Successfully processed ${rawData.length} rows of ${dataset.name} data`);
                 
                 if (rawData.length === 0) {
                     throw new Error('No valid data rows after processing');
                 }
                 
                 // Update the UI with the processed data
-                updateStatusBanner(`Successfully loaded ${rawData.length} records at ${new Date().toLocaleTimeString()}`, 'success');
+                updateStatusBanner(`Successfully loaded ${rawData.length} records from ${dataset.name} at ${new Date().toLocaleTimeString()}`, 'success');
                 
-                // Populate filters and display charts
+                // Populate filters
                 populateFilters(rawData);
                 
                 // Initially display all data without filters
@@ -916,8 +1064,8 @@
                 displayTavTcvChart(tavTcvData);
                 
             } catch (error) {
-                console.error('Error processing data:', error);
-                updateStatusBanner(`Error processing data: ${error.message}`, 'error');
+                console.error(`Error processing ${dataset.name} data:`, error);
+                updateStatusBanner(`Error processing ${dataset.name} data: ${error.message}`, 'error');
                 displayError('contract-leaders-table-container', `Error processing data: ${error.message}`);
                 displayError('tav-tcv-chart-container', `Error processing data: ${error.message}`);
             } finally {
@@ -927,16 +1075,17 @@
 
         // --- Event Listeners ---
         document.getElementById('arr-calculate-button').addEventListener('click', calculateAverageARR);
-        document.getElementById('refresh-button').addEventListener('click', loadDataFromS3);
-        
-        // Add event listeners for filter changes
+        document.getElementById('refresh-button').addEventListener('click', refreshCurrentDataset);
         document.getElementById('sub-agency-filter').addEventListener('change', applyFiltersAndUpdateCharts);
         document.getElementById('naics-filter').addEventListener('change', applyFiltersAndUpdateCharts);
         
         // --- Initialize Dashboard ---
         document.addEventListener('DOMContentLoaded', function() {
-            // Load data when the page loads
-            loadDataFromS3();
+            // Initialize the dataset selector
+            initializeDatasetSelector();
+            
+            // Set initial messages
+            updateStatusBanner('Please select a dataset to begin');
         });
     </script>
 </body>
