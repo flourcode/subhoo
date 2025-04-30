@@ -145,13 +145,13 @@ h1, h2, h3, h4, h5, h6 {
 .bento-grid {
     display: grid;
     gap: var(--bento-gap);
-    grid-template-columns: repeat(3, 1fr);
+    /* Use a 4-column grid for more flexibility */
+    grid-template-columns: repeat(4, 1fr);
     grid-template-areas:
-        "controls controls controls"
-        "leaders leaders leaders"
-        "tavtcv tavtcv tavtcv"
-        "arr arr arr"
-        "notes notes notes";
+        "controls controls controls controls"
+        "tavtcv   tavtcv   leaders  leaders"
+        "tavtcv   tavtcv   arr      arr"
+        "notes    notes    notes    notes";
 }
 
 .bento-box {
@@ -264,6 +264,26 @@ h2.bento-title {
 .chart-container canvas {
      max-width: 100%;
      max-height: 400px;
+}
+
+/* TAV/TCV chart specific styling */
+#bento-tavtcv .chart-container {
+    min-height: 400px; /* Taller for the more important chart */
+}
+#bento-tavtcv canvas {
+    max-height: 380px; /* Allow chart to use most of the container height */
+}
+
+/* Leaders table specific styling - make it more compact */
+#bento-leaders .chart-container {
+    min-height: 260px; 
+    max-height: 400px;
+    overflow-y: auto;
+}
+#bento-leaders table th,
+#bento-leaders table td {
+    padding: 8px 12px; /* More compact cells */
+    font-size: 0.85rem; /* Slightly smaller text */
 }
 
 /* Placeholder styling */
@@ -467,54 +487,45 @@ td.number { text-align: right; font-variant-numeric: tabular-nums; }
 
 
 /* --- Responsive Adjustments --- */
-@media (max-width: 1024px) {
-     body { padding: 1.5rem; }
-     .bento-grid {
-         grid-template-columns: repeat(2, 1fr);
-         grid-template-areas:
-             "controls controls"
-             "leaders leaders"
-             "tavtcv tavtcv"
-             "arr arr"
-             "notes notes";
-         gap: 1.5rem; /* Adjust gap */
-     }
-     h2.bento-title { font-size: 1.35rem; }
-     #arr-result { font-size: 2.25rem; }
+@media (max-width: 1200px) {
+    body { padding: 1.5rem; }
+    .bento-grid {
+        grid-template-columns: repeat(2, 1fr);
+        grid-template-areas:
+            "controls controls"
+            "tavtcv   tavtcv"
+            "leaders  arr"
+            "notes    notes";
+    }
+    #bento-leaders, #bento-arr {
+        min-height: 350px; /* Ensure equal heights */
+    }
 }
 
 @media (max-width: 768px) {
-     body { padding: 1rem; }
-     .bento-grid {
-         grid-template-columns: 1fr;
-         grid-template-areas:
-             "controls"
-             "leaders"
-             "tavtcv"
-             "arr"
-             "notes";
-         gap: 1.25rem; /* Adjust gap */
-     }
-     .bento-box { padding: 1.25rem; }
-     h2.bento-title { font-size: 1.25rem; }
-     #arr-result { font-size: 2rem; }
-     #bento-controls {
-          flex-direction: column;
-          align-items: stretch;
-          gap: 1rem;
-      }
-      .dataset-selector { min-width: unset; }
-      .status-section { justify-content: space-between; }
-      .filter-container { flex-direction: column; align-items: stretch; gap: 1rem; }
-      .filter-container button { margin-top: 0.5rem; width: 100%; }
-      .filter-container > div { width: 100%; }
-      .filter-container select, .filter-container input[type="date"] { width: 100%; min-width: unset; }
-}
-
-/* TAV vs TCV chart container - ensure it's tall enough */
-#bento-tavtcv .chart-container {
-    min-height: 450px; /* Increased height for better visualization */
-}
-#tavTcvChart {
-    max-height: 450px; /* Allow chart to use full container height */
+    body { padding: 1rem; }
+    .bento-grid {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+            "controls"
+            "tavtcv"
+            "leaders"
+            "arr"
+            "notes";
+        gap: 1.25rem; /* Adjust gap */
+    }
+    .bento-box { padding: 1.25rem; }
+    h2.bento-title { font-size: 1.25rem; }
+    #arr-result { font-size: 2rem; }
+    #bento-controls {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+    }
+    .dataset-selector { min-width: unset; }
+    .status-section { justify-content: space-between; }
+    .filter-container { flex-direction: column; align-items: stretch; gap: 1rem; }
+    .filter-container button { margin-top: 0.5rem; width: 100%; }
+    .filter-container > div { width: 100%; }
+    .filter-container select, .filter-container input[type="date"] { width: 100%; min-width: unset; }
 }

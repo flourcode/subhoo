@@ -30,54 +30,54 @@
              </div>
         </div>
 
+        <div id="bento-tavtcv" class="bento-box card">
+            <h2 class="bento-title">TAV vs TCV Tracker</h2>
+            <p class="bento-subtitle">Top 10 Contracts by TCV (Obligated vs Current Total)</p>
+            <div id="tav-tcv-chart-container" class="chart-container">
+                <div class="loading-placeholder">
+                    <div class="spinner"></div>
+                    Select a dataset to view chart
+                </div>
+                <canvas id="tavTcvChart"></canvas>
+            </div>
+        </div>
+
         <div id="bento-leaders" class="bento-box card">
             <h2 class="bento-title">Contract Leaders (by Prime Recipient)</h2>
             <div id="contract-leaders-table-container" class="chart-container">
                 <div class="loading-placeholder">
-                     <div class="spinner"></div>
-                     Select a dataset to view leaders
-                 </div>
-            </div>
-        </div>
-
-        <div id="bento-tavtcv" class="bento-box card">
-            <h2 class="bento-title">TAV vs TCV Tracker</h2>
-             <p class="bento-subtitle">Top 10 Contracts by TCV (Obligated vs Current Total)</p>
-            <div id="tav-tcv-chart-container" class="chart-container">
-                 <div class="loading-placeholder">
-                     <div class="spinner"></div>
-                     Select a dataset to view chart
-                 </div>
-                <canvas id="tavTcvChart"></canvas>
+                    <div class="spinner"></div>
+                    Select a dataset to view leaders
+                </div>
             </div>
         </div>
 
         <div id="bento-arr" class="bento-box card">
             <h2 class="bento-title">ARR Estimator</h2>
             <div class="filter-container">
-                 <div>
-                     <label for="sub-agency-filter">Sub-Agency:</label>
-                     <select id="sub-agency-filter">
-                         <option value="">All Sub-Agencies</option>
-                     </select>
-                 </div>
-                 <div>
-                     <label for="naics-filter">NAICS:</label>
-                     <select id="naics-filter">
-                         <option value="">All NAICS</option>
-                     </select>
-                 </div>
-                 <div>
-                     <label for="arr-start-date">Start Date:</label>
-                     <input type="date" id="arr-start-date">
-                 </div>
-                 <div>
-                     <label for="arr-end-date">End Date:</label>
-                     <input type="date" id="arr-end-date">
-                 </div>
-                 <div>
-                     <button id="arr-calculate-button" class="button">Calculate Avg. ARR</button>
-                 </div>
+                <div>
+                    <label for="sub-agency-filter">Sub-Agency:</label>
+                    <select id="sub-agency-filter">
+                        <option value="">All Sub-Agencies</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="naics-filter">NAICS:</label>
+                    <select id="naics-filter">
+                        <option value="">All NAICS</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="arr-start-date">Start Date:</label>
+                    <input type="date" id="arr-start-date">
+                </div>
+                <div>
+                    <label for="arr-end-date">End Date:</label>
+                    <input type="date" id="arr-end-date">
+                </div>
+                <div>
+                    <button id="arr-calculate-button" class="button">Calculate Avg. ARR</button>
+                </div>
             </div>
             <div id="arr-result-container">
                 <div class="result-label">Estimated Average Annual Recurring Revenue (ARR) for Filtered Contracts:</div>
@@ -92,10 +92,10 @@
         </div>
 
         <div id="bento-notes" class="bento-box card">
-             <h2 class="bento-title">Calculation Notes</h2>
-             <p>The TAV vs TCV chart compares the Total Dollars Obligated (TAV) against the Current Total Value of Award (TCV) for the top 10 contracts by TCV, illustrating the funding status or proportion of total value obligated so far.</p>
-             <p>The Estimated Average ARR is calculated for filtered contracts by annualizing each contract's Current Total Value over its Period of Performance (Start Date to Current End Date) and then averaging these annualized figures across all valid contracts in the filtered set; this provides an estimated annualized value intensity for comparison, assuming even value distribution, but does not represent guaranteed recurring revenue.</p>
-             <p>When a contract's Total Contract Value (TCV) is greater than the Total Amount Obligated (TAV), it means the government hasn't yet funded the contract to its full current value. This gap indicates remaining potential value within the contract's existing structure. While specific contract terms vary, this TCV headroom may suggest potential room for future funding, modifications, or the exercise of optional tasks or services already planned within the contract.</p>
+            <h2 class="bento-title">Calculation Notes</h2>
+            <p>The TAV vs TCV chart compares the Total Dollars Obligated (TAV) against the Current Total Value of Award (TCV) for the top 10 contracts by TCV, illustrating the funding status or proportion of total value obligated so far.</p>
+            <p>The Estimated Average ARR is calculated for filtered contracts by annualizing each contract's Current Total Value over its Period of Performance (Start Date to Current End Date) and then averaging these annualized figures across all valid contracts in the filtered set; this provides an estimated annualized value intensity for comparison, assuming even value distribution, but does not represent guaranteed recurring revenue.</p>
+            <p>When a contract's Total Contract Value (TCV) is greater than the Total Amount Obligated (TAV), it means the government hasn't yet funded the contract to its full current value. This gap indicates remaining potential value within the contract's existing structure. While specific contract terms vary, this TCV headroom may suggest potential room for future funding, modifications, or the exercise of optional tasks or services already planned within the contract.</p>
         </div>
     </main>
     <script src="test_script.js" defer></script>
