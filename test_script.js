@@ -521,7 +521,7 @@
                  })
                  .filter(Boolean) // Remove null entries from invalid rows
                  .sort((a, b) => b.tcv - a.tcv) // Sort by Current Total Value (TCV) descending
-                 .slice(0, 20); // Take the top 20 contracts
+                 .slice(0, 10); // Take the top 10 contracts
 
              console.log(`Processed ${contracts.length} contracts for TAV/TCV chart.`);
              return contracts;
