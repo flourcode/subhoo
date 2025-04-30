@@ -841,3 +841,50 @@ canvas.chartjs-render-monitor {
         border-radius: 4px;
     }
 }
+/* CSS to improve chart label display */
+
+/* Ensure Y-axis labels have enough space */
+.chart-container {
+    padding-left: 0; /* Remove any left padding that might reduce label space */
+}
+
+/* Give more space to Y-axis labels */
+#tavTcvChart {
+    margin-left: 10px; /* Add some space on the left for labels */
+}
+
+/* Mobile-specific label improvements */
+@media (max-width: 768px) {
+    /* Allow more space for labels on mobile */
+    #bento-tavtcv .chart-container {
+        padding-left: 10px;
+    }
+    
+    /* Ensure chart retains enough space for labels */
+    #tavTcvChart {
+        min-width: 520px; /* Slightly wider minimum to accommodate longer labels */
+    }
+}
+
+/* Optional: Custom styling for chart labels if needed */
+.chartjs-axis-y .chartjs-tick {
+    font-weight: 500; /* Make labels slightly bolder */
+    color: var(--color-text-primary) !important; /* Ensure good contrast */
+}
+
+/* Subtle gradient under labels for better readability */
+#tav-tcv-chart-container::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 200px;
+    background: linear-gradient(to right, 
+        var(--color-surface) 0%, 
+        var(--color-surface) 75%, 
+        transparent 100%);
+    opacity: 0.15;
+    pointer-events: none; /* Don't block interaction */
+    z-index: 1; /* Keep above chart but below labels */
+}
