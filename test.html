@@ -189,14 +189,14 @@
         <h2 class="text-xl font-semibold text-gray-700 mb-4">ARR Estimator</h2>
         <div class="filter-container flex flex-wrap items-center gap-4 mb-6">
             <div>
-                <label for="arr-agency-filter">Agency:</label>
-                <select id="arr-agency-filter">
-                    <option value="">All Agencies</option>
+                <label for="sub-agency-filter">Sub-Agency:</label>
+                <select id="sub-agency-filter">
+                    <option value="">All Sub-Agencies</option>
                 </select>
             </div>
             <div>
-                <label for="arr-naics-filter">NAICS:</label>
-                <select id="arr-naics-filter">
+                <label for="naics-filter">NAICS:</label>
+                <select id="naics-filter">
                     <option value="">All NAICS</option>
                 </select>
             </div>
@@ -414,7 +414,9 @@
 
                 const validContracts = contracts.filter(c => uniqueContractKeys.has(c.contract_award_unique_key || c.award_id_piid));
 
+                // Calculate total value for all contracts
                 const values = validContracts.map(c => parseSafeFloat(c.current_total_value_of_award) || parseSafeFloat(c.base_and_exercised_options_value) || 0).filter(v => !isNaN(v));
+                const totalValue = values.length > 0 ? d3.sum(values) : 0;
                 const avgValue = values.length > 0 ? d3.mean(values) : 0;
 
                 const durations = validContracts.map(c => calculateDurationDays(c.period_of_performance_start_date, c.period_of_performance_current_end_date)).filter(d => d > 0);
@@ -430,12 +432,14 @@
                 return {
                     siName: primeName,
                     numAwards: uniqueContractKeys.size,
+                    totalValue: totalValue,
                     avgValue: avgValue,
                     avgDurationDays: Math.round(avgDurationDays),
                     dominantType: dominantType
                 };
             }).filter(Boolean)
-              .sort((a, b) => b.numAwards - a.numAwards);
+              // Sort by total value instead of number of awards
+              .sort((a, b) => b.totalValue - a.totalValue);
 
             console.log(`Processed ${leaderData.length} leaders.`);
             return leaderData;
@@ -458,6 +462,7 @@
                     <thead class="bg-gray-50">
                         <tr>
                             <th scope="col">Recipient Name</th>
+                            <th scope="col" class="number">Total Value</th>
                             <th scope="col" class="number"># Awards</th>
                             <th scope="col" class="number">Avg Value</th>
                             <th scope="col" class="number">Avg Duration (Days)</th>
@@ -471,6 +476,7 @@
                 tableHTML += `
                     <tr>
                         <td class="font-medium text-gray-900">${truncateText(leader.siName, 35)}</td>
+                        <td class="number text-gray-600 font-bold">${formatCurrency(leader.totalValue)}</td>
                         <td class="number text-gray-600">${leader.numAwards.toLocaleString()}</td>
                         <td class="number text-gray-600">${formatCurrency(leader.avgValue)}</td>
                         <td class="number text-gray-600">${leader.avgDurationDays > 0 ? leader.avgDurationDays.toLocaleString() : '-'}</td>
@@ -481,7 +487,7 @@
 
             tableHTML += `</tbody></table>`;
             if (leaderData.length > 15) {
-                 tableHTML += `<p class="text-center text-sm text-gray-500 mt-4">Showing Top 15 of ${leaderData.length} leaders by # Awards</p>`;
+                 tableHTML += `<p class="text-center text-sm text-gray-500 mt-4">Showing Top 15 of ${leaderData.length} leaders by Total Value</p>`;
              }
             container.innerHTML = tableHTML;
         }
@@ -583,15 +589,16 @@
         }
 
 
-        // --- Chart 3: ARR Estimator ---
-        function populateArrFilters(data) {
+        // --- Filters and Dynamic Chart Updates ---
+        function populateFilters(data) {
              if (!data || data.length === 0) return;
-             const agencySet = new Set();
+             const subAgencySet = new Set();
              const naicsMap = new Map();
 
              data.forEach(row => {
-                  const agency = row.awarding_agency_name?.trim() || row.funding_agency_name?.trim();
-                  if (agency) agencySet.add(agency);
+                  // Use awarding_sub_agency_name instead of awarding_agency_name
+                  const subAgency = row.awarding_sub_agency_name?.trim();
+                  if (subAgency) subAgencySet.add(subAgency);
 
                   const code = row.naics_code?.toString().trim();
                   const desc = row.naics_description?.trim() || 'No Description';
@@ -600,15 +607,51 @@
                   }
              });
 
-             populateDropdown(document.getElementById('arr-agency-filter'), agencySet, "All Agencies");
-             populateNaicsDropdown(document.getElementById('arr-naics-filter'), naicsMap);
+             populateDropdown(document.getElementById('sub-agency-filter'), subAgencySet, "All Sub-Agencies");
+             populateNaicsDropdown(document.getElementById('naics-filter'), naicsMap);
          }
-
-        function calculateAverageARR() {
-            const agencyFilter = document.getElementById('arr-agency-filter').value;
-            const naicsFilter = document.getElementById('arr-naics-filter').value;
+        
+        // Function to apply filters and update all charts
+        function applyFiltersAndUpdateCharts() {
+            const subAgencyFilter = document.getElementById('sub-agency-filter').value;
+            const naicsFilter = document.getElementById('naics-filter').value;
             const startDateFilter = parseDate(document.getElementById('arr-start-date').value);
             const endDateFilter = parseDate(document.getElementById('arr-end-date').value);
+            
+            console.log("Applying filters:", { subAgencyFilter, naicsFilter, startDateFilter, endDateFilter });
+            
+            // Filter the data
+            const filteredData = rawData.filter(row => {
+                const subAgency = row.awarding_sub_agency_name?.trim();
+                const naics = row.naics_code?.toString().trim();
+                const popStartDate = parseDate(row.period_of_performance_start_date);
+                const popEndDate = parseDate(row.period_of_performance_current_end_date);
+
+                if (subAgencyFilter && subAgency !== subAgencyFilter) return false;
+                if (naicsFilter && naics !== naicsFilter) return false;
+                
+                const overlaps =
+                    (!startDateFilter || (popEndDate && popEndDate >= startDateFilter)) &&
+                    (!endDateFilter || (popStartDate && popStartDate <= endDateFilter));
+                if (!overlaps) return false;
+
+                return true;
+            });
+            
+            console.log(`Filtered data: ${filteredData.length} records`);
+            
+            // Update all charts with filtered data
+            const leaderData = processContractLeaders(filteredData);
+            displayContractLeadersTable(leaderData);
+            
+            const tavTcvData = processTavTcvData(filteredData);
+            displayTavTcvChart(tavTcvData);
+            
+            // Return the filtered data for any additional processing
+            return filteredData;
+        }
+
+        function calculateAverageARR() {
             const resultDiv = document.getElementById('arr-result');
             const loadingDiv = document.getElementById('arr-loading');
             const errorDiv = document.getElementById('arr-error');
@@ -619,25 +662,10 @@
             errorDiv.style.display = 'none';
             noDataDiv.style.display = 'none';
 
-            console.log("Calculating ARR with filters:", { agencyFilter, naicsFilter, startDateFilter, endDateFilter });
-
             setTimeout(() => {
                 try {
-                    const filteredData = rawData.filter(row => {
-                        const agency = row.awarding_agency_name?.trim() || row.funding_agency_name?.trim();
-                        const naics = row.naics_code?.toString().trim();
-                        const popStartDate = parseDate(row.period_of_performance_start_date);
-                        const popEndDate = parseDate(row.period_of_performance_current_end_date);
-
-                        if (agencyFilter && agency !== agencyFilter) return false;
-                        if (naicsFilter && naics !== naicsFilter) return false;
-                        const overlaps =
-                            (!startDateFilter || (popEndDate && popEndDate >= startDateFilter)) &&
-                            (!endDateFilter || (popStartDate && popStartDate <= endDateFilter));
-                        if (!overlaps) return false;
-
-                        return true;
-                    });
+                    // Get filtered data from the currently applied filters
+                    const filteredData = applyFiltersAndUpdateCharts();
 
                     console.log(`Filtered down to ${filteredData.length} contracts for ARR calculation.`);
 
@@ -779,7 +807,7 @@
                         
                         // Check for essential string fields and provide defaults
                         if (!cleanRow.recipient_name) cleanRow.recipient_name = 'Unknown Recipient';
-                        if (!cleanRow.awarding_agency_name && !cleanRow.funding_agency_name) cleanRow.awarding_agency_name = 'Unknown Agency';
+                        if (!cleanRow.awarding_sub_agency_name) cleanRow.awarding_sub_agency_name = 'Unknown Sub-Agency';
                         if (!cleanRow.naics_code) cleanRow.naics_code = 'Unknown';
                         
                         return cleanRow;
@@ -799,9 +827,9 @@
                 updateStatusBanner(`Successfully loaded ${rawData.length} records at ${new Date().toLocaleTimeString()}`, 'success');
                 
                 // Populate filters and display charts
-                populateArrFilters(rawData);
+                populateFilters(rawData);
                 
-                // Process and display contract leaders
+                // Initially display all data without filters
                 const leaderData = processContractLeaders(rawData);
                 displayContractLeadersTable(leaderData);
                 
@@ -822,6 +850,10 @@
         // --- Event Listeners ---
         document.getElementById('arr-calculate-button').addEventListener('click', calculateAverageARR);
         document.getElementById('refresh-button').addEventListener('click', loadDataFromS3);
+        
+        // Add event listeners for filter changes
+        document.getElementById('sub-agency-filter').addEventListener('change', applyFiltersAndUpdateCharts);
+        document.getElementById('naics-filter').addEventListener('change', applyFiltersAndUpdateCharts);
         
         // --- Initialize Dashboard ---
         document.addEventListener('DOMContentLoaded', function() {
