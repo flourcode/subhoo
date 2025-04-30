@@ -8,9 +8,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/date-fns/2.30.0/date-fns.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-	<link rel="stylesheet" href="test_style.css">
-	<script src="test_script.js" defer></script>
-    </head>
+    <link rel="stylesheet" href="test_style.css">
+</head>
 <body>
     <header class="dashboard-header">
         <h1 id="dashboard-title">Sales QBR Dashboard</h1>
@@ -94,11 +93,11 @@
 
         <div id="bento-notes" class="bento-box card">
              <h2 class="bento-title">Calculation Notes</h2>
-             <p>The TAV vs TCV chart compares the Total Dollars Obligated (TAV) against the Current Total Value of Award (TCV) for the top 20 contracts by TCV, illustrating the funding status or proportion of total value obligated so far.</p>
+             <p>The TAV vs TCV chart compares the Total Dollars Obligated (TAV) against the Current Total Value of Award (TCV) for the top 10 contracts by TCV, illustrating the funding status or proportion of total value obligated so far.</p>
              <p>The Estimated Average ARR is calculated for filtered contracts by annualizing each contract's Current Total Value over its Period of Performance (Start Date to Current End Date) and then averaging these annualized figures across all valid contracts in the filtered set; this provides an estimated annualized value intensity for comparison, assuming even value distribution, but does not represent guaranteed recurring revenue.</p>
              <p>When a contract's Total Contract Value (TCV) is greater than the Total Amount Obligated (TAV), it means the government hasn't yet funded the contract to its full current value. This gap indicates remaining potential value within the contract's existing structure. While specific contract terms vary, this TCV headroom may suggest potential room for future funding, modifications, or the exercise of optional tasks or services already planned within the contract.</p>
         </div>
-
     </main>
+    <script src="test_script.js" defer></script>
 </body>
 </html>

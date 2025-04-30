@@ -148,8 +148,9 @@ h1, h2, h3, h4, h5, h6 {
     grid-template-columns: repeat(3, 1fr);
     grid-template-areas:
         "controls controls controls"
-        "leaders leaders tavtcv"
-        "arr arr tavtcv"
+        "leaders leaders leaders"
+        "tavtcv tavtcv tavtcv"
+        "arr arr arr"
         "notes notes notes";
 }
 
@@ -322,6 +323,11 @@ td.number { text-align: right; font-variant-numeric: tabular-nums; }
     margin: 0 auto 10px auto;
 }
 
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
 /* Filter Styling Refresh */
 .filter-container {
      display: flex;
@@ -468,16 +474,16 @@ td.number { text-align: right; font-variant-numeric: tabular-nums; }
          grid-template-areas:
              "controls controls"
              "leaders leaders"
-             "tavtcv arr"
+             "tavtcv tavtcv"
+             "arr arr"
              "notes notes";
          gap: 1.5rem; /* Adjust gap */
      }
-     #bento-tavtcv { grid-row: span 1; }
      h2.bento-title { font-size: 1.35rem; }
      #arr-result { font-size: 2.25rem; }
 }
 
- @media (max-width: 768px) {
+@media (max-width: 768px) {
      body { padding: 1rem; }
      .bento-grid {
          grid-template-columns: 1fr;
@@ -503,94 +509,12 @@ td.number { text-align: right; font-variant-numeric: tabular-nums; }
       .filter-container button { margin-top: 0.5rem; width: 100%; }
       .filter-container > div { width: 100%; }
       .filter-container select, .filter-container input[type="date"] { width: 100%; min-width: unset; }
- }
- /* --- Bento Grid Layout --- */
-.bento-grid {
-    display: grid;
-    gap: var(--bento-gap);
-    grid-template-columns: repeat(3, 1fr); /* Keep 3 columns for other items */
-    /* --- UPDATED grid-template-areas --- */
-    grid-template-areas:
-        "controls controls controls" /* Controls full width */
-        "leaders leaders leaders"  /* Leaders full width */
-        "tavtcv tavtcv tavtcv"   /* <<< TAV/TCV chart full width row >>> */
-        "arr arr arr"           /* <<< ARR estimator gets its own row below >>> */
-        "notes notes notes";     /* Notes full width */
 }
 
-/* ... other styles ... */
-
-/* Assign grid areas to boxes (No changes needed here) */
-#bento-controls { grid-area: controls; }
-#bento-leaders  { grid-area: leaders; }
-#bento-tavtcv   { grid-area: tavtcv; } /* Assigns to the new full-width area */
-#bento-arr      { grid-area: arr; }    /* Assigns to its new row */
-#bento-notes    { grid-area: notes; }
-
-/* ... other styles ... */
-
-/* --- UPDATED chart container inside TAV/TCV box --- */
+/* TAV vs TCV chart container - ensure it's tall enough */
 #bento-tavtcv .chart-container {
-    min-height: 450px; /* <<< INCREASED MINIMUM HEIGHT >>> */
-    position: relative;
-    flex-grow: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow-x: hidden; /* Prevent horizontal scroll for the chart */
-    width: 100%;
+    min-height: 450px; /* Increased height for better visualization */
 }
-#bento-tavtcv .chart-container canvas {
-     /* Allow canvas to use the increased height */
-     max-height: 100%; /* Allow canvas to grow taller */
-     max-width: 100%;
+#tavTcvChart {
+    max-height: 450px; /* Allow chart to use full container height */
 }
-
-/* --- Adjust table container too if needed --- */
-#contract-leaders-table-container {
-     /* min-height might be fine, but ensure overflow is handled */
-     overflow-x: auto;
-     width: 100%;
-     min-height: 350px; /* Example height */
-}
-
-
-/* --- Responsive Adjustments --- */
-@media (max-width: 1024px) { /* Tablet */
-     .bento-grid {
-         grid-template-columns: repeat(2, 1fr); /* 2 columns */
-          /* --- UPDATED tablet layout --- */
-         grid-template-areas:
-             "controls controls"
-             "leaders leaders"    /* Leaders full width */
-             "tavtcv tavtcv"    /* TAV/TCV full width */
-             "arr arr"         /* ARR full width */
-             "notes notes";
-     }
-     /* Ensure TAV/TCV container height is still appropriate */
-     #bento-tavtcv .chart-container {
-         min-height: 400px; /* Adjust tablet height */
-     }
-     /* No need for #bento-tavtcv { grid-row: span 1; } anymore */
-}
-
- @media (max-width: 768px) { /* Mobile */
-     body { padding: 1rem; }
-     .bento-grid {
-         grid-template-columns: 1fr; /* Single column */
-          /* --- UPDATED mobile layout (already stacked) --- */
-         grid-template-areas:
-             "controls"
-             "leaders"
-             "tavtcv" /* Already full width */
-             "arr"    /* Already full width */
-             "notes";
-     }
-      /* Adjust mobile height */
-     #bento-tavtcv .chart-container {
-         min-height: 350px;
-     }
-     /* Other mobile styles remain the same */
-      #bento-controls { flex-direction: column; align-items: stretch; }
-      /* ... other mobile styles ... */
- }
