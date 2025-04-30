@@ -4,46 +4,188 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sales QBR Dashboard</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/date-fns/2.30.0/date-fns.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 
     <style>
-        /* Modern Light Theme with #FFFFF3, #1f231d, and #95b9c0 */
+        /* ========================================= */
+        /* CSS Variables - Monochromatic Desat Purple */
+        /* From style.css                       */
+        /* ========================================= */
         :root {
-            --bg-light: #FFFFF3;
-            --bg-card: #FFFFFF;
-            --color-text-primary: #1f231d;
-            --color-text-secondary: #3c4139;
-            --color-text-muted: #717971;
-            --color-border: #e5e7e3;
-            --color-accent: #95b9c0;
-            --color-accent-light: #b3ced3;
-            --color-accent-dark: #7a9ca2;
-            --color-table-header: #eef6f7;
-            --color-table-row-even: #f7fcfc;
-            --color-table-row-odd: #ffffff;
-            --color-charts-primary: #95b9c0;
-            --color-charts-secondary: #7a9ca2;
-            --color-success: #80b192;
-            --color-error: #e88e8e;
-            --color-info: #95b9c0;
-            --shadow-sm: 0 1px 2px 0 rgba(31, 35, 29, 0.05);
-            --shadow-md: 0 4px 6px -1px rgba(31, 35, 29, 0.1), 0 2px 4px -1px rgba(31, 35, 29, 0.06);
+            /* --- CORE MONOCHROMATIC PALETTE --- */
+            /* Desaturated Purples (Lightest to Darkest) */
+            --mono-purple-light: #9993A1; /* Lightest - Primary Accent */
+            --mono-purple-mid: #797484;   /* Mid Tone - Secondary Accent / Surfaces */
+            --mono-purple-dark: #615C66;  /* Darkest - Outlines / Dark Surfaces */
+
+            /* Neutral Backgrounds & Text */
+            --dark-bg: #252327;       /* Slightly Purple-tinted Dark BG */
+            --dark-text-main: #FFFFF3;/* User Specified Dark Text */
+            --light-bg: #F4F2F6;      /* Slightly Purple-tinted Light BG */
+            --light-text-main: #36323A;/* Dark Purple-Gray Text */
+
+            /* --- Dark Mode Semantic Mapping (Default) --- */
+            /* Backgrounds & Surfaces */
+            --color-background: var(--dark-bg);
+            --color-surface: color-mix(in srgb, var(--dark-bg) 90%, var(--mono-purple-light) 10%); /* Tinted surface */
+            --color-surface-variant: var(--mono-purple-dark); /* Dark purple surface */
+            --color-surface-container-lowest: color-mix(in srgb, var(--dark-bg) 96%, var(--mono-purple-light) 4%);
+            --color-surface-container-low: color-mix(in srgb, var(--dark-bg) 92%, var(--mono-purple-light) 8%);
+            --color-surface-container: var(--color-surface);
+            --color-surface-container-high: color-mix(in srgb, var(--dark-bg) 85%, var(--mono-purple-light) 15%);
+            --color-surface-container-highest: color-mix(in srgb, var(--dark-bg) 80%, var(--mono-purple-light) 20%);
+
+            /* Text ("On" Colors) */
+            --color-on-background: var(--dark-text-main);
+            --color-on-surface: var(--dark-text-main);
+            --color-on-surface-variant: var(--dark-text-main); /* Ensure text on dark purple is readable */
+
+            /* Primary */
+            --color-primary: var(--mono-purple-light); /* Lightest Purple */
+            --color-on-primary: var(--dark-bg);        /* Darkest BG for contrast */
+            --color-primary-container: var(--mono-purple-dark); /* Dark purple container */
+            --color-on-primary-container: var(--dark-text-main);
+
+            /* Secondary */
+            --color-secondary: var(--mono-purple-mid); /* Mid Purple */
+            --color-on-secondary: var(--dark-text-main); /* Use main text */
+            --color-secondary-container: var(--mono-purple-dark);
+            --color-on-secondary-container: var(--dark-text-main);
+
+            /* Tertiary (Using Mid Purple for less emphasis) */
+            --color-tertiary: var(--mono-purple-mid);
+            --color-on-tertiary: var(--dark-text-main);
+            --color-tertiary-container: var(--mono-purple-dark);
+            --color-on-tertiary-container: var(--dark-text-main);
+
+            /* Other */
+            --color-outline: var(--mono-purple-dark);  /* Dark Purple Outline */
+            --color-outline-variant: var(--mono-purple-mid); /* Mid Purple Variant */
+
+            /* Error Colors (Monochromatic attempt - might lack visual punch) */
+            /* --- Mapped to Monochromatic Theme --- */
+            /* Using Primary for Success/Info, Secondary for Error for some distinction */
+            --color-success: var(--color-primary); /* Using lightest purple */
+            --color-on-success: var(--color-on-primary);
+            --color-success-container: var(--color-primary-container);
+            --color-on-success-container: var(--color-on-primary-container);
+
+            --color-error: var(--color-secondary); /* Using mid purple */
+            --color-on-error: var(--color-on-secondary);
+            --color-error-container: var(--color-secondary-container);
+            --color-on-error-container: var(--color-on-secondary-container);
+
+            --color-info: var(--color-primary); /* Using lightest purple */
+            --color-on-info: var(--color-on-primary);
+            --color-info-container: var(--color-primary-container);
+            --color-on-info-container: var(--color-on-primary-container);
+            /* Consider adding border or icon for error emphasis */
+
+            /* Elevation Shadows (Subtle Dark) */
+            --elevation-1: 0px 1px 2px 0px rgba(0, 0, 0, 0.1), 0px 1px 1px 0px rgba(0, 0, 0, 0.08);
+            --elevation-2: 0px 1px 2px 0px rgba(0, 0, 0, 0.1), 0px 2px 3px 0px rgba(0, 0, 0, 0.08);
+            --elevation-3: 0px 2px 4px 0px rgba(0, 0, 0, 0.1), 0px 3px 4px 0px rgba(0, 0, 0, 0.08);
+            --elevation-4: 0px 2px 4px 0px rgba(0, 0, 0, 0.1), 0px 4px 5px 0px rgba(0, 0, 0, 0.08);
+            --elevation-5: 0px 3px 5px 0px rgba(0, 0, 0, 0.1), 0px 6px 10px 0px rgba(0, 0, 0, 0.08);
+
+            /* Mapped variables from old theme to new */
+            --bg-light: var(--color-background);
+            --bg-card: var(--color-surface-container);
+            --color-text-primary: var(--color-on-background);
+            --color-text-secondary: var(--color-on-surface-variant);
+            --color-text-muted: var(--color-outline);
+            --color-border: var(--color-outline-variant);
+            --color-accent: var(--color-primary);
+            --color-accent-light: color-mix(in srgb, var(--color-primary) 80%, var(--dark-text-main) 20%); /* Adjusted */
+            --color-accent-dark: color-mix(in srgb, var(--color-primary) 80%, var(--dark-bg) 20%); /* Adjusted */
+            --color-table-header: var(--color-surface-container-high);
+            --color-table-row-even: var(--color-surface-container-low);
+            --color-table-row-odd: var(--color-surface-container);
+            --color-charts-primary: var(--color-primary);
+            --color-charts-secondary: var(--color-secondary);
+            --shadow-sm: var(--elevation-1);
+            --shadow-md: var(--elevation-2);
         }
-        
+
+        /* Light Mode Theme (Optional - Add if needed) */
+        body.light-mode {
+            /* --- Light Mode Semantic Mapping --- */
+            --color-background: var(--light-bg);
+            --color-surface: color-mix(in srgb, var(--light-bg) 90%, var(--mono-purple-dark) 10%);
+            --color-surface-variant: color-mix(in srgb, var(--mono-purple-light) 30%, var(--light-bg) 70%);
+            --color-surface-container-lowest: var(--light-bg);
+            --color-surface-container-low: color-mix(in srgb, var(--light-bg) 98%, var(--mono-purple-dark) 2%);
+            --color-surface-container: var(--color-surface);
+            --color-surface-container-high: color-mix(in srgb, var(--light-bg) 92%, var(--mono-purple-dark) 8%);
+            --color-surface-container-highest: color-mix(in srgb, var(--light-bg) 88%, var(--mono-purple-dark) 12%);
+            --color-on-background: var(--light-text-main);
+            --color-on-surface: var(--light-text-main);
+            --color-on-surface-variant: var(--mono-purple-dark);
+            --color-primary: var(--mono-purple-light);
+            --color-on-primary: var(--dark-bg);
+            --color-primary-container: color-mix(in srgb, var(--mono-purple-light) 40%, var(--light-bg) 60%);
+            --color-on-primary-container: var(--mono-purple-dark);
+            --color-secondary: var(--mono-purple-mid);
+            --color-on-secondary: var(--light-bg);
+            --color-secondary-container: color-mix(in srgb, var(--mono-purple-mid) 30%, var(--light-bg) 70%);
+            --color-on-secondary-container: var(--mono-purple-dark);
+            --color-tertiary: var(--mono-purple-mid);
+            --color-on-tertiary: var(--light-bg);
+            --color-tertiary-container: color-mix(in srgb, var(--mono-purple-mid) 30%, var(--light-bg) 70%);
+            --color-on-tertiary-container: var(--mono-purple-dark);
+            --color-outline: var(--mono-purple-mid);
+            --color-outline-variant: color-mix(in srgb, var(--mono-purple-light) 60%, var(--light-bg) 40%);
+            --color-success: var(--color-primary);
+            --color-on-success: var(--color-on-primary);
+            --color-success-container: var(--color-primary-container);
+            --color-on-success-container: var(--color-on-primary-container);
+            --color-error: var(--color-secondary);
+            --color-on-error: var(--color-on-secondary);
+            --color-error-container: var(--color-secondary-container);
+            --color-on-error-container: var(--color-on-secondary-container);
+            --color-info: var(--color-primary);
+            --color-on-info: var(--color-on-primary);
+            --color-info-container: var(--color-primary-container);
+            --color-on-info-container: var(--color-on-primary-container);
+            --elevation-1: 0px 1px 2px 0px rgba(0, 0, 0, 0.08), 0px 1px 1px 0px rgba(0, 0, 0, 0.06);
+            --elevation-2: 0px 1px 2px 0px rgba(0, 0, 0, 0.08), 0px 2px 3px 0px rgba(0, 0, 0, 0.06);
+            --elevation-3: 0px 2px 4px 0px rgba(0, 0, 0, 0.08), 0px 3px 4px 0px rgba(0, 0, 0, 0.06);
+            --elevation-4: 0px 2px 4px 0px rgba(0, 0, 0, 0.08), 0px 4px 5px 0px rgba(0, 0, 0, 0.06);
+            --elevation-5: 0px 3px 5px 0px rgba(0, 0, 0, 0.08), 0px 6px 10px 0px rgba(0, 0, 0, 0.06);
+
+            /* Mapped light mode */
+            --bg-light: var(--color-background);
+            --bg-card: var(--color-surface-container);
+            --color-text-primary: var(--color-on-background);
+            --color-text-secondary: var(--color-on-surface-variant);
+            --color-text-muted: var(--color-outline);
+            --color-border: var(--color-outline-variant);
+            --color-accent: var(--color-primary);
+            --color-accent-light: color-mix(in srgb, var(--color-primary) 80%, var(--light-bg) 20%); /* Adjusted */
+            --color-accent-dark: color-mix(in srgb, var(--color-primary) 80%, var(--light-text-main) 20%); /* Adjusted */
+            --color-table-header: var(--color-surface-container-high);
+            --color-table-row-even: var(--color-surface-container-low);
+            --color-table-row-odd: var(--color-surface-container);
+            --color-charts-primary: var(--color-primary);
+            --color-charts-secondary: var(--color-secondary);
+            --shadow-sm: var(--elevation-1);
+            --shadow-md: var(--elevation-2);
+        }
+
+        /* --- Rest of the styles using the mapped variables --- */
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg-light);
-            color: var(--color-text-primary);
+            font-family: 'Inter', sans-serif; /* Consider changing if style.css specified one */
+            background-color: var(--bg-light); /* Uses mapped variable */
+            color: var(--color-text-primary); /* Uses mapped variable */
         }
-        
+
         h1, h2, h3, h4, h5, h6 {
             color: var(--color-text-primary);
         }
-        
+
         .chart-container {
             min-height: 350px;
             position: relative;
@@ -52,7 +194,7 @@
             border-radius: 0.5rem;
             box-shadow: var(--shadow-md);
         }
-        
+
         .loading-placeholder, .error-placeholder, .no-data-placeholder {
             position: absolute;
             top: 50%;
@@ -63,7 +205,7 @@
             padding: 20px;
             width: 90%;
         }
-        
+
         /* Style for table */
         table {
             width: 100%;
@@ -71,14 +213,14 @@
             margin-top: 1rem;
             color: var(--color-text-primary);
         }
-        
+
         th, td {
             padding: 10px 14px;
             text-align: left;
             border-bottom: 1px solid var(--color-border);
             white-space: nowrap;
         }
-        
+
         th {
             background-color: var(--color-table-header);
             font-weight: 600;
@@ -88,25 +230,25 @@
             top: 0;
             z-index: 10;
         }
-        
+
         tbody tr:nth-child(even) {
             background-color: var(--color-table-row-even);
         }
-        
+
         tbody tr:nth-child(odd) {
             background-color: var(--color-table-row-odd);
         }
-        
+
         tbody tr:hover {
             background-color: var(--color-accent-light);
             color: var(--color-text-primary);
         }
-        
+
         td.number {
             text-align: right;
             font-variant-numeric: tabular-nums;
         }
-        
+
         /* Simple spinner */
         .spinner {
             border: 4px solid var(--color-accent-light);
@@ -117,19 +259,19 @@
             animation: spin 1s linear infinite;
             margin: 0 auto 10px auto;
         }
-        
+
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-        
+
         /* Filter styling */
         .filter-container label {
             margin-right: 0.5rem;
             font-weight: 500;
             color: var(--color-text-primary);
         }
-        
+
         .filter-container select, .filter-container input[type="date"] {
             padding: 0.5rem;
             border: 1px solid var(--color-border);
@@ -139,30 +281,31 @@
             background-color: var(--bg-card);
             color: var(--color-text-primary);
         }
-        
+
         .filter-container button {
             padding: 0.5rem 1rem;
             background-color: var(--color-accent);
-            color: white;
+            color: var(--color-on-primary); /* Changed to use 'on' color */
             border: none;
             border-radius: 0.375rem;
             cursor: pointer;
             transition: background-color 0.2s;
         }
-        
+
         .filter-container button:hover {
             background-color: var(--color-accent-dark);
         }
-        
+
         #arr-result {
             font-size: 1.5rem;
             font-weight: 700;
             color: var(--color-accent-dark);
         }
-        
+
         /* Status Banner */
         .status-banner {
-            background-color: rgba(149, 185, 192, 0.1);
+            /* Use rgba with the base accent color */
+            background-color: color-mix(in srgb, var(--color-accent) 10%, transparent);
             border-left: 4px solid var(--color-accent);
             padding: 1rem;
             margin-bottom: 1.5rem;
@@ -172,65 +315,71 @@
             justify-content: space-between;
             box-shadow: var(--shadow-sm);
         }
-        
+
         .status-banner.error {
-            background-color: rgba(232, 142, 142, 0.1);
+            /* Use rgba with the error color */
+            background-color: color-mix(in srgb, var(--color-error) 10%, transparent);
             border-left-color: var(--color-error);
         }
-        
+
         .status-banner.success {
-            background-color: rgba(128, 177, 146, 0.1);
+            /* Use rgba with the success color */
+            background-color: color-mix(in srgb, var(--color-success) 10%, transparent);
             border-left-color: var(--color-success);
         }
-        
+
         .status-banner p {
             margin: 0;
             color: var(--color-text-primary);
         }
-        
+
+        /* General Button Styling */
         .button {
             padding: 0.375rem 0.75rem;
             background-color: var(--color-accent);
-            color: white;
+            color: var(--color-on-primary); /* Use 'on' color */
             border: none;
             border-radius: 0.25rem;
             cursor: pointer;
             font-size: 0.875rem;
             transition: background-color 0.2s;
         }
-        
+
         .button:hover {
             background-color: var(--color-accent-dark);
         }
-        
+
         .button:disabled {
             background-color: var(--color-text-muted);
+            color: var(--color-on-background); /* Ensure text is visible */
+            opacity: 0.7;
             cursor: not-allowed;
         }
-        
+
         /* Cards */
         .card {
             background-color: var(--bg-card);
             box-shadow: var(--shadow-md);
             border-radius: 0.5rem;
             border: 1px solid var(--color-border);
+            color: var(--color-on-surface); /* Ensure text inside card uses correct color */
         }
-        
+
         /* Dashboard header */
         .dashboard-header {
-            background-color: var(--color-accent);
-            color: white;
+            background-color: var(--color-accent); /* Primary accent */
+            color: var(--color-on-primary); /* Text on primary */
             padding: 1.5rem;
             border-radius: 0.5rem;
             margin-bottom: 1.5rem;
             box-shadow: var(--shadow-md);
         }
-        
+
         .dashboard-header h1 {
-            color: white;
+            color: var(--color-on-primary); /* Explicitly set h1 color */
             margin-bottom: 0.5rem;
         }
-        
+
         /* Dataset selector */
         .dataset-selector {
             display: flex;
@@ -241,13 +390,13 @@
             box-shadow: var(--shadow-sm);
             margin-bottom: 1.5rem;
         }
-        
+
         .dataset-selector label {
             font-weight: 600;
             color: var(--color-text-primary);
             margin-right: 1rem;
         }
-        
+
         .dataset-selector select {
             flex-grow: 1;
             padding: 0.5rem;
@@ -256,33 +405,89 @@
             background-color: var(--bg-card);
             color: var(--color-text-primary);
         }
+
+        /* --- Basic Grid Structure (Replace Tailwind classes) --- */
+        .container {
+             max-width: 1280px; /* Example width */
+             margin-left: auto;
+             margin-right: auto;
+             padding-left: 1rem;
+             padding-right: 1rem;
+        }
+
+        .grid {
+            display: grid;
+            gap: 2rem; /* Corresponds to gap-8 */
+            margin-bottom: 2.5rem; /* Corresponds to mb-10 */
+        }
+
+        .grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+
+        /* Apply lg:grid-cols-2 using a media query */
+        @media (min-width: 1024px) { /* Tailwind's 'lg' breakpoint */
+            .lg\:grid-cols-2 {
+                 grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        .p-6 { padding: 1.5rem; }
+        .mb-4 { margin-bottom: 1rem; }
+        .mb-3 { margin-bottom: 0.75rem; }
+        .mb-10 { margin-bottom: 2.5rem; }
+        .text-xl { font-size: 1.25rem; line-height: 1.75rem; }
+        .font-semibold { font-weight: 600; }
+        .text-gray-700 { color: var(--color-text-secondary); } /* Mapped to secondary text */
+        .text-sm { font-size: 0.875rem; line-height: 1.25rem; }
+        .text-gray-500 { color: var(--color-text-muted); } /* Mapped to muted text */
+        .text-3xl { font-size: 1.875rem; line-height: 2.25rem; }
+        .font-bold { font-weight: 700; }
+        .text-lg { font-size: 1.125rem; line-height: 1.75rem; }
+        .flex { display: flex; }
+        .flex-wrap { flex-wrap: wrap; }
+        .items-center { align-items: center; }
+        .gap-4 { gap: 1rem; }
+        .mb-6 { margin-bottom: 1.5rem; }
+        .text-center { text-align: center; }
+        .text-gray-600 { color: var(--color-text-secondary); } /* Mapped */
+        .mt-2 { margin-top: 0.5rem; }
+        .text-red-600 { color: var(--color-error); } /* Mapped */
+        .w-full { width: 100%; }
+        @media (min-width: 768px) { /* md breakpoint */
+           .md\:w-auto { width: auto; }
+        }
+        .min-w-full { min-width: 100%; }
+        .divide-y > :not([hidden]) ~ :not([hidden]) {
+           border-top-width: 1px;
+           border-bottom-width: 0px;
+           border-color: var(--color-border); /* Mapped */
+        }
+        .bg-gray-50 { background-color: var(--color-surface-container-low); } /* Mapped */
+        .font-medium { font-weight: 500; }
+        .text-gray-900 { color: var(--color-text-primary); } /* Mapped */
+        .text-xs { font-size: 0.75rem; line-height: 1rem; }
+
     </style>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/inter-ui/3.19.3/inter.min.css" rel="stylesheet">
-</head>
+    </head>
 <body>
-    <!-- Dashboard Header -->
     <div class="dashboard-header">
         <h1 class="text-3xl font-bold" id="dashboard-title">Sales QBR Dashboard</h1>
         <p class="text-lg" id="dashboard-subtitle">Select an agency dataset to begin</p>
     </div>
 
-    <!-- Dataset Selector -->
-    <div class="container mx-auto px-4">
+    <div class="container">
         <div class="dataset-selector">
             <label for="dataset-select">Select Dataset:</label>
             <select id="dataset-select" class="w-full md:w-auto">
                 <option value="">Choose a dataset...</option>
-                <!-- Options will be populated dynamically -->
-            </select>
+                </select>
         </div>
-        
-        <!-- Status Banner -->
+
         <div id="status-banner" class="status-banner">
             <p id="status-message">Please select a dataset to load</p>
             <button id="refresh-button" class="button" disabled>Refresh Data</button>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
+        <div class="grid lg:grid-cols-2">
             <div class="card p-6">
                 <h2 class="text-xl font-semibold text-gray-700 mb-4">Contract Leaders (by Prime Recipient)</h2>
                 <div id="contract-leaders-table-container" class="chart-container">
@@ -290,7 +495,7 @@
                         <div class="spinner"></div>
                         Select a dataset to view leaders
                     </div>
-                </div>
+                    </div>
             </div>
 
             <div class="card p-6">
@@ -360,7 +565,7 @@
             { id: 'usmc_primes', name: 'USMC (Primes)' },
             { id: 'va_primes', name: 'VA (Primes)' }
         ];
-        
+
         let rawData = []; // To store loaded data
         let tavTcvChartInstance = null; // Store chart instance
         let isLoading = false;
@@ -449,7 +654,7 @@
              let errorPlaceholder = container.querySelector('.error-placeholder');
               if (!errorPlaceholder) {
                      errorPlaceholder = document.createElement('div');
-                     errorPlaceholder.className = 'error-placeholder text-red-600';
+                     errorPlaceholder.className = 'error-placeholder text-red-600'; // Use mapped class
                      container.appendChild(errorPlaceholder);
                  }
              errorPlaceholder.textContent = message;
@@ -536,7 +741,7 @@
         // --- Initialize Dataset Selector ---
         function initializeDatasetSelector() {
             const datasetSelect = document.getElementById('dataset-select');
-            
+
             // Populate the dropdown with dataset options
             DATASETS.forEach(dataset => {
                 const option = document.createElement('option');
@@ -544,7 +749,7 @@
                 option.textContent = dataset.name;
                 datasetSelect.appendChild(option);
             });
-            
+
             // Add event listener to load selected dataset
             datasetSelect.addEventListener('change', function() {
                 const selectedDatasetId = this.value;
@@ -606,6 +811,13 @@
             const container = document.getElementById(containerId);
             setLoading(containerId, false);
 
+            // Remove any existing table first
+            const existingTable = container.querySelector('table');
+            if (existingTable) existingTable.remove();
+            const existingPara = container.querySelector('p');
+            if (existingPara) existingPara.remove();
+
+
             if (!leaderData || leaderData.length === 0) {
                 displayNoData(containerId, 'No contract leader data found.');
                 return;
@@ -614,7 +826,7 @@
             const displayData = leaderData.slice(0, 15);
 
             let tableHTML = `
-                <table class="min-w-full divide-y divide-gray-200">
+                <table class="min-w-full divide-y">
                     <thead class="bg-gray-50">
                         <tr>
                             <th scope="col">Recipient Name</th>
@@ -625,8 +837,8 @@
                             <th scope="col">Dominant Desc.</th>
                         </tr>
                     </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-            `;
+                    <tbody class="divide-y">
+            `; // Removed bg-white from tbody for theme consistency
 
             displayData.forEach(leader => {
                 tableHTML += `
@@ -643,9 +855,9 @@
 
             tableHTML += `</tbody></table>`;
             if (leaderData.length > 15) {
-                 tableHTML += `<p class="text-center text-sm text-gray-500 mt-4">Showing Top 15 of ${leaderData.length} leaders by Total Value</p>`;
+                 tableHTML += `<p class="text-center text-sm text-gray-500" style="margin-top: 1rem;">Showing Top 15 of ${leaderData.length} leaders by Total Value</p>`; // Added style
              }
-            container.innerHTML = tableHTML;
+            container.innerHTML = tableHTML; // Replace content
         }
 
 
@@ -665,7 +877,7 @@
                  tav: parseSafeFloat(row.total_dollars_obligated),
                  potentialTcv: parseSafeFloat(row.potential_total_value_of_award) || parseSafeFloat(row.base_and_all_options_value) || 0
              })).sort((a, b) => b.tcv - a.tcv)
-               .slice(0, 20); // Top 20 by TCV (changed from 5 to 20)
+               .slice(0, 20); // Top 20 by TCV
 
              console.log(`Processed ${contracts.length} contracts for TAV/TCV chart.`);
              return contracts;
@@ -676,15 +888,23 @@
             const canvas = document.getElementById('tavTcvChart');
             setLoading(containerId, false);
 
+            if (!canvas) {
+                 console.error("Canvas element 'tavTcvChart' not found.");
+                 displayError(containerId, "Chart canvas element is missing.");
+                 return;
+             }
+
             if (!chartData || chartData.length === 0) {
                 displayNoData(containerId, 'No contracts found for TAV/TCV comparison.');
                 if (tavTcvChartInstance) {
                     tavTcvChartInstance.destroy();
                     tavTcvChartInstance = null;
                 }
+                canvas.style.display = 'none'; // Hide canvas if no data
                 return;
             }
 
+             canvas.style.display = 'block'; // Ensure canvas is visible
             const ctx = canvas.getContext('2d');
             if (tavTcvChartInstance) {
                 tavTcvChartInstance.destroy();
@@ -694,6 +914,14 @@
             const tavData = chartData.map(d => d.tav);
             const tcvData = chartData.map(d => d.tcv);
 
+             // Get computed styles for chart colors
+             const computedStyle = getComputedStyle(document.documentElement);
+             const primaryColor = computedStyle.getPropertyValue('--color-charts-primary').trim();
+             const secondaryColor = computedStyle.getPropertyValue('--color-charts-secondary').trim();
+             const gridColor = computedStyle.getPropertyValue('--color-border').trim();
+             const textColor = computedStyle.getPropertyValue('--color-text-secondary').trim();
+
+
             tavTcvChartInstance = new Chart(ctx, {
                 type: 'bar',
                 data: {
@@ -702,15 +930,15 @@
                         {
                             label: 'TAV (Obligated)',
                             data: tavData,
-                            backgroundColor: 'rgba(149, 185, 192, 0.7)',  // Main accent color
-                            borderColor: 'rgba(149, 185, 192, 1)',
+                            backgroundColor: primaryColor, // Use CSS variable
+                            borderColor: primaryColor,
                             borderWidth: 1
                         },
                         {
                             label: 'TCV (Current Total)',
                             data: tcvData,
-                            backgroundColor: 'rgba(122, 156, 162, 0.7)',  // Darker accent color
-                            borderColor: 'rgba(122, 156, 162, 1)',
+                            backgroundColor: secondaryColor, // Use CSS variable
+                            borderColor: secondaryColor,
                             borderWidth: 1
                         }
                     ]
@@ -722,10 +950,17 @@
                     scales: {
                         x: {
                             beginAtZero: true,
-                            title: { display: true, text: 'Contract Value (USD)' },
-                            ticks: { callback: function(value) { return formatCurrency(value); } }
+                            title: { display: true, text: 'Contract Value (USD)', color: textColor },
+                            ticks: {
+                                callback: function(value) { return formatCurrency(value); },
+                                color: textColor
+                            },
+                            grid: { color: gridColor }
                         },
-                        y: { ticks: { autoSkip: false, font: { size: 10 } } }
+                        y: {
+                            ticks: { autoSkip: false, font: { size: 10 }, color: textColor },
+                             grid: { color: gridColor }
+                         }
                     },
                     plugins: {
                         tooltip: {
@@ -738,7 +973,10 @@
                                 }
                             }
                         },
-                        legend: { position: 'bottom' }
+                        legend: {
+                            position: 'bottom',
+                            labels: { color: textColor }
+                         }
                     }
                  }
             });
@@ -751,7 +989,6 @@
              const naicsMap = new Map();
 
              data.forEach(row => {
-                  // Use awarding_sub_agency_name instead of awarding_agency_name
                   const subAgency = row.awarding_sub_agency_name?.trim();
                   if (subAgency) subAgencySet.add(subAgency);
 
@@ -765,16 +1002,24 @@
              populateDropdown(document.getElementById('sub-agency-filter'), subAgencySet, "All Sub-Agencies");
              populateNaicsDropdown(document.getElementById('naics-filter'), naicsMap);
          }
-        
+
         // Function to apply filters and update all charts
         function applyFiltersAndUpdateCharts() {
             const subAgencyFilter = document.getElementById('sub-agency-filter').value;
             const naicsFilter = document.getElementById('naics-filter').value;
             const startDateFilter = parseDate(document.getElementById('arr-start-date').value);
             const endDateFilter = parseDate(document.getElementById('arr-end-date').value);
-            
+
             console.log("Applying filters:", { subAgencyFilter, naicsFilter, startDateFilter, endDateFilter });
-            
+
+            if (!rawData || rawData.length === 0) {
+                 console.warn("No raw data available to filter.");
+                 // Display no data messages if appropriate
+                 displayNoData('contract-leaders-table-container', 'Load a dataset first.');
+                 displayNoData('tav-tcv-chart-container', 'Load a dataset first.');
+                 return []; // Return empty array
+             }
+
             // Filter the data
             const filteredData = rawData.filter(row => {
                 const subAgency = row.awarding_sub_agency_name?.trim();
@@ -784,27 +1029,43 @@
 
                 if (subAgencyFilter && subAgency !== subAgencyFilter) return false;
                 if (naicsFilter && naics !== naicsFilter) return false;
-                
-                const overlaps =
-                    (!startDateFilter || (popEndDate && popEndDate >= startDateFilter)) &&
-                    (!endDateFilter || (popStartDate && popStartDate <= endDateFilter));
-                if (!overlaps) return false;
 
-                return true;
+                // Date Filtering Logic:
+                // A contract is included if ANY part of its performance period
+                // overlaps with the selected date range.
+                const contractStart = popStartDate;
+                const contractEnd = popEndDate;
+                const filterStart = startDateFilter;
+                const filterEnd = endDateFilter;
+
+                // Handle cases where dates might be missing
+                if (!contractStart || !contractEnd) return false; // Exclude if PoP is invalid
+
+                // Check for overlap:
+                // Condition 1: Filter range starts before contract ends
+                // Condition 2: Filter range ends after contract starts
+                const overlaps = (!filterStart || contractEnd >= filterStart) &&
+                                 (!filterEnd || contractStart <= filterEnd);
+
+                if ((filterStart || filterEnd) && !overlaps) return false; // Apply date filter only if dates are selected
+
+
+                return true; // Include if passes all filters or no filters applied
             });
-            
+
             console.log(`Filtered data: ${filteredData.length} records`);
-            
+
             // Update all charts with filtered data
             const leaderData = processContractLeaders(filteredData);
             displayContractLeadersTable(leaderData);
-            
+
             const tavTcvData = processTavTcvData(filteredData);
             displayTavTcvChart(tavTcvData);
-            
+
             // Return the filtered data for any additional processing
             return filteredData;
         }
+
 
         function calculateAverageARR() {
             const resultDiv = document.getElementById('arr-result');
@@ -817,12 +1078,12 @@
             errorDiv.style.display = 'none';
             noDataDiv.style.display = 'none';
 
-            setTimeout(() => {
-                try {
-                    // Get filtered data from the currently applied filters
-                    const filteredData = applyFiltersAndUpdateCharts();
+            // Ensure filters are applied *before* calculating ARR
+             const filteredData = applyFiltersAndUpdateCharts(); // Apply filters first
 
-                    console.log(`Filtered down to ${filteredData.length} contracts for ARR calculation.`);
+            setTimeout(() => { // Use setTimeout to allow UI update
+                try {
+                    console.log(`Calculating ARR based on ${filteredData.length} filtered contracts.`);
 
                     if (filteredData.length === 0) {
                          loadingDiv.style.display = 'none';
@@ -843,15 +1104,20 @@
                             const arr = value / durationYears;
                             totalARR += arr;
                             validContractsCount++;
+                            // console.log(`Contract ${row.award_id_piid || 'N/A'}: Value=${value}, Duration=${durationDays}d, ARR=${arr}`);
+                        } else {
+                            // console.log(`Contract ${row.award_id_piid || 'N/A'}: Skipped (Value=${value}, Duration=${durationDays}d)`);
                         }
                     });
 
                     if (validContractsCount > 0) {
                         const averageARR = totalARR / validContractsCount;
                         resultDiv.textContent = formatCurrency(averageARR) + " / year";
+                        console.log(`Average ARR: ${averageARR} (from ${validContractsCount} valid contracts)`);
                     } else {
                          noDataDiv.style.display = 'block';
                          resultDiv.textContent = '$0 / year';
+                         console.log("No valid contracts found for ARR calculation after filtering.");
                     }
                 } catch (error) {
                      console.error("Error calculating ARR:", error);
@@ -860,7 +1126,7 @@
                  } finally {
                     loadingDiv.style.display = 'none';
                 }
-            }, 50);
+            }, 50); // Short delay to allow UI rendering
         }
 
         // --- Load Dataset Functions ---
@@ -868,26 +1134,31 @@
             const banner = document.getElementById('status-banner');
             const statusMessage = document.getElementById('status-message');
             const refreshButton = document.getElementById('refresh-button');
-            
+
             // Update the message
             statusMessage.textContent = message;
-            
+
             // Update banner styling based on type
-            banner.className = 'status-banner';
+            banner.className = 'status-banner'; // Reset classes
             if (type === 'error') {
                 banner.classList.add('error');
             } else if (type === 'success') {
                 banner.classList.add('success');
             }
-            
+             // Add 'info' class for default/loading state if needed
+             else {
+                 // banner.classList.add('info'); // Or no specific class for info
+             }
+
+
             // Enable/disable refresh button
             refreshButton.disabled = isLoading;
         }
-        
+
         function updateDashboardTitle(dataset) {
             const dashboardTitle = document.getElementById('dashboard-title');
             const dashboardSubtitle = document.getElementById('dashboard-subtitle');
-            
+
             if (dataset) {
                 dashboardTitle.textContent = `${dataset.name} Sales QBR Dashboard`;
                 dashboardSubtitle.textContent = `Analyzing contract data for ${dataset.name}`;
@@ -899,163 +1170,224 @@
 
         function loadDataset(dataset) {
             if (!dataset || isLoading) return;
-            
+
             currentDataset = dataset;
             isLoading = true;
-            
+
             // Update UI elements
             updateDashboardTitle(dataset);
             updateStatusBanner(`Loading ${dataset.name} data...`, 'info');
-            
+
             // Set loading states for chart containers
             setLoading('contract-leaders-table-container', true, `Loading ${dataset.name} leader data...`);
             setLoading('tav-tcv-chart-container', true, `Loading ${dataset.name} TAV/TCV data...`);
+            // Clear previous chart instances
+            if (tavTcvChartInstance) {
+                 tavTcvChartInstance.destroy();
+                 tavTcvChartInstance = null;
+             }
+            // Clear previous table content
+            const tableContainer = document.getElementById('contract-leaders-table-container');
+            if (tableContainer) tableContainer.innerHTML = '<div class="loading-placeholder"><div class="spinner"></div>Loading leader data...</div>'; // Reset with loading
+
+
             document.getElementById('arr-result').textContent = '--';
-            
-            // Reset filter values
+
+            // Reset filter values and options
             document.getElementById('sub-agency-filter').innerHTML = '<option value="">All Sub-Agencies</option>';
             document.getElementById('naics-filter').innerHTML = '<option value="">All NAICS</option>';
             document.getElementById('arr-start-date').value = '';
             document.getElementById('arr-end-date').value = '';
-            
-            // Enable refresh button and set it to reload the current dataset
+
+            // Enable refresh button
             const refreshButton = document.getElementById('refresh-button');
-            refreshButton.disabled = false;
-            
+            refreshButton.disabled = false; // Enable it now
+
             // Fetch the data from S3
             fetchDataFromS3(dataset);
         }
-        
+
         function refreshCurrentDataset() {
-            if (currentDataset) {
+            if (currentDataset && !isLoading) { // Prevent multiple clicks while loading
+                console.log("Refreshing current dataset:", currentDataset.name);
                 loadDataset(currentDataset);
+            } else if (isLoading) {
+                console.log("Already loading, refresh cancelled.");
+            } else {
+                console.log("No current dataset selected to refresh.");
+                 updateStatusBanner('Select a dataset first to refresh.', 'error');
             }
         }
-        
+
         async function fetchDataFromS3(dataset) {
+             console.log(`Starting fetch for: ${dataset.name}`);
+             updateStatusBanner(`Workspaceing ${dataset.name} data...`, 'info'); // Update status
             try {
                 const csvUrl = `${S3_BASE_URL}${dataset.id}.csv`;
-                console.log(`Fetching data from: ${csvUrl}`);
-                
+                console.log(`Workspaceing data from: ${csvUrl}`);
+
                 const response = await fetch(csvUrl, {
                     method: 'GET',
                     mode: 'cors', // Important for cross-origin requests
                     cache: 'no-cache', // Avoid caching issues
                 });
-                
+
                 if (!response.ok) {
                     throw new Error(`Failed to fetch data: ${response.status} ${response.statusText}`);
                 }
-                
+
                 const csvText = await response.text();
                 if (!csvText || csvText.trim() === '') {
                     throw new Error('Received empty CSV data');
                 }
-                
+
                 // Parse CSV data using Papa Parse
                 Papa.parse(csvText, {
                     header: true,
                     dynamicTyping: false, // Keep as strings to handle properly
                     skipEmptyLines: true,
                     complete: function(results) {
-                        console.log(`Successfully parsed ${results.data.length} rows of CSV data`);
-                        
+                        console.log(`Successfully parsed ${results.data.length} rows of CSV data for ${dataset.name}`);
+
                         if (results.errors && results.errors.length > 0) {
-                            console.warn("CSV parsing had some errors:", results.errors);
+                            console.warn(`CSV parsing for ${dataset.name} had some errors:`, results.errors);
+                             // Decide if errors are critical, e.g., throw if too many?
                         }
-                        
+
                         if (!results.data || results.data.length === 0) {
-                            throw new Error('No data rows found in CSV');
+                            // Handle case where CSV has headers but no data rows
+                             console.warn(`No data rows found in CSV for ${dataset.name}.`);
+                             updateStatusBanner(`Loaded ${dataset.name}: 0 records found.`, 'success'); // Or 'warning'?
+                             rawData = []; // Set rawData to empty
+                             populateFilters(rawData); // Populate (empty) filters
+                             applyFiltersAndUpdateCharts(); // Update charts to show "No Data"
+                             isLoading = false; // Ensure loading state is cleared
+                             return; // Stop further processing
                         }
-                        
+
                         // Process the data
                         processDataset(dataset, results.data);
                     },
                     error: function(error) {
+                         // This error is specifically from PapaParse
+                        console.error(`PapaParse Error for ${dataset.name}: ${error.message}`);
                         throw new Error(`Error parsing CSV: ${error.message}`);
                     }
                 });
-                
+
             } catch (error) {
-                console.error('Error loading dataset:', error);
-                updateStatusBanner(`Error loading ${dataset.name} data: ${error.message}`, 'error');
+                // Catches fetch errors, empty data errors, or critical parse errors
+                console.error(`Error loading dataset ${dataset.name}:`, error);
+                updateStatusBanner(`Error loading ${dataset.name}: ${error.message}`, 'error');
                 displayError('contract-leaders-table-container', `Failed to load data: ${error.message}`);
                 displayError('tav-tcv-chart-container', `Failed to load data: ${error.message}`);
-                isLoading = false;
+                 rawData = []; // Clear rawData on error
+                 populateFilters(rawData); // Clear filters
+                isLoading = false; // Ensure loading state is cleared
+                 // Maybe disable refresh button here? Or leave it enabled for retry.
+                 const refreshButton = document.getElementById('refresh-button');
+                 if (refreshButton) refreshButton.disabled = false;
             }
         }
-        
+
+
         function processDataset(dataset, data) {
             try {
                 console.log(`Processing ${dataset.name} data...`);
-                
+
                 // Clean and process the data
                 rawData = data.map((row, index) => {
                     try {
-                        const cleanRow = {...row}; // Copy all properties
-                        
+                        // Basic Cleaning: Trim whitespace from all string values
+                        const cleanRow = {};
+                        for (const key in row) {
+                            if (typeof row[key] === 'string') {
+                                cleanRow[key] = row[key].trim();
+                            } else {
+                                cleanRow[key] = row[key]; // Keep non-strings as is
+                            }
+                        }
+
                         // Convert specific numeric fields safely
-                        cleanRow.current_total_value_of_award = parseSafeFloat(row.current_total_value_of_award);
-                        cleanRow.base_and_exercised_options_value = parseSafeFloat(row.base_and_exercised_options_value);
-                        cleanRow.total_dollars_obligated = parseSafeFloat(row.total_dollars_obligated);
-                        cleanRow.base_and_all_options_value = parseSafeFloat(row.base_and_all_options_value);
-                        cleanRow.potential_total_value_of_award = parseSafeFloat(row.potential_total_value_of_award);
-                        
+                        cleanRow.current_total_value_of_award = parseSafeFloat(cleanRow.current_total_value_of_award);
+                        cleanRow.base_and_exercised_options_value = parseSafeFloat(cleanRow.base_and_exercised_options_value);
+                        cleanRow.total_dollars_obligated = parseSafeFloat(cleanRow.total_dollars_obligated);
+                        cleanRow.base_and_all_options_value = parseSafeFloat(cleanRow.base_and_all_options_value);
+                        cleanRow.potential_total_value_of_award = parseSafeFloat(cleanRow.potential_total_value_of_award);
+
                         // Check for essential string fields and provide defaults
                         if (!cleanRow.recipient_name) cleanRow.recipient_name = 'Unknown Recipient';
                         if (!cleanRow.awarding_sub_agency_name) cleanRow.awarding_sub_agency_name = 'Unknown Sub-Agency';
                         if (!cleanRow.naics_code) cleanRow.naics_code = 'Unknown';
-                        
+                        if (!cleanRow.naics_description) cleanRow.naics_description = 'No Description';
+
+
+                        // Validate date fields (optional but good practice)
+                         cleanRow.period_of_performance_start_date_parsed = parseDate(cleanRow.period_of_performance_start_date);
+                         cleanRow.period_of_performance_current_end_date_parsed = parseDate(cleanRow.period_of_performance_current_end_date);
+
+
                         return cleanRow;
                     } catch (error) {
-                        console.error(`Error processing row ${index}:`, error);
-                        return null;
+                        console.error(`Error processing row ${index} for ${dataset.name}:`, error, "Row data:", row);
+                        return null; // Skip rows that cause processing errors
                     }
-                }).filter(Boolean); // Remove null entries
-                
+                }).filter(Boolean); // Remove null entries from skipped rows
+
                 console.log(`Successfully processed ${rawData.length} rows of ${dataset.name} data`);
-                
-                if (rawData.length === 0) {
-                    throw new Error('No valid data rows after processing');
-                }
-                
+
+                if (rawData.length === 0 && data.length > 0) {
+                     // This means all rows failed processing
+                     throw new Error('All data rows failed processing. Check data format or processing logic.');
+                 }
+
                 // Update the UI with the processed data
                 updateStatusBanner(`Successfully loaded ${rawData.length} records from ${dataset.name} at ${new Date().toLocaleTimeString()}`, 'success');
-                
+
                 // Populate filters
                 populateFilters(rawData);
-                
-                // Initially display all data without filters
-                const leaderData = processContractLeaders(rawData);
-                displayContractLeadersTable(leaderData);
-                
-                // Process and display TAV vs TCV chart
-                const tavTcvData = processTavTcvData(rawData);
-                displayTavTcvChart(tavTcvData);
-                
+
+                // Apply filters (which also updates charts)
+                 applyFiltersAndUpdateCharts(); // Display initial view (all data)
+
             } catch (error) {
                 console.error(`Error processing ${dataset.name} data:`, error);
-                updateStatusBanner(`Error processing ${dataset.name} data: ${error.message}`, 'error');
+                updateStatusBanner(`Error processing ${dataset.name}: ${error.message}`, 'error');
                 displayError('contract-leaders-table-container', `Error processing data: ${error.message}`);
                 displayError('tav-tcv-chart-container', `Error processing data: ${error.message}`);
+                 rawData = []; // Clear rawData on processing error
+                 populateFilters(rawData); // Clear filters
             } finally {
-                isLoading = false;
+                isLoading = false; // Ensure loading state is cleared
+                 const refreshButton = document.getElementById('refresh-button');
+                 if (refreshButton) refreshButton.disabled = false; // Re-enable refresh button
             }
         }
+
 
         // --- Event Listeners ---
         document.getElementById('arr-calculate-button').addEventListener('click', calculateAverageARR);
         document.getElementById('refresh-button').addEventListener('click', refreshCurrentDataset);
+        // Add listeners for ARR date inputs if needed for real-time updates (or keep with button click)
         document.getElementById('sub-agency-filter').addEventListener('change', applyFiltersAndUpdateCharts);
         document.getElementById('naics-filter').addEventListener('change', applyFiltersAndUpdateCharts);
-        
+        document.getElementById('arr-start-date').addEventListener('change', applyFiltersAndUpdateCharts); // Update on date change
+        document.getElementById('arr-end-date').addEventListener('change', applyFiltersAndUpdateCharts);   // Update on date change
+
+
         // --- Initialize Dashboard ---
         document.addEventListener('DOMContentLoaded', function() {
             // Initialize the dataset selector
             initializeDatasetSelector();
-            
+
             // Set initial messages
             updateStatusBanner('Please select a dataset to begin');
+            // Optionally set initial loading states for charts/tables
+            setLoading('contract-leaders-table-container', false); // Show placeholder initially
+            displayNoData('contract-leaders-table-container', 'Select a dataset to view leaders.');
+            setLoading('tav-tcv-chart-container', false); // Show placeholder initially
+            displayNoData('tav-tcv-chart-container', 'Select a dataset to view chart.');
+
         });
     </script>
 </body>
