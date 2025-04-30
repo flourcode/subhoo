@@ -27,6 +27,7 @@
             text-align: center;
             color: #6b7280; /* gray-500 */
             padding: 20px;
+            width: 90%; /* Prevent text overflow */
         }
         /* Style for table */
         table {
@@ -112,9 +113,7 @@
 </head>
 <body class="bg-gray-100 p-6 md:p-10">
 
-    <h1 class="text-3xl font-bold text-center text-gray-800 mb-10">Sales QBR Dashboard (DOJ Primes)</h1>
-
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
+    <h1 class="text-3xl font-bold text-center text-gray-800 mb-10">Sales QBR Dashboard (DOJ Primes)</h1> <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
 
         <div class="bg-white p-6 rounded-lg shadow-md">
             <h2 class="text-xl font-semibold text-gray-700 mb-4">Contract Leaders (by Prime Recipient)</h2>
@@ -145,9 +144,7 @@
         <p class="text-sm text-gray-500 mb-3">Filters applied here will update the charts above and the ARR calculation below.</p>
         <div class="filter-container flex flex-wrap items-center gap-4 mb-6">
             <div>
-
                 <label for="arr-subagency-filter">Sub-Agency:</label>
-
                 <select id="arr-subagency-filter">
                     <option value="">All Sub-Agencies</option>
                     </select>
@@ -184,7 +181,7 @@
 
 
     <script>
-        const DATA_URL = 'https://subhoodata.s3.us-east-1.amazonaws.com/data/doj_primes.csv';
+        const DATA_URL = 'https://subhoodata.s3.us-east-1.amazonaws.com/data/doj_primes.csv'; // *** USING DOJ PRIMES URL ***
         let rawData = []; // To store loaded data
         let tavTcvChartInstance = null; // Store chart instance
 
@@ -198,6 +195,13 @@
             return Number(value).toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 });
         }
 
+        function parseSafeFloat(value) {
+             // Handles null, undefined, empty strings, strings with commas/$, etc.
+             if (value === null || value === undefined || value === '') return 0;
+             const num = parseFloat(String(value).replace(/[^0-9.-]+/g,''));
+             return isNaN(num) ? 0 : num;
+         }
+
         function parseDate(dateString) {
             if (!dateString || typeof dateString !== 'string') return null;
             try {
@@ -205,7 +209,12 @@
                     return new Date(dateString + 'T00:00:00');
                 }
                 const date = typeof dateFns !== 'undefined' ? dateFns.parseISO(dateString) : new Date(dateString);
-                return isNaN(date.getTime()) ? null : date;
+                // Check if the parsed date is valid
+                if (isNaN(date.getTime())) {
+                    console.warn(`Invalid date parsed for: ${dateString}`);
+                    return null;
+                }
+                return date;
             } catch (e) {
                 console.warn(`Could not parse date: ${dateString}`, e);
                 return null;
@@ -218,9 +227,11 @@
             const end = parseDate(endDateStr);
             if (!start || !end || end < start) return 0;
              if (typeof dateFns !== 'undefined') {
+                 // Add 1 day to make the duration inclusive
                  return dateFns.differenceInDays(end, start) + 1;
              } else {
                  const diffTime = Math.abs(end - start);
+                 // Add 1 day to make the duration inclusive
                  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
                  return diffDays;
              }
@@ -239,7 +250,6 @@
                  }
                  placeholder.innerHTML = `<div class="spinner"></div>${message}`;
                  placeholder.style.display = 'block';
-                 // Clear actual content when loading
                  const content = container.querySelector('table, canvas');
                  if(content) content.style.display = 'none';
 
@@ -247,9 +257,8 @@
                  if (placeholder) {
                      placeholder.style.display = 'none';
                  }
-                  // Show actual content when not loading
                  const content = container.querySelector('table, canvas');
-                 if(content) content.style.display = 'block'; // or 'table', 'inline-block' etc.
+                 if(content) content.style.display = 'block';
              }
          }
 
@@ -266,6 +275,14 @@
                  }
              errorPlaceholder.textContent = message;
              errorPlaceholder.style.display = 'block';
+             // Clear chart/table content on error too
+             const chartCanvas = container.querySelector('canvas');
+             if (chartCanvas && typeof tavTcvChartInstance !== 'undefined' && tavTcvChartInstance) {
+                 tavTcvChartInstance.destroy();
+                 tavTcvChartInstance = null;
+             }
+             const table = container.querySelector('table');
+             if (table) table.remove();
          }
 
          function displayNoData(containerId, message = "No data available for this view.") {
@@ -281,7 +298,6 @@
              }
              noDataPlaceholder.textContent = message;
              noDataPlaceholder.style.display = 'block';
-             // Also clear any existing chart canvas or table
              const chartCanvas = container.querySelector('canvas');
              if (chartCanvas && typeof tavTcvChartInstance !== 'undefined' && tavTcvChartInstance) {
                  tavTcvChartInstance.destroy();
@@ -354,13 +370,15 @@
 
                 const validContracts = contracts.filter(c => uniqueContractKeys.has(c.contract_award_unique_key || c.award_id_piid));
 
+                // Use safe parsing for values
                 const values = validContracts.map(c => c.current_total_value_of_award ?? c.base_and_exercised_options_value ?? 0).filter(v => !isNaN(v));
                 const avgValue = values.length > 0 ? d3.mean(values) : 0;
 
                 const durations = validContracts.map(c => calculateDurationDays(c.period_of_performance_start_date, c.period_of_performance_current_end_date)).filter(d => d > 0);
                 const avgDurationDays = durations.length > 0 ? d3.mean(durations) : 0;
 
-                const descriptions = validContracts.map(c => c.prime_award_base_transaction_description?.trim() || c.transaction_description?.trim()).filter(Boolean);
+                // Use safe trimming for descriptions
+                const descriptions = validContracts.map(c => (c.prime_award_base_transaction_description || c.transaction_description || '').trim()).filter(Boolean);
                 let dominantType = 'N/A';
                 if (descriptions.length > 0) {
                     const descCounts = d3.rollup(descriptions, v => v.length, d => d);
@@ -375,8 +393,7 @@
                     dominantType: dominantType
                 };
             }).filter(Boolean)
-              // *** UPDATED SORT: Sort by avgValue descending ***
-              .sort((a, b) => b.avgValue - a.avgValue);
+              .sort((a, b) => b.avgValue - a.avgValue); // Sort by avgValue
 
             console.log(`Processed ${leaderData.length} leaders.`);
             return leaderData;
@@ -388,7 +405,7 @@
             setLoading(containerId, false);
 
             if (!leaderData || leaderData.length === 0) {
-                displayNoData(containerId, 'No contract leader data found for current filters.'); // Updated message
+                displayNoData(containerId, 'No contract leader data found for current filters.');
                 return;
             }
 
@@ -399,7 +416,6 @@
                     <thead class="bg-gray-50">
                         <tr>
                             <th scope="col">Recipient Name</th>
-                            {/* Swapped order */}
                             <th scope="col" class="number">Avg Value</th>
                             <th scope="col" class="number"># Awards</th>
                             <th scope="col" class="number">Avg Duration (Days)</th>
@@ -413,7 +429,6 @@
                 tableHTML += `
                     <tr>
                         <td class="font-medium text-gray-900">${truncateText(leader.siName, 35)}</td>
-                        {/* Swapped order */}
                         <td class="number text-gray-600">${formatCurrency(leader.avgValue)}</td>
                         <td class="number text-gray-600">${leader.numAwards.toLocaleString()}</td>
                         <td class="number text-gray-600">${leader.avgDurationDays > 0 ? leader.avgDurationDays.toLocaleString() : '-'}</td>
@@ -424,7 +439,7 @@
 
             tableHTML += `</tbody></table>`;
             if (leaderData.length > 15) {
-                 tableHTML += `<p class="text-center text-sm text-gray-500 mt-4">Showing Top 15 of ${leaderData.length} leaders by Avg Value</p>`; // Updated note
+                 tableHTML += `<p class="text-center text-sm text-gray-500 mt-4">Showing Top 15 of ${leaderData.length} leaders by Avg Value</p>`;
              }
             container.innerHTML = tableHTML;
         }
@@ -437,19 +452,19 @@
              console.log("Processing TAV/TCV data...");
              if (!data || data.length === 0) return [];
 
-             // Filter and map directly from the filtered data
              const contracts = data.filter(row => {
-                 const tcv = row.current_total_value_of_award;
+                 const tcv = row.current_total_value_of_award; // Already parsed
                  const contractId = row.award_id_piid || row.contract_award_unique_key;
-                 return contractId && tcv > 0;
+                 // Ensure recipient_name exists for labeling
+                 return contractId && tcv > 0 && row.recipient_name;
              }).map(row => ({
                  id: row.award_id_piid || row.contract_award_unique_key,
-                 primeName: row.recipient_name || 'Unknown Prime',
+                 primeName: row.recipient_name || 'Unknown Prime', // Use recipient_name
                  tcv: row.current_total_value_of_award,
-                 tav: row.total_dollars_obligated,
-                 potentialTcv: row.potential_total_value_of_award ?? row.base_and_all_options_value ?? 0
+                 tav: row.total_dollars_obligated, // Already parsed
+                 potentialTcv: row.potential_total_value_of_award ?? row.base_and_all_options_value ?? 0 // Already parsed
              })).sort((a, b) => b.tcv - a.tcv)
-               .slice(0, 5);
+               .slice(0, 5); // Top 5 by TCV
 
              console.log(`Processed ${contracts.length} contracts for TAV/TCV chart.`);
              return contracts;
@@ -461,13 +476,18 @@
             setLoading(containerId, false);
 
             if (!chartData || chartData.length === 0) {
-                displayNoData(containerId, 'No contracts found for TAV/TCV comparison with current filters.'); // Updated message
-                if (tavTcvChartInstance) tavTcvChartInstance.destroy();
+                displayNoData(containerId, 'No contracts found for TAV/TCV comparison with current filters.');
+                if (tavTcvChartInstance) {
+                    tavTcvChartInstance.destroy();
+                    tavTcvChartInstance = null;
+                }
                 return;
             }
 
             const ctx = canvas.getContext('2d');
-            if (tavTcvChartInstance) tavTcvChartInstance.destroy();
+            if (tavTcvChartInstance) {
+                tavTcvChartInstance.destroy();
+            }
 
             const labels = chartData.map(d => `${truncateText(d.primeName, 15)} (${truncateText(d.id, 8)})`);
             const tavData = chartData.map(d => d.tav);
@@ -494,7 +514,7 @@
                         }
                     ]
                 },
-                options: { /* ... options remain the same ... */
+                options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     indexAxis: 'y',
@@ -527,30 +547,27 @@
         // --- Chart 3: ARR Estimator ---
         function populateArrFilters(data) { // Populates based on FULL rawData
              if (!data || data.length === 0) return;
-             const subAgencySet = new Set(); // *** CHANGED: Use Sub-Agency ***
+             const subAgencySet = new Set();
              const naicsMap = new Map();
 
              data.forEach(row => {
-                  // *** CHANGED: Use awarding_sub_agency_name ***
-                  const subAgency = row.awarding_sub_agency_name?.trim();
+                  const subAgency = row.awarding_sub_agency_name?.trim(); // Use correct field
                   if (subAgency) subAgencySet.add(subAgency);
 
-                  const code = row.naics_code?.toString().trim();
-                  const desc = row.naics_description?.trim() || 'No Description';
+                  const code = row.naics_code?.toString().trim(); // Use correct field
+                  const desc = row.naics_description?.trim() || 'No Description'; // Use correct field
                   if (code && code !== 'null' && code !== 'undefined' && !naicsMap.has(code)) {
                       naicsMap.set(code, desc);
                   }
              });
 
-             // *** CHANGED: Populate Sub-Agency filter ***
              populateDropdown(document.getElementById('arr-subagency-filter'), subAgencySet, "All Sub-Agencies");
              populateNaicsDropdown(document.getElementById('arr-naics-filter'), naicsMap);
          }
 
         function calculateAverageARR() { // Uses global filters
-            // *** CHANGED: Read from subagency filter ***
-            const subAgencyFilter = currentSubAgencyFilter; // Use global state
-            const naicsFilter = currentNaicsFilter; // Use global state
+            const subAgencyFilter = currentSubAgencyFilter;
+            const naicsFilter = currentNaicsFilter;
             const startDateFilter = parseDate(document.getElementById('arr-start-date').value);
             const endDateFilter = parseDate(document.getElementById('arr-end-date').value);
             const resultDiv = document.getElementById('arr-result');
@@ -570,16 +587,22 @@
                 try {
                     // Filter rawData based on ALL relevant filters (SubAgency, NAICS, Dates)
                     const filteredData = rawData.filter(row => {
-                        // *** CHANGED: Filter by awarding_sub_agency_name ***
                         const subAgency = row.awarding_sub_agency_name?.trim();
                         const naics = row.naics_code?.toString().trim();
                         const popStartDate = parseDate(row.period_of_performance_start_date);
                         const popEndDate = parseDate(row.period_of_performance_current_end_date);
 
-                        if (subAgencyFilter && subAgency !== subAgencyFilter) return false; // Changed filter field
+                        if (subAgencyFilter && subAgency !== subAgencyFilter) return false;
                         if (naicsFilter && naics !== naicsFilter) return false;
-                        if (startDateFilter && popEndDate && popEndDate < startDateFilter) return false;
-                        if (endDateFilter && popStartDate && popStartDate > endDateFilter) return false;
+                        // Check date range overlap:
+                        // A contract overlaps if its end is after the filter start AND its start is before the filter end.
+                        // Handle cases where filter dates are not set.
+                        const overlaps =
+                            (!startDateFilter || (popEndDate && popEndDate >= startDateFilter)) &&
+                            (!endDateFilter || (popStartDate && popStartDate <= endDateFilter));
+
+                        if (!overlaps) return false;
+
 
                         return true;
                     });
@@ -612,6 +635,7 @@
                         resultDiv.textContent = formatCurrency(averageARR) + " / year";
                     } else {
                          noDataDiv.style.display = 'block';
+                         resultDiv.textContent = '$0 / year'; // Show $0 if no valid contracts found
                     }
                 } catch (error) {
                      console.error("Error calculating ARR:", error);
@@ -623,13 +647,12 @@
             }, 50);
         }
 
-        // --- NEW: Function to apply filters and update charts ---
+        // --- Function to apply filters and update charts ---
         function applyFiltersAndUpdateCharts() {
             console.log("Applying filters and updating charts...");
             setLoading('contract-leaders-table-container', true);
             setLoading('tav-tcv-chart-container', true);
 
-            // Use setTimeout to allow UI to update before processing
             setTimeout(() => {
                 try {
                     // Filter rawData based on current SubAgency and NAICS filters
@@ -661,7 +684,7 @@
                      setLoading('contract-leaders-table-container', false);
                      setLoading('tav-tcv-chart-container', false);
                 }
-            }, 50); // Short delay
+            }, 50);
         }
 
 
@@ -673,59 +696,71 @@
             document.getElementById('arr-result').textContent = '--';
 
             try {
-                rawData = await d3.csv(DATA_URL);
-                console.log(`Loaded ${rawData.length} rows from ${DATA_URL}`);
+                // Use d3.csv and handle potential errors during fetch/parse
+                const loadedData = await d3.csv(DATA_URL);
+                console.log(`Loaded ${loadedData.length} rows from ${DATA_URL}`);
 
-                if (!rawData || rawData.length === 0) {
+                if (!loadedData || loadedData.length === 0) {
                     throw new Error("CSV file loaded, but it contains no data rows.");
                 }
 
-                 // Convert amounts ONCE after loading
-                 rawData = rawData.map(row => {
-                     row.current_total_value_of_award = parseFloat(String(row.current_total_value_of_award || '0').replace(/[^0-9.-]+/g,'')) || 0;
-                     row.base_and_exercised_options_value = parseFloat(String(row.base_and_exercised_options_value || '0').replace(/[^0-9.-]+/g,'')) || 0;
-                     row.total_dollars_obligated = parseFloat(String(row.total_dollars_obligated || '0').replace(/[^0-9.-]+/g,'')) || 0;
-                     row.base_and_all_options_value = parseFloat(String(row.base_and_all_options_value || '0').replace(/[^0-9.-]+/g,'')) || 0;
-                     row.potential_total_value_of_award = parseFloat(String(row.potential_total_value_of_award || '0').replace(/[^0-9.-]+/g,'')) || 0;
-                     row.subaward_amount = 0; // Default for prime data
-                     return row;
-                 });
+                 // --- Data Type Conversion (Robust) ---
+                 rawData = loadedData.map((row, index) => {
+                     try {
+                         // Convert amounts using safe parsing
+                         row.current_total_value_of_award = parseSafeFloat(row.current_total_value_of_award);
+                         row.base_and_exercised_options_value = parseSafeFloat(row.base_and_exercised_options_value);
+                         row.total_dollars_obligated = parseSafeFloat(row.total_dollars_obligated);
+                         row.base_and_all_options_value = parseSafeFloat(row.base_and_all_options_value);
+                         row.potential_total_value_of_award = parseSafeFloat(row.potential_total_value_of_award);
+                         row.subaward_amount = 0; // Still default for prime data
+
+                         // Dates remain strings, parsed later
+                         return row;
+                     } catch(convError) {
+                         console.error(`Error converting row ${index}:`, row, convError);
+                         return null; // Return null for rows that fail conversion
+                     }
+                 }).filter(Boolean); // Filter out any null rows from conversion errors
+
+                 console.log(`Processed ${rawData.length} rows after conversion.`);
+
+                if (rawData.length === 0) {
+                    throw new Error("No valid data rows remained after processing/conversion.");
+                }
 
                 // Populate ARR filters (based on full rawData)
                 populateArrFilters(rawData);
 
                 // Initial display of charts using unfiltered data
-                applyFiltersAndUpdateCharts(); // Call the new update function
+                applyFiltersAndUpdateCharts(); // Call the update function
 
             } catch (error) {
                 console.error("Initialization failed:", error);
-                displayError('contract-leaders-table-container', `Error loading/processing data: ${error.message}`);
-                displayError('tav-tcv-chart-container', `Error loading/processing data: ${error.message}`);
+                // Display error in all chart containers
+                displayError('contract-leaders-table-container', `Error: ${error.message}`);
+                displayError('tav-tcv-chart-container', `Error: ${error.message}`);
                 const arrErrorDiv = document.getElementById('arr-error');
                 if(arrErrorDiv) {
-                    arrErrorDiv.textContent = `Error loading/processing data: ${error.message}`;
+                    arrErrorDiv.textContent = `Error: ${error.message}`;
                     arrErrorDiv.style.display = 'block';
                 }
-                 setLoading('contract-leaders-table-container', false);
-                 setLoading('tav-tcv-chart-container', false);
+                 // Ensure loading indicators are hidden on error
+                setLoading('contract-leaders-table-container', false);
+                setLoading('tav-tcv-chart-container', false);
             }
         }
 
         // --- Event Listeners ---
         document.getElementById('arr-calculate-button').addEventListener('click', calculateAverageARR);
 
-        // *** UPDATED: Add listeners for ARR filters to trigger chart updates ***
         document.getElementById('arr-subagency-filter').addEventListener('change', (e) => {
             currentSubAgencyFilter = e.target.value;
             applyFiltersAndUpdateCharts(); // Update charts when subagency changes
-            // Optionally recalculate ARR immediately or keep it button-driven
-            // calculateAverageARR();
         });
         document.getElementById('arr-naics-filter').addEventListener('change', (e) => {
             currentNaicsFilter = e.target.value;
             applyFiltersAndUpdateCharts(); // Update charts when NAICS changes
-            // Optionally recalculate ARR immediately
-            // calculateAverageARR();
         });
 
 
