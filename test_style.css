@@ -1,4 +1,5 @@
-        /* ========================================= */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');       
+	   /* ========================================= */
         /* CSS Variables - Monochromatic Desat Purple */
         /* From style.css                       */
         /* ========================================= */
@@ -167,13 +168,13 @@
         }
 
         /* --- Global & Utility Styles --- */
-        body {
-            font-family: 'Inter', sans-serif; /* Consider changing if style.css specified one */
-            background-color: var(--bg-light); /* Uses mapped variable */
-            color: var(--color-text-primary); /* Uses mapped variable */
-            margin: 0;
-            padding: 1.5rem; /* Add padding around the whole page */
-        }
+body {
+    font-family: 'Poppins', sans-serif; /* Change this line */
+    background-color: var(--bg-light); /* Uses mapped variable */
+    color: var(--color-text-primary); /* Uses mapped variable */
+    margin: 0;
+    padding: 1.5rem; /* Add padding around the whole page */
+}
 
         h1, h2, h3, h4, h5, h6 {
             color: var(--color-text-primary);
