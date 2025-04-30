@@ -294,7 +294,7 @@
             </div>
 
             <div class="card p-6">
-                <h2 class="text-xl font-semibold text-gray-700 mb-4">TAV vs TCV Tracker (Top 5 Contracts by TCV)</h2>
+                <h2 class="text-xl font-semibold text-gray-700 mb-4">TAV vs TCV Tracker (Top 20 Contracts by TCV)</h2>
                 <p class="text-sm text-gray-500 mb-3">Comparing Total Obligated Value to Current Total Value</p>
                 <div id="tav-tcv-chart-container" class="chart-container">
                     <div class="loading-placeholder">
@@ -695,7 +695,7 @@
                  tav: parseSafeFloat(row.total_dollars_obligated),
                  potentialTcv: parseSafeFloat(row.potential_total_value_of_award) || parseSafeFloat(row.base_and_all_options_value) || 0
              })).sort((a, b) => b.tcv - a.tcv)
-               .slice(0, 5); // Top 5 by TCV
+               .slice(0, 20); // Top 20 by TCV (changed from 5 to 20)
 
              console.log(`Processed ${contracts.length} contracts for TAV/TCV chart.`);
              return contracts;
