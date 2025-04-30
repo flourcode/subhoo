@@ -539,8 +539,11 @@ function displayTavTcvChart(chartData) {
              }
 
              setLoading(containerId, false); // Turn off loading
-             container.innerHTML = ''; // Clear previous content (placeholders)
-             container.appendChild(canvas); // Re-add canvas
+             // Ensure container is clean before adding canvas back
+             while (container.firstChild) {
+                 container.removeChild(container.firstChild);
+             }
+             container.appendChild(canvas); // Add canvas
 
 
              if (!chartData || chartData.length === 0) {
@@ -564,9 +567,9 @@ function displayTavTcvChart(chartData) {
 
              // Prepare data for Chart.js
              // Truncate Prime Name more aggressively for better axis readability
-            const labels = chartData.map(d => `${truncateText(d.primeName, 12)} (${truncateText(d.id, 6)})`);
-            const tavData = chartData.map(d => d.tav);
-            const tcvData = chartData.map(d => d.tcv);
+             const labels = chartData.map(d => `${truncateText(d.primeName, 12)} (${truncateText(d.id, 6)})`);
+             const tavData = chartData.map(d => d.tav);
+             const tcvData = chartData.map(d => d.tcv);
 
              // Get computed styles for chart colors dynamically
              const computedStyle = getComputedStyle(document.documentElement);
@@ -575,6 +578,8 @@ function displayTavTcvChart(chartData) {
              const secondaryColor = computedStyle.getPropertyValue('--color-charts-secondary').trim() || '#797484';
              const textColor = computedStyle.getPropertyValue('--color-text-secondary').trim() || '#FFFFF3'; // Muted text for axes
              const textPrimaryColor = computedStyle.getPropertyValue('--color-text-primary').trim() || '#FFFFF3'; // Primary text for tooltips/legend
+             const surfaceColor = computedStyle.getPropertyValue('--color-surface').trim() || '#252327'; // Tooltip BG
+             const outlineColor = computedStyle.getPropertyValue('--color-outline').trim() || '#615C66'; // Tooltip Border
 
              // Create the new chart instance
             tavTcvChartInstance = new Chart(ctx, {
@@ -619,18 +624,20 @@ function displayTavTcvChart(chartData) {
                             ticks: {
                                 callback: function(value, index, ticks) {
                                      // Show fewer ticks for cleaner look
-                                     if (index % 2 !== 0 && index !== ticks.length - 1) return ''; // Show every other tick + last one
+                                     // Show every other tick + last one, but only if there are enough ticks to warrant skipping
+                                     if (ticks.length > 10 && index % 2 !== 0 && index !== ticks.length - 1) return '';
                                      // Simplified currency format (e.g., $1M, $500K)
                                      if (Math.abs(value) >= 1e6) {
                                          return '$' + (value / 1e6).toFixed(1) + 'M';
                                      } else if (Math.abs(value) >= 1e3) {
                                          return '$' + (value / 1e3).toFixed(0) + 'K';
                                      }
-                                     return formatCurrency(value); // Fallback to full format if small
+                                     // Only format non-zero values, otherwise show $0
+                                     return value !== 0 ? formatCurrency(value) : '$0';
                                  },
                                 color: textColor, // Muted text color for ticks
-                                font: { size: 10 },
-                                maxTicksLimit: 6, // Limit number of ticks shown
+                                font: { size: 11 }, // Increased font size
+                                maxTicksLimit: 7, // Allow slightly more ticks if needed
                                 padding: 5, // Space between tick label and axis line
                             },
                             grid: {
@@ -643,8 +650,11 @@ function displayTavTcvChart(chartData) {
                         y: { // Category axis (Vertical - Prime/Contract ID)
                             ticks: {
                                  color: textColor, // Muted text color
-                                 font: { size: 9 }, // Slightly smaller font for labels
+                                 font: { size: 10 }, // Increased font size (was 9)
                                  padding: 5, // Add padding between label and chart edge
+                                 // Consider autoSkip if needed, but manual truncation is often clearer
+                                 // autoSkip: true,
+                                 // maxTicksLimit: 15
                              },
                              grid: {
                                  display: false, // Remove Y-axis grid lines
@@ -656,18 +666,22 @@ function displayTavTcvChart(chartData) {
                     },
                     plugins: {
                         tooltip: {
-                             backgroundColor: computedStyle.getPropertyValue('--color-surface').trim() || '#252327', // Use surface color from CSS
+                             backgroundColor: surfaceColor,
                              titleColor: textPrimaryColor,
                              bodyColor: textPrimaryColor,
-                             borderColor: computedStyle.getPropertyValue('--color-outline').trim() || '#615C66',
+                             borderColor: outlineColor,
                              borderWidth: 1,
                              padding: 10, // Add padding inside tooltip
                              callbacks: {
                                  title: function(tooltipItems) {
                                       // Display full Prime Name and Contract ID in tooltip title
                                       const index = tooltipItems[0].dataIndex;
-                                      const originalData = chartData[index];
-                                      return `${originalData.primeName}\n(${originalData.id})`; // Multi-line title
+                                      // Ensure chartData is accessible here (it should be via closure)
+                                      if (chartData && chartData[index]) {
+                                          const originalData = chartData[index];
+                                          return `${originalData.primeName}\n(${originalData.id})`; // Multi-line title
+                                      }
+                                      return ''; // Fallback
                                   },
                                 label: function(context) {
                                     let label = context.dataset.label || '';
@@ -684,15 +698,15 @@ function displayTavTcvChart(chartData) {
                             align: 'center', // Center legend items
                             labels: {
                                  color: textPrimaryColor, // Use primary text color for legend
-                                 boxWidth: 12, // Smaller color box
-                                 padding: 20, // Space between legend items
-                                 font: { size: 11 }
+                                 boxWidth: 14, // Slightly larger color box
+                                 padding: 25, // Space between legend items
+                                 font: { size: 12 } // Increased font size (was 11)
                              }
                          }
                     },
                      layout: {
                          // Adjust padding to ensure labels/legend fit well
-                         padding: { top: 5, bottom: 5, left: 5, right: 15 } // Increased right padding for values
+                         padding: { top: 10, bottom: 10, left: 10, right: 20 } // Ensure enough padding, esp right
                      }
                  }
             });
