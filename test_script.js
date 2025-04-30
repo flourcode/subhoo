@@ -527,8 +527,7 @@
              return contracts;
          }
 
-
-        function displayTavTcvChart(chartData) {
+function displayTavTcvChart(chartData) {
             const containerId = 'tav-tcv-chart-container';
             const container = document.getElementById(containerId);
              const canvas = document.getElementById('tavTcvChart');
@@ -564,17 +563,18 @@
             }
 
              // Prepare data for Chart.js
-            const labels = chartData.map(d => `${truncateText(d.primeName, 15)} (${truncateText(d.id, 8)})`); // Combine name and ID for label
+             // Truncate Prime Name more aggressively for better axis readability
+            const labels = chartData.map(d => `${truncateText(d.primeName, 12)} (${truncateText(d.id, 6)})`);
             const tavData = chartData.map(d => d.tav);
             const tcvData = chartData.map(d => d.tcv);
 
              // Get computed styles for chart colors dynamically
              const computedStyle = getComputedStyle(document.documentElement);
-             const primaryColor = computedStyle.getPropertyValue('--color-charts-primary').trim() || '#9993A1'; // Fallback
-             const secondaryColor = computedStyle.getPropertyValue('--color-charts-secondary').trim() || '#797484'; // Fallback
-             const gridColor = computedStyle.getPropertyValue('--color-border').trim() || 'rgba(121, 116, 132, 0.5)'; // Fallback
-             const textColor = computedStyle.getPropertyValue('--color-text-secondary').trim() || '#FFFFF3'; // Fallback
-
+             // Use the theme variables you defined in test_style.css
+             const primaryColor = computedStyle.getPropertyValue('--color-charts-primary').trim() || '#9993A1';
+             const secondaryColor = computedStyle.getPropertyValue('--color-charts-secondary').trim() || '#797484';
+             const textColor = computedStyle.getPropertyValue('--color-text-secondary').trim() || '#FFFFF3'; // Muted text for axes
+             const textPrimaryColor = computedStyle.getPropertyValue('--color-text-primary').trim() || '#FFFFF3'; // Primary text for tooltips/legend
 
              // Create the new chart instance
             tavTcvChartInstance = new Chart(ctx, {
@@ -585,69 +585,118 @@
                         {
                             label: 'TAV (Obligated)',
                             data: tavData,
-                            backgroundColor: primaryColor, // Use CSS variable
-                            borderColor: primaryColor,
-                            borderWidth: 1
+                            backgroundColor: primaryColor,
+                            borderColor: primaryColor, // No separate border color needed
+                            borderWidth: 0, // Remove bar border
+                            barPercentage: 0.8, // Make bars slightly thicker relative to category space
+                            categoryPercentage: 0.7, // Reduce gap between categories slightly
+                            borderRadius: 3, // Add subtle rounded corners
                         },
                         {
                             label: 'TCV (Current Total)',
                             data: tcvData,
-                            backgroundColor: secondaryColor, // Use CSS variable
+                            backgroundColor: secondaryColor,
                             borderColor: secondaryColor,
-                            borderWidth: 1
+                            borderWidth: 0,
+                            barPercentage: 0.8,
+                            categoryPercentage: 0.7,
+                            borderRadius: 3,
                         }
                     ]
                 },
                 options: {
                     responsive: true,
-                    maintainAspectRatio: false, // Allow chart to fill container height
-                    indexAxis: 'y', // Horizontal bars
+                    maintainAspectRatio: false, // Essential for fitting Bento box height
+                    indexAxis: 'y', // Keep as horizontal bars
+                    // Set default font family explicitly for Chart.js elements
+                     font: {
+                         family: "'Poppins', sans-serif"
+                     },
                     scales: {
-                        x: { // Value axis
+                        x: { // Value axis (Horizontal)
                             beginAtZero: true,
-                            title: { display: true, text: 'Contract Value (USD)', color: textColor },
+                             title: { display: false }, // Remove axis title (redundant)
                             ticks: {
-                                callback: function(value) { return formatCurrency(value); }, // Format ticks as currency
-                                color: textColor
+                                callback: function(value, index, ticks) {
+                                     // Show fewer ticks for cleaner look
+                                     if (index % 2 !== 0 && index !== ticks.length - 1) return ''; // Show every other tick + last one
+                                     // Simplified currency format (e.g., $1M, $500K)
+                                     if (Math.abs(value) >= 1e6) {
+                                         return '$' + (value / 1e6).toFixed(1) + 'M';
+                                     } else if (Math.abs(value) >= 1e3) {
+                                         return '$' + (value / 1e3).toFixed(0) + 'K';
+                                     }
+                                     return formatCurrency(value); // Fallback to full format if small
+                                 },
+                                color: textColor, // Muted text color for ticks
+                                font: { size: 10 },
+                                maxTicksLimit: 6, // Limit number of ticks shown
+                                padding: 5, // Space between tick label and axis line
                             },
-                            grid: { color: gridColor } // Use variable for grid line color
+                            grid: {
+                                display: false, // Remove X-axis grid lines
+                            },
+                             border: {
+                                 display: false, // Remove X-axis line itself
+                             }
                         },
-                        y: { // Category axis (contract labels)
+                        y: { // Category axis (Vertical - Prime/Contract ID)
                             ticks: {
-                                 autoSkip: false, // Show all labels
-                                 font: { size: 10 }, // Smaller font for labels
-                                 color: textColor
+                                 color: textColor, // Muted text color
+                                 font: { size: 9 }, // Slightly smaller font for labels
+                                 padding: 5, // Add padding between label and chart edge
                              },
-                             grid: { color: gridColor } // Use variable for grid line color
+                             grid: {
+                                 display: false, // Remove Y-axis grid lines
+                             },
+                             border: {
+                                 display: false, // Remove Y-axis line itself
+                             }
                          }
                     },
                     plugins: {
                         tooltip: {
-                            callbacks: {
+                             backgroundColor: computedStyle.getPropertyValue('--color-surface').trim() || '#252327', // Use surface color from CSS
+                             titleColor: textPrimaryColor,
+                             bodyColor: textPrimaryColor,
+                             borderColor: computedStyle.getPropertyValue('--color-outline').trim() || '#615C66',
+                             borderWidth: 1,
+                             padding: 10, // Add padding inside tooltip
+                             callbacks: {
+                                 title: function(tooltipItems) {
+                                      // Display full Prime Name and Contract ID in tooltip title
+                                      const index = tooltipItems[0].dataIndex;
+                                      const originalData = chartData[index];
+                                      return `${originalData.primeName}\n(${originalData.id})`; // Multi-line title
+                                  },
                                 label: function(context) {
                                     let label = context.dataset.label || '';
                                     if (label) { label += ': '; }
                                     if (context.parsed.x !== null) {
-                                        label += formatCurrency(context.parsed.x); // Format tooltip value as currency
+                                        label += formatCurrency(context.parsed.x); // Format value
                                     }
                                     return label;
                                 }
                             }
                         },
                         legend: {
-                            position: 'bottom', // Place legend below chart
-                            labels: { color: textColor } // Use variable for legend text color
+                            position: 'bottom',
+                            align: 'center', // Center legend items
+                            labels: {
+                                 color: textPrimaryColor, // Use primary text color for legend
+                                 boxWidth: 12, // Smaller color box
+                                 padding: 20, // Space between legend items
+                                 font: { size: 11 }
+                             }
                          }
                     },
-                    // Ensure chart takes available space within the container
                      layout: {
-                         padding: { top: 10, bottom: 10, left: 10, right: 10 }
+                         // Adjust padding to ensure labels/legend fit well
+                         padding: { top: 5, bottom: 5, left: 5, right: 15 } // Increased right padding for values
                      }
                  }
             });
         }
-
-
         // --- Filters and Dynamic Chart Updates ---
         function populateFilters(data) {
              if (!data || data.length === 0) {
