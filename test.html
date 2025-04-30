@@ -699,7 +699,9 @@ function truncateText(text, maxLength) {
     
     // Dynamically adjust truncation based on screen width
     const screenWidth = window.innerWidth;
-    const adjustedLength = screenWidth > 1200 ? maxLength * 1.5 : maxLength;
+    const adjustedLength = screenWidth > 1200 ? maxLength * 1.5 : 
+                          screenWidth > 768 ? maxLength : 
+                          Math.floor(maxLength * 0.7);
     
     return stringText.length > adjustedLength ? stringText.substring(0, adjustedLength - 3) + '...' : stringText;
 }
@@ -863,8 +865,8 @@ function truncateText(text, maxLength) {
 
             tableHTML += `</tbody></table>`;
             if (leaderData.length > 15) {
-                 tableHTML += `<p class="text-center text-sm text-gray-500" style="margin-top: 1rem;">Showing Top 15 of ${leaderData.length} leaders by Total Value</p>`; // Added style
-             }
+ container.innerHTML = `<div style="overflow-x: auto; width: 100%;">${tableHTML}</div>`;
+ }
             container.innerHTML = tableHTML; // Replace content
         }
 
@@ -951,9 +953,13 @@ function truncateText(text, maxLength) {
                         }
                     ]
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
+options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    resizeDelay: 0,
+    onResize: function(chart, size) {
+        chart.resize();
+    },
                     indexAxis: 'y',
                     scales: {
                         x: {
@@ -1095,7 +1101,12 @@ function truncateText(text, maxLength) {
             return filteredData;
         }
 
-
+// Add window resize handler to ensure charts resize properly
+window.addEventListener('resize', function() {
+    if (tavTcvChartInstance) {
+        tavTcvChartInstance.resize();
+    }
+});
         function calculateAverageARR() {
             const resultDiv = document.getElementById('arr-result');
             const loadingDiv = document.getElementById('arr-loading');
