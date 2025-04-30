@@ -107,27 +107,44 @@
             font-weight: 700; /* font-bold */
             color: #1d4ed8; /* blue-700 */
         }
-        #file-upload-container {
-            margin-bottom: 20px;
-            text-align: center;
+        .status-banner {
+            background-color: #dbeafe; /* blue-100 */
+            border-left: 4px solid #3b82f6; /* blue-500 */
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            border-radius: 0.375rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
         }
-        #file-upload-container input[type="file"] {
-            display: none;
+        .status-banner.error {
+            background-color: #fee2e2; /* red-100 */
+            border-left-color: #ef4444; /* red-500 */
         }
-        #file-upload-container label {
-            padding: 10px 15px;
-            background-color: #2563eb;
+        .status-banner.success {
+            background-color: #d1fae5; /* green-100 */
+            border-left-color: #10b981; /* green-500 */
+        }
+        .status-banner p {
+            margin: 0;
+            color: #1f2937; /* gray-800 */
+        }
+        .refresh-button {
+            padding: 0.375rem 0.75rem;
+            background-color: #3b82f6; /* blue-500 */
             color: white;
-            border-radius: 5px;
+            border: none;
+            border-radius: 0.25rem;
             cursor: pointer;
-            display: inline-block;
-        }
-        #file-upload-container label:hover {
-            background-color: #1d4ed8;
-        }
-        #file-info {
-            margin-top: 10px;
             font-size: 0.875rem;
+            transition: background-color 0.2s;
+        }
+        .refresh-button:hover {
+            background-color: #2563eb; /* blue-600 */
+        }
+        .refresh-button:disabled {
+            background-color: #9ca3af; /* gray-400 */
+            cursor: not-allowed;
         }
     </style>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/inter-ui/3.19.3/inter.min.css" rel="stylesheet">
@@ -136,13 +153,10 @@
 
     <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">Sales QBR Dashboard (DOJ Primes)</h1>
     
-    <!-- Add file upload functionality -->
-    <div id="file-upload-container" class="bg-white p-6 rounded-lg shadow-md mb-8">
-        <h2 class="text-xl font-semibold text-gray-700 mb-4">Upload Data</h2>
-        <p class="mb-4 text-gray-600">Upload a CSV file with DOJ prime contract data:</p>
-        <label for="csv-file-input" class="mb-2">Upload CSV File</label>
-        <input type="file" id="csv-file-input" accept=".csv">
-        <div id="file-info" class="text-gray-500">No file selected</div>
+    <!-- Status banner -->
+    <div id="status-banner" class="status-banner">
+        <p id="status-message">Loading data from S3...</p>
+        <button id="refresh-button" class="refresh-button" disabled>Refresh Data</button>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
@@ -211,8 +225,11 @@
     </div>
 
     <script>
+        // Constants
+        const DATA_URL = 'https://subhoodata.s3.us-east-1.amazonaws.com/data/doj_primes.csv'; // S3 URL from original code
         let rawData = []; // To store loaded data
         let tavTcvChartInstance = null; // Store chart instance
+        let isLoading = false;
 
         // --- Utility Functions ---
         function formatCurrency(value) {
@@ -663,142 +680,153 @@
             }, 50);
         }
 
-        // --- Process CSV File ---
-        function processCSVFile(file) {
-            if (!file) {
-                console.error("No file provided");
-                return;
+        // --- Load Data from S3 URL ---
+        function updateStatusBanner(message, type = 'info') {
+            const banner = document.getElementById('status-banner');
+            const statusMessage = document.getElementById('status-message');
+            const refreshButton = document.getElementById('refresh-button');
+            
+            // Update the message
+            statusMessage.textContent = message;
+            
+            // Update banner styling based on type
+            banner.className = 'status-banner';
+            if (type === 'error') {
+                banner.classList.add('error');
+            } else if (type === 'success') {
+                banner.classList.add('success');
             }
+            
+            // Enable/disable refresh button
+            refreshButton.disabled = isLoading;
+        }
 
-            setLoading('contract-leaders-table-container', true, 'Processing CSV data...');
-            setLoading('tav-tcv-chart-container', true, 'Processing CSV data...');
+        async function loadDataFromS3() {
+            if (isLoading) return;
+            isLoading = true;
+            
+            // Update UI to loading state
+            updateStatusBanner('Loading data from S3...', 'info');
+            setLoading('contract-leaders-table-container', true, 'Loading Data...');
+            setLoading('tav-tcv-chart-container', true, 'Loading Data...');
             document.getElementById('arr-result').textContent = '--';
-            document.getElementById('file-info').textContent = `Processing: ${file.name}`;
-
-            // Use PapaParse to parse the CSV file
-            Papa.parse(file, {
-                header: true,
-                dynamicTyping: true,
-                skipEmptyLines: true,
-                complete: function(results) {
-                    console.log("CSV parse complete:", results);
-                    
-                    if (results.errors && results.errors.length > 0) {
-                        console.error("CSV parsing errors:", results.errors);
-                        const errorMsg = `Error parsing CSV: ${results.errors[0].message}`;
-                        displayError('contract-leaders-table-container', errorMsg);
-                        displayError('tav-tcv-chart-container', errorMsg);
-                        document.getElementById('file-info').textContent = `Error processing ${file.name}`;
-                        return;
-                    }
-                    
-                    if (!results.data || results.data.length === 0) {
-                        console.error("No data found in CSV file");
-                        displayNoData('contract-leaders-table-container', 'No data found in CSV file');
-                        displayNoData('tav-tcv-chart-container', 'No data found in CSV file');
-                        document.getElementById('file-info').textContent = `No data found in ${file.name}`;
-                        return;
-                    }
-                    
-                    // Process raw data 
-                    try {
-                        // Clean and convert data
-                        rawData = results.data.map((row, index) => {
-                            const cleanRow = {...row}; // Copy all properties
-                            
-                            // Convert specific numeric fields
-                            try {
-                                cleanRow.current_total_value_of_award = parseSafeFloat(row.current_total_value_of_award);
-                                cleanRow.base_and_exercised_options_value = parseSafeFloat(row.base_and_exercised_options_value);
-                                cleanRow.total_dollars_obligated = parseSafeFloat(row.total_dollars_obligated);
-                                cleanRow.base_and_all_options_value = parseSafeFloat(row.base_and_all_options_value);
-                                cleanRow.potential_total_value_of_award = parseSafeFloat(row.potential_total_value_of_award);
-                                
-                                // Check for essential string fields and provide defaults
-                                if (!cleanRow.recipient_name) cleanRow.recipient_name = 'Unknown Recipient';
-                                if (!cleanRow.awarding_agency_name && !cleanRow.funding_agency_name) cleanRow.awarding_agency_name = 'Unknown Agency';
-                                if (!cleanRow.naics_code) cleanRow.naics_code = 'Unknown';
-                                
-                                return cleanRow;
-                            } catch (error) {
-                                console.error(`Error converting row ${index}:`, error);
-                                return null;
-                            }
-                        }).filter(Boolean); // Remove null entries
-                        
-                        console.log(`Processed ${rawData.length} valid rows from CSV`);
-                        document.getElementById('file-info').textContent = `Loaded: ${file.name} (${rawData.length} records)`;
-                        
-                        // Populate filters and display charts
-                        populateArrFilters(rawData);
-                        
-                        // Process and display the contract leaders data
-                        const leaderData = processContractLeaders(rawData);
-                        displayContractLeadersTable(leaderData);
-                        
-                        // Process and display the TAV vs TCV chart
-                        const tavTcvData = processTavTcvData(rawData);
-                        displayTavTcvChart(tavTcvData);
-                        
-                    } catch (error) {
-                        console.error("Error processing CSV data:", error);
-                        displayError('contract-leaders-table-container', `Error processing data: ${error.message}`);
-                        displayError('tav-tcv-chart-container', `Error processing data: ${error.message}`);
-                        document.getElementById('file-info').textContent = `Error processing ${file.name}: ${error.message}`;
-                    }
-                },
-                error: function(error) {
-                    console.error("Error parsing CSV:", error);
-                    displayError('contract-leaders-table-container', `Error parsing CSV: ${error.message}`);
-                    displayError('tav-tcv-chart-container', `Error parsing CSV: ${error.message}`);
-                    document.getElementById('file-info').textContent = `Error parsing ${file.name}`;
+            
+            try {
+                console.log(`Fetching data from: ${DATA_URL}`);
+                const response = await fetch(DATA_URL, {
+                    method: 'GET',
+                    mode: 'cors', // Important for cross-origin requests
+                    cache: 'no-cache', // Avoid caching issues
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch data: ${response.status} ${response.statusText}`);
                 }
-            });
+                
+                const csvText = await response.text();
+                if (!csvText || csvText.trim() === '') {
+                    throw new Error('Received empty CSV data');
+                }
+                
+                // Parse CSV data using Papa Parse
+                Papa.parse(csvText, {
+                    header: true,
+                    dynamicTyping: false, // Keep as strings to handle properly
+                    skipEmptyLines: true,
+                    complete: function(results) {
+                        console.log(`Successfully parsed ${results.data.length} rows of CSV data`);
+                        
+                        if (results.errors && results.errors.length > 0) {
+                            console.warn("CSV parsing had some errors:", results.errors);
+                        }
+                        
+                        if (!results.data || results.data.length === 0) {
+                            throw new Error('No data rows found in CSV');
+                        }
+                        
+                        // Process the data
+                        processCSVData(results.data);
+                    },
+                    error: function(error) {
+                        throw new Error(`Error parsing CSV: ${error.message}`);
+                    }
+                });
+                
+            } catch (error) {
+                console.error('Error loading data:', error);
+                updateStatusBanner(`Error loading data: ${error.message}`, 'error');
+                displayError('contract-leaders-table-container', `Failed to load data: ${error.message}`);
+                displayError('tav-tcv-chart-container', `Failed to load data: ${error.message}`);
+                isLoading = false;
+            }
+        }
+        
+        function processCSVData(data) {
+            try {
+                console.log("Processing CSV data...");
+                
+                // Clean and process the data
+                rawData = data.map((row, index) => {
+                    try {
+                        const cleanRow = {...row}; // Copy all properties
+                        
+                        // Convert specific numeric fields safely
+                        cleanRow.current_total_value_of_award = parseSafeFloat(row.current_total_value_of_award);
+                        cleanRow.base_and_exercised_options_value = parseSafeFloat(row.base_and_exercised_options_value);
+                        cleanRow.total_dollars_obligated = parseSafeFloat(row.total_dollars_obligated);
+                        cleanRow.base_and_all_options_value = parseSafeFloat(row.base_and_all_options_value);
+                        cleanRow.potential_total_value_of_award = parseSafeFloat(row.potential_total_value_of_award);
+                        
+                        // Check for essential string fields and provide defaults
+                        if (!cleanRow.recipient_name) cleanRow.recipient_name = 'Unknown Recipient';
+                        if (!cleanRow.awarding_agency_name && !cleanRow.funding_agency_name) cleanRow.awarding_agency_name = 'Unknown Agency';
+                        if (!cleanRow.naics_code) cleanRow.naics_code = 'Unknown';
+                        
+                        return cleanRow;
+                    } catch (error) {
+                        console.error(`Error processing row ${index}:`, error);
+                        return null;
+                    }
+                }).filter(Boolean); // Remove null entries
+                
+                console.log(`Successfully processed ${rawData.length} rows of data`);
+                
+                if (rawData.length === 0) {
+                    throw new Error('No valid data rows after processing');
+                }
+                
+                // Update the UI with the processed data
+                updateStatusBanner(`Successfully loaded ${rawData.length} records at ${new Date().toLocaleTimeString()}`, 'success');
+                
+                // Populate filters and display charts
+                populateArrFilters(rawData);
+                
+                // Process and display contract leaders
+                const leaderData = processContractLeaders(rawData);
+                displayContractLeadersTable(leaderData);
+                
+                // Process and display TAV vs TCV chart
+                const tavTcvData = processTavTcvData(rawData);
+                displayTavTcvChart(tavTcvData);
+                
+            } catch (error) {
+                console.error('Error processing data:', error);
+                updateStatusBanner(`Error processing data: ${error.message}`, 'error');
+                displayError('contract-leaders-table-container', `Error processing data: ${error.message}`);
+                displayError('tav-tcv-chart-container', `Error processing data: ${error.message}`);
+            } finally {
+                isLoading = false;
+            }
         }
 
         // --- Event Listeners ---
         document.getElementById('arr-calculate-button').addEventListener('click', calculateAverageARR);
+        document.getElementById('refresh-button').addEventListener('click', loadDataFromS3);
         
-        // File input change event
-        document.getElementById('csv-file-input').addEventListener('change', function(event) {
-            const file = event.target.files[0];
-            if (file) {
-                if (file.type === 'text/csv' || file.name.endsWith('.csv')) {
-                    processCSVFile(file);
-                } else {
-                    alert('Please select a CSV file');
-                    event.target.value = ''; // Reset the file input
-                    document.getElementById('file-info').textContent = 'Invalid file type. Please select a CSV file.';
-                }
-            }
-        });
-
-        // Sample data for initial load (testing purposes)
-        function loadSampleData() {
-            // Check if there's a sample file available
-            const fileInput = document.getElementById('csv-file-input');
-            if (fileInput.files.length > 0) {
-                processCSVFile(fileInput.files[0]);
-                return;
-            }
-            
-            // If no file is uploaded, display messages
-            displayNoData('contract-leaders-table-container', 'Please upload a CSV file to view contract leaders');
-            displayNoData('tav-tcv-chart-container', 'Please upload a CSV file to view TAV/TCV data');
-            document.getElementById('file-info').textContent = 'No file selected. Please upload a CSV file.';
-        }
-
-        // Initialize the dashboard
+        // --- Initialize Dashboard ---
         document.addEventListener('DOMContentLoaded', function() {
-            // Set up the file upload button styling
-            const fileInput = document.getElementById('csv-file-input');
-            const fileLabel = document.createElement('label');
-            fileLabel.setAttribute('for', 'csv-file-input');
-            fileLabel.innerHTML = '<span class="text-lg">📂</span> Select CSV File';
-            fileInput.parentNode.insertBefore(fileLabel, fileInput.nextSibling);
-            
-            // Initialize with empty state
-            loadSampleData();
+            // Load data when the page loads
+            loadDataFromS3();
         });
     </script>
 </body>
