@@ -12,6 +12,7 @@
     <style>
         /* ========================================= */
         /* CSS Variables - Monochromatic Desat Purple */
+        /* From style.css                       */
         /* ========================================= */
         :root {
             /* --- CORE MONOCHROMATIC PALETTE --- */
@@ -186,8 +187,7 @@
         }
 
         .chart-container {
-            width: 100%;
-			min-height: 350px;
+            min-height: 350px;
             position: relative;
             overflow-x: auto;
             background-color: var(--bg-card);
@@ -212,9 +212,7 @@
             border-collapse: collapse;
             margin-top: 1rem;
             color: var(--color-text-primary);
-         table-layout: auto; /* Allow columns to adjust based on content */
-    min-width: 650px; /* Minimum width to prevent excessive compression */
-}
+        }
 
         th, td {
             padding: 10px 14px;
@@ -467,71 +465,7 @@
         .font-medium { font-weight: 500; }
         .text-gray-900 { color: var(--color-text-primary); } /* Mapped */
         .text-xs { font-size: 0.75rem; line-height: 1rem; }
-		/* Tooltip styles */
-.tooltip {
-    position: relative;
-    display: inline-block;
-    cursor: help;
-}
 
-.tooltip .tooltip-text {
-    visibility: hidden;
-    width: 200px;
-    background-color: var(--color-surface-container-high);
-    color: var(--color-text-primary);
-    text-align: center;
-    border-radius: 6px;
-    padding: 10px;
-    position: absolute;
-    z-index: 100;
-    bottom: 125%;
-    left: 50%;
-    margin-left: -100px;
-    opacity: 0;
-    transition: opacity 0.3s;
-    box-shadow: var(--shadow-md);
-    font-size: 0.8rem;
-    border: 1px solid var(--color-border);
-}
-
-.tooltip:hover .tooltip-text {
-    visibility: visible;
-    opacity: 1;
-}
-/* Summary Cards */
-.summary-cards {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 1rem;
-    margin-bottom: 1.5rem;
-}
-
-.summary-card {
-    padding: 1rem;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-}
-
-.summary-card-title {
-    font-size: 0.875rem;
-    color: var(--color-text-secondary);
-    margin-bottom: 0.25rem;
-}
-
-.summary-card-value {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--color-text-primary);
-    margin-bottom: 0.25rem;
-}
-
-.summary-card-desc {
-    font-size: 0.75rem;
-    color: var(--color-text-muted);
-}
     </style>
     </head>
 <body>
@@ -553,28 +487,7 @@
             <p id="status-message">Please select a dataset to load</p>
             <button id="refresh-button" class="button" disabled>Refresh Data</button>
         </div>
-<div class="summary-cards">
-    <div class="card summary-card">
-        <div class="summary-card-title">Total Contract Value</div>
-        <div class="summary-card-value" id="total-contract-value">--</div>
-        <div class="summary-card-desc">All active contracts</div>
-    </div>
-    <div class="card summary-card">
-        <div class="summary-card-title">Avg Contract Size</div>
-        <div class="summary-card-value" id="avg-contract-size">--</div>
-        <div class="summary-card-desc">Per prime contractor</div>
-    </div>
-    <div class="card summary-card">
-        <div class="summary-card-title">Prime Contractors</div>
-        <div class="summary-card-value" id="prime-contractors-count">--</div>
-        <div class="summary-card-desc">Unique companies</div>
-    </div>
-    <div class="card summary-card">
-        <div class="summary-card-title">Largest Contract</div>
-        <div class="summary-card-value" id="largest-contract">--</div>
-        <div class="summary-card-desc" id="largest-contract-recipient">--</div>
-    </div>
-</div>
+
         <div class="grid lg:grid-cols-2">
             <div class="card p-6">
                 <h2 class="text-xl font-semibold text-gray-700 mb-4">Contract Leaders (by Prime Recipient)</h2>
@@ -778,18 +691,11 @@
              if (table) table.remove();
          }
 
-function truncateText(text, maxLength) {
-    if (!text) return '';
-    const stringText = String(text);
-    
-    // Dynamically adjust truncation based on screen width
-    const screenWidth = window.innerWidth;
-    const adjustedLength = screenWidth > 1200 ? maxLength * 1.5 : 
-                          screenWidth > 768 ? maxLength : 
-                          Math.floor(maxLength * 0.7);
-    
-    return stringText.length > adjustedLength ? stringText.substring(0, adjustedLength - 3) + '...' : stringText;
-}
+         function truncateText(text, maxLength) {
+             if (!text) return '';
+             const stringText = String(text);
+             return stringText.length > maxLength ? stringText.substring(0, maxLength - 3) + '...' : stringText;
+         }
 
          // Dropdown population functions
          function populateDropdown(selectElement, itemsSet, defaultOptionText = "All") {
@@ -919,47 +825,22 @@ function truncateText(text, maxLength) {
             }
 
             const displayData = leaderData.slice(0, 15);
-			// Add sorting styles to CSS
-.sorted::after {
-    content: attr(data-sort) === 'asc' ? ' ↑' : ' ↓';
-    font-size: 0.75rem;
-    vertical-align: middle;
-}
 
-th {
-    cursor: pointer;
-}
+            let tableHTML = `
+                <table class="min-w-full divide-y">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col">Recipient Name</th>
+                            <th scope="col" class="number">Total Value</th>
+                            <th scope="col" class="number"># Awards</th>
+                            <th scope="col" class="number">Avg Value</th>
+                            <th scope="col" class="number">Avg Duration (Days)</th>
+                            <th scope="col">Dominant Desc.</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y">
+            `; // Removed bg-white from tbody for theme consistency
 
-let tableHTML = `
-    <table class="min-w-full divide-y">
-        <thead class="bg-gray-50">
-            // Replace the header row in displayContractLeadersTable
-<tr>
-    <th scope="col" style="width: 30%;">Recipient Name</th>
-    <th scope="col" class="number tooltip" style="width: 20%;">
-        Total Value
-        <span class="tooltip-text">Total dollar value of all contracts awarded to this recipient</span>
-    </th>
-    <th scope="col" class="number tooltip" style="width: 10%;">
-        # Awards
-        <span class="tooltip-text">Total number of unique contracts awarded to this recipient</span>
-    </th>
-    <th scope="col" class="number tooltip" style="width: 15%;">
-        Avg Value
-        <span class="tooltip-text">Average dollar value per contract</span>
-    </th>
-    <th scope="col" class="number tooltip" style="width: 15%;">
-        Avg Duration
-        <span class="tooltip-text">Average contract period of performance in days</span>
-    </th>
-    <th scope="col" class="tooltip" style="width: 10%;">
-        Dominant Desc.
-        <span class="tooltip-text">Most common contract description</span>
-    </th>
-</tr>
-        </thead>
-        <tbody class="divide-y">
-`;
             displayData.forEach(leader => {
                 tableHTML += `
                     <tr>
@@ -973,26 +854,13 @@ let tableHTML = `
                 `;
             });
 
-tableHTML += `</tbody></table>`;
-if (leaderData.length > 15) {
-    tableHTML += `<p class="text-center text-sm text-gray-500" style="margin-top: 1rem;">Showing Top 15 of ${leaderData.length} leaders by Total Value</p>`;
-}
-container.innerHTML = `<div style="overflow-x: auto; width: 100%;">${tableHTML}</div>`;
+            tableHTML += `</tbody></table>`;
+            if (leaderData.length > 15) {
+                 tableHTML += `<p class="text-center text-sm text-gray-500" style="margin-top: 1rem;">Showing Top 15 of ${leaderData.length} leaders by Total Value</p>`; // Added style
+             }
+            container.innerHTML = tableHTML; // Replace content
         }
-const table = container.querySelector('table');
-if (table) {
-    const headerCells = table.querySelectorAll('th');
-    headerCells.forEach((cell, index) => {
-        cell.addEventListener('click', () => {
-            const type = index === 1 || index === 2 || index === 3 || index === 4 ? 'number' : 'string';
-            sortTable(table, index, type);
-        });
-    });
-    
-    // Set initial sort (by Total Value, descending)
-    headerCells[1].setAttribute('data-sort', 'desc');
-    headerCells[1].classList.add('sorted');
-}
+
 
         // --- Chart 2: TAV vs TCV Tracker ---
         function processTavTcvData(data) {
@@ -1076,13 +944,9 @@ if (table) {
                         }
                     ]
                 },
-options: {
-    responsive: true,
-    maintainAspectRatio: false,
-    resizeDelay: 0,
-    onResize: function(chart, size) {
-        chart.resize();
-    },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
                     indexAxis: 'y',
                     scales: {
                         x: {
@@ -1125,22 +989,9 @@ options: {
              const subAgencySet = new Set();
              const naicsMap = new Map();
 
-             // Debug what fields are available in the data
-             if (data.length > 0) {
-                console.log("Available fields in first record:", Object.keys(data[0]));
-                console.log("Sample record for debugging:", data[0]);
-             }
-
              data.forEach(row => {
-                  // IMPORTANT FIX: Check all possible sub-agency field names
-                  const subAgency = row.awarding_sub_agency_name || 
-                                    row.awarding_sub_tier_agency_name ||
-                                    row.funding_sub_agency_name || 
-                                    row.funding_sub_tier_agency_name || '';
-                  
-                  if (subAgency && subAgency.trim() !== '') {
-                      subAgencySet.add(subAgency.trim());
-                  }
+                  const subAgency = row.awarding_sub_agency_name?.trim();
+                  if (subAgency) subAgencySet.add(subAgency);
 
                   const code = row.naics_code?.toString().trim();
                   const desc = row.naics_description?.trim() || 'No Description';
@@ -1149,43 +1000,10 @@ options: {
                   }
              });
 
-             console.log("Found sub-agencies:", subAgencySet.size);
-             console.log("Found NAICS codes:", naicsMap.size);
-
              populateDropdown(document.getElementById('sub-agency-filter'), subAgencySet, "All Sub-Agencies");
              populateNaicsDropdown(document.getElementById('naics-filter'), naicsMap);
          }
-function updateSummaryCards(data) {
-    if (!data || data.length === 0) {
-        document.getElementById('total-contract-value').textContent = '--';
-        document.getElementById('avg-contract-size').textContent = '--';
-        document.getElementById('prime-contractors-count').textContent = '--';
-        document.getElementById('largest-contract').textContent = '--';
-        document.getElementById('largest-contract-recipient').textContent = '--';
-        return;
-    }
-    
-    // Calculate total contract value
-    const totalValue = data.reduce((sum, contract) => {
-        return sum + parseSafeFloat(contract.current_total_value_of_award);
-    }, 0);
-    
-    // Get unique contractors
-    const uniqueContractors = new Set(data.map(c => c.recipient_name).filter(Boolean));
-    
-    // Find largest contract
-    const largestContract = data.reduce((max, contract) => {
-        const value = parseSafeFloat(contract.current_total_value_of_award);
-        return value > parseSafeFloat(max.current_total_value_of_award) ? contract : max;
-    }, data[0]);
-    
-    // Update DOM
-    document.getElementById('total-contract-value').textContent = formatCurrency(totalValue);
-    document.getElementById('avg-contract-size').textContent = formatCurrency(totalValue / uniqueContractors.size);
-    document.getElementById('prime-contractors-count').textContent = uniqueContractors.size;
-    document.getElementById('largest-contract').textContent = formatCurrency(parseSafeFloat(largestContract.current_total_value_of_award));
-    document.getElementById('largest-contract-recipient').textContent = largestContract.recipient_name;
-}
+
         // Function to apply filters and update all charts
         function applyFiltersAndUpdateCharts() {
             const subAgencyFilter = document.getElementById('sub-agency-filter').value;
@@ -1205,17 +1023,12 @@ function updateSummaryCards(data) {
 
             // Filter the data
             const filteredData = rawData.filter(row => {
-                // IMPORTANT FIX: Check all possible sub-agency field names for filtering
-                const subAgency = row.awarding_sub_agency_name || 
-                                row.awarding_sub_tier_agency_name ||
-                                row.funding_sub_agency_name || 
-                                row.funding_sub_tier_agency_name || '';
-                
+                const subAgency = row.awarding_sub_agency_name?.trim();
                 const naics = row.naics_code?.toString().trim();
                 const popStartDate = parseDate(row.period_of_performance_start_date);
                 const popEndDate = parseDate(row.period_of_performance_current_end_date);
 
-                if (subAgencyFilter && subAgency.trim() !== subAgencyFilter) return false;
+                if (subAgencyFilter && subAgency !== subAgencyFilter) return false;
                 if (naicsFilter && naics !== naicsFilter) return false;
 
                 // Date Filtering Logic:
@@ -1254,12 +1067,7 @@ function updateSummaryCards(data) {
             return filteredData;
         }
 
-// Add window resize handler to ensure charts resize properly
-window.addEventListener('resize', function() {
-    if (tavTcvChartInstance) {
-        tavTcvChartInstance.resize();
-    }
-});
+
         function calculateAverageARR() {
             const resultDiv = document.getElementById('arr-result');
             const loadingDiv = document.getElementById('arr-loading');
@@ -1319,46 +1127,9 @@ window.addEventListener('resize', function() {
                  } finally {
                     loadingDiv.style.display = 'none';
                 }
-            }, 50);
-updateSummaryCards(filteredData);			// Short delay to allow UI rendering
+            }, 50); // Short delay to allow UI rendering
         }
-function sortTable(table, column, type = 'string') {
-    const rows = Array.from(table.querySelectorAll('tbody tr'));
-    const headerCells = table.querySelectorAll('th');
-    const headerCell = headerCells[column];
-    
-    // Toggle sort direction
-    const sortDir = headerCell.getAttribute('data-sort') === 'asc' ? 'desc' : 'asc';
-    
-    // Reset all headers
-    headerCells.forEach(cell => {
-        cell.removeAttribute('data-sort');
-        cell.classList.remove('sorted');
-    });
-    
-    // Set new sort direction
-    headerCell.setAttribute('data-sort', sortDir);
-    headerCell.classList.add('sorted');
-    
-    // Sort rows
-    rows.sort((a, b) => {
-        const aValue = a.cells[column].textContent.trim();
-        const bValue = b.cells[column].textContent.trim();
-        
-        if (type === 'number') {
-            return sortDir === 'asc' 
-                ? parseFloat(aValue.replace(/[^0-9.-]+/g,'')) - parseFloat(bValue.replace(/[^0-9.-]+/g,'')) 
-                : parseFloat(bValue.replace(/[^0-9.-]+/g,'')) - parseFloat(aValue.replace(/[^0-9.-]+/g,''));
-        } else {
-            return sortDir === 'asc' 
-                ? aValue.localeCompare(bValue) 
-                : bValue.localeCompare(aValue);
-        }
-    });
-    
-    // Reappend rows in new order
-    rows.forEach(row => table.querySelector('tbody').appendChild(row));
-}
+
         // --- Load Dataset Functions ---
         function updateStatusBanner(message, type = 'info') {
             const banner = document.getElementById('status-banner');
@@ -1437,7 +1208,7 @@ function sortTable(table, column, type = 'string') {
             fetchDataFromS3(dataset);
         }
 
-       function refreshCurrentDataset() {
+        function refreshCurrentDataset() {
             if (currentDataset && !isLoading) { // Prevent multiple clicks while loading
                 console.log("Refreshing current dataset:", currentDataset.name);
                 loadDataset(currentDataset);
@@ -1445,16 +1216,16 @@ function sortTable(table, column, type = 'string') {
                 console.log("Already loading, refresh cancelled.");
             } else {
                 console.log("No current dataset selected to refresh.");
-                updateStatusBanner('Select a dataset first to refresh.', 'error');
+                 updateStatusBanner('Select a dataset first to refresh.', 'error');
             }
         }
 
         async function fetchDataFromS3(dataset) {
-            console.log(`Starting fetch for: ${dataset.name}`);
-            updateStatusBanner(`Fetching ${dataset.name} data...`, 'info'); // Update status
+             console.log(`Starting fetch for: ${dataset.name}`);
+             updateStatusBanner(`Workspaceing ${dataset.name} data...`, 'info'); // Update status
             try {
                 const csvUrl = `${S3_BASE_URL}${dataset.id}.csv`;
-                console.log(`Fetching data from: ${csvUrl}`);
+                console.log(`Workspaceing data from: ${csvUrl}`);
 
                 const response = await fetch(csvUrl, {
                     method: 'GET',
@@ -1481,24 +1252,25 @@ function sortTable(table, column, type = 'string') {
 
                         if (results.errors && results.errors.length > 0) {
                             console.warn(`CSV parsing for ${dataset.name} had some errors:`, results.errors);
+                             // Decide if errors are critical, e.g., throw if too many?
                         }
 
                         if (!results.data || results.data.length === 0) {
                             // Handle case where CSV has headers but no data rows
-                            console.warn(`No data rows found in CSV for ${dataset.name}.`);
-                            updateStatusBanner(`Loaded ${dataset.name}: 0 records found.`, 'success'); // Or 'warning'?
-                            rawData = []; // Set rawData to empty
-                            populateFilters(rawData); // Populate (empty) filters
-                            applyFiltersAndUpdateCharts(); // Update charts to show "No Data"
-                            isLoading = false; // Ensure loading state is cleared
-                            return; // Stop further processing
+                             console.warn(`No data rows found in CSV for ${dataset.name}.`);
+                             updateStatusBanner(`Loaded ${dataset.name}: 0 records found.`, 'success'); // Or 'warning'?
+                             rawData = []; // Set rawData to empty
+                             populateFilters(rawData); // Populate (empty) filters
+                             applyFiltersAndUpdateCharts(); // Update charts to show "No Data"
+                             isLoading = false; // Ensure loading state is cleared
+                             return; // Stop further processing
                         }
 
                         // Process the data
                         processDataset(dataset, results.data);
                     },
                     error: function(error) {
-                        // This error is specifically from PapaParse
+                         // This error is specifically from PapaParse
                         console.error(`PapaParse Error for ${dataset.name}: ${error.message}`);
                         throw new Error(`Error parsing CSV: ${error.message}`);
                     }
@@ -1510,14 +1282,15 @@ function sortTable(table, column, type = 'string') {
                 updateStatusBanner(`Error loading ${dataset.name}: ${error.message}`, 'error');
                 displayError('contract-leaders-table-container', `Failed to load data: ${error.message}`);
                 displayError('tav-tcv-chart-container', `Failed to load data: ${error.message}`);
-                rawData = []; // Clear rawData on error
-                populateFilters(rawData); // Clear filters
+                 rawData = []; // Clear rawData on error
+                 populateFilters(rawData); // Clear filters
                 isLoading = false; // Ensure loading state is cleared
-                // Maybe disable refresh button here? Or leave it enabled for retry.
-                const refreshButton = document.getElementById('refresh-button');
-                if (refreshButton) refreshButton.disabled = false;
+                 // Maybe disable refresh button here? Or leave it enabled for retry.
+                 const refreshButton = document.getElementById('refresh-button');
+                 if (refreshButton) refreshButton.disabled = false;
             }
         }
+
 
         function processDataset(dataset, data) {
             try {
@@ -1545,22 +1318,15 @@ function sortTable(table, column, type = 'string') {
 
                         // Check for essential string fields and provide defaults
                         if (!cleanRow.recipient_name) cleanRow.recipient_name = 'Unknown Recipient';
-                        
-                        // IMPORTANT FIX: Ensure sub-agency fields are preserved and normalized
-                        const subAgency = cleanRow.awarding_sub_agency_name || 
-                                         cleanRow.awarding_sub_tier_agency_name ||
-                                         cleanRow.funding_sub_agency_name || 
-                                         cleanRow.funding_sub_tier_agency_name || 'Unknown Sub-Agency';
-                                         
-                        // Create a normalized sub-agency field 
-                        cleanRow.normalized_sub_agency = subAgency.trim();
-                        
+                        if (!cleanRow.awarding_sub_agency_name) cleanRow.awarding_sub_agency_name = 'Unknown Sub-Agency';
                         if (!cleanRow.naics_code) cleanRow.naics_code = 'Unknown';
                         if (!cleanRow.naics_description) cleanRow.naics_description = 'No Description';
 
+
                         // Validate date fields (optional but good practice)
-                        cleanRow.period_of_performance_start_date_parsed = parseDate(cleanRow.period_of_performance_start_date);
-                        cleanRow.period_of_performance_current_end_date_parsed = parseDate(cleanRow.period_of_performance_current_end_date);
+                         cleanRow.period_of_performance_start_date_parsed = parseDate(cleanRow.period_of_performance_start_date);
+                         cleanRow.period_of_performance_current_end_date_parsed = parseDate(cleanRow.period_of_performance_current_end_date);
+
 
                         return cleanRow;
                     } catch (error) {
@@ -1572,9 +1338,9 @@ function sortTable(table, column, type = 'string') {
                 console.log(`Successfully processed ${rawData.length} rows of ${dataset.name} data`);
 
                 if (rawData.length === 0 && data.length > 0) {
-                    // This means all rows failed processing
-                    throw new Error('All data rows failed processing. Check data format or processing logic.');
-                }
+                     // This means all rows failed processing
+                     throw new Error('All data rows failed processing. Check data format or processing logic.');
+                 }
 
                 // Update the UI with the processed data
                 updateStatusBanner(`Successfully loaded ${rawData.length} records from ${dataset.name} at ${new Date().toLocaleTimeString()}`, 'success');
@@ -1583,30 +1349,32 @@ function sortTable(table, column, type = 'string') {
                 populateFilters(rawData);
 
                 // Apply filters (which also updates charts)
-                applyFiltersAndUpdateCharts(); // Display initial view (all data)
+                 applyFiltersAndUpdateCharts(); // Display initial view (all data)
 
             } catch (error) {
                 console.error(`Error processing ${dataset.name} data:`, error);
                 updateStatusBanner(`Error processing ${dataset.name}: ${error.message}`, 'error');
                 displayError('contract-leaders-table-container', `Error processing data: ${error.message}`);
                 displayError('tav-tcv-chart-container', `Error processing data: ${error.message}`);
-                rawData = []; // Clear rawData on processing error
-                populateFilters(rawData); // Clear filters
+                 rawData = []; // Clear rawData on processing error
+                 populateFilters(rawData); // Clear filters
             } finally {
                 isLoading = false; // Ensure loading state is cleared
-                const refreshButton = document.getElementById('refresh-button');
-                if (refreshButton) refreshButton.disabled = false; // Re-enable refresh button
+                 const refreshButton = document.getElementById('refresh-button');
+                 if (refreshButton) refreshButton.disabled = false; // Re-enable refresh button
             }
         }
+
 
         // --- Event Listeners ---
         document.getElementById('arr-calculate-button').addEventListener('click', calculateAverageARR);
         document.getElementById('refresh-button').addEventListener('click', refreshCurrentDataset);
-        // Add listeners for filter changes to update charts dynamically
+        // Add listeners for ARR date inputs if needed for real-time updates (or keep with button click)
         document.getElementById('sub-agency-filter').addEventListener('change', applyFiltersAndUpdateCharts);
         document.getElementById('naics-filter').addEventListener('change', applyFiltersAndUpdateCharts);
-        document.getElementById('arr-start-date').addEventListener('change', applyFiltersAndUpdateCharts);
-        document.getElementById('arr-end-date').addEventListener('change', applyFiltersAndUpdateCharts);
+        document.getElementById('arr-start-date').addEventListener('change', applyFiltersAndUpdateCharts); // Update on date change
+        document.getElementById('arr-end-date').addEventListener('change', applyFiltersAndUpdateCharts);   // Update on date change
+
 
         // --- Initialize Dashboard ---
         document.addEventListener('DOMContentLoaded', function() {
@@ -1620,6 +1388,7 @@ function sortTable(table, column, type = 'string') {
             displayNoData('contract-leaders-table-container', 'Select a dataset to view leaders.');
             setLoading('tav-tcv-chart-container', false); // Show placeholder initially
             displayNoData('tav-tcv-chart-container', 'Select a dataset to view chart.');
+
         });
     </script>
 </body>
