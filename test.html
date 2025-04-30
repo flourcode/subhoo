@@ -142,12 +142,9 @@
     </div>
 
     <div class="bg-white p-6 rounded-lg shadow-md mb-10">
-         {/* Title changed back slightly */}
         <h2 class="text-xl font-semibold text-gray-700 mb-4">ARR Estimator</h2>
-         {/* Note about filters not affecting charts above removed */}
         <div class="filter-container flex flex-wrap items-center gap-4 mb-6">
             <div>
-                 {/* Changed back to Agency Filter */}
                 <label for="arr-agency-filter">Agency:</label>
                 <select id="arr-agency-filter">
                     <option value="">All Agencies</option>
@@ -258,7 +255,10 @@
                      placeholder.style.display = 'none';
                  }
                  const content = container.querySelector('table, canvas');
-                 if(content) content.style.display = 'block'; // Use 'table-cell' or 'block' appropriately if needed
+                 // Ensure content is displayed correctly (block for canvas, table for table)
+                 if(content && content.tagName === 'CANVAS') content.style.display = 'block';
+                 else if(content && content.tagName === 'TABLE') content.style.display = 'table';
+                 else if(content) content.style.display = 'block'; // Default fallback
              }
          }
 
@@ -357,7 +357,7 @@
 
         // --- Chart 1: Contract Type Leaders ---
         // *** Reverted to original sorting by numAwards, ensure field names match uscc_primes.csv ***
-        function processContractLeaders(data) {
+        function processContractLeaders(data) { // Takes UNFILTERED rawData
             console.log("Processing Contract Leaders data...");
             if (!data || data.length === 0) return [];
 
@@ -669,16 +669,21 @@
 
             try {
                 console.log(`Attempting to load data from: ${DATA_URL}`);
-                // Added explicit error handling for d3.csv fetch
                 const response = await fetch(DATA_URL);
                 if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status} while fetching ${DATA_URL}`);
+                    // Throw a more specific error including the status code
+                    throw new Error(`HTTP error! Status: ${response.status} while fetching ${DATA_URL}`);
                 }
                 const csvText = await response.text();
                 if (!csvText) {
                      throw new Error("CSV file loaded but is empty.");
                 }
-                const loadedData = d3.csvParse(csvText); // Parse text after successful fetch
+                // Use d3.csvParse for potentially better error handling during parsing
+                const loadedData = d3.csvParse(csvText, (d, i, columns) => {
+                     // Optional: Add row-level parsing logic or checks here if needed
+                     // d3.autoType(d); // Use d3.autoType for automatic type conversion
+                     return d;
+                 });
 
                 console.log(`Successfully loaded and parsed ${loadedData.length} rows from ${DATA_URL}`);
 
@@ -686,7 +691,7 @@
                     throw new Error("CSV data parsed, but resulted in no data rows.");
                 }
 
-                console.log("Raw data sample (first 3 rows):", loadedData.slice(0, 3));
+                console.log("Raw data sample (first row):", loadedData[0]); // Log first row to check fields
 
                 // --- Data Type Conversion (Robust) ---
                 console.log("Starting data type conversion...");
@@ -709,7 +714,7 @@
 
                          // Check for essential string fields and provide defaults
                          if (!cleanRow.recipient_name) cleanRow.recipient_name = 'Unknown Recipient';
-                         // No subagency needed for this version
+                         if (!cleanRow.awarding_agency_name && !cleanRow.funding_agency_name) cleanRow.awarding_agency_name = 'Unknown Agency'; // Default if both missing
                          if (!cleanRow.naics_code) cleanRow.naics_code = 'Unknown';
 
                         return cleanRow;
@@ -717,7 +722,7 @@
                         console.error(`Error converting row ${index}:`, row, convError);
                         return null;
                     }
-                }).filter(Boolean);
+                }).filter(Boolean); // Filter out rows that failed conversion
 
                 console.log(`Processed ${rawData.length} rows after conversion.`);
 
