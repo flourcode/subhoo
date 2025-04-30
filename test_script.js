@@ -1235,19 +1235,37 @@ function displayTavTcvChart(chartData) {
          }
 
 
-        // --- Initialize Dashboard ---
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log("DOM fully loaded and parsed");
-            // Initialize the dataset selector dropdown
-            initializeDatasetSelector();
+// --- Initialize Dashboard ---
+document.addEventListener('DOMContentLoaded', function() {
+    console.log("DOM fully loaded and parsed");
+    
+    // Initialize the dataset selector dropdown
+    initializeDatasetSelector();
 
-            // Set initial UI state (placeholders, default messages)
-             updateDashboardTitle(null); // Set default titles
-             updateStatusBanner('Please select a dataset to begin', 'info'); // Initial status
-             resetUIForNoDataset(); // Set initial state for charts, tables, filters
+    // Set initial UI state (placeholders, default messages)
+    updateDashboardTitle(null); // Set default titles
+    updateStatusBanner('Please select a dataset to begin', 'info'); // Initial status
+    resetUIForNoDataset(); // Set initial state for charts, tables, filters
 
-             // Setup all event listeners after DOM is ready
-             setupEventListeners();
+    // Setup all event listeners after DOM is ready
+    setupEventListeners();
+    
+    // *** Auto-load the SOCOM dataset when the page loads ***
+    const socomDataset = DATASETS.find(d => d.id === 'socom_primes');
+    if (socomDataset) {
+        console.log("Automatically loading SOCOM dataset...");
+        
+        // Update the dropdown to show SOCOM as selected
+        const datasetSelect = document.getElementById('dataset-select');
+        if (datasetSelect) {
+            datasetSelect.value = 'socom_primes';
+        }
+        
+        // Load the SOCOM dataset
+        loadDataset(socomDataset);
+    } else {
+        console.error("SOCOM dataset not found in the DATASETS array");
+    }
 
-            console.log("Dashboard initialized.");
-        });
+    console.log("Dashboard initialized.");
+});
