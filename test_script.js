@@ -653,22 +653,24 @@ function displayTavTcvChart(chartData) {
                         display: false,
                     }
                 },
-                y: { // Category axis (Vertical - Prime/Contract ID)
-    ticks: {
-        color: textColor, // Muted text color
-        font: { size: 11 }, // Slightly smaller font to fit more text
-        padding: 5, // Add padding between label and chart edge
-        // Increase max width for labels to show more text
-        maxWidth: 180, // Allow more space for company names
-        // Optional: Allow minor text wrapping if needed
-        // (Note: might not work in all Chart.js versions)
-        autoSkip: false,
-        callback: function(value, index) {
-            // For very long names, add ellipsis after more characters
-            const name = chartData[index].primeName;
-            return name.length > 25 ? name.substring(0, 25) + '...' : name;
-        }
-    },
+                y: { // Category axis (Vertical)
+                    ticks: {
+                        color: textColor,
+                        font: { 
+                            size: 13, // Larger tick font
+                            weight: 'bold' // Make labels bold
+                        },
+                        padding: 8, // More padding
+                    },
+                    grid: {
+                        display: false,
+                        drawBorder: false,
+                    },
+                    border: {
+                        display: false,
+                    }
+                }
+            },
             plugins: {
                 tooltip: {
                     backgroundColor: surfaceColor,
