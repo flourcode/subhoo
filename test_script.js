@@ -1287,3 +1287,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
     console.log("Dashboard initialized.");
 });
+window.addEventListener('resize', function() {
+    if (tavTcvChartInstance) {
+        // Force chart redraw on window resize
+        tavTcvChartInstance.resize();
+        // Additional adjustment for left alignment
+        const canvas = document.getElementById('tavTcvChart');
+        if (canvas) {
+            canvas.style.marginLeft = '0';
+        }
+    }
+});
