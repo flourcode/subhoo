@@ -1,0 +1,557 @@
+        /* ========================================= */
+        /* CSS Variables - Monochromatic Desat Purple */
+        /* From style.css                       */
+        /* ========================================= */
+        :root {
+            /* --- CORE MONOCHROMATIC PALETTE --- */
+            /* Desaturated Purples (Lightest to Darkest) */
+            --mono-purple-light: #9993A1; /* Lightest - Primary Accent */
+            --mono-purple-mid: #797484;   /* Mid Tone - Secondary Accent / Surfaces */
+            --mono-purple-dark: #615C66;  /* Darkest - Outlines / Dark Surfaces */
+
+            /* Neutral Backgrounds & Text */
+            --dark-bg: #252327;       /* Slightly Purple-tinted Dark BG */
+            --dark-text-main: #FFFFF3;/* User Specified Dark Text */
+            --light-bg: #F4F2F6;      /* Slightly Purple-tinted Light BG */
+            --light-text-main: #36323A;/* Dark Purple-Gray Text */
+
+            /* --- Dark Mode Semantic Mapping (Default) --- */
+            /* Backgrounds & Surfaces */
+            --color-background: var(--dark-bg);
+            --color-surface: color-mix(in srgb, var(--dark-bg) 90%, var(--mono-purple-light) 10%); /* Tinted surface */
+            --color-surface-variant: var(--mono-purple-dark); /* Dark purple surface */
+            --color-surface-container-lowest: color-mix(in srgb, var(--dark-bg) 96%, var(--mono-purple-light) 4%);
+            --color-surface-container-low: color-mix(in srgb, var(--dark-bg) 92%, var(--mono-purple-light) 8%);
+            --color-surface-container: var(--color-surface);
+            --color-surface-container-high: color-mix(in srgb, var(--dark-bg) 85%, var(--mono-purple-light) 15%);
+            --color-surface-container-highest: color-mix(in srgb, var(--dark-bg) 80%, var(--mono-purple-light) 20%);
+
+            /* Text ("On" Colors) */
+            --color-on-background: var(--dark-text-main);
+            --color-on-surface: var(--dark-text-main);
+            --color-on-surface-variant: var(--dark-text-main); /* Ensure text on dark purple is readable */
+
+            /* Primary */
+            --color-primary: var(--mono-purple-light); /* Lightest Purple */
+            --color-on-primary: var(--dark-bg);        /* Darkest BG for contrast */
+            --color-primary-container: var(--mono-purple-dark); /* Dark purple container */
+            --color-on-primary-container: var(--dark-text-main);
+
+            /* Secondary */
+            --color-secondary: var(--mono-purple-mid); /* Mid Purple */
+            --color-on-secondary: var(--dark-text-main); /* Use main text */
+            --color-secondary-container: var(--mono-purple-dark);
+            --color-on-secondary-container: var(--dark-text-main);
+
+            /* Tertiary (Using Mid Purple for less emphasis) */
+            --color-tertiary: var(--mono-purple-mid);
+            --color-on-tertiary: var(--dark-text-main);
+            --color-tertiary-container: var(--mono-purple-dark);
+            --color-on-tertiary-container: var(--dark-text-main);
+
+            /* Other */
+            --color-outline: var(--mono-purple-dark);  /* Dark Purple Outline */
+            --color-outline-variant: var(--mono-purple-mid); /* Mid Purple Variant */
+
+            /* Error Colors (Monochromatic attempt - might lack visual punch) */
+            /* --- Mapped to Monochromatic Theme --- */
+            /* Using Primary for Success/Info, Secondary for Error for some distinction */
+            --color-success: var(--color-primary); /* Using lightest purple */
+            --color-on-success: var(--color-on-primary);
+            --color-success-container: var(--color-primary-container);
+            --color-on-success-container: var(--color-on-primary-container);
+
+            --color-error: var(--color-secondary); /* Using mid purple */
+            --color-on-error: var(--color-on-secondary);
+            --color-error-container: var(--color-secondary-container);
+            --color-on-error-container: var(--color-on-secondary-container);
+
+            --color-info: var(--color-primary); /* Using lightest purple */
+            --color-on-info: var(--color-on-primary);
+            --color-info-container: var(--color-primary-container);
+            --color-on-info-container: var(--color-on-primary-container);
+            /* Consider adding border or icon for error emphasis */
+
+            /* Elevation Shadows (Subtle Dark) */
+            --elevation-1: 0px 1px 2px 0px rgba(0, 0, 0, 0.1), 0px 1px 1px 0px rgba(0, 0, 0, 0.08);
+            --elevation-2: 0px 1px 2px 0px rgba(0, 0, 0, 0.1), 0px 2px 3px 0px rgba(0, 0, 0, 0.08);
+            --elevation-3: 0px 2px 4px 0px rgba(0, 0, 0, 0.1), 0px 3px 4px 0px rgba(0, 0, 0, 0.08);
+            --elevation-4: 0px 2px 4px 0px rgba(0, 0, 0, 0.1), 0px 4px 5px 0px rgba(0, 0, 0, 0.08);
+            --elevation-5: 0px 3px 5px 0px rgba(0, 0, 0, 0.1), 0px 6px 10px 0px rgba(0, 0, 0, 0.08);
+
+            /* Mapped variables from old theme to new */
+            --bg-light: var(--color-background);
+            --bg-card: var(--color-surface-container);
+            --color-text-primary: var(--color-on-background);
+            --color-text-secondary: var(--color-on-surface-variant);
+            --color-text-muted: var(--color-outline);
+            --color-border: var(--color-outline-variant);
+            --color-accent: var(--color-primary);
+            --color-accent-light: color-mix(in srgb, var(--color-primary) 80%, var(--dark-text-main) 20%); /* Adjusted */
+            --color-accent-dark: color-mix(in srgb, var(--color-primary) 80%, var(--dark-bg) 20%); /* Adjusted */
+            --color-table-header: var(--color-surface-container-high);
+            --color-table-row-even: var(--color-surface-container-low);
+            --color-table-row-odd: var(--color-surface-container);
+            --color-charts-primary: var(--color-primary);
+            --color-charts-secondary: var(--color-secondary);
+            --shadow-sm: var(--elevation-1);
+            --shadow-md: var(--elevation-2);
+
+            /* Bento Grid Variables */
+            --bento-gap: 1.5rem; /* Gap between boxes */
+        }
+
+        /* Light Mode Theme (Optional - Add if needed) */
+        body.light-mode {
+            /* --- Light Mode Semantic Mapping --- */
+            --color-background: var(--light-bg);
+            --color-surface: color-mix(in srgb, var(--light-bg) 90%, var(--mono-purple-dark) 10%);
+            --color-surface-variant: color-mix(in srgb, var(--mono-purple-light) 30%, var(--light-bg) 70%);
+            --color-surface-container-lowest: var(--light-bg);
+            --color-surface-container-low: color-mix(in srgb, var(--light-bg) 98%, var(--mono-purple-dark) 2%);
+            --color-surface-container: var(--color-surface);
+            --color-surface-container-high: color-mix(in srgb, var(--light-bg) 92%, var(--mono-purple-dark) 8%);
+            --color-surface-container-highest: color-mix(in srgb, var(--light-bg) 88%, var(--mono-purple-dark) 12%);
+            --color-on-background: var(--light-text-main);
+            --color-on-surface: var(--light-text-main);
+            --color-on-surface-variant: var(--mono-purple-dark);
+            --color-primary: var(--mono-purple-light);
+            --color-on-primary: var(--dark-bg);
+            --color-primary-container: color-mix(in srgb, var(--mono-purple-light) 40%, var(--light-bg) 60%);
+            --color-on-primary-container: var(--mono-purple-dark);
+            --color-secondary: var(--mono-purple-mid);
+            --color-on-secondary: var(--light-bg);
+            --color-secondary-container: color-mix(in srgb, var(--mono-purple-mid) 30%, var(--light-bg) 70%);
+            --color-on-secondary-container: var(--mono-purple-dark);
+            --color-tertiary: var(--mono-purple-mid);
+            --color-on-tertiary: var(--light-bg);
+            --color-tertiary-container: color-mix(in srgb, var(--mono-purple-mid) 30%, var(--light-bg) 70%);
+            --color-on-tertiary-container: var(--mono-purple-dark);
+            --color-outline: var(--mono-purple-mid);
+            --color-outline-variant: color-mix(in srgb, var(--mono-purple-light) 60%, var(--light-bg) 40%);
+            --color-success: var(--color-primary);
+            --color-on-success: var(--color-on-primary);
+            --color-success-container: var(--color-primary-container);
+            --color-on-success-container: var(--color-on-primary-container);
+            --color-error: var(--color-secondary);
+            --color-on-error: var(--color-on-secondary);
+            --color-error-container: var(--color-secondary-container);
+            --color-on-error-container: var(--color-on-secondary-container);
+            --color-info: var(--color-primary);
+            --color-on-info: var(--color-on-primary);
+            --color-info-container: var(--color-primary-container);
+            --color-on-info-container: var(--color-on-primary-container);
+            --elevation-1: 0px 1px 2px 0px rgba(0, 0, 0, 0.08), 0px 1px 1px 0px rgba(0, 0, 0, 0.06);
+            --elevation-2: 0px 1px 2px 0px rgba(0, 0, 0, 0.08), 0px 2px 3px 0px rgba(0, 0, 0, 0.06);
+            --elevation-3: 0px 2px 4px 0px rgba(0, 0, 0, 0.08), 0px 3px 4px 0px rgba(0, 0, 0, 0.06);
+            --elevation-4: 0px 2px 4px 0px rgba(0, 0, 0, 0.08), 0px 4px 5px 0px rgba(0, 0, 0, 0.06);
+            --elevation-5: 0px 3px 5px 0px rgba(0, 0, 0, 0.08), 0px 6px 10px 0px rgba(0, 0, 0, 0.06);
+
+            /* Mapped light mode */
+            --bg-light: var(--color-background);
+            --bg-card: var(--color-surface-container);
+            --color-text-primary: var(--color-on-background);
+            --color-text-secondary: var(--color-on-surface-variant);
+            --color-text-muted: var(--color-outline);
+            --color-border: var(--color-outline-variant);
+            --color-accent: var(--color-primary);
+            --color-accent-light: color-mix(in srgb, var(--color-primary) 80%, var(--light-bg) 20%); /* Adjusted */
+            --color-accent-dark: color-mix(in srgb, var(--color-primary) 80%, var(--light-text-main) 20%); /* Adjusted */
+            --color-table-header: var(--color-surface-container-high);
+            --color-table-row-even: var(--color-surface-container-low);
+            --color-table-row-odd: var(--color-surface-container);
+            --color-charts-primary: var(--color-primary);
+            --color-charts-secondary: var(--color-secondary);
+            --shadow-sm: var(--elevation-1);
+            --shadow-md: var(--elevation-2);
+        }
+
+        /* --- Global & Utility Styles --- */
+        body {
+            font-family: 'Inter', sans-serif; /* Consider changing if style.css specified one */
+            background-color: var(--bg-light); /* Uses mapped variable */
+            color: var(--color-text-primary); /* Uses mapped variable */
+            margin: 0;
+            padding: 1.5rem; /* Add padding around the whole page */
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            color: var(--color-text-primary);
+            margin-top: 0; /* Reset margin */
+        }
+
+        /* Dashboard header */
+        .dashboard-header {
+            /* Removed background/padding - Now just holds title */
+            margin-bottom: var(--bento-gap);
+        }
+
+        .dashboard-header h1 {
+            color: var(--color-text-primary); /* Keep primary text color */
+            margin-bottom: 0.25rem;
+            font-size: 1.875rem; /* text-3xl */
+            font-weight: 700; /* font-bold */
+        }
+        .dashboard-header p {
+             font-size: 1.125rem; /* text-lg */
+             color: var(--color-text-secondary);
+             margin-bottom: 0;
+        }
+
+        /* --- Bento Grid Layout --- */
+        .bento-grid {
+            display: grid;
+            gap: var(--bento-gap);
+            grid-template-columns: repeat(3, 1fr); /* Default 3 columns */
+            grid-template-areas: /* Define layout areas */
+                "controls controls controls" /* Span full width initially */
+                "leaders leaders tavtcv"
+                "arr arr tavtcv" /* TAV/TCV spans two rows */
+                "notes notes notes";
+        }
+
+        .bento-box {
+            /* Inherit card styles for visual consistency */
+            background-color: var(--bg-card);
+            box-shadow: var(--shadow-md);
+            border-radius: 0.5rem;
+            border: 1px solid var(--color-border);
+            color: var(--color-on-surface);
+            padding: 1.5rem; /* p-6 */
+            display: flex; /* Use flexbox for content alignment */
+            flex-direction: column; /* Stack content vertically */
+            min-height: 150px; /* Ensure boxes have some min height */
+        }
+
+        /* Assign grid areas to boxes */
+        #bento-controls { grid-area: controls; }
+        #bento-leaders  { grid-area: leaders; }
+        #bento-tavtcv   { grid-area: tavtcv; }
+        #bento-arr      { grid-area: arr; }
+        #bento-notes    { grid-area: notes; }
+
+
+        /* Specific Box Styles */
+        #bento-controls {
+             /* Arrange items within the controls box */
+             flex-direction: row; /* Arrange items horizontally */
+             flex-wrap: wrap; /* Allow wrapping on small screens */
+             align-items: center; /* Vertically align items */
+             gap: 1rem; /* Space between items */
+         }
+
+        .dataset-selector {
+            /* Styles for the dataset selector group within controls */
+             display: flex;
+             align-items: center;
+             gap: 0.5rem;
+             flex-grow: 1; /* Allow it to take available space */
+             min-width: 250px; /* Prevent excessive shrinking */
+         }
+         .dataset-selector label {
+             font-weight: 600;
+             color: var(--color-text-primary);
+             margin-right: 0.5rem; /* Keep existing margin */
+         }
+         .dataset-selector select {
+             flex-grow: 1; /* Select takes remaining space */
+             /* Inherit styles from general filter select below */
+         }
+
+        .status-section {
+            /* Styles for the status message and refresh button group */
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-grow: 1; /* Allow it to take available space */
+            justify-content: flex-end; /* Align to the right */
+        }
+
+         #status-banner {
+             /* Status Banner - removing background/border, just text */
+             padding: 0;
+             margin: 0;
+             border: none;
+             box-shadow: none;
+             background-color: transparent;
+             /* Add indicators for status if needed */
+         }
+         #status-message {
+             margin: 0;
+             color: var(--color-text-secondary); /* Muted color for status */
+             text-align: right;
+         }
+         #status-banner.error #status-message { color: var(--color-error); }
+         #status-banner.success #status-message { color: var(--color-success); }
+
+
+         #bento-notes h2 { margin-bottom: 0.5rem; }
+         #bento-notes p {
+              font-size: 0.875rem; /* text-sm */
+              color: var(--color-text-secondary);
+              margin-bottom: 0.5rem;
+              line-height: 1.4;
+          }
+          #bento-notes p:last-child { margin-bottom: 0; }
+
+
+        /* --- General Component Styles (Mostly unchanged) --- */
+
+        h2.bento-title { /* Consistent title style for boxes */
+            font-size: 1.25rem; /* text-xl */
+            font-weight: 600; /* font-semibold */
+            color: var(--color-text-primary); /* Use primary text */
+            margin-bottom: 1rem; /* mb-4 */
+        }
+         p.bento-subtitle { /* Consistent subtitle style */
+             font-size: 0.875rem; /* text-sm */
+             color: var(--color-text-muted); /* Muted color */
+             margin-top: -0.75rem; /* Pull up slightly */
+             margin-bottom: 0.75rem; /* mb-3 */
+         }
+
+        .chart-container {
+            min-height: 300px; /* Slightly reduced min-height */
+            position: relative;
+            /* Remove background/border - handled by bento-box */
+            /* background-color: var(--bg-card); */
+            /* border-radius: 0.5rem; */
+            /* box-shadow: var(--shadow-md); */
+            flex-grow: 1; /* Allow chart container to fill box */
+            display: flex; /* Center placeholder */
+            align-items: center;
+            justify-content: center;
+             overflow-x: auto; /* Keep horizontal scroll for table */
+        }
+         .chart-container canvas {
+             max-height: 400px; /* Limit canvas height */
+         }
+         /* Ensure table takes full width */
+        #contract-leaders-table-container {
+             width: 100%;
+        }
+
+
+        .loading-placeholder, .error-placeholder, .no-data-placeholder {
+            position: absolute; /* Keep absolute positioning relative to container */
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: var(--color-text-secondary);
+            padding: 20px;
+            width: 90%;
+        }
+
+        /* Style for table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 0; /* Remove margin, handled by container padding */
+            color: var(--color-text-primary);
+        }
+
+        th, td {
+            padding: 10px 14px;
+            text-align: left;
+            border-bottom: 1px solid var(--color-border);
+            white-space: nowrap;
+            font-size: 0.875rem; /* Slightly smaller table text */
+        }
+
+        th {
+            background-color: var(--color-table-header);
+            font-weight: 600;
+            color: var(--color-text-primary);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        tbody tr:nth-child(even) { background-color: var(--color-table-row-even); }
+        tbody tr:nth-child(odd) { background-color: var(--color-table-row-odd); }
+        tbody tr:hover {
+            background-color: var(--color-accent-light);
+            color: var(--color-text-primary);
+        }
+        td.number { text-align: right; font-variant-numeric: tabular-nums; }
+
+        /* Simple spinner */
+        .spinner {
+            border: 4px solid var(--color-accent-light);
+            border-top: 4px solid var(--color-accent);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Filter styling */
+        .filter-container {
+             display: flex;
+             flex-wrap: wrap;
+             align-items: center;
+             gap: 1rem; /* gap-4 */
+             margin-bottom: 1.5rem; /* mb-6 */
+         }
+        .filter-container > div { /* Target direct div children for filters */
+            display: flex;
+            flex-direction: column; /* Stack label and input */
+            gap: 0.25rem;
+        }
+
+        .filter-container label {
+            margin-right: 0; /* Remove old margin */
+            font-weight: 500;
+            font-size: 0.75rem; /* text-xs */
+            color: var(--color-text-secondary);
+        }
+
+        .filter-container select, .filter-container input[type="date"] {
+            padding: 0.5rem;
+            border: 1px solid var(--color-border);
+            border-radius: 0.375rem;
+            margin-right: 0; /* Remove old margin */
+            min-width: 150px;
+            background-color: var(--bg-card); /* Match card background */
+            color: var(--color-text-primary);
+            font-size: 0.875rem;
+        }
+         /* Specific width for date inputs */
+         .filter-container input[type="date"] { min-width: 130px; }
+
+        .filter-container button {
+             /* Align button better */
+             margin-top: 1.1rem; /* Roughly align with inputs */
+             padding: 0.5rem 1rem;
+             background-color: var(--color-accent);
+             color: var(--color-on-primary);
+             border: none;
+             border-radius: 0.375rem;
+             cursor: pointer;
+             transition: background-color 0.2s;
+             height: fit-content;
+         }
+        .filter-container button:hover { background-color: var(--color-accent-dark); }
+
+        #arr-result-container { /* Container for ARR result section */
+             text-align: center;
+             margin-top: 1rem; /* Space above result */
+         }
+        #arr-result-container .result-label {
+            font-size: 0.875rem; /* text-sm */
+            color: var(--color-text-secondary); /* Mapped */
+        }
+
+        #arr-result {
+            font-size: 1.875rem; /* text-3xl */
+            font-weight: 700; /* font-bold */
+            color: var(--color-accent-dark);
+             margin-top: 0.5rem; /* mt-2 */
+        }
+
+        #arr-loading { /* Adjust loading position within its container */
+            position: relative;
+            display: none;
+            margin-top: 1rem;
+        }
+         #arr-error { /* Adjust error position */
+             position: relative;
+             display: none;
+             color: var(--color-error); /* Mapped */
+             margin-top: 1rem;
+         }
+         #arr-no-data { /* Adjust no-data position */
+             position: relative;
+             display: none;
+             margin-top: 1rem;
+         }
+
+        /* Status Banner (Now just text/button inside Controls box) */
+        /* .status-banner styles removed as it's integrated */
+
+        /* General Button Styling */
+        .button {
+            padding: 0.375rem 0.75rem;
+            background-color: var(--color-accent);
+            color: var(--color-on-primary); /* Use 'on' color */
+            border: none;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: background-color 0.2s;
+            line-height: 1.25; /* Ensure text is centered */
+        }
+        .button:hover { background-color: var(--color-accent-dark); }
+        .button:disabled {
+            background-color: var(--color-text-muted);
+            color: var(--color-on-background); /* Ensure text is visible */
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        /* Cards - Now applied to .bento-box */
+        .card { /* Base styles already applied to bento-box */ }
+
+        /* --- Basic Utility Classes (Keep for consistency if used in JS/HTML) --- */
+        .text-center { text-align: center; }
+        .text-sm { font-size: 0.875rem; line-height: 1.25rem; }
+        .text-gray-500 { color: var(--color-text-muted); } /* Mapped */
+        .font-bold { font-weight: 700; }
+        .mt-2 { margin-top: 0.5rem; }
+        .text-red-600 { color: var(--color-error); } /* Mapped */
+        .min-w-full { min-width: 100%; }
+        .divide-y > :not([hidden]) ~ :not([hidden]) {
+           border-top-width: 1px;
+           border-bottom-width: 0px;
+           border-color: var(--color-border); /* Mapped */
+        }
+        .font-medium { font-weight: 500; }
+        .text-gray-900 { color: var(--color-text-primary); } /* Mapped */
+        .text-xs { font-size: 0.75rem; line-height: 1rem; }
+
+        /* --- Responsive Adjustments --- */
+        @media (max-width: 1024px) { /* Adjust for tablet sizes */
+             .bento-grid {
+                 grid-template-columns: repeat(2, 1fr); /* 2 columns */
+                 grid-template-areas:
+                     "controls controls"
+                     "leaders leaders"   /* Leaders full width */
+                     "tavtcv arr"      /* TAV/TCV and ARR side-by-side */
+                     "notes notes";
+             }
+             #bento-tavtcv {
+                 grid-row: span 1; /* Reset row span */
+             }
+        }
+
+         @media (max-width: 768px) { /* Adjust for mobile sizes */
+             body { padding: 1rem; }
+             .bento-grid {
+                 grid-template-columns: 1fr; /* Single column */
+                 grid-template-areas: /* Stack everything */
+                     "controls"
+                     "leaders"
+                     "tavtcv"
+                     "arr"
+                     "notes";
+             }
+              #bento-controls {
+                  flex-direction: column; /* Stack controls vertically */
+                  align-items: stretch; /* Stretch items full width */
+              }
+              .dataset-selector { min-width: unset; }
+              .status-section { justify-content: space-between; } /* Space out status/button */
+              .filter-container { flex-direction: column; align-items: stretch; }
+              .filter-container button { margin-top: 0.5rem; width: 100%; }
+              .filter-container > div { width: 100%; }
+              .filter-container select, .filter-container input[type="date"] { width: 100%; }
+
+         }
+
