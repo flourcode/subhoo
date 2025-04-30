@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QBR Sales Performance Charts (USCC Primes)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/date-fns@2.30.0/cdn.min.js"></script>
+
+    <style>
+        /* Custom styles */
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .chart-container {
+            min-height: 350px; /* Ensure containers have some height */
+            position: relative;
+            overflow-x: auto; /* Allow horizontal scroll for tables */
+        }
+        .loading-placeholder, .error-placeholder, .no-data-placeholder {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: #6b7280; /* gray-500 */
+            padding: 20px;
+        }
+        /* Style for table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        th, td {
+            padding: 10px 14px; /* Increased padding */
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb; /* gray-200 */
+            white-space: nowrap; /* Prevent wrapping */
+        }
+        th {
+            background-color: #f9fafb; /* gray-50 */
+            font-weight: 600;
+            font-size: 0.875rem; /* text-sm */
+            color: #374151; /* gray-700 */
+            position: sticky; /* Make header sticky */
+            top: 0; /* Stick to the top */
+            z-index: 10;
+        }
+         tbody tr:nth-child(even) {
+             background-color: #f9fafb; /* gray-50 for zebra striping */
+         }
+        tbody tr:hover {
+            background-color: #f3f4f6; /* gray-100 */
+        }
+        td.number {
+            text-align: right;
+            font-variant-numeric: tabular-nums;
+        }
+        /* Simple spinner */
+        .spinner {
+            border: 4px solid #f3f4f6; /* gray-100 */
+            border-top: 4px solid #3b82f6; /* blue-500 */
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        /* Filter styling */
+        .filter-container label {
+            margin-right: 0.5rem;
+            font-weight: 500;
+            color: #4b5563; /* gray-600 */
+        }
+        .filter-container select, .filter-container input[type="date"] {
+            padding: 0.5rem;
+            border: 1px solid #d1d5db; /* gray-300 */
+            border-radius: 0.375rem; /* rounded-md */
+            margin-right: 1rem;
+            min-width: 150px;
+            background-color: #fff; /* Ensure background for select */
+            color: #1f2937; /* Ensure text color */
+        }
+        .filter-container button {
+            padding: 0.5rem 1rem;
+            background-color: #3b82f6; /* blue-500 */
+            color: white;
+            border: none;
+            border-radius: 0.375rem; /* rounded-md */
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .filter-container button:hover {
+            background-color: #2563eb; /* blue-600 */
+        }
+        #arr-result {
+            font-size: 1.5rem; /* text-2xl */
+            font-weight: 700; /* font-bold */
+            color: #1d4ed8; /* blue-700 */
+        }
+    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-gray-100 p-6 md:p-10">
+
+    <h1 class="text-3xl font-bold text-center text-gray-800 mb-10">Sales QBR Dashboard (USCC Primes)</h1>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
+
+        <div class="bg-white p-6 rounded-lg shadow-md">
+            <h2 class="text-xl font-semibold text-gray-700 mb-4">Contract Leaders (by Prime Recipient)</h2>
+            <div id="contract-leaders-table-container" class="chart-container">
+                <div class="loading-placeholder">
+                    <div class="spinner"></div>
+                    Loading Leader Data...
+                </div>
+                </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-lg shadow-md">
+            <h2 class="text-xl font-semibold text-gray-700 mb-4">TAV vs TCV Tracker (Top 5 Contracts by TCV)</h2>
+            <p class="text-sm text-gray-500 mb-3">Assuming TAV = Total Obligated, TCV = Current Total Value</p>
+            <div id="tav-tcv-chart-container" class="chart-container">
+                 <div class="loading-placeholder">
+                    <div class="spinner"></div>
+                    Loading TAV/TCV Data...
+                </div>
+                <canvas id="tavTcvChart"></canvas>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="bg-white p-6 rounded-lg shadow-md mb-10">
+        <h2 class="text-xl font-semibold text-gray-700 mb-4">ARR Estimator (Based on Historical Data)</h2>
+        <div class="filter-container flex flex-wrap items-center gap-4 mb-6">
+            <div>
+                <label for="arr-agency-filter">Agency:</label>
+                <select id="arr-agency-filter">
+                    <option value="">All Agencies</option>
+                    </select>
+            </div>
+            <div>
+                <label for="arr-naics-filter">NAICS:</label>
+                <select id="arr-naics-filter">
+                    <option value="">All NAICS</option>
+                    </select>
+            </div>
+            <div>
+                <label for="arr-start-date">Start Date:</label>
+                <input type="date" id="arr-start-date">
+            </div>
+            <div>
+                <label for="arr-end-date">End Date:</label>
+                <input type="date" id="arr-end-date">
+            </div>
+            <div>
+                <button id="arr-calculate-button">Calculate Avg. ARR</button>
+            </div>
+        </div>
+        <div class="text-center">
+            <span class="text-gray-600">Estimated Average Annual Recurring Revenue (ARR):</span>
+            <div id="arr-result" class="mt-2">--</div>
+             <div id="arr-loading" class="loading-placeholder" style="display: none;">
+                 <div class="spinner"></div>
+                 Calculating ARR...
+             </div>
+             <div id="arr-error" class="error-placeholder text-red-600" style="display: none;"></div>
+             <div id="arr-no-data" class="no-data-placeholder" style="display: none;">No contracts match the selected criteria.</div>
+        </div>
+    </div>
+
+
+    <script>
+        const DATA_URL = 'https://subhoodata.s3.us-east-1.amazonaws.com/data/doj_primes.csv';
+        let rawData = []; // To store loaded data
+
+        // --- Utility Functions ---
+        function formatCurrency(value) {
+            if (value === null || value === undefined || isNaN(Number(value))) return '$ -';
+            return Number(value).toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 });
+        }
+
+        function parseDate(dateString) {
+            if (!dateString || typeof dateString !== 'string') return null;
+            try {
+                if (dateString.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                    return new Date(dateString + 'T00:00:00');
+                }
+                const date = typeof dateFns !== 'undefined' ? dateFns.parseISO(dateString) : new Date(dateString);
+                return isNaN(date.getTime()) ? null : date;
+            } catch (e) {
+                console.warn(`Could not parse date: ${dateString}`, e);
+                return null;
+            }
+        }
+
+
+        function calculateDurationDays(startDateStr, endDateStr) {
+            const start = parseDate(startDateStr);
+            const end = parseDate(endDateStr);
+            if (!start || !end || end < start) return 0;
+             if (typeof dateFns !== 'undefined') {
+                 return dateFns.differenceInDays(end, start) + 1;
+             } else {
+                 const diffTime = Math.abs(end - start);
+                 const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+                 return diffDays;
+             }
+        }
+
+        function setLoading(containerId, isLoading, message = 'Loading...') {
+             const container = document.getElementById(containerId);
+             if (!container) return;
+             let placeholder = container.querySelector('.loading-placeholder');
+             if (isLoading) {
+                 container.querySelectorAll('.error-placeholder, .no-data-placeholder').forEach(el => el.style.display = 'none');
+                 if (!placeholder) {
+                     placeholder = document.createElement('div');
+                     placeholder.className = 'loading-placeholder';
+                     container.appendChild(placeholder);
+                 }
+                 placeholder.innerHTML = `<div class="spinner"></div>${message}`;
+                 placeholder.style.display = 'block';
+             } else {
+                 if (placeholder) {
+                     placeholder.style.display = 'none';
+                 }
+             }
+         }
+
+         function displayError(containerId, message) {
+             const container = document.getElementById(containerId);
+             if (!container) return;
+             setLoading(containerId, false);
+             container.querySelectorAll('.no-data-placeholder').forEach(el => el.style.display = 'none');
+             let errorPlaceholder = container.querySelector('.error-placeholder');
+              if (!errorPlaceholder) {
+                     errorPlaceholder = document.createElement('div');
+                     errorPlaceholder.className = 'error-placeholder text-red-600';
+                     container.appendChild(errorPlaceholder);
+                 }
+             errorPlaceholder.textContent = message;
+             errorPlaceholder.style.display = 'block';
+         }
+
+         function displayNoData(containerId, message = "No data available for this view.") {
+             const container = document.getElementById(containerId);
+             if (!container) return;
+             setLoading(containerId, false);
+             container.querySelectorAll('.error-placeholder').forEach(el => el.style.display = 'none');
+             let noDataPlaceholder = container.querySelector('.no-data-placeholder');
+             if (!noDataPlaceholder) {
+                 noDataPlaceholder = document.createElement('div');
+                 noDataPlaceholder.className = 'no-data-placeholder';
+                 container.appendChild(noDataPlaceholder);
+             }
+             noDataPlaceholder.textContent = message;
+             noDataPlaceholder.style.display = 'block';
+         }
+
+         function truncateText(text, maxLength) {
+             if (!text) return '';
+             const stringText = String(text);
+             return stringText.length > maxLength ? stringText.substring(0, maxLength - 3) + '...' : stringText;
+         }
+
+         function populateDropdown(selectElement, itemsSet, defaultOptionText = "All") {
+             if (!selectElement) {
+                 console.warn("populateDropdown: Provided selectElement is null or undefined.");
+                 return;
+             }
+             const currentValue = selectElement.value;
+             selectElement.innerHTML = `<option value="">${defaultOptionText}</option>`;
+             const sortedItems = Array.from(itemsSet).sort((a, b) => String(a).localeCompare(String(b)));
+             sortedItems.forEach(item => {
+                 const option = document.createElement('option');
+                 option.value = item;
+                 option.textContent = truncateText(item, 50);
+                 option.title = item;
+                 selectElement.appendChild(option);
+             });
+             if (sortedItems.includes(currentValue)) {
+                 selectElement.value = currentValue;
+             }
+         }
+
+         function populateNaicsDropdown(selectElement, naicsMap) {
+             if (!selectElement) {
+                  console.warn("populateNaicsDropdown: Provided selectElement is null or undefined.");
+                 return;
+             }
+             const currentValue = selectElement.value;
+             selectElement.innerHTML = `<option value="">All NAICS</option>`;
+             const sortedCodes = Array.from(naicsMap.keys()).sort();
+             sortedCodes.forEach(code => {
+                 const desc = naicsMap.get(code);
+                 const option = document.createElement('option');
+                 option.value = code;
+                 option.textContent = `${code} - ${truncateText(desc, 40)}`;
+                 option.title = `${code} - ${desc}`;
+                 selectElement.appendChild(option);
+             });
+             if (sortedCodes.includes(currentValue)) {
+                 selectElement.value = currentValue;
+             }
+         }
+
+
+        // --- Chart 1: Contract Type Leaders ---
+        function processContractLeaders(data) {
+            console.log("Processing Contract Leaders data...");
+            if (!data || data.length === 0) return [];
+
+            // *** Use 'recipient_name' for prime name ***
+            const leaders = d3.group(data, d => d.recipient_name);
+
+            const leaderData = Array.from(leaders, ([primeName, contracts]) => {
+                if (!primeName || primeName.toLowerCase() === 'unknown recipient') return null;
+
+                 // *** Use 'contract_award_unique_key' or 'award_id_piid' for unique awards ***
+                const uniqueContractKeys = new Set(contracts.map(c => c.contract_award_unique_key || c.award_id_piid).filter(Boolean));
+                if (uniqueContractKeys.size === 0) return null;
+
+                const validContracts = contracts.filter(c => uniqueContractKeys.has(c.contract_award_unique_key || c.award_id_piid));
+
+                // *** Use 'current_total_value_of_award' or 'base_and_exercised_options_value' ***
+                // Use ?? to provide fallback if the first field is null/undefined
+                const values = validContracts.map(c => c.current_total_value_of_award ?? c.base_and_exercised_options_value ?? 0).filter(v => !isNaN(v));
+                const avgValue = values.length > 0 ? d3.mean(values) : 0;
+
+                // *** Use correct date fields ***
+                const durations = validContracts.map(c => calculateDurationDays(c.period_of_performance_start_date, c.period_of_performance_current_end_date)).filter(d => d > 0);
+                const avgDurationDays = durations.length > 0 ? d3.mean(durations) : 0;
+
+                // *** Use correct description fields ***
+                // Check for prime_award_base_transaction_description first if it exists, then transaction_description
+                const descriptions = validContracts.map(c => c.prime_award_base_transaction_description?.trim() || c.transaction_description?.trim()).filter(Boolean);
+                let dominantType = 'N/A';
+                if (descriptions.length > 0) {
+                    const descCounts = d3.rollup(descriptions, v => v.length, d => d);
+                    dominantType = d3.greatest(Array.from(descCounts.entries()), ([, count]) => count)?.[0] || 'N/A';
+                }
+
+                return {
+                    siName: primeName,
+                    numAwards: uniqueContractKeys.size,
+                    avgValue: avgValue,
+                    avgDurationDays: Math.round(avgDurationDays),
+                    dominantType: dominantType
+                };
+            }).filter(Boolean) // Remove null entries (e.g., if primeName was missing)
+              .sort((a, b) => b.numAwards - a.numAwards); // Sort by number of awards
+
+            console.log(`Processed ${leaderData.length} leaders.`);
+            return leaderData;
+        }
+
+        function displayContractLeadersTable(leaderData) {
+            const containerId = 'contract-leaders-table-container';
+            const container = document.getElementById(containerId);
+            setLoading(containerId, false);
+
+            if (!leaderData || leaderData.length === 0) {
+                displayNoData(containerId, 'No contract leader data found.');
+                return;
+            }
+
+            const displayData = leaderData.slice(0, 15);
+
+            let tableHTML = `
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col">Recipient Name</th> 
+                            <th scope="col" class="number"># Awards</th>
+                            <th scope="col" class="number">Avg Value</th>
+                            <th scope="col" class="number">Avg Duration (Days)</th>
+                            <th scope="col">Dominant Desc.</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+            `;
+
+            displayData.forEach(leader => {
+                tableHTML += `
+                    <tr>
+                        <td class="font-medium text-gray-900">${truncateText(leader.siName, 35)}</td>
+                        <td class="number text-gray-600">${leader.numAwards.toLocaleString()}</td>
+                        <td class="number text-gray-600">${formatCurrency(leader.avgValue)}</td>
+                        <td class="number text-gray-600">${leader.avgDurationDays > 0 ? leader.avgDurationDays.toLocaleString() : '-'}</td>
+                        <td class="text-gray-600 text-xs" title="${leader.dominantType}">${truncateText(leader.dominantType, 30)}</td>
+                    </tr>
+                `;
+            });
+
+            tableHTML += `</tbody></table>`;
+            if (leaderData.length > 15) {
+                 tableHTML += `<p class="text-center text-sm text-gray-500 mt-4">Showing Top 15 of ${leaderData.length} leaders</p>`;
+             }
+            container.innerHTML = tableHTML;
+        }
+
+
+        // --- Chart 2: TAV vs TCV Tracker ---
+        let tavTcvChartInstance = null;
+
+        function processTavTcvData(data) {
+             console.log("Processing TAV/TCV data...");
+             if (!data || data.length === 0) return [];
+
+             const contracts = data.filter(row => {
+                 const tcv = row.current_total_value_of_award; // Use already parsed number
+                 // *** Use 'award_id_piid' or 'contract_award_unique_key' ***
+                 const contractId = row.award_id_piid || row.contract_award_unique_key;
+                 return contractId && tcv > 0;
+             }).map(row => ({
+                 id: row.award_id_piid || row.contract_award_unique_key,
+                 // *** Use 'recipient_name' ***
+                 primeName: row.recipient_name || 'Unknown Prime',
+                 tcv: row.current_total_value_of_award,
+                 // *** Use 'total_dollars_obligated' ***
+                 tav: row.total_dollars_obligated, // Use already parsed number
+                 // *** Use 'potential_total_value_of_award' or 'base_and_all_options_value' ***
+                 potentialTcv: row.potential_total_value_of_award ?? row.base_and_all_options_value ?? 0 // Use already parsed number
+             })).sort((a, b) => b.tcv - a.tcv)
+               .slice(0, 5);
+
+             console.log(`Processed ${contracts.length} contracts for TAV/TCV chart.`);
+             return contracts;
+         }
+
+        function displayTavTcvChart(chartData) {
+            const containerId = 'tav-tcv-chart-container';
+            const canvas = document.getElementById('tavTcvChart');
+            setLoading(containerId, false);
+
+            if (!chartData || chartData.length === 0) {
+                displayNoData(containerId, 'No suitable contracts found for TAV/TCV comparison.');
+                if (tavTcvChartInstance) tavTcvChartInstance.destroy();
+                return;
+            }
+
+            const ctx = canvas.getContext('2d');
+            if (tavTcvChartInstance) tavTcvChartInstance.destroy();
+
+            const labels = chartData.map(d => `${truncateText(d.primeName, 15)} (${truncateText(d.id, 8)})`);
+            const tavData = chartData.map(d => d.tav);
+            const tcvData = chartData.map(d => d.tcv);
+
+            tavTcvChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'TAV (Obligated)',
+                            data: tavData,
+                            backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'TCV (Current Total)',
+                            data: tcvData,
+                            backgroundColor: 'rgba(255, 99, 132, 0.7)',
+                            borderColor: 'rgba(255, 99, 132, 1)',
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: { /* ... options remain the same ... */
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            title: { display: true, text: 'Contract Value (USD)' },
+                            ticks: { callback: function(value) { return formatCurrency(value); } }
+                        },
+                        y: { ticks: { autoSkip: false, font: { size: 10 } } }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) { label += ': '; }
+                                    if (context.parsed.x !== null) { label += formatCurrency(context.parsed.x); }
+                                    return label;
+                                }
+                            }
+                        },
+                        legend: { position: 'bottom' }
+                    }
+                 }
+            });
+        }
+
+
+        // --- Chart 3: ARR Estimator ---
+        function populateArrFilters(data) {
+             if (!data || data.length === 0) return;
+             const agencySet = new Set();
+             const naicsMap = new Map();
+
+             data.forEach(row => {
+                  // *** Use 'awarding_agency_name' or 'funding_agency_name' ***
+                  const agency = row.awarding_sub_agency_name?.trim() || row.funding_sub_agency_name?.trim();
+                  if (agency) agencySet.add(agency);
+
+                  // *** Use 'naics_code' and 'naics_description' ***
+                  const code = row.naics_code?.toString().trim();
+                  const desc = row.naics_description?.trim() || 'No Description';
+                  if (code && code !== 'null' && code !== 'undefined' && !naicsMap.has(code)) { // Added checks for invalid codes
+                      naicsMap.set(code, desc);
+                  }
+             });
+
+             populateDropdown(document.getElementById('arr-agency-filter'), agencySet, "All Agencies");
+             populateNaicsDropdown(document.getElementById('arr-naics-filter'), naicsMap);
+         }
+
+        function calculateAverageARR() {
+            const agencyFilter = document.getElementById('arr-agency-filter').value;
+            const naicsFilter = document.getElementById('arr-naics-filter').value;
+            const startDateFilter = parseDate(document.getElementById('arr-start-date').value);
+            const endDateFilter = parseDate(document.getElementById('arr-end-date').value);
+            const resultDiv = document.getElementById('arr-result');
+            const loadingDiv = document.getElementById('arr-loading');
+            const errorDiv = document.getElementById('arr-error');
+            const noDataDiv = document.getElementById('arr-no-data');
+
+            resultDiv.textContent = '--';
+            loadingDiv.style.display = 'block';
+            errorDiv.style.display = 'none';
+            noDataDiv.style.display = 'none';
+
+
+            console.log("Calculating ARR with filters:", { agencyFilter, naicsFilter, startDateFilter, endDateFilter });
+
+            setTimeout(() => {
+                try {
+                    const filteredData = rawData.filter(row => {
+                        // *** Use correct fields for filtering ***
+                        const agency = row.awarding_agency_name?.trim() || row.funding_agency_name?.trim();
+                        const naics = row.naics_code?.toString().trim();
+                        const popStartDate = parseDate(row.period_of_performance_start_date);
+                        const popEndDate = parseDate(row.period_of_performance_current_end_date);
+
+                        if (agencyFilter && agency !== agencyFilter) return false;
+                        if (naicsFilter && naics !== naicsFilter) return false;
+                        if (startDateFilter && popEndDate && popEndDate < startDateFilter) return false;
+                        if (endDateFilter && popStartDate && popStartDate > endDateFilter) return false;
+
+                        return true;
+                    });
+
+                    console.log(`Filtered down to ${filteredData.length} contracts for ARR calculation.`);
+
+                    if (filteredData.length === 0) {
+                         loadingDiv.style.display = 'none';
+                         noDataDiv.style.display = 'block';
+                         return;
+                     }
+
+                    let totalARR = 0;
+                    let validContractsCount = 0;
+
+                    filteredData.forEach(row => {
+                        // *** Use correct fields for ARR value and duration ***
+                        const value = row.current_total_value_of_award ?? row.base_and_exercised_options_value ?? 0; // Already parsed
+                        const durationDays = calculateDurationDays(row.period_of_performance_start_date, row.period_of_performance_current_end_date);
+
+                        if (value > 0 && durationDays > 0) {
+                            const durationYears = durationDays / 365.25;
+                            const arr = value / durationYears;
+                            totalARR += arr;
+                            validContractsCount++;
+                        }
+                    });
+
+                    if (validContractsCount > 0) {
+                        const averageARR = totalARR / validContractsCount;
+                        resultDiv.textContent = formatCurrency(averageARR) + " / year";
+                    } else {
+                         noDataDiv.style.display = 'block';
+                    }
+                } catch (error) {
+                     console.error("Error calculating ARR:", error);
+                     errorDiv.textContent = `Error calculating ARR: ${error.message}`;
+                     errorDiv.style.display = 'block';
+                 } finally {
+                    loadingDiv.style.display = 'none';
+                }
+            }, 50);
+        }
+
+
+        // --- Initialization ---
+        async function initializeDashboard() {
+            console.log("Initializing dashboard...");
+            setLoading('contract-leaders-table-container', true);
+            setLoading('tav-tcv-chart-container', true);
+            document.getElementById('arr-result').textContent = '--';
+
+            try {
+                rawData = await d3.csv(DATA_URL);
+                console.log(`Loaded ${rawData.length} rows from ${DATA_URL}`);
+
+                if (!rawData || rawData.length === 0) {
+                    throw new Error("CSV file loaded, but it contains no data rows.");
+                }
+
+                 // --- Data Type Conversion (Adjusted for Prime Data Fields) ---
+                 rawData = rawData.map(row => {
+                     // Convert amounts using the correct field names from your list
+                     row.current_total_value_of_award = parseFloat(String(row.current_total_value_of_award || '0').replace(/[^0-9.-]+/g,'')) || 0;
+                     row.base_and_exercised_options_value = parseFloat(String(row.base_and_exercised_options_value || '0').replace(/[^0-9.-]+/g,'')) || 0;
+                     row.total_dollars_obligated = parseFloat(String(row.total_dollars_obligated || '0').replace(/[^0-9.-]+/g,'')) || 0;
+                     row.base_and_all_options_value = parseFloat(String(row.base_and_all_options_value || '0').replace(/[^0-9.-]+/g,'')) || 0;
+                     row.potential_total_value_of_award = parseFloat(String(row.potential_total_value_of_award || '0').replace(/[^0-9.-]+/g,'')) || 0;
+                     // 'subaward_amount' might not exist in prime data, handle gracefully
+                     row.subaward_amount = 0; // Default to 0 if not present
+
+                     // Dates remain strings for now, parsed in specific functions
+                     return row;
+                 });
+
+
+                // Process and display charts
+                const leaderData = processContractLeaders(rawData);
+                displayContractLeadersTable(leaderData);
+
+                const tavTcvData = processTavTcvData(rawData);
+                displayTavTcvChart(tavTcvData);
+
+                // Populate ARR filters
+                populateArrFilters(rawData);
+
+            } catch (error) {
+                console.error("Initialization failed:", error);
+                displayError('contract-leaders-table-container', `Error loading/processing data: ${error.message}`);
+                displayError('tav-tcv-chart-container', `Error loading/processing data: ${error.message}`);
+                const arrErrorDiv = document.getElementById('arr-error');
+                if(arrErrorDiv) {
+                    arrErrorDiv.textContent = `Error loading/processing data: ${error.message}`;
+                    arrErrorDiv.style.display = 'block';
+                }
+                 setLoading('contract-leaders-table-container', false);
+                 setLoading('tav-tcv-chart-container', false);
+            }
+        }
+
+        // --- Event Listeners ---
+        document.getElementById('arr-calculate-button').addEventListener('click', calculateAverageARR);
+
+        // --- Run Initialization ---
+        document.addEventListener('DOMContentLoaded', initializeDashboard);
+
+    </script>
+</body>
+</html>
