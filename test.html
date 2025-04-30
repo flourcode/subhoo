@@ -142,13 +142,15 @@
     </div>
 
     <div class="bg-white p-6 rounded-lg shadow-md mb-10">
-        <h2 class="text-xl font-semibold text-gray-700 mb-4">ARR Estimator & Global Filters</h2>
-        <p class="text-sm text-gray-500 mb-3">Filters applied here will update the charts above and the ARR calculation below.</p>
+         {/* Title changed back slightly */}
+        <h2 class="text-xl font-semibold text-gray-700 mb-4">ARR Estimator</h2>
+         {/* Note about filters not affecting charts above removed */}
         <div class="filter-container flex flex-wrap items-center gap-4 mb-6">
             <div>
-                <label for="arr-subagency-filter">Sub-Agency:</label>
-                <select id="arr-subagency-filter">
-                    <option value="">All Sub-Agencies</option>
+                 {/* Changed back to Agency Filter */}
+                <label for="arr-agency-filter">Agency:</label>
+                <select id="arr-agency-filter">
+                    <option value="">All Agencies</option>
                     </select>
             </div>
             <div>
@@ -183,13 +185,9 @@
 
 
     <script>
-        const DATA_URL = 'https://subhoodata.s3.us-east-1.amazonaws.com/data/doj_primes.csv';
+        const DATA_URL = 'https://subhoodata.s3.us-east-1.amazonaws.com/data/doj_primes.csv'; // Correct URL
         let rawData = []; // To store loaded data
         let tavTcvChartInstance = null; // Store chart instance
-
-        // --- Global Filter State ---
-        let currentSubAgencyFilter = '';
-        let currentNaicsFilter = '';
 
         // --- Utility Functions ---
         function formatCurrency(value) {
@@ -199,7 +197,6 @@
 
         function parseSafeFloat(value) {
              if (value === null || value === undefined || value === '') return 0;
-             // Remove $, commas, and handle potential non-numeric chars robustly
              const cleanedString = String(value).replace(/[^0-9.-]+/g,'');
              const num = parseFloat(cleanedString);
              return isNaN(num) ? 0 : num;
@@ -208,19 +205,16 @@
         function parseDate(dateString) {
             if (!dateString || typeof dateString !== 'string') return null;
             try {
-                // Prioritize YYYY-MM-DD
                 if (dateString.match(/^\d{4}-\d{2}-\d{2}/)) {
-                    // Check if time part exists, if not add T00:00:00
                     const dateTimeStr = dateString.includes('T') ? dateString : dateString.split(' ')[0] + 'T00:00:00';
                     const date = new Date(dateTimeStr);
                      if (!isNaN(date.getTime())) return date;
                 }
-                // Fallback for other formats (less reliable)
                 const date = typeof dateFns !== 'undefined' ? dateFns.parseISO(dateString) : new Date(dateString);
                 if (!isNaN(date.getTime())) return date;
 
                 console.warn(`Could not parse date reliably: ${dateString}`);
-                return null; // Return null if all parsing attempts fail
+                return null;
             } catch (e) {
                 console.error(`Error parsing date: ${dateString}`, e);
                 return null;
@@ -231,15 +225,13 @@
         function calculateDurationDays(startDateStr, endDateStr) {
             const start = parseDate(startDateStr);
             const end = parseDate(endDateStr);
-            // Check if both dates are valid Date objects
             if (!start || !end || !(start instanceof Date) || !(end instanceof Date) || isNaN(start) || isNaN(end) || end < start) {
-                 // console.warn(`Invalid dates for duration calculation: Start=${startDateStr}, End=${endDateStr}`);
                  return 0;
              }
              if (typeof dateFns !== 'undefined') {
                  return dateFns.differenceInDays(end, start) + 1;
              } else {
-                 const diffTime = Math.abs(end.getTime() - start.getTime()); // Use getTime() for reliability
+                 const diffTime = Math.abs(end.getTime() - start.getTime());
                  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
                  return diffDays;
              }
@@ -266,7 +258,7 @@
                      placeholder.style.display = 'none';
                  }
                  const content = container.querySelector('table, canvas');
-                 if(content) content.style.display = 'block';
+                 if(content) content.style.display = 'block'; // Use 'table-cell' or 'block' appropriately if needed
              }
          }
 
@@ -320,6 +312,7 @@
              return stringText.length > maxLength ? stringText.substring(0, maxLength - 3) + '...' : stringText;
          }
 
+         // *** These dropdown population functions are needed ***
          function populateDropdown(selectElement, itemsSet, defaultOptionText = "All") {
              if (!selectElement) {
                  console.warn("populateDropdown: Provided selectElement is null or undefined.");
@@ -363,78 +356,48 @@
 
 
         // --- Chart 1: Contract Type Leaders ---
-        function processContractLeaders(data) { // Takes FILTERED data
+        // *** Reverted to original sorting by numAwards, ensure field names match uscc_primes.csv ***
+        function processContractLeaders(data) {
             console.log("Processing Contract Leaders data...");
             if (!data || data.length === 0) return [];
 
-            const leaders = new Map(); // Use Map for efficient aggregation
+            const leaders = d3.group(data, d => d.recipient_name); // Use recipient_name
 
-            data.forEach(row => {
-                const primeName = row.recipient_name?.trim();
-                if (!primeName || primeName.toLowerCase() === 'unknown recipient') return; // Skip invalid names
+            const leaderData = Array.from(leaders, ([primeName, contracts]) => {
+                if (!primeName || primeName.toLowerCase() === 'unknown recipient') return null;
 
-                const contractId = row.contract_award_unique_key || row.award_id_piid;
-                if (!contractId) return; // Skip if no unique ID
+                // Use contract_award_unique_key or award_id_piid
+                const uniqueContractKeys = new Set(contracts.map(c => c.contract_award_unique_key || c.award_id_piid).filter(Boolean));
+                if (uniqueContractKeys.size === 0) return null;
 
-                if (!leaders.has(primeName)) {
-                    leaders.set(primeName, {
-                        siName: primeName,
-                        uniqueContractKeys: new Set(),
-                        totalValue: 0,
-                        valueCount: 0,
-                        totalDuration: 0,
-                        durationCount: 0,
-                        descriptionCounts: {}
-                    });
+                const validContracts = contracts.filter(c => uniqueContractKeys.has(c.contract_award_unique_key || c.award_id_piid));
+
+                // Use current_total_value_of_award or base_and_exercised_options_value
+                const values = validContracts.map(c => c.current_total_value_of_award ?? c.base_and_exercised_options_value ?? 0).filter(v => !isNaN(v));
+                const avgValue = values.length > 0 ? d3.mean(values) : 0;
+
+                // Use period_of_performance_start_date, period_of_performance_current_end_date
+                const durations = validContracts.map(c => calculateDurationDays(c.period_of_performance_start_date, c.period_of_performance_current_end_date)).filter(d => d > 0);
+                const avgDurationDays = durations.length > 0 ? d3.mean(durations) : 0;
+
+                // Use transaction_description or prime_award_base_transaction_description
+                const descriptions = validContracts.map(c => (c.transaction_description || c.prime_award_base_transaction_description || '').trim()).filter(Boolean);
+                let dominantType = 'N/A';
+                if (descriptions.length > 0) {
+                    const descCounts = d3.rollup(descriptions, v => v.length, d => d);
+                    dominantType = d3.greatest(Array.from(descCounts.entries()), ([, count]) => count)?.[0] || 'N/A';
                 }
-
-                const leader = leaders.get(primeName);
-
-                // Count unique contracts
-                leader.uniqueContractKeys.add(contractId);
-
-                // Sum values for average calculation
-                const value = row.current_total_value_of_award ?? row.base_and_exercised_options_value ?? null;
-                if (value !== null && !isNaN(value)) {
-                    leader.totalValue += value;
-                    leader.valueCount++;
-                }
-
-                // Sum durations for average calculation
-                const duration = calculateDurationDays(row.period_of_performance_start_date, row.period_of_performance_current_end_date);
-                if (duration > 0) {
-                    leader.totalDuration += duration;
-                    leader.durationCount++;
-                }
-
-                // Count descriptions
-                const description = (row.prime_award_base_transaction_description || row.transaction_description || '').trim();
-                if (description) {
-                    leader.descriptionCounts[description] = (leader.descriptionCounts[description] || 0) + 1;
-                }
-            });
-
-
-            const leaderData = Array.from(leaders.values()).map(leader => {
-                 // Find dominant description
-                 let dominantType = 'N/A';
-                 let maxCount = 0;
-                 for (const [desc, count] of Object.entries(leader.descriptionCounts)) {
-                     if (count > maxCount) {
-                         maxCount = count;
-                         dominantType = desc;
-                     }
-                 }
 
                 return {
-                    siName: leader.siName,
-                    numAwards: leader.uniqueContractKeys.size,
-                    avgValue: leader.valueCount > 0 ? leader.totalValue / leader.valueCount : 0,
-                    avgDurationDays: leader.durationCount > 0 ? Math.round(leader.totalDuration / leader.durationCount) : 0,
+                    siName: primeName,
+                    numAwards: uniqueContractKeys.size,
+                    avgValue: avgValue,
+                    avgDurationDays: Math.round(avgDurationDays),
                     dominantType: dominantType
                 };
-            }).filter(leader => leader.numAwards > 0) // Ensure they have at least one award
-              .sort((a, b) => b.avgValue - a.avgValue); // Sort by avgValue
+            }).filter(Boolean)
+              // *** Reverted sorting to numAwards descending ***
+              .sort((a, b) => b.numAwards - a.numAwards);
 
             console.log(`Processed ${leaderData.length} leaders.`);
             return leaderData;
@@ -446,7 +409,8 @@
             setLoading(containerId, false);
 
             if (!leaderData || leaderData.length === 0) {
-                displayNoData(containerId, 'No contract leader data found for current filters.');
+                // Use displayNoData for consistency
+                displayNoData(containerId, 'No contract leader data found.');
                 return;
             }
 
@@ -456,9 +420,10 @@
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
+                             {/* Reverted column order */}
                             <th scope="col">Recipient Name</th>
-                            <th scope="col" class="number">Avg Value</th>
                             <th scope="col" class="number"># Awards</th>
+                            <th scope="col" class="number">Avg Value</th>
                             <th scope="col" class="number">Avg Duration (Days)</th>
                             <th scope="col">Dominant Desc.</th>
                         </tr>
@@ -470,8 +435,9 @@
                 tableHTML += `
                     <tr>
                         <td class="font-medium text-gray-900">${truncateText(leader.siName, 35)}</td>
-                        <td class="number text-gray-600">${formatCurrency(leader.avgValue)}</td>
+                         {/* Reverted column order */}
                         <td class="number text-gray-600">${leader.numAwards.toLocaleString()}</td>
+                        <td class="number text-gray-600">${formatCurrency(leader.avgValue)}</td>
                         <td class="number text-gray-600">${leader.avgDurationDays > 0 ? leader.avgDurationDays.toLocaleString() : '-'}</td>
                         <td class="text-gray-600 text-xs" title="${leader.dominantType}">${truncateText(leader.dominantType, 30)}</td>
                     </tr>
@@ -480,7 +446,7 @@
 
             tableHTML += `</tbody></table>`;
             if (leaderData.length > 15) {
-                 tableHTML += `<p class="text-center text-sm text-gray-500 mt-4">Showing Top 15 of ${leaderData.length} leaders by Avg Value</p>`;
+                 tableHTML += `<p class="text-center text-sm text-gray-500 mt-4">Showing Top 15 of ${leaderData.length} leaders by # Awards</p>`; // Updated note
              }
             container.innerHTML = tableHTML;
         }
@@ -489,21 +455,23 @@
         // --- Chart 2: TAV vs TCV Tracker ---
         let tavTcvChartInstance = null;
 
-        function processTavTcvData(data) { // Takes FILTERED data
+        function processTavTcvData(data) { // Takes UNFILTERED rawData
              console.log("Processing TAV/TCV data...");
              if (!data || data.length === 0) return [];
 
              const contracts = data.filter(row => {
                  const tcv = row.current_total_value_of_award; // Already parsed
+                 // Use award_id_piid or contract_award_unique_key
                  const contractId = row.award_id_piid || row.contract_award_unique_key;
-                 // Ensure recipient_name exists for labeling
+                 // Use recipient_name
                  return contractId && tcv > 0 && row.recipient_name;
              }).map(row => ({
                  id: row.award_id_piid || row.contract_award_unique_key,
-                 primeName: row.recipient_name || 'Unknown Prime', // Use recipient_name
+                 primeName: row.recipient_name || 'Unknown Prime',
                  tcv: row.current_total_value_of_award,
                  tav: row.total_dollars_obligated, // Already parsed
-                 potentialTcv: row.potential_total_value_of_award ?? row.base_and_all_options_value ?? 0 // Already parsed
+                 // Use potential_total_value_of_award or base_and_all_options_value
+                 potentialTcv: row.potential_total_value_of_award ?? row.base_and_all_options_value ?? 0
              })).sort((a, b) => b.tcv - a.tcv)
                .slice(0, 5); // Top 5 by TCV
 
@@ -517,7 +485,8 @@
             setLoading(containerId, false);
 
             if (!chartData || chartData.length === 0) {
-                displayNoData(containerId, 'No contracts found for TAV/TCV comparison with current filters.');
+                // Use displayNoData
+                displayNoData(containerId, 'No contracts found for TAV/TCV comparison.');
                 if (tavTcvChartInstance) {
                     tavTcvChartInstance.destroy();
                     tavTcvChartInstance = null;
@@ -588,28 +557,30 @@
         // --- Chart 3: ARR Estimator ---
         function populateArrFilters(data) { // Populates based on FULL rawData
              if (!data || data.length === 0) return;
-             const subAgencySet = new Set();
+             const agencySet = new Set(); // *** Reverted to Agency ***
              const naicsMap = new Map();
 
              data.forEach(row => {
-                  const subAgency = row.awarding_sub_agency_name?.trim();
-                  if (subAgency) subAgencySet.add(subAgency);
+                  // *** Reverted to awarding_agency_name / funding_agency_name ***
+                  const agency = row.awarding_agency_name?.trim() || row.funding_agency_name?.trim();
+                  if (agency) agencySet.add(agency);
 
                   const code = row.naics_code?.toString().trim();
                   const desc = row.naics_description?.trim() || 'No Description';
-                  // Added check for invalid NAICS codes like 'none' or 'NULL'
                   if (code && code !== 'null' && code !== 'undefined' && code.toLowerCase() !== 'none' && !naicsMap.has(code)) {
                       naicsMap.set(code, desc);
                   }
              });
 
-             populateDropdown(document.getElementById('arr-subagency-filter'), subAgencySet, "All Sub-Agencies");
+             // *** Reverted to populating Agency filter ***
+             populateDropdown(document.getElementById('arr-agency-filter'), agencySet, "All Agencies");
              populateNaicsDropdown(document.getElementById('arr-naics-filter'), naicsMap);
          }
 
-        function calculateAverageARR() { // Uses global filters
-            const subAgencyFilter = currentSubAgencyFilter;
-            const naicsFilter = currentNaicsFilter;
+        function calculateAverageARR() {
+            // *** Reverted to read from Agency filter ***
+            const agencyFilter = document.getElementById('arr-agency-filter').value;
+            const naicsFilter = document.getElementById('arr-naics-filter').value;
             const startDateFilter = parseDate(document.getElementById('arr-start-date').value);
             const endDateFilter = parseDate(document.getElementById('arr-end-date').value);
             const resultDiv = document.getElementById('arr-result');
@@ -623,17 +594,18 @@
             noDataDiv.style.display = 'none';
 
 
-            console.log("Calculating ARR with filters:", { subAgencyFilter, naicsFilter, startDateFilter, endDateFilter });
+            console.log("Calculating ARR with filters:", { agencyFilter, naicsFilter, startDateFilter, endDateFilter });
 
             setTimeout(() => {
                 try {
                     const filteredData = rawData.filter(row => {
-                        const subAgency = row.awarding_sub_agency_name?.trim();
+                        // *** Reverted to filter by Agency ***
+                        const agency = row.awarding_agency_name?.trim() || row.funding_agency_name?.trim();
                         const naics = row.naics_code?.toString().trim();
                         const popStartDate = parseDate(row.period_of_performance_start_date);
                         const popEndDate = parseDate(row.period_of_performance_current_end_date);
 
-                        if (subAgencyFilter && subAgency !== subAgencyFilter) return false;
+                        if (agencyFilter && agency !== agencyFilter) return false; // Reverted filter field
                         if (naicsFilter && naics !== naicsFilter) return false;
                         const overlaps =
                             (!startDateFilter || (popEndDate && popEndDate >= startDateFilter)) &&
@@ -648,7 +620,7 @@
                     if (filteredData.length === 0) {
                          loadingDiv.style.display = 'none';
                          noDataDiv.style.display = 'block';
-                         resultDiv.textContent = '$0 / year'; // Show $0 if no contracts match
+                         resultDiv.textContent = '$0 / year';
                          return;
                      }
 
@@ -672,7 +644,7 @@
                         resultDiv.textContent = formatCurrency(averageARR) + " / year";
                     } else {
                          noDataDiv.style.display = 'block';
-                         resultDiv.textContent = '$0 / year'; // Show $0 if no valid contracts found
+                         resultDiv.textContent = '$0 / year';
                     }
                 } catch (error) {
                      console.error("Error calculating ARR:", error);
@@ -684,46 +656,8 @@
             }, 50);
         }
 
-        // --- Function to apply filters and update charts ---
-        function applyFiltersAndUpdateCharts() {
-            console.log("Applying filters and updating charts...");
-            console.log(`Current Filters - SubAgency: '${currentSubAgencyFilter}', NAICS: '${currentNaicsFilter}'`);
-            setLoading('contract-leaders-table-container', true, 'Applying Filters...');
-            setLoading('tav-tcv-chart-container', true, 'Applying Filters...');
-
-            setTimeout(() => {
-                let filteredChartData = [];
-                try {
-                    // Filter rawData based on current SubAgency and NAICS filters
-                    filteredChartData = rawData.filter(row => {
-                        const subAgency = row.awarding_sub_agency_name?.trim();
-                        const naics = row.naics_code?.toString().trim();
-
-                        const subAgencyMatch = !currentSubAgencyFilter || (subAgency && subAgency === currentSubAgencyFilter);
-                        const naicsMatch = !currentNaicsFilter || (naics && naics === currentNaicsFilter);
-
-                        return subAgencyMatch && naicsMatch;
-                    });
-
-                    console.log(`Filtered to ${filteredChartData.length} rows for charts based on SubAgency/NAICS.`);
-
-                    // Update Contract Leaders
-                    const leaderData = processContractLeaders(filteredChartData); // Pass filtered data
-                    displayContractLeadersTable(leaderData);
-
-                    // Update TAV/TCV Chart
-                    const tavTcvData = processTavTcvData(filteredChartData); // Pass filtered data
-                    displayTavTcvChart(tavTcvData);
-
-                } catch (error) {
-                     console.error("Error updating charts based on filters:", error);
-                     displayError('contract-leaders-table-container', `Error updating: ${error.message}`);
-                     displayError('tav-tcv-chart-container', `Error updating: ${error.message}`);
-                } finally {
-                     // Loading indicators are hidden within display functions now
-                }
-            }, 50);
-        }
+        // --- Function to apply filters and update charts (REMOVED - Updates happen on load) ---
+        // function applyFiltersAndUpdateCharts() { ... }
 
 
         // --- Initialization ---
@@ -735,11 +669,21 @@
 
             try {
                 console.log(`Attempting to load data from: ${DATA_URL}`);
-                const loadedData = await d3.csv(DATA_URL);
-                console.log(`Successfully loaded ${loadedData.length} rows from ${DATA_URL}`);
+                // Added explicit error handling for d3.csv fetch
+                const response = await fetch(DATA_URL);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status} while fetching ${DATA_URL}`);
+                }
+                const csvText = await response.text();
+                if (!csvText) {
+                     throw new Error("CSV file loaded but is empty.");
+                }
+                const loadedData = d3.csvParse(csvText); // Parse text after successful fetch
+
+                console.log(`Successfully loaded and parsed ${loadedData.length} rows from ${DATA_URL}`);
 
                 if (!loadedData || loadedData.length === 0) {
-                    throw new Error("CSV file loaded, but it contains no data rows.");
+                    throw new Error("CSV data parsed, but resulted in no data rows.");
                 }
 
                 console.log("Raw data sample (first 3 rows):", loadedData.slice(0, 3));
@@ -749,16 +693,12 @@
                 rawData = loadedData.map((row, index) => {
                     const cleanRow = {};
                     try {
-                        // Copy string properties first
+                        // Copy all properties first
                         for (const key in row) {
-                            if (Object.hasOwnProperty.call(row, key) && typeof row[key] === 'string') {
-                                cleanRow[key] = row[key];
-                            } else if (Object.hasOwnProperty.call(row, key)) {
-                                // Keep non-string values as they are for now (might be numbers already)
+                            if (Object.hasOwnProperty.call(row, key)) {
                                 cleanRow[key] = row[key];
                             }
                         }
-
                         // Convert specific numeric fields safely
                         cleanRow.current_total_value_of_award = parseSafeFloat(row.current_total_value_of_award);
                         cleanRow.base_and_exercised_options_value = parseSafeFloat(row.base_and_exercised_options_value);
@@ -769,7 +709,7 @@
 
                          // Check for essential string fields and provide defaults
                          if (!cleanRow.recipient_name) cleanRow.recipient_name = 'Unknown Recipient';
-                         if (!cleanRow.awarding_sub_agency_name) cleanRow.awarding_sub_agency_name = 'Unknown Sub-Agency';
+                         // No subagency needed for this version
                          if (!cleanRow.naics_code) cleanRow.naics_code = 'Unknown';
 
                         return cleanRow;
@@ -787,13 +727,17 @@
 
                 // Populate ARR filters (based on full rawData)
                 console.log("Populating filters...");
-                populateArrFilters(rawData);
+                populateArrFilters(rawData); // Uses Agency/NAICS
                 console.log("Filters populated.");
 
-                // Initial display of charts using unfiltered data
-                console.log("Applying initial filters and updating charts...");
-                applyFiltersAndUpdateCharts(); // Call the update function
-                console.log("Initial chart update triggered.");
+                // Initial display of charts using FULL unfiltered rawData
+                console.log("Displaying initial charts...");
+                const leaderData = processContractLeaders(rawData);
+                displayContractLeadersTable(leaderData);
+
+                const tavTcvData = processTavTcvData(rawData);
+                displayTavTcvChart(tavTcvData);
+                console.log("Initial charts displayed.");
 
 
             } catch (error) {
@@ -813,14 +757,7 @@
         // --- Event Listeners ---
         document.getElementById('arr-calculate-button').addEventListener('click', calculateAverageARR);
 
-        document.getElementById('arr-subagency-filter').addEventListener('change', (e) => {
-            currentSubAgencyFilter = e.target.value;
-            applyFiltersAndUpdateCharts(); // Update charts when subagency changes
-        });
-        document.getElementById('arr-naics-filter').addEventListener('change', (e) => {
-            currentNaicsFilter = e.target.value;
-            applyFiltersAndUpdateCharts(); // Update charts when NAICS changes
-        });
+        // REMOVED listeners that trigger chart updates from ARR filters
 
 
         // --- Run Initialization ---
