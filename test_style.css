@@ -607,3 +607,107 @@ td.number { text-align: right; font-variant-numeric: tabular-nums; }
 #bento-leaders .chart-container:hover::after {
     opacity: 1;
 }
+/* Add these specific fixes to your bento_style.css file */
+
+/* Make sure the table container properly contains the table */
+#contract-leaders-table-container {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    position: relative;
+}
+
+/* Position the summary text below the table container */
+#contract-leaders-table-container p.text-center {
+    position: relative;
+    bottom: 0;
+    width: 100%;
+    margin-top: 8px !important;
+    margin-bottom: 0;
+    padding-top: 8px;
+    border-top: 1px solid var(--color-border);
+    font-size: 0.8rem;
+    color: var(--color-text-secondary);
+}
+
+/* Ensure the table takes up the proper space */
+#contract-leaders-table-container table {
+    width: 100%;
+    min-width: 650px;
+    margin-bottom: 0;
+    flex: 1;
+}
+
+/* TAV/TCV chart enhancements - make it much taller and maximize space */
+
+/* Ensure the bento box for TAV/TCV is given significant height */
+#bento-tavtcv {
+    min-height: 550px; /* Much taller minimum height */
+    display: flex;
+    flex-direction: column;
+}
+
+/* Make chart container fill available space vertically */
+#bento-tavtcv .chart-container {
+    min-height: 480px; /* Significantly increased from 400px */
+    flex: 1; /* Fill available space */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0; /* Remove padding that might reduce available space */
+    margin-bottom: 0; /* Remove any margin */
+}
+
+/* Make the canvas itself use all available height */
+#bento-tavtcv canvas {
+    height: 100% !important; /* Force it to use full container height */
+    max-height: none !important; /* Override any max-height limitations */
+    width: 100% !important; /* Use full width */
+    object-fit: contain; /* Maintain aspect ratio */
+}
+
+/* Adjust the title and subtitle to take minimal space */
+#bento-tavtcv h2.bento-title {
+    margin-bottom: 0.3rem;
+    padding-bottom: 0.3rem;
+}
+
+#bento-tavtcv p.bento-subtitle {
+    margin-bottom: 0.75rem; /* Reduce space below subtitle */
+    font-size: 0.8rem; /* Slightly smaller subtitle */
+}
+
+/* Ensure chart gets priority in the layout */
+#bento-tavtcv {
+    display: grid;
+    grid-template-rows: auto auto 1fr; /* Header, subtitle, chart */
+}
+
+/* Responsive adjustments - keep chart chunky on all screen sizes */
+@media (max-width: 1200px) {
+    #bento-tavtcv {
+        min-height: 500px; /* Still keep it tall on smaller screens */
+    }
+    
+    #bento-tavtcv .chart-container {
+        min-height: 420px;
+    }
+}
+
+@media (max-width: 768px) {
+    #bento-tavtcv {
+        min-height: 450px; /* Adjust for mobile but still keep substantial */
+    }
+    
+    #bento-tavtcv .chart-container {
+        min-height: 380px;
+    }
+}
+
+/* Optional: If needed to make chart borders more visible */
+#tavTcvChart {
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    padding: 8px;
+    background-color: var(--color-surface-container-low);
+}

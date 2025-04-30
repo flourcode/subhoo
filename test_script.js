@@ -390,105 +390,114 @@
             return leaderData;
         }
 
+// Modify the displayContractLeadersTable function to position the summary text correctly
+// Replace or update the relevant part of your displayContractLeadersTable function
 
-        function displayContractLeadersTable(leaderData) {
-            const containerId = 'contract-leaders-table-container';
-            const container = document.getElementById(containerId);
-             if (!container) {
-                 console.error(`Container ${containerId} not found.`);
-                 return;
-             }
+function displayContractLeadersTable(leaderData) {
+    const containerId = 'contract-leaders-table-container';
+    const container = document.getElementById(containerId);
+    if (!container) {
+        console.error(`Container ${containerId} not found.`);
+        return;
+    }
 
-             setLoading(containerId, false); // Turn off loading spinner
+    setLoading(containerId, false); // Turn off loading spinner
 
-            // Remove any existing table or placeholders first
-            container.innerHTML = ''; // Clear previous content
+    // Remove any existing table or placeholders first
+    container.innerHTML = ''; // Clear previous content
 
-            if (!leaderData || leaderData.length === 0) {
-                displayNoData(containerId, 'No contract leader data found.');
-                return;
-            }
+    if (!leaderData || leaderData.length === 0) {
+        displayNoData(containerId, 'No contract leader data found.');
+        return;
+    }
 
-            // Display top 15 leaders
-            const displayData = leaderData.slice(0, 15);
+    // Create a table wrapper div to hold only the table
+    const tableWrapper = document.createElement('div');
+    tableWrapper.className = 'table-wrapper';
+    tableWrapper.style.overflow = 'auto';
+    tableWrapper.style.maxHeight = '300px'; // Adjust as needed
 
-             // Create Table Structure dynamically
-             const table = document.createElement('table');
-             table.className = 'min-w-full divide-y'; // Use existing classes
+    // Display top 15 leaders
+    const displayData = leaderData.slice(0, 15);
 
-             const thead = table.createTHead();
-             thead.className = 'bg-gray-50'; // Use existing class (adjust if needed)
-             const headerRow = thead.insertRow();
-             const headers = [
-                 { text: 'Recipient Name', scope: 'col' },
-                 { text: 'Total Value', scope: 'col', class: 'number' },
-                 { text: '# Awards', scope: 'col', class: 'number' },
-                 { text: 'Avg Value', scope: 'col', class: 'number' },
-                 { text: 'Avg Duration (Days)', scope: 'col', class: 'number' },
-                 { text: 'Dominant Desc.', scope: 'col' }
-             ];
+    // Create Table Structure dynamically
+    const table = document.createElement('table');
+    table.className = 'min-w-full divide-y'; // Use existing classes
 
-             headers.forEach(headerInfo => {
-                 const th = document.createElement('th');
-                 th.textContent = headerInfo.text;
-                 th.scope = headerInfo.scope;
-                 if (headerInfo.class) th.className = headerInfo.class;
-                 headerRow.appendChild(th);
-             });
+    const thead = table.createTHead();
+    thead.className = 'bg-gray-50'; // Use existing class (adjust if needed)
+    const headerRow = thead.insertRow();
+    const headers = [
+        { text: 'Recipient Name', scope: 'col' },
+        { text: 'Total Value', scope: 'col', class: 'number' },
+        { text: '# Awards', scope: 'col', class: 'number' },
+        { text: 'Avg Value', scope: 'col', class: 'number' },
+        { text: 'Avg Duration (Days)', scope: 'col', class: 'number' },
+        { text: 'Dominant Desc.', scope: 'col' }
+    ];
 
-             const tbody = table.createTBody();
-             tbody.className = 'divide-y'; // Use existing class
+    headers.forEach(headerInfo => {
+        const th = document.createElement('th');
+        th.textContent = headerInfo.text;
+        th.scope = headerInfo.scope;
+        if (headerInfo.class) th.className = headerInfo.class;
+        headerRow.appendChild(th);
+    });
 
-             displayData.forEach(leader => {
-                 const row = tbody.insertRow();
+    const tbody = table.createTBody();
+    tbody.className = 'divide-y'; // Use existing class
 
-                 // Recipient Name
-                 let cell = row.insertCell();
-                 cell.className = 'font-medium text-gray-900'; // Use mapped classes
-                 cell.textContent = truncateText(leader.siName, 35);
-                 cell.title = leader.siName; // Full name on hover
+    displayData.forEach(leader => {
+        const row = tbody.insertRow();
 
-                 // Total Value
-                 cell = row.insertCell();
-                 cell.className = 'number text-gray-600 font-bold'; // Use mapped classes
-                 cell.textContent = formatCurrency(leader.totalValue);
+        // Recipient Name
+        let cell = row.insertCell();
+        cell.className = 'font-medium text-gray-900'; // Use mapped classes
+        cell.textContent = truncateText(leader.siName, 35);
+        cell.title = leader.siName; // Full name on hover
 
-                 // Num Awards
-                 cell = row.insertCell();
-                 cell.className = 'number text-gray-600'; // Use mapped classes
-                 cell.textContent = leader.numAwards.toLocaleString();
+        // Total Value
+        cell = row.insertCell();
+        cell.className = 'number text-gray-600 font-bold'; // Use mapped classes
+        cell.textContent = formatCurrency(leader.totalValue);
 
-                 // Avg Value
-                 cell = row.insertCell();
-                 cell.className = 'number text-gray-600'; // Use mapped classes
-                 cell.textContent = formatCurrency(leader.avgValue);
+        // Num Awards
+        cell = row.insertCell();
+        cell.className = 'number text-gray-600'; // Use mapped classes
+        cell.textContent = leader.numAwards.toLocaleString();
 
-                 // Avg Duration
-                 cell = row.insertCell();
-                 cell.className = 'number text-gray-600'; // Use mapped classes
-                 cell.textContent = leader.avgDurationDays > 0 ? leader.avgDurationDays.toLocaleString() : '-';
+        // Avg Value
+        cell = row.insertCell();
+        cell.className = 'number text-gray-600'; // Use mapped classes
+        cell.textContent = formatCurrency(leader.avgValue);
 
-                 // Dominant Type
-                 cell = row.insertCell();
-                 cell.className = 'text-gray-600 text-xs'; // Use mapped classes
-                 cell.textContent = truncateText(leader.dominantType, 30);
-                 cell.title = leader.dominantType; // Full description on hover
-             });
+        // Avg Duration
+        cell = row.insertCell();
+        cell.className = 'number text-gray-600'; // Use mapped classes
+        cell.textContent = leader.avgDurationDays > 0 ? leader.avgDurationDays.toLocaleString() : '-';
 
-             // Append the table to the container
-             container.appendChild(table);
+        // Dominant Type
+        cell = row.insertCell();
+        cell.className = 'text-gray-600 text-xs'; // Use mapped classes
+        cell.textContent = truncateText(leader.dominantType, 30);
+        cell.title = leader.dominantType; // Full description on hover
+    });
 
-             // Add summary text if more leaders exist
-             if (leaderData.length > 15) {
-                 const summaryPara = document.createElement('p');
-                 summaryPara.className = 'text-center text-sm text-gray-500'; // Use mapped classes
-                 summaryPara.style.marginTop = '1rem'; // Add space above summary
-                 summaryPara.textContent = `Showing Top 15 of ${leaderData.length} leaders by Total Value`;
-                 container.appendChild(summaryPara);
-             }
-        }
+    // Append the table to the wrapper
+    tableWrapper.appendChild(table);
+    
+    // Append the wrapper to the container
+    container.appendChild(tableWrapper);
 
-
+    // Add summary text OUTSIDE the table wrapper if more leaders exist
+    if (leaderData.length > 15) {
+        const summaryPara = document.createElement('p');
+        summaryPara.className = 'text-center text-sm text-gray-500 summary-text'; // Added a summary-text class
+        summaryPara.textContent = `Showing Top 15 of ${leaderData.length} leaders by Total Value`;
+        // Append summary directly to container, not inside table wrapper
+        container.appendChild(summaryPara);
+    }
+}
 
         // --- Chart 2: TAV vs TCV Tracker ---
          function processTavTcvData(data) {
@@ -527,191 +536,200 @@
              return contracts;
          }
 
+// Updates to the displayTavTcvChart function to make the chart chunkier
+
 function displayTavTcvChart(chartData) {
-            const containerId = 'tav-tcv-chart-container';
-            const container = document.getElementById(containerId);
-             const canvas = document.getElementById('tavTcvChart');
+    const containerId = 'tav-tcv-chart-container';
+    const container = document.getElementById(containerId);
+    const canvas = document.getElementById('tavTcvChart');
 
-             if (!container || !canvas) {
-                 console.error("TAV/TCV chart container or canvas element not found.");
-                  if(container) displayError(containerId, "Chart canvas element is missing.");
-                 return;
-             }
+    if (!container || !canvas) {
+        console.error("TAV/TCV chart container or canvas element not found.");
+        if(container) displayError(containerId, "Chart canvas element is missing.");
+        return;
+    }
 
-             setLoading(containerId, false); // Turn off loading
-             // Ensure container is clean before adding canvas back
-             while (container.firstChild) {
-                 container.removeChild(container.firstChild);
-             }
-             container.appendChild(canvas); // Add canvas
+    setLoading(containerId, false); // Turn off loading
+    // Ensure container is clean before adding canvas back
+    while (container.firstChild) {
+        container.removeChild(container.firstChild);
+    }
+    container.appendChild(canvas); // Add canvas
 
-
-             if (!chartData || chartData.length === 0) {
-                 displayNoData(containerId, 'No contracts found for TAV/TCV comparison.');
-                 if (tavTcvChartInstance) {
-                     tavTcvChartInstance.destroy();
-                     tavTcvChartInstance = null;
-                 }
-                 canvas.style.display = 'none'; // Hide canvas if no data
-                 return;
-             }
-
-             canvas.style.display = 'block'; // Ensure canvas is visible
-            const ctx = canvas.getContext('2d');
-
-             // Destroy previous chart instance if it exists
-            if (tavTcvChartInstance) {
-                tavTcvChartInstance.destroy();
-                tavTcvChartInstance = null; // Clear reference
-            }
-
-             // Prepare data for Chart.js
-             // Truncate Prime Name more aggressively for better axis readability
-             const labels = chartData.map(d => `${truncateText(d.primeName, 12)} (${truncateText(d.id, 6)})`);
-             const tavData = chartData.map(d => d.tav);
-             const tcvData = chartData.map(d => d.tcv);
-
-             // Get computed styles for chart colors dynamically
-             const computedStyle = getComputedStyle(document.documentElement);
-             // Use the theme variables you defined in test_style.css
-             const primaryColor = computedStyle.getPropertyValue('--color-charts-primary').trim() || '#9993A1';
-             const secondaryColor = computedStyle.getPropertyValue('--color-charts-secondary').trim() || '#797484';
-             const textColor = computedStyle.getPropertyValue('--color-text-secondary').trim() || '#FFFFF3'; // Muted text for axes
-             const textPrimaryColor = computedStyle.getPropertyValue('--color-text-primary').trim() || '#FFFFF3'; // Primary text for tooltips/legend
-             const surfaceColor = computedStyle.getPropertyValue('--color-surface').trim() || '#252327'; // Tooltip BG
-             const outlineColor = computedStyle.getPropertyValue('--color-outline').trim() || '#615C66'; // Tooltip Border
-
-             // Create the new chart instance
-            tavTcvChartInstance = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [
-                        {
-                            label: 'TAV (Obligated)',
-                            data: tavData,
-                            backgroundColor: primaryColor,
-                            borderColor: primaryColor, // No separate border color needed
-                            borderWidth: 0, // Remove bar border
-                            barPercentage: 0.8, // Make bars slightly thicker relative to category space
-                            categoryPercentage: 0.7, // Reduce gap between categories slightly
-                            borderRadius: 3, // Add subtle rounded corners
-                        },
-                        {
-                            label: 'TCV (Current Total)',
-                            data: tcvData,
-                            backgroundColor: secondaryColor,
-                            borderColor: secondaryColor,
-                            borderWidth: 0,
-                            barPercentage: 0.8,
-                            categoryPercentage: 0.7,
-                            borderRadius: 3,
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false, // Essential for fitting Bento box height
-                    indexAxis: 'y', // Keep as horizontal bars
-                    // Set default font family explicitly for Chart.js elements
-                     font: {
-                         family: "'Poppins', sans-serif"
-                     },
-                    scales: {
-                        x: { // Value axis (Horizontal)
-                            beginAtZero: true,
-                             title: { display: false }, // Remove axis title (redundant)
-                            ticks: {
-                                callback: function(value, index, ticks) {
-                                     // Show fewer ticks for cleaner look
-                                     // Show every other tick + last one, but only if there are enough ticks to warrant skipping
-                                     if (ticks.length > 10 && index % 2 !== 0 && index !== ticks.length - 1) return '';
-                                     // Simplified currency format (e.g., $1M, $500K)
-                                     if (Math.abs(value) >= 1e6) {
-                                         return '$' + (value / 1e6).toFixed(1) + 'M';
-                                     } else if (Math.abs(value) >= 1e3) {
-                                         return '$' + (value / 1e3).toFixed(0) + 'K';
-                                     }
-                                     // Only format non-zero values, otherwise show $0
-                                     return value !== 0 ? formatCurrency(value) : '$0';
-                                 },
-                                color: textColor, // Muted text color for ticks
-                                font: { size: 11 }, // Increased font size
-                                maxTicksLimit: 7, // Allow slightly more ticks if needed
-                                padding: 5, // Space between tick label and axis line
-                            },
-                            grid: {
-                                display: false, // Remove X-axis grid lines
-                            },
-                             border: {
-                                 display: false, // Remove X-axis line itself
-                             }
-                        },
-                        y: { // Category axis (Vertical - Prime/Contract ID)
-                            ticks: {
-                                 color: textColor, // Muted text color
-                                 font: { size: 10 }, // Increased font size (was 9)
-                                 padding: 5, // Add padding between label and chart edge
-                                 // Consider autoSkip if needed, but manual truncation is often clearer
-                                 // autoSkip: true,
-                                 // maxTicksLimit: 15
-                             },
-                             grid: {
-                                 display: false, // Remove Y-axis grid lines
-                             },
-                             border: {
-                                 display: false, // Remove Y-axis line itself
-                             }
-                         }
-                    },
-                    plugins: {
-                        tooltip: {
-                             backgroundColor: surfaceColor,
-                             titleColor: textPrimaryColor,
-                             bodyColor: textPrimaryColor,
-                             borderColor: outlineColor,
-                             borderWidth: 1,
-                             padding: 10, // Add padding inside tooltip
-                             callbacks: {
-                                 title: function(tooltipItems) {
-                                      // Display full Prime Name and Contract ID in tooltip title
-                                      const index = tooltipItems[0].dataIndex;
-                                      // Ensure chartData is accessible here (it should be via closure)
-                                      if (chartData && chartData[index]) {
-                                          const originalData = chartData[index];
-                                          return `${originalData.primeName}\n(${originalData.id})`; // Multi-line title
-                                      }
-                                      return ''; // Fallback
-                                  },
-                                label: function(context) {
-                                    let label = context.dataset.label || '';
-                                    if (label) { label += ': '; }
-                                    if (context.parsed.x !== null) {
-                                        label += formatCurrency(context.parsed.x); // Format value
-                                    }
-                                    return label;
-                                }
-                            }
-                        },
-                        legend: {
-                            position: 'bottom',
-                            align: 'center', // Center legend items
-                            labels: {
-                                 color: textPrimaryColor, // Use primary text color for legend
-                                 boxWidth: 14, // Slightly larger color box
-                                 padding: 25, // Space between legend items
-                                 font: { size: 12 } // Increased font size (was 11)
-                             }
-                         }
-                    },
-                     layout: {
-                         // Adjust padding to ensure labels/legend fit well
-                         padding: { top: 10, bottom: 10, left: 10, right: 20 } // Ensure enough padding, esp right
-                     }
-                 }
-            });
+    if (!chartData || chartData.length === 0) {
+        displayNoData(containerId, 'No contracts found for TAV/TCV comparison.');
+        if (tavTcvChartInstance) {
+            tavTcvChartInstance.destroy();
+            tavTcvChartInstance = null;
         }
-        // --- Filters and Dynamic Chart Updates ---
+        canvas.style.display = 'none'; // Hide canvas if no data
+        return;
+    }
+
+    canvas.style.display = 'block'; // Ensure canvas is visible
+    const ctx = canvas.getContext('2d');
+
+    // Destroy previous chart instance if it exists
+    if (tavTcvChartInstance) {
+        tavTcvChartInstance.destroy();
+        tavTcvChartInstance = null; // Clear reference
+    }
+
+    // Prepare data for Chart.js
+    // Truncate Prime Name more aggressively for better axis readability
+    const labels = chartData.map(d => `${truncateText(d.primeName, 12)} (${truncateText(d.id, 6)})`);
+    const tavData = chartData.map(d => d.tav);
+    const tcvData = chartData.map(d => d.tcv);
+
+    // Get computed styles for chart colors dynamically
+    const computedStyle = getComputedStyle(document.documentElement);
+    // Use the theme variables you defined in test_style.css
+    const primaryColor = computedStyle.getPropertyValue('--color-charts-primary').trim() || '#9993A1';
+    const secondaryColor = computedStyle.getPropertyValue('--color-charts-secondary').trim() || '#797484';
+    const textColor = computedStyle.getPropertyValue('--color-text-secondary').trim() || '#FFFFF3'; // Muted text for axes
+    const textPrimaryColor = computedStyle.getPropertyValue('--color-text-primary').trim() || '#FFFFF3'; // Primary text for tooltips/legend
+    const surfaceColor = computedStyle.getPropertyValue('--color-surface').trim() || '#252327'; // Tooltip BG
+    const outlineColor = computedStyle.getPropertyValue('--color-outline').trim() || '#615C66'; // Tooltip Border
+
+    // Create the new chart instance with enhanced options for a chunkier look
+    tavTcvChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'TAV (Obligated)',
+                    data: tavData,
+                    backgroundColor: primaryColor,
+                    borderColor: primaryColor,
+                    borderWidth: 0,
+                    barPercentage: 0.85, // Thicker bars
+                    categoryPercentage: 0.8, // Less gap between categories
+                    borderRadius: 4, // Slightly more rounded corners
+                },
+                {
+                    label: 'TCV (Current Total)',
+                    data: tcvData,
+                    backgroundColor: secondaryColor,
+                    borderColor: secondaryColor,
+                    borderWidth: 0,
+                    barPercentage: 0.85, // Thicker bars
+                    categoryPercentage: 0.8, // Less gap between categories
+                    borderRadius: 4, // Slightly more rounded corners
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false, // Essential for filling height
+            indexAxis: 'y', // Horizontal bars
+            font: {
+                family: "'Poppins', sans-serif",
+                size: 13 // Larger font size
+            },
+            scales: {
+                x: { // Value axis (Horizontal)
+                    beginAtZero: true,
+                    title: { display: false },
+                    ticks: {
+                        callback: function(value, index, ticks) {
+                            if (Math.abs(value) >= 1e6) {
+                                return '$' + (value / 1e6).toFixed(1) + 'M';
+                            } else if (Math.abs(value) >= 1e3) {
+                                return '$' + (value / 1e3).toFixed(0) + 'K';
+                            }
+                            return value !== 0 ? formatCurrency(value) : '$0';
+                        },
+                        color: textColor,
+                        font: { size: 13 }, // Larger tick size
+                        padding: 8, // More space
+                        maxTicksLimit: 6, // Fewer ticks for cleaner look
+                    },
+                    grid: {
+                        display: false, // No grid lines
+                        drawBorder: false,
+                    },
+                    border: {
+                        display: false,
+                    }
+                },
+                y: { // Category axis (Vertical)
+                    ticks: {
+                        color: textColor,
+                        font: { 
+                            size: 13, // Larger tick font
+                            weight: 'bold' // Make labels bold
+                        },
+                        padding: 8, // More padding
+                    },
+                    grid: {
+                        display: false,
+                        drawBorder: false,
+                    },
+                    border: {
+                        display: false,
+                    }
+                }
+            },
+            plugins: {
+                tooltip: {
+                    backgroundColor: surfaceColor,
+                    titleColor: textPrimaryColor,
+                    bodyColor: textPrimaryColor,
+                    borderColor: outlineColor,
+                    borderWidth: 1,
+                    padding: 12, // Larger padding
+                    titleFont: {
+                        size: 14, // Larger title
+                        weight: 'bold'
+                    },
+                    bodyFont: {
+                        size: 13 // Larger body text
+                    },
+                    callbacks: {
+                        title: function(tooltipItems) {
+                            const index = tooltipItems[0].dataIndex;
+                            if (chartData && chartData[index]) {
+                                const originalData = chartData[index];
+                                return `${originalData.primeName}\n(${originalData.id})`;
+                            }
+                            return '';
+                        },
+                        label: function(context) {
+                            let label = context.dataset.label || '';
+                            if (label) { label += ': '; }
+                            if (context.parsed.x !== null) {
+                                label += formatCurrency(context.parsed.x);
+                            }
+                            return label;
+                        }
+                    }
+                },
+                legend: {
+                    position: 'bottom',
+                    align: 'center',
+                    labels: {
+                        color: textPrimaryColor,
+                        boxWidth: 18, // Larger legend boxes
+                        padding: 20, // More space between items
+                        font: { 
+                            size: 14, // Larger legend text
+                            weight: 'bold' // Bold legend
+                        }
+                    }
+                }
+            },
+            layout: {
+                padding: { top: 16, bottom: 16, left: 12, right: 20 }
+            },
+            animation: {
+                duration: 800, // Slightly longer animation
+                easing: 'easeOutQuart' // Smoother animation
+            }
+        }
+    });
+}
+ // --- Filters and Dynamic Chart Updates ---
         function populateFilters(data) {
              if (!data || data.length === 0) {
                  // Clear existing filters if no data
