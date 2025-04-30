@@ -211,7 +211,9 @@
             border-collapse: collapse;
             margin-top: 1rem;
             color: var(--color-text-primary);
-        }
+         table-layout: auto; /* Allow columns to adjust based on content */
+    min-width: 650px; /* Minimum width to prevent excessive compression */
+}
 
         th, td {
             padding: 10px 14px;
@@ -690,11 +692,16 @@
              if (table) table.remove();
          }
 
-         function truncateText(text, maxLength) {
-             if (!text) return '';
-             const stringText = String(text);
-             return stringText.length > maxLength ? stringText.substring(0, maxLength - 3) + '...' : stringText;
-         }
+function truncateText(text, maxLength) {
+    if (!text) return '';
+    const stringText = String(text);
+    
+    // Dynamically adjust truncation based on screen width
+    const screenWidth = window.innerWidth;
+    const adjustedLength = screenWidth > 1200 ? maxLength * 1.5 : maxLength;
+    
+    return stringText.length > adjustedLength ? stringText.substring(0, adjustedLength - 3) + '...' : stringText;
+}
 
          // Dropdown population functions
          function populateDropdown(selectElement, itemsSet, defaultOptionText = "All") {
