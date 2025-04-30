@@ -529,3 +529,81 @@ td.number { text-align: right; font-variant-numeric: tabular-nums; }
     .filter-container > div { width: 100%; }
     .filter-container select, .filter-container input[type="date"] { width: 100%; min-width: unset; }
 }
+/* Add these specific fixes to your bento_style.css file */
+
+/* Fix for table container - ensure proper padding and overflow handling */
+#bento-leaders .chart-container {
+    min-height: 260px;
+    max-height: 400px;
+    overflow-y: auto;
+    overflow-x: auto; /* Ensure horizontal scroll works */
+    padding: 0; /* Remove padding that might be causing cutoff */
+}
+
+/* Ensure table takes proper width and doesn't get cut off */
+#contract-leaders-table-container table {
+    width: 100%;
+    min-width: 650px; /* Ensure minimum width to prevent squeezing */
+    table-layout: fixed; /* Use fixed layout for better control */
+}
+
+/* Set specific widths for table columns to prevent cutoff */
+#contract-leaders-table-container th:first-child,
+#contract-leaders-table-container td:first-child {
+    padding-left: 16px; /* Ensure left padding on first column */
+    width: 25%; /* Give recipient name column more space */
+    min-width: 160px; /* Ensure minimum width */
+}
+
+#contract-leaders-table-container th:nth-child(2),
+#contract-leaders-table-container td:nth-child(2),
+#contract-leaders-table-container th:nth-child(4),
+#contract-leaders-table-container td:nth-child(4) {
+    width: 15%; /* For Total Value and Avg Value columns */
+    min-width: 100px;
+}
+
+#contract-leaders-table-container th:nth-child(3),
+#contract-leaders-table-container td:nth-child(3),
+#contract-leaders-table-container th:nth-child(5),
+#contract-leaders-table-container td:nth-child(5) {
+    width: 10%; /* For # Awards and Avg Duration columns */
+    min-width: 80px;
+}
+
+#contract-leaders-table-container th:last-child,
+#contract-leaders-table-container td:last-child {
+    width: 25%; /* For Dominant Description column */
+    min-width: 140px;
+}
+
+/* Fix for table cells - ensure proper text wrapping */
+#contract-leaders-table-container td {
+    white-space: nowrap; /* Prevent text wrapping */
+    overflow: hidden;
+    text-overflow: ellipsis; /* Show ellipsis for overflowing text */
+}
+
+/* Ensure the whole bento box has proper padding */
+#bento-leaders {
+    padding: 1.5rem; /* Consistent padding */
+    overflow: hidden; /* Prevent overflow outside the box */
+}
+
+/* Add shadow to indicate scrollable content */
+#bento-leaders .chart-container::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 8px;
+    height: 100%;
+    background: linear-gradient(to right, rgba(37, 35, 39, 0.5), transparent);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+#bento-leaders .chart-container:hover::after {
+    opacity: 1;
+}
