@@ -353,7 +353,6 @@ function resetUIForNoDataset() {
     if (searchInput) searchInput.value = '';
 }
 
-// --- Chart 1: Contract Leaders Table ---
 function processContractLeaders(data) {
     console.log("Processing Contract Leaders data...");
     if (!data || data.length === 0) return [];
@@ -377,14 +376,16 @@ function processContractLeaders(data) {
         // If no valid contracts after filtering, skip this recipient
         if (validContracts.length === 0) return null;
 
-        // Get unique contract keys
-        const uniqueContractKeys = new Set(validContracts.map(c => c.contract_award_unique_key || c.award_id_piid).filter(Boolean));
-        if (uniqueContractKeys.size === 0) return null;
+        // Get unique contract keys - MODIFIED: Store these in an array to use for permalinks
+        const uniqueContractKeysSet = new Set(validContracts.map(c => c.contract_award_unique_key || c.award_id_piid).filter(Boolean));
+        const uniqueContractKeys = Array.from(uniqueContractKeysSet); // Convert set to array
+        
+        if (uniqueContractKeys.length === 0) return null;
 
         // Calculate total and average values
         const values = validContracts.map(c => parseSafeFloat(c.current_total_value_of_award) || parseSafeFloat(c.base_and_exercised_options_value) || 0);
         const totalValue = d3.sum(values);
-        const avgValue = totalValue / uniqueContractKeys.size;
+        const avgValue = totalValue / uniqueContractKeys.length;
 
         // Calculate average duration
         const durations = validContracts.map(c => calculateDurationDays(c.period_of_performance_start_date, c.period_of_performance_current_end_date)).filter(d => d > 0);
@@ -402,13 +403,25 @@ function processContractLeaders(data) {
             dominantType = sortedCounts[0][0];
         }
 
+        // ADDED: Check for usaspending_permalink
+        let usaspending_permalink = null;
+        // Look for a permalink in the contracts
+        for (const contract of validContracts) {
+            if (contract.usaspending_permalink) {
+                usaspending_permalink = contract.usaspending_permalink;
+                break;
+            }
+        }
+
         return {
             siName: primeName,
-            numAwards: uniqueContractKeys.size,
+            numAwards: uniqueContractKeys.length,
             totalValue: totalValue,
             avgValue: avgValue,
             avgDurationDays: Math.round(avgDurationDays),
-            dominantType: dominantType
+            dominantType: dominantType,
+            uniqueContractKeys: uniqueContractKeys, // ADDED: Include the contract keys
+            usaspending_permalink: usaspending_permalink // ADDED: Include the permalink if available
         };
     }).filter(Boolean) // Remove null entries
       .sort((a, b) => b.totalValue - a.totalValue); // Sort by total value descending
