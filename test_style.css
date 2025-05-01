@@ -12,7 +12,7 @@
     --light-purple-600: #615C66; /* Darkest - Text */
     
     /* Neutral Colors */
-    --white: #FFFFF3;
+    --white: #FFFFFF;
     --light-text: #36323A;      /* Dark Purple-Gray Text */
     --dark-text: #252327;       /* Darkest Text */
     
@@ -76,7 +76,7 @@
 
 body {
     font-family: 'Inter', -apple-system, sans-serif;
-    background-color: var(--color-background);
+    background-color: #FFFFF3;
     color: var(--color-text-primary);
     line-height: 1.5;
     padding: 24px;
