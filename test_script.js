@@ -1260,15 +1260,22 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize the dataset selector dropdown
     initializeDatasetSelector();
 
-    // Set initial UI state (placeholders, default messages)
+    // Set initial UI state
     updateDashboardTitle(null); // Set default titles
     updateStatusBanner('Please select a dataset to begin', 'info'); // Initial status
     resetUIForNoDataset(); // Set initial state for charts, tables, filters
 
+    // Create income and traffic charts with mock data
+    createIncomeChart();
+    createTrafficChart();
+
+    // Update date display with actual current date
+    updateDateDisplay();
+
     // Setup all event listeners after DOM is ready
     setupEventListeners();
     
-    // *** Auto-load the SOCOM dataset when the page loads ***
+    // Auto-load the SOCOM dataset when the page loads
     const socomDataset = DATASETS.find(d => d.id === 'socom_primes');
     if (socomDataset) {
         console.log("Automatically loading SOCOM dataset...");
@@ -1285,6 +1292,9 @@ document.addEventListener('DOMContentLoaded', function() {
         console.error("SOCOM dataset not found in the DATASETS array");
     }
 
+    // Add this line to update the date every minute
+    setInterval(updateDateDisplay, 60000);
+
     console.log("Dashboard initialized.");
 });
 window.addEventListener('resize', function() {
@@ -1298,3 +1308,47 @@ window.addEventListener('resize', function() {
         }
     }
 });
+// Function to update the date display with actual current date
+function updateDateDisplay() {
+    // Get current date elements
+    const dateNumber = document.querySelector('.date-number');
+    const dateDetails = document.querySelector('.date-details');
+    const dateRange = document.querySelector('.date-range span');
+    
+    if (!dateNumber || !dateDetails || !dateRange) {
+        console.error("Date display elements not found");
+        return;
+    }
+    
+    // Get current date
+    const now = new Date();
+    
+    // Update the day number
+    dateNumber.textContent = now.getDate();
+    
+    // Update day name and month
+    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const monthNames = [
+        'January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    
+    dateDetails.innerHTML = `
+        <div>${dayNames[now.getDay()]},</div>
+        <div>${monthNames[now.getMonth()]}</div>
+    `;
+    
+    // Calculate date range (current month to 3 months later)
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+    
+    // Format start date (current month shortened)
+    const startMonth = monthNames[currentMonth].substring(0, 3);
+    
+    // Calculate end date (3 months later)
+    const endDate = new Date(currentYear, currentMonth + 3, now.getDate());
+    const endMonth = monthNames[endDate.getMonth()].substring(0, 3);
+    
+    // Update date range display
+    dateRange.textContent = `${startMonth} ${now.getDate()} - ${endMonth} ${endDate.getDate()}`;
+}
