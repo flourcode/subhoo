@@ -392,7 +392,55 @@
 
 // Modify the displayContractLeadersTable function to position the summary text correctly
 // Replace or update the relevant part of your displayContractLeadersTable function
+// Add this function to your test_script.js file
+// (e.g., near the other utility functions)
+function updateDateDisplay() {
+    // Get current date elements using their IDs
+    const dateNumber = document.getElementById('current-date'); // Corrected ID
+    const dateDetails = document.getElementById('date-details'); // Corrected ID
+    const dateRange = document.getElementById('date-range');     // Corrected ID
 
+    // Check if elements were found
+    if (!dateNumber || !dateDetails || !dateRange) {
+        console.error("Date display elements not found. Check IDs: #current-date, #date-details, #date-range");
+        return; // Exit if elements are missing
+    }
+
+    // Get current date
+    const now = new Date();
+
+    // Update the day number
+    dateNumber.textContent = now.getDate();
+
+    // Define names for days and months
+    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const monthNames = [
+        'January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+
+    // Update day name and month (using innerHTML to create the divs)
+    dateDetails.innerHTML = `
+        <div>${dayNames[now.getDay()]},</div>
+        <div>${monthNames[now.getMonth()]}</div>
+    `;
+
+    // --- Calculate and Update Date Range ---
+
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+
+    // Format start date (current month shortened)
+    const startMonth = monthNames[currentMonth].substring(0, 3);
+
+    // Calculate end date (3 months later)
+    // Date object handles month/year rollovers correctly
+    const endDate = new Date(currentYear, currentMonth + 3, now.getDate());
+    const endMonth = monthNames[endDate.getMonth()].substring(0, 3);
+
+    // Update date range display in the span
+    dateRange.textContent = `${startMonth} ${now.getDate()} - ${endMonth} ${endDate.getDate()}`;
+}
 function displayContractLeadersTable(leaderData) {
     const containerId = 'contract-leaders-table-container';
     const container = document.getElementById(containerId);
@@ -1264,7 +1312,7 @@ document.addEventListener('DOMContentLoaded', function() {
     updateDashboardTitle(null); // Set default titles
     updateStatusBanner('Please select a dataset to begin', 'info'); // Initial status
     resetUIForNoDataset(); // Set initial state for charts, tables, filters
-
+	updateDateDisplay();
     // Setup all event listeners after DOM is ready
     setupEventListeners();
     
@@ -1287,6 +1335,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     console.log("Dashboard initialized.");
 });
+setInterval(updateDateDisplay, 60000);
 window.addEventListener('resize', function() {
     if (tavTcvChartInstance) {
         // Force chart redraw on window resize
