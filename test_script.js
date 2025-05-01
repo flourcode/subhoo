@@ -1241,21 +1241,7 @@ function displaySankeyChart(sankeyData) {
         .attr('stroke', '#E9E6ED')
         .append('title')
         .text(d => `${d.name}\n${formatCurrency(d.value)}`);
-    
-    // Add text background for better readability
-    g.append('g')
-        .selectAll('rect')
-        .data(nodes)
-        .enter()
-        .append('rect')
-        .attr('x', d => d.x0 < innerWidth / 2 ? d.x1 + 2 : d.x0 - 112) // Position based on left/right
-        .attr('y', d => (d.y1 + d.y0) / 2 - 10)
-        .attr('width', 110)
-        .attr('height', 20)
-        .attr('fill', textBackground)
-        .attr('rx', 3) // Rounded corners
-        .style('pointer-events', 'none'); // Ensures clicks go through to the node
-    
+       
     // Add node labels with dark text
     g.append('g')
         .selectAll('text')
