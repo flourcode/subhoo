@@ -587,22 +587,7 @@ tr:hover td {
         min-height: 350px;
     }
     
-    /* Mobile chart fixes */
-    #bento-tavtcv .chart-container {
-        height: 350px !important;
-        max-height: 350px !important;
-        overflow-y: hidden !important;
-        overflow-x: auto !important;
-        justify-content: flex-start;
-        align-items: flex-start;
-    }
-    
-    #tavTcvChart {
-        height: 330px !important;
-        max-height: 330px !important;
-        min-width: 480px;
-        max-width: 800px !important;
-    }
+  
     
     /* Contract leaders table on mobile */
     #contract-leaders-table-container {
@@ -620,23 +605,5 @@ tr:hover td {
         background-color: var(--color-bg-primary);
         z-index: 2;
         box-shadow: 2px 0 5px rgba(0,0,0,0.05);
-    }
-}
-/* Fixed height for TAV/TCV chart */
-#bento-tavtcv .chart-container {
-    height: 550px !important; /* Fixed height */
-    min-height: 550px !important;
-    max-height: 550px !important;
-    overflow: hidden !important; /* Prevent overflow */
-}
-
-/* Mobile adjustment */
-@media (max-width: 768px) {
-    #bento-tavtcv .chart-container {
-        height: 450px !important;
-        min-height: 450px !important;
-        max-height: 450px !important;
-        overflow-y: hidden !important;
-        overflow-x: auto !important;
     }
 }
