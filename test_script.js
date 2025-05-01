@@ -1758,11 +1758,17 @@ function updateDashboardTitle(dataset) {
     if (!dashboardTitle || !dashboardSubtitle) return;
 
     if (dataset) {
-        dashboardTitle.textContent = `${dataset.name} Sales QBR Dashboard`;
-        dashboardSubtitle.textContent = `Analyzing contract data for ${dataset.name}`;
+        // Extract just the agency name by removing " (Primes)"
+        const agencyName = dataset.name.replace(' (Primes)', '');
+        
+        // Set the title to just the agency name
+        dashboardTitle.textContent = agencyName;
+        
+        // Keep the subtitle with the full dataset name
+        dashboardSubtitle.textContent = `Analyzing contract data from USAspending.gov`;
     } else {
         // Reset to default titles
-        dashboardTitle.textContent = 'Sales QBR Dashboard';
+        dashboardTitle.textContent = 'QBR Dashboard';
         dashboardSubtitle.textContent = 'Select an agency dataset to begin';
     }
 }
