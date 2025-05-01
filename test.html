@@ -12,187 +12,107 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <script src="https://unpkg.com/topojson@3"></script>
     <link rel="stylesheet" href="test_style.css">
-    <style>
-        /* Additional styles for the side panel layout */
-        .dashboard-layout {
-            display: flex;
-            width: 100%;
-            height: calc(100vh - 80px); /* Adjust for header height */
-            overflow: hidden;
-        }
-        
-        .side-panel {
-            width: 300px;
-            min-width: 300px;
-            background-color: var(--white);
-            border-right: 1px solid var(--color-border);
-            padding: 20px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-        
-        .main-content {
-            flex: 1;
-            overflow-y: auto;
-            padding: 20px;
-        }
-        
-        .panel-section {
-            background-color: var(--color-surface);
-            border-radius: var(--border-radius-md);
-            padding: 16px;
-            border: 1px solid var(--color-border);
-        }
-        
-        .panel-section h2 {
-            font-size: 16px;
-            font-weight: 600;
-            margin-bottom: 12px;
-            color: var(--color-text-primary);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .panel-section h2 svg {
-            width: 18px;
-            height: 18px;
-        }
-        
-        .main-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            grid-template-rows: auto auto auto;
-            gap: 20px;
-        }
-        
-        .grid-span-2 {
-            grid-column: span 2;
-        }
-    </style>
 </head>
 <body>
-    <header class="dashboard-header">
-        <div class="header-content">
-            <div class="title-area">
-                <h1 id="dashboard-title">QBR Dashboard</h1>
-                <p id="dashboard-subtitle">Analyze contract data from USAspending.gov</p>
-            </div>
-            <div class="header-controls">
-                <div class="date-container">
-                    <span id="date-text">--</span>
-                    <span class="date-separator">|</span>
-                    <span id="time-text">--</span>
-                </div>
-            </div>
-        </div>
-    </header>
-    
     <div class="dashboard-layout">
-        <!-- Fixed Side Panel -->
+        <!-- Side Panel -->
         <aside class="side-panel">
-            <!-- Dataset Selection Section -->
-            <div class="panel-section">
-                <h2>
+            <div class="card-header">
+                <div class="card-icon-circle">
                     <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none">
                         <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path>
                     </svg>
-                    Dataset Selection
-                </h2>
-                <div class="dataset-selector">
-                    <label for="dataset-select">Select Agency Dataset:</label>
-                    <select id="dataset-select" class="input-select">
-                        <option value="">Choose a dataset...</option>
-                        <!-- Options will be populated by JavaScript -->
-                    </select>
                 </div>
-                <div class="status-section" style="margin-top: 12px;">
-                    <div id="status-banner" class="info">
-                        <span id="status-message">Select a dataset to begin</span>
-                    </div>
-                    <button id="refresh-button" class="button" style="width: 100%; margin-top: 8px;" disabled>
-                        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
-                            <path d="M23 4v6h-6"></path>
-                            <path d="M1 20v-6h6"></path>
-                            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"></path>
-                            <path d="M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
-                        </svg>
-                        Refresh Data
-                    </button>
+                <h2>Dashboard Controls</h2>
+            </div>
+            
+            <!-- Dataset Selection -->
+            <div class="dataset-selector">
+                <label for="dataset-select">Select Dataset:</label>
+                <select id="dataset-select" class="input-select">
+                    <option value="">Choose a dataset...</option>
+                    <!-- Options will be populated by JavaScript -->
+                </select>
+            </div>
+            
+            <div class="status-section" style="margin-top: 16px;">
+                <div id="status-banner" class="info">
+                    <span id="status-message">Select a dataset to begin</span>
                 </div>
             </div>
             
-            <!-- Search Section -->
-            <div class="panel-section">
-                <h2>
-                    <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="11" cy="11" r="8"></circle>
-                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                    </svg>
-                    Search Contracts
-                </h2>
-                <div class="search-container">
-                    <input type="search" id="search-input" placeholder="Search by keyword, recipient, description..." class="input-select" style="width: 100%;">
-                    <p style="font-size: 12px; color: var(--color-text-secondary); margin-top: 8px;">
-                        Search across contracts by recipient name, contract ID, or description.
-                    </p>
-                </div>
-            </div>
+            <button id="refresh-button" style="width: 100%; margin-top: 16px;" disabled>
+                <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+                    <path d="M23 4v6h-6"></path>
+                    <path d="M1 20v-6h6"></path>
+                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"></path>
+                    <path d="M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                </svg>
+                Refresh
+            </button>
             
-            <!-- Filters Section -->
-            <div class="panel-section">
-                <h2>
-                    <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"></path>
-                    </svg>
-                    Filters
-                </h2>
-                <div class="filter-item" style="margin-bottom: 12px;">
+            <div class="filter-container" style="margin-top: 24px;">
+                <div class="filter-item">
+                    <label for="search-input">Search Contracts:</label>
+                    <input type="search" id="search-input" placeholder="Search by keyword, recipient, description...">
+                </div>
+                
+                <div class="filter-item" style="margin-top: 16px;">
                     <label for="sub-agency-filter">Sub-Agency:</label>
-                    <select id="sub-agency-filter" class="input-select" style="width: 100%;">
+                    <select id="sub-agency-filter" class="input-select">
                         <option value="">All Sub-Agencies</option>
                     </select>
                 </div>
-                <div class="filter-item">
+                
+                <div class="filter-item" style="margin-top: 16px;">
                     <label for="naics-filter">NAICS Code:</label>
-                    <select id="naics-filter" class="input-select" style="width: 100%;">
+                    <select id="naics-filter" class="input-select">
                         <option value="">All NAICS</option>
                     </select>
                 </div>
-                <button id="arr-calculate-button" class="primary-button" style="width: 100%; margin-top: 16px;">
+                
+                <button id="arr-calculate-button" class="primary-button" style="width: 100%; margin-top: 24px;">
                     Calculate ARR
                 </button>
             </div>
             
-            <!-- Dashboard Notes Section -->
-            <div class="panel-section">
-                <h2>
-                    <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                    </svg>
-                    Dashboard Notes
-                </h2>
-                <div class="notes-content">
-                    <p style="font-size: 13px; color: var(--color-text-secondary); margin-bottom: 8px;">
-                        This dashboard provides insights into contract data across different agencies from USAspending.gov.
-                    </p>
-                    <ul style="font-size: 13px; color: var(--color-text-secondary); margin-left: 16px; margin-bottom: 8px;">
-                        <li><strong>TAV</strong> - Total Award Value (Currently Obligated)</li>
-                        <li><strong>TCV</strong> - Total Contract Value (Max Potential Value)</li>
-                        <li><strong>ARR</strong> - Average Annual Run Rate</li>
-                    </ul>
-                </div>
+            <!-- Dashboard Notes -->
+            <div class="notes-content" style="margin-top: 32px; padding-top: 16px; border-top: 1px solid var(--color-border);">
+                <h3 style="margin-bottom: 12px; font-size: 16px; font-weight: 600;">Dashboard Notes</h3>
+                <p>
+                    This dashboard provides insights into contract data across different agencies. The data is sourced from public contract records.
+                </p>
+                <ul>
+                    <li><strong>TAV</strong> - Total Award Value (Currently Obligated)</li>
+                    <li><strong>TCV</strong> - Total Contract Value (Max Potential Value)</li>
+                    <li><strong>ARR</strong> - Average Annual Run Rate (Uses Average Annual Contract Value)</li>
+                </ul>
+                <p>Use the Search and Agency/NAICS Filters to focus on specific segments.</p>
             </div>
         </aside>
         
         <!-- Main Content Area -->
         <main class="main-content">
-            <div class="main-grid">
+            <header class="dashboard-header">
+                <div class="header-content">
+                    <div class="title-area">
+                        <h1 id="dashboard-title">QBR Dashboard</h1>
+                        <p id="dashboard-subtitle">Analyze contract data from USAspending.gov</p>
+                    </div>
+                    <div class="header-controls">
+                        <div class="date-container">
+                            <span id="date-text">--</span>
+                            <span class="date-separator">|</span>
+                            <span id="time-text">--</span>
+                        </div>
+                    </div>
+                </div>
+            </header>
+            
+            <!-- Bento Grid Layout -->
+            <div class="bento-grid">
                 <!-- TAV vs TCV Chart -->
-                <div id="bento-tavtcv" class="bento-box grid-span-2">
+                <div id="bento-tavtcv" class="bento-box col-span-2">
                     <div class="card-header">
                         <div class="card-icon-circle">
                             <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
@@ -211,7 +131,7 @@
                 </div>
 
                 <!-- Contract Leaders Table -->
-                <div id="bento-leaders" class="bento-box">
+                <div id="bento-leaders" class="bento-box col-span-2">
                     <div class="card-header">
                         <div class="card-icon-circle">
                             <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
@@ -230,37 +150,8 @@
                     </div>
                 </div>
 
-                <!-- ARR Display -->
-                <div id="bento-arr" class="bento-box">
-                    <div class="card-header">
-                        <div class="card-icon-circle">
-                            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M12 2v20M2 12h20"></path>
-                            </svg>
-                        </div>
-                        <h2>Average Annual Run Rate</h2>
-                    </div>
-                    <div class="card-content">
-                        <div class="arr-result-section" style="text-align: center;">
-                            <div class="arr-display">
-                                <div class="arr-value-display">
-                                    <div id="arr-loading" style="display: none;">
-                                        <div class="spinner"></div>
-                                    </div>
-                                    <div id="arr-error" style="display: none;" class="error-message"></div>
-                                    <div id="arr-no-data" style="display: none;" class="no-data-message"></div>
-                                    <div id="arr-result" class="value" style="font-size: 32px; font-weight: 700; color: var(--color-primary);">$0 / year</div>
-                                </div>
-                            </div>
-                            <p style="margin-top: 12px; font-size: 14px; color: var(--color-text-secondary);">
-                                Based on contract duration and values in selected dataset
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
                 <!-- Sankey Chart -->
-                <div id="bento-sankey" class="bento-box grid-span-2">
+                <div id="bento-sankey" class="bento-box col-span-2">
                     <div class="card-header">
                         <div class="card-icon-circle">
                             <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
@@ -270,7 +161,7 @@
                         </div>
                         <h2>Award Flow (Agency to Prime)</h2>
                     </div>
-                    <div id="sankey-chart-container" class="chart-container" style="min-height: 300px;">
+                    <div id="sankey-chart-container" class="chart-container">
                         <div class="loading-placeholder">
                             <div class="spinner"></div>
                             <span>Loading Sankey data...</span>
@@ -280,7 +171,7 @@
                 </div>
 
                 <!-- Map Visualization -->
-                <div id="bento-map" class="bento-box">
+                <div id="bento-map" class="bento-box col-span-2">
                     <div class="card-header">
                         <div class="card-icon-circle">
                             <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
@@ -290,7 +181,7 @@
                         </div>
                         <h2>Place of Performance</h2>
                     </div>
-                    <div id="map-container" class="chart-container" style="min-height: 300px;">
+                    <div id="map-container" class="chart-container">
                         <div class="loading-placeholder">
                             <div class="spinner"></div>
                             <span>Loading map data...</span>
@@ -299,8 +190,34 @@
                     </div>
                 </div>
 
+                <!-- ARR Display -->
+                <div id="bento-arr" class="bento-box col-span-2">
+                    <div class="card-header">
+                        <div class="card-icon-circle">
+                            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 2v20M2 12h20"></path>
+                            </svg>
+                        </div>
+                        <h2>Average Annual Run Rate</h2>
+                    </div>
+                    <div class="card-content">
+                        <div class="arr-result-section">
+                            <div class="arr-display">
+                                <div class="arr-value-display">
+                                    <div id="arr-loading" style="display: none;">
+                                        <div class="spinner"></div>
+                                    </div>
+                                    <div id="arr-error" style="display: none;" class="error-message"></div>
+                                    <div id="arr-no-data" style="display: none;" class="no-data-message"></div>
+                                    <div id="arr-result" class="value">$0 / year</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Expiring Contracts -->
-                <div id="bento-expiring" class="bento-box">
+                <div id="bento-expiring" class="bento-box col-span-2">
                     <div class="card-header">
                         <div class="card-icon-circle">
                             <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
