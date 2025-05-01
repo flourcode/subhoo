@@ -747,79 +747,9 @@ function displayTavTcvChart(chartData) {
         return;
     }
 
-    // Create a table below the chart with USA Spending links
-    const chartLegendTable = document.createElement('div');
-    chartLegendTable.className = 'tav-tcv-legend';
-    chartLegendTable.style.marginTop = '10px';
-    chartLegendTable.style.fontSize = '12px';
-    chartLegendTable.style.overflowX = 'auto';
-    
-    const table = document.createElement('table');
-    table.style.width = '100%';
-    table.style.borderCollapse = 'collapse';
-    table.style.fontSize = '12px';
-    
-    // Create header row
-    const thead = table.createTHead();
-    const headerRow = thead.insertRow();
-    
-    const headers = ['Prime', 'TAV', 'TCV', 'USA Spending'];
-    headers.forEach(text => {
-        const th = document.createElement('th');
-        th.textContent = text;
-        th.style.padding = '4px 8px';
-        th.style.textAlign = text === 'Prime' ? 'left' : 'right';
-        if (text === 'USA Spending') th.style.textAlign = 'center';
-        headerRow.appendChild(th);
-    });
-    
-    // Create a row for each contract
-    const tbody = table.createTBody();
-    chartData.forEach(contract => {
-        const row = tbody.insertRow();
-        
-        // Prime Name
-        let cell = row.insertCell();
-        cell.textContent = truncateText(contract.primeName, 30);
-        cell.title = contract.primeName;
-        cell.style.padding = '4px 8px';
-        
-        // TAV
-        cell = row.insertCell();
-        cell.textContent = formatCurrency(contract.tav);
-        cell.style.padding = '4px 8px';
-        cell.style.textAlign = 'right';
-        
-        // TCV
-        cell = row.insertCell();
-        cell.textContent = formatCurrency(contract.tcv);
-        cell.style.padding = '4px 8px';
-        cell.style.textAlign = 'right';
-        
-        // USA Spending Link
-        cell = row.insertCell();
-        cell.style.padding = '4px 8px';
-        cell.style.textAlign = 'center';
-        
-        if (contract.id) {
-            const link = document.createElement('a');
-            link.href = `https://www.usaspending.gov/award/${contract.id}`;
-            link.target = '_blank';
-            link.rel = 'noopener noreferrer';
-            link.textContent = 'View';
-            link.style.color = '#3e95cd';
-            link.style.textDecoration = 'underline';
-            cell.appendChild(link);
-        } else {
-            cell.textContent = '-';
-        }
-    });
-    
-    chartLegendTable.appendChild(table);
-
     canvas.style.display = 'block'; // Ensure canvas is visible
     const containerWidth = container.clientWidth;
-    const containerHeight = container.clientHeight - 150; // Adjust for legend table
+    const containerHeight = container.clientHeight;
     canvas.width = containerWidth;
     canvas.height = containerHeight;
     
@@ -915,6 +845,10 @@ function displayTavTcvChart(chartData) {
                             weight: 'bold'
                         },
                         padding: 8,
+                        callback: function(value, index) {
+                            // Just return the text for now, we'll replace with links after chart is created
+                            return this.getLabelForValue(value);
+                        }
                     },
                     grid: {
                         display: false,
@@ -979,12 +913,87 @@ function displayTavTcvChart(chartData) {
             animation: {
                 duration: 800,
                 easing: 'easeOutQuart'
+            },
+            // Add onClick handler for the entire chart
+            onClick: function(e, elements) {
+                if (!elements || elements.length === 0) return;
+                
+                const index = elements[0].index;
+                if (chartData && chartData[index] && chartData[index].id) {
+                    // Open USA Spending link for the clicked bar/label
+                    window.open(`https://www.usaspending.gov/award/${chartData[index].id}`, '_blank');
+                }
             }
         }
     });
     
-    // Append the legend table below the chart
-    container.appendChild(chartLegendTable);
+    // Now replace Y-axis labels with clickable links
+    // This is done after chart creation because Chart.js doesn't natively support HTML in axis labels
+    
+    // Create a container to overlay our clickable labels
+    const labelsContainer = document.createElement('div');
+    labelsContainer.className = 'chart-clickable-labels';
+    labelsContainer.style.position = 'absolute';
+    labelsContainer.style.top = '0';
+    labelsContainer.style.left = '0';
+    labelsContainer.style.width = '100%';
+    labelsContainer.style.height = '100%';
+    labelsContainer.style.pointerEvents = 'none'; // Don't block chart interactions
+    
+    // Add the labels container
+    container.style.position = 'relative'; // Ensure the container is positioned for absolute positioning
+    container.appendChild(labelsContainer);
+    
+    // We need to wait for chart to render fully
+    setTimeout(() => {
+        // Get the positions of Y-axis labels from the chart
+        const yAxis = tavTcvChartInstance.scales.y;
+        const chartArea = tavTcvChartInstance.chartArea;
+        
+        // For each label, create a clickable link positioned over the original label
+        chartData.forEach((contract, index) => {
+            if (!contract.id) return;
+            
+            // Get position of this label
+            const y = yAxis.getPixelForValue(index);
+            
+            // Create clickable link
+            const link = document.createElement('a');
+            link.href = `https://www.usaspending.gov/award/${contract.id}`;
+            link.target = '_blank';
+            link.rel = 'noopener noreferrer';
+            link.textContent = truncateText(contract.primeName, 25);
+            link.title = `View ${contract.primeName} on USA Spending`;
+            
+            // Style the link to match chart labels
+            link.style.position = 'absolute';
+            link.style.left = '0';
+            link.style.top = (y - 10) + 'px'; // Adjust to center with label
+            link.style.fontFamily = "'Poppins', sans-serif";
+            link.style.fontSize = '13px';
+            link.style.fontWeight = 'bold';
+            link.style.color = textColor;
+            link.style.textDecoration = 'none';
+            link.style.cursor = 'pointer';
+            link.style.pointerEvents = 'auto'; // Make link clickable
+            link.style.padding = '5px 8px';
+            link.style.paddingRight = chartArea.left + 'px'; // Extend clickable area to chart
+            
+            // Add hover effect
+            link.addEventListener('mouseover', () => {
+                link.style.textDecoration = 'underline';
+                link.style.color = primaryColor;
+            });
+            
+            link.addEventListener('mouseout', () => {
+                link.style.textDecoration = 'none';
+                link.style.color = textColor;
+            });
+            
+            // Add to container
+            labelsContainer.appendChild(link);
+        });
+    }, 100); // Small delay to ensure chart is rendered
 }
 // --- Filters and Dynamic Chart Updates ---
 function populateFilters(data) {
