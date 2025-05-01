@@ -894,7 +894,422 @@ function populateFilters(data) {
     populateDropdown(document.getElementById('sub-agency-filter'), subAgencySet, "All Sub-Agencies");
     populateNaicsDropdown(document.getElementById('naics-filter'), naicsMap);
 }
+// --- Choropleth Map Functions ---
+function processMapData(data) {
+    console.log("Processing data for performance map...");
+    if (!data || data.length === 0) return {};
+    
+    // Create a map to store state-level aggregates
+    const stateData = {};
+    
+    data.forEach(row => {
+        const state = row.place_of_performance_state_name?.trim() || 
+                     row.pop_state_code?.trim() || 
+                     "Unknown";
+                     
+        const value = parseSafeFloat(row.current_total_value_of_award) || 0;
+        
+        if (state.toLowerCase() === 'unknown') return;
+        
+        if (!stateData[state]) {
+            stateData[state] = {
+                value: 0,
+                count: 0
+            };
+        }
+        
+        stateData[state].value += value;
+        stateData[state].count += 1;
+    });
+    
+    console.log(`Processed data for map: ${Object.keys(stateData).length} states`);
+    return stateData;
+}
+// --- Sankey Chart Functions ---
+function processSankeyData(data) {
+    console.log("Processing data for Sankey chart...");
+    if (!data || data.length === 0) return { nodes: [], links: [] };
 
+    // Get unique sub-agencies
+    const subAgencies = new Set();
+    data.forEach(row => {
+        const agency = row.awarding_sub_agency_name?.trim();
+        if (agency && agency.toLowerCase() !== 'unknown sub-agency' && agency.toLowerCase() !== 'unknown') {
+            subAgencies.add(agency);
+        }
+    });
+
+    // Get top 10 recipients
+    const recipientValues = {};
+    data.forEach(row => {
+        const recipient = row.recipient_name;
+        if (!recipient) return;
+        
+        if (!recipientValues[recipient]) {
+            recipientValues[recipient] = 0;
+        }
+        recipientValues[recipient] += parseSafeFloat(row.current_total_value_of_award);
+    });
+
+    // Sort recipients by value and take top 10
+    const topRecipients = Object.entries(recipientValues)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 10)
+        .map(([name]) => name);
+
+    // Create nodes array
+    const nodes = [];
+    
+    // Add agency nodes
+    subAgencies.forEach(agency => {
+        nodes.push({ name: truncateText(agency, 30) });
+    });
+    
+    // Add recipient nodes
+    topRecipients.forEach(recipient => {
+        nodes.push({ name: truncateText(recipient, 30) });
+    });
+
+    // Create links array
+    const links = [];
+    const agencyIndices = {};
+    const recipientIndices = {};
+    
+    // Map agency names to indices
+    subAgencies.forEach((agency, i) => {
+        agencyIndices[agency] = i;
+    });
+    
+    // Map recipient names to indices (offset by number of agencies)
+    topRecipients.forEach((recipient, i) => {
+        recipientIndices[recipient] = i + subAgencies.size;
+    });
+
+    // Create links from agencies to recipients
+    data.forEach(row => {
+        const agency = row.awarding_sub_agency_name?.trim();
+        const recipient = row.recipient_name;
+        
+        if (!agency || !recipient || !agencyIndices.hasOwnProperty(agency) || !recipientIndices.hasOwnProperty(recipient)) {
+            return;
+        }
+        
+        const sourceIndex = agencyIndices[agency];
+        const targetIndex = recipientIndices[recipient];
+        const value = parseSafeFloat(row.current_total_value_of_award);
+        
+        if (value <= 0) return;
+        
+        // Check if a link already exists between these nodes
+        const existingLinkIndex = links.findIndex(link => 
+            link.source === sourceIndex && link.target === targetIndex
+        );
+        
+        if (existingLinkIndex >= 0) {
+            // Add to existing link
+            links[existingLinkIndex].value += value;
+        } else {
+            // Create new link
+            links.push({
+                source: sourceIndex,
+                target: targetIndex,
+                value: value
+            });
+        }
+    });
+
+    console.log(`Processed data for Sankey chart: ${nodes.length} nodes, ${links.length} links`);
+    return { nodes, links };
+}
+
+function displaySankeyChart(sankeyData) {
+    const containerId = 'sankey-chart-container';
+    const container = document.getElementById(containerId);
+    const svg = document.getElementById('sankeyChart');
+    
+    if (!container || !svg) {
+        console.error("Sankey chart container or SVG element not found.");
+        if(container) displayError(containerId, "SVG element is missing.");
+        return;
+    }
+    
+    setLoading(containerId, false); // Turn off loading spinner
+    
+    // Clear any previous content
+    while (svg.firstChild) {
+        svg.removeChild(svg.firstChild);
+    }
+    
+    // Show the SVG element
+    svg.style.display = 'block';
+    
+    if (!sankeyData || !sankeyData.nodes || !sankeyData.links || 
+        sankeyData.nodes.length === 0 || sankeyData.links.length === 0) {
+        displayNoData(containerId, 'No data available for Sankey diagram.');
+        return;
+    }
+    
+    // Set dimensions and margins
+    const width = container.clientWidth;
+    const height = container.clientHeight;
+    const margin = {top: 20, right: 20, bottom: 20, left: 20};
+    const innerWidth = width - margin.left - margin.right;
+    const innerHeight = height - margin.top - margin.bottom;
+    
+    // Create the main group element with margins
+    const g = d3.select(svg)
+        .attr('width', width)
+        .attr('height', height)
+        .append('g')
+        .attr('transform', `translate(${margin.left},${margin.top})`);
+    
+    // Convert node indices to objects for the sankey generator
+    const links = sankeyData.links.map(d => ({...d}));
+    const nodes = sankeyData.nodes.map(d => ({...d}));
+    
+    // Create sankey generator
+    const sankey = d3.sankey()
+        .nodeWidth(15)
+        .nodePadding(10)
+        .extent([[0, 0], [innerWidth, innerHeight]]);
+    
+    // Generate the sankey diagram
+    const sankeyData0 = sankey({
+        nodes: nodes,
+        links: links
+    });
+    
+    // Add links
+    g.append('g')
+        .selectAll('path')
+        .data(sankeyData0.links)
+        .enter()
+        .append('path')
+        .attr('d', d3.sankeyLinkHorizontal())
+        .attr('stroke-width', d => Math.max(1, d.width))
+        .attr('stroke', '#797484')
+        .attr('stroke-opacity', 0.5)
+        .attr('fill', 'none')
+        .append('title')
+        .text(d => `${d.source.name} → ${d.target.name}\n${formatCurrency(d.value)}`);
+    
+    // Add nodes
+    const node = g.append('g')
+        .selectAll('rect')
+        .data(sankeyData0.nodes)
+        .enter()
+        .append('rect')
+        .attr('x', d => d.x0)
+        .attr('y', d => d.y0)
+        .attr('height', d => d.y1 - d.y0)
+        .attr('width', d => d.x1 - d.x0)
+        .attr('fill', '#9993A1')
+        .attr('stroke', '#252327')
+        .append('title')
+        .text(d => `${d.name}\n${formatCurrency(d.value)}`);
+    
+    // Add node labels
+    g.append('g')
+        .selectAll('text')
+        .data(sankeyData0.nodes)
+        .enter()
+        .append('text')
+        .attr('x', d => d.x0 < innerWidth / 2 ? d.x1 + 6 : d.x0 - 6)
+        .attr('y', d => (d.y1 + d.y0) / 2)
+        .attr('dy', '0.35em')
+        .attr('text-anchor', d => d.x0 < innerWidth / 2 ? 'start' : 'end')
+        .text(d => d.name)
+        .attr('font-size', '10px')
+        .attr('fill', '#FFFFF3');
+}
+function displayChoroplethMap(mapData) {
+    const containerId = 'map-container';
+    const container = document.getElementById(containerId);
+    const mapDiv = document.getElementById('choroplethMap');
+    
+    if (!container || !mapDiv) {
+        console.error("Map container or div element not found.");
+        if(container) displayError(containerId, "Map div element is missing.");
+        return;
+    }
+    
+    setLoading(containerId, false); // Turn off loading spinner
+    
+    // Clear any previous content
+    mapDiv.innerHTML = '';
+    
+    if (!mapData || Object.keys(mapData).length === 0) {
+        displayNoData(containerId, 'No geographic data available for mapping.');
+        return;
+    }
+    
+    // Set up map dimensions
+    const width = mapDiv.clientWidth;
+    const height = mapDiv.clientHeight;
+    
+    // Create SVG element inside the map div
+    const svg = d3.select(mapDiv)
+        .append('svg')
+        .attr('width', width)
+        .attr('height', height);
+    
+    // Create a map projection
+    const projection = d3.geoAlbersUsa()
+        .scale(width)
+        .translate([width / 2, height / 2]);
+    
+    const path = d3.geoPath().projection(projection);
+    
+    // Define color scale for the map
+    const stateValues = Object.values(mapData).map(d => d.value);
+    const minValue = d3.min(stateValues);
+    const maxValue = d3.max(stateValues);
+    
+    const colorScale = d3.scaleSequential(d3.interpolateBlues)
+        .domain([0, maxValue]);
+    
+    // Create tooltip
+    const tooltip = d3.select(mapDiv)
+        .append('div')
+        .attr('class', 'tooltip')
+        .style('opacity', 0)
+        .style('position', 'absolute')
+        .style('background-color', '#252327')
+        .style('color', '#FFFFF3')
+        .style('padding', '8px')
+        .style('border-radius', '4px')
+        .style('font-size', '12px')
+        .style('pointer-events', 'none');
+    
+    // Load US state boundaries GeoJSON
+    d3.json('https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json')
+        .then(us => {
+            // Convert to proper GeoJSON format
+            const states = topojson.feature(us, us.objects.states).features;
+            
+            // Map state names to FIPS codes
+            const stateFipsLookup = {
+                "Alabama": "01", "Alaska": "02", "Arizona": "04", "Arkansas": "05",
+                "California": "06", "Colorado": "08", "Connecticut": "09", "Delaware": "10",
+                "District of Columbia": "11", "Florida": "12", "Georgia": "13", "Hawaii": "15",
+                "Idaho": "16", "Illinois": "17", "Indiana": "18", "Iowa": "19",
+                "Kansas": "20", "Kentucky": "21", "Louisiana": "22", "Maine": "23",
+                "Maryland": "24", "Massachusetts": "25", "Michigan": "26", "Minnesota": "27",
+                "Mississippi": "28", "Missouri": "29", "Montana": "30", "Nebraska": "31",
+                "Nevada": "32", "New Hampshire": "33", "New Jersey": "34", "New Mexico": "35",
+                "New York": "36", "North Carolina": "37", "North Dakota": "38", "Ohio": "39",
+                "Oklahoma": "40", "Oregon": "41", "Pennsylvania": "42", "Rhode Island": "44",
+                "South Carolina": "45", "South Dakota": "46", "Tennessee": "47", "Texas": "48",
+                "Utah": "49", "Vermont": "50", "Virginia": "51", "Washington": "53",
+                "West Virginia": "54", "Wisconsin": "55", "Wyoming": "56"
+            };
+            
+            // Add reverse lookup (FIPS to name)
+            const fipsToName = {};
+            Object.entries(stateFipsLookup).forEach(([name, fips]) => {
+                fipsToName[fips] = name;
+            });
+            
+            // Draw state boundaries
+            svg.selectAll('path')
+                .data(states)
+                .enter()
+                .append('path')
+                .attr('d', path)
+                .attr('fill', d => {
+                    const stateName = fipsToName[d.id];
+                    return stateName && mapData[stateName] 
+                        ? colorScale(mapData[stateName].value) 
+                        : '#ccc';
+                })
+                .attr('stroke', '#252327')
+                .attr('stroke-width', 0.5)
+                .on('mouseover', function(event, d) {
+                    const stateName = fipsToName[d.id];
+                    
+                    if (!stateName || !mapData[stateName]) return;
+                    
+                    tooltip.transition()
+                        .duration(200)
+                        .style('opacity', 0.9);
+                        
+                    tooltip.html(`
+                        <strong>${stateName}</strong><br>
+                        Total Value: ${formatCurrency(mapData[stateName].value)}<br>
+                        Contracts: ${mapData[stateName].count}
+                    `)
+                    .style('left', (event.pageX + 10) + 'px')
+                    .style('top', (event.pageY - 28) + 'px');
+                })
+                .on('mouseout', function() {
+                    tooltip.transition()
+                        .duration(500)
+                        .style('opacity', 0);
+                });
+                
+            // Add legend
+            const legendWidth = 200;
+            const legendHeight = 15;
+            const legendX = width - legendWidth - 20;
+            const legendY = height - 40;
+            
+            // Create a linear gradient for the legend
+            const defs = svg.append('defs');
+            const linearGradient = defs.append('linearGradient')
+                .attr('id', 'legend-gradient')
+                .attr('x1', '0%')
+                .attr('y1', '0%')
+                .attr('x2', '100%')
+                .attr('y2', '0%');
+                
+            // Add color stops to the gradient
+            const stops = [0, 0.25, 0.5, 0.75, 1];
+            stops.forEach(stop => {
+                linearGradient.append('stop')
+                    .attr('offset', `${stop * 100}%`)
+                    .attr('stop-color', colorScale(stop * maxValue));
+            });
+            
+            // Draw the legend rectangle
+            svg.append('rect')
+                .attr('x', legendX)
+                .attr('y', legendY)
+                .attr('width', legendWidth)
+                .attr('height', legendHeight)
+                .style('fill', 'url(#legend-gradient)')
+                .attr('stroke', '#252327')
+                .attr('stroke-width', 1);
+                
+            // Add legend labels
+            svg.append('text')
+                .attr('x', legendX)
+                .attr('y', legendY - 5)
+                .attr('text-anchor', 'start')
+                .attr('font-size', '10px')
+                .attr('fill', '#FFFFF3')
+                .text('$0');
+                
+            svg.append('text')
+                .attr('x', legendX + legendWidth)
+                .attr('y', legendY - 5)
+                .attr('text-anchor', 'end')
+                .attr('font-size', '10px')
+                .attr('fill', '#FFFFF3')
+                .text(formatCurrency(maxValue));
+                
+            svg.append('text')
+                .attr('x', legendX + (legendWidth / 2))
+                .attr('y', legendY - 5)
+                .attr('text-anchor', 'middle')
+                .attr('font-size', '10px')
+                .attr('fill', '#FFFFF3')
+                .text('Contract Value by State');
+        })
+        .catch(error => {
+            console.error("Error loading GeoJSON:", error);
+            displayError(containerId, `Error loading map data: ${error.message}`);
+        });
+}
 function applyFiltersAndUpdateVisuals() {
     // --- Get Filter & Search Values ---
     const subAgencyFilter = document.getElementById('sub-agency-filter')?.value || '';
@@ -990,12 +1405,13 @@ function applyFiltersAndUpdateVisuals() {
     const expiringData = processExpiringData(filteredData);
     displayExpiringTable(expiringData);
 
-    // Placeholders for uncompleted visualizations
-    setLoading('sankey-chart-container', false);
-    displayNoData('sankey-chart-container', 'Sankey chart not implemented yet.');
+    // Sankey Chart for Award Flow
+    const sankeyData = processSankeyData(filteredData);
+    displaySankeyChart(sankeyData);
 
-    setLoading('map-container', false);
-    displayNoData('map-container', 'Map not implemented yet.');
+    // Choropleth Map
+    const mapData = processMapData(filteredData);
+    displayChoroplethMap(mapData);
 
     // Return the final filtered data
     return filteredData;
