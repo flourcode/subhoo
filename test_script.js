@@ -1447,7 +1447,6 @@ function applyFiltersAndUpdateVisuals() {
     return filteredData;
 }
 
-// --- ARR Calculation ---
 function calculateAverageARR() {
     const resultDiv = document.getElementById('arr-result');
     const loadingDiv = document.getElementById('arr-loading');
@@ -1455,7 +1454,7 @@ function calculateAverageARR() {
     const noDataDiv = document.getElementById('arr-no-data');
 
     // Reset UI elements
-resultDiv.textContent = '$0 / yr';
+    resultDiv.textContent = '$0 / yr';
     resultDiv.style.display = 'none';
     loadingDiv.style.display = 'block';
     errorDiv.style.display = 'none';
@@ -1480,24 +1479,79 @@ resultDiv.textContent = '$0 / yr';
 
             let totalAnnualizedValue = 0;
             let validContractsCount = 0;
-
+            
+            // Group contracts by duration buckets for more accurate ARR
+            const shortTermContracts = []; // Less than 90 days
+            const mediumTermContracts = []; // 90 days to 270 days
+            const longTermContracts = []; // More than 270 days
+            
             dataForARR.forEach((row) => {
                 const value = parseSafeFloat(row.current_total_value_of_award) || parseSafeFloat(row.base_and_exercised_options_value) || 0;
                 const durationDays = calculateDurationDays(row.period_of_performance_start_date, row.period_of_performance_current_end_date);
 
                 if (value > 0 && durationDays > 0) {
-                    const durationYears = durationDays / 365.25;
-                    const annualizedValue = value / durationYears;
-                    totalAnnualizedValue += annualizedValue;
+                    // Categorize by duration
+                    if (durationDays < 90) {
+                        shortTermContracts.push({ value, durationDays });
+                    } else if (durationDays < 270) {
+                        mediumTermContracts.push({ value, durationDays });
+                    } else {
+                        longTermContracts.push({ value, durationDays });
+                    }
                     validContractsCount++;
                 }
             });
+            
+            // Calculate ARR with appropriate weighting based on contract duration
+            let weightedARR = 0;
+            
+            // Short-term contracts are weighted less in the ARR calculation (to avoid over-projection)
+            if (shortTermContracts.length > 0) {
+                const shortTermARR = shortTermContracts.reduce((sum, contract) => {
+                    return sum + (contract.value / contract.durationDays) * 365.25 * 0.5; // 50% weight
+                }, 0) / shortTermContracts.length;
+                
+                weightedARR += shortTermARR * (shortTermContracts.length / validContractsCount);
+            }
+            
+            // Medium-term contracts are weighted normally
+            if (mediumTermContracts.length > 0) {
+                const mediumTermARR = mediumTermContracts.reduce((sum, contract) => {
+                    return sum + (contract.value / contract.durationDays) * 365.25 * 0.8; // 80% weight
+                }, 0) / mediumTermContracts.length;
+                
+                weightedARR += mediumTermARR * (mediumTermContracts.length / validContractsCount);
+            }
+            
+            // Long-term contracts are weighted most heavily (most reliable ARR indicator)
+            if (longTermContracts.length > 0) {
+                const longTermARR = longTermContracts.reduce((sum, contract) => {
+                    return sum + (contract.value / contract.durationDays) * 365.25; // 100% weight
+                }, 0) / longTermContracts.length;
+                
+                weightedARR += longTermARR * (longTermContracts.length / validContractsCount);
+            }
+            
+            // If no contracts in any bucket, fall back to simple average
+            if (weightedARR === 0 && validContractsCount > 0) {
+                dataForARR.forEach((row) => {
+                    const value = parseSafeFloat(row.current_total_value_of_award) || parseSafeFloat(row.base_and_exercised_options_value) || 0;
+                    const durationDays = calculateDurationDays(row.period_of_performance_start_date, row.period_of_performance_current_end_date);
+                    
+                    if (value > 0 && durationDays > 0) {
+                        const durationYears = durationDays / 365.25;
+                        const annualizedValue = value / durationYears;
+                        totalAnnualizedValue += annualizedValue;
+                    }
+                });
+                
+                weightedARR = totalAnnualizedValue / validContractsCount;
+            }
 
             if (validContractsCount > 0) {
-                const averageARR = totalAnnualizedValue / validContractsCount;
-                resultDiv.textContent = formatCurrency(averageARR) + " / yr";
+                resultDiv.textContent = formatCurrency(weightedARR) + " / yr";
                 resultDiv.style.display = 'block';
-                console.log(`Average ARR: ${averageARR.toFixed(0)} (from ${validContractsCount} valid contracts)`);
+                console.log(`Weighted Average ARR: ${weightedARR.toFixed(0)} (from ${validContractsCount} valid contracts)`);
                 noDataDiv.style.display = 'none';
             } else {
                 noDataDiv.textContent = 'No contracts suitable for ARR calculation found in the filtered set.';
@@ -1517,7 +1571,6 @@ resultDiv.textContent = '$0 / yr';
         }
     }, 50);
 }
-
 // --- Load Dataset Functions ---
 function updateStatusBanner(message, type = 'info') {
     const banner = document.getElementById('status-banner');
