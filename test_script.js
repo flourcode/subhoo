@@ -445,7 +445,7 @@ function displayContractLeadersTable(leaderData) {
     const tableWrapper = document.createElement('div');
     tableWrapper.className = 'table-wrapper';
     tableWrapper.style.overflow = 'auto';
-    tableWrapper.style.maxHeight = '300px';
+    tableWrapper.style.maxHeight = 'none';
 
     // Display top 15 leaders
     const displayData = leaderData.slice(0, 15);
