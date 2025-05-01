@@ -707,6 +707,11 @@ function displayTavTcvChart(chartData) {
     }
 
     canvas.style.display = 'block'; // Ensure canvas is visible
+    const containerWidth = container.clientWidth;
+    const containerHeight = container.clientHeight;
+    canvas.width = containerWidth;
+    canvas.height = containerHeight;
+    
     const ctx = canvas.getContext('2d');
 
     // Destroy previous chart instance if it exists
