@@ -615,8 +615,8 @@ function displayExpiringTable(expiringData) {
         { text: 'Contract ID / PIID', key: 'award_id_piid' },
         { text: 'Recipient Name', key: 'recipient_name' },
         { text: 'End Date', key: 'period_of_performance_current_end_date' },
-        { text: 'Current Value', key: 'current_total_value_of_award', format: 'currency', class: 'number' }, // Add class: 'number' here
-        { text: 'USA Spending', key: 'usa_spending' }
+        { text: 'Current Value', key: 'current_total_value_of_award', format: 'currency', class: 'text-right' }, // Use text-right class
+        { text: 'USA Spending', key: 'usa_spending', class: 'text-center' }
     ];
 
     headers.forEach(headerInfo => {
