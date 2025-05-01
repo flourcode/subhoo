@@ -161,13 +161,13 @@ body {
 .bento-grid {
     display: grid;
     gap: var(--bento-gap);
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     grid-template-areas:
-        "controls controls controls"
-        "tavtcv tavtcv leaders"
-        "expiring map sankey"
-        "arr arr notes";
-    grid-template-rows: auto auto minmax(350px, auto) auto;
+        "controls controls controls controls"
+        "tavtcv tavtcv leaders arr"
+        "sankey sankey map notes"
+        "expiring expiring expiring expiring";
+    grid-template-rows: auto 1fr 1fr auto;
 }
 
 /* Assign grid areas */
@@ -179,7 +179,6 @@ body {
 #bento-expiring { grid-area: expiring; }
 #bento-map { grid-area: map; }
 #bento-sankey { grid-area: sankey; }
-
 /* ========================================= */
 /* Card Styles                               */
 /* ========================================= */
@@ -592,14 +591,12 @@ tr:hover td {
         grid-template-areas:
             "controls controls"
             "tavtcv tavtcv"
-            "leaders leaders"
-            "expiring expiring"
-            "map map"
-            "sankey sankey"
-            "arr arr"
-            "notes notes";
+            "leaders arr"
+            "sankey map"
+            "notes notes"
+            "expiring expiring";
     }
-}
+
 
 @media (max-width: 768px) {
     body {
@@ -612,12 +609,11 @@ tr:hover td {
             "controls"
             "tavtcv"
             "leaders"
-            "expiring"
-            "map"
-            "sankey"
             "arr"
-            "notes";
-        gap: 16px;
+            "sankey"
+            "map"
+            "notes"
+            "expiring";
     }
 
     .header-content {
