@@ -1759,7 +1759,7 @@ function updateDashboardTitle(dataset) {
 
     if (dataset) {
         // Extract just the agency name by removing " (Primes)"
-        const agencyName = dataset.name.replace(' (Primes)', 'Spending Dashboard');
+        const agencyName = dataset.name.replace(' (Primes)', ' Spending Dashboard');
         
         // Set the title to just the agency name
         dashboardTitle.textContent = agencyName;
@@ -1768,7 +1768,7 @@ function updateDashboardTitle(dataset) {
         dashboardSubtitle.textContent = `Analyzing contract data from USAspending.gov`;
     } else {
         // Reset to default titles
-        dashboardTitle.textContent = 'Spending Dashboard';
+        dashboardTitle.textContent = ' Spending Dashboard';
         dashboardSubtitle.textContent = 'Select an agency dataset to begin';
     }
 }
