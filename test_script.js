@@ -2095,15 +2095,105 @@ document.addEventListener('DOMContentLoaded', function() {
 // Update the date display every minute
 setInterval(updateDateDisplay, 60000);
 
-// Handle window resize for charts
-window.addEventListener('resize', function() {
+// Add this function to your test_script.js file
+function handleWindowResize() {
+    // Resize TAV/TCV chart if it exists
     if (tavTcvChartInstance) {
-        // Force chart redraw on window resize
         tavTcvChartInstance.resize();
         // Additional adjustment for left alignment
         const canvas = document.getElementById('tavTcvChart');
         if (canvas) {
             canvas.style.marginLeft = '0';
         }
+
+        // Re-render the custom labels for the TAV/TCV chart
+        const container = document.getElementById('tav-tcv-chart-container');
+        const labelsContainer = container.querySelector('.chart-y-labels-container');
+        
+        if (labelsContainer && chartData && chartData.length > 0) {
+            // Clear existing labels
+            labelsContainer.innerHTML = '';
+            
+            // Re-add labels (similar code to what's in displayTavTcvChart)
+            setTimeout(() => {
+                const yAxis = tavTcvChartInstance.scales.y;
+                
+                // Create custom labels
+                chartData.forEach((contract, index) => {
+                    if (!contract.id) return;
+                    
+                    // Calculate position (centered on the bar)
+                    const yCenter = yAxis.getPixelForValue(index);
+                    
+                    // Create the clickable link (same code as in your original function)
+                    const link = document.createElement('a');
+                    link.href = `https://www.usaspending.gov/award/${contract.id}`;
+                    link.target = '_blank';
+                    link.rel = 'noopener noreferrer';
+                    link.textContent = contract.primeName;
+                    link.title = `View ${contract.primeName} on USA Spending`;
+                    
+                    // Style the link
+                    link.style.position = 'absolute';
+                    link.style.left = '10px';
+                    link.style.top = (yCenter - 10) + 'px';
+                    link.style.transform = 'translateY(-50%)';
+                    link.style.fontFamily = "'Poppins', sans-serif";
+                    link.style.fontSize = '13px';
+                    link.style.fontWeight = 'bold';
+                    link.style.color = textColor;
+                    link.style.textDecoration = 'none';
+                    link.style.cursor = 'pointer';
+                    link.style.padding = '5px';
+                    link.style.whiteSpace = 'nowrap';
+                    link.style.overflow = 'hidden';
+                    link.style.textOverflow = 'ellipsis';
+                    
+                    // Add hover effect
+                    link.addEventListener('mouseover', () => {
+                        link.style.textDecoration = 'underline';
+                        link.style.color = primaryColor;
+                    });
+                    
+                    link.addEventListener('mouseout', () => {
+                        link.style.textDecoration = 'none';
+                        link.style.color = textColor;
+                    });
+                    
+                    // Add to container
+                    labelsContainer.appendChild(link);
+                });
+            }, 100);
+        }
     }
+
+    // Redraw Sankey chart
+    if (document.getElementById('sankeyChart') && 
+        document.getElementById('sankey-chart-container')) {
+        // The easiest way to redraw the Sankey chart is to reprocess the data
+        if (rawData && rawData.length > 0) {
+            const sankeyData = processSankeyData(rawData);
+            displaySankeyChart(sankeyData);
+        }
+    }
+
+    // Redraw Choropleth map
+    if (document.getElementById('choroplethMap') && 
+        document.getElementById('map-container')) {
+        // The easiest way to redraw the map is to reprocess the data
+        if (rawData && rawData.length > 0) {
+            const mapData = processMapData(rawData);
+            displayChoroplethMap(mapData);
+        }
+    }
+}
+
+// Replace your existing window resize event handler with this:
+window.addEventListener('resize', function() {
+    // Use a debounce to prevent excessive redraws during resize
+    clearTimeout(window.resizeTimer);
+    window.resizeTimer = setTimeout(function() {
+        console.log("Window resized, redrawing charts...");
+        handleWindowResize();
+    }, 250);
 });
