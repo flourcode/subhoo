@@ -511,14 +511,23 @@ tr:hover td {
     border-top: 1px solid var(--color-border);
 }
 #bento-leaders .table-container {
-  min-height: 450px; /* Increase from the default 300px */
-  max-height: 550px; /* Set a reasonable maximum height */
-  overflow-y: auto; /* Ensure vertical scrolling works if needed */
+  display: flex;
+  flex-direction: column;
+}
+#bento-leaders .card-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+#contract-leaders-table-container {
+  min-height: 400px;
+  max-height: none; /* Remove max height constraint */
 }
 
-/* Adjust the table wrapper for better scrolling */
+/* Make the table wrapper taller to show more rows */
 #contract-leaders-table-container .table-wrapper {
-  max-height: 500px; /* Increase from current value */
+  max-height: 500px;
+  overflow-y: auto;
 }
 /* ========================================= */
 /* Notes Section                             */
