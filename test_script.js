@@ -1759,7 +1759,7 @@ function updateDashboardTitle(dataset) {
 
     if (dataset) {
         // Extract just the agency name by removing " (Primes)"
-        const agencyName = dataset.name.replace(' (Primes)', ' Spending Dashboard');
+        const agencyName = dataset.name.replace(' (Primes)', ' Spending');
         
         // Set the title to just the agency name
         dashboardTitle.textContent = agencyName;
