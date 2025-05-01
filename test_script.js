@@ -614,8 +614,9 @@ function displayExpiringTable(expiringData) {
     const headers = [
         { text: 'Contract ID / PIID', key: 'award_id_piid' },
         { text: 'Recipient Name', key: 'recipient_name' },
+        { text: 'Description', key: 'transaction_description' }, // Added description column
         { text: 'End Date', key: 'period_of_performance_current_end_date' },
-        { text: 'Current Value', key: 'current_total_value_of_award', format: 'currency', class: 'text-right' }, // Use text-right class
+        { text: 'Current Value', key: 'current_total_value_of_award', format: 'currency', class: 'text-right' },
         { text: 'USA Spending', key: 'usa_spending', class: 'text-center' }
     ];
 
@@ -623,7 +624,11 @@ function displayExpiringTable(expiringData) {
         const th = document.createElement('th');
         th.textContent = headerInfo.text;
         th.scope = 'col';
-        if (headerInfo.class) th.className = headerInfo.class; // This applies the class to the header
+        if (headerInfo.class) th.className = headerInfo.class;
+        // Add inline style if it's the Current Value column to ensure alignment
+        if (headerInfo.key === 'current_total_value_of_award') {
+            th.style.textAlign = 'right';
+        }
         headerRow.appendChild(th);
     });
 
@@ -659,15 +664,31 @@ function displayExpiringTable(expiringData) {
             // Regular column processing
             let value = contract[headerInfo.key] || '-';
 
+            // For description, look for alternative fields if the main one is empty
+            if (headerInfo.key === 'transaction_description' && (value === '-' || value === '')) {
+                value = contract.prime_award_base_transaction_description || 
+                        contract.award_description || 
+                        contract.description || '-';
+            }
+
             // Format date or currency if specified
             if (headerInfo.key === 'period_of_performance_current_end_date' && contract[headerInfo.key + '_parsed'] instanceof Date) {
                 value = contract[headerInfo.key + '_parsed'].toISOString().split('T')[0];
             } else if (headerInfo.format === 'currency') {
                 value = formatCurrency(value);
+                cell.className = 'number'; // Add number class for right alignment
             }
 
-            cell.textContent = truncateText(value, 40);
-            cell.title = contract[headerInfo.key] || '';
+            // Determine max length based on column
+            let maxLength = 40;
+            if (headerInfo.key === 'transaction_description') {
+                maxLength = 60; // Allow longer text for description
+                cell.style.maxWidth = '250px'; // Limit width of description cell
+                cell.style.wordWrap = 'break-word'; // Allow word wrapping
+            }
+
+            cell.textContent = truncateText(value, maxLength);
+            cell.title = value !== '-' ? value : ''; // Set title for full text on hover
             if (headerInfo.class) cell.className = headerInfo.class;
         });
     });
