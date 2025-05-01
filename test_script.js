@@ -351,8 +351,6 @@ function resetUIForNoDataset() {
     const naicsFilter = document.getElementById('naics-filter');
     if (subAgencyFilter) subAgencyFilter.innerHTML = '<option value="">All Sub-Agencies</option>';
     if (naicsFilter) naicsFilter.innerHTML = '<option value="">All NAICS</option>';
-    document.getElementById('arr-start-date').value = '';
-    document.getElementById('arr-end-date').value = '';
     
     // Reset search
     const searchInput = document.getElementById('search-input');
@@ -1370,8 +1368,6 @@ function applyFiltersAndUpdateVisuals() {
     // --- Get Filter & Search Values ---
     const subAgencyFilter = document.getElementById('sub-agency-filter')?.value || '';
     const naicsFilter = document.getElementById('naics-filter')?.value || '';
-    const startDateString = document.getElementById('arr-start-date')?.value || '';
-    const endDateString = document.getElementById('arr-end-date')?.value || '';
     const searchTerm = document.getElementById('search-input')?.value.trim().toLowerCase() || '';
 
     console.log("Applying filters/search:", { subAgencyFilter, naicsFilter, startDateString, endDateString, searchTerm });
@@ -1426,21 +1422,6 @@ function applyFiltersAndUpdateVisuals() {
         // Check NAICS Filter
         const naics = row.naics_code?.toString().trim();
         if (naicsFilter && naics !== naicsFilter) return false;
-
-        // Check Date Filter (Period of Performance Overlap)
-        if (filterStartDate || filterEndDate) {
-            const popStartDate = row.period_of_performance_start_date_parsed;
-            const popEndDate = row.period_of_performance_current_end_date_parsed;
-
-            if (!popStartDate || !popEndDate || !(popStartDate instanceof Date) || !(popEndDate instanceof Date)) {
-                return false; // Exclude if dates are invalid for date filtering
-            }
-            const endsAfterFilterStart = !filterStartDate || popEndDate >= filterStartDate;
-            const startsBeforeFilterEnd = !filterEndDate || popStartDate <= filterEndDate;
-            if (!endsAfterFilterStart || !startsBeforeFilterEnd) {
-                return false; // No overlap
-            }
-        }
 
         // If all checks pass, include the row
         return true;
@@ -1624,8 +1605,6 @@ function loadDataset(dataset) {
     document.getElementById('sub-agency-filter').value = '';
     document.getElementById('naics-filter').innerHTML = '<option value="">All NAICS</option>';
     document.getElementById('naics-filter').value = '';
-    document.getElementById('arr-start-date').value = '';
-    document.getElementById('arr-end-date').value = '';
 
     // Fetch the data from S3
     fetchDataFromS3(dataset);
@@ -1863,13 +1842,9 @@ function setupEventListeners() {
     // Filters that trigger visual updates
     const subAgencyFilter = document.getElementById('sub-agency-filter');
     const naicsFilter = document.getElementById('naics-filter');
-    const startDateInput = document.getElementById('arr-start-date');
-    const endDateInput = document.getElementById('arr-end-date');
 
     if (subAgencyFilter) subAgencyFilter.addEventListener('change', applyFiltersAndUpdateVisuals);
     if (naicsFilter) naicsFilter.addEventListener('change', applyFiltersAndUpdateVisuals);
-    if (startDateInput) startDateInput.addEventListener('change', applyFiltersAndUpdateVisuals);
-    if (endDateInput) endDateInput.addEventListener('change', applyFiltersAndUpdateVisuals);
 }
 
 // --- Initialize Dashboard ---
