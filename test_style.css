@@ -163,9 +163,9 @@ body {
     gap: var(--bento-gap);
     grid-template-columns: repeat(4, 1fr);
     grid-template-areas:
-        "controls controls controls controls"
-        "tavtcv tavtcv leaders arr"
-        "sankey sankey map notes"
+        "controls controls notes arr"
+        "tavtcv tavtcv leaders leaders"
+        "sankey sankey map map"
         "expiring expiring expiring expiring";
     grid-template-rows: auto minmax(550px, auto) minmax(450px, auto) auto;
 }
