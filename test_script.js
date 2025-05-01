@@ -767,6 +767,28 @@ function displayTavTcvChart(chartData) {
         return;
     }
 
+    // Create a custom tooltip element
+    const customTooltip = document.createElement('div');
+    customTooltip.className = 'custom-chart-tooltip';
+    customTooltip.style.cssText = `
+        position: absolute;
+        background-color: rgba(244, 242, 246, 0.85);
+        border: 1px solid #B5B0BD;
+        border-radius: 6px;
+        padding: 10px;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.2s;
+        max-width: 200px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        font-size: 12px;
+        z-index: 10;
+    `;
+    container.appendChild(customTooltip);
+    
+    // Position for the container to handle tooltip positioning
+    container.style.position = 'relative';
+
     canvas.style.display = 'block'; // Ensure canvas is visible
     const containerWidth = container.clientWidth;
     const containerHeight = container.clientHeight;
@@ -781,19 +803,13 @@ function displayTavTcvChart(chartData) {
         tavTcvChartInstance = null;
     }
 
-    // Calculate appropriate left padding based on longest company name
-    const longestNameLength = Math.max(...chartData.map(d => d.primeName.length));
-    const estimatedLabelWidth = Math.min(Math.max(longestNameLength * 8, 150), 220);
-    
     // Get computed styles for chart colors
     const computedStyle = getComputedStyle(document.documentElement);
     const primaryColor = computedStyle.getPropertyValue('--color-charts-primary').trim() || '#9993A1';
     const secondaryColor = computedStyle.getPropertyValue('--color-charts-secondary').trim() || '#797484';
     const textColor = computedStyle.getPropertyValue('--color-text-primary').trim() || '#36323A';
-    const surfaceColor = computedStyle.getPropertyValue('--color-surface').trim() || '#F4F2F6';
-    const outlineColor = computedStyle.getPropertyValue('--color-outline').trim() || '#B5B0BD';
 
-    // Prepare labels that will be clickable
+    // Prepare labels
     const labels = chartData.map(d => d.primeName);
     const tavData = chartData.map(d => d.tav);
     const tcvData = chartData.map(d => d.tcv);
@@ -802,7 +818,7 @@ function displayTavTcvChart(chartData) {
     tavTcvChartInstance = new Chart(ctx, {
         type: 'bar',
         data: {
-            labels: labels, // Use actual labels
+            labels: labels,
             datasets: [
                 {
                     label: 'TAV (Obligated)',
@@ -880,42 +896,7 @@ function displayTavTcvChart(chartData) {
             },
             plugins: {
                 tooltip: {
-                    enabled: true, // Make sure tooltips are enabled
-                    backgroundColor: surfaceColor,
-                    titleColor: textColor,
-                    bodyColor: textColor,
-                    borderColor: outlineColor,
-                    borderWidth: 1,
-                    padding: 12,
-                    titleFont: {
-                        size: 14,
-                        weight: 'bold'
-                    },
-                    bodyFont: {
-                        size: 13
-                    },
-                    callbacks: {
-                        title: function(tooltipItems) {
-                            const index = tooltipItems[0].dataIndex;
-                            if (chartData && chartData[index]) {
-                                const originalData = chartData[index];
-                                return `${originalData.primeName}\n(${originalData.id})`;
-                            }
-                            return '';
-                        },
-                        label: function(context) {
-                            let label = context.dataset.label || '';
-                            if (label) { label += ': '; }
-                            if (context.parsed.x !== null) {
-                                label += formatCurrency(context.parsed.x);
-                            }
-                            return label;
-                        },
-                        // Add footer for USA Spending link information
-                        footer: function(tooltipItems) {
-                            return ['Click to open in USA Spending'];
-                        }
-                    }
+                    enabled: false, // Disable default tooltips
                 },
                 legend: {
                     position: 'bottom',
@@ -935,7 +916,7 @@ function displayTavTcvChart(chartData) {
                 padding: { 
                     top: 16, 
                     bottom: 16, 
-                    left: 20, // Reduced padding since we're using regular labels
+                    left: 20,
                     right: 20 
                 }
             },
@@ -943,21 +924,96 @@ function displayTavTcvChart(chartData) {
                 duration: 800,
                 easing: 'easeOutQuart'
             },
-            // Add click handler for the entire chart
+            // Use the hover event instead of tooltips
+            onHover: function(evt, elements) {
+                if (elements && elements.length > 0) {
+                    const index = elements[0].index;
+                    const datasetIndex = elements[0].datasetIndex;
+                    
+                    if (chartData && chartData[index]) {
+                        const contract = chartData[index];
+                        const datasetLabel = tavTcvChartInstance.data.datasets[datasetIndex].label;
+                        const value = datasetIndex === 0 ? contract.tav : contract.tcv;
+                        
+                        // Format tooltip content
+                        customTooltip.innerHTML = `
+                            <div style="font-weight: bold; margin-bottom: 5px;">${contract.primeName}</div>
+                            <div style="margin-bottom: 2px; font-size: 11px;">ID: ${contract.id}</div>
+                            <div style="margin-bottom: 5px;">${datasetLabel}: ${formatCurrency(value)}</div>
+                            <div style="font-style: italic; font-size: 11px; color: #797484;">Click to view on USA Spending</div>
+                        `;
+                        
+                        // Position the tooltip
+                        const rect = canvas.getBoundingClientRect();
+                        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+                        const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+                        
+                        const chartY = elements[0].element.y;
+                        
+                        // Position tooltip to the right of the bar on desktop, above on mobile
+                        if (window.innerWidth > 768) {
+                            // Desktop position (to the right of the bar)
+                            customTooltip.style.left = 'auto';
+                            customTooltip.style.right = '10px';
+                            customTooltip.style.top = (chartY + scrollTop - rect.top - 30) + 'px';
+                        } else {
+                            // Mobile position (above the bar)
+                            customTooltip.style.left = '50%';
+                            customTooltip.style.transform = 'translateX(-50%)';
+                            customTooltip.style.top = (chartY + scrollTop - rect.top - 80) + 'px';
+                        }
+                        
+                        // Show the tooltip
+                        customTooltip.style.opacity = '1';
+                        
+                        // Apply hover style to indicate clickability
+                        canvas.style.cursor = 'pointer';
+                    }
+                } else {
+                    // Hide tooltip when not hovering over a bar
+                    customTooltip.style.opacity = '0';
+                    canvas.style.cursor = 'default';
+                }
+            },
+            // Add click handler
             onClick: function(e, elements) {
                 if (!elements || elements.length === 0) return;
                 
                 const index = elements[0].index;
                 if (chartData && chartData[index] && chartData[index].id) {
-                    // Open USA Spending link for the clicked bar or label
+                    // Open USA Spending link for the clicked bar
                     window.open(`https://www.usaspending.gov/award/${chartData[index].id}`, '_blank');
                 }
             }
         }
     });
-
-    // Add hover styling to make it clear items are clickable
-    container.style.cursor = 'pointer';
+    
+    // Add client-side event to make Y-axis labels clickable
+    canvas.addEventListener('click', function(evt) {
+        const activePoints = tavTcvChartInstance.getElementsAtEventForMode(
+            evt, 'nearest', { axis: 'y', intersect: true }, false
+        );
+        
+        if (activePoints.length > 0) {
+            const index = activePoints[0].index;
+            if (chartData && chartData[index] && chartData[index].id) {
+                window.open(`https://www.usaspending.gov/award/${chartData[index].id}`, '_blank');
+            }
+        }
+    });
+    
+    // Add styles to make labels look clickable
+    canvas.addEventListener('mousemove', function(evt) {
+        const activePoints = tavTcvChartInstance.getElementsAtEventForMode(
+            evt, 'nearest', { axis: 'y', intersect: true }, false
+        );
+        
+        if (activePoints.length > 0) {
+            canvas.style.cursor = 'pointer';
+        } else {
+            canvas.style.cursor = 'default';
+        }
+    });
 }
 // --- Filters and Dynamic Chart Updates ---
 function populateFilters(data) {
