@@ -580,7 +580,6 @@ function processExpiringData(data) {
     console.log(`Found ${expiringContracts.length} contracts expiring in the next 6 months.`);
     return expiringContracts;
 }
-
 function displayExpiringTable(expiringData) {
     const containerId = 'expiring-contracts-table-container';
     const container = document.getElementById(containerId);
@@ -616,7 +615,8 @@ function displayExpiringTable(expiringData) {
         { text: 'Contract ID / PIID', key: 'award_id_piid' },
         { text: 'Recipient Name', key: 'recipient_name' },
         { text: 'End Date', key: 'period_of_performance_current_end_date' },
-        { text: 'Current Value', key: 'current_total_value_of_award', format: 'currency', class: 'number' }
+        { text: 'Current Value', key: 'current_total_value_of_award', format: 'currency', class: 'number' },
+        { text: 'USA Spending', key: 'usa_spending' } // Added new header for USA Spending link
     ];
 
     headers.forEach(headerInfo => {
@@ -632,8 +632,31 @@ function displayExpiringTable(expiringData) {
 
     expiringData.forEach(contract => {
         const row = tbody.insertRow();
+        
+        // Process each column defined in headers
         headers.forEach(headerInfo => {
             let cell = row.insertCell();
+            
+            // Special handling for USA Spending column
+            if (headerInfo.key === 'usa_spending') {
+                cell.className = 'text-center';
+                const contractId = contract.contract_award_unique_key || contract.award_id_piid;
+                
+                if (contractId) {
+                    const link = document.createElement('a');
+                    link.href = `https://www.usaspending.gov/award/${contractId}`;
+                    link.target = '_blank';
+                    link.rel = 'noopener noreferrer';
+                    link.className = 'detail-link';
+                    link.textContent = 'View';
+                    cell.appendChild(link);
+                } else {
+                    cell.textContent = '-';
+                }
+                return;
+            }
+            
+            // Regular column processing
             let value = contract[headerInfo.key] || '-';
 
             // Format date or currency if specified
@@ -658,7 +681,6 @@ function displayExpiringTable(expiringData) {
     summaryPara.textContent = `Showing ${expiringData.length} expiring contracts.`;
     container.appendChild(summaryPara);
 }
-
 // --- Chart 3: TAV vs TCV Tracker ---
 function processTavTcvData(data) {
     console.log("Processing TAV/TCV data...");
@@ -864,6 +886,15 @@ function displayTavTcvChart(chartData) {
                                 label += formatCurrency(context.parsed.x);
                             }
                             return label;
+                        },
+                        // Add a new footer callback to show USA Spending link
+                        afterBody: function(tooltipItems) {
+                            const index = tooltipItems[0].dataIndex;
+                            if (chartData && chartData[index]) {
+                                const contractId = chartData[index].id;
+                                return [`\nUSA Spending: https://www.usaspending.gov/award/${contractId}`];
+                            }
+                            return '';
                         }
                     }
                 },
@@ -891,7 +922,6 @@ function displayTavTcvChart(chartData) {
         }
     });
 }
-
 // --- Filters and Dynamic Chart Updates ---
 function populateFilters(data) {
     if (!data || data.length === 0) {
