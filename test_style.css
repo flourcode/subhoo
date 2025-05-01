@@ -179,6 +179,7 @@ body {
 #bento-expiring { grid-area: expiring; }
 #bento-map { grid-area: map; }
 #bento-sankey { grid-area: sankey; }
+
 /* ========================================= */
 /* Card Styles                               */
 /* ========================================= */
@@ -233,8 +234,9 @@ body {
     gap: 16px;
     flex-grow: 1;
 }
+
 /* Make cards fill their grid cells */
-#bento-leaders, #bento-arr, #bento-sankey, #bento-map, #bento-notes {
+#bento-leaders, #bento-arr, #bento-sankey, #bento-map, #bento-notes, #bento-tavtcv {
     display: flex;
     flex-direction: column;
     height: 100%;
@@ -245,11 +247,13 @@ body {
 #bento-arr .card-content,
 #bento-sankey .card-content,
 #bento-map .card-content,
-#bento-notes .card-content {
+#bento-notes .card-content,
+#bento-tavtcv .card-content {
     flex: 1;
     display: flex;
     flex-direction: column;
 }
+
 /* ========================================= */
 /* Form Element Styles                       */
 /* ========================================= */
@@ -431,14 +435,23 @@ button:disabled, .button:disabled, .primary-button:disabled {
     display: flex;
     align-items: center;
     justify-content: center;
+    flex: 1;
 }
 
+/* Fixed TAV/TCV Chart Container */
 #bento-tavtcv .chart-container {
-    height: 550px !important;
-    min-height: 550px !important;
-    max-height: 550px !important;
-    overflow: hidden !important;
-    margin-top: 20px;
+    height: auto !important; /* Remove fixed height */
+    min-height: 450px !important; 
+    flex: 1 !important; /* Allow it to grow */
+    overflow: visible !important; /* Allow content to be visible */
+    margin-top: 10px;
+}
+
+/* Ensure the canvas can expand properly */
+#tavTcvChart {
+    width: 100% !important;
+    height: 100% !important;
+    max-height: none !important;
 }
 
 .table-container {
@@ -448,19 +461,26 @@ button:disabled, .button:disabled, .primary-button:disabled {
     overflow: auto;
     margin-top: 16px;
     position: relative;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
 }
-/* Add this after the .chart-container styles (around line 457) */
+
+/* Chart container specific styling */
 #sankey-chart-container, #map-container {
     flex: 1;
     min-height: 300px;
 }
 
 /* Ensure parent containers allow charts to expand */
-#bento-sankey .card-content, #bento-map .card-content {
+#bento-sankey .card-content, 
+#bento-map .card-content,
+#bento-tavtcv .card-content {
     flex: 1;
     display: flex;
     flex-direction: column;
 }
+
 /* ========================================= */
 /* Table Styles                              */
 /* ========================================= */
@@ -510,25 +530,27 @@ tr:hover td {
     padding-top: 8px;
     border-top: 1px solid var(--color-border);
 }
+
+/* Leaders table specific styling */
 #bento-leaders .table-container {
-  display: flex;
-  flex-direction: column;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
 }
-#bento-leaders .card-content {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-}
+
 #contract-leaders-table-container {
-  min-height: 400px;
-  max-height: none; /* Remove max height constraint */
+    min-height: 400px;
+    max-height: none; /* Remove max height constraint */
+    flex: 1;
 }
 
 /* Make the table wrapper taller to show more rows */
 #contract-leaders-table-container .table-wrapper {
-  max-height: none;
-  overflow-y: auto;
+    max-height: none;
+    height: 100%;
+    overflow-y: auto;
 }
+
 /* ========================================= */
 /* Notes Section                             */
 /* ========================================= */
@@ -630,7 +652,6 @@ tr:hover td {
 /* ========================================= */
 /* Responsive Adjustments                    */
 /* ========================================= */
-/* Add this closing bracket after the media query at line 557 */
 @media (max-width: 1200px) {
     .bento-grid {
         grid-template-columns: repeat(2, 1fr);
@@ -642,7 +663,8 @@ tr:hover td {
             "notes notes"
             "expiring expiring";
     }
-} /* Add this closing bracket */
+}
+
 @media (max-width: 768px) {
     body {
         padding: 16px;
