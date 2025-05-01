@@ -416,7 +416,6 @@ function processContractLeaders(data) {
     console.log(`Processed ${leaderData.length} valid leaders.`);
     return leaderData;
 }
-
 function displayContractLeadersTable(leaderData) {
     const containerId = 'contract-leaders-table-container';
     const container = document.getElementById(containerId);
@@ -424,30 +423,29 @@ function displayContractLeadersTable(leaderData) {
         console.error(`Container ${containerId} not found.`);
         return;
     }
-
     setLoading(containerId, false); // Turn off loading spinner
-
+    
     // Remove any existing table or placeholders
     container.innerHTML = '';
-
+    
     if (!leaderData || leaderData.length === 0) {
         displayNoData(containerId, 'No contract leader data found.');
         return;
     }
-
+    
     // Create a table wrapper div
     const tableWrapper = document.createElement('div');
     tableWrapper.className = 'table-wrapper';
     tableWrapper.style.overflow = 'auto';
     tableWrapper.style.maxHeight = '900px';
-
-    // Display top 15 leaders
+    
+    // Display top 10 leaders
     const displayData = leaderData.slice(0, 10);
-
+    
     // Create Table Structure
     const table = document.createElement('table');
     table.className = 'min-w-full divide-y';
-
+    
     const thead = table.createTHead();
     thead.className = 'bg-gray-50';
     const headerRow = thead.insertRow();
@@ -457,9 +455,10 @@ function displayContractLeadersTable(leaderData) {
         { text: '# Awards', scope: 'col', class: 'number' },
         { text: 'Avg Value', scope: 'col', class: 'number' },
         { text: 'Avg Duration (Days)', scope: 'col', class: 'number' },
-        { text: 'Dominant Desc.', scope: 'col' }
+        { text: 'Dominant Desc.', scope: 'col' },
+        { text: 'USA Spending', scope: 'col', class: 'text-center' }
     ];
-
+    
     headers.forEach(headerInfo => {
         const th = document.createElement('th');
         th.textContent = headerInfo.text;
@@ -467,61 +466,85 @@ function displayContractLeadersTable(leaderData) {
         if (headerInfo.class) th.className = headerInfo.class;
         headerRow.appendChild(th);
     });
-
+    
     const tbody = table.createTBody();
     tbody.className = 'divide-y';
-
+    
     displayData.forEach(leader => {
         const row = tbody.insertRow();
-
+        
         // Recipient Name
         let cell = row.insertCell();
         cell.className = 'font-medium text-gray-900';
         cell.textContent = truncateText(leader.siName, 35);
         cell.title = leader.siName;
-
+        
         // Total Value
         cell = row.insertCell();
         cell.className = 'number text-gray-600 font-bold';
         cell.textContent = formatCurrency(leader.totalValue);
-
+        
         // Num Awards
         cell = row.insertCell();
         cell.className = 'number text-gray-600';
         cell.textContent = leader.numAwards.toLocaleString();
-
+        
         // Avg Value
         cell = row.insertCell();
         cell.className = 'number text-gray-600';
         cell.textContent = formatCurrency(leader.avgValue);
-
+        
         // Avg Duration
         cell = row.insertCell();
         cell.className = 'number text-gray-600';
         cell.textContent = leader.avgDurationDays > 0 ? leader.avgDurationDays.toLocaleString() : '-';
-
+        
         // Dominant Type
         cell = row.insertCell();
         cell.className = 'text-gray-600 text-xs';
         cell.textContent = truncateText(leader.dominantType, 30);
         cell.title = leader.dominantType;
+        
+        // USASpending Link
+        cell = row.insertCell();
+        cell.className = 'text-center';
+        
+        // Check if we have contract IDs to create a USASpending link
+        // The URL format is typically something like: https://www.usaspending.gov/award/CONT_IDV_[CONTRACT_ID]
+        if (leader.uniqueContractKeys && leader.uniqueContractKeys.length > 0) {
+            const contractId = leader.uniqueContractKeys[0]; // Use the first contract ID
+            const link = document.createElement('a');
+            link.href = `https://www.usaspending.gov/search/?hash=%7B%22searchText%22:%22${encodeURIComponent(leader.siName)}%22%7D`;
+            link.target = '_blank'; // Open in new tab
+            link.rel = 'noopener noreferrer'; // Security best practice
+            link.className = 'detail-link';
+            link.textContent = 'View';
+            cell.appendChild(link);
+        } else {
+            const link = document.createElement('a');
+            link.href = `https://www.usaspending.gov/search/?hash=%7B%22searchText%22:%22${encodeURIComponent(leader.siName)}%22%7D`;
+            link.target = '_blank';
+            link.rel = 'noopener noreferrer';
+            link.className = 'detail-link';
+            link.textContent = 'Search';
+            cell.appendChild(link);
+        }
     });
-
+    
     // Append the table to the wrapper
     tableWrapper.appendChild(table);
     
     // Append the wrapper to the container
     container.appendChild(tableWrapper);
-
+    
     // Add summary text if more leaders exist
-    if (leaderData.length > 15) {
+    if (leaderData.length > 10) {
         const summaryPara = document.createElement('p');
         summaryPara.className = 'text-center text-sm text-gray-500 summary-text';
-        summaryPara.textContent = `Showing Top 15 of ${leaderData.length} leaders by Total Value`;
+        summaryPara.textContent = `Showing Top 10 of ${leaderData.length} leaders by Total Value`;
         container.appendChild(summaryPara);
     }
 }
-
 // --- Chart 2: Expiring Contracts Table ---
 function processExpiringData(data) {
     console.log("Processing data for expiring contracts...");
