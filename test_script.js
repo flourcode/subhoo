@@ -403,16 +403,6 @@ function processContractLeaders(data) {
             dominantType = sortedCounts[0][0];
         }
 
-        // ADDED: Check for usaspending_permalink
-        let usaspending_permalink = null;
-        // Look for a permalink in the contracts
-        for (const contract of validContracts) {
-            if (contract.usaspending_permalink) {
-                usaspending_permalink = contract.usaspending_permalink;
-                break;
-            }
-        }
-
         return {
             siName: primeName,
             numAwards: uniqueContractKeys.length,
@@ -420,8 +410,7 @@ function processContractLeaders(data) {
             avgValue: avgValue,
             avgDurationDays: Math.round(avgDurationDays),
             dominantType: dominantType,
-            uniqueContractKeys: uniqueContractKeys, // ADDED: Include the contract keys
-            usaspending_permalink: usaspending_permalink // ADDED: Include the permalink if available
+            uniqueContractKeys: uniqueContractKeys // Added this line
         };
     }).filter(Boolean) // Remove null entries
       .sort((a, b) => b.totalValue - a.totalValue); // Sort by total value descending
@@ -522,25 +511,25 @@ function displayContractLeadersTable(leaderData) {
         cell = row.insertCell();
         cell.className = 'text-center';
         
-        // Check if we have contract IDs to create a USASpending link
-        // The URL format is typically something like: https://www.usaspending.gov/award/CONT_IDV_[CONTRACT_ID]
+        // Only create links when we have a specific contract ID
         if (leader.uniqueContractKeys && leader.uniqueContractKeys.length > 0) {
-            const contractId = leader.uniqueContractKeys[0]; // Use the first contract ID
-            const link = document.createElement('a');
-            link.href = `https://www.usaspending.gov/search/?hash=%7B%22searchText%22:%22${encodeURIComponent(leader.siName)}%22%7D`;
-            link.target = '_blank'; // Open in new tab
-            link.rel = 'noopener noreferrer'; // Security best practice
-            link.className = 'detail-link';
-            link.textContent = 'View';
-            cell.appendChild(link);
+            // If there's only one contract
+            if (leader.uniqueContractKeys.length === 1) {
+                const contractId = leader.uniqueContractKeys[0];
+                const link = document.createElement('a');
+                link.href = `https://www.usaspending.gov/award/${contractId}`;
+                link.target = '_blank';
+                link.rel = 'noopener noreferrer';
+                link.className = 'detail-link';
+                link.textContent = 'View';
+                cell.appendChild(link);
+            } 
+            // If there are multiple contracts, note that
+            else {
+                cell.textContent = `${leader.uniqueContractKeys.length} contracts`;
+            }
         } else {
-            const link = document.createElement('a');
-            link.href = `https://www.usaspending.gov/search/?hash=%7B%22searchText%22:%22${encodeURIComponent(leader.siName)}%22%7D`;
-            link.target = '_blank';
-            link.rel = 'noopener noreferrer';
-            link.className = 'detail-link';
-            link.textContent = 'Search';
-            cell.appendChild(link);
+            cell.textContent = '-';
         }
     });
     
