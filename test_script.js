@@ -92,7 +92,7 @@ function setLoading(containerId, isLoading, message = 'Loading...') {
     let noDataPlaceholder = container.querySelector('.no-data-placeholder');
     
     // Find the main content
-    const content = container.querySelector('table, canvas');
+    const content = container.querySelector('table, canvas, svg');
     
     if (isLoading) {
         // Hide error/no-data placeholders
@@ -148,7 +148,7 @@ function displayError(containerId, message) {
     errorPlaceholder.style.display = 'block';
     
     // Hide main content
-    const content = container.querySelector('table, canvas');
+    const content = container.querySelector('table, canvas, svg');
     if(content) content.style.display = 'none';
     
     // Destroy chart instance if needed
@@ -180,7 +180,7 @@ function displayNoData(containerId, message = "No data available for this view."
     noDataPlaceholder.style.display = 'block';
     
     // Hide main content
-    const content = container.querySelector('table, canvas');
+    const content = container.querySelector('table, canvas, svg');
     if(content) content.style.display = 'none';
     
     // Destroy chart instance if needed
@@ -231,55 +231,59 @@ function updateDateDisplay() {
 
 // --- Dropdown Population Functions ---
 function populateDropdown(selectElement, itemsSet, defaultOptionText = "All") {
-    if (!selectElement) {
-        console.warn("populateDropdown: Provided selectElement is null or undefined.");
-        return;
+    if (!selectElement) return;
+    
+    // Preserve current selection if possible
+    const currentValue = selectElement.value;
+    
+    // Clear existing options first
+    selectElement.innerHTML = `<option value="">${defaultOptionText}</option>`;
+    
+    // Simply add all items without transformation
+    if (itemsSet && itemsSet.size > 0) {
+        Array.from(itemsSet).sort().forEach(item => {
+            if (item === null || item === undefined || item === '') return;
+            
+            const option = document.createElement('option');
+            option.value = item;
+            option.textContent = item;
+            selectElement.appendChild(option);
+        });
     }
-    const currentValue = selectElement.value; // Preserve selection if possible
-    selectElement.innerHTML = `<option value="">${defaultOptionText}</option>`; // Clear existing options
     
-    // Sort items alphabetically
-    const sortedItems = Array.from(itemsSet).sort((a, b) => String(a).localeCompare(String(b)));
-    sortedItems.forEach(item => {
-        if (item === null || item === undefined) return; // Skip null/undefined items
-        const option = document.createElement('option');
-        option.value = item;
-        const text = String(item); // Ensure it's a string
-        option.textContent = truncateText(text, 50); // Truncate long text
-        option.title = text; // Full text in tooltip
-        selectElement.appendChild(option);
-    });
-    
-    // Restore previous selection if possible
-    if (sortedItems.includes(currentValue)) {
+    // Restore previous selection if it exists in the new set
+    if (currentValue && Array.from(itemsSet).includes(currentValue)) {
         selectElement.value = currentValue;
     }
 }
 
 function populateNaicsDropdown(selectElement, naicsMap) {
-    if (!selectElement) {
-        console.warn("populateNaicsDropdown: Provided selectElement is null or undefined.");
-        return;
-    }
-    const currentValue = selectElement.value; // Preserve selection
-    selectElement.innerHTML = `<option value="">All NAICS</option>`; // Clear existing
+    if (!selectElement) return;
     
-    // Sort NAICS codes
-    const sortedCodes = Array.from(naicsMap.keys()).sort();
-    sortedCodes.forEach(code => {
-        if (code === null || code === undefined) return; // Skip null/undefined codes
-        const desc = naicsMap.get(code) || 'No Description'; // Handle missing descriptions
-        const option = document.createElement('option');
-        option.value = code;
-        const codeStr = String(code); // Ensure code is string
-        const descStr = String(desc); // Ensure desc is string
-        option.textContent = `${codeStr} - ${truncateText(descStr, 40)}`; // Format: CODE - Short Desc
-        option.title = `${codeStr} - ${descStr}`; // Full description in tooltip
-        selectElement.appendChild(option);
-    });
+    // Preserve current selection
+    const currentValue = selectElement.value;
+    
+    // Clear existing options
+    selectElement.innerHTML = `<option value="">All NAICS</option>`;
+    
+    // Add all NAICS codes with descriptions
+    if (naicsMap && naicsMap.size > 0) {
+        Array.from(naicsMap.keys()).sort().forEach(code => {
+            if (!code) return;
+            
+            const desc = naicsMap.get(code) || '';
+            const option = document.createElement('option');
+            option.value = code;
+            
+            // Simple format: CODE - Description
+            option.textContent = code + (desc ? ' - ' + desc : '');
+            
+            selectElement.appendChild(option);
+        });
+    }
     
     // Restore previous selection if possible
-    if (sortedCodes.includes(currentValue)) {
+    if (currentValue && naicsMap.has(currentValue)) {
         selectElement.value = currentValue;
     }
 }
@@ -292,7 +296,10 @@ function initializeDatasetSelector() {
         return;
     }
 
-    // Populate the dropdown with dataset options
+    // Clear any existing options
+    datasetSelect.innerHTML = '';
+    
+    // Populate the dropdown with dataset options exactly as defined in DATASETS
     DATASETS.forEach(dataset => {
         const option = document.createElement('option');
         option.value = dataset.id;
@@ -313,10 +320,10 @@ function initializeDatasetSelector() {
                 resetUIForNoDataset();
             }
         } else {
-            // Handle "Choose a dataset..." selection
-            updateDashboardTitle(null); // Reset title
+            // Handle empty selection
+            updateDashboardTitle(null);
             updateStatusBanner('Please select a dataset to load', 'info');
-            resetUIForNoDataset(); // Clear charts/tables/filters
+            resetUIForNoDataset();
         }
     });
 }
@@ -871,28 +878,486 @@ function populateFilters(data) {
     }
 
     const subAgencySet = new Set();
-    const naicsMap = new Map(); // Use Map for NAICS code -> description
+    const naicsMap = new Map();
 
     data.forEach(row => {
-        // Populate Sub-Agency Filter
-        const subAgency = row.awarding_sub_agency_name?.trim();
-        // Add only if it's a non-empty string and not a common 'unknown' placeholder
-        if (subAgency && subAgency.toLowerCase() !== 'unknown sub-agency' && subAgency.toLowerCase() !== 'unknown') {
-            subAgencySet.add(subAgency);
+        // Add all sub-agencies as-is without extra checks
+        if (row.awarding_sub_agency_name) {
+            subAgencySet.add(row.awarding_sub_agency_name);
         }
 
-        // Populate NAICS Filter
-        const code = row.naics_code?.toString().trim();
-        const desc = row.naics_description?.trim() || 'No Description';
-        // Add only if code is valid and not already in the map
-        if (code && code !== 'null' && code !== 'undefined' && code.toLowerCase() !== 'unknown' && code.toLowerCase() !== 'none' && !naicsMap.has(code)) {
-            naicsMap.set(code, desc);
+        // Add all NAICS codes as-is
+        if (row.naics_code) {
+            const code = String(row.naics_code);
+            const desc = row.naics_description || '';
+            if (!naicsMap.has(code)) {
+                naicsMap.set(code, desc);
+            }
         }
     });
 
-    // Populate the dropdowns using the collected, unique, sorted values
+    // Populate the dropdowns
     populateDropdown(document.getElementById('sub-agency-filter'), subAgencySet, "All Sub-Agencies");
     populateNaicsDropdown(document.getElementById('naics-filter'), naicsMap);
+}
+// --- Sankey Chart Functions ---
+function processSankeyData(data) {
+    console.log("Processing data for Sankey chart...");
+    if (!data || data.length === 0) return { nodes: [], links: [] };
+
+    // Get unique sub-agencies
+    const subAgencies = new Set();
+    data.forEach(row => {
+        const agency = row.awarding_sub_agency_name?.trim();
+        if (agency && agency.toLowerCase() !== 'unknown sub-agency' && agency.toLowerCase() !== 'unknown') {
+            subAgencies.add(agency);
+        }
+    });
+
+    // Get top 10 recipients
+    const recipientValues = {};
+    data.forEach(row => {
+        const recipient = row.recipient_name;
+        if (!recipient) return;
+        
+        if (!recipientValues[recipient]) {
+            recipientValues[recipient] = 0;
+        }
+        recipientValues[recipient] += parseSafeFloat(row.current_total_value_of_award);
+    });
+
+    // Sort recipients by value and take top 10
+    const topRecipients = Object.entries(recipientValues)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 10)
+        .map(([name]) => name);
+
+    // Create nodes array
+    const nodes = [];
+    
+    // Add agency nodes
+    Array.from(subAgencies).forEach(agency => {
+        nodes.push({ name: truncateText(agency, 30) });
+    });
+    
+    // Add recipient nodes
+    topRecipients.forEach(recipient => {
+        nodes.push({ name: truncateText(recipient, 30) });
+    });
+
+    // Create links array
+    const links = [];
+    const agencyIndices = {};
+    const recipientIndices = {};
+    
+    // Map agency names to indices
+    Array.from(subAgencies).forEach((agency, i) => {
+        agencyIndices[agency] = i;
+    });
+    
+    // Map recipient names to indices (offset by number of agencies)
+    topRecipients.forEach((recipient, i) => {
+        recipientIndices[recipient] = i + subAgencies.size;
+    });
+
+    // Create links from agencies to recipients
+    data.forEach(row => {
+        const agency = row.awarding_sub_agency_name?.trim();
+        const recipient = row.recipient_name;
+        
+        if (!agency || !recipient || !agencyIndices.hasOwnProperty(agency) || !recipientIndices.hasOwnProperty(recipient)) {
+            return;
+        }
+        
+        const value = parseSafeFloat(row.current_total_value_of_award);
+        
+        if (value <= 0) return;
+        
+        // Check if a link already exists between these nodes
+        const existingLinkIndex = links.findIndex(link => 
+            link.source === agencyIndices[agency] && link.target === recipientIndices[recipient]
+        );
+        
+        if (existingLinkIndex >= 0) {
+            // Add to existing link
+            links[existingLinkIndex].value += value;
+        } else {
+            // Create new link
+            links.push({
+                source: agencyIndices[agency],
+                target: recipientIndices[recipient],
+                value: value
+            });
+        }
+    });
+
+    // Convert source/target from indices to objects (required by d3.sankey)
+    const nodesObjects = nodes.map(n => ({...n}));
+    const linksObjects = links.map(l => ({
+        source: nodesObjects[l.source],
+        target: nodesObjects[l.target],
+        value: l.value
+    }));
+
+    console.log(`Processed data for Sankey chart: ${nodesObjects.length} nodes, ${linksObjects.length} links`);
+    return { nodes: nodesObjects, links: linksObjects };
+}
+
+function displaySankeyChart(sankeyData) {
+    const containerId = 'sankey-chart-container';
+    const container = document.getElementById(containerId);
+    const svg = document.getElementById('sankeyChart');
+    
+    if (!container || !svg) {
+        console.error("Sankey chart container or SVG element not found.");
+        if(container) displayError(containerId, "SVG element is missing.");
+        return;
+    }
+    
+    setLoading(containerId, false); // Turn off loading spinner
+    
+    // Clear any previous content
+    svg.innerHTML = '';
+    
+    if (!sankeyData || !sankeyData.nodes || !sankeyData.links || 
+        sankeyData.nodes.length === 0 || sankeyData.links.length === 0) {
+        displayNoData(containerId, 'No data available for Sankey diagram.');
+        return;
+    }
+    
+    // Set dimensions and margins
+    const width = container.clientWidth;
+    const height = container.clientHeight;
+    const margin = {top: 20, right: 20, bottom: 20, left: 20};
+    const innerWidth = width - margin.left - margin.right;
+    const innerHeight = height - margin.top - margin.bottom;
+    
+    // Create the sankey generator
+    const sankey = d3.sankey()
+        .nodeWidth(15)
+        .nodePadding(10)
+        .extent([[1, 1], [innerWidth - 1, innerHeight - 1]]);
+    
+    // Generate the sankey layout
+    const { nodes, links } = sankey({
+        nodes: sankeyData.nodes,
+        links: sankeyData.links
+    });
+    
+    // Create the main group element with margins
+    const g = d3.select(svg)
+        .attr('width', width)
+        .attr('height', height)
+        .append('g')
+        .attr('transform', `translate(${margin.left},${margin.top})`);
+    
+    // Add links
+    g.append('g')
+        .selectAll('path')
+        .data(links)
+        .enter()
+        .append('path')
+        .attr('d', d3.sankeyLinkHorizontal())
+        .attr('stroke-width', d => Math.max(1, d.width))
+        .attr('stroke', '#797484')
+        .attr('stroke-opacity', 0.5)
+        .attr('fill', 'none')
+        .append('title')
+        .text(d => `${d.source.name} → ${d.target.name}\n${formatCurrency(d.value)}`);
+    
+    // Add nodes
+    const node = g.append('g')
+        .selectAll('rect')
+        .data(nodes)
+        .enter()
+        .append('rect')
+        .attr('x', d => d.x0)
+        .attr('y', d => d.y0)
+        .attr('height', d => d.y1 - d.y0)
+        .attr('width', d => d.x1 - d.x0)
+        .attr('fill', '#9993A1')
+        .attr('stroke', '#252327')
+        .append('title')
+        .text(d => `${d.name}\n${formatCurrency(d.value)}`);
+    
+    // Add node labels
+    g.append('g')
+        .selectAll('text')
+        .data(nodes)
+        .enter()
+        .append('text')
+        .attr('x', d => d.x0 < innerWidth / 2 ? d.x1 + 6 : d.x0 - 6)
+        .attr('y', d => (d.y1 + d.y0) / 2)
+        .attr('dy', '0.35em')
+        .attr('text-anchor', d => d.x0 < innerWidth / 2 ? 'start' : 'end')
+        .text(d => d.name)
+        .attr('font-size', '10px')
+        .attr('fill', '#FFFFF3');
+}
+
+
+// --- Choropleth Map Functions ---
+function processMapData(data) {
+    console.log("Processing data for performance map...");
+    if (!data || data.length === 0) return {};
+    
+    // Create a map to store state-level aggregates
+    const stateData = {};
+    
+    // Debug counter for rows with FIPS codes
+    let rowsWithFips = 0;
+    
+    data.forEach(row => {
+        // Use the correct field for state FIPS codes
+        let fipsCode = null;
+        
+        // First try the exact field name provided
+        if (row.prime_award_transaction_place_of_performance_state_fips_code) {
+            fipsCode = row.prime_award_transaction_place_of_performance_state_fips_code.trim();
+            rowsWithFips++;
+        } 
+        // Then try fallback options
+        else if (row.primary_place_of_performance_state_code) {
+            fipsCode = row.primary_place_of_performance_state_code.trim();
+        } else if (row.pop_state_code) {
+            fipsCode = row.pop_state_code.trim();
+        } else if (row.place_of_performance_state_code) {
+            fipsCode = row.place_of_performance_state_code.trim();
+        }
+        
+        // If no FIPS code found, skip this row
+        if (!fipsCode) return;
+        
+        // Ensure FIPS code is a 2-digit string
+        if (fipsCode.length > 2) {
+            // If longer than 2 digits, assume it's a county FIPS and take the first 2 digits
+            fipsCode = fipsCode.substring(0, 2);
+        } else if (fipsCode.length === 1) {
+            // If it's a single digit, add leading zero
+            fipsCode = '0' + fipsCode;
+        }
+        
+        const value = parseSafeFloat(row.current_total_value_of_award) || 0;
+        
+        if (!stateData[fipsCode]) {
+            stateData[fipsCode] = {
+                value: 0,
+                count: 0
+            };
+        }
+        
+        stateData[fipsCode].value += value;
+        stateData[fipsCode].count += 1;
+    });
+    
+    console.log(`Processed data for map: ${Object.keys(stateData).length} states with FIPS codes (found ${rowsWithFips} rows with FIPS codes)`);
+    console.log("State data:", stateData);
+    return stateData;
+}
+
+function displayChoroplethMap(mapData) {
+    const containerId = 'map-container';
+    const container = document.getElementById(containerId);
+    const mapDiv = document.getElementById('choroplethMap');
+    
+    if (!container || !mapDiv) {
+        console.error("Map container or div element not found.");
+        if(container) displayError(containerId, "Map div element is missing.");
+        return;
+    }
+    
+    setLoading(containerId, false); // Turn off loading spinner
+    
+    // Clear any previous content
+    mapDiv.innerHTML = '';
+    
+    if (!mapData || Object.keys(mapData).length === 0) {
+        displayNoData(containerId, 'No geographic data available for mapping.');
+        return;
+    }
+    
+    try {
+        // Set up map dimensions
+        const width = mapDiv.clientWidth;
+        const height = mapDiv.clientHeight;
+        
+        // Create SVG element inside the map div
+        const svg = d3.select(mapDiv)
+            .append('svg')
+            .attr('width', width)
+            .attr('height', height);
+        
+        // Create a map projection
+        const projection = d3.geoAlbersUsa()
+            .scale(width)
+            .translate([width / 2, height / 2]);
+        
+        const path = d3.geoPath().projection(projection);
+        
+        // Define color scale for the map
+        const stateValues = Object.values(mapData).map(d => d.value);
+        const maxValue = d3.max(stateValues) || 0;
+        
+        const colorScale = d3.scaleSequential()
+            .interpolator(d3.interpolateBlues)
+            .domain([0, maxValue]);
+        
+        // Create tooltip
+        const tooltip = d3.select(mapDiv)
+            .append('div')
+            .attr('class', 'tooltip')
+            .style('opacity', 0)
+            .style('position', 'absolute')
+            .style('background-color', '#252327')
+            .style('color', '#FFFFF3')
+            .style('padding', '8px')
+            .style('border-radius', '4px')
+            .style('font-size', '12px')
+            .style('pointer-events', 'none');
+        
+        // State name mapping
+        const fipsToStateName = {
+            "01": "Alabama", "02": "Alaska", "04": "Arizona", "05": "Arkansas", 
+            "06": "California", "08": "Colorado", "09": "Connecticut", "10": "Delaware", 
+            "11": "District of Columbia", "12": "Florida", "13": "Georgia", "15": "Hawaii", 
+            "16": "Idaho", "17": "Illinois", "18": "Indiana", "19": "Iowa", "20": "Kansas", 
+            "21": "Kentucky", "22": "Louisiana", "23": "Maine", "24": "Maryland", 
+            "25": "Massachusetts", "26": "Michigan", "27": "Minnesota", "28": "Mississippi", 
+            "29": "Missouri", "30": "Montana", "31": "Nebraska", "32": "Nevada", 
+            "33": "New Hampshire", "34": "New Jersey", "35": "New Mexico", "36": "New York", 
+            "37": "North Carolina", "38": "North Dakota", "39": "Ohio", "40": "Oklahoma", 
+            "41": "Oregon", "42": "Pennsylvania", "44": "Rhode Island", "45": "South Carolina", 
+            "46": "South Dakota", "47": "Tennessee", "48": "Texas", "49": "Utah", 
+            "50": "Vermont", "51": "Virginia", "53": "Washington", "54": "West Virginia", 
+            "55": "Wisconsin", "56": "Wyoming", "72": "Puerto Rico"
+        };
+        
+        // Load US state boundaries GeoJSON
+        d3.json('https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json')
+            .then(us => {
+                if (!us || !us.objects || !us.objects.states) {
+                    throw new Error("Invalid GeoJSON data");
+                }
+                
+                // Convert TopoJSON to GeoJSON
+                const states = topojson.feature(us, us.objects.states).features;
+                
+                // Debugging: Log the first few states to check their structure
+                console.log("First few states from TopoJSON:", states.slice(0, 3));
+                
+                // Draw state boundaries
+                svg.selectAll('path')
+                    .data(states)
+                    .enter()
+                    .append('path')
+                    .attr('d', path)
+                    .attr('fill', d => {
+                        // Use the state FIPS code to lookup data
+                        // d.id is numeric in the topojson, so convert to 2-digit string
+                        const fipsCode = d.id.toString().padStart(2, '0');
+                        const stateData = mapData[fipsCode];
+                        
+                        // Debug info
+                        if (stateData) {
+                            console.log(`State ${fipsCode} (${fipsToStateName[fipsCode] || 'Unknown'}): ${stateData.value}`);
+                        }
+                        
+                        return stateData ? colorScale(stateData.value) : '#ccc';
+                    })
+                    .attr('stroke', '#252327')
+                    .attr('stroke-width', 0.5)
+                    .on('mouseover', function(event, d) {
+                        // Get FIPS code as 2-digit string
+                        const fipsCode = d.id.toString().padStart(2, '0');
+                        const stateData = mapData[fipsCode];
+                        const stateName = fipsToStateName[fipsCode] || "Unknown";
+                        
+                        if (stateData) {
+                            tooltip.transition()
+                                .duration(200)
+                                .style('opacity', 0.9);
+                                
+                            tooltip.html(`
+                                <strong>${stateName}</strong><br>
+                                Total Value: ${formatCurrency(stateData.value)}<br>
+                                Contracts: ${stateData.count}
+                            `)
+                            .style('left', (event.pageX + 10) + 'px')
+                            .style('top', (event.pageY - 28) + 'px');
+                        }
+                    })
+                    .on('mouseout', function() {
+                        tooltip.transition()
+                            .duration(500)
+                            .style('opacity', 0);
+                    });
+                    
+                // Add legend
+                const legendWidth = 200;
+                const legendHeight = 15;
+                const legendX = width - legendWidth - 20;
+                const legendY = height - 40;
+                
+                // Create a linear gradient for the legend
+                const defs = svg.append('defs');
+                const linearGradient = defs.append('linearGradient')
+                    .attr('id', 'legend-gradient')
+                    .attr('x1', '0%')
+                    .attr('y1', '0%')
+                    .attr('x2', '100%')
+                    .attr('y2', '0%');
+                    
+                // Add color stops to the gradient
+                const stops = [0, 0.25, 0.5, 0.75, 1];
+                stops.forEach(stop => {
+                    linearGradient.append('stop')
+                        .attr('offset', `${stop * 100}%`)
+                        .attr('stop-color', colorScale(stop * maxValue));
+                });
+                
+                // Draw the legend rectangle
+                svg.append('rect')
+                    .attr('x', legendX)
+                    .attr('y', legendY)
+                    .attr('width', legendWidth)
+                    .attr('height', legendHeight)
+                    .style('fill', 'url(#legend-gradient)')
+                    .attr('stroke', '#252327')
+                    .attr('stroke-width', 1);
+                    
+                // Add legend labels
+                svg.append('text')
+                    .attr('x', legendX)
+                    .attr('y', legendY - 5)
+                    .attr('text-anchor', 'start')
+                    .attr('font-size', '10px')
+                    .attr('fill', '#FFFFF3')
+                    .text('$0');
+                    
+                svg.append('text')
+                    .attr('x', legendX + legendWidth)
+                    .attr('y', legendY - 5)
+                    .attr('text-anchor', 'end')
+                    .attr('font-size', '10px')
+                    .attr('fill', '#FFFFF3')
+                    .text(formatCurrency(maxValue));
+                    
+                svg.append('text')
+                    .attr('x', legendX + (legendWidth / 2))
+                    .attr('y', legendY - 5)
+                    .attr('text-anchor', 'middle')
+                    .attr('font-size', '10px')
+                    .attr('fill', '#FFFFF3')
+                    .text('Contract Value by State');
+            })
+            .catch(error => {
+                console.error("Error loading GeoJSON:", error);
+                displayError(containerId, `Error loading map data: ${error.message}`);
+            });
+    } catch (error) {
+        console.error("Error creating choropleth map:", error);
+        displayError(containerId, "Failed to render map: " + error.message);
+    }
 }
 
 function applyFiltersAndUpdateVisuals() {
@@ -935,7 +1400,7 @@ function applyFiltersAndUpdateVisuals() {
         dataAfterSearch = rawData.filter(row => {
             const recipientMatch = row.recipient_name?.toLowerCase().includes(searchTerm);
             const piidMatch = row.award_id_piid?.toLowerCase().includes(searchTerm);
-            const descriptionMatch = row.transaction_description?.toLowerCase().includes(searchTerm);
+			const descriptionMatch = row.transaction_description?.toLowerCase().includes(searchTerm);
 
             return recipientMatch || piidMatch || descriptionMatch;
         });
@@ -990,12 +1455,13 @@ function applyFiltersAndUpdateVisuals() {
     const expiringData = processExpiringData(filteredData);
     displayExpiringTable(expiringData);
 
-    // Placeholders for uncompleted visualizations
-    setLoading('sankey-chart-container', false);
-    displayNoData('sankey-chart-container', 'Sankey chart not implemented yet.');
+    // Sankey Chart for Award Flow
+    const sankeyData = processSankeyData(filteredData);
+    displaySankeyChart(sankeyData);
 
-    setLoading('map-container', false);
-    displayNoData('map-container', 'Map not implemented yet.');
+    // Choropleth Map
+    const mapData = processMapData(filteredData);
+    displayChoroplethMap(mapData);
 
     // Return the final filtered data
     return filteredData;
