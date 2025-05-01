@@ -740,7 +740,6 @@ function displayTavTcvChart(chartData) {
                         color: textPrimaryColor,
                         boxWidth: 14,
                         padding: 20,
-						animation: false,
                         font: { 
                             size: 13,
                             weight: 'medium'
@@ -751,7 +750,10 @@ function displayTavTcvChart(chartData) {
             layout: {
                 padding: { top: 10, bottom: 10, left: 10, right: 20 }
             },
-           
+            animation: {
+                duration: 800,
+                easing: 'easeOutQuart'
+            },
             onResize: function(chart, size) {
                 // Check if we're on mobile
                 if (window.innerWidth <= 768) {
@@ -980,3 +982,364 @@ function calculateAverageARR() {
         }
     }, 50); // Short delay (50ms) seems reasonable
 }
+// --- Load Dataset Functions ---
+function updateStatusBanner(message, type = 'info') {
+    const banner = document.getElementById('status-banner'); // The div containing the message
+    const statusMessage = document.getElementById('status-message');
+    const refreshButton = document.getElementById('refresh-button');
+    if (!banner || !statusMessage || !refreshButton) return; // Safety check
+
+    // Update the message text
+    statusMessage.textContent = message;
+
+    // Update banner styling/class based on type
+    banner.className = ''; // Reset classes first
+    if (type === 'error') {
+        banner.classList.add('error');
+    } else if (type === 'success') {
+        banner.classList.add('success');
+    } else {
+        banner.classList.add('info'); // Default/loading state
+    }
+
+    // Enable/disable refresh button based on global loading state
+    refreshButton.disabled = isLoading;
+}
+
+function updateDashboardTitle(dataset) {
+    const dashboardTitle = document.getElementById('dashboard-title');
+    const dashboardSubtitle = document.getElementById('dashboard-subtitle');
+    if (!dashboardTitle || !dashboardSubtitle) return; // Safety check
+
+    if (dataset) {
+        dashboardTitle.textContent = `${dataset.name} Sales QBR Dashboard`;
+        dashboardSubtitle.textContent = `Analyze contract data with precision`;
+    } else {
+        // Reset to default titles when no dataset is selected
+        dashboardTitle.textContent = 'Sales QBR Dashboard';
+        dashboardSubtitle.textContent = 'Analyze contract data with precision';
+    }
+}
+
+function loadDataset(dataset) {
+    // Prevent concurrent loads or loading without a valid dataset object
+    if (!dataset || !dataset.id || isLoading) {
+        console.warn("Load dataset cancelled. Already loading or invalid dataset provided.");
+        if (!dataset) updateStatusBanner('Invalid dataset specified.', 'error');
+        return;
+    }
+
+    console.log(`Initiating load for dataset: ${dataset.name} (ID: ${dataset.id})`);
+    currentDataset = dataset; // Store the currently selected dataset info
+    isLoading = true; // Set loading flag
+
+    // Update UI to reflect loading state
+    updateDashboardTitle(dataset); // Set header title/subtitle
+    updateStatusBanner(`Loading ${dataset.name} data...`, 'info'); // Show loading message in status
+    document.getElementById('refresh-button').disabled = true; // Disable refresh during load
+
+    // Set loading states specifically for chart/table containers
+    setLoading('contract-leaders-table-container', true, `Loading ${dataset.name} leader data...`);
+    setLoading('tav-tcv-chart-container', true, `Loading ${dataset.name} TAV/TCV data...`);
+
+    // Clear previous chart instances to prevent rendering issues
+    if (tavTcvChartInstance) {
+        tavTcvChartInstance.destroy();
+        tavTcvChartInstance = null;
+    }
+
+    // Clear ARR result and reset filters
+    document.getElementById('arr-result').textContent = '--';
+    document.getElementById('arr-loading').style.display = 'none';
+    document.getElementById('arr-error').style.display = 'none';
+    document.getElementById('arr-no-data').style.display = 'none';
+    
+    // Reset filter dropdowns and date inputs
+    document.getElementById('sub-agency-filter').innerHTML = '<option value="">All Sub-Agencies</option>';
+    document.getElementById('sub-agency-filter').value = '';
+    document.getElementById('naics-filter').innerHTML = '<option value="">All NAICS</option>';
+    document.getElementById('naics-filter').value = '';
+    document.getElementById('arr-start-date').value = '';
+    document.getElementById('arr-end-date').value = '';
+
+    // Fetch the data from S3 asynchronously
+    fetchDataFromS3(dataset);
+}
+
+function refreshCurrentDataset() {
+    if (currentDataset && !isLoading) { // Only refresh if a dataset is selected and not currently loading
+        console.log("Refreshing current dataset:", currentDataset.name);
+        // Simply call loadDataset again with the stored currentDataset
+        loadDataset(currentDataset);
+    } else if (isLoading) {
+        console.log("Refresh cancelled: Data is already loading.");
+    } else {
+        console.log("Refresh cancelled: No dataset selected.");
+        updateStatusBanner('Select a dataset first to refresh.', 'error');
+    }
+}
+
+async function fetchDataFromS3(dataset) {
+    console.log(`Starting fetch for: ${dataset.name}`);
+    updateStatusBanner(`Loading ${dataset.name} data...`, 'info'); // Update status
+
+    const csvUrl = `${S3_BASE_URL}${dataset.id}.csv`;
+    console.log(`Loading data from URL: ${csvUrl}`);
+
+    try {
+        const response = await fetch(csvUrl, {
+            method: 'GET',
+            mode: 'cors', // Ensure CORS is handled
+            cache: 'no-cache', // Force fresh data fetch
+            headers: {
+                'Accept': 'text/csv', // Be explicit about expected content type
+            }
+        });
+
+        // Check if the fetch was successful (status code 200-299)
+        if (!response.ok) {
+            // Construct a more informative error message
+            const statusText = response.statusText || 'Unknown Error';
+            const errorMsg = `Failed to fetch data: ${response.status} ${statusText}`;
+            console.error(errorMsg, `URL: ${csvUrl}`);
+            throw new Error(errorMsg); // Throw error to be caught below
+        }
+
+        // Get the response body as text
+        const csvText = await response.text();
+
+        // Check if the response body is empty or whitespace only
+        if (!csvText || csvText.trim() === '') {
+            console.warn(`Received empty CSV data for ${dataset.name} from ${csvUrl}`);
+            // Treat empty data as a successful load but with zero records
+            processDataset(dataset, []); // Process with an empty array
+            return; // Stop further processing for this function
+        }
+
+        // Update status before starting potentially long parse process
+        updateStatusBanner(`Parsing ${dataset.name} data...`, 'info');
+
+        // Use PapaParse for robust CSV parsing
+        Papa.parse(csvText, {
+            header: true, // Treat first row as headers
+            dynamicTyping: false, // Keep all values as strings initially for safe parsing
+            skipEmptyLines: 'greedy', // Skip empty lines and lines with only whitespace
+            transformHeader: header => header.trim(), // Trim whitespace from headers
+            complete: (results) => {
+                console.log(`Successfully parsed ${results.data.length} rows for ${dataset.name}.`);
+
+                // Log any non-critical parsing errors
+                if (results.errors && results.errors.length > 0) {
+                    console.warn(`CSV parsing for ${dataset.name} encountered ${results.errors.length} errors:`, results.errors);
+                }
+
+                // Check if data array exists and has content after parsing
+                if (!results.data || results.data.length === 0) {
+                    console.warn(`No data rows found after parsing CSV for ${dataset.name}.`);
+                    // Process with empty data array
+                    processDataset(dataset, []);
+                } else {
+                    // Process the successfully parsed data
+                    processDataset(dataset, results.data);
+                }
+            },
+            error: (error) => {
+                // Handle critical errors specifically from PapaParse
+                console.error(`PapaParse Error for ${dataset.name}:`, error);
+                // Throw a new error to be caught by the main catch block
+                throw new Error(`Error parsing CSV: ${error.message}`);
+            }
+        });
+
+    } catch (error) {
+        // Catch errors from fetch() or errors thrown during parsing
+        console.error(`Error loading or parsing dataset ${dataset.name}:`, error);
+        updateStatusBanner(`Error loading ${dataset.name}: ${error.message}`, 'error');
+
+        // Display error messages in the UI components
+        displayError('contract-leaders-table-container', `Failed to load data: ${error.message}`);
+        displayError('tav-tcv-chart-container', `Failed to load data: ${error.message}`);
+
+        // Reset state on error
+        rawData = []; // Clear any potentially partial data
+        populateFilters(rawData); // Clear filters
+        isLoading = false; // Reset loading flag
+        // Ensure refresh button is usable for retrying
+        const refreshButton = document.getElementById('refresh-button');
+        if (refreshButton) refreshButton.disabled = false;
+    }
+}
+
+function processDataset(dataset, data) {
+    console.log(`Processing ${data.length} rows for ${dataset.name}...`);
+    updateStatusBanner(`Processing ${dataset.name} data...`, 'info');
+
+    try {
+        // Map over the raw parsed data to clean and structure it
+        rawData = data.map((row, index) => {
+            try {
+                // Create a new object for the cleaned row
+                const cleanRow = {};
+
+                // Trim whitespace from all string values and handle nulls/undefined
+                for (const key in row) {
+                    if (Object.prototype.hasOwnProperty.call(row, key)) {
+                        const value = row[key];
+                        if (typeof value === 'string') {
+                            cleanRow[key] = value.trim();
+                        } else if (value === null || value === undefined) {
+                            cleanRow[key] = null; // Standardize null/undefined
+                        } else {
+                            cleanRow[key] = value; // Keep non-strings as is (numbers, booleans)
+                        }
+                    }
+                }
+
+                // Convert specific numeric fields safely using parseSafeFloat
+                cleanRow.current_total_value_of_award = parseSafeFloat(cleanRow.current_total_value_of_award);
+                cleanRow.base_and_exercised_options_value = parseSafeFloat(cleanRow.base_and_exercised_options_value);
+                cleanRow.total_dollars_obligated = parseSafeFloat(cleanRow.total_dollars_obligated);
+                cleanRow.base_and_all_options_value = parseSafeFloat(cleanRow.base_and_all_options_value);
+                cleanRow.potential_total_value_of_award = parseSafeFloat(cleanRow.potential_total_value_of_award);
+
+                // Provide default values for essential string fields if they are null/empty
+                cleanRow.recipient_name = cleanRow.recipient_name || 'Unknown Recipient';
+                cleanRow.awarding_sub_agency_name = cleanRow.awarding_sub_agency_name || 'Unknown Sub-Agency';
+                cleanRow.naics_code = cleanRow.naics_code || 'Unknown';
+                cleanRow.naics_description = cleanRow.naics_description || 'No Description';
+                // Ensure key fields like award ID are present, maybe default if absolutely needed
+                cleanRow.contract_award_unique_key = cleanRow.contract_award_unique_key || null; // Keep null if missing
+                cleanRow.award_id_piid = cleanRow.award_id_piid || null; // Keep null if missing
+
+                // Pre-parse date fields for efficiency during filtering/calculations
+                // Store parsed dates in new properties to avoid modifying original strings
+                cleanRow.period_of_performance_start_date_parsed = parseDate(cleanRow.period_of_performance_start_date);
+                cleanRow.period_of_performance_current_end_date_parsed = parseDate(cleanRow.period_of_performance_current_end_date);
+
+                // Return the cleaned and structured row
+                return cleanRow;
+
+            } catch (rowError) {
+                console.error(`Error processing row ${index} for ${dataset.name}:`, rowError, "Row data:", row);
+                return null; // Return null for rows that cause critical processing errors
+            }
+        }).filter(Boolean); // Filter out any null entries resulting from row processing errors
+
+        console.log(`Successfully processed ${rawData.length} valid rows for ${dataset.name}`);
+
+        // Check if all rows failed processing (rawData is empty but original data was not)
+        if (rawData.length === 0 && data.length > 0) {
+            // This indicates a systemic issue with the data or processing logic
+            throw new Error(`All ${data.length} data rows failed processing. Check data format or processing logic.`);
+        }
+
+        // Update UI after successful processing
+        updateStatusBanner(`Successfully loaded ${rawData.length} records from ${dataset.name} at ${new Date().toLocaleTimeString()}`, 'success');
+
+        // Populate filter dropdowns based on the processed data
+        populateFilters(rawData);
+
+        // Apply filters initially (to show all data) and update charts/tables
+        applyFiltersAndUpdateVisuals();
+
+    } catch (error) {
+        // Catch errors specific to the processing stage
+        console.error(`Error processing dataset ${dataset.name}:`, error);
+        updateStatusBanner(`Error processing ${dataset.name}: ${error.message}`, 'error');
+
+        // Display error messages in the UI components
+        displayError('contract-leaders-table-container', `Error processing data: ${error.message}`);
+        displayError('tav-tcv-chart-container', `Error processing data: ${error.message}`);
+
+        // Reset state on processing error
+        rawData = []; // Clear data
+        populateFilters(rawData); // Clear filters
+        resetUIForNoDataset(); // Ensure UI reflects the error state
+
+    } finally {
+        // Always reset the loading flag and re-enable refresh button
+        isLoading = false;
+        const refreshButton = document.getElementById('refresh-button');
+        if (refreshButton) refreshButton.disabled = false;
+    }
+}
+
+// --- Event Listeners ---
+function setupEventListeners() {
+    // Calculate ARR button
+    const arrButton = document.getElementById('arr-calculate-button');
+    if (arrButton) {
+        arrButton.addEventListener('click', calculateAverageARR);
+    } else {
+        console.error("ARR Calculate button not found.");
+    }
+
+    // Refresh button
+    const refreshButton = document.getElementById('refresh-button');
+    if (refreshButton) {
+        refreshButton.addEventListener('click', refreshCurrentDataset);
+    } else {
+        console.error("Refresh button not found.");
+    }
+
+    // Filters that trigger visual updates (excluding ARR calculation)
+    const subAgencyFilter = document.getElementById('sub-agency-filter');
+    const naicsFilter = document.getElementById('naics-filter');
+    const startDateInput = document.getElementById('arr-start-date');
+    const endDateInput = document.getElementById('arr-end-date');
+
+    if (subAgencyFilter) subAgencyFilter.addEventListener('change', applyFiltersAndUpdateVisuals);
+    if (naicsFilter) naicsFilter.addEventListener('change', applyFiltersAndUpdateVisuals);
+    // Update visuals immediately when dates change (ARR calculation still needs button press)
+    if (startDateInput) startDateInput.addEventListener('change', applyFiltersAndUpdateVisuals);
+    if (endDateInput) endDateInput.addEventListener('change', applyFiltersAndUpdateVisuals);
+
+    // Add window resize listener for chart responsiveness
+    window.addEventListener('resize', function() {
+        if (tavTcvChartInstance) {
+            tavTcvChartInstance.resize();
+            enforceChartSizeConstraints();
+        }
+    });
+}
+
+// --- Initialize Dashboard ---
+document.addEventListener('DOMContentLoaded', function() {
+    console.log("DOM fully loaded and parsed");
+    
+    // Initialize the dataset selector dropdown
+    initializeDatasetSelector();
+
+    // Set initial UI state
+    updateDashboardTitle(null); // Set default titles
+    updateStatusBanner('Please select a dataset to begin', 'info'); // Initial status
+    resetUIForNoDataset(); // Set initial state for charts, tables, filters
+
+    // Update date display with actual current date
+    updateDateDisplay();
+
+    // Setup all event listeners after DOM is ready
+    setupEventListeners();
+    
+    // Auto-load the SOCOM dataset when the page loads
+    const socomDataset = DATASETS.find(d => d.id === 'socom_primes');
+    if (socomDataset) {
+        console.log("Automatically loading SOCOM dataset...");
+        
+        // Update the dropdown to show SOCOM as selected
+        const datasetSelect = document.getElementById('dataset-select');
+        if (datasetSelect) {
+            datasetSelect.value = 'socom_primes';
+        }
+        
+        // Load the SOCOM dataset
+        loadDataset(socomDataset);
+    } else {
+        console.error("SOCOM dataset not found in the DATASETS array");
+    }
+
+    // Update the date display every minute to keep it current during long sessions
+    setInterval(updateDateDisplay, 60000);
+
+    console.log("Dashboard initialized.");
+});
