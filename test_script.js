@@ -761,8 +761,23 @@ function displayTavTcvChart(chartData) {
         tavTcvChartInstance = null;
     }
 
-    // Prepare data for Chart.js
-    const labels = chartData.map(d => truncateText(d.primeName, 25));
+    // Create container for clickable links that will replace the chart labels
+    const labelsContainer = document.createElement('div');
+    labelsContainer.className = 'chart-y-labels-container';
+    labelsContainer.style.position = 'absolute';
+    labelsContainer.style.top = '0';
+    labelsContainer.style.left = '0';
+    labelsContainer.style.width = '100%';
+    labelsContainer.style.height = '100%';
+    labelsContainer.style.pointerEvents = 'none'; // Start with no pointer events
+    
+    // Add the labels container to the chart container
+    container.style.position = 'relative';
+    container.appendChild(labelsContainer);
+
+    // Prepare data for Chart.js - use empty labels for Y axis
+    // We'll replace them with our custom links later
+    const emptyLabels = chartData.map(() => '');
     const tavData = chartData.map(d => d.tav);
     const tcvData = chartData.map(d => d.tcv);
 
@@ -775,11 +790,11 @@ function displayTavTcvChart(chartData) {
     const surfaceColor = computedStyle.getPropertyValue('--color-surface').trim() || '#252327';
     const outlineColor = computedStyle.getPropertyValue('--color-outline').trim() || '#615C66';
 
-    // Create the new chart instance
+    // Create the new chart instance with empty Y labels
     tavTcvChartInstance = new Chart(ctx, {
         type: 'bar',
         data: {
-            labels: labels,
+            labels: emptyLabels, // Empty labels - we'll use custom links instead
             datasets: [
                 {
                     label: 'TAV (Obligated)',
@@ -839,16 +854,9 @@ function displayTavTcvChart(chartData) {
                 },
                 y: {
                     ticks: {
-                        color: textColor,
-                        font: { 
-                            size: 13,
-                            weight: 'bold'
-                        },
-                        padding: 8,
-                        callback: function(value, index) {
-                            // Just return the text for now, we'll replace with links after chart is created
-                            return this.getLabelForValue(value);
-                        }
+                        // Hide the default Y-axis ticks since we're replacing them
+                        display: false,
+                        padding: 30, // Add space for our custom labels
                     },
                     grid: {
                         display: false,
@@ -908,56 +916,47 @@ function displayTavTcvChart(chartData) {
                 }
             },
             layout: {
-                padding: { top: 16, bottom: 16, left: 12, right: 20 }
+                padding: { 
+                    top: 16, 
+                    bottom: 16, 
+                    left: 100, // Add extra padding for our custom labels
+                    right: 20 
+                }
             },
             animation: {
                 duration: 800,
                 easing: 'easeOutQuart'
             },
-            // Add onClick handler for the entire chart
+            // Add click handler for the chart bars
             onClick: function(e, elements) {
                 if (!elements || elements.length === 0) return;
                 
                 const index = elements[0].index;
                 if (chartData && chartData[index] && chartData[index].id) {
-                    // Open USA Spending link for the clicked bar/label
+                    // Open USA Spending link for the clicked bar
                     window.open(`https://www.usaspending.gov/award/${chartData[index].id}`, '_blank');
                 }
             }
         }
     });
     
-    // Now replace Y-axis labels with clickable links
-    // This is done after chart creation because Chart.js doesn't natively support HTML in axis labels
-    
-    // Create a container to overlay our clickable labels
-    const labelsContainer = document.createElement('div');
-    labelsContainer.className = 'chart-clickable-labels';
-    labelsContainer.style.position = 'absolute';
-    labelsContainer.style.top = '0';
-    labelsContainer.style.left = '0';
-    labelsContainer.style.width = '100%';
-    labelsContainer.style.height = '100%';
-    labelsContainer.style.pointerEvents = 'none'; // Don't block chart interactions
-    
-    // Add the labels container
-    container.style.position = 'relative'; // Ensure the container is positioned for absolute positioning
-    container.appendChild(labelsContainer);
-    
-    // We need to wait for chart to render fully
+    // Add custom clickable labels after chart has rendered
     setTimeout(() => {
-        // Get the positions of Y-axis labels from the chart
-        const yAxis = tavTcvChartInstance.scales.y;
+        // Get the Y axis position
         const chartArea = tavTcvChartInstance.chartArea;
+        const yAxis = tavTcvChartInstance.scales.y;
         
-        // For each label, create a clickable link positioned over the original label
+        // Enable pointer events for custom labels container
+        labelsContainer.style.pointerEvents = 'auto';
+        
+        // Create custom labels
         chartData.forEach((contract, index) => {
             if (!contract.id) return;
             
-            // Get position of this label
-            const y = yAxis.getPixelForValue(index);
+            // Calculate position (centered on the bar)
+            const yCenter = yAxis.getPixelForValue(index);
             
-            // Create clickable link
+            // Create the clickable link
             const link = document.createElement('a');
             link.href = `https://www.usaspending.gov/award/${contract.id}`;
             link.target = '_blank';
@@ -965,19 +964,22 @@ function displayTavTcvChart(chartData) {
             link.textContent = truncateText(contract.primeName, 25);
             link.title = `View ${contract.primeName} on USA Spending`;
             
-            // Style the link to match chart labels
+            // Style the link
             link.style.position = 'absolute';
-            link.style.left = '0';
-            link.style.top = (y - 10) + 'px'; // Adjust to center with label
+            link.style.left = '10px'; // Position to the left of the chart
+            link.style.top = (yCenter - 10) + 'px'; // Center with the bar
+            link.style.transform = 'translateY(-50%)'; // Center vertically
             link.style.fontFamily = "'Poppins', sans-serif";
             link.style.fontSize = '13px';
             link.style.fontWeight = 'bold';
             link.style.color = textColor;
             link.style.textDecoration = 'none';
             link.style.cursor = 'pointer';
-            link.style.pointerEvents = 'auto'; // Make link clickable
-            link.style.padding = '5px 8px';
-            link.style.paddingRight = chartArea.left + 'px'; // Extend clickable area to chart
+            link.style.padding = '5px';
+            link.style.whiteSpace = 'nowrap';
+            link.style.maxWidth = '90px';
+            link.style.overflow = 'hidden';
+            link.style.textOverflow = 'ellipsis';
             
             // Add hover effect
             link.addEventListener('mouseover', () => {
@@ -993,7 +995,7 @@ function displayTavTcvChart(chartData) {
             // Add to container
             labelsContainer.appendChild(link);
         });
-    }, 100); // Small delay to ensure chart is rendered
+    }, 100);
 }
 // --- Filters and Dynamic Chart Updates ---
 function populateFilters(data) {
