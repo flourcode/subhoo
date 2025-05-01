@@ -894,37 +894,6 @@ function populateFilters(data) {
     populateDropdown(document.getElementById('sub-agency-filter'), subAgencySet, "All Sub-Agencies");
     populateNaicsDropdown(document.getElementById('naics-filter'), naicsMap);
 }
-// --- Choropleth Map Functions ---
-function processMapData(data) {
-    console.log("Processing data for performance map...");
-    if (!data || data.length === 0) return {};
-    
-    // Create a map to store state-level aggregates
-    const stateData = {};
-    
-    data.forEach(row => {
-        const state = row.place_of_performance_state_name?.trim() || 
-                     row.pop_state_code?.trim() || 
-                     "Unknown";
-                     
-        const value = parseSafeFloat(row.current_total_value_of_award) || 0;
-        
-        if (state.toLowerCase() === 'unknown') return;
-        
-        if (!stateData[state]) {
-            stateData[state] = {
-                value: 0,
-                count: 0
-            };
-        }
-        
-        stateData[state].value += value;
-        stateData[state].count += 1;
-    });
-    
-    console.log(`Processed data for map: ${Object.keys(stateData).length} states`);
-    return stateData;
-}
 // --- Sankey Chart Functions ---
 function processSankeyData(data) {
     console.log("Processing data for Sankey chart...");
@@ -961,7 +930,7 @@ function processSankeyData(data) {
     const nodes = [];
     
     // Add agency nodes
-    subAgencies.forEach(agency => {
+    Array.from(subAgencies).forEach(agency => {
         nodes.push({ name: truncateText(agency, 30) });
     });
     
@@ -976,7 +945,7 @@ function processSankeyData(data) {
     const recipientIndices = {};
     
     // Map agency names to indices
-    subAgencies.forEach((agency, i) => {
+    Array.from(subAgencies).forEach((agency, i) => {
         agencyIndices[agency] = i;
     });
     
@@ -994,15 +963,13 @@ function processSankeyData(data) {
             return;
         }
         
-        const sourceIndex = agencyIndices[agency];
-        const targetIndex = recipientIndices[recipient];
         const value = parseSafeFloat(row.current_total_value_of_award);
         
         if (value <= 0) return;
         
         // Check if a link already exists between these nodes
         const existingLinkIndex = links.findIndex(link => 
-            link.source === sourceIndex && link.target === targetIndex
+            link.source === agencyIndices[agency] && link.target === recipientIndices[recipient]
         );
         
         if (existingLinkIndex >= 0) {
@@ -1011,15 +978,23 @@ function processSankeyData(data) {
         } else {
             // Create new link
             links.push({
-                source: sourceIndex,
-                target: targetIndex,
+                source: agencyIndices[agency],
+                target: recipientIndices[recipient],
                 value: value
             });
         }
     });
 
-    console.log(`Processed data for Sankey chart: ${nodes.length} nodes, ${links.length} links`);
-    return { nodes, links };
+    // Convert source/target from indices to objects (required by d3.sankey)
+    const nodesObjects = nodes.map(n => ({...n}));
+    const linksObjects = links.map(l => ({
+        source: nodesObjects[l.source],
+        target: nodesObjects[l.target],
+        value: l.value
+    }));
+
+    console.log(`Processed data for Sankey chart: ${nodesObjects.length} nodes, ${linksObjects.length} links`);
+    return { nodes: nodesObjects, links: linksObjects };
 }
 
 function displaySankeyChart(sankeyData) {
@@ -1036,12 +1011,7 @@ function displaySankeyChart(sankeyData) {
     setLoading(containerId, false); // Turn off loading spinner
     
     // Clear any previous content
-    while (svg.firstChild) {
-        svg.removeChild(svg.firstChild);
-    }
-    
-    // Show the SVG element
-    svg.style.display = 'block';
+    svg.innerHTML = '';
     
     if (!sankeyData || !sankeyData.nodes || !sankeyData.links || 
         sankeyData.nodes.length === 0 || sankeyData.links.length === 0) {
@@ -1056,6 +1026,18 @@ function displaySankeyChart(sankeyData) {
     const innerWidth = width - margin.left - margin.right;
     const innerHeight = height - margin.top - margin.bottom;
     
+    // Create the sankey generator
+    const sankey = d3.sankey()
+        .nodeWidth(15)
+        .nodePadding(10)
+        .extent([[1, 1], [innerWidth - 1, innerHeight - 1]]);
+    
+    // Generate the sankey layout
+    const { nodes, links } = sankey({
+        nodes: sankeyData.nodes,
+        links: sankeyData.links
+    });
+    
     // Create the main group element with margins
     const g = d3.select(svg)
         .attr('width', width)
@@ -1063,26 +1045,10 @@ function displaySankeyChart(sankeyData) {
         .append('g')
         .attr('transform', `translate(${margin.left},${margin.top})`);
     
-    // Convert node indices to objects for the sankey generator
-    const links = sankeyData.links.map(d => ({...d}));
-    const nodes = sankeyData.nodes.map(d => ({...d}));
-    
-    // Create sankey generator
-    const sankey = d3.sankey()
-        .nodeWidth(15)
-        .nodePadding(10)
-        .extent([[0, 0], [innerWidth, innerHeight]]);
-    
-    // Generate the sankey diagram
-    const sankeyData0 = sankey({
-        nodes: nodes,
-        links: links
-    });
-    
     // Add links
     g.append('g')
         .selectAll('path')
-        .data(sankeyData0.links)
+        .data(links)
         .enter()
         .append('path')
         .attr('d', d3.sankeyLinkHorizontal())
@@ -1096,7 +1062,7 @@ function displaySankeyChart(sankeyData) {
     // Add nodes
     const node = g.append('g')
         .selectAll('rect')
-        .data(sankeyData0.nodes)
+        .data(nodes)
         .enter()
         .append('rect')
         .attr('x', d => d.x0)
@@ -1111,7 +1077,7 @@ function displaySankeyChart(sankeyData) {
     // Add node labels
     g.append('g')
         .selectAll('text')
-        .data(sankeyData0.nodes)
+        .data(nodes)
         .enter()
         .append('text')
         .attr('x', d => d.x0 < innerWidth / 2 ? d.x1 + 6 : d.x0 - 6)
@@ -1122,6 +1088,42 @@ function displaySankeyChart(sankeyData) {
         .attr('font-size', '10px')
         .attr('fill', '#FFFFF3');
 }
+
+// --- Choropleth Map Functions ---
+function processMapData(data) {
+    console.log("Processing data for performance map...");
+    if (!data || data.length === 0) return {};
+    
+    // Create a map to store state-level aggregates
+    const stateData = {};
+    
+    data.forEach(row => {
+        // Try multiple possible field names for state
+        const state = row.place_of_performance_state_name?.trim() || 
+                      row.pop_state_code?.trim() ||
+                      row.pop_state_name?.trim() ||
+                      row.place_of_performance_state_code?.trim() ||
+                      "Unknown";
+                     
+        const value = parseSafeFloat(row.current_total_value_of_award) || 0;
+        
+        if (state.toLowerCase() === 'unknown') return;
+        
+        if (!stateData[state]) {
+            stateData[state] = {
+                value: 0,
+                count: 0
+            };
+        }
+        
+        stateData[state].value += value;
+        stateData[state].count += 1;
+    });
+    
+    console.log(`Processed data for map: ${Object.keys(stateData).length} states`);
+    return stateData;
+}
+
 function displayChoroplethMap(mapData) {
     const containerId = 'map-container';
     const container = document.getElementById(containerId);
@@ -1162,10 +1164,10 @@ function displayChoroplethMap(mapData) {
     
     // Define color scale for the map
     const stateValues = Object.values(mapData).map(d => d.value);
-    const minValue = d3.min(stateValues);
-    const maxValue = d3.max(stateValues);
+    const maxValue = d3.max(stateValues) || 0;
     
-    const colorScale = d3.scaleSequential(d3.interpolateBlues)
+    const colorScale = d3.scaleSequential()
+        .interpolator(d3.interpolateBlues)
         .domain([0, maxValue]);
     
     // Create tooltip
@@ -1181,33 +1183,40 @@ function displayChoroplethMap(mapData) {
         .style('font-size', '12px')
         .style('pointer-events', 'none');
     
+    // State name to abbreviation mapping
+    const stateNameToAbbr = {
+        "Alabama": "AL", "Alaska": "AK", "Arizona": "AZ", "Arkansas": "AR",
+        "California": "CA", "Colorado": "CO", "Connecticut": "CT", "Delaware": "DE",
+        "Florida": "FL", "Georgia": "GA", "Hawaii": "HI", "Idaho": "ID",
+        "Illinois": "IL", "Indiana": "IN", "Iowa": "IA", "Kansas": "KS",
+        "Kentucky": "KY", "Louisiana": "LA", "Maine": "ME", "Maryland": "MD",
+        "Massachusetts": "MA", "Michigan": "MI", "Minnesota": "MN", "Mississippi": "MS",
+        "Missouri": "MO", "Montana": "MT", "Nebraska": "NE", "Nevada": "NV",
+        "New Hampshire": "NH", "New Jersey": "NJ", "New Mexico": "NM", "New York": "NY",
+        "North Carolina": "NC", "North Dakota": "ND", "Ohio": "OH", "Oklahoma": "OK",
+        "Oregon": "OR", "Pennsylvania": "PA", "Rhode Island": "RI", "South Carolina": "SC",
+        "South Dakota": "SD", "Tennessee": "TN", "Texas": "TX", "Utah": "UT",
+        "Vermont": "VT", "Virginia": "VA", "Washington": "WA", "West Virginia": "WV",
+        "Wisconsin": "WI", "Wyoming": "WY", "District of Columbia": "DC"
+    };
+    
+    // Abbreviation to name mapping (reverse of above)
+    const abbrToStateName = {};
+    Object.entries(stateNameToAbbr).forEach(([name, abbr]) => {
+        abbrToStateName[abbr] = name;
+    });
+    
     // Load US state boundaries GeoJSON
     d3.json('https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json')
         .then(us => {
-            // Convert to proper GeoJSON format
+            // Convert TopoJSON to GeoJSON
             const states = topojson.feature(us, us.objects.states).features;
             
-            // Map state names to FIPS codes
-            const stateFipsLookup = {
-                "Alabama": "01", "Alaska": "02", "Arizona": "04", "Arkansas": "05",
-                "California": "06", "Colorado": "08", "Connecticut": "09", "Delaware": "10",
-                "District of Columbia": "11", "Florida": "12", "Georgia": "13", "Hawaii": "15",
-                "Idaho": "16", "Illinois": "17", "Indiana": "18", "Iowa": "19",
-                "Kansas": "20", "Kentucky": "21", "Louisiana": "22", "Maine": "23",
-                "Maryland": "24", "Massachusetts": "25", "Michigan": "26", "Minnesota": "27",
-                "Mississippi": "28", "Missouri": "29", "Montana": "30", "Nebraska": "31",
-                "Nevada": "32", "New Hampshire": "33", "New Jersey": "34", "New Mexico": "35",
-                "New York": "36", "North Carolina": "37", "North Dakota": "38", "Ohio": "39",
-                "Oklahoma": "40", "Oregon": "41", "Pennsylvania": "42", "Rhode Island": "44",
-                "South Carolina": "45", "South Dakota": "46", "Tennessee": "47", "Texas": "48",
-                "Utah": "49", "Vermont": "50", "Virginia": "51", "Washington": "53",
-                "West Virginia": "54", "Wisconsin": "55", "Wyoming": "56"
-            };
-            
-            // Add reverse lookup (FIPS to name)
-            const fipsToName = {};
-            Object.entries(stateFipsLookup).forEach(([name, fips]) => {
-                fipsToName[fips] = name;
+            // Get state ids and names
+            const stateIdToName = {};
+            states.forEach(state => {
+                const stateName = state.properties.name;
+                stateIdToName[state.id] = stateName;
             });
             
             // Draw state boundaries
@@ -1217,17 +1226,32 @@ function displayChoroplethMap(mapData) {
                 .append('path')
                 .attr('d', path)
                 .attr('fill', d => {
-                    const stateName = fipsToName[d.id];
-                    return stateName && mapData[stateName] 
-                        ? colorScale(mapData[stateName].value) 
-                        : '#ccc';
+                    const stateName = stateIdToName[d.id];
+                    const stateAbbr = stateNameToAbbr[stateName];
+                    
+                    // Check if we have data for this state (by name or abbreviation)
+                    if (mapData[stateName]) {
+                        return colorScale(mapData[stateName].value);
+                    } else if (stateAbbr && mapData[stateAbbr]) {
+                        return colorScale(mapData[stateAbbr].value);
+                    } else {
+                        return '#ccc'; // Default color for states without data
+                    }
                 })
                 .attr('stroke', '#252327')
                 .attr('stroke-width', 0.5)
                 .on('mouseover', function(event, d) {
-                    const stateName = fipsToName[d.id];
+                    const stateName = stateIdToName[d.id];
+                    const stateAbbr = stateNameToAbbr[stateName];
+                    let stateData;
                     
-                    if (!stateName || !mapData[stateName]) return;
+                    if (mapData[stateName]) {
+                        stateData = mapData[stateName];
+                    } else if (stateAbbr && mapData[stateAbbr]) {
+                        stateData = mapData[stateAbbr];
+                    }
+                    
+                    if (!stateData) return;
                     
                     tooltip.transition()
                         .duration(200)
@@ -1235,8 +1259,8 @@ function displayChoroplethMap(mapData) {
                         
                     tooltip.html(`
                         <strong>${stateName}</strong><br>
-                        Total Value: ${formatCurrency(mapData[stateName].value)}<br>
-                        Contracts: ${mapData[stateName].count}
+                        Total Value: ${formatCurrency(stateData.value)}<br>
+                        Contracts: ${stateData.count}
                     `)
                     .style('left', (event.pageX + 10) + 'px')
                     .style('top', (event.pageY - 28) + 'px');
@@ -1392,7 +1416,7 @@ function applyFiltersAndUpdateVisuals() {
 
     console.log(`Filtered data count (after search & filters): ${filteredData.length} records`);
 
-    // --- Process and Update Visuals ---
+// --- Process and Update Visuals ---
     // Contract Leaders Table
     const leaderData = processContractLeaders(filteredData);
     displayContractLeadersTable(leaderData);
