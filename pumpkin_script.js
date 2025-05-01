@@ -900,25 +900,21 @@ function populateFilters(data) {
     populateDropdown(document.getElementById('sub-agency-filter'), subAgencySet, "All Sub-Agencies");
     populateNaicsDropdown(document.getElementById('naics-filter'), naicsMap);
 }
-
 // --- Sankey Chart Functions ---
 function processSankeyData(data) {
     console.log("Processing data for Sankey chart...");
-    if (!data || data.length === 0) return [];
+    if (!data || data.length === 0) return { nodes: [], links: [] };
 
     // Get unique sub-agencies
-    const subAgencies = [];
-    const subAgencySet = new Set();
-    
+    const subAgencies = new Set();
     data.forEach(row => {
         const agency = row.awarding_sub_agency_name?.trim();
-        if (agency && !subAgencySet.has(agency)) {
-            subAgencySet.add(agency);
-            subAgencies.push({ name: agency });
+        if (agency && agency.toLowerCase() !== 'unknown sub-agency' && agency.toLowerCase() !== 'unknown') {
+            subAgencies.add(agency);
         }
     });
 
-    // Get top 10 recipients by value
+    // Get top 10 recipients
     const recipientValues = {};
     data.forEach(row => {
         const recipient = row.recipient_name;
@@ -934,87 +930,77 @@ function processSankeyData(data) {
     const topRecipients = Object.entries(recipientValues)
         .sort((a, b) => b[1] - a[1])
         .slice(0, 10)
-        .map(([name]) => ({ name: name }));
+        .map(([name]) => name);
 
-    // Create links between agencies and recipients
-    const links = [];
+    // Create nodes array
+    const nodes = [];
     
-    // Collect all links and sum values
+    // Add agency nodes
+    Array.from(subAgencies).forEach(agency => {
+        nodes.push({ name: truncateText(agency, 30) });
+    });
+    
+    // Add recipient nodes
+    topRecipients.forEach(recipient => {
+        nodes.push({ name: truncateText(recipient, 30) });
+    });
+
+    // Create links array
+    const links = [];
+    const agencyIndices = {};
+    const recipientIndices = {};
+    
+    // Map agency names to indices
+    Array.from(subAgencies).forEach((agency, i) => {
+        agencyIndices[agency] = i;
+    });
+    
+    // Map recipient names to indices (offset by number of agencies)
+    topRecipients.forEach((recipient, i) => {
+        recipientIndices[recipient] = i + subAgencies.size;
+    });
+
+    // Create links from agencies to recipients
     data.forEach(row => {
         const agency = row.awarding_sub_agency_name?.trim();
         const recipient = row.recipient_name;
         
-        if (!agency || !recipient) return;
-        
-        // Find agency and recipient indices
-        const sourceIndex = subAgencies.findIndex(a => a.name === agency);
-        const targetIndex = topRecipients.findIndex(r => r.name === recipient);
-        
-        // Only create links to top recipients
-        if (sourceIndex === -1 || targetIndex === -1) return;
+        if (!agency || !recipient || !agencyIndices.hasOwnProperty(agency) || !recipientIndices.hasOwnProperty(recipient)) {
+            return;
+        }
         
         const value = parseSafeFloat(row.current_total_value_of_award);
+        
         if (value <= 0) return;
         
-        // Check if a link already exists
+        // Check if a link already exists between these nodes
         const existingLinkIndex = links.findIndex(link => 
-            link.source === sourceIndex && 
-            link.target === subAgencies.length + targetIndex
+            link.source === agencyIndices[agency] && link.target === recipientIndices[recipient]
         );
         
         if (existingLinkIndex >= 0) {
-            // Add value to existing link
+            // Add to existing link
             links[existingLinkIndex].value += value;
         } else {
             // Create new link
             links.push({
-                source: sourceIndex,
-                target: subAgencies.length + targetIndex, // Recipients start after agencies
+                source: agencyIndices[agency],
+                target: recipientIndices[recipient],
                 value: value
             });
         }
     });
-    
-    // Filter out links with zero or very small values
-    const validLinks = links.filter(link => link.value > 1000);
-    
-    // Filter nodes to only include those with connections
-    const connectedAgencyIndices = new Set();
-    const connectedRecipientIndices = new Set();
-    
-    validLinks.forEach(link => {
-        if (link.source < subAgencies.length) {
-            connectedAgencyIndices.add(link.source);
-        }
-        if (link.target >= subAgencies.length) {
-            connectedRecipientIndices.add(link.target - subAgencies.length);
-        }
-    });
-    
-    const filteredAgencies = Array.from(connectedAgencyIndices).map(i => subAgencies[i]);
-    const filteredRecipients = Array.from(connectedRecipientIndices).map(i => topRecipients[i]);
-    
-    // Create final nodes list
-    const nodes = [...filteredAgencies, ...filteredRecipients];
-    
-    // Create a mapping from old indices to new indices
-    const oldToNewIndexMap = new Map();
-    connectedAgencyIndices.forEach((oldIndex, newIndex) => {
-        oldToNewIndexMap.set(oldIndex, newIndex);
-    });
-    connectedRecipientIndices.forEach((oldIndex, newIndex) => {
-        oldToNewIndexMap.set(oldIndex + subAgencies.length, newIndex + filteredAgencies.length);
-    });
-    
-    // Remap link source/target to new indices
-    const remappedLinks = validLinks.map(link => ({
-        source: oldToNewIndexMap.get(link.source),
-        target: oldToNewIndexMap.get(link.target),
-        value: link.value
-    })).filter(link => link.source !== undefined && link.target !== undefined);
-    
-    console.log(`Processed data for Sankey chart: ${nodes.length} nodes, ${remappedLinks.length} links`);
-    return { nodes, links: remappedLinks };
+
+    // Convert source/target from indices to objects (required by d3.sankey)
+    const nodesObjects = nodes.map(n => ({...n}));
+    const linksObjects = links.map(l => ({
+        source: nodesObjects[l.source],
+        target: nodesObjects[l.target],
+        value: l.value
+    }));
+
+    console.log(`Processed data for Sankey chart: ${nodesObjects.length} nodes, ${linksObjects.length} links`);
+    return { nodes: nodesObjects, links: linksObjects };
 }
 
 function displaySankeyChart(sankeyData) {
@@ -1046,156 +1032,69 @@ function displaySankeyChart(sankeyData) {
     const innerWidth = width - margin.left - margin.right;
     const innerHeight = height - margin.top - margin.bottom;
     
-    // Create simple Sankey layout with D3
-    const nodeWidth = 15;
-    const nodePadding = 10;
+    // Create the sankey generator
+    const sankey = d3.sankey()
+        .nodeWidth(15)
+        .nodePadding(10)
+        .extent([[1, 1], [innerWidth - 1, innerHeight - 1]]);
     
-    // Manually create a simple Sankey layout if d3.sankey is not available
-    try {
-        // Create a mapping of node ID to index in the nodes array
-        const nodeMap = new Map(sankeyData.nodes.map((node, i) => [i, node]));
-        
-        // Calculate the total outgoing value for each source node
-        const sourceValues = new Map();
-        sankeyData.links.forEach(link => {
-            const source = link.source;
-            const value = link.value;
-            sourceValues.set(source, (sourceValues.get(source) || 0) + value);
-        });
-        
-        // Calculate the total incoming value for each target node
-        const targetValues = new Map();
-        sankeyData.links.forEach(link => {
-            const target = link.target;
-            const value = link.value;
-            targetValues.set(target, (targetValues.get(target) || 0) + value);
-        });
-        
-        // Calculate the maximum value for scaling purposes
-        const maxValue = Math.max(
-            ...Array.from(sourceValues.values()),
-            ...Array.from(targetValues.values())
-        );
-        
-        // Layout nodes in two columns
-        const columnGap = innerWidth * 0.6;
-        const nodeCount = sankeyData.nodes.length;
-        const halfCount = Math.ceil(nodeCount / 2);
-        
-        // Assign x positions in two columns
-        for (let i = 0; i < nodeCount; i++) {
-            const node = nodeMap.get(i);
-            // Determine if node is source or target
-            const isSource = i < halfCount;
-            
-            // Set x position
-            node.x0 = isSource ? margin.left : margin.left + columnGap;
-            node.x1 = node.x0 + nodeWidth;
-        }
-        
-        // Calculate y positions based on equal spacing
-        const sourceNodes = sankeyData.nodes.slice(0, halfCount);
-        const targetNodes = sankeyData.nodes.slice(halfCount);
-        
-        // Calculate spacing for source nodes
-        const sourceSpacing = (innerHeight - sourceNodes.length * nodeWidth) / (sourceNodes.length + 1);
-        sourceNodes.forEach((node, i) => {
-            node.y0 = margin.top + i * (nodeWidth + sourceSpacing) + sourceSpacing;
-            node.y1 = node.y0 + nodeWidth;
-        });
-        
-        // Calculate spacing for target nodes
-        const targetSpacing = (innerHeight - targetNodes.length * nodeWidth) / (targetNodes.length + 1);
-        targetNodes.forEach((node, i) => {
-            node.y0 = margin.top + i * (nodeWidth + targetSpacing) + targetSpacing;
-            node.y1 = node.y0 + nodeWidth;
-        });
-        
-        // Create path data for links
-        sankeyData.links.forEach(link => {
-            const source = nodeMap.get(link.source);
-            const target = nodeMap.get(link.target);
-            const value = link.value;
-            
-            // Set source and target data for rendering
-            link.sourceX = source.x1;
-            link.sourceY = source.y0 + (source.y1 - source.y0) / 2;
-            link.targetX = target.x0;
-            link.targetY = target.y0 + (target.y1 - target.y0) / 2;
-            
-            // Calculate width proportional to value
-            link.width = Math.max(1, (value / maxValue) * 30);
-        });
-        
-        // Create the main SVG group
-        const g = d3.select(svg)
-            .attr('width', width)
-            .attr('height', height)
-            .append('g');
-        
-        // Add links
-        g.append('g')
-            .selectAll('path')
-            .data(sankeyData.links)
-            .enter()
-            .append('path')
-            .attr('d', link => {
-                const curvature = 0.5;
-                const x0 = link.sourceX;
-                const y0 = link.sourceY;
-                const x1 = link.targetX;
-                const y1 = link.targetY;
-                const xi = d3.interpolateNumber(x0, x1);
-                const x2 = xi(curvature);
-                const x3 = xi(1 - curvature);
-                
-                return `M${x0},${y0}C${x2},${y0} ${x3},${y1} ${x1},${y1}`;
-            })
-            .attr('stroke-width', d => Math.max(1, d.width))
-            .attr('stroke', '#797484')
-            .attr('stroke-opacity', 0.5)
-            .attr('fill', 'none')
-            .append('title')
-            .text(d => {
-                const source = nodeMap.get(d.source);
-                const target = nodeMap.get(d.target);
-                return `${source.name} → ${target.name}\n${formatCurrency(d.value)}`;
-            });
-        
-        // Add nodes as rectangles
-        g.append('g')
-            .selectAll('rect')
-            .data(sankeyData.nodes)
-            .enter()
-            .append('rect')
-            .attr('x', d => d.x0)
-            .attr('y', d => d.y0)
-            .attr('height', d => d.y1 - d.y0)
-            .attr('width', d => d.x1 - d.x0)
-            .attr('fill', '#9993A1')
-            .attr('stroke', '#252327')
-            .append('title')
-            .text(d => `${d.name}\n${formatCurrency(sourceValues.get(sankeyData.nodes.indexOf(d)) || targetValues.get(sankeyData.nodes.indexOf(d)) || 0)}`);
-        
-        // Add labels
-        g.append('g')
-            .selectAll('text')
-            .data(sankeyData.nodes)
-            .enter()
-            .append('text')
-            .attr('x', d => d.x0 < innerWidth / 2 ? d.x1 + 6 : d.x0 - 6)
-            .attr('y', d => (d.y1 + d.y0) / 2)
-            .attr('dy', '0.35em')
-            .attr('text-anchor', d => d.x0 < innerWidth / 2 ? 'start' : 'end')
-            .text(d => truncateText(d.name, 25))
-            .attr('font-size', '11px')
-            .attr('fill', '#FFFFF3');
-        
-    } catch (error) {
-        console.error("Error creating Sankey diagram:", error);
-        displayError(containerId, "Failed to render Sankey diagram: " + error.message);
-    }
+    // Generate the sankey layout
+    const { nodes, links } = sankey({
+        nodes: sankeyData.nodes,
+        links: sankeyData.links
+    });
+    
+    // Create the main group element with margins
+    const g = d3.select(svg)
+        .attr('width', width)
+        .attr('height', height)
+        .append('g')
+        .attr('transform', `translate(${margin.left},${margin.top})`);
+    
+    // Add links
+    g.append('g')
+        .selectAll('path')
+        .data(links)
+        .enter()
+        .append('path')
+        .attr('d', d3.sankeyLinkHorizontal())
+        .attr('stroke-width', d => Math.max(1, d.width))
+        .attr('stroke', '#797484')
+        .attr('stroke-opacity', 0.5)
+        .attr('fill', 'none')
+        .append('title')
+        .text(d => `${d.source.name} → ${d.target.name}\n${formatCurrency(d.value)}`);
+    
+    // Add nodes
+    const node = g.append('g')
+        .selectAll('rect')
+        .data(nodes)
+        .enter()
+        .append('rect')
+        .attr('x', d => d.x0)
+        .attr('y', d => d.y0)
+        .attr('height', d => d.y1 - d.y0)
+        .attr('width', d => d.x1 - d.x0)
+        .attr('fill', '#9993A1')
+        .attr('stroke', '#252327')
+        .append('title')
+        .text(d => `${d.name}\n${formatCurrency(d.value)}`);
+    
+    // Add node labels
+    g.append('g')
+        .selectAll('text')
+        .data(nodes)
+        .enter()
+        .append('text')
+        .attr('x', d => d.x0 < innerWidth / 2 ? d.x1 + 6 : d.x0 - 6)
+        .attr('y', d => (d.y1 + d.y0) / 2)
+        .attr('dy', '0.35em')
+        .attr('text-anchor', d => d.x0 < innerWidth / 2 ? 'start' : 'end')
+        .text(d => d.name)
+        .attr('font-size', '10px')
+        .attr('fill', '#FFFFF3');
 }
+
 
 // --- Choropleth Map Functions ---
 function processMapData(data) {
@@ -1460,6 +1359,7 @@ function displayChoroplethMap(mapData) {
         displayError(containerId, "Failed to render map: " + error.message);
     }
 }
+
 function applyFiltersAndUpdateVisuals() {
     // --- Get Filter & Search Values ---
     const subAgencyFilter = document.getElementById('sub-agency-filter')?.value || '';
