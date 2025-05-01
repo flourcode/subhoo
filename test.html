@@ -12,6 +12,66 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <script src="https://unpkg.com/topojson@3"></script>
     <link rel="stylesheet" href="test_style.css">
+    <style>
+        /* Additional styles for the side panel layout */
+        .dashboard-layout {
+            display: flex;
+            width: 100%;
+            height: calc(100vh - 80px); /* Adjust for header height */
+            overflow: hidden;
+        }
+        
+        .side-panel {
+            width: 300px;
+            min-width: 300px;
+            background-color: var(--white);
+            border-right: 1px solid var(--color-border);
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+        
+        .panel-section {
+            background-color: var(--color-surface);
+            border-radius: var(--border-radius-md);
+            padding: 16px;
+            border: 1px solid var(--color-border);
+        }
+        
+        .panel-section h2 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--color-text-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .panel-section h2 svg {
+            width: 18px;
+            height: 18px;
+        }
+        
+        .main-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: auto auto auto;
+            gap: 20px;
+        }
+        
+        .grid-span-2 {
+            grid-column: span 2;
+        }
+    </style>
 </head>
 <body>
     <header class="dashboard-header">
@@ -29,217 +89,241 @@
             </div>
         </div>
     </header>
-    <main class="bento-grid">
-        <div id="bento-controls" class="bento-box">
-            <div class="card-header">
-                <div class="card-icon-circle">
+    
+    <div class="dashboard-layout">
+        <!-- Fixed Side Panel -->
+        <aside class="side-panel">
+            <!-- Dataset Selection Section -->
+            <div class="panel-section">
+                <h2>
                     <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none">
                         <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path>
                     </svg>
-                </div>
-                <h2>Dashboard Controls</h2>
-            </div>
-            <div class="card-content">
+                    Dataset Selection
+                </h2>
                 <div class="dataset-selector">
-                    <label for="dataset-select">Select Dataset:</label>
+                    <label for="dataset-select">Select Agency Dataset:</label>
                     <select id="dataset-select" class="input-select">
                         <option value="">Choose a dataset...</option>
                         <!-- Options will be populated by JavaScript -->
                     </select>
                 </div>
-                <div class="status-section">
+                <div class="status-section" style="margin-top: 12px;">
                     <div id="status-banner" class="info">
                         <span id="status-message">Select a dataset to begin</span>
-                        <button id="refresh-button" disabled>
-                            <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
-                                <path d="M23 4v6h-6"></path>
-                                <path d="M1 20v-6h6"></path>
-                                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"></path>
-                                <path d="M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
-                            </svg>
-                            Refresh
-                        </button>
                     </div>
-                </div>
-                
-                <!-- Dashboard Notes integrated into controls bento -->
-                <div class="dashboard-notes" style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--color-border);">
-                    <h3 style="font-size: 14px; font-weight: 600; margin-bottom: 8px;">Notes</h3>
-                    <p style="font-size: 13px; color: var(--color-text-secondary); margin-bottom: 8px;">
-                        This dashboard provides insights into contract data across different agencies. All data is sourced from USAspending.gov.
-                    </p>
-                    <ul style="font-size: 13px; color: var(--color-text-secondary); margin-left: 16px; margin-bottom: 8px;">
-                        <li><strong>TAV</strong> - Total Award Value (Currently Obligated)</li>
-                        <li><strong>TCV</strong> - Total Contract Value (Max Potential Value)</li>
-                        <li><strong>ARR</strong> - Average Annual Run Rate (Uses Average Annual Contract Value)</li>
-                    </ul>
-                    <p style="font-size: 13px; color: var(--color-text-secondary);">
-                        Use the Search and Agency/NAICS Filters to focus on specific segments.
-                    </p>
+                    <button id="refresh-button" class="button" style="width: 100%; margin-top: 8px;" disabled>
+                        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+                            <path d="M23 4v6h-6"></path>
+                            <path d="M1 20v-6h6"></path>
+                            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"></path>
+                            <path d="M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                        </svg>
+                        Refresh Data
+                    </button>
                 </div>
             </div>
-        </div>
-
-        <div id="bento-search" class="bento-box">
-            <div class="card-header">
-                <div class="card-icon-circle">
+            
+            <!-- Search Section -->
+            <div class="panel-section">
+                <h2>
                     <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="11" cy="11" r="8"></circle>
                         <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                     </svg>
-                </div>
-                <h2>Search Contracts</h2>
-            </div>
-            <div class="card-content">
+                    Search Contracts
+                </h2>
                 <div class="search-container">
-                    <input type="search" id="search-input" placeholder="Search by keyword, recipient, description, etc..." class="input-select" style="width: 100%;">
-                    <p class="text-sm text-gray-500 mt-2">Search across contracts by recipient name, contract ID, or description.</p>
+                    <input type="search" id="search-input" placeholder="Search by keyword, recipient, description..." class="input-select" style="width: 100%;">
+                    <p style="font-size: 12px; color: var(--color-text-secondary); margin-top: 8px;">
+                        Search across contracts by recipient name, contract ID, or description.
+                    </p>
                 </div>
             </div>
-        </div>
-
-        <div id="bento-tavtcv" class="bento-box">
-            <div class="card-header">
-                <div class="card-icon-circle">
+            
+            <!-- Filters Section -->
+            <div class="panel-section">
+                <h2>
                     <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M19 3v14m-7-11v11m-7-7v7"></path>
+                        <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"></path>
                     </svg>
+                    Filters
+                </h2>
+                <div class="filter-item" style="margin-bottom: 12px;">
+                    <label for="sub-agency-filter">Sub-Agency:</label>
+                    <select id="sub-agency-filter" class="input-select" style="width: 100%;">
+                        <option value="">All Sub-Agencies</option>
+                    </select>
                 </div>
-                <h2>TAV vs TCV (Top Contracts)</h2>
-            </div>
-            <div id="tav-tcv-chart-container" class="chart-container">
-                <div class="loading-placeholder">
-                    <div class="spinner"></div>
-                    <span>Loading TAV/TCV data...</span>
+                <div class="filter-item">
+                    <label for="naics-filter">NAICS Code:</label>
+                    <select id="naics-filter" class="input-select" style="width: 100%;">
+                        <option value="">All NAICS</option>
+                    </select>
                 </div>
-                <canvas id="tavTcvChart"></canvas>
+                <button id="arr-calculate-button" class="primary-button" style="width: 100%; margin-top: 16px;">
+                    Calculate ARR
+                </button>
             </div>
-        </div>
-
-        <div id="bento-leaders" class="bento-box">
-            <div class="card-header">
-                <div class="card-icon-circle">
+            
+            <!-- Dashboard Notes Section -->
+            <div class="panel-section">
+                <h2>
                     <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M16 6h4a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4"></path>
-                        <rect width="8" height="4" x="8" y="2" rx="1" ry="1"></rect>
-                        <path d="M12 16h.01"></path>
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                     </svg>
+                    Dashboard Notes
+                </h2>
+                <div class="notes-content">
+                    <p style="font-size: 13px; color: var(--color-text-secondary); margin-bottom: 8px;">
+                        This dashboard provides insights into contract data across different agencies from USAspending.gov.
+                    </p>
+                    <ul style="font-size: 13px; color: var(--color-text-secondary); margin-left: 16px; margin-bottom: 8px;">
+                        <li><strong>TAV</strong> - Total Award Value (Currently Obligated)</li>
+                        <li><strong>TCV</strong> - Total Contract Value (Max Potential Value)</li>
+                        <li><strong>ARR</strong> - Average Annual Run Rate</li>
+                    </ul>
                 </div>
-                <h2>Contract Value Leaders</h2>
             </div>
-            <div id="contract-leaders-table-container" class="table-container">
-                <div class="loading-placeholder">
-                    <div class="spinner"></div>
-                    <span>Loading leader data...</span>
-                </div>
-            </div>
-        </div>
-
-        <div id="bento-arr" class="bento-box">
-            <div class="card-header">
-                <div class="card-icon-circle">
-                    <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M12 2v20M2 12h20"></path>
-                    </svg>
-                </div>
-                <h2>Average Annual Run Rate</h2>
-            </div>
-            <div class="card-content">
-                <div class="arr-filters">
-                    <div class="filter-row">
-                        <div class="filter-item">
-                            <label for="sub-agency-filter">Sub-Agency:</label>
-                            <select id="sub-agency-filter" class="input-select">
-                                <option value="">All Sub-Agencies</option>
-                            </select>
+        </aside>
+        
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <div class="main-grid">
+                <!-- TAV vs TCV Chart -->
+                <div id="bento-tavtcv" class="bento-box grid-span-2">
+                    <div class="card-header">
+                        <div class="card-icon-circle">
+                            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M19 3v14m-7-11v11m-7-7v7"></path>
+                            </svg>
                         </div>
-                        <div class="filter-item">
-                            <label for="naics-filter">NAICS Code:</label>
-                            <select id="naics-filter" class="input-select">
-                                <option value="">All NAICS</option>
-                            </select>
+                        <h2>TAV vs TCV (Top Contracts)</h2>
+                    </div>
+                    <div id="tav-tcv-chart-container" class="chart-container">
+                        <div class="loading-placeholder">
+                            <div class="spinner"></div>
+                            <span>Loading TAV/TCV data...</span>
+                        </div>
+                        <canvas id="tavTcvChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Contract Leaders Table -->
+                <div id="bento-leaders" class="bento-box">
+                    <div class="card-header">
+                        <div class="card-icon-circle">
+                            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M16 6h4a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4"></path>
+                                <rect width="8" height="4" x="8" y="2" rx="1" ry="1"></rect>
+                                <path d="M12 16h.01"></path>
+                            </svg>
+                        </div>
+                        <h2>Contract Value Leaders</h2>
+                    </div>
+                    <div id="contract-leaders-table-container" class="table-container">
+                        <div class="loading-placeholder">
+                            <div class="spinner"></div>
+                            <span>Loading leader data...</span>
                         </div>
                     </div>
                 </div>
-                <div class="arr-result-section">
-                    <div class="arr-display">
-                        <label>Average ARR:</label>
-                        <div class="arr-value-display">
-                            <div id="arr-loading" style="display: none;">
-                                <div class="spinner"></div>
+
+                <!-- ARR Display -->
+                <div id="bento-arr" class="bento-box">
+                    <div class="card-header">
+                        <div class="card-icon-circle">
+                            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 2v20M2 12h20"></path>
+                            </svg>
+                        </div>
+                        <h2>Average Annual Run Rate</h2>
+                    </div>
+                    <div class="card-content">
+                        <div class="arr-result-section" style="text-align: center;">
+                            <div class="arr-display">
+                                <div class="arr-value-display">
+                                    <div id="arr-loading" style="display: none;">
+                                        <div class="spinner"></div>
+                                    </div>
+                                    <div id="arr-error" style="display: none;" class="error-message"></div>
+                                    <div id="arr-no-data" style="display: none;" class="no-data-message"></div>
+                                    <div id="arr-result" class="value" style="font-size: 32px; font-weight: 700; color: var(--color-primary);">$0 / year</div>
+                                </div>
                             </div>
-                            <div id="arr-error" style="display: none;" class="error-message"></div>
-                            <div id="arr-no-data" style="display: none;" class="no-data-message"></div>
-                            <div id="arr-result" class="value">$0 / year</div>
+                            <p style="margin-top: 12px; font-size: 14px; color: var(--color-text-secondary);">
+                                Based on contract duration and values in selected dataset
+                            </p>
                         </div>
                     </div>
-                    <button id="arr-calculate-button" class="primary-button">
-                        Calculate ARR
-                    </button>
                 </div>
-            </div>
-        </div>
 
-        <div id="bento-expiring" class="bento-box">
-            <div class="card-header">
-                <div class="card-icon-circle">
-                    <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M8 3v3a2 2 0 0 1-4 0V3"></path>
-                        <path d="M17 3v3a2 2 0 0 1-4 0V3"></path>
-                        <rect width="18" height="18" x="3" y="4" rx="2"></rect>
-                        <path d="M3 10h18"></path>
-                        <path d="M12 14v4"></path>
-                        <path d="M12 18h-2"></path>
-                    </svg>
+                <!-- Sankey Chart -->
+                <div id="bento-sankey" class="bento-box grid-span-2">
+                    <div class="card-header">
+                        <div class="card-icon-circle">
+                            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M7 10a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-4.5a1 1 0 0 0-1 1v1a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1v-1a1 1 0 0 0-1-1H4a1 1 0 0 1-1-1v-2a1 1 0 0 1 1-1h3Z"></path>
+                                <path d="M19 14a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-3a1 1 0 0 1-1-1v-1a1 1 0 0 0-1-1H9.5a1 1 0 0 0-1 1v1a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-2a1 1 0 0 1 1-1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h4.5a1 1 0 0 1 1 1v1a1 1 0 0 0 1 1h3Z"></path>
+                            </svg>
+                        </div>
+                        <h2>Award Flow (Agency to Prime)</h2>
+                    </div>
+                    <div id="sankey-chart-container" class="chart-container" style="min-height: 300px;">
+                        <div class="loading-placeholder">
+                            <div class="spinner"></div>
+                            <span>Loading Sankey data...</span>
+                        </div>
+                        <svg id="sankeyChart" width="100%" height="100%"></svg>
+                    </div>
                 </div>
-                <h2>Expiring Soon (Next 6 Months)</h2>
-            </div>
-            <div id="expiring-contracts-table-container" class="table-container">
-                <div class="loading-placeholder">
-                    <div class="spinner"></div>
-                    <span>Loading expiring contracts...</span>
-                </div>
-            </div>
-        </div>
 
-        <div id="bento-sankey" class="bento-box">
-            <div class="card-header">
-                <div class="card-icon-circle">
-                    <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M7 10a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-4.5a1 1 0 0 0-1 1v1a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1v-1a1 1 0 0 0-1-1H4a1 1 0 0 1-1-1v-2a1 1 0 0 1 1-1h3Z"></path>
-                        <path d="M19 14a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-3a1 1 0 0 1-1-1v-1a1 1 0 0 0-1-1H9.5a1 1 0 0 0-1 1v1a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-2a1 1 0 0 1 1-1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h4.5a1 1 0 0 1 1 1v1a1 1 0 0 0 1 1h3Z"></path>
-                    </svg>
+                <!-- Map Visualization -->
+                <div id="bento-map" class="bento-box">
+                    <div class="card-header">
+                        <div class="card-icon-circle">
+                            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path>
+                                <circle cx="12" cy="10" r="3"></circle>
+                            </svg>
+                        </div>
+                        <h2>Place of Performance</h2>
+                    </div>
+                    <div id="map-container" class="chart-container" style="min-height: 300px;">
+                        <div class="loading-placeholder">
+                            <div class="spinner"></div>
+                            <span>Loading map data...</span>
+                        </div>
+                        <div id="choroplethMap" style="width: 100%; height: 100%;"></div>
+                    </div>
                 </div>
-                <h2>Award Flow (Agency to Prime)</h2>
-            </div>
-            <div id="sankey-chart-container" class="chart-container" style="min-height: 300px;">
-                <div class="loading-placeholder">
-                    <div class="spinner"></div>
-                    <span>Loading Sankey data...</span>
-                </div>
-                <svg id="sankeyChart" width="100%" height="100%"></svg>
-            </div>
-        </div>
 
-        <div id="bento-map" class="bento-box">
-            <div class="card-header">
-                <div class="card-icon-circle">
-                    <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path>
-                        <circle cx="12" cy="10" r="3"></circle>
-                    </svg>
+                <!-- Expiring Contracts -->
+                <div id="bento-expiring" class="bento-box">
+                    <div class="card-header">
+                        <div class="card-icon-circle">
+                            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M8 3v3a2 2 0 0 1-4 0V3"></path>
+                                <path d="M17 3v3a2 2 0 0 1-4 0V3"></path>
+                                <rect width="18" height="18" x="3" y="4" rx="2"></rect>
+                                <path d="M3 10h18"></path>
+                                <path d="M12 14v4"></path>
+                                <path d="M12 18h-2"></path>
+                            </svg>
+                        </div>
+                        <h2>Expiring Soon (Next 6 Months)</h2>
+                    </div>
+                    <div id="expiring-contracts-table-container" class="table-container">
+                        <div class="loading-placeholder">
+                            <div class="spinner"></div>
+                            <span>Loading expiring contracts...</span>
+                        </div>
+                    </div>
                 </div>
-                <h2>Place of Performance Value</h2>
             </div>
-            <div id="map-container" class="chart-container" style="min-height: 300px;">
-                <div class="loading-placeholder">
-                    <div class="spinner"></div>
-                    <span>Loading map data...</span>
-                </div>
-                <div id="choroplethMap" style="width: 100%; height: 100%;"></div>
-            </div>
-        </div>
-    </main>
+        </main>
+    </div>
     <script src="test_script.js" defer></script>
 </body>
 </html>
