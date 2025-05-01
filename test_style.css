@@ -526,7 +526,7 @@ tr:hover td {
 
 /* Make the table wrapper taller to show more rows */
 #contract-leaders-table-container .table-wrapper {
-  max-height: 500px;
+  max-height: none;
   overflow-y: auto;
 }
 /* ========================================= */
