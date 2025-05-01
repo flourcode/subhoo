@@ -622,3 +622,21 @@ tr:hover td {
         box-shadow: 2px 0 5px rgba(0,0,0,0.05);
     }
 }
+/* Fixed height for TAV/TCV chart */
+#bento-tavtcv .chart-container {
+    height: 550px !important; /* Fixed height */
+    min-height: 550px !important;
+    max-height: 550px !important;
+    overflow: hidden !important; /* Prevent overflow */
+}
+
+/* Mobile adjustment */
+@media (max-width: 768px) {
+    #bento-tavtcv .chart-container {
+        height: 450px !important;
+        min-height: 450px !important;
+        max-height: 450px !important;
+        overflow-y: hidden !important;
+        overflow-x: auto !important;
+    }
+}

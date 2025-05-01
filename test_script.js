@@ -1457,6 +1457,7 @@ function displayTavTcvChart(chartData) {
                         color: textPrimaryColor,
                         boxWidth: 14,
                         padding: 20,
+						animation: false,
                         font: { 
                             size: 13,
                             weight: 'medium'
@@ -1467,10 +1468,7 @@ function displayTavTcvChart(chartData) {
             layout: {
                 padding: { top: 10, bottom: 10, left: 10, right: 20 }
             },
-            animation: {
-                duration: 800,
-                easing: 'easeOutQuart'
-            },
+           
             onResize: function(chart, size) {
                 // Check if we're on mobile
                 if (window.innerWidth <= 768) {
