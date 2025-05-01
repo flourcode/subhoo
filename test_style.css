@@ -149,7 +149,7 @@ body {
     gap: var(--bento-gap);
     grid-template-columns: repeat(4, 1fr);
     grid-template-areas:
-		"controls controls search arr"
+        "controls controls search arr"
         "tavtcv tavtcv leaders leaders"
         "sankey sankey map map"
         "expiring expiring expiring expiring";
@@ -640,19 +640,23 @@ tr:hover td {
     stroke: var(--color-primary);
 }
 
-/* ========================================= */
-/* Responsive Adjustments                    */
-/* ========================================= */
+/* Better responsive adjustments */
 @media (max-width: 1200px) {
     .bento-grid {
         grid-template-columns: repeat(2, 1fr);
         grid-template-areas:
-            "controls controls"
+            "controls search"
+            "arr arr"
             "tavtcv tavtcv"
-            "leaders arr"
+            "leaders leaders"
             "sankey map"
-            "notes notes"
             "expiring expiring";
+        grid-template-rows: auto auto auto auto auto auto;
+    }
+    
+    /* Adjust heights for smaller screens */
+    #bento-tavtcv, #bento-leaders, #bento-sankey, #bento-map {
+        height: 450px;
     }
 }
 
@@ -665,61 +669,69 @@ tr:hover td {
         grid-template-columns: 1fr;
         grid-template-areas:
             "controls"
+            "search"
+            "arr"
             "tavtcv"
             "leaders"
-            "arr"
             "sankey"
             "map"
-            "notes"
             "expiring";
+        grid-template-rows: repeat(8, auto);
     }
-
-    .header-content {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 16px;
+    
+    /* Adjust card padding for mobile */
+    .bento-box {
+        padding: 16px;
     }
-
-    .header-controls {
-        width: 100%;
-        justify-content: space-between;
-        flex-wrap: wrap;
-        gap: 12px;
+    
+    /* Make sure charts have minimum heights on mobile */
+    #bento-tavtcv, #bento-leaders {
+        height: 400px;
     }
-
-    .filter-row {
-        flex-direction: column;
-        gap: 12px;
-    }
-
-    #contract-leaders-table-container th:first-child,
-    #contract-leaders-table-container td:first-child {
-        position: sticky;
-        left: 0;
-        background-color: var(--white);
-        z-index: 2;
-        box-shadow: 2px 0 5px rgba(0,0,0,0.1);
-    }
-
-    #sankey-chart-container,
-    #map-container {
-        min-height: 300px;
+    
+    #bento-sankey, #bento-map {
         height: 350px;
     }
-
-    #expiring-contracts-table-container {
-        min-height: 250px;
+    
+    /* Make smaller cards on mobile not take up too much vertical space */
+    #bento-controls, #bento-search, #bento-arr {
+        min-height: 0;
+    }
+    
+    /* Ensure the header is responsive */
+    .dashboard-header {
+        margin-bottom: 16px;
     }
 }
 
 @media (max-width: 480px) {
-    .arr-result-section {
-        flex-direction: column;
-        align-items: stretch;
+    /* Extra small screen adjustments */
+    body {
+        padding: 12px;
     }
-
-    .arr-display {
-        margin-top: 16px;
+    
+    .bento-grid {
+        gap: 12px; /* Smaller gap on very small screens */
+    }
+    
+    .bento-box {
+        padding: 12px;
+    }
+    
+    /* Fixed heights for smaller screens */
+    #bento-tavtcv, #bento-leaders, #bento-sankey, #bento-map {
+        height: 300px;
+    }
+    
+    /* Make sure filters stack vertically */
+    .filter-row {
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    /* Ensure dashboard title fits */
+    .title-area h1 {
+        font-size: 20px;
     }
 }
 /* Add this to your CSS to make both containers have consistent heights */
