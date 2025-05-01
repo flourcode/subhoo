@@ -390,56 +390,48 @@
             return leaderData;
         }
 
-// Modify the displayContractLeadersTable function to position the summary text correctly
-// Replace or update the relevant part of your displayContractLeadersTable function
-// Add this function to your test_script.js file
-// (e.g., near the other utility functions)
+// Replace the previous updateDateDisplay function in test_script.js with this one
 function updateDateDisplay() {
-    // Get current date elements using their IDs
-    const dateNumber = document.getElementById('current-date'); // Corrected ID
-    const dateDetails = document.getElementById('date-details'); // Corrected ID
-    const dateRange = document.getElementById('date-range');     // Corrected ID
+    // Get the elements for date number, details, and the element that *used* to show the range
+    const dateNumber = document.getElementById('current-date');
+    const dateDetails = document.getElementById('date-details');
+    // We'll reuse the 'date-range' span to display the time now
+    const timeDisplay = document.getElementById('date-range');
 
     // Check if elements were found
-    if (!dateNumber || !dateDetails || !dateRange) {
-        console.error("Date display elements not found. Check IDs: #current-date, #date-details, #date-range");
+    if (!dateNumber || !dateDetails || !timeDisplay) {
+        console.error("Date/Time display elements not found. Check IDs: #current-date, #date-details, #date-range");
         return; // Exit if elements are missing
     }
 
-    // Get current date
+    // Get the current date and time
     const now = new Date();
 
-    // Update the day number
+    // --- Update Date Portion (Same as before) ---
     dateNumber.textContent = now.getDate();
 
-    // Define names for days and months
     const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     const monthNames = [
         'January', 'February', 'March', 'April', 'May', 'June',
         'July', 'August', 'September', 'October', 'November', 'December'
     ];
-
-    // Update day name and month (using innerHTML to create the divs)
     dateDetails.innerHTML = `
         <div>${dayNames[now.getDay()]},</div>
         <div>${monthNames[now.getMonth()]}</div>
     `;
 
-    // --- Calculate and Update Date Range ---
+    // --- Update Time Portion (Replaces Date Range) ---
+    // Format the current time according to the user's locale settings
+    // Examples: 9:18 PM or 21:18
+    const timeString = now.toLocaleTimeString([], { // Use user's default locale
+        hour: 'numeric',       // e.g., 9 or 21
+        minute: '2-digit'      // e.g., 05 or 18
+        // hour12: true         // Optional: uncomment this line to force 12-hour AM/PM format
+    });
 
-    const currentMonth = now.getMonth();
-    const currentYear = now.getFullYear();
+    // Set the text content of the span to the formatted time string
+    timeDisplay.textContent = timeString;
 
-    // Format start date (current month shortened)
-    const startMonth = monthNames[currentMonth].substring(0, 3);
-
-    // Calculate end date (3 months later)
-    // Date object handles month/year rollovers correctly
-    const endDate = new Date(currentYear, currentMonth + 3, now.getDate());
-    const endMonth = monthNames[endDate.getMonth()].substring(0, 3);
-
-    // Update date range display in the span
-    dateRange.textContent = `${startMonth} ${now.getDate()} - ${endMonth} ${endDate.getDate()}`;
 }
 function displayContractLeadersTable(leaderData) {
     const containerId = 'contract-leaders-table-container';
