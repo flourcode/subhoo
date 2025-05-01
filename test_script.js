@@ -190,45 +190,41 @@ function displayNoData(containerId, message = "No data available for this view."
     }
 }
 
-// --- Date Display Functions ---
 function updateDateDisplay() {
-    // Get the elements for date number, details, and time display
-    const dateNumber = document.getElementById('current-date');
-    const dateDetails = document.getElementById('date-details');
-    const timeDisplay = document.getElementById('date-range');
+    // Get the elements
+    const dateText = document.getElementById('date-text');
+    const timeText = document.getElementById('time-text');
 
     // Check if elements were found
-    if (!dateNumber || !dateDetails || !timeDisplay) {
-        console.error("Date/Time display elements not found. Check IDs: #current-date, #date-details, #date-range");
-        return; // Exit if elements are missing
+    if (!dateText || !timeText) {
+        console.error("Date/Time display elements not found. Check IDs: #date-text, #time-text");
+        return; 
     }
 
     // Get the current date and time
     const now = new Date();
 
-    // Update Date Portion
-    dateNumber.textContent = now.getDate();
-
+    // Format the date as "Thu, May 1"
     const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     const monthNames = [
-        'January', 'February', 'March', 'April', 'May', 'June',
-        'July', 'August', 'September', 'October', 'November', 'December'
+        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
     ];
-    dateDetails.innerHTML = `
-        <div>${dayNames[now.getDay()]},</div>
-        <div>${monthNames[now.getMonth()]}</div>
-    `;
+    
+    const dayStr = dayNames[now.getDay()];
+    const monthStr = monthNames[now.getMonth()];
+    const dateStr = now.getDate();
+    
+    dateText.textContent = `${dayStr}, ${monthStr} ${dateStr}`;
 
-    // Update Time Portion
+    // Format the time as "2:07 PM"
     const timeString = now.toLocaleTimeString([], {
         hour: 'numeric',
         minute: '2-digit'
     });
-
-    // Set the text content of the span to the formatted time string
-    timeDisplay.textContent = timeString;
+    
+    timeText.textContent = timeString;
 }
-
 // --- Dropdown Population Functions ---
 function populateDropdown(selectElement, itemsSet, defaultOptionText = "All") {
     if (!selectElement) return;
