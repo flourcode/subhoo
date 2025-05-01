@@ -747,9 +747,79 @@ function displayTavTcvChart(chartData) {
         return;
     }
 
+    // Create a table below the chart with USA Spending links
+    const chartLegendTable = document.createElement('div');
+    chartLegendTable.className = 'tav-tcv-legend';
+    chartLegendTable.style.marginTop = '10px';
+    chartLegendTable.style.fontSize = '12px';
+    chartLegendTable.style.overflowX = 'auto';
+    
+    const table = document.createElement('table');
+    table.style.width = '100%';
+    table.style.borderCollapse = 'collapse';
+    table.style.fontSize = '12px';
+    
+    // Create header row
+    const thead = table.createTHead();
+    const headerRow = thead.insertRow();
+    
+    const headers = ['Prime', 'TAV', 'TCV', 'USA Spending'];
+    headers.forEach(text => {
+        const th = document.createElement('th');
+        th.textContent = text;
+        th.style.padding = '4px 8px';
+        th.style.textAlign = text === 'Prime' ? 'left' : 'right';
+        if (text === 'USA Spending') th.style.textAlign = 'center';
+        headerRow.appendChild(th);
+    });
+    
+    // Create a row for each contract
+    const tbody = table.createTBody();
+    chartData.forEach(contract => {
+        const row = tbody.insertRow();
+        
+        // Prime Name
+        let cell = row.insertCell();
+        cell.textContent = truncateText(contract.primeName, 30);
+        cell.title = contract.primeName;
+        cell.style.padding = '4px 8px';
+        
+        // TAV
+        cell = row.insertCell();
+        cell.textContent = formatCurrency(contract.tav);
+        cell.style.padding = '4px 8px';
+        cell.style.textAlign = 'right';
+        
+        // TCV
+        cell = row.insertCell();
+        cell.textContent = formatCurrency(contract.tcv);
+        cell.style.padding = '4px 8px';
+        cell.style.textAlign = 'right';
+        
+        // USA Spending Link
+        cell = row.insertCell();
+        cell.style.padding = '4px 8px';
+        cell.style.textAlign = 'center';
+        
+        if (contract.id) {
+            const link = document.createElement('a');
+            link.href = `https://www.usaspending.gov/award/${contract.id}`;
+            link.target = '_blank';
+            link.rel = 'noopener noreferrer';
+            link.textContent = 'View';
+            link.style.color = '#3e95cd';
+            link.style.textDecoration = 'underline';
+            cell.appendChild(link);
+        } else {
+            cell.textContent = '-';
+        }
+    });
+    
+    chartLegendTable.appendChild(table);
+
     canvas.style.display = 'block'; // Ensure canvas is visible
     const containerWidth = container.clientWidth;
-    const containerHeight = container.clientHeight;
+    const containerHeight = container.clientHeight - 150; // Adjust for legend table
     canvas.width = containerWidth;
     canvas.height = containerHeight;
     
@@ -886,15 +956,6 @@ function displayTavTcvChart(chartData) {
                                 label += formatCurrency(context.parsed.x);
                             }
                             return label;
-                        },
-                        // Add a new footer callback to show USA Spending link
-                        afterBody: function(tooltipItems) {
-                            const index = tooltipItems[0].dataIndex;
-                            if (chartData && chartData[index]) {
-                                const contractId = chartData[index].id;
-                                return [`\nUSA Spending: https://www.usaspending.gov/award/${contractId}`];
-                            }
-                            return '';
                         }
                     }
                 },
@@ -921,6 +982,9 @@ function displayTavTcvChart(chartData) {
             }
         }
     });
+    
+    // Append the legend table below the chart
+    container.appendChild(chartLegendTable);
 }
 // --- Filters and Dynamic Chart Updates ---
 function populateFilters(data) {
