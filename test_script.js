@@ -448,7 +448,7 @@ function displayContractLeadersTable(leaderData) {
     tableWrapper.style.maxHeight = 'none';
 
     // Display top 15 leaders
-    const displayData = leaderData.slice(0, 15);
+    const displayData = leaderData.slice(0, 10);
 
     // Create Table Structure
     const table = document.createElement('table');
