@@ -2,49 +2,71 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 :root {
-    /* Color palette */
-    --blue-500: #3b82f6;
-    --blue-600: #2563eb;
-    --blue-700: #1d4ed8;
-    --blue-50: #eff6ff;
-    --blue-100: #dbeafe;
-    --blue-200: #bfdbfe;
+    /* Primary Color Palette - Muted Purples */
+    --purple-900: #252327;  /* Dark background */
+    --purple-800: #3b3340;
+    --purple-700: #4e4554;
+    --purple-600: #615C66;  /* Outline color */
+    --purple-500: #797484;  /* Secondary color for charts */
+    --purple-400: #8e8a97;
+    --purple-300: #9993A1;  /* Primary color for charts */
+    --purple-200: #b5b0bd; 
+    --purple-100: #d7d4dc;
+    --purple-50: #efedf3;
     
-    --gray-50: #f9fafb;
+    /* Neutral & Accent Colors */
+    --white: #FFFFF3;       /* Text color on dark backgrounds */
+    --black: #1a1a1a;
     --gray-100: #f3f4f6;
     --gray-200: #e5e7eb;
     --gray-300: #d1d5db;
     --gray-400: #9ca3af;
-    --gray-500: #6b7280;
-    --gray-600: #4b5563;
-    --gray-700: #374151;
-    --gray-800: #1f2937;
-    --gray-900: #111827;
     
-    --red-500: #ef4444;
-    --green-500: #10b981;
+    --red-500: #ef4444;    /* Error state */
+    --green-500: #10b981;  /* Success state */
+    --blue-500: #3e95cd;   /* Info state */
     
-    /* Semantic colors */
-    --color-primary: var(--blue-600);
-    --color-primary-hover: var(--blue-700);
-    --color-primary-light: var(--blue-50);
-    --color-text-primary: var(--gray-900);
-    --color-text-secondary: var(--gray-600);
-    --color-text-tertiary: var(--gray-500);
-    --color-bg-primary: #ffffff;
-    --color-bg-secondary: var(--gray-50);
-    --color-border: var(--gray-200);
+    /* Semantic color mapping */
+    --color-primary: var(--purple-300);
+    --color-primary-hover: var(--purple-400);
+    --color-primary-light: var(--purple-50);
+    
+    --color-surface: var(--purple-900);      /* Card background */
+    --color-surface-hover: var(--purple-800);
+    --color-background: var(--purple-800);   /* Page background */
+    
+    --color-text-primary: var(--white);
+    --color-text-secondary: var(--purple-100);
+    --color-text-tertiary: var(--purple-200);
+    
+    --color-outline: var(--purple-600);      /* Border color */
+    --color-border: var(--purple-700);
+    
     --color-accent-positive: var(--green-500);
     --color-accent-negative: var(--red-500);
+    --color-accent-info: var(--blue-500);
+    
+    /* Chart colors */
+    --color-charts-primary: var(--purple-300);   /* Primary chart color */
+    --color-charts-secondary: var(--purple-500); /* Secondary chart color */
+    --color-charts-tertiary: var(--purple-700);  /* Tertiary chart color */
+    --color-charts-background: var(--purple-900);
+    
+    /* Choropleth map colors */
+    --color-map-water: var(--purple-900);
+    --color-map-land: var(--purple-800);
+    --color-map-highlight: var(--purple-300);
     
     /* Layout values */
     --border-radius-sm: 8px;
     --border-radius-md: 12px;
     --border-radius-lg: 16px;
     --border-radius-xl: 20px;
-    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
-    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    
+    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.2);
+    --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.25);
+    --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.3);
+    
     --transition-standard: all 0.2s ease;
     --spacing-unit: 4px;
     --bento-gap: 20px;
@@ -59,7 +81,7 @@
 
 body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background-color: var(--color-bg-secondary);
+    background-color: var(--color-background);
     color: var(--color-text-primary);
     line-height: 1.5;
     padding: 24px;
@@ -100,9 +122,10 @@ body {
     align-items: center;
     gap: 8px;
     padding: 8px 12px;
-    background-color: var(--color-bg-primary);
+    background-color: var(--color-surface);
     border-radius: var(--border-radius-lg);
     box-shadow: var(--shadow-sm);
+    border: 1px solid var(--color-outline);
 }
 
 .date-number {
@@ -123,33 +146,32 @@ body {
     align-items: center;
     gap: 8px;
     padding: 8px 12px;
-    background-color: var(--color-bg-primary);
+    background-color: var(--color-surface);
     border-radius: var(--border-radius-lg);
     box-shadow: var(--shadow-sm);
     font-size: 13px;
     color: var(--color-text-secondary);
+    border: 1px solid var(--color-outline);
 }
 
 .date-range svg {
     color: var(--color-primary);
 }
 
-/* Grid layout - MODIFIED for simplified layout */
+/* Grid layout - Same as before */
 .bento-grid {
     display: grid;
     gap: var(--bento-gap, 20px);
-    /* Define 3 columns */
     grid-template-columns: repeat(3, 1fr);
-    /* Define areas for a 3x3 layout + controls row */
     grid-template-areas:
-        "controls controls controls" /* Span controls across top */
-        "tavtcv tavtcv leaders"      /* TAV/TCV wider, leaders beside */
-        "expiring map sankey"       /* New cards row */
-        "arr arr notes";            /* ARR wider, notes beside */
-         /* Adjust rows as needed, e.g., make some taller */
-         grid-template-rows: auto auto minmax(350px, auto) auto;
+        "controls controls controls"
+        "tavtcv tavtcv leaders"
+        "expiring map sankey"
+        "arr arr notes";
+    grid-template-rows: auto auto minmax(350px, auto) auto;
 }
-/* Assign new grid areas */
+
+/* Assign grid areas */
 #bento-controls { grid-area: controls; }
 #bento-tavtcv { grid-area: tavtcv; }
 #bento-leaders { grid-area: leaders; }
@@ -159,23 +181,16 @@ body {
 #bento-map { grid-area: map; }
 #bento-sankey { grid-area: sankey; }
 
-/* Add basic styles for new card containers if needed */
-#expiring-contracts-table-container,
-#sankey-chart-container,
-#map-container {
-    position: relative; /* Needed for absolute positioning of placeholders */
-    width: 100%;
-    height: 100%;
-}
 /* Base card styles */
 .bento-box {
-    background-color: var(--color-bg-primary);
+    background-color: var(--color-surface);
     border-radius: var(--border-radius-lg);
     box-shadow: var(--shadow-md);
     padding: 20px;
     transition: var(--transition-standard);
     position: relative;
     overflow: hidden;
+    border: 1px solid var(--color-outline);
 }
 
 .bento-box:hover {
@@ -189,6 +204,8 @@ body {
     align-items: center;
     gap: 12px;
     margin-bottom: 16px;
+    border-bottom: 1px solid var(--color-border);
+    padding-bottom: 12px;
 }
 
 .card-header h2 {
@@ -205,15 +222,8 @@ body {
     width: 32px;
     height: 32px;
     border-radius: 50%;
-    background-color: var(--color-primary-light);
+    background-color: var(--purple-800);
     color: var(--color-primary);
-}
-
-.chart-control {
-    font-size: 12px;
-    color: var(--color-text-tertiary);
-    display: flex;
-    align-items: center;
 }
 
 /* Card content styles */
@@ -222,6 +232,72 @@ body {
     flex-direction: column;
     gap: 16px;
     flex-grow: 1;
+}
+
+/* Input styles */
+.input-select, .input-date, input[type="search"], input[type="text"] {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid var(--color-outline);
+    border-radius: var(--border-radius-md);
+    font-size: 14px;
+    color: var(--color-text-primary);
+    background-color: var(--purple-800);
+    transition: var(--transition-standard);
+}
+
+.input-select:focus, .input-date:focus, input[type="search"]:focus, input[type="text"]:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(153, 147, 161, 0.3);
+}
+
+.input-select option {
+    background-color: var(--color-surface);
+    color: var(--color-text-primary);
+}
+
+/* Button styles */
+button, .button, .primary-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border-radius: var(--border-radius-md);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition-standard);
+    border: 1px solid var(--color-outline);
+}
+
+button, .button {
+    background-color: var(--purple-800);
+    color: var(--color-text-primary);
+}
+
+button:hover:not(:disabled), .button:hover:not(:disabled) {
+    background-color: var(--purple-700);
+}
+
+.primary-button {
+    background-color: var(--color-primary);
+    color: var(--purple-900);
+    border: none;
+}
+
+.primary-button:hover:not(:disabled) {
+    background-color: var(--color-primary-hover);
+}
+
+button:disabled, .button:disabled, .primary-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+button svg, .button svg {
+    color: var(--color-text-tertiary);
 }
 
 /* Dataset selector styles */
@@ -237,40 +313,6 @@ body {
     color: var(--color-text-primary);
 }
 
-.select-wrapper {
-    position: relative;
-    flex-grow: 1;
-}
-
-.select-wrapper select {
-    width: 100%;
-    padding: 10px 14px;
-    padding-right: 36px;
-    border: 1px solid var(--color-border);
-    border-radius: var(--border-radius-md);
-    font-size: 14px;
-    color: var(--color-text-primary);
-    background-color: var(--color-bg-primary);
-    appearance: none;
-    cursor: pointer;
-    transition: var(--transition-standard);
-}
-
-.select-wrapper select:focus {
-    outline: none;
-    border-color: var(--color-primary);
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
-}
-
-.select-wrapper svg {
-    position: absolute;
-    right: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--color-text-tertiary);
-    pointer-events: none;
-}
-
 /* Status section styles */
 .status-section {
     display: flex;
@@ -283,65 +325,32 @@ body {
     padding: 8px 12px;
     border-radius: var(--border-radius-md);
     font-size: 13px;
-    color: var(--color-text-tertiary);
-    transition: var(--transition-standard);
+    color: var(--color-text-secondary);
+    background-color: var(--purple-800);
+    border: 1px solid var(--color-border);
+    flex-grow: 1;
 }
 
 #status-banner.error {
-    background-color: rgba(239, 68, 68, 0.1);
+    background-color: rgba(239, 68, 68, 0.2);
     color: var(--color-accent-negative);
+    border-color: var(--color-accent-negative);
 }
 
 #status-banner.success {
-    background-color: rgba(16, 185, 129, 0.1);
+    background-color: rgba(16, 185, 129, 0.2);
     color: var(--color-accent-positive);
+    border-color: var(--color-accent-positive);
 }
 
-/* Button styles */
-.button {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 16px;
-    background-color: var(--color-bg-primary);
-    border: 1px solid var(--color-border);
-    border-radius: var(--border-radius-md);
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--color-text-primary);
-    cursor: pointer;
-    transition: var(--transition-standard);
-}
-
-.button:hover:not(:disabled) {
-    background-color: var(--color-bg-secondary);
-}
-
-.button svg {
-    color: var(--color-text-tertiary);
-}
-
-.button.primary {
-    background-color: var(--color-primary);
-    border-color: var(--color-primary);
-    color: white;
-}
-
-.button.primary:hover:not(:disabled) {
-    background-color: var(--color-primary-hover);
-}
-
-.button.primary svg {
-    color: white;
-}
-
-.button:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
+#status-banner.info {
+    background-color: rgba(62, 149, 205, 0.2);
+    color: var(--color-accent-info);
+    border-color: var(--color-accent-info);
 }
 
 /* Filter styles */
-.filter-container {
+.filter-container, .arr-filters {
     display: flex;
     flex-direction: column;
     gap: 16px;
@@ -352,54 +361,46 @@ body {
     gap: 16px;
 }
 
-.filter-group {
+.filter-item {
     display: flex;
     flex-direction: column;
     gap: 6px;
     flex: 1;
 }
 
-.filter-group label {
+.filter-item label {
     font-size: 12px;
     font-weight: 500;
     color: var(--color-text-secondary);
 }
 
-.date-input-wrapper {
-    position: relative;
-}
-
-.date-input-wrapper input {
-    width: 100%;
-    padding: 10px 14px;
-    padding-right: 36px;
-    border: 1px solid var(--color-border);
-    border-radius: var(--border-radius-md);
-    font-size: 14px;
-    color: var(--color-text-primary);
-    background-color: var(--color-bg-primary);
-    transition: var(--transition-standard);
-}
-
-.date-input-wrapper input:focus {
-    outline: none;
-    border-color: var(--color-primary);
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
-}
-
-.date-input-wrapper svg {
-    position: absolute;
-    right: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--color-text-tertiary);
-    pointer-events: none;
-}
-
-.filter-actions {
+/* ARR result styles */
+.arr-result-section {
     display: flex;
-    justify-content: flex-end;
-    margin-top: 8px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-top: 10px;
+}
+
+.arr-value-display {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--color-primary);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.arr-display {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.arr-display label {
+    font-size: 14px;
+    color: var(--color-text-secondary);
 }
 
 /* Chart styles */
@@ -413,32 +414,13 @@ body {
     justify-content: center;
 }
 
-
 /* Fixed height for TAV/TCV chart */
 #bento-tavtcv .chart-container {
-    height: 550px !important; /* Fixed height */
+    height: 550px !important;
     min-height: 550px !important;
     max-height: 550px !important;
-    overflow: hidden !important; /* Prevent overflow */
-	margin-top: 20px;
-}
-}
-/* ARR result styles */
-#arr-result-container {
-    text-align: center;
-    margin-top: 24px;
-}
-
-.result-label {
-    font-size: 12px;
-    color: var(--color-text-secondary);
-    margin-bottom: 8px;
-}
-
-#arr-result {
-    font-size: 36px;
-    font-weight: 700;
-    color: var(--color-primary);
+    overflow: hidden !important;
+    margin-top: 20px;
 }
 
 /* Table container styles */
@@ -449,58 +431,6 @@ body {
     overflow: auto;
     margin-top: 16px;
     position: relative;
-}
-
-/* Notes styles */
-.notes-content {
-    color: var(--color-text-secondary);
-    font-size: 13px;
-}
-
-.notes-content p {
-    margin-bottom: 12px;
-}
-
-.notes-content p:last-child {
-    margin-bottom: 0;
-}
-
-/* Loading and error states */
-.loading-placeholder, .error-placeholder, .no-data-placeholder {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    padding: 24px;
-    text-align: center;
-    color: var(--color-text-tertiary);
-    font-size: 14px;
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(255, 255, 255, 0.8);
-    border-radius: var(--border-radius-md);
-    z-index: 10;
-}
-
-.error-placeholder {
-    color: var(--color-accent-negative);
-}
-
-.spinner {
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    border: 3px solid var(--color-primary-light);
-    border-top-color: var(--color-primary);
-    animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-    to { transform: rotate(360deg); }
 }
 
 /* Table styles */
@@ -521,7 +451,7 @@ th {
     color: var(--color-text-secondary);
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    background-color: var(--color-bg-secondary);
+    background-color: var(--purple-800);
     position: sticky;
     top: 0;
     z-index: 1;
@@ -539,194 +469,264 @@ td.number {
 }
 
 tr:hover td {
-    background-color: var(--color-primary-light);
+    background-color: var(--purple-800);
 }
 
-/* Add a summary text style */
-.table-summary {
+/* Table summary styles */
+.table-summary, .summary-text {
     text-align: center;
     font-size: 12px;
-    color: var(--color-text-tertiary);
+    color: var(--color-text-secondary);
     margin-top: 12px;
     padding-top: 8px;
     border-top: 1px solid var(--color-border);
 }
 
-/* Assign grid areas */
-#bento-controls { grid-area: controls; }
-#bento-tavtcv { grid-area: tavtcv; }
-#bento-leaders { grid-area: leaders; }
-#bento-arr { grid-area: arr; }
-#bento-notes { grid-area: notes; }
+/* Notes styles */
+.notes-content {
+    color: var(--color-text-secondary);
+    font-size: 13px;
+}
 
-/* =================================== */
-/* Responsive Adjustments - REWRITTEN */
-/* =================================== */
+.notes-content p {
+    margin-bottom: 12px;
+}
 
-/* Medium Screens (Tablets, smaller laptops) */
+.notes-content p:last-child {
+    margin-bottom: 0;
+}
+
+.notes-content ul {
+    margin-left: 20px;
+    margin-bottom: 12px;
+}
+
+.notes-content ul li {
+    margin-bottom: 6px;
+}
+
+.notes-content strong {
+    color: var(--color-text-primary);
+}
+
+/* Loading and error states */
+.loading-placeholder, .error-placeholder, .no-data-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 24px;
+    text-align: center;
+    color: var(--color-text-tertiary);
+    font-size: 14px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(37, 35, 39, 0.8);
+    border-radius: var(--border-radius-md);
+    z-index: 10;
+}
+
+.error-placeholder {
+    color: var(--color-accent-negative);
+}
+
+.spinner {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 3px solid var(--purple-800);
+    border-top-color: var(--color-primary);
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Error and warning messages */
+.error-message {
+    color: var(--color-accent-negative);
+    font-size: 13px;
+    padding: 8px 12px;
+    background-color: rgba(239, 68, 68, 0.1);
+    border-radius: var(--border-radius-md);
+    margin-top: 8px;
+}
+
+.no-data-message {
+    color: var(--color-text-tertiary);
+    font-size: 13px;
+    padding: 8px 12px;
+    background-color: var(--purple-800);
+    border-radius: var(--border-radius-md);
+    margin-top: 8px;
+}
+
+/* Search container styles */
+.search-container {
+    margin-top: 16px;
+}
+
+.search-container label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--color-text-secondary);
+}
+
+/* Map specific styles */
+#choroplethMap {
+    background-color: var(--color-map-water);
+}
+
+#choroplethMap path {
+    transition: fill 0.3s ease, stroke-width 0.3s ease;
+}
+
+#choroplethMap path:hover {
+    stroke-width: 1.5;
+    stroke: var(--color-primary);
+}
+
+.tooltip {
+    pointer-events: none;
+    box-shadow: var(--shadow-md);
+    z-index: 100;
+}
+
+/* Sankey chart styles */
+#sankeyChart path {
+    transition: stroke-opacity 0.3s ease;
+}
+
+#sankeyChart path:hover {
+    stroke-opacity: 0.8;
+}
+
+/* Responsive Adjustments */
 @media (max-width: 1200px) {
     .bento-grid {
-        grid-template-columns: repeat(2, 1fr); /* Switch to 2 columns */
+        grid-template-columns: repeat(2, 1fr);
         grid-template-areas:
             "controls controls"
             "tavtcv tavtcv"
             "leaders leaders"
+            "expiring expiring"
+            "map map"
+            "sankey sankey"
             "arr arr"
             "notes notes";
     }
-
-    /* Keep the date display visible on medium screens */
-    /* Removed the display: none; rule that was here */
 }
 
-/* Small Screens (Mobile) */
 @media (max-width: 768px) {
     body {
-        padding: 16px; /* Reduce body padding */
+        padding: 16px;
     }
 
     .bento-grid {
-        grid-template-columns: 1fr; /* Switch to 1 column */
+        grid-template-columns: 1fr;
         grid-template-areas:
             "controls"
             "tavtcv"
             "leaders"
+            "expiring"
+            "map"
+            "sankey"
             "arr"
             "notes";
-        gap: 16px; /* Slightly reduce gap */
+        gap: 16px;
     }
 
-    /* --- Header Adjustments --- */
     .header-content {
-        flex-direction: column; /* Stack title and controls */
+        flex-direction: column;
         align-items: flex-start;
         gap: 16px;
     }
 
     .header-controls {
         width: 100%;
-        justify-content: space-between; /* Space out date/time and refresh */
-        flex-wrap: wrap; /* Allow wrapping if needed */
-        gap: 12px; /* Add gap for wrapped items */
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 12px;
     }
 
-    /* Make date/time elements slightly smaller if needed */
     .date-display {
         padding: 6px 10px;
     }
-     .date-number {
+
+    .date-number {
         font-size: 22px;
     }
+
     .date-details {
         font-size: 11px;
     }
-     .date-range { /* Now holds the time */
+
+    .date-range {
         padding: 6px 10px;
         font-size: 12px;
     }
 
-    /* --- Filter Adjustments --- */
     .filter-row {
-        flex-direction: column; /* Stack filter groups */
+        flex-direction: column;
         gap: 12px;
     }
 
-    /* --- TAV vs TCV Chart Adjustments --- */
     #bento-tavtcv .chart-container {
-        /* Use the larger height, allow horizontal scroll if content overflows */
         height: 450px !important;
-        min-height: 450px !important; /* Ensure height is consistent */
+        min-height: 450px !important;
         max-height: 450px !important;
         overflow-y: hidden !important;
-        overflow-x: auto !important; /* Keep horizontal scroll on CONTAINER */
+        overflow-x: auto !important;
         justify-content: flex-start;
         align-items: flex-start;
     }
 
-    #tavTcvChart { /* The Canvas */
-        /* Allow canvas to shrink, Chart.js will handle responsiveness */
-        /* Removed min-width: 480px; */
-        width: 100%; /* Make canvas try to fill container width */
-        max-width: 800px !important; /* Keep a reasonable max width */
-        height: 430px !important; /* Adjust height slightly for container padding */
+    #tavTcvChart {
+        width: 100%;
+        max-width: 800px !important;
+        height: 430px !important;
         max-height: 430px !important;
     }
 
-    /* --- Contract Leaders Table Adjustments --- */
     #contract-leaders-table-container {
-        overflow-x: auto; /* Keep horizontal scrolling on the container */
-    }
-
-    #contract-leaders-table-container table {
-        /* Removed min-width: 650px; */
-        /* Let table content determine the width needed for scrolling */
-        width: 100%; /* Ensure table tries to fill container initially */
-    }
-
-    /* Keep sticky header and first column for scrollable table */
-    #contract-leaders-table-container th {
-        position: sticky;
-        top: 0;
-        z-index: 1;
-        background-color: var(--color-bg-secondary); /* Match header bg */
+        overflow-x: auto;
     }
 
     #contract-leaders-table-container th:first-child,
     #contract-leaders-table-container td:first-child {
         position: sticky;
         left: 0;
-        background-color: var(--color-bg-primary); /* Match row bg */
-        z-index: 2; /* Ensure it's above sticky header */
-        box-shadow: 2px 0 5px rgba(0,0,0,0.05); /* Visual cue */
+        background-color: var(--color-surface);
+        z-index: 2;
+        box-shadow: 2px 0 5px rgba(0,0,0,0.2);
     }
 
-} /* End of @media (max-width: 768px) */
-/* Responsive adjustments for the new layout */
-@media (max-width: 1200px) {
-    .bento-grid {
-        grid-template-columns: repeat(2, 1fr); /* 2 columns */
-        grid-template-areas:
-            "controls controls"
-            "tavtcv tavtcv"
-            "leaders leaders"
-            "expiring expiring"  /* Stack new cards */
-            "map map"
-            "sankey sankey"
-            "arr arr"
-            "notes notes";
-        grid-template-rows: auto; /* Reset rows */
+    #sankey-chart-container,
+    #map-container {
+        min-height: 300px;
+        height: 350px;
     }
-     /* Keep date display visible (already adjusted in previous step) */
+
+    #expiring-contracts-table-container {
+        min-height: 250px;
+    }
 }
 
-@media (max-width: 768px) {
-     .bento-grid {
-        grid-template-columns: 1fr; /* 1 column */
-        grid-template-areas:
-            "controls"
-            "tavtcv"
-            "leaders"
-            "expiring"   /* Stack all */
-            "map"
-            "sankey"
-            "arr"
-            "notes";
-         grid-template-rows: auto; /* Reset rows */
+/* Extra small screens */
+@media (max-width: 480px) {
+    .arr-result-section {
+        flex-direction: column;
+        align-items: stretch;
     }
-     /* Other mobile styles from previous step remain */
 
-    /* Ensure new chart containers have appropriate mobile height */
-     #sankey-chart-container,
-     #map-container {
-         min-height: 300px; /* Adjust as needed */
-         height: 350px;
-     }
-     #expiring-contracts-table-container {
-         min-height: 250px; /* Adjust for table */
-     }
-}
-
-/* Add styles for search input if desired */
-.search-container input {
-    /* Your styles */
+    .arr-display {
+        margin-top: 16px;
+    }
 }
