@@ -231,59 +231,62 @@ function updateDateDisplay() {
 
 // --- Dropdown Population Functions ---
 function populateDropdown(selectElement, itemsSet, defaultOptionText = "All") {
-    if (!selectElement) {
-        console.warn("populateDropdown: Provided selectElement is null or undefined.");
-        return;
+    if (!selectElement) return;
+    
+    // Preserve current selection if possible
+    const currentValue = selectElement.value;
+    
+    // Clear existing options first
+    selectElement.innerHTML = `<option value="">${defaultOptionText}</option>`;
+    
+    // Simply add all items without transformation
+    if (itemsSet && itemsSet.size > 0) {
+        Array.from(itemsSet).sort().forEach(item => {
+            if (item === null || item === undefined || item === '') return;
+            
+            const option = document.createElement('option');
+            option.value = item;
+            option.textContent = item;
+            selectElement.appendChild(option);
+        });
     }
-    const currentValue = selectElement.value; // Preserve selection if possible
-    selectElement.innerHTML = `<option value="">${defaultOptionText}</option>`; // Clear existing options
     
-    // Sort items alphabetically
-    const sortedItems = Array.from(itemsSet).sort((a, b) => String(a).localeCompare(String(b)));
-    sortedItems.forEach(item => {
-        if (item === null || item === undefined) return; // Skip null/undefined items
-        const option = document.createElement('option');
-        option.value = item;
-        const text = String(item); // Ensure it's a string
-        option.textContent = truncateText(text, 50); // Truncate long text
-        option.title = text; // Full text in tooltip
-        selectElement.appendChild(option);
-    });
-    
-    // Restore previous selection if possible
-    if (sortedItems.includes(currentValue)) {
+    // Restore previous selection if it exists in the new set
+    if (currentValue && Array.from(itemsSet).includes(currentValue)) {
         selectElement.value = currentValue;
     }
 }
 
 function populateNaicsDropdown(selectElement, naicsMap) {
-    if (!selectElement) {
-        console.warn("populateNaicsDropdown: Provided selectElement is null or undefined.");
-        return;
-    }
-    const currentValue = selectElement.value; // Preserve selection
-    selectElement.innerHTML = `<option value="">All NAICS</option>`; // Clear existing
+    if (!selectElement) return;
     
-    // Sort NAICS codes
-    const sortedCodes = Array.from(naicsMap.keys()).sort();
-    sortedCodes.forEach(code => {
-        if (code === null || code === undefined) return; // Skip null/undefined codes
-        const desc = naicsMap.get(code) || 'No Description'; // Handle missing descriptions
-        const option = document.createElement('option');
-        option.value = code;
-        const codeStr = String(code); // Ensure code is string
-        const descStr = String(desc); // Ensure desc is string
-        option.textContent = `${codeStr} - ${truncateText(descStr, 40)}`; // Format: CODE - Short Desc
-        option.title = `${codeStr} - ${descStr}`; // Full description in tooltip
-        selectElement.appendChild(option);
-    });
+    // Preserve current selection
+    const currentValue = selectElement.value;
+    
+    // Clear existing options
+    selectElement.innerHTML = `<option value="">All NAICS</option>`;
+    
+    // Add all NAICS codes with descriptions
+    if (naicsMap && naicsMap.size > 0) {
+        Array.from(naicsMap.keys()).sort().forEach(code => {
+            if (!code) return;
+            
+            const desc = naicsMap.get(code) || '';
+            const option = document.createElement('option');
+            option.value = code;
+            
+            // Simple format: CODE - Description
+            option.textContent = code + (desc ? ' - ' + desc : '');
+            
+            selectElement.appendChild(option);
+        });
+    }
     
     // Restore previous selection if possible
-    if (sortedCodes.includes(currentValue)) {
+    if (currentValue && naicsMap.has(currentValue)) {
         selectElement.value = currentValue;
     }
 }
-
 // --- Initialize Dataset Selector ---
 function initializeDatasetSelector() {
     const datasetSelect = document.getElementById('dataset-select');
@@ -292,7 +295,10 @@ function initializeDatasetSelector() {
         return;
     }
 
-    // Populate the dropdown with dataset options
+    // Clear any existing options
+    datasetSelect.innerHTML = '';
+    
+    // Populate the dropdown with dataset options exactly as defined in DATASETS
     DATASETS.forEach(dataset => {
         const option = document.createElement('option');
         option.value = dataset.id;
@@ -313,14 +319,13 @@ function initializeDatasetSelector() {
                 resetUIForNoDataset();
             }
         } else {
-            // Handle "Choose a dataset..." selection
-            updateDashboardTitle(null); // Reset title
+            // Handle empty selection
+            updateDashboardTitle(null);
             updateStatusBanner('Please select a dataset to load', 'info');
-            resetUIForNoDataset(); // Clear charts/tables/filters
+            resetUIForNoDataset();
         }
     });
 }
-
 function resetUIForNoDataset() {
     rawData = [];
     currentDataset = null;
@@ -871,26 +876,25 @@ function populateFilters(data) {
     }
 
     const subAgencySet = new Set();
-    const naicsMap = new Map(); // Use Map for NAICS code -> description
+    const naicsMap = new Map();
 
     data.forEach(row => {
-        // Populate Sub-Agency Filter
-        const subAgency = row.awarding_sub_agency_name?.trim();
-        // Add only if it's a non-empty string and not a common 'unknown' placeholder
-        if (subAgency && subAgency.toLowerCase() !== 'unknown sub-agency' && subAgency.toLowerCase() !== 'unknown') {
-            subAgencySet.add(subAgency);
+        // Add all sub-agencies as-is without extra checks
+        if (row.awarding_sub_agency_name) {
+            subAgencySet.add(row.awarding_sub_agency_name);
         }
 
-        // Populate NAICS Filter
-        const code = row.naics_code?.toString().trim();
-        const desc = row.naics_description?.trim() || 'No Description';
-        // Add only if code is valid and not already in the map
-        if (code && code !== 'null' && code !== 'undefined' && code.toLowerCase() !== 'unknown' && code.toLowerCase() !== 'none' && !naicsMap.has(code)) {
-            naicsMap.set(code, desc);
+        // Add all NAICS codes as-is
+        if (row.naics_code) {
+            const code = String(row.naics_code);
+            const desc = row.naics_description || '';
+            if (!naicsMap.has(code)) {
+                naicsMap.set(code, desc);
+            }
         }
     });
 
-    // Populate the dropdowns using the collected, unique, sorted values
+    // Populate the dropdowns
     populateDropdown(document.getElementById('sub-agency-filter'), subAgencySet, "All Sub-Agencies");
     populateNaicsDropdown(document.getElementById('naics-filter'), naicsMap);
 }
