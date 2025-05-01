@@ -168,7 +168,7 @@ body {
         "sankey sankey map map"
         "expiring expiring expiring expiring";
     /* Update grid-template-rows with more specific height controls */
-    grid-template-rows: auto 550px 400px auto;
+    grid-template-rows: auto 600px 600px auto;
 }
 
 /* Assign grid areas */
@@ -734,7 +734,7 @@ tr:hover td {
 }
 /* Add this to your CSS to make both containers have consistent heights */
 #bento-tavtcv, #bento-leaders {
-  height: 550px; /* Set a fixed height for both containers */
+  height: 600px; /* Set a fixed height for both containers */
 }
 
 /* Make the chart containers fill their parents properly */
@@ -763,7 +763,7 @@ tr:hover td {
 }
 /* Add these to control specific container heights */
 #bento-sankey, #bento-map {
-    height: 400px; /* Match the height in grid-template-rows */
+    height: 600px; /* Match the height in grid-template-rows */
     overflow: hidden; /* Prevent content from overflowing */
 }
 
