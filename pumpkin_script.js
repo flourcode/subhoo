@@ -901,120 +901,88 @@ function populateFilters(data) {
     populateNaicsDropdown(document.getElementById('naics-filter'), naicsMap);
 }
 
-// --- Sankey Chart Functions ---
+// --- Simplified Sankey Chart Functions ---
 function processSankeyData(data) {
     console.log("Processing data for Sankey chart...");
-    if (!data || data.length === 0) return [];
+    if (!data || data.length === 0) return { nodes: [], links: [] };
 
-    // Get unique sub-agencies
-    const subAgencies = [];
-    const subAgencySet = new Set();
+    // Group data by awarding agency and recipient
+    const agencyRecipientValues = {};
     
+    // First pass: collect total values by agency and recipient
     data.forEach(row => {
-        const agency = row.awarding_sub_agency_name?.trim();
-        if (agency && !subAgencySet.has(agency)) {
-            subAgencySet.add(agency);
-            subAgencies.push({ name: agency });
-        }
-    });
-
-    // Get top 10 recipients by value
-    const recipientValues = {};
-    data.forEach(row => {
-        const recipient = row.recipient_name;
-        if (!recipient) return;
+        const agency = row.awarding_sub_agency_name?.trim() || "Unknown Agency";
+        const recipient = row.recipient_name?.trim() || "Unknown Recipient";
+        const value = parseSafeFloat(row.current_total_value_of_award) || 0;
         
-        if (!recipientValues[recipient]) {
-            recipientValues[recipient] = 0;
-        }
-        recipientValues[recipient] += parseSafeFloat(row.current_total_value_of_award);
-    });
-
-    // Sort recipients by value and take top 10
-    const topRecipients = Object.entries(recipientValues)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 10)
-        .map(([name]) => ({ name: name }));
-
-    // Create links between agencies and recipients
-    const links = [];
-    
-    // Collect all links and sum values
-    data.forEach(row => {
-        const agency = row.awarding_sub_agency_name?.trim();
-        const recipient = row.recipient_name;
-        
-        if (!agency || !recipient) return;
-        
-        // Find agency and recipient indices
-        const sourceIndex = subAgencies.findIndex(a => a.name === agency);
-        const targetIndex = topRecipients.findIndex(r => r.name === recipient);
-        
-        // Only create links to top recipients
-        if (sourceIndex === -1 || targetIndex === -1) return;
-        
-        const value = parseSafeFloat(row.current_total_value_of_award);
         if (value <= 0) return;
         
-        // Check if a link already exists
-        const existingLinkIndex = links.findIndex(link => 
-            link.source === sourceIndex && 
-            link.target === subAgencies.length + targetIndex
-        );
+        if (!agencyRecipientValues[agency]) {
+            agencyRecipientValues[agency] = {};
+        }
         
-        if (existingLinkIndex >= 0) {
-            // Add value to existing link
-            links[existingLinkIndex].value += value;
-        } else {
-            // Create new link
+        if (!agencyRecipientValues[agency][recipient]) {
+            agencyRecipientValues[agency][recipient] = 0;
+        }
+        
+        agencyRecipientValues[agency][recipient] += value;
+    });
+    
+    // Second pass: get top agencies by total value
+    const agencyTotals = {};
+    Object.entries(agencyRecipientValues).forEach(([agency, recipients]) => {
+        agencyTotals[agency] = Object.values(recipients).reduce((sum, value) => sum + value, 0);
+    });
+    
+    // Sort agencies by total value and take top 10
+    const topAgencies = Object.entries(agencyTotals)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 10)
+        .map(([name]) => name);
+    
+    // Third pass: for each top agency, get its top 5 recipients
+    const nodes = [];
+    const links = [];
+    
+    // Add agency nodes first
+    topAgencies.forEach(agency => {
+        nodes.push({ name: truncateText(agency, 30) });
+    });
+    
+    // Add top recipients for each agency and create links
+    topAgencies.forEach((agency, agencyIndex) => {
+        const recipients = agencyRecipientValues[agency];
+        
+        // Get top 5 recipients for this agency
+        const topRecipients = Object.entries(recipients)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 5);
+            
+        // Add new recipient nodes and links
+        topRecipients.forEach(([recipient, value]) => {
+            // Check if this recipient is already a node
+            let recipientIndex = nodes.findIndex(n => 
+                n.name === truncateText(recipient, 30) && 
+                nodes.indexOf(n) >= topAgencies.length // Only check in recipient section
+            );
+            
+            // If not found, add a new node
+            if (recipientIndex === -1) {
+                nodes.push({ name: truncateText(recipient, 30) });
+                recipientIndex = nodes.length - 1;
+            }
+            
+            // Add link from agency to recipient
             links.push({
-                source: sourceIndex,
-                target: subAgencies.length + targetIndex, // Recipients start after agencies
+                source: agencyIndex,
+                target: recipientIndex,
                 value: value
             });
-        }
+        });
     });
     
-    // Filter out links with zero or very small values
-    const validLinks = links.filter(link => link.value > 1000);
-    
-    // Filter nodes to only include those with connections
-    const connectedAgencyIndices = new Set();
-    const connectedRecipientIndices = new Set();
-    
-    validLinks.forEach(link => {
-        if (link.source < subAgencies.length) {
-            connectedAgencyIndices.add(link.source);
-        }
-        if (link.target >= subAgencies.length) {
-            connectedRecipientIndices.add(link.target - subAgencies.length);
-        }
-    });
-    
-    const filteredAgencies = Array.from(connectedAgencyIndices).map(i => subAgencies[i]);
-    const filteredRecipients = Array.from(connectedRecipientIndices).map(i => topRecipients[i]);
-    
-    // Create final nodes list
-    const nodes = [...filteredAgencies, ...filteredRecipients];
-    
-    // Create a mapping from old indices to new indices
-    const oldToNewIndexMap = new Map();
-    connectedAgencyIndices.forEach((oldIndex, newIndex) => {
-        oldToNewIndexMap.set(oldIndex, newIndex);
-    });
-    connectedRecipientIndices.forEach((oldIndex, newIndex) => {
-        oldToNewIndexMap.set(oldIndex + subAgencies.length, newIndex + filteredAgencies.length);
-    });
-    
-    // Remap link source/target to new indices
-    const remappedLinks = validLinks.map(link => ({
-        source: oldToNewIndexMap.get(link.source),
-        target: oldToNewIndexMap.get(link.target),
-        value: link.value
-    })).filter(link => link.source !== undefined && link.target !== undefined);
-    
-    console.log(`Processed data for Sankey chart: ${nodes.length} nodes, ${remappedLinks.length} links`);
-    return { nodes, links: remappedLinks };
+    console.log(`Processed Sankey data: ${nodes.length} nodes, ${links.length} links`);
+    return { nodes, links };
 }
 
 function displaySankeyChart(sankeyData) {
@@ -1039,155 +1007,149 @@ function displaySankeyChart(sankeyData) {
         return;
     }
     
-    // Set dimensions and margins
-    const width = container.clientWidth;
-    const height = container.clientHeight;
-    const margin = {top: 20, right: 20, bottom: 20, left: 20};
-    const innerWidth = width - margin.left - margin.right;
-    const innerHeight = height - margin.top - margin.bottom;
-    
-    // Create simple Sankey layout with D3
-    const nodeWidth = 15;
-    const nodePadding = 10;
-    
-    // Manually create a simple Sankey layout if d3.sankey is not available
     try {
-        // Create a mapping of node ID to index in the nodes array
-        const nodeMap = new Map(sankeyData.nodes.map((node, i) => [i, node]));
+        // Set dimensions
+        const width = container.clientWidth;
+        const height = container.clientHeight;
+        const margin = {top: 10, right: 30, bottom: 10, left: 30};
+        const innerWidth = width - margin.left - margin.right;
+        const innerHeight = height - margin.top - margin.bottom;
         
-        // Calculate the total outgoing value for each source node
-        const sourceValues = new Map();
+        // Create a simple two-column layout
+        const nodeWidth = 15;
+        const nodePadding = 20;
+        
+        // Calculate total value and node heights
+        const totalValue = d3.sum(sankeyData.links, d => d.value);
+        const nodeValues = {};
+        
+        // Calculate source node values (outgoing values)
         sankeyData.links.forEach(link => {
-            const source = link.source;
-            const value = link.value;
-            sourceValues.set(source, (sourceValues.get(source) || 0) + value);
+            if (!nodeValues[link.source]) nodeValues[link.source] = 0;
+            nodeValues[link.source] += link.value;
         });
         
-        // Calculate the total incoming value for each target node
-        const targetValues = new Map();
+        // Calculate target node values (incoming values)
         sankeyData.links.forEach(link => {
-            const target = link.target;
-            const value = link.value;
-            targetValues.set(target, (targetValues.get(target) || 0) + value);
+            if (!nodeValues[link.target]) nodeValues[link.target] = 0;
+            // We don't add to target values since they're just used for height
         });
         
-        // Calculate the maximum value for scaling purposes
-        const maxValue = Math.max(
-            ...Array.from(sourceValues.values()),
-            ...Array.from(targetValues.values())
-        );
+        // Separate agencies and recipients
+        const agencyNodes = sankeyData.nodes.slice(0, 10); // Top 10 agencies
+        const recipientNodes = sankeyData.nodes.slice(10); // All recipients
         
-        // Layout nodes in two columns
-        const columnGap = innerWidth * 0.6;
-        const nodeCount = sankeyData.nodes.length;
-        const halfCount = Math.ceil(nodeCount / 2);
+        // Position nodes
+        const nodePositions = [];
         
-        // Assign x positions in two columns
-        for (let i = 0; i < nodeCount; i++) {
-            const node = nodeMap.get(i);
-            // Determine if node is source or target
-            const isSource = i < halfCount;
+        // Position agency nodes in left column
+        const totalAgencyHeight = innerHeight - (agencyNodes.length - 1) * nodePadding;
+        const maxAgencyValue = d3.max(Object.entries(nodeValues)
+            .filter(([idx]) => parseInt(idx) < 10)
+            .map(([_, val]) => val));
+        
+        // Position agencies from top to bottom
+        agencyNodes.forEach((node, i) => {
+            const nodeValue = nodeValues[i] || 0;
+            const height = Math.max(10, (nodeValue / maxAgencyValue) * (totalAgencyHeight / agencyNodes.length));
             
-            // Set x position
-            node.x0 = isSource ? margin.left : margin.left + columnGap;
-            node.x1 = node.x0 + nodeWidth;
-        }
-        
-        // Calculate y positions based on equal spacing
-        const sourceNodes = sankeyData.nodes.slice(0, halfCount);
-        const targetNodes = sankeyData.nodes.slice(halfCount);
-        
-        // Calculate spacing for source nodes
-        const sourceSpacing = (innerHeight - sourceNodes.length * nodeWidth) / (sourceNodes.length + 1);
-        sourceNodes.forEach((node, i) => {
-            node.y0 = margin.top + i * (nodeWidth + sourceSpacing) + sourceSpacing;
-            node.y1 = node.y0 + nodeWidth;
+            nodePositions.push({
+                x0: margin.left,
+                x1: margin.left + nodeWidth,
+                y0: margin.top + i * (totalAgencyHeight / agencyNodes.length + nodePadding),
+                y1: margin.top + i * (totalAgencyHeight / agencyNodes.length + nodePadding) + height,
+                height: height,
+                value: nodeValue
+            });
         });
         
-        // Calculate spacing for target nodes
-        const targetSpacing = (innerHeight - targetNodes.length * nodeWidth) / (targetNodes.length + 1);
-        targetNodes.forEach((node, i) => {
-            node.y0 = margin.top + i * (nodeWidth + targetSpacing) + targetSpacing;
-            node.y1 = node.y0 + nodeWidth;
-        });
+        // Position recipient nodes in right column
+        const totalRecipientHeight = innerHeight - (recipientNodes.length - 1) * nodePadding;
+        const maxRecipientValue = d3.max(Object.entries(nodeValues)
+            .filter(([idx]) => parseInt(idx) >= 10)
+            .map(([_, val]) => val));
         
-        // Create path data for links
-        sankeyData.links.forEach(link => {
-            const source = nodeMap.get(link.source);
-            const target = nodeMap.get(link.target);
-            const value = link.value;
+        // Position recipients from top to bottom
+        recipientNodes.forEach((node, i) => {
+            const nodeIdx = i + 10; // Offset for agency nodes
+            const nodeValue = nodeValues[nodeIdx] || 0;
+            const height = Math.max(10, (nodeValue / maxRecipientValue) * (totalRecipientHeight / recipientNodes.length));
             
-            // Set source and target data for rendering
-            link.sourceX = source.x1;
-            link.sourceY = source.y0 + (source.y1 - source.y0) / 2;
-            link.targetX = target.x0;
-            link.targetY = target.y0 + (target.y1 - target.y0) / 2;
-            
-            // Calculate width proportional to value
-            link.width = Math.max(1, (value / maxValue) * 30);
+            nodePositions.push({
+                x0: width - margin.right - nodeWidth,
+                x1: width - margin.right,
+                y0: margin.top + i * (totalRecipientHeight / recipientNodes.length + nodePadding),
+                y1: margin.top + i * (totalRecipientHeight / recipientNodes.length + nodePadding) + height,
+                height: height,
+                value: nodeValue
+            });
         });
         
-        // Create the main SVG group
-        const g = d3.select(svg)
+        // Set SVG dimensions
+        d3.select(svg)
             .attr('width', width)
-            .attr('height', height)
+            .attr('height', height);
+        
+        // Create a group for the Sankey diagram
+        const g = d3.select(svg)
             .append('g');
         
-        // Add links
+        // Create links
         g.append('g')
             .selectAll('path')
             .data(sankeyData.links)
             .enter()
             .append('path')
-            .attr('d', link => {
-                const curvature = 0.5;
-                const x0 = link.sourceX;
-                const y0 = link.sourceY;
-                const x1 = link.targetX;
-                const y1 = link.targetY;
-                const xi = d3.interpolateNumber(x0, x1);
-                const x2 = xi(curvature);
-                const x3 = xi(1 - curvature);
+            .attr('d', d => {
+                const source = nodePositions[d.source];
+                const target = nodePositions[d.target];
                 
-                return `M${x0},${y0}C${x2},${y0} ${x3},${y1} ${x1},${y1}`;
+                // Calculate connection points
+                const sourceX = source.x1;
+                const sourceY = source.y0 + (source.height / 2);
+                const targetX = target.x0;
+                const targetY = target.y0 + (target.height / 2);
+                
+                // Create a simple curved path
+                return `M${sourceX},${sourceY}C${sourceX + (targetX - sourceX) * 0.5},${sourceY} ${targetX - (targetX - sourceX) * 0.5},${targetY} ${targetX},${targetY}`;
             })
-            .attr('stroke-width', d => Math.max(1, d.width))
             .attr('stroke', '#797484')
             .attr('stroke-opacity', 0.5)
+            .attr('stroke-width', d => Math.max(1, Math.sqrt(d.value / 1e6)))
             .attr('fill', 'none')
             .append('title')
             .text(d => {
-                const source = nodeMap.get(d.source);
-                const target = nodeMap.get(d.target);
+                const source = sankeyData.nodes[d.source];
+                const target = sankeyData.nodes[d.target];
                 return `${source.name} → ${target.name}\n${formatCurrency(d.value)}`;
             });
         
-        // Add nodes as rectangles
+        // Create nodes
         g.append('g')
             .selectAll('rect')
-            .data(sankeyData.nodes)
+            .data(sankeyPositions)
             .enter()
             .append('rect')
             .attr('x', d => d.x0)
             .attr('y', d => d.y0)
-            .attr('height', d => d.y1 - d.y0)
-            .attr('width', d => d.x1 - d.x0)
-            .attr('fill', '#9993A1')
+            .attr('height', d => d.height)
+            .attr('width', nodeWidth)
+            .attr('fill', (d, i) => i < 10 ? '#9993A1' : '#757080')
             .attr('stroke', '#252327')
             .append('title')
-            .text(d => `${d.name}\n${formatCurrency(sourceValues.get(sankeyData.nodes.indexOf(d)) || targetValues.get(sankeyData.nodes.indexOf(d)) || 0)}`);
+            .text((d, i) => `${sankeyData.nodes[i].name}\n${formatCurrency(d.value)}`);
         
-        // Add labels
+        // Add labels to nodes
         g.append('g')
             .selectAll('text')
-            .data(sankeyData.nodes)
+            .data(sankeyPositions)
             .enter()
             .append('text')
-            .attr('x', d => d.x0 < innerWidth / 2 ? d.x1 + 6 : d.x0 - 6)
-            .attr('y', d => (d.y1 + d.y0) / 2)
+            .attr('x', d => d.x0 < width / 2 ? d.x1 + 6 : d.x0 - 6)
+            .attr('y', d => d.y0 + d.height / 2)
             .attr('dy', '0.35em')
-            .attr('text-anchor', d => d.x0 < innerWidth / 2 ? 'start' : 'end')
-            .text(d => truncateText(d.name, 25))
+            .attr('text-anchor', d => d.x0 < width / 2 ? 'start' : 'end')
+            .text((d, i) => sankeyData.nodes[i].name)
             .attr('font-size', '11px')
             .attr('fill', '#FFFFF3');
         
@@ -1196,7 +1158,6 @@ function displaySankeyChart(sankeyData) {
         displayError(containerId, "Failed to render Sankey diagram: " + error.message);
     }
 }
-
 // --- Choropleth Map Functions ---
 function processMapData(data) {
     console.log("Processing data for performance map...");
@@ -1205,30 +1166,54 @@ function processMapData(data) {
     // Create a map to store state-level aggregates
     const stateData = {};
     
+    // Debug counter for rows with FIPS codes
+    let rowsWithFips = 0;
+    
     data.forEach(row => {
-        // Try multiple possible field names for state
-        const state = row.place_of_performance_state_name?.trim() || 
-                      row.pop_state_code?.trim() ||
-                      row.pop_state_name?.trim() ||
-                      row.place_of_performance_state_code?.trim() ||
-                      "Unknown";
-                     
+        // Use the correct field for state FIPS codes
+        let fipsCode = null;
+        
+        // First try the exact field name provided
+        if (row.prime_award_transaction_place_of_performance_state_fips_code) {
+            fipsCode = row.prime_award_transaction_place_of_performance_state_fips_code.trim();
+            rowsWithFips++;
+        } 
+        // Then try fallback options
+        else if (row.primary_place_of_performance_state_code) {
+            fipsCode = row.primary_place_of_performance_state_code.trim();
+        } else if (row.pop_state_code) {
+            fipsCode = row.pop_state_code.trim();
+        } else if (row.place_of_performance_state_code) {
+            fipsCode = row.place_of_performance_state_code.trim();
+        }
+        
+        // If no FIPS code found, skip this row
+        if (!fipsCode) return;
+        
+        // Ensure FIPS code is a 2-digit string
+        if (fipsCode.length > 2) {
+            // If longer than 2 digits, assume it's a county FIPS and take the first 2 digits
+            fipsCode = fipsCode.substring(0, 2);
+        } else if (fipsCode.length === 1) {
+            // If it's a single digit, add leading zero
+            fipsCode = '0' + fipsCode;
+        }
+        
         const value = parseSafeFloat(row.current_total_value_of_award) || 0;
         
-        if (state.toLowerCase() === 'unknown') return;
-        
-        if (!stateData[state]) {
-            stateData[state] = {
+        if (!stateData[fipsCode]) {
+            stateData[fipsCode] = {
                 value: 0,
                 count: 0
             };
         }
         
-        stateData[state].value += value;
-        stateData[state].count += 1;
+        stateData[fipsCode].value += value;
+        stateData[fipsCode].count += 1;
     });
     
-    console.log(`Processed data for map: ${Object.keys(stateData).length} states`);
+    console.log(`Processed data for map: ${Object.keys(stateData).length} states with FIPS codes (found ${rowsWithFips} rows with FIPS codes)`);
+    console.log("State data:", stateData);
     return stateData;
 }
 
@@ -1292,30 +1277,24 @@ function displayChoroplethMap(mapData) {
             .style('font-size', '12px')
             .style('pointer-events', 'none');
         
-        // State name to abbreviation mapping
-        const stateNameToAbbr = {
-            "Alabama": "AL", "Alaska": "AK", "Arizona": "AZ", "Arkansas": "AR",
-            "California": "CA", "Colorado": "CO", "Connecticut": "CT", "Delaware": "DE",
-            "Florida": "FL", "Georgia": "GA", "Hawaii": "HI", "Idaho": "ID",
-            "Illinois": "IL", "Indiana": "IN", "Iowa": "IA", "Kansas": "KS",
-            "Kentucky": "KY", "Louisiana": "LA", "Maine": "ME", "Maryland": "MD",
-            "Massachusetts": "MA", "Michigan": "MI", "Minnesota": "MN", "Mississippi": "MS",
-            "Missouri": "MO", "Montana": "MT", "Nebraska": "NE", "Nevada": "NV",
-            "New Hampshire": "NH", "New Jersey": "NJ", "New Mexico": "NM", "New York": "NY",
-            "North Carolina": "NC", "North Dakota": "ND", "Ohio": "OH", "Oklahoma": "OK",
-            "Oregon": "OR", "Pennsylvania": "PA", "Rhode Island": "RI", "South Carolina": "SC",
-            "South Dakota": "SD", "Tennessee": "TN", "Texas": "TX", "Utah": "UT",
-            "Vermont": "VT", "Virginia": "VA", "Washington": "WA", "West Virginia": "WV",
-            "Wisconsin": "WI", "Wyoming": "WY", "District of Columbia": "DC"
+        // State name mapping
+        const fipsToStateName = {
+            "01": "Alabama", "02": "Alaska", "04": "Arizona", "05": "Arkansas", 
+            "06": "California", "08": "Colorado", "09": "Connecticut", "10": "Delaware", 
+            "11": "District of Columbia", "12": "Florida", "13": "Georgia", "15": "Hawaii", 
+            "16": "Idaho", "17": "Illinois", "18": "Indiana", "19": "Iowa", "20": "Kansas", 
+            "21": "Kentucky", "22": "Louisiana", "23": "Maine", "24": "Maryland", 
+            "25": "Massachusetts", "26": "Michigan", "27": "Minnesota", "28": "Mississippi", 
+            "29": "Missouri", "30": "Montana", "31": "Nebraska", "32": "Nevada", 
+            "33": "New Hampshire", "34": "New Jersey", "35": "New Mexico", "36": "New York", 
+            "37": "North Carolina", "38": "North Dakota", "39": "Ohio", "40": "Oklahoma", 
+            "41": "Oregon", "42": "Pennsylvania", "44": "Rhode Island", "45": "South Carolina", 
+            "46": "South Dakota", "47": "Tennessee", "48": "Texas", "49": "Utah", 
+            "50": "Vermont", "51": "Virginia", "53": "Washington", "54": "West Virginia", 
+            "55": "Wisconsin", "56": "Wyoming", "72": "Puerto Rico"
         };
         
-        // Abbreviation to name mapping (reverse of above)
-        const abbrToStateName = {};
-        Object.entries(stateNameToAbbr).forEach(([name, abbr]) => {
-            abbrToStateName[abbr] = name;
-        });
-        
-        // Attempt to load US state boundaries GeoJSON
+        // Load US state boundaries GeoJSON
         d3.json('https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json')
             .then(us => {
                 if (!us || !us.objects || !us.objects.states) {
@@ -1325,16 +1304,8 @@ function displayChoroplethMap(mapData) {
                 // Convert TopoJSON to GeoJSON
                 const states = topojson.feature(us, us.objects.states).features;
                 
-                // Set state name property for each feature
-                states.forEach(state => {
-                    const id = state.id;
-                    // Convert FIPS code to state name
-                    Object.entries(stateNameToAbbr).forEach(([name, abbr]) => {
-                        if (state.properties && !state.properties.name) {
-                            state.properties.name = name;
-                        }
-                    });
-                });
+                // Debugging: Log the first few states to check their structure
+                console.log("First few states from TopoJSON:", states.slice(0, 3));
                 
                 // Draw state boundaries
                 svg.selectAll('path')
@@ -1343,34 +1314,25 @@ function displayChoroplethMap(mapData) {
                     .append('path')
                     .attr('d', path)
                     .attr('fill', d => {
-                        // Try to find data for this state
-                        let stateData;
-                        const stateName = d.properties.name;
-                        const stateAbbr = stateNameToAbbr[stateName];
+                        // Use the state FIPS code to lookup data
+                        // d.id is numeric in the topojson, so convert to 2-digit string
+                        const fipsCode = d.id.toString().padStart(2, '0');
+                        const stateData = mapData[fipsCode];
                         
-                        // Check if we have data under the full name or abbreviation
-                        if (mapData[stateName]) {
-                            stateData = mapData[stateName];
-                        } else if (stateAbbr && mapData[stateAbbr]) {
-                            stateData = mapData[stateAbbr];
+                        // Debug info
+                        if (stateData) {
+                            console.log(`State ${fipsCode} (${fipsToStateName[fipsCode] || 'Unknown'}): ${stateData.value}`);
                         }
                         
-                        // Return color based on value, or default gray
                         return stateData ? colorScale(stateData.value) : '#ccc';
                     })
                     .attr('stroke', '#252327')
                     .attr('stroke-width', 0.5)
                     .on('mouseover', function(event, d) {
-                        let stateName = d.properties.name;
-                        let stateAbbr = stateNameToAbbr[stateName];
-                        let stateData;
-                        
-                        // Find data for this state
-                        if (mapData[stateName]) {
-                            stateData = mapData[stateName];
-                        } else if (stateAbbr && mapData[stateAbbr]) {
-                            stateData = mapData[stateAbbr];
-                        }
+                        // Get FIPS code as 2-digit string
+                        const fipsCode = d.id.toString().padStart(2, '0');
+                        const stateData = mapData[fipsCode];
+                        const stateName = fipsToStateName[fipsCode] || "Unknown";
                         
                         if (stateData) {
                             tooltip.transition()
@@ -1459,7 +1421,6 @@ function displayChoroplethMap(mapData) {
         displayError(containerId, "Failed to render map: " + error.message);
     }
 }
-
 function applyFiltersAndUpdateVisuals() {
     // --- Get Filter & Search Values ---
     const subAgencyFilter = document.getElementById('sub-agency-filter')?.value || '';
