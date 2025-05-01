@@ -546,9 +546,6 @@ tr:hover td {
             "notes notes";
     }
     
-    .date-display {
-        display: none;
-    }
 }
 
 @media (max-width: 768px) {
