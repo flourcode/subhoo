@@ -615,15 +615,15 @@ function displayExpiringTable(expiringData) {
         { text: 'Contract ID / PIID', key: 'award_id_piid' },
         { text: 'Recipient Name', key: 'recipient_name' },
         { text: 'End Date', key: 'period_of_performance_current_end_date' },
-        { text: 'Current Value', key: 'current_total_value_of_award', format: 'currency', class: 'number' },
-        { text: 'USA Spending', key: 'usa_spending' } // Added new header for USA Spending link
+        { text: 'Current Value', key: 'current_total_value_of_award', format: 'currency', class: 'number' }, // Add class: 'number' here
+        { text: 'USA Spending', key: 'usa_spending' }
     ];
 
     headers.forEach(headerInfo => {
         const th = document.createElement('th');
         th.textContent = headerInfo.text;
         th.scope = 'col';
-        if (headerInfo.class) th.className = headerInfo.class;
+        if (headerInfo.class) th.className = headerInfo.class; // This applies the class to the header
         headerRow.appendChild(th);
     });
 
