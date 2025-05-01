@@ -790,6 +790,12 @@ function displayTavTcvChart(chartData) {
     const surfaceColor = computedStyle.getPropertyValue('--color-surface').trim() || '#252327';
     const outlineColor = computedStyle.getPropertyValue('--color-outline').trim() || '#615C66';
 
+    // Calculate appropriate left padding based on longest company name
+    // Find longest name to determine padding needed
+    const longestNameLength = Math.max(...chartData.map(d => d.primeName.length));
+    // Estimate ~8px per character for the company name width (adjust as needed)
+    const estimatedLabelWidth = Math.min(Math.max(longestNameLength * 8, 150), 220);
+    
     // Create the new chart instance with empty Y labels
     tavTcvChartInstance = new Chart(ctx, {
         type: 'bar',
@@ -919,7 +925,7 @@ function displayTavTcvChart(chartData) {
                 padding: { 
                     top: 16, 
                     bottom: 16, 
-                    left: 100, // Add extra padding for our custom labels
+                    left: estimatedLabelWidth, // Dynamic left padding based on name length
                     right: 20 
                 }
             },
@@ -961,7 +967,7 @@ function displayTavTcvChart(chartData) {
             link.href = `https://www.usaspending.gov/award/${contract.id}`;
             link.target = '_blank';
             link.rel = 'noopener noreferrer';
-            link.textContent = truncateText(contract.primeName, 25);
+            link.textContent = contract.primeName; // Use full name, don't truncate
             link.title = `View ${contract.primeName} on USA Spending`;
             
             // Style the link
@@ -977,13 +983,13 @@ function displayTavTcvChart(chartData) {
             link.style.cursor = 'pointer';
             link.style.padding = '5px';
             link.style.whiteSpace = 'nowrap';
-            link.style.maxWidth = '90px';
+            link.style.maxWidth = (estimatedLabelWidth - 30) + 'px'; // Leave some margin
             link.style.overflow = 'hidden';
             link.style.textOverflow = 'ellipsis';
             
             // Add hover effect
             link.addEventListener('mouseover', () => {
-                link.style.textDecoration = 'underline';
+                link.style.textDecoration = 'none';
                 link.style.color = primaryColor;
             });
             
