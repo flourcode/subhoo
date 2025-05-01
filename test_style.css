@@ -149,16 +149,16 @@ body {
     gap: var(--bento-gap);
     grid-template-columns: repeat(4, 1fr);
     grid-template-areas:
-        "controls controls notes arr"
+        "controls controls search search"
         "tavtcv tavtcv leaders leaders"
         "sankey sankey map map"
-        "expiring expiring expiring expiring";
-    /* Update grid-template-rows with more specific height controls */
+        "notes arr expiring expiring";
     grid-template-rows: auto 600px 600px auto;
 }
 
 /* Assign grid areas */
 #bento-controls { grid-area: controls; }
+#bento-search { grid-area: search; }
 #bento-tavtcv { grid-area: tavtcv; }
 #bento-leaders { grid-area: leaders; }
 #bento-arr { grid-area: arr; }
