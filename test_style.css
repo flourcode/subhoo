@@ -149,10 +149,10 @@ body {
     gap: var(--bento-gap);
     grid-template-columns: repeat(4, 1fr);
     grid-template-areas:
-        "controls controls search search"
+        "controls controls search arr"
         "tavtcv tavtcv leaders leaders"
         "sankey sankey map map"
-        "arr arr expiring expiring";
+        "expiring expiring expiring expiring";
     grid-template-rows: auto 600px 600px auto;
 }
 /* Assign grid areas */
