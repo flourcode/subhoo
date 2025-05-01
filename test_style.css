@@ -731,3 +731,32 @@ tr:hover td {
         margin-top: 16px;
     }
 }
+/* Add this to your CSS to make both containers have consistent heights */
+#bento-tavtcv, #bento-leaders {
+  height: 550px; /* Set a fixed height for both containers */
+}
+
+/* Make the chart containers fill their parents properly */
+#bento-tavtcv .chart-container,
+#bento-leaders .table-container {
+  height: calc(100% - 60px) !important; /* Account for header height */
+  min-height: auto !important;
+  max-height: none !important;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Fix the table wrapper to fill its container */
+#contract-leaders-table-container .table-wrapper {
+  max-height: none;
+  height: 100%;
+  overflow-y: auto;
+  flex: 1;
+}
+
+/* Ensure chart canvas behaves properly */
+#tavTcvChart {
+  height: 100% !important;
+  max-height: none !important;
+}
