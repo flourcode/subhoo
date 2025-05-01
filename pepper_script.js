@@ -1088,7 +1088,6 @@ function displaySankeyChart(sankeyData) {
         .attr('font-size', '10px')
         .attr('fill', '#FFFFF3');
 }
-
 // --- Choropleth Map Functions ---
 function processMapData(data) {
     console.log("Processing data for performance map...");
@@ -1097,30 +1096,54 @@ function processMapData(data) {
     // Create a map to store state-level aggregates
     const stateData = {};
     
+    // Debug counter for rows with FIPS codes
+    let rowsWithFips = 0;
+    
     data.forEach(row => {
-        // Try multiple possible field names for state
-        const state = row.place_of_performance_state_name?.trim() || 
-                      row.pop_state_code?.trim() ||
-                      row.pop_state_name?.trim() ||
-                      row.place_of_performance_state_code?.trim() ||
-                      "Unknown";
-                     
+        // Use the correct field for state FIPS codes
+        let fipsCode = null;
+        
+        // First try the exact field name provided
+        if (row.prime_award_transaction_place_of_performance_state_fips_code) {
+            fipsCode = row.prime_award_transaction_place_of_performance_state_fips_code.trim();
+            rowsWithFips++;
+        } 
+        // Then try fallback options
+        else if (row.primary_place_of_performance_state_code) {
+            fipsCode = row.primary_place_of_performance_state_code.trim();
+        } else if (row.pop_state_code) {
+            fipsCode = row.pop_state_code.trim();
+        } else if (row.place_of_performance_state_code) {
+            fipsCode = row.place_of_performance_state_code.trim();
+        }
+        
+        // If no FIPS code found, skip this row
+        if (!fipsCode) return;
+        
+        // Ensure FIPS code is a 2-digit string
+        if (fipsCode.length > 2) {
+            // If longer than 2 digits, assume it's a county FIPS and take the first 2 digits
+            fipsCode = fipsCode.substring(0, 2);
+        } else if (fipsCode.length === 1) {
+            // If it's a single digit, add leading zero
+            fipsCode = '0' + fipsCode;
+        }
+        
         const value = parseSafeFloat(row.current_total_value_of_award) || 0;
         
-        if (state.toLowerCase() === 'unknown') return;
-        
-        if (!stateData[state]) {
-            stateData[state] = {
+        if (!stateData[fipsCode]) {
+            stateData[fipsCode] = {
                 value: 0,
                 count: 0
             };
         }
         
-        stateData[state].value += value;
-        stateData[state].count += 1;
+        stateData[fipsCode].value += value;
+        stateData[fipsCode].count += 1;
     });
     
-    console.log(`Processed data for map: ${Object.keys(stateData).length} states`);
+    console.log(`Processed data for map: ${Object.keys(stateData).length} states with FIPS codes (found ${rowsWithFips} rows with FIPS codes)`);
+    console.log("State data:", stateData);
     return stateData;
 }
 
@@ -1145,195 +1168,191 @@ function displayChoroplethMap(mapData) {
         return;
     }
     
-    // Set up map dimensions
-    const width = mapDiv.clientWidth;
-    const height = mapDiv.clientHeight;
-    
-    // Create SVG element inside the map div
-    const svg = d3.select(mapDiv)
-        .append('svg')
-        .attr('width', width)
-        .attr('height', height);
-    
-    // Create a map projection
-    const projection = d3.geoAlbersUsa()
-        .scale(width)
-        .translate([width / 2, height / 2]);
-    
-    const path = d3.geoPath().projection(projection);
-    
-    // Define color scale for the map
-    const stateValues = Object.values(mapData).map(d => d.value);
-    const maxValue = d3.max(stateValues) || 0;
-    
-    const colorScale = d3.scaleSequential()
-        .interpolator(d3.interpolateBlues)
-        .domain([0, maxValue]);
-    
-    // Create tooltip
-    const tooltip = d3.select(mapDiv)
-        .append('div')
-        .attr('class', 'tooltip')
-        .style('opacity', 0)
-        .style('position', 'absolute')
-        .style('background-color', '#252327')
-        .style('color', '#FFFFF3')
-        .style('padding', '8px')
-        .style('border-radius', '4px')
-        .style('font-size', '12px')
-        .style('pointer-events', 'none');
-    
-    // State name to abbreviation mapping
-    const stateNameToAbbr = {
-        "Alabama": "AL", "Alaska": "AK", "Arizona": "AZ", "Arkansas": "AR",
-        "California": "CA", "Colorado": "CO", "Connecticut": "CT", "Delaware": "DE",
-        "Florida": "FL", "Georgia": "GA", "Hawaii": "HI", "Idaho": "ID",
-        "Illinois": "IL", "Indiana": "IN", "Iowa": "IA", "Kansas": "KS",
-        "Kentucky": "KY", "Louisiana": "LA", "Maine": "ME", "Maryland": "MD",
-        "Massachusetts": "MA", "Michigan": "MI", "Minnesota": "MN", "Mississippi": "MS",
-        "Missouri": "MO", "Montana": "MT", "Nebraska": "NE", "Nevada": "NV",
-        "New Hampshire": "NH", "New Jersey": "NJ", "New Mexico": "NM", "New York": "NY",
-        "North Carolina": "NC", "North Dakota": "ND", "Ohio": "OH", "Oklahoma": "OK",
-        "Oregon": "OR", "Pennsylvania": "PA", "Rhode Island": "RI", "South Carolina": "SC",
-        "South Dakota": "SD", "Tennessee": "TN", "Texas": "TX", "Utah": "UT",
-        "Vermont": "VT", "Virginia": "VA", "Washington": "WA", "West Virginia": "WV",
-        "Wisconsin": "WI", "Wyoming": "WY", "District of Columbia": "DC"
-    };
-    
-    // Abbreviation to name mapping (reverse of above)
-    const abbrToStateName = {};
-    Object.entries(stateNameToAbbr).forEach(([name, abbr]) => {
-        abbrToStateName[abbr] = name;
-    });
-    
-    // Load US state boundaries GeoJSON
-    d3.json('https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json')
-        .then(us => {
-            // Convert TopoJSON to GeoJSON
-            const states = topojson.feature(us, us.objects.states).features;
-            
-            // Get state ids and names
-            const stateIdToName = {};
-            states.forEach(state => {
-                const stateName = state.properties.name;
-                stateIdToName[state.id] = stateName;
-            });
-            
-            // Draw state boundaries
-            svg.selectAll('path')
-                .data(states)
-                .enter()
-                .append('path')
-                .attr('d', path)
-                .attr('fill', d => {
-                    const stateName = stateIdToName[d.id];
-                    const stateAbbr = stateNameToAbbr[stateName];
-                    
-                    // Check if we have data for this state (by name or abbreviation)
-                    if (mapData[stateName]) {
-                        return colorScale(mapData[stateName].value);
-                    } else if (stateAbbr && mapData[stateAbbr]) {
-                        return colorScale(mapData[stateAbbr].value);
-                    } else {
-                        return '#ccc'; // Default color for states without data
-                    }
-                })
-                .attr('stroke', '#252327')
-                .attr('stroke-width', 0.5)
-                .on('mouseover', function(event, d) {
-                    const stateName = stateIdToName[d.id];
-                    const stateAbbr = stateNameToAbbr[stateName];
-                    let stateData;
-                    
-                    if (mapData[stateName]) {
-                        stateData = mapData[stateName];
-                    } else if (stateAbbr && mapData[stateAbbr]) {
-                        stateData = mapData[stateAbbr];
-                    }
-                    
-                    if (!stateData) return;
-                    
-                    tooltip.transition()
-                        .duration(200)
-                        .style('opacity', 0.9);
+    try {
+        // Set up map dimensions
+        const width = mapDiv.clientWidth;
+        const height = mapDiv.clientHeight;
+        
+        // Create SVG element inside the map div
+        const svg = d3.select(mapDiv)
+            .append('svg')
+            .attr('width', width)
+            .attr('height', height);
+        
+        // Create a map projection
+        const projection = d3.geoAlbersUsa()
+            .scale(width)
+            .translate([width / 2, height / 2]);
+        
+        const path = d3.geoPath().projection(projection);
+        
+        // Define color scale for the map
+        const stateValues = Object.values(mapData).map(d => d.value);
+        const maxValue = d3.max(stateValues) || 0;
+        
+        const colorScale = d3.scaleSequential()
+            .interpolator(d3.interpolateBlues)
+            .domain([0, maxValue]);
+        
+        // Create tooltip
+        const tooltip = d3.select(mapDiv)
+            .append('div')
+            .attr('class', 'tooltip')
+            .style('opacity', 0)
+            .style('position', 'absolute')
+            .style('background-color', '#252327')
+            .style('color', '#FFFFF3')
+            .style('padding', '8px')
+            .style('border-radius', '4px')
+            .style('font-size', '12px')
+            .style('pointer-events', 'none');
+        
+        // State name mapping
+        const fipsToStateName = {
+            "01": "Alabama", "02": "Alaska", "04": "Arizona", "05": "Arkansas", 
+            "06": "California", "08": "Colorado", "09": "Connecticut", "10": "Delaware", 
+            "11": "District of Columbia", "12": "Florida", "13": "Georgia", "15": "Hawaii", 
+            "16": "Idaho", "17": "Illinois", "18": "Indiana", "19": "Iowa", "20": "Kansas", 
+            "21": "Kentucky", "22": "Louisiana", "23": "Maine", "24": "Maryland", 
+            "25": "Massachusetts", "26": "Michigan", "27": "Minnesota", "28": "Mississippi", 
+            "29": "Missouri", "30": "Montana", "31": "Nebraska", "32": "Nevada", 
+            "33": "New Hampshire", "34": "New Jersey", "35": "New Mexico", "36": "New York", 
+            "37": "North Carolina", "38": "North Dakota", "39": "Ohio", "40": "Oklahoma", 
+            "41": "Oregon", "42": "Pennsylvania", "44": "Rhode Island", "45": "South Carolina", 
+            "46": "South Dakota", "47": "Tennessee", "48": "Texas", "49": "Utah", 
+            "50": "Vermont", "51": "Virginia", "53": "Washington", "54": "West Virginia", 
+            "55": "Wisconsin", "56": "Wyoming", "72": "Puerto Rico"
+        };
+        
+        // Load US state boundaries GeoJSON
+        d3.json('https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json')
+            .then(us => {
+                if (!us || !us.objects || !us.objects.states) {
+                    throw new Error("Invalid GeoJSON data");
+                }
+                
+                // Convert TopoJSON to GeoJSON
+                const states = topojson.feature(us, us.objects.states).features;
+                
+                // Debugging: Log the first few states to check their structure
+                console.log("First few states from TopoJSON:", states.slice(0, 3));
+                
+                // Draw state boundaries
+                svg.selectAll('path')
+                    .data(states)
+                    .enter()
+                    .append('path')
+                    .attr('d', path)
+                    .attr('fill', d => {
+                        // Use the state FIPS code to lookup data
+                        // d.id is numeric in the topojson, so convert to 2-digit string
+                        const fipsCode = d.id.toString().padStart(2, '0');
+                        const stateData = mapData[fipsCode];
                         
-                    tooltip.html(`
-                        <strong>${stateName}</strong><br>
-                        Total Value: ${formatCurrency(stateData.value)}<br>
-                        Contracts: ${stateData.count}
-                    `)
-                    .style('left', (event.pageX + 10) + 'px')
-                    .style('top', (event.pageY - 28) + 'px');
-                })
-                .on('mouseout', function() {
-                    tooltip.transition()
-                        .duration(500)
-                        .style('opacity', 0);
+                        // Debug info
+                        if (stateData) {
+                            console.log(`State ${fipsCode} (${fipsToStateName[fipsCode] || 'Unknown'}): ${stateData.value}`);
+                        }
+                        
+                        return stateData ? colorScale(stateData.value) : '#ccc';
+                    })
+                    .attr('stroke', '#252327')
+                    .attr('stroke-width', 0.5)
+                    .on('mouseover', function(event, d) {
+                        // Get FIPS code as 2-digit string
+                        const fipsCode = d.id.toString().padStart(2, '0');
+                        const stateData = mapData[fipsCode];
+                        const stateName = fipsToStateName[fipsCode] || "Unknown";
+                        
+                        if (stateData) {
+                            tooltip.transition()
+                                .duration(200)
+                                .style('opacity', 0.9);
+                                
+                            tooltip.html(`
+                                <strong>${stateName}</strong><br>
+                                Total Value: ${formatCurrency(stateData.value)}<br>
+                                Contracts: ${stateData.count}
+                            `)
+                            .style('left', (event.pageX + 10) + 'px')
+                            .style('top', (event.pageY - 28) + 'px');
+                        }
+                    })
+                    .on('mouseout', function() {
+                        tooltip.transition()
+                            .duration(500)
+                            .style('opacity', 0);
+                    });
+                    
+                // Add legend
+                const legendWidth = 200;
+                const legendHeight = 15;
+                const legendX = width - legendWidth - 20;
+                const legendY = height - 40;
+                
+                // Create a linear gradient for the legend
+                const defs = svg.append('defs');
+                const linearGradient = defs.append('linearGradient')
+                    .attr('id', 'legend-gradient')
+                    .attr('x1', '0%')
+                    .attr('y1', '0%')
+                    .attr('x2', '100%')
+                    .attr('y2', '0%');
+                    
+                // Add color stops to the gradient
+                const stops = [0, 0.25, 0.5, 0.75, 1];
+                stops.forEach(stop => {
+                    linearGradient.append('stop')
+                        .attr('offset', `${stop * 100}%`)
+                        .attr('stop-color', colorScale(stop * maxValue));
                 });
                 
-            // Add legend
-            const legendWidth = 200;
-            const legendHeight = 15;
-            const legendX = width - legendWidth - 20;
-            const legendY = height - 40;
-            
-            // Create a linear gradient for the legend
-            const defs = svg.append('defs');
-            const linearGradient = defs.append('linearGradient')
-                .attr('id', 'legend-gradient')
-                .attr('x1', '0%')
-                .attr('y1', '0%')
-                .attr('x2', '100%')
-                .attr('y2', '0%');
-                
-            // Add color stops to the gradient
-            const stops = [0, 0.25, 0.5, 0.75, 1];
-            stops.forEach(stop => {
-                linearGradient.append('stop')
-                    .attr('offset', `${stop * 100}%`)
-                    .attr('stop-color', colorScale(stop * maxValue));
+                // Draw the legend rectangle
+                svg.append('rect')
+                    .attr('x', legendX)
+                    .attr('y', legendY)
+                    .attr('width', legendWidth)
+                    .attr('height', legendHeight)
+                    .style('fill', 'url(#legend-gradient)')
+                    .attr('stroke', '#252327')
+                    .attr('stroke-width', 1);
+                    
+                // Add legend labels
+                svg.append('text')
+                    .attr('x', legendX)
+                    .attr('y', legendY - 5)
+                    .attr('text-anchor', 'start')
+                    .attr('font-size', '10px')
+                    .attr('fill', '#FFFFF3')
+                    .text('$0');
+                    
+                svg.append('text')
+                    .attr('x', legendX + legendWidth)
+                    .attr('y', legendY - 5)
+                    .attr('text-anchor', 'end')
+                    .attr('font-size', '10px')
+                    .attr('fill', '#FFFFF3')
+                    .text(formatCurrency(maxValue));
+                    
+                svg.append('text')
+                    .attr('x', legendX + (legendWidth / 2))
+                    .attr('y', legendY - 5)
+                    .attr('text-anchor', 'middle')
+                    .attr('font-size', '10px')
+                    .attr('fill', '#FFFFF3')
+                    .text('Contract Value by State');
+            })
+            .catch(error => {
+                console.error("Error loading GeoJSON:", error);
+                displayError(containerId, `Error loading map data: ${error.message}`);
             });
-            
-            // Draw the legend rectangle
-            svg.append('rect')
-                .attr('x', legendX)
-                .attr('y', legendY)
-                .attr('width', legendWidth)
-                .attr('height', legendHeight)
-                .style('fill', 'url(#legend-gradient)')
-                .attr('stroke', '#252327')
-                .attr('stroke-width', 1);
-                
-            // Add legend labels
-            svg.append('text')
-                .attr('x', legendX)
-                .attr('y', legendY - 5)
-                .attr('text-anchor', 'start')
-                .attr('font-size', '10px')
-                .attr('fill', '#FFFFF3')
-                .text('$0');
-                
-            svg.append('text')
-                .attr('x', legendX + legendWidth)
-                .attr('y', legendY - 5)
-                .attr('text-anchor', 'end')
-                .attr('font-size', '10px')
-                .attr('fill', '#FFFFF3')
-                .text(formatCurrency(maxValue));
-                
-            svg.append('text')
-                .attr('x', legendX + (legendWidth / 2))
-                .attr('y', legendY - 5)
-                .attr('text-anchor', 'middle')
-                .attr('font-size', '10px')
-                .attr('fill', '#FFFFF3')
-                .text('Contract Value by State');
-        })
-        .catch(error => {
-            console.error("Error loading GeoJSON:", error);
-            displayError(containerId, `Error loading map data: ${error.message}`);
-        });
+    } catch (error) {
+        console.error("Error creating choropleth map:", error);
+        displayError(containerId, "Failed to render map: " + error.message);
+    }
 }
+
+
 function applyFiltersAndUpdateVisuals() {
     // --- Get Filter & Search Values ---
     const subAgencyFilter = document.getElementById('sub-agency-filter')?.value || '';
