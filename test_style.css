@@ -399,11 +399,18 @@ button:disabled, .button:disabled, .primary-button:disabled {
 /* ========================================= */
 .arr-result-section {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: space-between;
     gap: 16px;
-    margin-top: 20px; /* Increased from 10px */
-    padding: 10px 0;
+    margin-top: 20px;
+    text-align: center;
+}
+
+.arr-display {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
 }
 
 .arr-value-display {
@@ -412,20 +419,17 @@ button:disabled, .button:disabled, .primary-button:disabled {
     color: var(--color-primary);
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 10px;
 }
 
-.arr-display {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
+#arr-result {
+    font-size: 28px;
 }
 
-.arr-display label {
-    font-size: 14px;
-    color: var(--color-text-secondary);
+#arr-calculate-button {
+    min-width: 180px;
 }
-
 /* ========================================= */
 /* Chart & Table Containers                  */
 /* ========================================= */

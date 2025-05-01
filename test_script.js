@@ -341,7 +341,7 @@ function resetUIForNoDataset() {
     displayNoData('map-container', 'Select a dataset to view performance map.');
 
     // Reset ARR estimator
-    document.getElementById('arr-result').textContent = '--';
+    document.getElementById('arr-result').textContent = '$0 / yr';
     document.getElementById('arr-loading').style.display = 'none';
     document.getElementById('arr-error').style.display = 'none';
     document.getElementById('arr-no-data').style.display = 'none'; 
@@ -1459,7 +1459,7 @@ function calculateAverageARR() {
     const noDataDiv = document.getElementById('arr-no-data');
 
     // Reset UI elements
-    resultDiv.textContent = '--';
+resultDiv.textContent = '$0 / yr';
     resultDiv.style.display = 'none';
     loadingDiv.style.display = 'block';
     errorDiv.style.display = 'none';
@@ -1477,7 +1477,7 @@ function calculateAverageARR() {
                 loadingDiv.style.display = 'none';
                 noDataDiv.textContent = 'No contracts match the selected filter criteria for ARR calculation.';
                 noDataDiv.style.display = 'block';
-                resultDiv.textContent = formatCurrency(0) + " / year";
+                resultDiv.textContent = formatCurrency(0) + " / yr";
                 resultDiv.style.display = 'block';
                 return;
             }
@@ -1499,14 +1499,14 @@ function calculateAverageARR() {
 
             if (validContractsCount > 0) {
                 const averageARR = totalAnnualizedValue / validContractsCount;
-                resultDiv.textContent = formatCurrency(averageARR) + " / year";
+                resultDiv.textContent = formatCurrency(averageARR) + " / yr";
                 resultDiv.style.display = 'block';
                 console.log(`Average ARR: ${averageARR.toFixed(0)} (from ${validContractsCount} valid contracts)`);
                 noDataDiv.style.display = 'none';
             } else {
                 noDataDiv.textContent = 'No contracts suitable for ARR calculation found in the filtered set.';
                 noDataDiv.style.display = 'block';
-                resultDiv.textContent = formatCurrency(0) + " / year";
+                resultDiv.textContent = formatCurrency(0) + " / yr";
                 resultDiv.style.display = 'block';
                 console.log("No valid contracts found for ARR calculation after filtering.");
             }
@@ -1592,7 +1592,7 @@ function loadDataset(dataset) {
     }
 
     // Clear ARR result and reset filters
-    document.getElementById('arr-result').textContent = '--';
+	document.getElementById('arr-result').textContent = '$0 / yr';
     document.getElementById('arr-loading').style.display = 'none';
     document.getElementById('arr-error').style.display = 'none';
     document.getElementById('arr-no-data').style.display = 'none';
