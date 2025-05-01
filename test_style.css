@@ -1,78 +1,73 @@
-/* Import modern font */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-
+/* ========================================= */
+/* CSS Variables - Light Mode Muted Purples  */
+/* ========================================= */
 :root {
-    /* Primary Color Palette - Muted Purples */
-    --purple-900: #252327;  /* Dark background */
-    --purple-800: #3b3340;
-    --purple-700: #4e4554;
-    --purple-600: #615C66;  /* Outline color */
-    --purple-500: #797484;  /* Secondary color for charts */
-    --purple-400: #8e8a97;
-    --purple-300: #9993A1;  /* Primary color for charts */
-    --purple-200: #b5b0bd; 
-    --purple-100: #d7d4dc;
-    --purple-50: #efedf3;
+    /* Core Color Palette - Muted Purples */
+    --light-purple-50: #F4F2F6;  /* Lightest - Background */
+    --light-purple-100: #E9E6ED; /* Light - Surface Container */
+    --light-purple-200: #D7D4DC; /* Light Mid - Surface Variant */
+    --light-purple-300: #B5B0BD; /* Mid - Outline */
+    --light-purple-400: #9993A1; /* Mid Dark - Primary */
+    --light-purple-500: #797484; /* Dark - Secondary */
+    --light-purple-600: #615C66; /* Darkest - Text */
     
-    /* Neutral & Accent Colors */
-    --white: #FFFFF3;       /* Text color on dark backgrounds */
-    --black: #1a1a1a;
-    --gray-100: #f3f4f6;
-    --gray-200: #e5e7eb;
-    --gray-300: #d1d5db;
-    --gray-400: #9ca3af;
+    /* Neutral Colors */
+    --white: #FFFFFF;
+    --light-text: #36323A;      /* Dark Purple-Gray Text */
+    --dark-text: #252327;       /* Darkest Text */
     
-    --red-500: #ef4444;    /* Error state */
-    --green-500: #10b981;  /* Success state */
-    --blue-500: #3e95cd;   /* Info state */
+    /* Status Colors */
+    --red-500: #ef4444;         /* Error */
+    --green-500: #10b981;       /* Success */
+    --blue-500: #3e95cd;        /* Info */
     
-    /* Semantic color mapping */
-    --color-primary: var(--purple-300);
-    --color-primary-hover: var(--purple-400);
-    --color-primary-light: var(--purple-50);
+    /* Semantic Color Mapping */
+    --color-background: var(--white);
+    --color-surface: var(--light-purple-50); 
+    --color-surface-container: var(--light-purple-100);
+    --color-surface-variant: var(--light-purple-200);
     
-    --color-surface: var(--purple-900);      /* Card background */
-    --color-surface-hover: var(--purple-800);
-    --color-background: var(--purple-800);   /* Page background */
+    /* Text Colors */
+    --color-text-primary: var(--light-text);
+    --color-text-secondary: var(--light-purple-600);
+    --color-text-tertiary: var(--light-purple-500);
     
-    --color-text-primary: var(--white);
-    --color-text-secondary: var(--purple-100);
-    --color-text-tertiary: var(--purple-200);
+    /* Action Colors */
+    --color-primary: var(--light-purple-400);
+    --color-on-primary: var(--white);
+    --color-secondary: var(--light-purple-500);
+    --color-on-secondary: var(--white);
     
-    --color-outline: var(--purple-600);      /* Border color */
-    --color-border: var(--purple-700);
+    /* Border & Outline */
+    --color-outline: var(--light-purple-300);
+    --color-border: var(--light-purple-200);
     
-    --color-accent-positive: var(--green-500);
-    --color-accent-negative: var(--red-500);
-    --color-accent-info: var(--blue-500);
+    /* Chart Colors */
+    --chart-color-primary: var(--light-purple-400);   
+    --chart-color-secondary: var(--light-purple-500);
+    --chart-color-tertiary: var(--light-purple-300);  
     
-    /* Chart colors */
-    --color-charts-primary: var(--purple-300);   /* Primary chart color */
-    --color-charts-secondary: var(--purple-500); /* Secondary chart color */
-    --color-charts-tertiary: var(--purple-700);  /* Tertiary chart color */
-    --color-charts-background: var(--purple-900);
+    /* Status Colors */
+    --color-error: var(--red-500);
+    --color-success: var(--green-500);
+    --color-info: var(--blue-500);
     
-    /* Choropleth map colors */
-    --color-map-water: var(--purple-900);
-    --color-map-land: var(--purple-800);
-    --color-map-highlight: var(--purple-300);
-    
-    /* Layout values */
+    /* Layout Values */
     --border-radius-sm: 8px;
     --border-radius-md: 12px;
     --border-radius-lg: 16px;
-    --border-radius-xl: 20px;
     
-    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.2);
-    --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.25);
-    --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.3);
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.08);
+    --shadow-lg: 0 4px 6px rgba(0, 0, 0, 0.12);
     
     --transition-standard: all 0.2s ease;
-    --spacing-unit: 4px;
     --bento-gap: 20px;
 }
 
-/* Base styles */
+/* ========================================= */
+/* Base Styles                               */
+/* ========================================= */
 * {
     margin: 0;
     padding: 0;
@@ -80,7 +75,7 @@
 }
 
 body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: 'Inter', -apple-system, sans-serif;
     background-color: var(--color-background);
     color: var(--color-text-primary);
     line-height: 1.5;
@@ -88,7 +83,9 @@ body {
     font-size: 14px;
 }
 
-/* Header styles */
+/* ========================================= */
+/* Header Styles                             */
+/* ========================================= */
 .dashboard-header {
     margin-bottom: 24px;
 }
@@ -122,10 +119,10 @@ body {
     align-items: center;
     gap: 8px;
     padding: 8px 12px;
-    background-color: var(--color-surface);
+    background-color: var(--white);
     border-radius: var(--border-radius-lg);
     box-shadow: var(--shadow-sm);
-    border: 1px solid var(--color-outline);
+    border: 1px solid var(--color-border);
 }
 
 .date-number {
@@ -146,22 +143,24 @@ body {
     align-items: center;
     gap: 8px;
     padding: 8px 12px;
-    background-color: var(--color-surface);
+    background-color: var(--white);
     border-radius: var(--border-radius-lg);
     box-shadow: var(--shadow-sm);
     font-size: 13px;
     color: var(--color-text-secondary);
-    border: 1px solid var(--color-outline);
+    border: 1px solid var(--color-border);
 }
 
 .date-range svg {
     color: var(--color-primary);
 }
 
-/* Grid layout - Same as before */
+/* ========================================= */
+/* Grid Layout                               */
+/* ========================================= */
 .bento-grid {
     display: grid;
-    gap: var(--bento-gap, 20px);
+    gap: var(--bento-gap);
     grid-template-columns: repeat(3, 1fr);
     grid-template-areas:
         "controls controls controls"
@@ -181,16 +180,18 @@ body {
 #bento-map { grid-area: map; }
 #bento-sankey { grid-area: sankey; }
 
-/* Base card styles */
+/* ========================================= */
+/* Card Styles                               */
+/* ========================================= */
 .bento-box {
-    background-color: var(--color-surface);
+    background-color: var(--white);
     border-radius: var(--border-radius-lg);
     box-shadow: var(--shadow-md);
     padding: 20px;
     transition: var(--transition-standard);
     position: relative;
     overflow: hidden;
-    border: 1px solid var(--color-outline);
+    border: 1px solid var(--color-border);
 }
 
 .bento-box:hover {
@@ -198,7 +199,7 @@ body {
     transform: translateY(-2px);
 }
 
-/* Card header styles */
+/* Card Header Styles */
 .card-header {
     display: flex;
     align-items: center;
@@ -222,11 +223,11 @@ body {
     width: 32px;
     height: 32px;
     border-radius: 50%;
-    background-color: var(--purple-800);
+    background-color: var(--color-surface);
     color: var(--color-primary);
 }
 
-/* Card content styles */
+/* Card Content Styles */
 .card-content {
     display: flex;
     flex-direction: column;
@@ -234,7 +235,9 @@ body {
     flex-grow: 1;
 }
 
-/* Input styles */
+/* ========================================= */
+/* Form Element Styles                       */
+/* ========================================= */
 .input-select, .input-date, input[type="search"], input[type="text"] {
     width: 100%;
     padding: 10px 14px;
@@ -242,22 +245,22 @@ body {
     border-radius: var(--border-radius-md);
     font-size: 14px;
     color: var(--color-text-primary);
-    background-color: var(--purple-800);
+    background-color: var(--white);
     transition: var(--transition-standard);
 }
 
 .input-select:focus, .input-date:focus, input[type="search"]:focus, input[type="text"]:focus {
     outline: none;
     border-color: var(--color-primary);
-    box-shadow: 0 0 0 3px rgba(153, 147, 161, 0.3);
+    box-shadow: 0 0 0 3px rgba(153, 147, 161, 0.2);
 }
 
 .input-select option {
-    background-color: var(--color-surface);
+    background-color: var(--white);
     color: var(--color-text-primary);
 }
 
-/* Button styles */
+/* Button Styles */
 button, .button, .primary-button {
     display: flex;
     align-items: center;
@@ -269,26 +272,26 @@ button, .button, .primary-button {
     font-weight: 500;
     cursor: pointer;
     transition: var(--transition-standard);
-    border: 1px solid var(--color-outline);
+    border: 1px solid var(--color-border);
 }
 
 button, .button {
-    background-color: var(--purple-800);
+    background-color: var(--color-surface);
     color: var(--color-text-primary);
 }
 
 button:hover:not(:disabled), .button:hover:not(:disabled) {
-    background-color: var(--purple-700);
+    background-color: var(--color-surface-container);
 }
 
 .primary-button {
     background-color: var(--color-primary);
-    color: var(--purple-900);
+    color: var(--color-on-primary);
     border: none;
 }
 
 .primary-button:hover:not(:disabled) {
-    background-color: var(--color-primary-hover);
+    background-color: var(--light-purple-500);
 }
 
 button:disabled, .button:disabled, .primary-button:disabled {
@@ -296,11 +299,9 @@ button:disabled, .button:disabled, .primary-button:disabled {
     cursor: not-allowed;
 }
 
-button svg, .button svg {
-    color: var(--color-text-tertiary);
-}
-
-/* Dataset selector styles */
+/* ========================================= */
+/* Controls & Status                         */
+/* ========================================= */
 .dataset-selector {
     display: flex;
     align-items: center;
@@ -313,7 +314,6 @@ button svg, .button svg {
     color: var(--color-text-primary);
 }
 
-/* Status section styles */
 .status-section {
     display: flex;
     justify-content: space-between;
@@ -326,30 +326,30 @@ button svg, .button svg {
     border-radius: var(--border-radius-md);
     font-size: 13px;
     color: var(--color-text-secondary);
-    background-color: var(--purple-800);
+    background-color: var(--color-surface);
     border: 1px solid var(--color-border);
     flex-grow: 1;
 }
 
 #status-banner.error {
-    background-color: rgba(239, 68, 68, 0.2);
-    color: var(--color-accent-negative);
-    border-color: var(--color-accent-negative);
+    background-color: rgba(239, 68, 68, 0.1);
+    color: var(--color-error);
+    border-color: var(--color-error);
 }
 
 #status-banner.success {
-    background-color: rgba(16, 185, 129, 0.2);
-    color: var(--color-accent-positive);
-    border-color: var(--color-accent-positive);
+    background-color: rgba(16, 185, 129, 0.1);
+    color: var(--color-success);
+    border-color: var(--color-success);
 }
 
 #status-banner.info {
-    background-color: rgba(62, 149, 205, 0.2);
-    color: var(--color-accent-info);
-    border-color: var(--color-accent-info);
+    background-color: rgba(62, 149, 205, 0.1);
+    color: var(--color-info);
+    border-color: var(--color-info);
 }
 
-/* Filter styles */
+/* Filter Styles */
 .filter-container, .arr-filters {
     display: flex;
     flex-direction: column;
@@ -374,7 +374,9 @@ button svg, .button svg {
     color: var(--color-text-secondary);
 }
 
-/* ARR result styles */
+/* ========================================= */
+/* ARR Section                               */
+/* ========================================= */
 .arr-result-section {
     display: flex;
     align-items: center;
@@ -403,7 +405,9 @@ button svg, .button svg {
     color: var(--color-text-secondary);
 }
 
-/* Chart styles */
+/* ========================================= */
+/* Chart & Table Containers                  */
+/* ========================================= */
 .chart-container {
     position: relative;
     width: 100%;
@@ -414,7 +418,6 @@ button svg, .button svg {
     justify-content: center;
 }
 
-/* Fixed height for TAV/TCV chart */
 #bento-tavtcv .chart-container {
     height: 550px !important;
     min-height: 550px !important;
@@ -423,7 +426,6 @@ button svg, .button svg {
     margin-top: 20px;
 }
 
-/* Table container styles */
 .table-container {
     width: 100%;
     height: 100%;
@@ -433,7 +435,9 @@ button svg, .button svg {
     position: relative;
 }
 
-/* Table styles */
+/* ========================================= */
+/* Table Styles                              */
+/* ========================================= */
 table {
     width: 100%;
     border-collapse: collapse;
@@ -451,7 +455,7 @@ th {
     color: var(--color-text-secondary);
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    background-color: var(--purple-800);
+    background-color: var(--color-surface);
     position: sticky;
     top: 0;
     z-index: 1;
@@ -469,10 +473,9 @@ td.number {
 }
 
 tr:hover td {
-    background-color: var(--purple-800);
+    background-color: var(--color-surface);
 }
 
-/* Table summary styles */
 .table-summary, .summary-text {
     text-align: center;
     font-size: 12px;
@@ -482,7 +485,9 @@ tr:hover td {
     border-top: 1px solid var(--color-border);
 }
 
-/* Notes styles */
+/* ========================================= */
+/* Notes Section                             */
+/* ========================================= */
 .notes-content {
     color: var(--color-text-secondary);
     font-size: 13px;
@@ -507,9 +512,12 @@ tr:hover td {
 
 .notes-content strong {
     color: var(--color-text-primary);
+    font-weight: 600;
 }
 
-/* Loading and error states */
+/* ========================================= */
+/* Loading States                            */
+/* ========================================= */
 .loading-placeholder, .error-placeholder, .no-data-placeholder {
     display: flex;
     flex-direction: column;
@@ -525,20 +533,20 @@ tr:hover td {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(37, 35, 39, 0.8);
+    background-color: rgba(255, 255, 255, 0.8);
     border-radius: var(--border-radius-md);
     z-index: 10;
 }
 
 .error-placeholder {
-    color: var(--color-accent-negative);
+    color: var(--color-error);
 }
 
 .spinner {
     width: 24px;
     height: 24px;
     border-radius: 50%;
-    border: 3px solid var(--purple-800);
+    border: 3px solid var(--color-surface-variant);
     border-top-color: var(--color-primary);
     animation: spin 1s linear infinite;
 }
@@ -547,60 +555,13 @@ tr:hover td {
     to { transform: rotate(360deg); }
 }
 
-/* Error and warning messages */
-.error-message {
-    color: var(--color-accent-negative);
-    font-size: 13px;
-    padding: 8px 12px;
-    background-color: rgba(239, 68, 68, 0.1);
-    border-radius: var(--border-radius-md);
-    margin-top: 8px;
-}
-
-.no-data-message {
-    color: var(--color-text-tertiary);
-    font-size: 13px;
-    padding: 8px 12px;
-    background-color: var(--purple-800);
-    border-radius: var(--border-radius-md);
-    margin-top: 8px;
-}
-
-/* Search container styles */
-.search-container {
-    margin-top: 16px;
-}
-
-.search-container label {
-    display: block;
-    margin-bottom: 6px;
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--color-text-secondary);
-}
-
-/* Map specific styles */
-#choroplethMap {
-    background-color: var(--color-map-water);
-}
-
-#choroplethMap path {
-    transition: fill 0.3s ease, stroke-width 0.3s ease;
-}
-
-#choroplethMap path:hover {
-    stroke-width: 1.5;
-    stroke: var(--color-primary);
-}
-
-.tooltip {
-    pointer-events: none;
-    box-shadow: var(--shadow-md);
-    z-index: 100;
-}
-
-/* Sankey chart styles */
+/* ========================================= */
+/* Chart-Specific Styling                    */
+/* ========================================= */
+/* Sankey Chart */
 #sankeyChart path {
+    stroke: var(--chart-color-secondary);
+    stroke-opacity: 0.5;
     transition: stroke-opacity 0.3s ease;
 }
 
@@ -608,7 +569,23 @@ tr:hover td {
     stroke-opacity: 0.8;
 }
 
-/* Responsive Adjustments */
+#sankeyChart rect {
+    fill: var(--chart-color-primary);
+}
+
+/* Choropleth Map */
+#choroplethMap path {
+    transition: fill 0.3s ease, stroke-width 0.3s ease;
+}
+
+#choroplethMap path:hover {
+    stroke-width: 1.5px;
+    stroke: var(--color-primary);
+}
+
+/* ========================================= */
+/* Responsive Adjustments                    */
+/* ========================================= */
 @media (max-width: 1200px) {
     .bento-grid {
         grid-template-columns: repeat(2, 1fr);
@@ -656,56 +633,18 @@ tr:hover td {
         gap: 12px;
     }
 
-    .date-display {
-        padding: 6px 10px;
-    }
-
-    .date-number {
-        font-size: 22px;
-    }
-
-    .date-details {
-        font-size: 11px;
-    }
-
-    .date-range {
-        padding: 6px 10px;
-        font-size: 12px;
-    }
-
     .filter-row {
         flex-direction: column;
         gap: 12px;
-    }
-
-    #bento-tavtcv .chart-container {
-        height: 450px !important;
-        min-height: 450px !important;
-        max-height: 450px !important;
-        overflow-y: hidden !important;
-        overflow-x: auto !important;
-        justify-content: flex-start;
-        align-items: flex-start;
-    }
-
-    #tavTcvChart {
-        width: 100%;
-        max-width: 800px !important;
-        height: 430px !important;
-        max-height: 430px !important;
-    }
-
-    #contract-leaders-table-container {
-        overflow-x: auto;
     }
 
     #contract-leaders-table-container th:first-child,
     #contract-leaders-table-container td:first-child {
         position: sticky;
         left: 0;
-        background-color: var(--color-surface);
+        background-color: var(--white);
         z-index: 2;
-        box-shadow: 2px 0 5px rgba(0,0,0,0.2);
+        box-shadow: 2px 0 5px rgba(0,0,0,0.1);
     }
 
     #sankey-chart-container,
@@ -719,7 +658,6 @@ tr:hover td {
     }
 }
 
-/* Extra small screens */
 @media (max-width: 480px) {
     .arr-result-section {
         flex-direction: column;
