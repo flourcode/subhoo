@@ -1207,7 +1207,13 @@ function displaySankeyChart(sankeyData) {
         .append('g')
         .attr('transform', `translate(${margin.left},${margin.top})`);
     
-    // Add links
+    // Set better colors for nodes and links
+    const nodeColor = '#9993A1';      // Keep your existing color for nodes
+    const linkColor = '#D7D4DC';      // Lighter color for links (your light-purple-200)
+    const textColor = '#36323A';      // Dark text instead of white (your light-text)
+    const textBackground = 'rgba(255, 255, 255, 0.7)'; // Semi-transparent white background for text
+    
+    // Add links with better colors
     g.append('g')
         .selectAll('path')
         .data(links)
@@ -1215,13 +1221,13 @@ function displaySankeyChart(sankeyData) {
         .append('path')
         .attr('d', d3.sankeyLinkHorizontal())
         .attr('stroke-width', d => Math.max(1, d.width))
-        .attr('stroke', '#797484')
-        .attr('stroke-opacity', 0.5)
+        .attr('stroke', linkColor)    // Lighter color for links
+        .attr('stroke-opacity', 0.7)  // Higher opacity
         .attr('fill', 'none')
         .append('title')
         .text(d => `${d.source.name} → ${d.target.name}\n${formatCurrency(d.value)}`);
     
-    // Add nodes
+    // Add nodes with existing color
     const node = g.append('g')
         .selectAll('rect')
         .data(nodes)
@@ -1231,12 +1237,26 @@ function displaySankeyChart(sankeyData) {
         .attr('y', d => d.y0)
         .attr('height', d => d.y1 - d.y0)
         .attr('width', d => d.x1 - d.x0)
-        .attr('fill', '#9993A1')
+        .attr('fill', nodeColor)
         .attr('stroke', '#E9E6ED')
         .append('title')
         .text(d => `${d.name}\n${formatCurrency(d.value)}`);
     
-    // Add node labels
+    // Add text background for better readability
+    g.append('g')
+        .selectAll('rect')
+        .data(nodes)
+        .enter()
+        .append('rect')
+        .attr('x', d => d.x0 < innerWidth / 2 ? d.x1 + 2 : d.x0 - 112) // Position based on left/right
+        .attr('y', d => (d.y1 + d.y0) / 2 - 10)
+        .attr('width', 110)
+        .attr('height', 20)
+        .attr('fill', textBackground)
+        .attr('rx', 3) // Rounded corners
+        .style('pointer-events', 'none'); // Ensures clicks go through to the node
+    
+    // Add node labels with dark text
     g.append('g')
         .selectAll('text')
         .data(nodes)
@@ -1248,9 +1268,9 @@ function displaySankeyChart(sankeyData) {
         .attr('text-anchor', d => d.x0 < innerWidth / 2 ? 'start' : 'end')
         .text(d => d.name)
         .attr('font-size', '10px')
-        .attr('fill', '#FFFFF3');
+        .attr('fill', textColor)      // Dark text instead of white
+        .style('pointer-events', 'none'); // Ensures clicks go through to the node
 }
-
 
 // --- Choropleth Map Functions ---
 function processMapData(data) {
