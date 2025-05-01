@@ -538,7 +538,126 @@ function displayContractLeadersTable(leaderData) {
         container.appendChild(summaryPara);
     }
 }
+function processExpiringData(data) {
+    console.log("Processing data for expiring contracts...");
+    if (!data || data.length === 0) return [];
 
+    const sixMonthsFromNow = new Date();
+    sixMonthsFromNow.setMonth(sixMonthsFromNow.getMonth() + 6); // Calculate date 6 months ahead
+    const today = new Date();
+
+    const expiringContracts = data.filter(row => {
+        // Ensure you have the correct field name for the end date
+        const endDateField = 'period_of_performance_current_end_date'; // <<< CHANGE IF YOUR FIELD IS DIFFERENT
+        const endDate = row[endDateField + '_parsed']; // Use pre-parsed date if available
+
+        // Check if endDate is a valid Date object
+        if (!endDate || !(endDate instanceof Date) || isNaN(endDate.getTime())) {
+            // console.warn(`Invalid or missing end date for row:`, row);
+            return false;
+        }
+
+        // Check if the end date is between today and 6 months from now
+        return endDate >= today && endDate <= sixMonthsFromNow;
+    });
+
+    // Sort by end date ascending (soonest expiring first)
+    expiringContracts.sort((a, b) => {
+         const endDateField = 'period_of_performance_current_end_date_parsed';
+         const dateA = a[endDateField];
+         const dateB = b[endDateField];
+         if (!dateA) return 1; // Put items without dates last
+         if (!dateB) return -1;
+         return dateA - dateB;
+    });
+
+
+    console.log(`Found ${expiringContracts.length} contracts expiring in the next 6 months.`);
+    return expiringContracts;
+}
+
+
+// --- Add near other 'display' functions ---
+function displayExpiringTable(expiringData) {
+    const containerId = 'expiring-contracts-table-container';
+    const container = document.getElementById(containerId);
+    if (!container) {
+        console.error(`Container ${containerId} not found.`);
+        return;
+    }
+
+    setLoading(containerId, false); // Turn off loading spinner for this container
+
+    // Clear previous content (important!)
+    container.innerHTML = '';
+
+    if (!expiringData || expiringData.length === 0) {
+        displayNoData(containerId, 'No contracts found expiring in the next 6 months.');
+        return;
+    }
+
+    // --- Create Table Structure (similar to displayContractLeadersTable) ---
+    const tableWrapper = document.createElement('div');
+    tableWrapper.className = 'table-wrapper'; // Reuse class if needed
+    tableWrapper.style.overflow = 'auto';
+    tableWrapper.style.maxHeight = '300px'; // Adjust as needed
+
+    const table = document.createElement('table');
+    // table.className = '...'; // Add classes as needed
+
+    const thead = table.createTHead();
+    // thead.className = '...';
+    const headerRow = thead.insertRow();
+    // ++ DEFINE YOUR TABLE HEADERS HERE ++
+    // Example headers (customize based on your CSV fields!)
+    const headers = [
+        { text: 'Contract ID / PIID', key: 'award_id_piid' }, // <<< CHANGE KEY IF NEEDED
+        { text: 'Recipient Name', key: 'recipient_name' }, // <<< CHANGE KEY IF NEEDED
+        { text: 'End Date', key: 'period_of_performance_current_end_date' }, // <<< CHANGE KEY IF NEEDED
+        { text: 'Current Value', key: 'current_total_value_of_award', format: 'currency', class: 'number' }, // <<< CHANGE KEY IF NEEDED
+        // Add more relevant headers/keys from your data
+    ];
+
+    headers.forEach(headerInfo => {
+        const th = document.createElement('th');
+        th.textContent = headerInfo.text;
+        // th.scope = 'col';
+        // if (headerInfo.class) th.className = headerInfo.class;
+        headerRow.appendChild(th);
+    });
+
+    const tbody = table.createTBody();
+    // tbody.className = '...';
+
+    expiringData.forEach(contract => {
+        const row = tbody.insertRow();
+        headers.forEach(headerInfo => {
+            let cell = row.insertCell();
+            let value = contract[headerInfo.key] || '-'; // Get value using the key
+
+            // Format date or currency if specified
+            if (headerInfo.key === 'period_of_performance_current_end_date' && value instanceof Date) {
+                 // Format date nicely (e.g., YYYY-MM-DD)
+                 value = value.toISOString().split('T')[0];
+            } else if (headerInfo.format === 'currency') {
+                 value = formatCurrency(value); // Use your existing utility
+            }
+
+            cell.textContent = truncateText(value, 40); // Truncate long text
+             cell.title = contract[headerInfo.key] || ''; // Full value on hover
+             // if (headerInfo.class) cell.className = headerInfo.class;
+        });
+    });
+
+    tableWrapper.appendChild(table);
+    container.appendChild(tableWrapper); // Add table to the container
+
+     // Optional: Add summary text
+     const summaryPara = document.createElement('p');
+     // summaryPara.className = 'table-summary'; // Use existing class
+     summaryPara.textContent = `Showing ${expiringData.length} expiring contracts.`;
+     container.appendChild(summaryPara);
+}
         // --- Chart 2: TAV vs TCV Tracker ---
          function processTavTcvData(data) {
              console.log("Processing TAV/TCV data...");
@@ -804,86 +923,133 @@ function displayTavTcvChart(chartData) {
          }
 
 
-        // Function to apply filters and update relevant charts/tables
-        function applyFiltersAndUpdateVisuals() {
-            const subAgencyFilter = document.getElementById('sub-agency-filter').value;
-            const naicsFilter = document.getElementById('naics-filter').value;
-            // Get date strings directly from input, parse them within the filter logic
-            const startDateString = document.getElementById('arr-start-date').value;
-            const endDateString = document.getElementById('arr-end-date').value;
+// Replace your existing applyFiltersAndUpdateVisuals function with this one
 
-            console.log("Applying filters:", { subAgencyFilter, naicsFilter, startDateString, endDateString });
+function applyFiltersAndUpdateVisuals() {
+    // --- Get Filter & Search Values ---
+    const subAgencyFilter = document.getElementById('sub-agency-filter')?.value || '';
+    const naicsFilter = document.getElementById('naics-filter')?.value || '';
+    const startDateString = document.getElementById('arr-start-date')?.value || '';
+    const endDateString = document.getElementById('arr-end-date')?.value || '';
+    const searchTerm = document.getElementById('search-input')?.value.trim().toLowerCase() || ''; // Get search term, trim whitespace, lowercase
 
-            if (!rawData || rawData.length === 0) {
-                 console.warn("No raw data available to filter.");
-                 // Ensure UI reflects no data state if dataset wasn't loaded
-                 if (!currentDataset) {
-                     resetUIForNoDataset();
-                 } else {
-                    // If dataset loaded but rawData is empty (e.g., processing error)
-                     displayNoData('contract-leaders-table-container', 'No data loaded to filter.');
-                     displayNoData('tav-tcv-chart-container', 'No data loaded to filter.');
-                 }
-                 return []; // Return empty array as no data to filter
-             }
+    console.log("Applying filters/search:", { subAgencyFilter, naicsFilter, startDateString, endDateString, searchTerm });
 
-             // Parse filter dates only once
-             const filterStartDate = startDateString ? parseDate(startDateString) : null;
-             const filterEndDate = endDateString ? parseDate(endDateString) : null;
+    // --- Set Loading States for ALL dynamic cards ---
+    // Existing cards
+    setLoading('contract-leaders-table-container', true);
+    setLoading('tav-tcv-chart-container', true);
+    // New cards
+    setLoading('expiring-contracts-table-container', true);
+    setLoading('sankey-chart-container', true);
+    setLoading('map-container', true);
+    // Note: ARR estimator has its own loading via its button click
 
+    // --- Check for Raw Data ---
+    if (!rawData || rawData.length === 0) {
+        console.warn("No raw data available to filter.");
+        // Turn off loading and show appropriate messages if no data loaded
+        if (!currentDataset) {
+            resetUIForNoDataset(); // Resets everything if no dataset selected
+        } else {
+            // If dataset was loaded but resulted in empty rawData
+            displayNoData('contract-leaders-table-container', 'No data loaded.');
+            displayNoData('tav-tcv-chart-container', 'No data loaded.');
+            displayNoData('expiring-contracts-table-container', 'No data loaded.');
+            displayNoData('sankey-chart-container', 'No data loaded.');
+            displayNoData('map-container', 'No data loaded.');
+        }
+        // Turn off loading explicitly again in case resetUI or displayNoData doesn't handle all
+        setLoading('contract-leaders-table-container', false);
+        setLoading('tav-tcv-chart-container', false);
+        setLoading('expiring-contracts-table-container', false);
+        setLoading('sankey-chart-container', false);
+        setLoading('map-container', false);
+        return []; // Return empty array as no data to filter
+    }
 
-             // Filter the raw data based on selected criteria
-             const filteredData = rawData.filter(row => {
-                 // Check Sub-Agency Filter
-                 const subAgency = row.awarding_sub_agency_name?.trim();
-                 if (subAgencyFilter && subAgency !== subAgencyFilter) return false;
+    // --- Apply Search (Placeholder - expand fields later) ---
+    let dataAfterSearch = rawData; // Start with all raw data
+    if (searchTerm !== '') {
+        console.log(`Applying search for term: "${searchTerm}"`);
+        dataAfterSearch = rawData.filter(row => {
+            // ** Define which fields to search here **
+            // Example: Search recipient name and contract ID/PIID
+            const recipientMatch = row.recipient_name?.toLowerCase().includes(searchTerm);
+            const piidMatch = row.award_id_piid?.toLowerCase().includes(searchTerm);
+            const descriptionMatch = row.transaction_description?.toLowerCase().includes(searchTerm); // Add more fields as needed
 
-                 // Check NAICS Filter
-                 const naics = row.naics_code?.toString().trim();
-                 if (naicsFilter && naics !== naicsFilter) return false;
+            // Return true if the search term is found in ANY of the specified fields
+            return recipientMatch || piidMatch || descriptionMatch; // Add more || conditions
+        });
+        console.log(`Data count after search: ${dataAfterSearch.length}`);
+    }
 
-                 // Check Date Filter (Period of Performance Overlap)
-                 if (filterStartDate || filterEndDate) {
-                      const popStartDate = row.period_of_performance_start_date_parsed; // Use pre-parsed date
-                      const popEndDate = row.period_of_performance_current_end_date_parsed; // Use pre-parsed date
+    // --- Apply Filters (SubAgency, NAICS, Dates) ---
+    const filterStartDate = startDateString ? parseDate(startDateString) : null;
+    const filterEndDate = endDateString ? parseDate(endDateString) : null;
 
-                      // If contract dates are invalid, exclude it from date-filtered results
-                      if (!popStartDate || !popEndDate || !(popStartDate instanceof Date) || !(popEndDate instanceof Date)) {
-                          return false;
-                      }
+    // Filter the data *after* search has been applied
+    const filteredData = dataAfterSearch.filter(row => {
+        // Check Sub-Agency Filter
+        const subAgency = row.awarding_sub_agency_name?.trim();
+        if (subAgencyFilter && subAgency !== subAgencyFilter) return false;
 
-                      // Check for overlap:
-                      // Contract must end *after* or *on* the filter start date (if specified)
-                      const endsAfterFilterStart = !filterStartDate || popEndDate >= filterStartDate;
-                      // Contract must start *before* or *on* the filter end date (if specified)
-                      const startsBeforeFilterEnd = !filterEndDate || popStartDate <= filterEndDate;
+        // Check NAICS Filter
+        const naics = row.naics_code?.toString().trim();
+        if (naicsFilter && naics !== naicsFilter) return false;
 
-                      // If either condition is false, there is no overlap
-                      if (!endsAfterFilterStart || !startsBeforeFilterEnd) {
-                          return false;
-                      }
-                 }
+        // Check Date Filter (Period of Performance Overlap)
+        if (filterStartDate || filterEndDate) {
+            const popStartDate = row.period_of_performance_start_date_parsed;
+            const popEndDate = row.period_of_performance_current_end_date_parsed;
 
-                 // If all checks pass, include the row
-                 return true;
-             });
-
-            console.log(`Filtered data count: ${filteredData.length} records`);
-
-            // Update visuals that depend on the *full* filtered dataset
-            // (Leaders and TAV/TCV process the filtered data internally to get top N)
-            const leaderData = processContractLeaders(filteredData);
-            displayContractLeadersTable(leaderData);
-
-            const tavTcvData = processTavTcvData(filteredData); // Processes filtered data for top 20 TCV
-            displayTavTcvChart(tavTcvData);
-
-            // NOTE: ARR calculation uses this filtered data but is triggered separately by its button.
-             // We return filteredData so the ARR function can use it directly.
-            return filteredData;
+            if (!popStartDate || !popEndDate || !(popStartDate instanceof Date) || !(popEndDate instanceof Date)) {
+                return false; // Exclude if dates are invalid for date filtering
+            }
+            const endsAfterFilterStart = !filterStartDate || popEndDate >= filterStartDate;
+            const startsBeforeFilterEnd = !filterEndDate || popStartDate <= filterEndDate;
+            if (!endsAfterFilterStart || !startsBeforeFilterEnd) {
+                return false; // No overlap
+            }
         }
 
+        // If all checks pass (including surviving the initial search filter), include the row
+        return true;
+    });
 
+    console.log(`Filtered data count (after search & filters): ${filteredData.length} records`);
+
+    // --- Process and Update Visuals ---
+
+    // Existing Visuals
+    const leaderData = processContractLeaders(filteredData);
+    displayContractLeadersTable(leaderData); // Handles its own loading off/no data
+
+    const tavTcvData = processTavTcvData(filteredData);
+    displayTavTcvChart(tavTcvData); // Handles its own loading off/no data
+
+    // New Visuals (Implemented)
+    const expiringData = processExpiringData(filteredData);
+    displayExpiringTable(expiringData); // Handles its own loading off/no data
+
+    // New Visuals (Placeholders for now)
+    // Sankey Chart - TBD
+    // const sankeyData = processSankeyData(filteredData); // Define this function later
+    // displaySankeyChart(sankeyData); // Define this function later
+    setLoading('sankey-chart-container', false); // Turn off loading
+    displayNoData('sankey-chart-container', 'Sankey chart not implemented yet.'); // Show placeholder message
+
+    // Choropleth Map - TBD
+    // const mapData = processMapData(filteredData); // Define this function later
+    // displayChoroplethMap(mapData, geoJson); // Define this function later - Need geoJson loaded
+    setLoading('map-container', false); // Turn off loading
+    displayNoData('map-container', 'Map not implemented yet.'); // Show placeholder message
+
+
+    // Return the final filtered data, primarily for the separate ARR calculation button
+    return filteredData;
+}
 
         function calculateAverageARR() {
             const resultDiv = document.getElementById('arr-result');
@@ -1278,7 +1444,20 @@ function displayTavTcvChart(chartData) {
              } else {
                  console.error("Refresh button not found.");
              }
-
+			    const searchInput = document.getElementById('search-input');
+    if (searchInput) {
+         // Use 'input' event for real-time feedback, but debounce it!
+         let debounceTimer;
+        searchInput.addEventListener('input', () => {
+             clearTimeout(debounceTimer);
+             debounceTimer = setTimeout(() => {
+                 console.log("Search input changed, triggering filter update...");
+                 applyFiltersAndUpdateVisuals(); // Re-run filters/updates after delay
+             }, 500); // 500ms delay - adjust as needed
+         });
+    } else {
+         console.error("Search input element not found.");
+    }
              // Filters that trigger visual updates (excluding ARR calculation)
              const subAgencyFilter = document.getElementById('sub-agency-filter');
              const naicsFilter = document.getElementById('naics-filter');
