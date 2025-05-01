@@ -392,12 +392,16 @@ body {
     justify-content: center;
 }
 
-/* ENHANCED TCV vs TAV chart container */
-#bento-tavtcv .chart-container {
-    min-height: 500px; /* Increased from 400px */
-    margin-top: 20px;
-}
 
+/* Fixed height for TAV/TCV chart */
+#bento-tavtcv .chart-container {
+    height: 550px !important; /* Fixed height */
+    min-height: 550px !important;
+    max-height: 550px !important;
+    overflow: hidden !important; /* Prevent overflow */
+	margin-top: 20px;
+}
+}
 /* ARR result styles */
 #arr-result-container {
     text-align: center;
@@ -534,10 +538,14 @@ tr:hover td {
 #bento-arr { grid-area: arr; }
 #bento-notes { grid-area: notes; }
 
-/* Responsive adjustments */
+/* =================================== */
+/* Responsive Adjustments - REWRITTEN */
+/* =================================== */
+
+/* Medium Screens (Tablets, smaller laptops) */
 @media (max-width: 1200px) {
     .bento-grid {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(2, 1fr); /* Switch to 2 columns */
         grid-template-areas:
             "controls controls"
             "tavtcv tavtcv"
@@ -545,85 +553,111 @@ tr:hover td {
             "arr arr"
             "notes notes";
     }
-    
+
+    /* Keep the date display visible on medium screens */
+    /* Removed the display: none; rule that was here */
 }
 
+/* Small Screens (Mobile) */
 @media (max-width: 768px) {
     body {
-        padding: 16px;
+        padding: 16px; /* Reduce body padding */
     }
-    
+
     .bento-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr; /* Switch to 1 column */
         grid-template-areas:
             "controls"
             "tavtcv"
             "leaders"
             "arr"
             "notes";
-        gap: 16px;
+        gap: 16px; /* Slightly reduce gap */
     }
-    
+
+    /* --- Header Adjustments --- */
     .header-content {
-        flex-direction: column;
+        flex-direction: column; /* Stack title and controls */
         align-items: flex-start;
         gap: 16px;
     }
-    
+
     .header-controls {
         width: 100%;
-        justify-content: space-between;
+        justify-content: space-between; /* Space out date/time and refresh */
+        flex-wrap: wrap; /* Allow wrapping if needed */
+        gap: 12px; /* Add gap for wrapped items */
     }
-    
+
+    /* Make date/time elements slightly smaller if needed */
+    .date-display {
+        padding: 6px 10px;
+    }
+     .date-number {
+        font-size: 22px;
+    }
+    .date-details {
+        font-size: 11px;
+    }
+     .date-range { /* Now holds the time */
+        padding: 6px 10px;
+        font-size: 12px;
+    }
+
+    /* --- Filter Adjustments --- */
     .filter-row {
-        flex-direction: column;
+        flex-direction: column; /* Stack filter groups */
         gap: 12px;
     }
-    
-    #tav-tcv-chart-container {
-        min-height: 350px;
-    }
-    
-    /* Mobile chart fixes */
+
+    /* --- TAV vs TCV Chart Adjustments --- */
     #bento-tavtcv .chart-container {
-        height: 350px !important;
-        max-height: 350px !important;
+        /* Use the larger height, allow horizontal scroll if content overflows */
+        height: 450px !important;
+        min-height: 450px !important; /* Ensure height is consistent */
+        max-height: 450px !important;
         overflow-y: hidden !important;
-        overflow-x: auto !important;
+        overflow-x: auto !important; /* Keep horizontal scroll on CONTAINER */
         justify-content: flex-start;
         align-items: flex-start;
     }
-    
-    #tavTcvChart {
-        height: 330px !important;
-        max-height: 330px !important;
-        min-width: 480px;
-        max-width: 800px !important;
+
+    #tavTcvChart { /* The Canvas */
+        /* Allow canvas to shrink, Chart.js will handle responsiveness */
+        /* Removed min-width: 480px; */
+        width: 100%; /* Make canvas try to fill container width */
+        max-width: 800px !important; /* Keep a reasonable max width */
+        height: 430px !important; /* Adjust height slightly for container padding */
+        max-height: 430px !important;
     }
-    
-    /* Contract leaders table on mobile */
+
+    /* --- Contract Leaders Table Adjustments --- */
     #contract-leaders-table-container {
-        overflow-x: auto;
+        overflow-x: auto; /* Keep horizontal scrolling on the container */
     }
-    
+
     #contract-leaders-table-container table {
-        min-width: 650px;
+        /* Removed min-width: 650px; */
+        /* Let table content determine the width needed for scrolling */
+        width: 100%; /* Ensure table tries to fill container initially */
     }
-    
+
+    /* Keep sticky header and first column for scrollable table */
+    #contract-leaders-table-container th {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        background-color: var(--color-bg-secondary); /* Match header bg */
+    }
+
     #contract-leaders-table-container th:first-child,
     #contract-leaders-table-container td:first-child {
         position: sticky;
         left: 0;
-        background-color: var(--color-bg-primary);
-        z-index: 2;
-        box-shadow: 2px 0 5px rgba(0,0,0,0.05);
+        background-color: var(--color-bg-primary); /* Match row bg */
+        z-index: 2; /* Ensure it's above sticky header */
+        box-shadow: 2px 0 5px rgba(0,0,0,0.05); /* Visual cue */
     }
-}
-/* Fixed height for TAV/TCV chart */
-#bento-tavtcv .chart-container {
-    height: 550px !important; /* Fixed height */
-    min-height: 550px !important;
-    max-height: 550px !important;
-    overflow: hidden !important; /* Prevent overflow */
-}
+
+} /* End of @media (max-width: 768px) */
 
