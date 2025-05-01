@@ -1076,7 +1076,7 @@ function displaySankeyChart(sankeyData) {
         .attr('height', d => d.y1 - d.y0)
         .attr('width', d => d.x1 - d.x0)
         .attr('fill', '#9993A1')
-        .attr('stroke', '#252327')
+        .attr('stroke', '#E9E6ED')
         .append('title')
         .text(d => `${d.name}\n${formatCurrency(d.value)}`);
     
@@ -1198,9 +1198,10 @@ function displayChoroplethMap(mapData) {
         const stateValues = Object.values(mapData).map(d => d.value);
         const maxValue = d3.max(stateValues) || 0;
         
-        const colorScale = d3.scaleSequential()
-            .interpolator(d3.interpolateBlues)
-            .domain([0, maxValue]);
+        // Create color scale for map
+		const colorScale = d3.scaleSequential()
+		.domain([0, maxValue])
+		.interpolator(d3.interpolate('#E9E6ED', '#9993A1')); // Light to medium purple
         
         // Create tooltip
         const tooltip = d3.select(mapDiv)
