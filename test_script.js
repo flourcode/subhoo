@@ -1370,7 +1370,7 @@ function applyFiltersAndUpdateVisuals() {
     const naicsFilter = document.getElementById('naics-filter')?.value || '';
     const searchTerm = document.getElementById('search-input')?.value.trim().toLowerCase() || '';
 
-    console.log("Applying filters/search:", { subAgencyFilter, naicsFilter, startDateString, endDateString, searchTerm });
+    console.log("Applying filters/search:", { subAgencyFilter, naicsFilter, searchTerm });
 
     // --- Set Loading States for ALL dynamic cards ---
     setLoading('contract-leaders-table-container', true);
@@ -1409,9 +1409,6 @@ function applyFiltersAndUpdateVisuals() {
         console.log(`Data count after search: ${dataAfterSearch.length}`);
     }
 
-    // --- Apply Filters (SubAgency, NAICS, Dates) ---
-    const filterStartDate = startDateString ? parseDate(startDateString) : null;
-    const filterEndDate = endDateString ? parseDate(endDateString) : null;
 
     // Filter the data *after* search has been applied
     const filteredData = dataAfterSearch.filter(row => {
