@@ -1195,7 +1195,6 @@ function processSankeyData(data) {
     console.log(`Processed data for Sankey chart: ${nodesObjects.length} nodes, ${linksObjects.length} links`);
     return { nodes: nodesObjects, links: linksObjects };
 }
-
 function displaySankeyChart(sankeyData) {
     const containerId = 'sankey-chart-container';
     const container = document.getElementById(containerId);
@@ -1205,9 +1204,6 @@ function displaySankeyChart(sankeyData) {
         return;
     }
 
-    // Clean up any existing tooltips
-    cleanupTooltips();
-    
     // Clear any previous content and create a new SVG
     container.innerHTML = '';
     const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
@@ -1216,7 +1212,7 @@ function displaySankeyChart(sankeyData) {
     svg.setAttribute('height', '100%');
     container.appendChild(svg);
     
-    setLoading(containerId, false); // Turn off loading spinner
+    setLoading(containerId, false);
     
     if (!sankeyData || !sankeyData.nodes || !sankeyData.links || 
         sankeyData.nodes.length === 0 || sankeyData.links.length === 0) {
@@ -1225,78 +1221,96 @@ function displaySankeyChart(sankeyData) {
     }
     
     try {
-        // Create simple tooltip div directly
-        let tooltip = document.createElement('div');
-        tooltip.className = 'sankey-tooltip';
+        // Check if we need to remove old tooltips
+        const oldTooltip = document.getElementById('sankey-tooltip-direct');
+        if (oldTooltip) {
+            document.body.removeChild(oldTooltip);
+        }
+        
+        // Create a simple tooltip div (standalone, not related to other CSS)
+        const tooltip = document.createElement('div');
+        tooltip.id = 'sankey-tooltip-direct';
         tooltip.style.position = 'absolute';
         tooltip.style.padding = '10px';
-        tooltip.style.background = 'white';
-        tooltip.style.border = '1px solid #ccc';
+        tooltip.style.backgroundColor = '#FFFFFF';
+        tooltip.style.color = '#36323A';
+        tooltip.style.border = '1px solid #D7D4DC';
         tooltip.style.borderRadius = '4px';
         tooltip.style.pointerEvents = 'none';
-        tooltip.style.opacity = '0';
         tooltip.style.zIndex = '9999';
         tooltip.style.display = 'none';
+        tooltip.style.fontSize = '12px';
+        tooltip.style.boxShadow = '0 2px 4px rgba(0,0,0,0.2)';
         document.body.appendChild(tooltip);
         
-        // Set dimensions and margins
+        // Check theme for tooltip appearance
+        const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
+        if (isDarkMode) {
+            tooltip.style.backgroundColor = '#252229';
+            tooltip.style.color = '#F4F2F6';
+            tooltip.style.border = '1px solid #3A373E';
+        }
+        
         const width = container.clientWidth || 600;
         const height = container.clientHeight || 400;
         const margin = {top: 20, right: 20, bottom: 20, left: 20};
         
-        // Check theme
-        const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
-        const textColor = isDarkMode ? '#F4F2F6' : '#36323A';
+        // Choose colors based on theme
         const nodeColor = isDarkMode ? '#A29AAA' : '#9993A1';
         const linkColor = isDarkMode ? '#3A373E' : '#D7D4DC';
-        
-        if (isDarkMode) {
-            tooltip.style.background = '#252229';
-            tooltip.style.color = '#F4F2F6';
-            tooltip.style.border = '1px solid #3A373E';
-        }
+        const textColor = isDarkMode ? '#F4F2F6' : '#36323A';
         
         // Create D3 selection
         const svgSelection = d3.select(svg)
             .attr('width', width)
             .attr('height', height);
         
-        // Prepare data for D3 Sankey
-        const nodesArray = Array.from(sankeyData.nodes, (node, i) => ({
+        // Reset data for Sankey
+        const nodesData = sankeyData.nodes.map((node, i) => ({
             name: node.name,
             id: i
         }));
         
-        const linksArray = sankeyData.links.map(link => {
-            const source = typeof link.source === 'object' ? 
-                nodesArray.findIndex(n => n.name === link.source.name) : 
-                Number(link.source);
+        const linksData = [];
+        sankeyData.links.forEach(link => {
+            // Handle both object and index references
+            let sourceIndex = typeof link.source === 'object' ? 
+                nodesData.findIndex(n => n.name === link.source.name) : 
+                parseInt(link.source);
                 
-            const target = typeof link.target === 'object' ? 
-                nodesArray.findIndex(n => n.name === link.target.name) : 
-                Number(link.target);
-                
-            return {
-                source: source >= 0 ? source : 0,
-                target: target >= 0 ? target : 0,
-                value: link.value
-            };
-        }).filter(link => link.source !== link.target);
+            let targetIndex = typeof link.target === 'object' ? 
+                nodesData.findIndex(n => n.name === link.target.name) : 
+                parseInt(link.target);
+            
+            // Only add valid links 
+            if (sourceIndex !== targetIndex && 
+                sourceIndex >= 0 && sourceIndex < nodesData.length &&
+                targetIndex >= 0 && targetIndex < nodesData.length) {
+                linksData.push({
+                    source: sourceIndex,
+                    target: targetIndex,
+                    value: link.value || 1  // Default to 1 if no value
+                });
+            }
+        });
         
-        // Generate sankey layout
+        // Check if we have valid data
+        if (nodesData.length === 0 || linksData.length === 0) {
+            displayNoData(containerId, 'Insufficient data for Sankey diagram.');
+            return;
+        }
+        
+        // Create Sankey generator
         const sankey = d3.sankey()
             .nodeWidth(15)
             .nodePadding(10)
             .extent([[margin.left, margin.top], [width - margin.right, height - margin.bottom]]);
-            
-        // Create a copy of data to avoid reference issues
-        const sankeyData2 = {
-            nodes: JSON.parse(JSON.stringify(nodesArray)),
-            links: JSON.parse(JSON.stringify(linksArray))
-        };
         
-        // Process through sankey
-        const graph = sankey(sankeyData2);
+        // Apply Sankey to data
+        const graph = sankey({
+            nodes: nodesData.map(d => Object.assign({}, d)),
+            links: linksData.map(d => Object.assign({}, d))
+        });
         
         // Draw links
         svgSelection.append('g')
@@ -1309,17 +1323,19 @@ function displaySankeyChart(sankeyData) {
             .attr('stroke-width', d => Math.max(1, d.width))
             .attr('stroke-opacity', 0.5)
             .attr('fill', 'none')
-            .style('cursor', 'pointer')
+            .attr('cursor', 'pointer')
             .on('mouseover', function(event, d) {
-                tooltip.innerHTML = `
-                    <strong>${d.source.name} → ${d.target.name}</strong>
+                // Show tooltip
+                const html = `
+                    <div style="font-weight: bold; margin-bottom: 5px;">${d.source.name} → ${d.target.name}</div>
                     <div>Value: ${formatCurrency(d.value)}</div>
                 `;
+                tooltip.innerHTML = html;
                 tooltip.style.display = 'block';
-                tooltip.style.opacity = '1';
                 tooltip.style.left = (event.pageX + 10) + 'px';
                 tooltip.style.top = (event.pageY - 28) + 'px';
                 
+                // Highlight link
                 d3.select(this).attr('stroke-opacity', 0.8);
             })
             .on('mousemove', function(event) {
@@ -1328,8 +1344,6 @@ function displaySankeyChart(sankeyData) {
             })
             .on('mouseout', function() {
                 tooltip.style.display = 'none';
-                tooltip.style.opacity = '0';
-                
                 d3.select(this).attr('stroke-opacity', 0.5);
             });
         
@@ -1345,17 +1359,19 @@ function displaySankeyChart(sankeyData) {
             .attr('width', d => Math.max(1, d.x1 - d.x0))
             .attr('fill', nodeColor)
             .attr('stroke', isDarkMode ? '#4A474E' : '#E9E6ED')
-            .style('cursor', 'pointer')
+            .attr('cursor', 'pointer')
             .on('mouseover', function(event, d) {
-                tooltip.innerHTML = `
-                    <strong>${d.name}</strong>
+                // Show tooltip
+                const html = `
+                    <div style="font-weight: bold; margin-bottom: 5px;">${d.name}</div>
                     <div>Total Value: ${formatCurrency(d.value)}</div>
                 `;
+                tooltip.innerHTML = html;
                 tooltip.style.display = 'block';
-                tooltip.style.opacity = '1';
                 tooltip.style.left = (event.pageX + 10) + 'px';
                 tooltip.style.top = (event.pageY - 28) + 'px';
                 
+                // Highlight node
                 d3.select(this)
                     .attr('stroke', isDarkMode ? '#A29AAA' : '#9993A1')
                     .attr('stroke-width', 2);
@@ -1366,8 +1382,6 @@ function displaySankeyChart(sankeyData) {
             })
             .on('mouseout', function() {
                 tooltip.style.display = 'none';
-                tooltip.style.opacity = '0';
-                
                 d3.select(this)
                     .attr('stroke', isDarkMode ? '#4A474E' : '#E9E6ED')
                     .attr('stroke-width', 1);
@@ -1386,7 +1400,7 @@ function displaySankeyChart(sankeyData) {
             .text(d => d.name)
             .attr('font-size', '10px')
             .attr('fill', textColor);
-    
+        
     } catch (error) {
         console.error("Error rendering Sankey chart:", error);
         displayError(containerId, `Error rendering Sankey chart: ${error.message}`);
@@ -2245,7 +2259,7 @@ function setupEventListeners() {
     if (naicsFilter) naicsFilter.addEventListener('change', applyFiltersAndUpdateVisuals);
 }
 
-// Theme toggle functionality
+// Add this to the theme toggle event listener in initializeThemeToggle function:
 function initializeThemeToggle() {
     const toggleBtn = document.getElementById('theme-toggle-btn');
     const moonIcon = document.getElementById('moon-icon');
@@ -2272,16 +2286,53 @@ function initializeThemeToggle() {
                 localStorage.setItem('theme', 'light');
                 moonIcon.style.display = 'block';
                 sunIcon.style.display = 'none';
+                
+                // Update tooltip styles for light theme
+                updateTooltipThemes(false);
             } else {
                 document.documentElement.setAttribute('data-theme', 'dark');
                 localStorage.setItem('theme', 'dark');
                 moonIcon.style.display = 'none';
                 sunIcon.style.display = 'block';
+                
+                // Update tooltip styles for dark theme
+                updateTooltipThemes(true);
             }
             
             // Force immediate update of all charts with theme-aware colors
             setTimeout(updateChartsForTheme, 50);
         });
+    }
+}
+
+// Add this new function to update tooltip themes:
+function updateTooltipThemes(isDarkMode) {
+    // Update TAV/TCV tooltip
+    const tavTooltip = document.getElementById('tav-tcv-tooltip-new');
+    if (tavTooltip) {
+        if (isDarkMode) {
+            tavTooltip.style.backgroundColor = '#252229';
+            tavTooltip.style.color = '#F4F2F6';
+            tavTooltip.style.border = '1px solid #3A373E';
+        } else {
+            tavTooltip.style.backgroundColor = '#FFFFFF';
+            tavTooltip.style.color = '#36323A';
+            tavTooltip.style.border = '1px solid #D7D4DC';
+        }
+    }
+    
+    // Update Sankey tooltip
+    const sankeyTooltip = document.querySelector('.sankey-tooltip');
+    if (sankeyTooltip) {
+        if (isDarkMode) {
+            sankeyTooltip.style.backgroundColor = '#252229';
+            sankeyTooltip.style.color = '#F4F2F6';
+            sankeyTooltip.style.border = '1px solid #3A373E';
+        } else {
+            sankeyTooltip.style.backgroundColor = '#FFFFFF';
+            sankeyTooltip.style.color = '#36323A';
+            sankeyTooltip.style.border = '1px solid #D7D4DC';
+        }
     }
 }
 
