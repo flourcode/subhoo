@@ -950,3 +950,8 @@ tr:hover td {
     .card-header h2 { font-size: 14px; }
     .side-panel, .main-content { padding: 12px; }
 }
+/* In Light Mode */
+#bento-arr { background-color: var(--color-surface-container); /* Slightly darker than --color-surface */ }
+
+/* In Dark Mode */
+[data-theme="dark"] #bento-arr { background-color: var(--color-background); /* Slightly darker than --color-surface */ }
