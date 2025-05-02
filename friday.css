@@ -1840,3 +1840,46 @@ canvas[role="img"] + div {
   color: var(--color-text-primary) !important;
   border: 1px solid var(--color-border) !important;
 }
+/* ARR Grid Display Styling */
+.bento-grid {
+    display: grid;
+    gap: var(--bento-gap);
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-areas:
+        "sankey sankey map arr"
+        "tavtcv tavtcv leaders leaders"
+        "expiring expiring expiring expiring";
+    grid-template-rows: auto auto auto;
+}
+
+/* Assign grid areas */
+#bento-arr { grid-area: arr; }
+#bento-sankey { grid-area: sankey; }
+#bento-map { grid-area: map; }
+#bento-tavtcv { grid-area: tavtcv; }
+#bento-leaders { grid-area: leaders; }
+#bento-expiring { grid-area: expiring; }
+
+/* ARR Display Box Styling */
+.arr-display-grid {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    padding: 20px 0;
+}
+
+.arr-grid-value {
+    font-size: 36px;
+    font-weight: 700;
+    color: var(--color-primary);
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+.arr-description {
+    font-size: 13px;
+    color: var(--color-text-secondary);
+    text-align: center;
+}

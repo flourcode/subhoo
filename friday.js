@@ -1680,41 +1680,38 @@ function applyFiltersAndUpdateVisuals() {
     // Choropleth Map
     const mapData = processMapData(filteredData);
     displayChoroplethMap(mapData);
-
+	calculateAverageARR(filteredData);
     // Return the final filtered data
     return filteredData;
 }
 
-function calculateAverageARR() {
+function calculateAverageARR(dataForARR) {
     const resultDiv = document.getElementById('arr-result');
     const loadingDiv = document.getElementById('arr-loading');
     const errorDiv = document.getElementById('arr-error');
     const noDataDiv = document.getElementById('arr-no-data');
 
     // Reset UI elements
-    resultDiv.textContent = '$0 / yr';
     resultDiv.style.display = 'none';
     loadingDiv.style.display = 'block';
     errorDiv.style.display = 'none';
     noDataDiv.style.display = 'none';
 
-    // Apply filters to get filtered data
-    const dataForARR = applyFiltersAndUpdateVisuals();
+    // If no data was passed, get the currently filtered data
+    if (!dataForARR) {
+        dataForARR = applyFiltersAndUpdateVisuals();
+    }
 
-    // Use setTimeout to allow the UI to render
-    setTimeout(() => {
-        try {
-            console.log(`Calculating ARR based on ${dataForARR.length} filtered contracts.`);
+    try {
+        console.log(`Calculating ARR based on ${dataForARR.length} filtered contracts.`);
 
-            if (dataForARR.length === 0) {
-                loadingDiv.style.display = 'none';
-                noDataDiv.textContent = 'No contracts match the selected filter criteria for ARR calculation.';
-                noDataDiv.style.display = 'block';
-                resultDiv.textContent = formatCurrency(0) + " / yr";
-                resultDiv.style.display = 'block';
-                return;
-            }
-
+        if (dataForARR.length === 0) {
+            loadingDiv.style.display = 'none';
+            noDataDiv.style.display = 'block';
+            resultDiv.textContent = formatCurrency(0) + " / yr";
+            resultDiv.style.display = 'block';
+            return;
+        }
             let totalAnnualizedValue = 0;
             let validContractsCount = 0;
             
