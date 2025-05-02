@@ -82,7 +82,6 @@ function truncateText(text, maxLength) {
     return stringText.length > maxLength ? stringText.substring(0, maxLength - 3) + '...' : stringText;
 }
 
-// New function to clean up all tooltips
 function cleanupTooltips() {
     // Remove custom HTML tooltips
     const tooltipIds = ['tav-tcv-tooltip'];
@@ -93,12 +92,29 @@ function cleanupTooltips() {
         }
     });
     
-    // Remove D3 tooltips
+    // Remove D3 tooltips - use more specific selectors
     d3.select("body").selectAll(".sankey-tooltip").remove();
     d3.select("body").selectAll(".map-tooltip").remove();
     d3.select("body").selectAll(".tooltip").remove();
+    
+    // Also clean up any Chart.js tooltips that might be created
+    d3.select("body").selectAll(".chartjs-tooltip").remove();
+    const chartjsTooltip = document.getElementById('chartjs-tooltip');
+    if (chartjsTooltip && chartjsTooltip.parentNode) {
+        chartjsTooltip.parentNode.removeChild(chartjsTooltip);
+    }
+    
+    // For good measure, find any tooltips with style="opacity: 1" that might be stuck
+    document.querySelectorAll('div[style*="opacity: 1"][style*="position: absolute"]').forEach(el => {
+        // Only remove if it looks like a tooltip
+        if (el.style.pointerEvents === 'none' && 
+            el.style.zIndex && 
+            !el.className.includes('loading') && 
+            !el.className.includes('placeholder')) {
+            el.parentNode.removeChild(el);
+        }
+    });
 }
-
 // --- UI Helper Functions ---
 function setLoading(containerId, isLoading, message = 'Loading...') {
     const container = document.getElementById(containerId);
@@ -829,6 +845,7 @@ function displayTavTcvChart(chartData) {
             existingTooltip.parentNode.removeChild(existingTooltip);
         }
         
+        // Create a fresh tooltip
         const tooltipEl = document.createElement('div');
         tooltipEl.id = 'tav-tcv-tooltip';
         tooltipEl.style.position = 'absolute';
@@ -838,10 +855,11 @@ function displayTavTcvChart(chartData) {
         tooltipEl.style.borderRadius = '4px';
         tooltipEl.style.pointerEvents = 'none';
         tooltipEl.style.opacity = '0';
-        tooltipEl.style.transition = 'opacity 0.2s';
+        tooltipEl.style.visibility = 'hidden';
         tooltipEl.style.zIndex = '9999';
         tooltipEl.style.fontSize = '13px';
         tooltipEl.style.boxShadow = isDarkMode ? '0 2px 4px rgba(0,0,0,0.3)' : '0 2px 4px rgba(0,0,0,0.1)';
+        tooltipEl.style.border = '1px solid ' + (isDarkMode ? '#3A373E' : '#D7D4DC');
         document.body.appendChild(tooltipEl);
         
         // Create chart with empty labels
@@ -950,11 +968,11 @@ function displayTavTcvChart(chartData) {
                 false
             );
             
-            if (activePoints.length > 0) {
+            if (activePoints && activePoints.length > 0) {
                 const idx = activePoints[0].index;
                 const datasetIdx = activePoints[0].datasetIndex;
                 
-                if (idx >= 0 && datasetIdx >= 0) {
+                if (idx >= 0 && datasetIdx >= 0 && chartData[idx]) {
                     const contract = chartData[idx];
                     const datasetLabel = tavTcvChartInstance.data.datasets[datasetIdx].label;
                     const value = tavTcvChartInstance.data.datasets[datasetIdx].data[idx];
@@ -965,8 +983,9 @@ function displayTavTcvChart(chartData) {
                         <div>${datasetLabel}: ${formatCurrency(value)}</div>
                         <div>Click to view on USAspending.gov</div>
                     `;
-                    
+					// Show the tooltip with proper styles
                     tooltipEl.style.opacity = '1';
+                    tooltipEl.style.visibility = 'visible';
                     tooltipEl.style.left = (event.clientX + 10) + 'px';
                     tooltipEl.style.top = (event.clientY - 28) + 'px';
                     
@@ -974,10 +993,12 @@ function displayTavTcvChart(chartData) {
                     newCanvas.style.cursor = 'pointer';
                 } else {
                     tooltipEl.style.opacity = '0';
+                    tooltipEl.style.visibility = 'hidden';
                     newCanvas.style.cursor = 'default';
                 }
             } else {
                 tooltipEl.style.opacity = '0';
+                tooltipEl.style.visibility = 'hidden';
                 newCanvas.style.cursor = 'default';
             }
         });
@@ -985,6 +1006,7 @@ function displayTavTcvChart(chartData) {
         // Hide tooltip when mouse leaves chart
         newCanvas.addEventListener('mouseout', function() {
             tooltipEl.style.opacity = '0';
+            tooltipEl.style.visibility = 'hidden';
             newCanvas.style.cursor = 'default';
         });
         
@@ -999,7 +1021,7 @@ function displayTavTcvChart(chartData) {
                 false
             );
             
-            if (activePoints.length > 0) {
+            if (activePoints && activePoints.length > 0) {
                 const idx = activePoints[0].index;
                 if (idx >= 0 && chartData[idx] && chartData[idx].id) {
                     window.open(`https://www.usaspending.gov/award/${chartData[idx].id}`, '_blank');
@@ -1016,7 +1038,7 @@ function displayTavTcvChart(chartData) {
             const chartArea = tavTcvChartInstance.chartArea;
             
             chartData.forEach((contract, index) => {
-                if (!contract.id) return;
+                if (!contract || !contract.id) return;
                 
                 const yCenter = yAxis.getPixelForValue(index);
                 
@@ -1030,7 +1052,7 @@ function displayTavTcvChart(chartData) {
                 label.style.fontFamily = "'Inter', sans-serif";
                 label.style.fontSize = '12px';
                 label.style.fontWeight = 'bold';
-                label.style.color = isDarkMode ? '#FFFFFF' : '#FFFFFF'; // White text for contrast on the bars
+                label.style.color = '#FFFFFF'; // White text for contrast on the bars
                 label.style.textShadow = '0px 0px 2px rgba(0,0,0,0.5)'; // Add shadow for better visibility
                 label.style.pointerEvents = 'none'; // Allow clicks to go through to the chart
                 label.style.whiteSpace = 'nowrap';
@@ -1052,6 +1074,7 @@ function displayTavTcvChart(chartData) {
     } catch (error) {
         console.error("Error creating TAV/TCV chart:", error);
         displayError(containerId, `Error creating chart: ${error.message}`);
+        
         // Clean up tooltip if it exists
         const tooltipEl = document.getElementById('tav-tcv-tooltip');
         if (tooltipEl && tooltipEl.parentNode) {
@@ -1059,6 +1082,7 @@ function displayTavTcvChart(chartData) {
         }
     }
 }
+					
 // --- Filters and Dynamic Chart Updates ---
 function populateFilters(data) {
     if (!data || data.length === 0) {
@@ -1226,186 +1250,168 @@ function displaySankeyChart(sankeyData) {
         const width = container.clientWidth;
         const height = container.clientHeight || 400; // Default height if not set
         const margin = {top: 20, right: 20, bottom: 20, left: 20};
-        const innerWidth = width - margin.left - margin.right;
-        const innerHeight = height - margin.top - margin.bottom;
         
         // Get text color based on current theme
         const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
-        const textColor = isDarkMode ? '#F4F2F6' : '#36323A'; // Light text for dark mode, dark text for light mode
-        const nodeColor = isDarkMode ? '#A29AAA' : '#9993A1'; // Brighter in dark mode
-        const linkColor = isDarkMode ? '#3A373E' : '#D7D4DC'; // Different opacity for links
+        const textColor = isDarkMode ? '#F4F2F6' : '#36323A';
+        const nodeColor = isDarkMode ? '#A29AAA' : '#9993A1';
+        const linkColor = isDarkMode ? '#3A373E' : '#D7D4DC';
         
-        // Remove existing tooltips
+        // First remove any existing tooltips in the body
         d3.select("body").selectAll(".sankey-tooltip").remove();
         
-        // Create a tooltip div attached to the body
+        // Create a new tooltip div 
         const tooltip = d3.select("body")
             .append("div")
             .attr("class", "sankey-tooltip")
             .style("position", "absolute")
             .style("visibility", "hidden")
-            .style("opacity", "0") // Start with 0 opacity
+            .style("opacity", "0")
             .style("background-color", isDarkMode ? "#252229" : "#FFFFFF")
             .style("color", isDarkMode ? "#F4F2F6" : "#36323A")
-            .style("padding", "8px")
+            .style("padding", "10px")
             .style("border-radius", "4px")
             .style("font-size", "12px")
             .style("pointer-events", "none")
             .style("border", "1px solid " + (isDarkMode ? "#3A373E" : "#D7D4DC"))
-            .style("z-index", "9999")
-            .style("box-shadow", isDarkMode ? 
-                '0 2px 4px rgba(0, 0, 0, 0.3)' : 
-                '0 2px 4px rgba(0, 0, 0, 0.1)');
+            .style("z-index", "9999");
         
         // Set SVG dimensions
         d3.select(svg)
             .attr("width", width)
             .attr("height", height);
         
-        // Create the sankey generator
+        // Create proper data structure for d3-sankey
+        const nodes = sankeyData.nodes.map((d, i) => ({
+            name: d.name,
+            id: i
+        }));
+        
+        const links = sankeyData.links.map(d => {
+            // Handle source/target if they're objects or indices
+            const sourceIndex = typeof d.source === 'object' ? 
+                nodes.findIndex(n => n.name === d.source.name) : 
+                (typeof d.source === 'number' ? d.source : 0);
+            
+            const targetIndex = typeof d.target === 'object' ? 
+                nodes.findIndex(n => n.name === d.target.name) : 
+                (typeof d.target === 'number' ? d.target : 0);
+            
+            return {
+                source: sourceIndex,
+                target: targetIndex,
+                value: d.value
+            };
+        }).filter(d => d.source !== d.target);
+        
+        // Generate Sankey diagram
         const sankey = d3.sankey()
             .nodeWidth(15)
             .nodePadding(10)
             .extent([[margin.left, margin.top], [width - margin.right, height - margin.bottom]]);
         
-        // Use proper object structure for d3-sankey
-        const properNodes = sankeyData.nodes.map((d, i) => ({ 
-            name: d.name,
-            id: i  // Ensure each node has a unique id
-        }));
-        
-        const properLinks = sankeyData.links.map(d => ({
-            source: typeof d.source === 'object' ? properNodes.findIndex(n => n.name === d.source.name) : d.source,
-            target: typeof d.target === 'object' ? properNodes.findIndex(n => n.name === d.target.name) : d.target,
-            value: d.value
-        }));
-        
-        // Generate the sankey layout with proper data structure
-        const sankeyData2 = sankey({
-            nodes: properNodes,
-            links: properLinks
+        const graph = sankey({
+            nodes: JSON.parse(JSON.stringify(nodes)), // Create deep copy to avoid reference issues
+            links: JSON.parse(JSON.stringify(links))
         });
         
-        // Create the main group element with margins
-        const g = d3.select(svg)
-            .append('g');
-        
-        // Add links with theme-aware colors
-        g.append('g')
-            .selectAll('path')
-            .data(sankeyData2.links)
-            .enter()
-            .append('path')
-            .attr('d', d3.sankeyLinkHorizontal())
-            .attr('stroke-width', d => Math.max(1, d.width))
-            .attr('stroke', linkColor)
-            .attr('stroke-opacity', isDarkMode ? 0.6 : 0.7) // Adjust opacity based on theme
-            .attr('fill', 'none')
-            .style('pointer-events', 'all') // Ensure links are clickable
-            .on('mouseover', function(event, d) {
-                // Show tooltip with transition
+        // Draw links
+        svg.append("g")
+            .selectAll("path")
+            .data(graph.links)
+            .join("path")
+            .attr("d", d3.sankeyLinkHorizontal())
+            .attr("stroke", linkColor)
+            .attr("stroke-width", d => Math.max(1, d.width))
+            .attr("stroke-opacity", 0.5)
+            .attr("fill", "none")
+            .style("cursor", "pointer")
+            .on("mouseover", function(event, d) {
+                // Show tooltip
                 tooltip
                     .style("visibility", "visible")
                     .style("opacity", "1")
                     .html(`
-                        <div style="font-weight: bold; margin-bottom: 5px;">${d.source.name} → ${d.target.name}</div>
+                        <strong>${d.source.name} → ${d.target.name}</strong>
                         <div>Value: ${formatCurrency(d.value)}</div>
-                    `);
-                    
-                // Position tooltip
-                tooltip
+                    `)
                     .style("left", (event.pageX + 10) + "px")
                     .style("top", (event.pageY - 28) + "px");
-                    
-                // Highlight the link
-                d3.select(this)
-                    .attr('stroke-opacity', isDarkMode ? 0.85 : 0.9);
+                
+                // Highlight link
+                d3.select(this).attr("stroke-opacity", 0.8);
             })
-            .on('mousemove', function(event) {
-                // Update tooltip position as mouse moves
+            .on("mousemove", function(event) {
                 tooltip
                     .style("left", (event.pageX + 10) + "px")
                     .style("top", (event.pageY - 28) + "px");
             })
-            .on('mouseout', function() {
-                // Hide tooltip with transition
+            .on("mouseout", function() {
                 tooltip
                     .style("visibility", "hidden")
                     .style("opacity", "0");
                 
-                // Remove highlight
-                d3.select(this)
-                    .attr('stroke-opacity', isDarkMode ? 0.6 : 0.7);
+                d3.select(this).attr("stroke-opacity", 0.5);
             });
         
-        // Add nodes with theme-aware colors
-        const node = g.append('g')
-            .selectAll('rect')
-            .data(sankeyData2.nodes)
-            .enter()
-            .append('rect')
-            .attr('x', d => d.x0)
-            .attr('y', d => d.y0)
-            .attr('height', d => d.y1 - d.y0)
-            .attr('width', d => d.x1 - d.x0)
-            .attr('fill', nodeColor)
-            .attr('stroke', isDarkMode ? '#4A474E' : '#E9E6ED')
-            .style('pointer-events', 'all') // Ensure nodes are clickable
-            .on('mouseover', function(event, d) {
+        // Draw nodes
+        svg.append("g")
+            .selectAll("rect")
+            .data(graph.nodes)
+            .join("rect")
+            .attr("x", d => d.x0)
+            .attr("y", d => d.y0)
+            .attr("height", d => d.y1 - d.y0)
+            .attr("width", d => d.x1 - d.x0)
+            .attr("fill", nodeColor)
+            .attr("stroke", isDarkMode ? "#4A474E" : "#E9E6ED")
+            .style("cursor", "pointer")
+            .on("mouseover", function(event, d) {
                 tooltip
                     .style("visibility", "visible")
                     .style("opacity", "1")
                     .html(`
-                        <div style="font-weight: bold; margin-bottom: 5px;">${d.name}</div>
+                        <strong>${d.name}</strong>
                         <div>Total Value: ${formatCurrency(d.value)}</div>
-                    `);
-                    
-                // Position tooltip
-                tooltip
+                    `)
                     .style("left", (event.pageX + 10) + "px")
                     .style("top", (event.pageY - 28) + "px");
-                    
-                // Highlight the node
+                
                 d3.select(this)
-                    .attr('stroke', isDarkMode ? '#A29AAA' : '#9993A1')
-                    .attr('stroke-width', 2);
+                    .attr("stroke", isDarkMode ? "#A29AAA" : "#9993A1")
+                    .attr("stroke-width", 2);
             })
-            .on('mousemove', function(event) {
-                // Update tooltip position as mouse moves
+            .on("mousemove", function(event) {
                 tooltip
                     .style("left", (event.pageX + 10) + "px")
                     .style("top", (event.pageY - 28) + "px");
             })
-            .on('mouseout', function() {
-                // Hide tooltip
+            .on("mouseout", function() {
                 tooltip
                     .style("visibility", "hidden")
                     .style("opacity", "0");
                 
-                // Remove highlight
                 d3.select(this)
-                    .attr('stroke', isDarkMode ? '#4A474E' : '#E9E6ED')
-                    .attr('stroke-width', 1);
+                    .attr("stroke", isDarkMode ? "#4A474E" : "#E9E6ED")
+                    .attr("stroke-width", 1);
             });
-           
-        // Add node labels with theme-aware color
-        g.append('g')
-            .selectAll('text')
-            .data(sankeyData2.nodes)
-            .enter()
-            .append('text')
-            .attr('x', d => d.x0 < innerWidth / 2 ? d.x1 + 6 : d.x0 - 6)
-            .attr('y', d => (d.y1 + d.y0) / 2)
-            .attr('dy', '0.35em')
-            .attr('text-anchor', d => d.x0 < innerWidth / 2 ? 'start' : 'end')
+        
+        // Add node labels
+        svg.append("g")
+            .selectAll("text")
+            .data(graph.nodes)
+            .join("text")
+            .attr("x", d => d.x0 < width / 2 ? d.x1 + 6 : d.x0 - 6)
+            .attr("y", d => (d.y1 + d.y0) / 2)
+            .attr("dy", "0.35em")
+            .attr("text-anchor", d => d.x0 < width / 2 ? "start" : "end")
             .text(d => d.name)
-            .attr('font-size', '10px')
-            .attr('fill', textColor)       // Theme-aware text color
-            .style('pointer-events', 'none'); // Ensures clicks go through to the node
+            .attr("font-size", "10px")
+            .attr("fill", textColor);
+    
     } catch (error) {
         console.error("Error rendering Sankey chart:", error);
         displayError(containerId, `Error rendering Sankey chart: ${error.message}`);
-        // Clean up tooltip if it exists
         d3.select("body").selectAll(".sankey-tooltip").remove();
     }
 }
