@@ -788,3 +788,84 @@ tr:hover td {
     height: 100%;
     max-height: none;
 }
+/* --- Font Hierarchy Enhancements --- */
+
+/* Increase main dashboard title size */
+.title-area h1#dashboard-title {
+    font-size: 32px; /* Example: Larger size */
+    font-weight: 700;
+    margin-bottom: 8px; /* Adjust spacing if needed */
+}
+
+/* Increase card title size and weight */
+.card-header h2 {
+    font-size: 18px; /* Example: Larger size */
+    font-weight: 700; /* Example: Bolder */
+}
+
+/* Adjust base body font size if desired (ensure readability) */
+body {
+    /* font-size: 15px; */ /* Optional: Slightly larger base */
+    /* ... other body styles ... */
+}
+
+/* Define size for less prominent text (e.g., notes, labels) */
+p, .text-sm, .notes-content, td { /* Target appropriate elements */
+    font-size: 14px; /* Ensure readability for standard text */
+}
+.notes-content ul li, .filter-item label {
+     font-size: 13px; /* Slightly smaller for less critical info */
+     color: var(--color-text-secondary);
+}
+
+/* Make key metrics pop */
+.arr-value-display {
+    font-size: 32px; /* Example: Significantly larger */
+    font-weight: 700;
+    color: var(--color-primary);
+}
+
+/* Ensure table headers are distinct */
+th {
+    font-size: 12px; /* Keep small but clear */
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+/* --- Wow Factor Enhancements --- */
+
+/* Smoother transitions for bento boxes */
+.bento-box {
+    /* ... existing styles ... */
+    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease; /* Added border-color */
+}
+
+.bento-box:hover {
+    transform: translateY(-3px); /* Slightly more lift */
+    box-shadow: var(--shadow-lg);
+    border-color: var(--color-primary); /* Example: Highlight border on hover */
+}
+
+/* Example: Subtle fade-in animation class (Apply with JS when content loads) */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.fade-in-element {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+/* Example: Style for clickable links/details */
+.detail-link {
+    color: var(--color-primary);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s ease;
+}
+
+.detail-link:hover {
+    color: var(--color-secondary);
+    text-decoration: underline;
+}
