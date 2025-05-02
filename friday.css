@@ -943,3 +943,9 @@ tr:hover td {
      #sankeyChart text, #choroplethMap text { font-size: 10px; }
      .side-panel > div[style*="font-size: 10px"], .side-panel > div[style*="font-size: 12px"] { font-size: 11px !important; }
 }
+#contract-leaders-table-container td:nth-child(6) {
+    white-space: normal;
+    word-wrap: break-word;
+    max-width: 250px;
+    font-size: 12px; /* Reduced from default 14px - Adjust if needed */
+}
