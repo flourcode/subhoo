@@ -1,15 +1,15 @@
 // Constants
 const S3_BASE_URL = 'https://subhoodata.s3.us-east-1.amazonaws.com/data/';
 const DATASETS = [
-    { id: 'army_primes', name: 'Army (Primes)' },
-    { id: 'dhs_primes', name: 'DHS (Primes)' },
-    { id: 'doj_primes', name: 'DOJ (Primes)' },
-    { id: 'epa_primes', name: 'EPA (Primes)' },
-    { id: 'navy_primes', name: 'Navy (Primes)' },
-    { id: 'socom_primes', name: 'SOCOM (Primes)' },
-    { id: 'uscc_primes', name: 'USCC (Primes)' },
-    { id: 'usmc_primes', name: 'USMC (Primes)' },
-    { id: 'va_primes', name: 'VA (Primes)' }
+    { id: 'army_primes', name: 'Army' },
+    { id: 'dhs_primes', name: 'DHS' },
+    { id: 'doj_primes', name: 'DOJ' },
+    { id: 'epa_primes', name: 'EPA' },
+    { id: 'navy_primes', name: 'Navy' },
+    { id: 'socom_primes', name: 'SOCOM' },
+    { id: 'uscc_primes', name: 'USCC' },
+    { id: 'usmc_primes', name: 'USMC' },
+    { id: 'va_primes', name: 'VA' }
 ];
 
 // Global variables
