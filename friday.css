@@ -954,3 +954,51 @@ tr:hover td {
      .side-panel > div[style*="font-size: 12px"] /* Info */
      { font-size: 11px !important; }
 }
+/* Report download button */
+#download-report-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background-color: var(--color-primary);
+    color: var(--color-on-primary);
+    border: none;
+    border-radius: var(--border-radius-md);
+    padding: 8px 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+#download-report-btn:hover {
+    background-color: var(--color-secondary);
+}
+
+#download-report-btn svg {
+    width: 18px;
+    height: 18px;
+}
+
+/* PDF loading toast */
+.pdf-loading-toast {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background-color: var(--color-primary);
+    color: var(--color-on-primary);
+    padding: 12px 16px;
+    border-radius: var(--border-radius-md);
+    box-shadow: var(--shadow-lg);
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 9999;
+}
+
+.pdf-loading-toast .spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}

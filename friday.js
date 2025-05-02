@@ -2257,6 +2257,20 @@ function setupEventListeners() {
 
     if (subAgencyFilter) subAgencyFilter.addEventListener('change', applyFiltersAndUpdateVisuals);
     if (naicsFilter) naicsFilter.addEventListener('change', applyFiltersAndUpdateVisuals);
+const downloadReportBtn = document.getElementById('download-report-btn');
+    if (downloadReportBtn) {
+        downloadReportBtn.addEventListener('click', function() {
+            // Check if jsPDF is loaded
+            if (typeof jspdf === 'undefined') {
+                // Load jsPDF dynamically if not already loaded
+                loadJsPDF(function() {
+                    generatePDFReport();
+                });
+            } else {
+                generatePDFReport();
+            }
+        });
+    }
 }
 
 // Add this to the theme toggle event listener in initializeThemeToggle function:
@@ -2515,3 +2529,734 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Update the date display every minute
 setInterval(updateDateDisplay, 60000);
+// --- PDF Report Generation ---
+function generatePDFReport() {
+    // Check if we have data to report on
+    if (!rawData || rawData.length === 0 || !currentDataset) {
+        alert("Please select a dataset first to generate a report.");
+        return;
+    }
+    
+    // Get filtered data based on current filters
+    const subAgencyFilter = document.getElementById('sub-agency-filter')?.value || '';
+    const naicsFilter = document.getElementById('naics-filter')?.value || '';
+    const searchTerm = document.getElementById('search-input')?.value.trim().toLowerCase() || '';
+    
+    // Create a copy of the filtered data
+    const filteredData = applyFiltersAndUpdateVisuals();
+    
+    // Show loading message
+    const loadingToast = document.createElement('div');
+    loadingToast.className = 'pdf-loading-toast';
+    loadingToast.innerHTML = `
+        <div class="spinner"></div>
+        <div>Generating PDF report...</div>
+    `;
+    loadingToast.style.position = 'fixed';
+    loadingToast.style.bottom = '20px';
+    loadingToast.style.right = '20px';
+    loadingToast.style.padding = '15px 20px';
+    loadingToast.style.borderRadius = '4px';
+    loadingToast.style.backgroundColor = 'var(--color-primary)';
+    loadingToast.style.color = 'var(--color-on-primary)';
+    loadingToast.style.display = 'flex';
+    loadingToast.style.alignItems = 'center';
+    loadingToast.style.gap = '10px';
+    loadingToast.style.zIndex = '9999';
+    loadingToast.style.boxShadow = 'var(--shadow-lg)';
+    document.body.appendChild(loadingToast);
+    
+    // Use setTimeout to allow UI to update before intensive PDF generation
+    setTimeout(() => {
+        try {
+            // Initialize jsPDF
+            const doc = new jspdf.jsPDF({
+                orientation: 'portrait',
+                unit: 'mm',
+                format: 'a4'
+            });
+            
+            // Add metadata
+            doc.setProperties({
+                title: `${currentDataset.name} Spending Report`,
+                subject: 'Government Contracting Analysis',
+                author: 'Subhoo',
+                keywords: 'government, contracts, spending, analysis',
+                creator: 'Subhoo Dashboard'
+            });
+            
+            // Set up base fonts and colors
+            doc.setFont('helvetica');
+            const primaryColor = '#9993A1';
+            const textColor = '#36323A';
+            const lightGray = '#E9E6ED';
+            
+            // --- Cover Page ---
+            // Add Subhoo logo/header
+            doc.setFontSize(28);
+            doc.setTextColor(primaryColor);
+            doc.text("Subhoo.", 20, 30);
+            
+            // Add report title
+            doc.setFontSize(24);
+            doc.setTextColor(textColor);
+            doc.text(`${currentDataset.name} Spending Report`, 20, 50);
+            
+            // Add date
+            const now = new Date();
+            doc.setFontSize(12);
+            doc.setTextColor(textColor);
+            doc.text(`Generated on ${now.toLocaleDateString()}`, 20, 60);
+            
+            // Add filtered criteria if applicable
+            let yPos = 70;
+            if (subAgencyFilter || naicsFilter || searchTerm) {
+                doc.setFontSize(10);
+                doc.text("Report filters:", 20, yPos);
+                yPos += 6;
+                
+                if (subAgencyFilter) {
+                    doc.text(`• Sub-Agency: ${subAgencyFilter}`, 25, yPos);
+                    yPos += 5;
+                }
+                
+                if (naicsFilter) {
+                    const naicsSelect = document.getElementById('naics-filter');
+                    const naicsText = naicsSelect?.options[naicsSelect.selectedIndex]?.text || naicsFilter;
+                    doc.text(`• NAICS: ${naicsText}`, 25, yPos);
+                    yPos += 5;
+                }
+                
+                if (searchTerm) {
+                    doc.text(`• Search: "${searchTerm}"`, 25, yPos);
+                    yPos += 5;
+                }
+            }
+            
+            // Add introduction text
+            yPos += 10;
+            doc.setFontSize(11);
+            doc.text("This report provides an analysis of government contracting data from USAspending.gov.", 20, yPos);
+            yPos += 6;
+            doc.text("The data includes contract awards, recipients, values, and geographic distribution.", 20, yPos);
+            yPos += 6;
+            doc.text("Use this report to identify contracting trends and potential business opportunities.", 20, yPos);
+            
+            // Add footer
+            doc.setFontSize(8);
+            doc.setTextColor('#999999');
+            doc.text("© Subhoo | All data from USAspending.gov", 20, 285);
+            doc.text("Page 1", 180, 285);
+            
+            // --- Executive Summary Page ---
+            doc.addPage();
+            let page = 2;
+            yPos = 20;
+            
+            // Header
+            doc.setFontSize(16);
+            doc.setTextColor(primaryColor);
+            doc.text("Executive Summary", 20, yPos);
+            yPos += 10;
+            
+            // Total contracts and value
+            doc.setFontSize(12);
+            doc.setTextColor(textColor);
+            
+            const totalValue = d3.sum(filteredData, d => parseSafeFloat(d.current_total_value_of_award));
+            const avgDuration = d3.mean(filteredData, d => 
+                calculateDurationDays(d.period_of_performance_start_date, d.period_of_performance_current_end_date)
+            );
+            const uniqueRecipients = new Set(filteredData.map(d => d.recipient_name)).size;
+            
+            // Format date for report period
+            const oldestDate = d3.min(filteredData, d => d.period_of_performance_start_date_parsed);
+            const newestDate = d3.max(filteredData, d => d.period_of_performance_current_end_date_parsed);
+            let dateRangeText = "All available data";
+            
+            if (oldestDate && newestDate) {
+                const oldestYear = oldestDate.getFullYear();
+                const newestYear = newestDate.getFullYear();
+                if (oldestYear === newestYear) {
+                    dateRangeText = `${oldestYear}`;
+                } else {
+                    dateRangeText = `${oldestYear} - ${newestYear}`;
+                }
+            }
+            
+            // Key metrics in a structured format
+            doc.text(`Analysis Period: ${dateRangeText}`, 20, yPos);
+            yPos += 8;
+            
+            // Create a summary table
+            const summaryData = [
+                ["Total Contracts", filteredData.length.toLocaleString()],
+                ["Total Contract Value", formatCurrency(totalValue)],
+                ["Unique Recipients", uniqueRecipients.toLocaleString()],
+                ["Average Contract Duration", Math.round(avgDuration).toLocaleString() + " days"],
+                ["Est. Annual Value", calculateAverageARRValue(filteredData) + " / yr"]
+            ];
+            
+            // Draw summary table
+            doc.setFillColor(lightGray);
+            doc.rect(20, yPos, 170, 8, 'F');
+            doc.setFontSize(10);
+            doc.setTextColor(textColor);
+            doc.text("Metric", 25, yPos + 5.5);
+            doc.text("Value", 100, yPos + 5.5);
+            yPos += 8;
+            
+            // Table rows
+            summaryData.forEach((row, i) => {
+                // Alternate row background
+                if (i % 2 === 0) {
+                    doc.setFillColor(245, 245, 245);
+                    doc.rect(20, yPos, 170, 7, 'F');
+                }
+                
+                doc.text(row[0], 25, yPos + 5);
+                doc.text(row[1], 100, yPos + 5);
+                yPos += 7;
+            });
+            
+            yPos += 10;
+            
+            // Top Recipients Section
+            doc.setFontSize(14);
+            doc.setTextColor(primaryColor);
+            doc.text("Top Recipients by Value", 20, yPos);
+            yPos += 8;
+            
+            // Process top recipients data (reuse the leaders data)
+            const leaderData = processContractLeaders(filteredData);
+            const topRecipients = leaderData.slice(0, 5);
+            
+            // Create header
+            doc.setFillColor(lightGray);
+            doc.rect(20, yPos, 170, 8, 'F');
+            doc.setFontSize(10);
+            doc.setTextColor(textColor);
+            doc.text("Recipient", 25, yPos + 5.5);
+            doc.text("# Awards", 100, yPos + 5.5);
+            doc.text("Total Value", 130, yPos + 5.5);
+            yPos += 8;
+            
+            // Draw recipient rows
+            topRecipients.forEach((recipient, i) => {
+                // Alternate row background
+                if (i % 2 === 0) {
+                    doc.setFillColor(245, 245, 245);
+                    doc.rect(20, yPos, 170, 7, 'F');
+                }
+                
+                doc.text(truncateText(recipient.siName, 50), 25, yPos + 5);
+                doc.text(recipient.numAwards.toLocaleString(), 100, yPos + 5);
+                doc.text(formatCurrency(recipient.totalValue), 130, yPos + 5);
+                yPos += 7;
+            });
+            
+            // Add footer
+            doc.setFontSize(8);
+            doc.setTextColor('#999999');
+            doc.text("© Subhoo | All data from USAspending.gov", 20, 285);
+            doc.text(`Page ${page}`, 180, 285);
+            
+            // --- Expiring Contracts Page ---
+            doc.addPage();
+            page++;
+            yPos = 20;
+            
+            // Header
+            doc.setFontSize(16);
+            doc.setTextColor(primaryColor);
+            doc.text("Contracts Expiring in the Next 6 Months", 20, yPos);
+            yPos += 10;
+            
+            // Process expiring contracts
+            const expiringData = processExpiringData(filteredData);
+            const expiringCount = expiringData.length;
+            
+            doc.setFontSize(11);
+            doc.setTextColor(textColor);
+            doc.text(`There are ${expiringCount.toLocaleString()} contracts expiring in the next 6 months.`, 20, yPos);
+            yPos += 8;
+            
+            if (expiringCount > 0) {
+                // Sort by date for the report
+                expiringData.sort((a, b) => {
+                    const dateA = a.period_of_performance_current_end_date_parsed;
+                    const dateB = b.period_of_performance_current_end_date_parsed;
+                    if (!dateA) return 1;
+                    if (!dateB) return -1;
+                    return dateA - dateB;
+                });
+                
+                // List the top expiring contracts (first 10 or fewer)
+                const reportExpiringData = expiringData.slice(0, 10);
+                
+                // Create header
+                doc.setFillColor(lightGray);
+                doc.rect(20, yPos, 170, 8, 'F');
+                doc.setFontSize(9);
+                doc.setTextColor(textColor);
+                doc.text("End Date", 22, yPos + 5.5);
+                doc.text("Contract ID", 50, yPos + 5.5);
+                doc.text("Recipient", 85, yPos + 5.5);
+                doc.text("Value", 155, yPos + 5.5);
+                yPos += 8;
+                
+                // Draw contract rows
+                reportExpiringData.forEach((contract, i) => {
+                    // Alternate row background
+                    if (i % 2 === 0) {
+                        doc.setFillColor(245, 245, 245);
+                        doc.rect(20, yPos, 170, 7, 'F');
+                    }
+                    
+                    // Format date for display
+                    let endDate = "Unknown";
+                    if (contract.period_of_performance_current_end_date_parsed) {
+                        endDate = contract.period_of_performance_current_end_date_parsed.toISOString().split('T')[0];
+                    }
+                    
+                    const piid = contract.award_id_piid || "N/A";
+                    const recipient = truncateText(contract.recipient_name || "Unknown", 45);
+                    const value = formatCurrency(contract.current_total_value_of_award);
+                    
+                    doc.setFontSize(8);
+                    doc.text(endDate, 22, yPos + 5);
+                    doc.text(piid, 50, yPos + 5);
+                    doc.text(recipient, 85, yPos + 5);
+                    doc.text(value, 155, yPos + 5);
+                    yPos += 7;
+                });
+                
+                // Note if showing partial results
+                if (expiringCount > 10) {
+                    yPos += 5;
+                    doc.setFontSize(9);
+                    doc.setTextColor('#777777');
+                    doc.text(`Note: Showing 10 of ${expiringCount} expiring contracts. Full data available in the dashboard.`, 20, yPos);
+                }
+            } else {
+                doc.text("No contracts are expiring in the next 6 months.", 20, yPos);
+            }
+            
+            // Add footer
+            doc.setFontSize(8);
+            doc.setTextColor('#999999');
+            doc.text("© Subhoo | All data from USAspending.gov", 20, 285);
+            doc.text(`Page ${page}`, 180, 285);
+            
+            // --- Geographic Distribution Page ---
+            doc.addPage();
+            page++;
+            yPos = 20;
+            
+            // Header
+            doc.setFontSize(16);
+            doc.setTextColor(primaryColor);
+            doc.text("Geographic Distribution", 20, yPos);
+            yPos += 10;
+            
+            // Process map data
+            const mapData = processMapData(filteredData);
+            const stateCount = Object.keys(mapData).length;
+            
+            doc.setFontSize(11);
+            doc.setTextColor(textColor);
+            doc.text(`Contract work is being performed in ${stateCount} states/territories.`, 20, yPos);
+            yPos += 15;
+            
+            // Create a table for top states by value
+            if (stateCount > 0) {
+                const stateArray = Object.entries(mapData).map(([fipsCode, data]) => {
+                    // Get state name from FIPS code
+                    const stateNames = {
+                        "01": "Alabama", "02": "Alaska", "04": "Arizona", "05": "Arkansas",
+                        "06": "California", "08": "Colorado", "09": "Connecticut", "10": "Delaware",
+                        "11": "District of Columbia", "12": "Florida", "13": "Georgia", "15": "Hawaii",
+                        "16": "Idaho", "17": "Illinois", "18": "Indiana", "19": "Iowa", "20": "Kansas",
+                        "21": "Kentucky", "22": "Louisiana", "23": "Maine", "24": "Maryland",
+                        "25": "Massachusetts", "26": "Michigan", "27": "Minnesota", "28": "Mississippi",
+                        "29": "Missouri", "30": "Montana", "31": "Nebraska", "32": "Nevada",
+                        "33": "New Hampshire", "34": "New Jersey", "35": "New Mexico", "36": "New York",
+                        "37": "North Carolina", "38": "North Dakota", "39": "Ohio", "40": "Oklahoma",
+                        "41": "Oregon", "42": "Pennsylvania", "44": "Rhode Island", "45": "South Carolina",
+                        "46": "South Dakota", "47": "Tennessee", "48": "Texas", "49": "Utah",
+                        "50": "Vermont", "51": "Virginia", "53": "Washington", "54": "West Virginia",
+                        "55": "Wisconsin", "56": "Wyoming", "72": "Puerto Rico"
+                    };
+                    
+                    return {
+                        fipsCode: fipsCode,
+                        stateName: stateNames[fipsCode] || `State ${fipsCode}`,
+                        value: data.value,
+                        count: data.count
+                    };
+                }).sort((a, b) => b.value - a.value);
+                
+                // Top 10 states by value
+                const topStates = stateArray.slice(0, 10);
+                
+                // Create header
+                doc.setFillColor(lightGray);
+                doc.rect(20, yPos, 170, 8, 'F');
+                doc.setFontSize(10);
+                doc.setTextColor(textColor);
+                doc.text("State", 25, yPos + 5.5);
+                doc.text("# Contracts", 80, yPos + 5.5);
+                doc.text("Total Value", 130, yPos + 5.5);
+                yPos += 8;
+                
+                // Draw state rows
+                topStates.forEach((state, i) => {
+                    // Alternate row background
+                    if (i % 2 === 0) {
+                        doc.setFillColor(245, 245, 245);
+                        doc.rect(20, yPos, 170, 7, 'F');
+                    }
+                    
+                    doc.text(state.stateName, 25, yPos + 5);
+                    doc.text(state.count.toLocaleString(), 80, yPos + 5);
+                    doc.text(formatCurrency(state.value), 130, yPos + 5);
+                    yPos += 7;
+                });
+                
+                // Note if showing partial results
+                if (stateArray.length > 10) {
+                    yPos += 5;
+                    doc.setFontSize(9);
+                    doc.setTextColor('#777777');
+                    doc.text(`Note: Showing top 10 of ${stateArray.length} states. Full data available in the dashboard.`, 20, yPos);
+                }
+            } else {
+                doc.text("No geographic distribution data available.", 20, yPos);
+            }
+            
+            // Add recommendation section
+            yPos += 20;
+            doc.setFontSize(14);
+            doc.setTextColor(primaryColor);
+            doc.text("Key Insights & Recommendations", 20, yPos);
+            yPos += 10;
+            
+            doc.setFontSize(11);
+            doc.setTextColor(textColor);
+            
+            // Generate some insights based on the data
+            const insights = generateDataInsights(filteredData, currentDataset.name);
+            
+            insights.forEach(insight => {
+                doc.text(`• ${insight}`, 25, yPos);
+                yPos += 8;
+                
+                // Check if we need a new page
+                if (yPos > 270) {
+                    // Add footer to current page
+                    doc.setFontSize(8);
+                    doc.setTextColor('#999999');
+                    doc.text("© Subhoo | All data from USAspending.gov", 20, 285);
+                    doc.text(`Page ${page}`, 180, 285);
+                    
+                    // Add new page
+                    doc.addPage();
+                    page++;
+                    yPos = 30;
+                }
+            });
+            
+            // Add footer
+            doc.setFontSize(8);
+            doc.setTextColor('#999999');
+            doc.text("© Subhoo | All data from USAspending.gov", 20, 285);
+            doc.text(`Page ${page}`, 180, 285);
+            
+            // --- Final page with notes and disclaimer ---
+            doc.addPage();
+            page++;
+            yPos = 20;
+            
+            // Header
+            doc.setFontSize(16);
+            doc.setTextColor(primaryColor);
+            doc.text("Notes & Methodology", 20, yPos);
+            yPos += 10;
+            
+            doc.setFontSize(11);
+            doc.setTextColor(textColor);
+            
+            doc.text("Data Source", 20, yPos);
+            yPos += 6;
+            
+            doc.setFontSize(10);
+            doc.text("All data in this report is sourced from USAspending.gov, the official source for", 25, yPos);
+            yPos += 5;
+            doc.text("spending data for the U.S. Government. The data represents federal contract", 25, yPos);
+            yPos += 5;
+            doc.text("awards to prime contractors.", 25, yPos);
+            yPos += 10;
+            
+            doc.setFontSize(11);
+            doc.text("Methodology", 20, yPos);
+            yPos += 6;
+            
+            doc.setFontSize(10);
+            doc.text("• Contract values represent the total value of each award over its full period", 25, yPos);
+            yPos += 5;
+            doc.text("  of performance, not just annual values.", 25, yPos);
+            yPos += 7;
+            
+            doc.text("• Estimated Annual Recurring Revenue (ARR) is calculated by dividing the", 25, yPos);
+            yPos += 5;
+            doc.text("  contract value by its duration, then annualizing the result.", 25, yPos);
+            yPos += 7;
+            
+            doc.text("• Geographic distribution is based on the Place of Performance data.", 25, yPos);
+            yPos += 15;
+            
+            doc.setFontSize(11);
+            doc.text("Disclaimer", 20, yPos);
+            yPos += 6;
+            
+            doc.setFontSize(10);
+            doc.text("This report is provided for informational purposes only and should not be considered", 25, yPos);
+            yPos += 5;
+            doc.text("financial or legal advice. Subhoo makes no representations or warranties of any kind,", 25, yPos);
+            yPos += 5;
+            doc.text("express or implied, about the completeness, accuracy, reliability, suitability, or", 25, yPos);
+            yPos += 5;
+            doc.text("availability of the data contained in this report.", 25, yPos);
+            
+            // Add footer
+            doc.setFontSize(8);
+            doc.setTextColor('#999999');
+            doc.text("© Subhoo | All data from USAspending.gov", 20, 285);
+            doc.text(`Page ${page}`, 180, 285);
+            
+            // Save the PDF with a dynamic filename
+            const agencyName = currentDataset.name.replace(' ', '_').toLowerCase();
+            const timestamp = new Date().toISOString().split('T')[0];
+            const filename = `subhoo_${agencyName}_report_${timestamp}.pdf`;
+            
+            doc.save(filename);
+            
+            // Clean up loading toast
+            document.body.removeChild(loadingToast);
+            
+        } catch (error) {
+            console.error("Error generating PDF report:", error);
+            
+            // Clean up loading toast
+            document.body.removeChild(loadingToast);
+            
+            // Show error message
+            alert("Error generating PDF report. Please try again.");
+        }
+    }, 100); // Short delay to allow UI updates
+}
+
+// Helper function to calculate ARR for reports
+function calculateAverageARRValue(dataForARR) {
+    if (!dataForARR || dataForARR.length === 0) {
+        return formatCurrency(0);
+    }
+    
+    let validContractsCount = 0;
+    let weightedARR = 0;
+    
+    // Group contracts by duration
+    const shortTermContracts = []; // Less than 90 days
+    const mediumTermContracts = []; // 90 days to 270 days
+    const longTermContracts = []; // More than 270 days
+    
+    dataForARR.forEach((row) => {
+        const value = parseSafeFloat(row.current_total_value_of_award) || 
+                      parseSafeFloat(row.base_and_exercised_options_value) || 0;
+                      
+        const durationDays = calculateDurationDays(
+            row.period_of_performance_start_date, 
+            row.period_of_performance_current_end_date
+        );
+
+        if (value > 0 && durationDays > 0) {
+            // Categorize by duration
+            if (durationDays < 90) {
+                shortTermContracts.push({ value, durationDays });
+            } else if (durationDays < 270) {
+                mediumTermContracts.push({ value, durationDays });
+            } else {
+                longTermContracts.push({ value, durationDays });
+            }
+            validContractsCount++;
+        }
+    });
+    
+    // Calculate ARR with different weights based on contract duration
+    if (shortTermContracts.length > 0) {
+        const shortTermARR = shortTermContracts.reduce((sum, contract) => {
+            return sum + (contract.value / contract.durationDays) * 365.25 * 0.5; // 50% weight
+        }, 0) / shortTermContracts.length;
+        
+        weightedARR += shortTermARR * (shortTermContracts.length / validContractsCount);
+    }
+    
+    if (mediumTermContracts.length > 0) {
+        const mediumTermARR = mediumTermContracts.reduce((sum, contract) => {
+            return sum + (contract.value / contract.durationDays) * 365.25 * 0.8; // 80% weight
+        }, 0) / mediumTermContracts.length;
+        
+        weightedARR += mediumTermARR * (mediumTermContracts.length / validContractsCount);
+    }
+    
+    if (longTermContracts.length > 0) {
+        const longTermARR = longTermContracts.reduce((sum, contract) => {
+            return sum + (contract.value / contract.durationDays) * 365.25; // 100% weight
+        }, 0) / longTermContracts.length;
+        
+        weightedARR += longTermARR * (longTermContracts.length / validContractsCount);
+    }
+    
+    // If no weighted ARR, fall back to simple average
+    if (weightedARR === 0 && validContractsCount > 0) {
+        let totalAnnualizedValue = 0;
+        
+        dataForARR.forEach((row) => {
+            const value = parseSafeFloat(row.current_total_value_of_award) || 
+                         parseSafeFloat(row.base_and_exercised_options_value) || 0;
+                         
+            const durationDays = calculateDurationDays(
+                row.period_of_performance_start_date, 
+                row.period_of_performance_current_end_date
+            );
+            
+            if (value > 0 && durationDays > 0) {
+                const durationYears = durationDays / 365.25;
+                const annualizedValue = value / durationYears;
+                totalAnnualizedValue += annualizedValue;
+            }
+        });
+        
+        weightedARR = totalAnnualizedValue / validContractsCount;
+    }
+    
+    return formatCurrency(weightedARR);
+}
+
+// Generate insights based on the data
+function generateDataInsights(data, agencyName) {
+    if (!data || data.length === 0) {
+        return [
+            "Insufficient data to generate insights.",
+            "Select a dataset or adjust filters to see agency-specific recommendations."
+        ];
+    }
+    
+    const insights = [];
+    
+    // Calculate key metrics
+    const totalValue = d3.sum(data, d => parseSafeFloat(d.current_total_value_of_award));
+    const avgValue = totalValue / data.length;
+    const medianValue = d3.median(data, d => parseSafeFloat(d.current_total_value_of_award));
+    
+    // Group contracts by recipient
+    const recipientGroups = d3.group(data, d => d.recipient_name);
+    const recipientCount = recipientGroups.size;
+    
+    // Find recipient concentration (top 3 recipients as % of total)
+    const recipientValues = Array.from(recipientGroups, ([name, contracts]) => {
+        return {
+            name: name,
+            value: d3.sum(contracts, d => parseSafeFloat(d.current_total_value_of_award))
+        };
+    }).sort((a, b) => b.value - a.value);
+    
+    const top3Value = recipientValues.slice(0, 3).reduce((sum, r) => sum + r.value, 0);
+    const top3Percentage = (top3Value / totalValue) * 100;
+    
+    // Find expiring contracts in next 6 months
+    const sixMonthsFromNow = new Date();
+    sixMonthsFromNow.setMonth(sixMonthsFromNow.getMonth() + 6);
+    const today = new Date();
+    
+    const expiringContracts = data.filter(row => {
+        const endDate = row.period_of_performance_current_end_date_parsed;
+        if (!endDate || !(endDate instanceof Date) || isNaN(endDate.getTime())) {
+            return false;
+        }
+        return endDate >= today && endDate <= sixMonthsFromNow;
+    });
+    
+    const expiringValue = d3.sum(expiringContracts, d => parseSafeFloat(d.current_total_value_of_award));
+    const expiringPercentage = (expiringValue / totalValue) * 100;
+    
+    // Check for NAICS distribution
+    const naicsGroups = d3.group(data, d => d.naics_code);
+    const naicsCount = naicsGroups.size;
+    
+    // Find top NAICS codes by value
+    const naicsValues = Array.from(naicsGroups, ([code, contracts]) => {
+        return {
+            code: code,
+            description: contracts[0].naics_description || 'Unknown',
+            value: d3.sum(contracts, d => parseSafeFloat(d.current_total_value_of_award))
+        };
+    }).sort((a, b) => b.value - a.value);
+    
+    const topNaics = naicsValues.slice(0, 3);
+    
+    // Generate insights based on data analysis
+    
+    // 1. Market structure insight
+    if (top3Percentage > 70) {
+        insights.push(`The ${agencyName} contracting market is highly concentrated, with the top 3 recipients accounting for ${Math.round(top3Percentage)}% of total contract value. Consider exploring partnership opportunities with these key players.`);
+    } else if (top3Percentage > 40) {
+        insights.push(`The ${agencyName} contracting market has moderate concentration, with the top 3 recipients accounting for ${Math.round(top3Percentage)}% of total contract value. Both prime and subcontracting opportunities may be viable entry strategies.`);
+    } else {
+        insights.push(`The ${agencyName} contracting market is fairly distributed across ${recipientCount} recipients, suggesting diverse contracting opportunities and multiple potential entry points.`);
+    }
+    
+    // 2. Contract size insight
+    if (medianValue > 1000000) {
+        insights.push(`Contract sizes are relatively large, with a median value of ${formatCurrency(medianValue)}. Consider teaming arrangements to compete for these higher-value opportunities.`);
+    } else if (medianValue > 250000) {
+        insights.push(`Contract sizes are moderate, with a median value of ${formatCurrency(medianValue)}. This indicates a mix of opportunities suitable for businesses of various sizes.`);
+    } else {
+        insights.push(`Contract sizes tend to be smaller, with a median value of ${formatCurrency(medianValue)}. These may be more accessible for small businesses without extensive teaming.`);
+    }
+    
+    // 3. Expiring contracts insight
+    if (expiringContracts.length > 0) {
+        insights.push(`${expiringContracts.length} contracts worth ${formatCurrency(expiringValue)} (${Math.round(expiringPercentage)}% of total value) are expiring in the next 6 months. These represent near-term recompete opportunities to monitor.`);
+    }
+    
+    // 4. Industry focus insight
+    if (naicsCount <= 3 && topNaics.length > 0) {
+        insights.push(`Spending is focused primarily in ${naicsCount} NAICS categories, with ${topNaics[0].code} (${truncateText(topNaics[0].description, 40)}) being the largest at ${formatCurrency(topNaics[0].value)}. Specialization in these areas may be advantageous.`);
+    } else if (naicsCount > 10) {
+        insights.push(`Contract spending spans a diverse range of ${naicsCount} NAICS categories, indicating a broad spectrum of procurement needs across multiple industries.`);
+    } else if (topNaics.length > 0) {
+        insights.push(`The top NAICS category is ${topNaics[0].code} (${truncateText(topNaics[0].description, 40)}), representing ${formatCurrency(topNaics[0].value)}. Look for opportunities to leverage expertise in this area.`);
+    }
+    
+    // Add general strategy recommendation
+    insights.push(`For ${agencyName}, develop a targeted approach focusing on specific contract vehicles, key relationships with current primes, and capabilities that align with the dominant NAICS codes.`);
+    
+    return insights;
+}
+// Add this function to dynamically load jsPDF when needed
+function loadJsPDF(callback) {
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+    script.async = true;
+    script.onload = callback;
+    
+    document.head.appendChild(script);
+    
+    // Also load the font for better PDF rendering
+    const fontScript = document.createElement('script');
+    fontScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+    fontScript.async = true;
+    
+    document.head.appendChild(fontScript);
+}
