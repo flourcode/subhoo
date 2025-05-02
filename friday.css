@@ -1,0 +1,1633 @@
+/* ========================================= */
+
+/* CSS Variables - Light Mode Muted Purples  */
+
+/* ========================================= */
+
+:root {
+
+    /* Core Color Palette - Muted Purples */
+
+    --light-purple-50: #F4F2F6;  /* Lightest - Background */
+
+    --light-purple-100: #E9E6ED; /* Light - Surface Container */
+
+    --light-purple-200: #D7D4DC; /* Light Mid - Surface Variant */
+
+    --light-purple-300: #B5B0BD; /* Mid - Outline */
+
+    --light-purple-400: #9993A1; /* Mid Dark - Primary */
+
+    --light-purple-500: #797484; /* Dark - Secondary */
+
+    --light-purple-600: #615C66; /* Darkest - Text */
+
+    
+
+    /* Neutral Colors */
+
+    --white: #FFFFFF;
+
+    --light-text: #36323A;      /* Dark Purple-Gray Text */
+
+    --dark-text: #252327;       /* Darkest Text */
+
+    
+
+    /* Status Colors */
+
+    --red-500: #ef4444;         /* Error */
+
+    --green-500: #10b981;       /* Success */
+
+    --blue-500: #3e95cd;        /* Info */
+
+    
+
+    /* Semantic Color Mapping */
+
+    --color-background: var(--white);
+
+    --color-surface: var(--light-purple-50); 
+
+    --color-surface-container: var(--light-purple-100);
+
+    --color-surface-variant: var(--light-purple-200);
+
+    
+
+    /* Text Colors */
+
+    --color-text-primary: var(--light-text);
+
+    --color-text-secondary: var(--light-purple-600);
+
+    --color-text-tertiary: var(--light-purple-500);
+
+    
+
+    /* Action Colors */
+
+    --color-primary: var(--light-purple-400);
+
+    --color-on-primary: var(--white);
+
+    --color-secondary: var(--light-purple-500);
+
+    --color-on-secondary: var(--white);
+
+    
+
+    /* Border & Outline */
+
+    --color-outline: var(--light-purple-300);
+
+    --color-border: var(--light-purple-200);
+
+    
+
+    /* Chart Colors */
+
+    --chart-color-primary: var(--light-purple-400);   
+
+    --chart-color-secondary: var(--light-purple-500);
+
+    --chart-color-tertiary: var(--light-purple-300);  
+
+    
+
+    /* Status Colors */
+
+    --color-error: var(--red-500);
+
+    --color-success: var(--green-500);
+
+    --color-info: var(--blue-500);
+
+    
+
+    /* Layout Values */
+
+    --border-radius-sm: 8px;
+
+    --border-radius-md: 12px;
+
+    --border-radius-lg: 16px;
+
+    
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+
+    --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.08);
+
+    --shadow-lg: 0 4px 6px rgba(0, 0, 0, 0.12);
+
+    
+
+    --transition-standard: all 0.2s ease;
+
+    --bento-gap: 20px;
+
+}
+
+
+
+/* ========================================= */
+
+/* Base Styles                               */
+
+/* ========================================= */
+
+* {
+
+    margin: 0;
+
+    padding: 0;
+
+    box-sizing: border-box;
+
+}
+
+
+
+body {
+
+    font-family: 'Inter', -apple-system, sans-serif;
+
+    background-color: #F4F2F6;
+
+    color: var(--color-text-primary);
+
+    line-height: 1.5;
+
+    padding: 24px;
+
+    font-size: 14px;
+
+}
+
+
+
+/* ========================================= */
+
+/* Header Styles                             */
+
+/* ========================================= */
+
+.dashboard-header {
+
+    margin-bottom: 24px;
+
+}
+
+
+
+.header-content {
+
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+}
+
+
+
+.title-area h1 {
+
+    font-size: 24px;
+
+    font-weight: 700;
+
+    color: var(--color-text-primary);
+
+    margin-bottom: 4px;
+
+}
+
+
+
+.title-area p {
+
+    font-size: 14px;
+
+    color: var(--color-text-secondary);
+
+}
+
+
+
+.header-controls {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 16px;
+
+}
+
+
+
+/* Unified date container */
+
+.date-container {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+
+    padding: 8px 16px;
+
+    background-color: var(--white);
+
+    border-radius: var(--border-radius-lg);
+
+    box-shadow: var(--shadow-sm);
+
+    border: 1px solid var(--color-border);
+
+    font-size: 14px;
+
+    color: var(--color-text-primary);
+
+}
+
+
+
+.date-separator {
+
+    color: var(--color-text-secondary);
+
+    opacity: 0.6;
+
+}
+
+
+
+#date-text {
+
+    font-weight: 500;
+
+}
+
+
+
+#time-text {
+
+    font-weight: 500;
+
+}
+
+
+
+/* ========================================= */
+
+/* Grid Layout                               */
+
+/* ========================================= */
+
+.bento-grid {
+
+    display: grid;
+
+    gap: var(--bento-gap);
+
+    grid-template-columns: repeat(4, 1fr);
+
+    grid-template-areas:
+
+        "controls controls search arr"
+
+        "tavtcv tavtcv leaders leaders"
+
+        "sankey sankey map map"
+
+        "expiring expiring expiring expiring";
+
+    grid-template-rows: auto 600px 600px auto;
+
+}
+
+/* Assign grid areas */
+
+#bento-controls { grid-area: controls; }
+
+#bento-search { grid-area: search; }
+
+#bento-tavtcv { grid-area: tavtcv; }
+
+#bento-leaders { grid-area: leaders; }
+
+#bento-arr { grid-area: arr; }
+
+#bento-notes { grid-area: notes; }
+
+#bento-expiring { grid-area: expiring; }
+
+#bento-map { grid-area: map; }
+
+#bento-sankey { grid-area: sankey; }
+
+
+
+/* ========================================= */
+
+/* Card Styles                               */
+
+/* ========================================= */
+
+.bento-box {
+
+    background-color: var(--white);
+
+    border-radius: var(--border-radius-lg);
+
+    box-shadow: var(--shadow-md);
+
+    padding: 20px;
+
+    transition: var(--transition-standard);
+
+    position: relative;
+
+    overflow: hidden;
+
+    border: 1px solid var(--color-border);
+
+}
+
+
+
+.bento-box:hover {
+
+    box-shadow: var(--shadow-lg);
+
+    transform: translateY(-2px);
+
+}
+
+
+
+/* Card Header Styles */
+
+.card-header {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 12px;
+
+    margin-bottom: 16px;
+
+    border-bottom: 1px solid var(--color-border);
+
+    padding-bottom: 12px;
+
+}
+
+
+
+.card-header h2 {
+
+    font-size: 16px;
+
+    font-weight: 600;
+
+    color: var(--color-text-primary);
+
+    flex-grow: 1;
+
+}
+
+
+
+.card-icon-circle {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    width: 32px;
+
+    height: 32px;
+
+    border-radius: 50%;
+
+    background-color: var(--color-surface);
+
+    color: var(--color-primary);
+
+}
+
+
+
+/* Card Content Styles */
+
+.card-content {
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 16px;
+
+    flex-grow: 1;
+
+}
+
+
+
+/* Make cards fill their grid cells */
+
+#bento-leaders, #bento-arr, #bento-sankey, #bento-map, #bento-notes, #bento-tavtcv {
+
+    display: flex;
+
+    flex-direction: column;
+
+    height: 100%;
+
+}
+
+
+
+/* Make card content expand to fill available space */
+
+#bento-leaders .card-content, 
+
+#bento-arr .card-content,
+
+#bento-sankey .card-content,
+
+#bento-map .card-content,
+
+#bento-notes .card-content,
+
+#bento-tavtcv .card-content {
+
+    flex: 1;
+
+    display: flex;
+
+    flex-direction: column;
+
+}
+
+
+
+/* ========================================= */
+
+/* Form Element Styles                       */
+
+/* ========================================= */
+
+.input-select, .input-date, input[type="search"], input[type="text"] {
+
+    width: 100%;
+
+    padding: 10px 14px;
+
+    border: 1px solid var(--color-outline);
+
+    border-radius: var(--border-radius-md);
+
+    font-size: 14px;
+
+    color: var(--color-text-primary);
+
+    background-color: var(--white);
+
+    transition: var(--transition-standard);
+
+}
+
+
+
+.input-select:focus, .input-date:focus, input[type="search"]:focus, input[type="text"]:focus {
+
+    outline: none;
+
+    border-color: var(--color-primary);
+
+    box-shadow: 0 0 0 3px rgba(153, 147, 161, 0.2);
+
+}
+
+
+
+.input-select option {
+
+    background-color: var(--white);
+
+    color: var(--color-text-primary);
+
+}
+
+
+
+/* Button Styles */
+
+button, .button, .primary-button {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 8px;
+
+    padding: 10px 16px;
+
+    border-radius: var(--border-radius-md);
+
+    font-size: 14px;
+
+    font-weight: 500;
+
+    cursor: pointer;
+
+    transition: var(--transition-standard);
+
+    border: 1px solid var(--color-border);
+
+}
+
+
+
+button, .button {
+
+    background-color: var(--color-surface);
+
+    color: var(--color-text-primary);
+
+}
+
+
+
+button:hover:not(:disabled), .button:hover:not(:disabled) {
+
+    background-color: var(--color-surface-container);
+
+}
+
+
+
+.primary-button {
+
+    background-color: var(--color-primary);
+
+    color: var(--color-on-primary);
+
+    border: none;
+
+}
+
+
+
+.primary-button:hover:not(:disabled) {
+
+    background-color: var(--light-purple-500);
+
+}
+
+
+
+button:disabled, .button:disabled, .primary-button:disabled {
+
+    opacity: 0.6;
+
+    cursor: not-allowed;
+
+}
+
+
+
+/* ========================================= */
+
+/* Controls & Status                         */
+
+/* ========================================= */
+
+.dataset-selector {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 12px;
+
+}
+
+
+
+.dataset-selector label {
+
+    font-size: 14px;
+
+    font-weight: 500;
+
+    color: var(--color-text-primary);
+
+}
+
+
+
+.status-section {
+
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+    gap: 12px;
+
+}
+
+
+
+#status-banner {
+
+    padding: 8px 12px;
+
+    border-radius: var(--border-radius-md);
+
+    font-size: 13px;
+
+    color: var(--color-text-secondary);
+
+    background-color: var(--color-surface);
+
+    border: 1px solid var(--color-border);
+
+    flex-grow: 1;
+
+}
+
+
+
+#status-banner.error {
+
+    background-color: rgba(239, 68, 68, 0.1);
+
+    color: var(--color-error);
+
+    border-color: var(--color-error);
+
+}
+
+
+
+#status-banner.success {
+
+    background-color: rgba(16, 185, 129, 0.1);
+
+    color: var(--color-success);
+
+    border-color: var(--color-success);
+
+}
+
+
+
+#status-banner.info {
+
+    background-color: rgba(62, 149, 205, 0.1);
+
+    color: var(--color-info);
+
+    border-color: var(--color-info);
+
+}
+
+
+
+/* Filter Styles */
+
+.filter-container, .arr-filters {
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 16px;
+
+}
+
+
+
+.filter-row {
+
+    display: flex;
+
+    gap: 16px;
+
+}
+
+
+
+.filter-item {
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 6px;
+
+    flex: 1;
+
+}
+
+
+
+.filter-item label {
+
+    font-size: 12px;
+
+    font-weight: 500;
+
+    color: var(--color-text-secondary);
+
+}
+
+
+
+/* ========================================= */
+
+/* ARR Section                               */
+
+/* ========================================= */
+
+.arr-result-section {
+
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: center;
+
+    gap: 16px;
+
+    margin-top: 20px;
+
+    text-align: center;
+
+}
+
+
+
+.arr-display {
+
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: center;
+
+    gap: 4px;
+
+}
+
+
+
+.arr-value-display {
+
+    font-size: 28px;
+
+    font-weight: 700;
+
+    color: var(--color-primary);
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 10px;
+
+}
+
+
+
+#arr-result {
+
+    font-size: 28px;
+
+}
+
+
+
+#arr-calculate-button {
+
+    min-width: 180px;
+
+}
+
+/* ========================================= */
+
+/* Chart & Table Containers                  */
+
+/* ========================================= */
+
+.chart-container {
+
+    position: relative;
+
+    width: 100%;
+
+    height: 100%;
+
+    min-height: 200px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    flex: 1;
+
+}
+
+
+
+/* Fixed TAV/TCV Chart Container */
+
+#bento-tavtcv .chart-container {
+
+    height: auto !important; /* Remove fixed height */
+
+    min-height: 450px !important; 
+
+    flex: 1 !important; /* Allow it to grow */
+
+    overflow: visible !important; /* Allow content to be visible */
+
+    margin-top: 10px;
+
+}
+
+
+
+/* Ensure the canvas can expand properly */
+
+#tavTcvChart {
+
+    width: 100% !important;
+
+    height: 100% !important;
+
+    max-height: none !important;
+
+}
+
+
+
+.table-container {
+
+    width: 100%;
+
+    height: 100%;
+
+    min-height: 300px;
+
+    overflow: auto;
+
+    margin-top: 16px;
+
+    position: relative;
+
+    flex: 1;
+
+    display: flex;
+
+    flex-direction: column;
+
+}
+
+
+
+/* Chart container specific styling */
+
+#sankey-chart-container, #map-container {
+
+    flex: 1;
+
+    min-height: 300px;
+
+}
+
+
+
+/* Ensure parent containers allow charts to expand */
+
+#bento-sankey .card-content, 
+
+#bento-map .card-content,
+
+#bento-tavtcv .card-content {
+
+    flex: 1;
+
+    display: flex;
+
+    flex-direction: column;
+
+}
+
+
+
+/* ========================================= */
+
+/* Table Styles                              */
+
+/* ========================================= */
+
+table {
+
+    width: 100%;
+
+    border-collapse: collapse;
+
+}
+
+
+
+th, td {
+
+    padding: 12px 16px;
+
+    text-align: left;
+
+    border-bottom: 1px solid var(--color-border);
+
+}
+
+
+
+th {
+
+    font-weight: 600;
+
+    font-size: 12px;
+
+    color: var(--color-text-secondary);
+
+    text-transform: uppercase;
+
+    letter-spacing: 0.05em;
+
+    background-color: var(--color-surface);
+
+    position: sticky;
+
+    top: 0;
+
+    z-index: 1;
+
+}
+
+
+
+td {
+
+    font-size: 13px;
+
+    color: var(--color-text-primary);
+
+}
+
+
+
+td.number {
+
+    text-align: right;
+
+    font-variant-numeric: tabular-nums;
+
+    font-weight: 500;
+
+}
+
+
+
+tr:hover td {
+
+    background-color: var(--color-surface);
+
+}
+
+
+
+.table-summary, .summary-text {
+
+    text-align: center;
+
+    font-size: 12px;
+
+    color: var(--color-text-secondary);
+
+    margin-top: 12px;
+
+    padding-top: 8px;
+
+    border-top: 1px solid var(--color-border);
+
+}
+
+
+
+/* Leaders table specific styling */
+
+#bento-leaders .table-container {
+
+    display: flex;
+
+    flex-direction: column;
+
+    flex: 1;
+
+}
+
+
+
+#contract-leaders-table-container {
+
+    min-height: 400px;
+
+    max-height: none; /* Remove max height constraint */
+
+    flex: 1;
+
+}
+
+
+
+/* Make the table wrapper taller to show more rows */
+
+#contract-leaders-table-container .table-wrapper {
+
+    max-height: none;
+
+    height: 100%;
+
+    overflow-y: auto;
+
+}
+
+
+
+/* ========================================= */
+
+/* Notes Section                             */
+
+/* ========================================= */
+
+.notes-content {
+
+    color: var(--color-text-secondary);
+
+    font-size: 13px;
+
+}
+
+
+
+.notes-content p {
+
+    margin-bottom: 12px;
+
+}
+
+
+
+.notes-content p:last-child {
+
+    margin-bottom: 0;
+
+}
+
+
+
+.notes-content ul {
+
+    margin-left: 20px;
+
+    margin-bottom: 12px;
+
+}
+
+
+
+.notes-content ul li {
+
+    margin-bottom: 6px;
+
+}
+
+
+
+.notes-content strong {
+
+    color: var(--color-text-primary);
+
+    font-weight: 600;
+
+}
+
+
+
+/* ========================================= */
+
+/* Loading States                            */
+
+/* ========================================= */
+
+.loading-placeholder, .error-placeholder, .no-data-placeholder {
+
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 12px;
+
+    padding: 24px;
+
+    text-align: center;
+
+    color: var(--color-text-tertiary);
+
+    font-size: 14px;
+
+    position: absolute;
+
+    top: 0;
+
+    left: 0;
+
+    width: 100%;
+
+    height: 100%;
+
+    background-color: rgba(255, 255, 255, 0.8);
+
+    border-radius: var(--border-radius-md);
+
+    z-index: 10;
+
+}
+
+
+
+.error-placeholder {
+
+    color: var(--color-error);
+
+}
+
+
+
+.spinner {
+
+    width: 24px;
+
+    height: 24px;
+
+    border-radius: 50%;
+
+    border: 3px solid var(--color-surface-variant);
+
+    border-top-color: var(--color-primary);
+
+    animation: spin 1s linear infinite;
+
+}
+
+
+
+@keyframes spin {
+
+    to { transform: rotate(360deg); }
+
+}
+
+
+
+/* ========================================= */
+
+/* Chart-Specific Styling                    */
+
+/* ========================================= */
+
+/* Sankey Chart */
+
+#sankeyChart path {
+
+    stroke: var(--chart-color-secondary);
+
+    stroke-opacity: 0.5;
+
+    transition: stroke-opacity 0.3s ease;
+
+}
+
+
+
+#sankeyChart path:hover {
+
+    stroke-opacity: 0.8;
+
+}
+
+
+
+#sankeyChart rect {
+
+    fill: var(--chart-color-primary);
+
+}
+
+
+
+/* Choropleth Map */
+
+#choroplethMap path {
+
+    transition: fill 0.3s ease, stroke-width 0.3s ease;
+
+}
+
+
+
+#choroplethMap path:hover {
+
+    stroke-width: 1.5px;
+
+    stroke: var(--color-primary);
+
+}
+
+
+
+/* ========================================= */
+
+/* Responsive Adjustments                    */
+
+/* ========================================= */
+
+@media (max-width: 1200px) {
+
+    .bento-grid {
+
+        grid-template-columns: repeat(2, 1fr);
+
+        grid-template-areas:
+
+            "controls controls"
+
+            "tavtcv tavtcv"
+
+            "leaders arr"
+
+            "sankey map"
+
+            "notes notes"
+
+            "expiring expiring";
+
+    }
+
+}
+
+
+
+@media (max-width: 768px) {
+
+    body {
+
+        padding: 16px;
+
+    }
+
+
+
+    .bento-grid {
+
+        grid-template-columns: 1fr;
+
+        grid-template-areas:
+
+            "controls"
+
+            "tavtcv"
+
+            "leaders"
+
+            "arr"
+
+            "sankey"
+
+            "map"
+
+            "notes"
+
+            "expiring";
+
+    }
+
+
+
+    .header-content {
+
+        flex-direction: column;
+
+        align-items: flex-start;
+
+        gap: 16px;
+
+    }
+
+
+
+    .header-controls {
+
+        width: 100%;
+
+        justify-content: space-between;
+
+        flex-wrap: wrap;
+
+        gap: 12px;
+
+    }
+
+
+
+    .filter-row {
+
+        flex-direction: column;
+
+        gap: 12px;
+
+    }
+
+
+
+    #contract-leaders-table-container th:first-child,
+
+    #contract-leaders-table-container td:first-child {
+
+        position: sticky;
+
+        left: 0;
+
+        background-color: var(--white);
+
+        z-index: 2;
+
+        box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+
+    }
+
+
+
+    #sankey-chart-container,
+
+    #map-container {
+
+        min-height: 300px;
+
+        height: 350px;
+
+    }
+
+
+
+    #expiring-contracts-table-container {
+
+        min-height: 250px;
+
+    }
+
+}
+
+
+
+@media (max-width: 480px) {
+
+    .arr-result-section {
+
+        flex-direction: column;
+
+        align-items: stretch;
+
+    }
+
+
+
+    .arr-display {
+
+        margin-top: 16px;
+
+    }
+
+}
+
+/* Add this to your CSS to make both containers have consistent heights */
+
+#bento-tavtcv, #bento-leaders {
+
+  height: 600px; /* Set a fixed height for both containers */
+
+}
+
+
+
+/* Make the chart containers fill their parents properly */
+
+#bento-tavtcv .chart-container,
+
+#bento-leaders .table-container {
+
+  height: calc(100% - 60px) !important; /* Account for header height */
+
+  min-height: auto !important;
+
+  max-height: none !important;
+
+  flex: 1;
+
+  display: flex;
+
+  flex-direction: column;
+
+}
+
+
+
+/* Fix the table wrapper to fill its container */
+
+#contract-leaders-table-container .table-wrapper {
+
+  max-height: none;
+
+  height: 100%;
+
+  overflow-y: auto;
+
+  flex: 1;
+
+}
+
+
+
+/* Ensure chart canvas behaves properly */
+
+#tavTcvChart {
+
+  height: 100% !important;
+
+  max-height: none !important;
+
+}
+
+/* Add these to control specific container heights */
+
+#bento-sankey, #bento-map {
+
+    height: 600px; /* Match the height in grid-template-rows */
+
+    overflow: hidden; /* Prevent content from overflowing */
+
+}
+
+
+
+/* Make chart containers fill their parent containers */
+
+#sankey-chart-container, #map-container {
+
+    height: calc(100% - 60px); /* Account for header height */
+
+    min-height: auto;
+
+    max-height: none;
+
+}
+
+
+
+/* Ensure choropleth map fills its container properly */
+
+#choroplethMap {
+
+    height: 100%;
+
+    width: 100%;
+
+}
+
+
+
+/* Ensure SVG fits properly in the container */
+
+#choroplethMap svg {
+
+    width: 100%;
+
+    height: 100%;
+
+    max-height: none;
+
+}
+
+/* Add this to your test_style.css */
+
+.dashboard-layout {
+
+  display: flex;
+
+  height: 100vh;
+
+  overflow: hidden;
+
+}
+
+
+
+.side-panel {
+
+  width: 250px;
+
+  height: 100vh;
+
+  background-color: var(--white);
+
+  border-right: 1px solid var(--color-border);
+
+  padding: 20px;
+
+  overflow-y: auto;
+
+}
+
+
+
+.main-content {
+
+  flex: 1;
+
+  height: 100vh;
+
+  overflow-y: auto;
+
+  padding: 20px;
+
+}
+
+
+
+.bento-grid {
+
+  display: grid;
+
+  grid-template-columns: repeat(4, 1fr);
+
+  grid-auto-rows: minmax(200px, auto);
+
+  gap: 20px;
+
+}
+
+
+
+.col-span-2 {
+
+  grid-column: span 2;
+
+}
+
+
+
+body {
+
+  margin: 0;
+
+  padding: 0;
+
+  overflow: hidden;
+
+}
