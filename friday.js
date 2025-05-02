@@ -17,6 +17,7 @@ let rawData = []; // To store loaded data
 let tavTcvChartInstance = null; // Store chart instance
 let isLoading = false;
 let currentDataset = null;
+let chartData = []; // Store chart data globally
 
 // --- Utility Functions ---
 function formatCurrency(value) {
@@ -79,6 +80,23 @@ function truncateText(text, maxLength) {
     if (!text) return '';
     const stringText = String(text);
     return stringText.length > maxLength ? stringText.substring(0, maxLength - 3) + '...' : stringText;
+}
+
+// New function to clean up all tooltips
+function cleanupTooltips() {
+    // Remove custom HTML tooltips
+    const tooltipIds = ['tav-tcv-tooltip'];
+    tooltipIds.forEach(id => {
+        const tooltipEl = document.getElementById(id);
+        if (tooltipEl && tooltipEl.parentNode) {
+            tooltipEl.parentNode.removeChild(tooltipEl);
+        }
+    });
+    
+    // Remove D3 tooltips
+    d3.select("body").selectAll(".sankey-tooltip").remove();
+    d3.select("body").selectAll(".map-tooltip").remove();
+    d3.select("body").selectAll(".tooltip").remove();
 }
 
 // --- UI Helper Functions ---
@@ -325,6 +343,9 @@ function initializeDatasetSelector() {
 }
 
 function resetUIForNoDataset() {
+    // Clean up tooltips
+    cleanupTooltips();
+    
     rawData = [];
     currentDataset = null;
     document.getElementById('refresh-button').disabled = true; // Disable refresh
@@ -701,7 +722,6 @@ function displayExpiringTable(expiringData) {
     summaryPara.textContent = `Showing ${expiringData.length} expiring contracts.`;
     container.appendChild(summaryPara);
 }
-// --- Chart 3: TAV vs TCV Tracker ---
 function processTavTcvData(data) {
     console.log("Processing TAV/TCV data...");
     if (!data || data.length === 0) return [];
@@ -737,18 +757,20 @@ function processTavTcvData(data) {
     console.log(`Processed ${contracts.length} contracts for TAV/TCV chart.`);
     return contracts;
 }
+
 function displayTavTcvChart(chartData) {
     const containerId = 'tav-tcv-chart-container';
     const container = document.getElementById(containerId);
-    const canvas = document.getElementById('tavTcvChart');
-
-    if (!container || !canvas) {
-        console.error("TAV/TCV chart container or canvas element not found.");
-        if(container) displayError(containerId, "Chart canvas element is missing.");
+    
+    if (!container) {
+        console.error("TAV/TCV chart container element not found.");
         return;
     }
 
     setLoading(containerId, false);
+    
+    // Clean up any existing tooltips
+    cleanupTooltips();
     
     // Clear container and recreate canvas
     container.innerHTML = '';
@@ -761,12 +783,15 @@ function displayTavTcvChart(chartData) {
         return;
     }
 
+    // Store chart data globally for resize events
+    window.chartData = chartData;
+    
     // Check theme
     const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
     
     // Set dimensions
     const containerWidth = container.clientWidth;
-    const containerHeight = container.clientHeight;
+    const containerHeight = container.clientHeight || 400; // Default height if not set
     newCanvas.width = containerWidth;
     newCanvas.height = containerHeight;
     
@@ -789,7 +814,12 @@ function displayTavTcvChart(chartData) {
         tavTcvChartInstance = null;
     }
     
-    // Create a custom tooltip element
+    // Create a custom tooltip element - remove existing first
+    const existingTooltip = document.getElementById('tav-tcv-tooltip');
+    if (existingTooltip && existingTooltip.parentNode) {
+        existingTooltip.parentNode.removeChild(existingTooltip);
+    }
+    
     const tooltipEl = document.createElement('div');
     tooltipEl.id = 'tav-tcv-tooltip';
     tooltipEl.style.position = 'absolute';
@@ -797,7 +827,6 @@ function displayTavTcvChart(chartData) {
     tooltipEl.style.color = isDarkMode ? '#F4F2F6' : '#36323A';
     tooltipEl.style.padding = '10px';
     tooltipEl.style.borderRadius = '4px';
-    tooltipEl.style.border = '1px solid ' + (isDarkMode ? '#3A373E' : '#D7D4DC');
     tooltipEl.style.pointerEvents = 'none';
     tooltipEl.style.opacity = '0';
     tooltipEl.style.transition = 'opacity 0.2s';
@@ -878,7 +907,6 @@ function displayTavTcvChart(chartData) {
                     }
                 }
             },
-            // No padding needed since we're not using labels on the y-axis
             layout: {
                 padding: {
                     left: 5,
@@ -1006,14 +1034,8 @@ function displayTavTcvChart(chartData) {
             labelsContainer.appendChild(label);
         });
     }, 100);
-    
-    // Clean up tooltip when chart is destroyed
-    newCanvas.addEventListener('remove', () => {
-        if (tooltipEl && tooltipEl.parentNode) {
-            tooltipEl.parentNode.removeChild(tooltipEl);
-        }
-    });
 }
+
 // --- Filters and Dynamic Chart Updates ---
 function populateFilters(data) {
     if (!data || data.length === 0) {
@@ -1046,6 +1068,7 @@ function populateFilters(data) {
     populateDropdown(document.getElementById('sub-agency-filter'), subAgencySet, "All Sub-Agencies");
     populateNaicsDropdown(document.getElementById('naics-filter'), naicsMap);
 }
+
 // --- Sankey Chart Functions ---
 function processSankeyData(data) {
     console.log("Processing data for Sankey chart...");
@@ -1148,21 +1171,26 @@ function processSankeyData(data) {
     console.log(`Processed data for Sankey chart: ${nodesObjects.length} nodes, ${linksObjects.length} links`);
     return { nodes: nodesObjects, links: linksObjects };
 }
+
 function displaySankeyChart(sankeyData) {
     const containerId = 'sankey-chart-container';
     const container = document.getElementById(containerId);
-    const svg = document.getElementById('sankeyChart');
     
-    if (!container || !svg) {
-        console.error("Sankey chart container or SVG element not found.");
-        if(container) displayError(containerId, "SVG element is missing.");
+    if (!container) {
+        console.error("Sankey chart container not found.");
         return;
     }
+
+    // Clean up any existing tooltips
+    cleanupTooltips();
+    
+    // Clear any previous content and create a new SVG
+    container.innerHTML = '';
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.id = 'sankeyChart';
+    container.appendChild(svg);
     
     setLoading(containerId, false); // Turn off loading spinner
-    
-    // Clear any previous content
-    svg.innerHTML = '';
     
     if (!sankeyData || !sankeyData.nodes || !sankeyData.links || 
         sankeyData.nodes.length === 0 || sankeyData.links.length === 0) {
@@ -1172,7 +1200,7 @@ function displaySankeyChart(sankeyData) {
     
     // Set dimensions and margins
     const width = container.clientWidth;
-    const height = container.clientHeight;
+    const height = container.clientHeight || 400; // Default height if not set
     const margin = {top: 20, right: 20, bottom: 20, left: 20};
     const innerWidth = width - margin.left - margin.right;
     const innerHeight = height - margin.top - margin.bottom;
@@ -1183,12 +1211,16 @@ function displaySankeyChart(sankeyData) {
     const nodeColor = isDarkMode ? '#A29AAA' : '#9993A1'; // Brighter in dark mode
     const linkColor = isDarkMode ? '#3A373E' : '#D7D4DC'; // Different opacity for links
     
+    // Remove existing tooltips
+    d3.select("body").selectAll(".sankey-tooltip").remove();
+    
     // Create a tooltip div attached to the body
     const tooltip = d3.select("body")
         .append("div")
         .attr("class", "sankey-tooltip")
         .style("position", "absolute")
         .style("visibility", "hidden")
+        .style("opacity", "0") // Start with 0 opacity
         .style("background-color", isDarkMode ? "#252229" : "#FFFFFF")
         .style("color", isDarkMode ? "#F4F2F6" : "#36323A")
         .style("padding", "8px")
@@ -1201,24 +1233,26 @@ function displaySankeyChart(sankeyData) {
             '0 2px 4px rgba(0, 0, 0, 0.3)' : 
             '0 2px 4px rgba(0, 0, 0, 0.1)');
     
+    // Set SVG dimensions
+    d3.select(svg)
+        .attr("width", width)
+        .attr("height", height);
+    
     // Create the sankey generator
     const sankey = d3.sankey()
         .nodeWidth(15)
         .nodePadding(10)
-        .extent([[1, 1], [innerWidth - 1, innerHeight - 1]]);
+        .extent([[margin.left, margin.top], [width - margin.right, height - margin.bottom]]);
     
     // Generate the sankey layout
     const { nodes, links } = sankey({
-        nodes: sankeyData.nodes,
-        links: sankeyData.links
+        nodes: sankeyData.nodes.map(d => ({...d})),
+        links: sankeyData.links.map(d => ({...d}))
     });
     
     // Create the main group element with margins
     const g = d3.select(svg)
-        .attr('width', width)
-        .attr('height', height)
-        .append('g')
-        .attr('transform', `translate(${margin.left},${margin.top})`);
+        .append('g');
     
     // Add links with theme-aware colors
     g.append('g')
@@ -1231,9 +1265,12 @@ function displaySankeyChart(sankeyData) {
         .attr('stroke', linkColor)
         .attr('stroke-opacity', isDarkMode ? 0.6 : 0.7) // Adjust opacity based on theme
         .attr('fill', 'none')
+        .style('pointer-events', 'all') // Ensure links are clickable
         .on('mouseover', function(event, d) {
+            // Show tooltip with transition
             tooltip
                 .style("visibility", "visible")
+                .style("opacity", "1")
                 .html(`
                     <div style="font-weight: bold; margin-bottom: 5px;">${d.source.name} → ${d.target.name}</div>
                     <div>Value: ${formatCurrency(d.value)}</div>
@@ -1255,8 +1292,10 @@ function displaySankeyChart(sankeyData) {
                 .style("top", (event.pageY - 28) + "px");
         })
         .on('mouseout', function() {
-            // Hide tooltip
-            tooltip.style("visibility", "hidden");
+            // Hide tooltip with transition
+            tooltip
+                .style("visibility", "hidden")
+                .style("opacity", "0");
             
             // Remove highlight
             d3.select(this)
@@ -1275,9 +1314,11 @@ function displaySankeyChart(sankeyData) {
         .attr('width', d => d.x1 - d.x0)
         .attr('fill', nodeColor)
         .attr('stroke', isDarkMode ? '#4A474E' : '#E9E6ED')
+        .style('pointer-events', 'all') // Ensure nodes are clickable
         .on('mouseover', function(event, d) {
             tooltip
                 .style("visibility", "visible")
+                .style("opacity", "1")
                 .html(`
                     <div style="font-weight: bold; margin-bottom: 5px;">${d.name}</div>
                     <div>Total Value: ${formatCurrency(d.value)}</div>
@@ -1301,7 +1342,9 @@ function displaySankeyChart(sankeyData) {
         })
         .on('mouseout', function() {
             // Hide tooltip
-            tooltip.style("visibility", "hidden");
+            tooltip
+                .style("visibility", "hidden")
+                .style("opacity", "0");
             
             // Remove highlight
             d3.select(this)
@@ -1309,7 +1352,7 @@ function displaySankeyChart(sankeyData) {
                 .attr('stroke-width', 1);
         });
        
-    // Add node labels with theme-aware color (no background)
+    // Add node labels with theme-aware color
     g.append('g')
         .selectAll('text')
         .data(nodes)
@@ -1321,9 +1364,14 @@ function displaySankeyChart(sankeyData) {
         .attr('text-anchor', d => d.x0 < innerWidth / 2 ? 'start' : 'end')
         .text(d => d.name)
         .attr('font-size', '10px')
-        .attr('fill', textColor)      // Theme-aware text color
+        .attr('fill', textColor)       // Theme-aware text color
         .style('pointer-events', 'none'); // Ensures clicks go through to the node
+        
+    // Add animation transition to all elements (optional)
+    d3.select(svg).selectAll('*')
+        .style("transition", "all 0.3s ease");
 }
+
 // --- Choropleth Map Functions ---
 function processMapData(data) {
     console.log("Processing data for performance map...");
@@ -1379,24 +1427,29 @@ function processMapData(data) {
     });
     
     console.log(`Processed data for map: ${Object.keys(stateData).length} states with FIPS codes (found ${rowsWithFips} rows with FIPS codes)`);
-    console.log("State data:", stateData);
     return stateData;
 }
 function displayChoroplethMap(mapData) {
     const containerId = 'map-container';
     const container = document.getElementById(containerId);
-    const mapDiv = document.getElementById('choroplethMap');
-
-    if (!container || !mapDiv) {
-        console.error("Map container or div element not found.");
-        if(container) displayError(containerId, "Map div element is missing.");
+    
+    if (!container) {
+        console.error("Map container not found.");
         return;
     }
 
+    // Clean up any existing tooltips
+    cleanupTooltips();
+    
+    // Clear any previous content and create a new div
+    container.innerHTML = '';
+    const mapDiv = document.createElement('div');
+    mapDiv.id = 'choroplethMap';
+    mapDiv.style.width = '100%';
+    mapDiv.style.height = '100%';
+    container.appendChild(mapDiv);
+    
     setLoading(containerId, false); // Turn off loading spinner
-
-    // Clear any previous content
-    mapDiv.innerHTML = '';
 
     if (!mapData || Object.keys(mapData).length === 0) {
         displayNoData(containerId, 'No geographic data available for mapping.');
@@ -1405,16 +1458,15 @@ function displayChoroplethMap(mapData) {
 
     try {
         // Set up map dimensions based on the container div
-        const width = mapDiv.clientWidth;
-        const height = mapDiv.clientHeight;
+        const width = container.clientWidth;
+        const height = container.clientHeight || 400; // Default height if not set
 
         // Check if dimensions are valid
         if (width <= 0 || height <= 0) {
-             console.warn(`Map container (${containerId}) has invalid dimensions: ${width}x${height}. Map rendering skipped.`);
+             console.warn(`Map container has invalid dimensions: ${width}x${height}. Map rendering skipped.`);
              displayError(containerId, 'Map container has zero size. Cannot render map.');
              return;
         }
-
 
         // Check if we're in dark mode
         const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
@@ -1429,7 +1481,6 @@ function displayChoroplethMap(mapData) {
             .style('max-width', '100%') // Ensure SVG scales down if needed
             .style('height', 'auto');
 
-
         // Define color scale for the map
         const stateValues = Object.values(mapData).map(d => d.value);
         const maxValue = d3.max(stateValues) || 0;
@@ -1441,9 +1492,10 @@ function displayChoroplethMap(mapData) {
                 d3.interpolate('#3A373E', '#A29AAA') : // Dark mode: darker to lighter purple
                 d3.interpolate('#E9E6ED', '#9993A1')); // Light mode: light to medium purple
 
-        // Create tooltip - attach to body for better positioning
-        // Remove existing tooltips first to avoid duplicates
+        // Remove existing tooltips first
         d3.select("body").selectAll(".map-tooltip").remove();
+        
+        // Create tooltip - attach to body for better positioning
         const tooltip = d3.select("body")
             .append("div")
             .attr("class", "map-tooltip tooltip") // Add generic tooltip class too
@@ -1514,8 +1566,13 @@ function displayChoroplethMap(mapData) {
                    })
                    .attr('stroke', isDarkMode ? '#3A373E' : '#FFFFFF') // Border color between states
                    .attr('stroke-width', 0.5)
+                   .style('pointer-events', 'all') // Ensure map areas are clickable
                    .on('mouseover', function(event, d) {
-                       tooltip.transition().duration(200).style("opacity", .9).style("visibility", "visible"); // Fade in
+                       // Show tooltip with transition
+                       tooltip.transition().duration(200)
+                            .style("visibility", "visible")
+                            .style("opacity", 0.9); // Fade in
+                            
                        tooltip.html(() => {
                            const fipsCode = d.id.toString().padStart(2, '0');
                            const stateData = mapData[fipsCode];
@@ -1545,7 +1602,11 @@ function displayChoroplethMap(mapData) {
                               .style("top", (event.pageY - 28) + "px");
                    })
                    .on('mouseout', function() {
-                       tooltip.transition().duration(500).style("opacity", 0).style("visibility", "hidden"); // Fade out
+                       // Hide tooltip with transition
+                       tooltip.transition().duration(500)
+                              .style("visibility", "hidden")
+                              .style("opacity", 0); // Fade out
+                              
                        // Remove highlight
                        d3.select(this)
                            .attr("stroke", isDarkMode ? '#3A373E' : '#FFFFFF')
@@ -1612,16 +1673,17 @@ function displayChoroplethMap(mapData) {
             .catch(error => {
                 console.error("Error loading or processing GeoJSON for map:", error);
                 displayError(containerId, `Error rendering map: ${error.message}`);
-                 // Clean up tooltip if it exists
-                 d3.select("body").selectAll(".map-tooltip").remove();
+                // Clean up tooltip if it exists
+                d3.select("body").selectAll(".map-tooltip").remove();
             });
     } catch (error) {
         console.error("Error creating choropleth map:", error);
         displayError(containerId, "Failed to render map: " + error.message);
-         // Clean up tooltip if it exists
-         d3.select("body").selectAll(".map-tooltip").remove();
+        // Clean up tooltip if it exists
+        d3.select("body").selectAll(".map-tooltip").remove();
     }
 }
+
 function applyFiltersAndUpdateVisuals() {
     // --- Get Filter & Search Values ---
     const subAgencyFilter = document.getElementById('sub-agency-filter')?.value || '';
@@ -1660,7 +1722,7 @@ function applyFiltersAndUpdateVisuals() {
         dataAfterSearch = rawData.filter(row => {
             const recipientMatch = row.recipient_name?.toLowerCase().includes(searchTerm);
             const piidMatch = row.award_id_piid?.toLowerCase().includes(searchTerm);
-			const descriptionMatch = row.transaction_description?.toLowerCase().includes(searchTerm);
+            const descriptionMatch = row.transaction_description?.toLowerCase().includes(searchTerm);
 
             return recipientMatch || piidMatch || descriptionMatch;
         });
@@ -1684,6 +1746,9 @@ function applyFiltersAndUpdateVisuals() {
 
     console.log(`Filtered data count (after search & filters): ${filteredData.length} records`);
 
+    // Clean up tooltips before redrawing
+    cleanupTooltips();
+
     // --- Process and Update Visuals ---
     // Contract Leaders Table
     const leaderData = processContractLeaders(filteredData);
@@ -1704,7 +1769,9 @@ function applyFiltersAndUpdateVisuals() {
     // Choropleth Map
     const mapData = processMapData(filteredData);
     displayChoroplethMap(mapData);
-	calculateAverageARR(filteredData);
+    
+    calculateAverageARR(filteredData);
+    
     // Return the final filtered data
     return filteredData;
 }
@@ -1829,6 +1896,7 @@ function calculateAverageARR(dataForARR) {
         loadingDiv.style.display = 'none';
     }
 }
+
 // --- Load Dataset Functions ---
 function updateStatusBanner(message, type = 'info') {
     const banner = document.getElementById('status-banner');
@@ -1875,6 +1943,9 @@ function updateDashboardTitle(dataset) {
 }
 
 function loadDataset(dataset) {
+    // Clean up tooltips before loading new dataset
+    cleanupTooltips();
+    
     // Prevent concurrent loads or loading without a valid dataset object
     if (!dataset || !dataset.id || isLoading) {
         console.warn("Load dataset cancelled. Already loading or invalid dataset provided.");
@@ -1905,7 +1976,7 @@ function loadDataset(dataset) {
     }
 
     // Clear ARR result and reset filters
-	document.getElementById('arr-result').textContent = '$0 / yr';
+    document.getElementById('arr-result').textContent = '$0 / yr';
     document.getElementById('arr-loading').style.display = 'none';
     document.getElementById('arr-error').style.display = 'none';
     document.getElementById('arr-no-data').style.display = 'none';
@@ -2156,6 +2227,7 @@ function setupEventListeners() {
     if (subAgencyFilter) subAgencyFilter.addEventListener('change', applyFiltersAndUpdateVisuals);
     if (naicsFilter) naicsFilter.addEventListener('change', applyFiltersAndUpdateVisuals);
 }
+
 // Theme toggle functionality
 function initializeThemeToggle() {
     const toggleBtn = document.getElementById('theme-toggle-btn');
@@ -2175,78 +2247,167 @@ function initializeThemeToggle() {
     
     // Toggle theme when button is clicked
     if (toggleBtn) {
-        // In the theme toggle click handler
-toggleBtn.addEventListener('click', function() {
-    const currentTheme = document.documentElement.getAttribute('data-theme');
-    
-    if (currentTheme === 'dark') {
-        document.documentElement.removeAttribute('data-theme');
-        localStorage.setItem('theme', 'light');
-        moonIcon.style.display = 'block';
-        sunIcon.style.display = 'none';
-    } else {
-        document.documentElement.setAttribute('data-theme', 'dark');
-        localStorage.setItem('theme', 'dark');
-        moonIcon.style.display = 'none';
-        sunIcon.style.display = 'block';
-    }
-    
-    // Force immediate update of all charts with theme-aware colors
-    setTimeout(updateChartsForTheme, 50);
-});
+        toggleBtn.addEventListener('click', function() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            
+            if (currentTheme === 'dark') {
+                document.documentElement.removeAttribute('data-theme');
+                localStorage.setItem('theme', 'light');
+                moonIcon.style.display = 'block';
+                sunIcon.style.display = 'none';
+            } else {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                localStorage.setItem('theme', 'dark');
+                moonIcon.style.display = 'none';
+                sunIcon.style.display = 'block';
+            }
+            
+            // Force immediate update of all charts with theme-aware colors
+            setTimeout(updateChartsForTheme, 50);
+        });
     }
 }
 
 // Update chart colors when theme changes
 function updateChartsForTheme() {
+    // First cleanup all tooltips
+    cleanupTooltips();
+    
     // Update TAV/TCV chart if it exists
     if (tavTcvChartInstance) {
-        const computedStyle = getComputedStyle(document.documentElement);
-        const primaryColor = computedStyle.getPropertyValue('--chart-color-primary').trim() || '#9993A1';
-        const secondaryColor = computedStyle.getPropertyValue('--chart-color-secondary').trim() || '#797484';
+        const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
+        const primaryColor = isDarkMode ? '#A29AAA' : '#9993A1';
+        const secondaryColor = isDarkMode ? '#8C85A0' : '#797484';
         
         tavTcvChartInstance.data.datasets[0].backgroundColor = primaryColor;
-        tavTcvChartInstance.data.datasets[0].borderColor = primaryColor;
         tavTcvChartInstance.data.datasets[1].backgroundColor = secondaryColor;
-        tavTcvChartInstance.data.datasets[1].borderColor = secondaryColor;
+        
+        // Update text colors
+        tavTcvChartInstance.options.plugins.legend.labels.color = isDarkMode ? '#F4F2F6' : '#36323A';
+        tavTcvChartInstance.options.scales.x.ticks.color = isDarkMode ? '#F4F2F6' : '#36323A';
         
         tavTcvChartInstance.update();
     }
     
-    // Other charts could be updated here as well
-    if (document.getElementById('choroplethMap') && 
-    document.getElementById('map-container')) {
-    const container = document.getElementById('map-container');
-    const mapDiv = document.getElementById('choroplethMap');
-    
-    // Clear previous map completely
-    if (mapDiv) {
-        mapDiv.innerHTML = '';
-    }
-    
-    // Redraw with current data
-    if (rawData && rawData.length > 0) {
-        const mapData = processMapData(rawData);
-        displayChoroplethMap(mapData);
-    }
-}
-if (document.getElementById('sankeyChart') && 
+    // Redraw Sankey chart
+    if (document.getElementById('sankeyChart') && 
         document.getElementById('sankey-chart-container')) {
-        const container = document.getElementById('sankey-chart-container');
-        const svg = document.getElementById('sankeyChart');
-        
-        // Clear previous chart completely
-        if (svg) {
-            svg.innerHTML = '';
-        }
-        
-        // Redraw with current data
+        // Only redraw if we have data
         if (rawData && rawData.length > 0) {
             const sankeyData = processSankeyData(rawData);
             displaySankeyChart(sankeyData);
         }
     }
+    
+    // Redraw Choropleth map
+    if (document.getElementById('choroplethMap') && 
+        document.getElementById('map-container')) {
+        // Only redraw if we have data
+        if (rawData && rawData.length > 0) {
+            const mapData = processMapData(rawData);
+            displayChoroplethMap(mapData);
+        }
+    }
 }
+
+function handleWindowResize() {
+    // Clean up tooltips before resizing
+    cleanupTooltips();
+    
+    // Resize TAV/TCV chart if it exists
+    if (tavTcvChartInstance) {
+        tavTcvChartInstance.resize();
+        
+        // Re-render the custom labels for the TAV/TCV chart
+        const container = document.getElementById('tav-tcv-chart-container');
+        if (container) {
+            // Find or recreate the labels container
+            let labelsContainer = container.querySelector('.chart-y-labels-container');
+            
+            if (labelsContainer) {
+                // Clear existing labels
+                labelsContainer.innerHTML = '';
+                
+                // Access the stored chart data
+                const chartData = window.chartData;
+                
+                if (chartData && chartData.length > 0) {
+                    // Re-add labels (similar code to what's in displayTavTcvChart)
+                    setTimeout(() => {
+                        const yAxis = tavTcvChartInstance.scales.y;
+                        const xAxis = tavTcvChartInstance.scales.x;
+                        const chartArea = tavTcvChartInstance.chartArea;
+                        const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
+                        
+                        chartData.forEach((contract, index) => {
+                            if (!contract.id) return;
+                            
+                            const yCenter = yAxis.getPixelForValue(index);
+                            
+                            // Create the label element
+                            const label = document.createElement('div');
+                            label.textContent = contract.primeName;
+                            label.style.position = 'absolute';
+                            label.style.left = (chartArea.left + 10) + 'px';
+                            label.style.top = (yCenter - 10) + 'px';
+                            label.style.transform = 'translateY(-50%)';
+                            label.style.fontFamily = "'Inter', sans-serif";
+                            label.style.fontSize = '12px';
+                            label.style.fontWeight = 'bold';
+                            label.style.color = '#FFFFFF'; // White text for visibility
+                            label.style.textShadow = '0px 0px 2px rgba(0,0,0,0.5)';
+                            label.style.pointerEvents = 'none';
+                            label.style.whiteSpace = 'nowrap';
+                            label.style.overflow = 'hidden';
+                            label.style.textOverflow = 'ellipsis';
+                            
+                            // Calculate max width
+                            const tavData = chartData.map(d => d.tav);
+                            const tcvData = chartData.map(d => d.tcv);
+                            const minValueForRow = Math.min(tavData[index], tcvData[index]);
+                            const xPosition = xAxis.getPixelForValue(minValueForRow);
+                            const maxWidth = xPosition - chartArea.left - 20;
+                            
+                            label.style.maxWidth = Math.max(maxWidth, 50) + 'px';
+                            
+                            labelsContainer.appendChild(label);
+                        });
+                    }, 100);
+                }
+            }
+        }
+    }
+
+    // Redraw Sankey chart
+    if (document.getElementById('sankeyChart') && 
+        document.getElementById('sankey-chart-container')) {
+        // Only redraw if we have data
+        if (rawData && rawData.length > 0) {
+            const sankeyData = processSankeyData(rawData);
+            displaySankeyChart(sankeyData);
+        }
+    }
+
+    // Redraw Choropleth map
+    if (document.getElementById('choroplethMap') && 
+        document.getElementById('map-container')) {
+        // Only redraw if we have data
+        if (rawData && rawData.length > 0) {
+            const mapData = processMapData(rawData);
+            displayChoroplethMap(mapData);
+        }
+    }
+}
+
+// Window resize event handler with debounce
+window.addEventListener('resize', function() {
+    clearTimeout(window.resizeTimer);
+    window.resizeTimer = setTimeout(function() {
+        console.log("Window resized, redrawing charts...");
+        handleWindowResize();
+    }, 250);
+});
+
 document.addEventListener('DOMContentLoaded', function() {
     console.log("DOM fully loaded and parsed");
     
@@ -2256,7 +2417,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize theme toggle
     initializeThemeToggle();
 
-    // Existing code remains the same
+    // Initial dashboard setup
     updateDashboardTitle(null);
     resetUIForNoDataset();
     updateDateDisplay();
@@ -2283,108 +2444,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     console.log("Dashboard initialized.");
 });
+
 // Update the date display every minute
 setInterval(updateDateDisplay, 60000);
-
-// Add this function to your test_script.js file
-function handleWindowResize() {
-    // Resize TAV/TCV chart if it exists
-    if (tavTcvChartInstance) {
-        tavTcvChartInstance.resize();
-        // Additional adjustment for left alignment
-        const canvas = document.getElementById('tavTcvChart');
-        if (canvas) {
-            canvas.style.marginLeft = '0';
-        }
-
-        // Re-render the custom labels for the TAV/TCV chart
-        const container = document.getElementById('tav-tcv-chart-container');
-        const labelsContainer = container.querySelector('.chart-y-labels-container');
-        
-        if (labelsContainer && chartData && chartData.length > 0) {
-            // Clear existing labels
-            labelsContainer.innerHTML = '';
-            
-            // Re-add labels (similar code to what's in displayTavTcvChart)
-            setTimeout(() => {
-                const yAxis = tavTcvChartInstance.scales.y;
-                
-                // Create custom labels
-                chartData.forEach((contract, index) => {
-                    if (!contract.id) return;
-                    
-                    // Calculate position (centered on the bar)
-                    const yCenter = yAxis.getPixelForValue(index);
-                    
-                    // Create the clickable link (same code as in your original function)
-                    const link = document.createElement('a');
-                    link.href = `https://www.usaspending.gov/award/${contract.id}`;
-                    link.target = '_blank';
-                    link.rel = 'noopener noreferrer';
-                    link.textContent = contract.primeName;
-                    link.title = `View ${contract.primeName} on USA Spending`;
-                    
-                    // Style the link
-                    link.style.position = 'absolute';
-                    link.style.left = '10px';
-                    link.style.top = (yCenter - 10) + 'px';
-                    link.style.transform = 'translateY(-50%)';
-                    link.style.fontFamily = "'Poppins', sans-serif";
-                    link.style.fontSize = '13px';
-                    link.style.fontWeight = 'bold';
-                    link.style.color = textColor;
-                    link.style.textDecoration = 'none';
-                    link.style.cursor = 'pointer';
-                    link.style.padding = '5px';
-                    link.style.whiteSpace = 'nowrap';
-                    link.style.overflow = 'hidden';
-                    link.style.textOverflow = 'ellipsis';
-                    
-                    // Add hover effect
-                    link.addEventListener('mouseover', () => {
-                        link.style.textDecoration = 'underline';
-                        link.style.color = primaryColor;
-                    });
-                    
-                    link.addEventListener('mouseout', () => {
-                        link.style.textDecoration = 'none';
-                        link.style.color = textColor;
-                    });
-                    
-                    // Add to container
-                    labelsContainer.appendChild(link);
-                });
-            }, 100);
-        }
-    }
-
-    // Redraw Sankey chart
-    if (document.getElementById('sankeyChart') && 
-        document.getElementById('sankey-chart-container')) {
-        // The easiest way to redraw the Sankey chart is to reprocess the data
-        if (rawData && rawData.length > 0) {
-            const sankeyData = processSankeyData(rawData);
-            displaySankeyChart(sankeyData);
-        }
-    }
-
-    // Redraw Choropleth map
-    if (document.getElementById('choroplethMap') && 
-        document.getElementById('map-container')) {
-        // The easiest way to redraw the map is to reprocess the data
-        if (rawData && rawData.length > 0) {
-            const mapData = processMapData(rawData);
-            displayChoroplethMap(mapData);
-        }
-    }
-}
-
-// Replace your existing window resize event handler with this:
-window.addEventListener('resize', function() {
-    // Use a debounce to prevent excessive redraws during resize
-    clearTimeout(window.resizeTimer);
-    window.resizeTimer = setTimeout(function() {
-        console.log("Window resized, redrawing charts...");
-        handleWindowResize();
-    }, 250);
-});
