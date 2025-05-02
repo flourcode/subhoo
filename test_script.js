@@ -767,28 +767,6 @@ function displayTavTcvChart(chartData) {
         return;
     }
 
-    // Create a custom tooltip element
-    const customTooltip = document.createElement('div');
-    customTooltip.className = 'custom-chart-tooltip';
-    customTooltip.style.cssText = `
-        position: absolute;
-        background-color: rgba(244, 242, 246, 0.85);
-        border: 1px solid #B5B0BD;
-        border-radius: 6px;
-        padding: 10px;
-        pointer-events: none;
-        opacity: 0;
-        transition: opacity 0.2s;
-        max-width: 200px;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        font-size: 12px;
-        z-index: 10;
-    `;
-    container.appendChild(customTooltip);
-    
-    // Position for the container to handle tooltip positioning
-    container.style.position = 'relative';
-
     canvas.style.display = 'block'; // Ensure canvas is visible
     const containerWidth = container.clientWidth;
     const containerHeight = container.clientHeight;
@@ -803,22 +781,46 @@ function displayTavTcvChart(chartData) {
         tavTcvChartInstance = null;
     }
 
+    // Create container for clickable links that will replace the chart labels
+    const labelsContainer = document.createElement('div');
+    labelsContainer.className = 'chart-y-labels-container';
+    labelsContainer.style.position = 'absolute';
+    labelsContainer.style.top = '0';
+    labelsContainer.style.left = '0';
+    labelsContainer.style.width = '100%';
+    labelsContainer.style.height = '100%';
+    labelsContainer.style.pointerEvents = 'none'; // Start with no pointer events
+    
+    // Add the labels container to the chart container
+    container.style.position = 'relative';
+    container.appendChild(labelsContainer);
+
+    // Prepare data for Chart.js - use empty labels for Y axis
+    // We'll replace them with our custom links later
+    const emptyLabels = chartData.map(() => '');
+    const tavData = chartData.map(d => d.tav);
+    const tcvData = chartData.map(d => d.tcv);
+
     // Get computed styles for chart colors
     const computedStyle = getComputedStyle(document.documentElement);
     const primaryColor = computedStyle.getPropertyValue('--color-charts-primary').trim() || '#9993A1';
     const secondaryColor = computedStyle.getPropertyValue('--color-charts-secondary').trim() || '#797484';
-    const textColor = computedStyle.getPropertyValue('--color-text-primary').trim() || '#36323A';
+    const textColor = computedStyle.getPropertyValue('--color-text-secondary').trim() || '#FFFFF3';
+    const textPrimaryColor = computedStyle.getPropertyValue('--color-text-primary').trim() || '#FFFFF3';
+    const surfaceColor = computedStyle.getPropertyValue('--color-surface').trim() || '#252327';
+    const outlineColor = computedStyle.getPropertyValue('--color-outline').trim() || '#615C66';
 
-    // Prepare labels
-    const labels = chartData.map(d => d.primeName);
-    const tavData = chartData.map(d => d.tav);
-    const tcvData = chartData.map(d => d.tcv);
-
-    // Create the new chart instance
+    // Calculate appropriate left padding based on longest company name
+    // Find longest name to determine padding needed
+    const longestNameLength = Math.max(...chartData.map(d => d.primeName.length));
+    // Estimate ~8px per character for the company name width (adjust as needed)
+    const estimatedLabelWidth = Math.min(Math.max(longestNameLength * 8, 150), 220);
+    
+    // Create the new chart instance with empty Y labels
     tavTcvChartInstance = new Chart(ctx, {
         type: 'bar',
         data: {
-            labels: labels,
+            labels: emptyLabels, // Empty labels - we'll use custom links instead
             datasets: [
                 {
                     label: 'TAV (Obligated)',
@@ -878,12 +880,9 @@ function displayTavTcvChart(chartData) {
                 },
                 y: {
                     ticks: {
-                        color: textColor,
-                        font: { 
-                            size: 13,
-                            weight: 'bold'
-                        },
-                        padding: 8,
+                        // Hide the default Y-axis ticks since we're replacing them
+                        display: false,
+                        padding: 30, // Add space for our custom labels
                     },
                     grid: {
                         display: false,
@@ -896,13 +895,43 @@ function displayTavTcvChart(chartData) {
             },
             plugins: {
                 tooltip: {
-                    enabled: false, // Disable default tooltips
+                    backgroundColor: surfaceColor,
+                    titleColor: textPrimaryColor,
+                    bodyColor: textPrimaryColor,
+                    borderColor: outlineColor,
+                    borderWidth: 1,
+                    padding: 12,
+                    titleFont: {
+                        size: 14,
+                        weight: 'bold'
+                    },
+                    bodyFont: {
+                        size: 13
+                    },
+                    callbacks: {
+                        title: function(tooltipItems) {
+                            const index = tooltipItems[0].dataIndex;
+                            if (chartData && chartData[index]) {
+                                const originalData = chartData[index];
+                                return `${originalData.primeName}\n(${originalData.id})`;
+                            }
+                            return '';
+                        },
+                        label: function(context) {
+                            let label = context.dataset.label || '';
+                            if (label) { label += ': '; }
+                            if (context.parsed.x !== null) {
+                                label += formatCurrency(context.parsed.x);
+                            }
+                            return label;
+                        }
+                    }
                 },
                 legend: {
                     position: 'bottom',
                     align: 'center',
                     labels: {
-                        color: textColor,
+                        color: textPrimaryColor,
                         boxWidth: 18,
                         padding: 20,
                         font: { 
@@ -916,7 +945,7 @@ function displayTavTcvChart(chartData) {
                 padding: { 
                     top: 16, 
                     bottom: 16, 
-                    left: 20,
+                    left: estimatedLabelWidth, // Dynamic left padding based on name length
                     right: 20 
                 }
             },
@@ -924,58 +953,7 @@ function displayTavTcvChart(chartData) {
                 duration: 800,
                 easing: 'easeOutQuart'
             },
-            // Use the hover event instead of tooltips
-            onHover: function(evt, elements) {
-                if (elements && elements.length > 0) {
-                    const index = elements[0].index;
-                    const datasetIndex = elements[0].datasetIndex;
-                    
-                    if (chartData && chartData[index]) {
-                        const contract = chartData[index];
-                        const datasetLabel = tavTcvChartInstance.data.datasets[datasetIndex].label;
-                        const value = datasetIndex === 0 ? contract.tav : contract.tcv;
-                        
-                        // Format tooltip content
-                        customTooltip.innerHTML = `
-                            <div style="font-weight: bold; margin-bottom: 5px;">${contract.primeName}</div>
-                            <div style="margin-bottom: 2px; font-size: 11px;">ID: ${contract.id}</div>
-                            <div style="margin-bottom: 5px;">${datasetLabel}: ${formatCurrency(value)}</div>
-                            <div style="font-style: italic; font-size: 11px; color: #797484;">Click to view on USA Spending</div>
-                        `;
-                        
-                        // Position the tooltip
-                        const rect = canvas.getBoundingClientRect();
-                        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-                        const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
-                        
-                        const chartY = elements[0].element.y;
-                        
-                        // Position tooltip to the right of the bar on desktop, above on mobile
-                        if (window.innerWidth > 768) {
-                            // Desktop position (to the right of the bar)
-                            customTooltip.style.left = 'auto';
-                            customTooltip.style.right = '10px';
-                            customTooltip.style.top = (chartY + scrollTop - rect.top - 30) + 'px';
-                        } else {
-                            // Mobile position (above the bar)
-                            customTooltip.style.left = '50%';
-                            customTooltip.style.transform = 'translateX(-50%)';
-                            customTooltip.style.top = (chartY + scrollTop - rect.top - 80) + 'px';
-                        }
-                        
-                        // Show the tooltip
-                        customTooltip.style.opacity = '1';
-                        
-                        // Apply hover style to indicate clickability
-                        canvas.style.cursor = 'pointer';
-                    }
-                } else {
-                    // Hide tooltip when not hovering over a bar
-                    customTooltip.style.opacity = '0';
-                    canvas.style.cursor = 'default';
-                }
-            },
-            // Add click handler
+            // Add click handler for the chart bars
             onClick: function(e, elements) {
                 if (!elements || elements.length === 0) return;
                 
@@ -988,33 +966,64 @@ function displayTavTcvChart(chartData) {
         }
     });
     
-    // Add client-side event to make Y-axis labels clickable
-    canvas.addEventListener('click', function(evt) {
-        const activePoints = tavTcvChartInstance.getElementsAtEventForMode(
-            evt, 'nearest', { axis: 'y', intersect: true }, false
-        );
+    // Add custom clickable labels after chart has rendered
+    setTimeout(() => {
+        // Get the Y axis position
+        const chartArea = tavTcvChartInstance.chartArea;
+        const yAxis = tavTcvChartInstance.scales.y;
         
-        if (activePoints.length > 0) {
-            const index = activePoints[0].index;
-            if (chartData && chartData[index] && chartData[index].id) {
-                window.open(`https://www.usaspending.gov/award/${chartData[index].id}`, '_blank');
-            }
-        }
-    });
-    
-    // Add styles to make labels look clickable
-    canvas.addEventListener('mousemove', function(evt) {
-        const activePoints = tavTcvChartInstance.getElementsAtEventForMode(
-            evt, 'nearest', { axis: 'y', intersect: true }, false
-        );
+        // Enable pointer events for custom labels container
+        labelsContainer.style.pointerEvents = 'auto';
         
-        if (activePoints.length > 0) {
-            canvas.style.cursor = 'pointer';
-        } else {
-            canvas.style.cursor = 'default';
-        }
-    });
+        // Create custom labels
+        chartData.forEach((contract, index) => {
+            if (!contract.id) return;
+            
+            // Calculate position (centered on the bar)
+            const yCenter = yAxis.getPixelForValue(index);
+            
+            // Create the clickable link
+            const link = document.createElement('a');
+            link.href = `https://www.usaspending.gov/award/${contract.id}`;
+            link.target = '_blank';
+            link.rel = 'noopener noreferrer';
+            link.textContent = contract.primeName; // Use full name, don't truncate
+            link.title = `View ${contract.primeName} on USA Spending`;
+            
+            // Style the link
+            link.style.position = 'absolute';
+            link.style.left = '10px'; // Position to the left of the chart
+            link.style.top = (yCenter - 10) + 'px'; // Center with the bar
+            link.style.transform = 'translateY(-50%)'; // Center vertically
+            link.style.fontFamily = "'Poppins', sans-serif";
+            link.style.fontSize = '13px';
+            link.style.fontWeight = 'bold';
+            link.style.color = textColor;
+            link.style.textDecoration = 'none';
+            link.style.cursor = 'pointer';
+            link.style.padding = '5px';
+            link.style.whiteSpace = 'nowrap';
+            link.style.maxWidth = (estimatedLabelWidth - 30) + 'px'; // Leave some margin
+            link.style.overflow = 'hidden';
+            link.style.textOverflow = 'ellipsis';
+            
+            // Add hover effect
+            link.addEventListener('mouseover', () => {
+                link.style.textDecoration = 'none';
+                link.style.color = primaryColor;
+            });
+            
+            link.addEventListener('mouseout', () => {
+                link.style.textDecoration = 'none';
+                link.style.color = textColor;
+            });
+            
+            // Add to container
+            labelsContainer.appendChild(link);
+        });
+    }, 100);
 }
+
 // --- Filters and Dynamic Chart Updates ---
 function populateFilters(data) {
     if (!data || data.length === 0) {
