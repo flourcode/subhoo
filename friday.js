@@ -1342,6 +1342,10 @@ function displayChoroplethMap(mapData) {
         const width = mapDiv.clientWidth;
         const height = mapDiv.clientHeight;
         
+        // Check if we're in dark mode
+        const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
+        const textColor = isDarkMode ? '#F4F2F6' : '#36323A'; // Set appropriate text color based on theme
+        
         // Create SVG element inside the map div
         const svg = d3.select(mapDiv)
             .append('svg')
@@ -1359,23 +1363,30 @@ function displayChoroplethMap(mapData) {
         const stateValues = Object.values(mapData).map(d => d.value);
         const maxValue = d3.max(stateValues) || 0;
         
-        // Create color scale for map
-		const colorScale = d3.scaleSequential()
-		.domain([0, maxValue])
-		.interpolator(d3.interpolate('#E9E6ED', '#9993A1')); // Light to medium purple
+        // Create color scale for map - use different colors for dark/light mode
+        const colorScale = d3.scaleSequential()
+            .domain([0, maxValue])
+            .interpolator(isDarkMode ? 
+                d3.interpolate('#3A373E', '#A29AAA') : // Dark mode: darker to lighter purple
+                d3.interpolate('#E9E6ED', '#9993A1')); // Light mode: light to medium purple
         
-        // Create tooltip
+        // Create tooltip - position it fixed relative to the map container
         const tooltip = d3.select(mapDiv)
             .append('div')
             .attr('class', 'tooltip')
             .style('opacity', 0)
             .style('position', 'absolute')
-            .style('background-color', '#252327')
-            .style('color', '#FFFFF3')
+            .style('background-color', isDarkMode ? '#252229' : '#FFFFFF')
+            .style('color', isDarkMode ? '#F4F2F6' : '#36323A')
             .style('padding', '8px')
             .style('border-radius', '4px')
             .style('font-size', '12px')
-            .style('pointer-events', 'none');
+            .style('pointer-events', 'none')
+            .style('border', '1px solid ' + (isDarkMode ? '#3A373E' : '#D7D4DC'))
+            .style('z-index', '1000')
+            .style('box-shadow', isDarkMode ? 
+                '0 2px 4px rgba(0, 0, 0, 0.3)' : 
+                '0 2px 4px rgba(0, 0, 0, 0.1)');
         
         // State name mapping
         const fipsToStateName = {
@@ -1404,9 +1415,6 @@ function displayChoroplethMap(mapData) {
                 // Convert TopoJSON to GeoJSON
                 const states = topojson.feature(us, us.objects.states).features;
                 
-                // Debugging: Log the first few states to check their structure
-                console.log("First few states from TopoJSON:", states.slice(0, 3));
-                
                 // Draw state boundaries
                 svg.selectAll('path')
                     .data(states)
@@ -1419,14 +1427,9 @@ function displayChoroplethMap(mapData) {
                         const fipsCode = d.id.toString().padStart(2, '0');
                         const stateData = mapData[fipsCode];
                         
-                        // Debug info
-                        if (stateData) {
-                            console.log(`State ${fipsCode} (${fipsToStateName[fipsCode] || 'Unknown'}): ${stateData.value}`);
-                        }
-                        
-                        return stateData ? colorScale(stateData.value) : '#ccc';
+                        return stateData ? colorScale(stateData.value) : (isDarkMode ? '#2D2A31' : '#ccc');
                     })
-                    .attr('stroke', '#252327')
+                    .attr('stroke', isDarkMode ? '#3A373E' : '#FFFFFF')
                     .attr('stroke-width', 0.5)
                     .on('mouseover', function(event, d) {
                         // Get FIPS code as 2-digit string
@@ -1435,6 +1438,9 @@ function displayChoroplethMap(mapData) {
                         const stateName = fipsToStateName[fipsCode] || "Unknown";
                         
                         if (stateData) {
+                            // Position tooltip to follow mouse
+                            const [mouseX, mouseY] = d3.pointer(event, document.body);
+                            
                             tooltip.transition()
                                 .duration(200)
                                 .style('opacity', 0.9);
@@ -1444,14 +1450,31 @@ function displayChoroplethMap(mapData) {
                                 Total Value: ${formatCurrency(stateData.value)}<br>
                                 Contracts: ${stateData.count}
                             `)
-                            .style('left', (event.pageX + 10) + 'px')
-                            .style('top', (event.pageY - 28) + 'px');
+                            .style('left', (mouseX + 10) + 'px')
+                            .style('top', (mouseY - 28) + 'px');
+                            
+                            // Highlight the state
+                            d3.select(this)
+                                .attr('stroke', isDarkMode ? '#A29AAA' : '#9993A1')
+                                .attr('stroke-width', 1.5);
                         }
+                    })
+                    .on('mousemove', function(event) {
+                        // Update tooltip position as mouse moves
+                        const [mouseX, mouseY] = d3.pointer(event, document.body);
+                        tooltip
+                            .style('left', (mouseX + 10) + 'px')
+                            .style('top', (mouseY - 28) + 'px');
                     })
                     .on('mouseout', function() {
                         tooltip.transition()
                             .duration(500)
                             .style('opacity', 0);
+                            
+                        // Remove highlight
+                        d3.select(this)
+                            .attr('stroke', isDarkMode ? '#3A373E' : '#FFFFFF')
+                            .attr('stroke-width', 0.5);
                     });
                     
                 // Add legend
@@ -1484,16 +1507,16 @@ function displayChoroplethMap(mapData) {
                     .attr('width', legendWidth)
                     .attr('height', legendHeight)
                     .style('fill', 'url(#legend-gradient)')
-                    .attr('stroke', '#252327')
+                    .attr('stroke', isDarkMode ? '#3A373E' : '#D7D4DC')
                     .attr('stroke-width', 1);
                     
-                // Add legend labels
+                // Add legend labels with theme-aware colors
                 svg.append('text')
                     .attr('x', legendX)
                     .attr('y', legendY - 5)
                     .attr('text-anchor', 'start')
                     .attr('font-size', '10px')
-                    .attr('fill', '#FFFFF3')
+                    .attr('fill', textColor)
                     .text('$0');
                     
                 svg.append('text')
@@ -1501,7 +1524,7 @@ function displayChoroplethMap(mapData) {
                     .attr('y', legendY - 5)
                     .attr('text-anchor', 'end')
                     .attr('font-size', '10px')
-                    .attr('fill', '#FFFFF3')
+                    .attr('fill', textColor)
                     .text(formatCurrency(maxValue));
                     
                 svg.append('text')
@@ -1509,7 +1532,7 @@ function displayChoroplethMap(mapData) {
                     .attr('y', legendY - 5)
                     .attr('text-anchor', 'middle')
                     .attr('font-size', '10px')
-                    .attr('fill', '#FFFFF3')
+                    .attr('fill', textColor)
                     .text('Contract Value by State');
             })
             .catch(error => {
@@ -1521,7 +1544,6 @@ function displayChoroplethMap(mapData) {
         displayError(containerId, "Failed to render map: " + error.message);
     }
 }
-
 function applyFiltersAndUpdateVisuals() {
     // --- Get Filter & Search Values ---
     const subAgencyFilter = document.getElementById('sub-agency-filter')?.value || '';
