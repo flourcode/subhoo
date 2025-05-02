@@ -792,14 +792,14 @@ tr:hover td {
 
 /* Increase main dashboard title size */
 .title-area h1#dashboard-title {
-    font-size: 32px; /* Example: Larger size */
+    font-size: 42px; /* Example: Larger size */
     font-weight: 700;
     margin-bottom: 8px; /* Adjust spacing if needed */
 }
 
 /* Increase card title size and weight */
 .card-header h2 {
-    font-size: 18px; /* Example: Larger size */
+    font-size: 24px; /* Example: Larger size */
     font-weight: 700; /* Example: Bolder */
 }
 
