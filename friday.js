@@ -898,64 +898,42 @@ function displayTavTcvChart(chartData) {
             },
             plugins: {
                 tooltip: {
-                    enabled: false, // Disable the default tooltip
-                    external: function(context) {
-                        // Tooltip Element
-                        let tooltipEl = document.getElementById('tavtcv-tooltip');
-                        
-                        // Create element if it doesn't exist
-                        if (!tooltipEl) {
-                            tooltipEl = document.createElement('div');
-                            tooltipEl.id = 'tavtcv-tooltip';
-                            tooltipEl.style.background = surfaceColor;
-                            tooltipEl.style.color = textPrimaryColor;
-                            tooltipEl.style.border = `1px solid ${outlineColor}`;
-                            tooltipEl.style.borderRadius = '4px';
-                            tooltipEl.style.padding = '10px';
-                            tooltipEl.style.position = 'absolute';
-                            tooltipEl.style.pointerEvents = 'none';
-                            tooltipEl.style.opacity = 0;
-                            tooltipEl.style.transition = 'opacity 0.3s';
-                            tooltipEl.style.fontSize = '13px';
-                            tooltipEl.style.zIndex = 9999;
-                            tooltipEl.style.boxShadow = isDarkMode ? 
-                                '0 2px 4px rgba(0, 0, 0, 0.3)' : 
-                                '0 2px 4px rgba(0, 0, 0, 0.1)';
-                            document.body.appendChild(tooltipEl);
-                        }
-                        
-                        // Hide if no tooltip
-                        const tooltipModel = context.tooltip;
-                        if (tooltipModel.opacity === 0) {
-                            tooltipEl.style.opacity = 0;
-                            return;
-                        }
-                        
-                        // Set Text
-                        if (tooltipModel.body) {
-                            const dataIndex = tooltipModel.dataPoints[0].dataIndex;
-                            const datasetIndex = tooltipModel.dataPoints[0].datasetIndex;
-                            
-                            if (chartData && chartData[dataIndex]) {
-                                const contract = chartData[dataIndex];
-                                const datasetLabel = context.chart.data.datasets[datasetIndex].label;
-                                const value = tooltipModel.dataPoints[0].parsed.x;
-                                
-                                // Create tooltip content
-                                const innerHtml = `
-                                    <div style="font-weight: bold; margin-bottom: 5px;">${contract.primeName}</div>
-                                    <div style="margin-bottom: 2px; font-style: italic; font-size: 11px; opacity: 0.8;">(ID: ${contract.id})</div>
-                                    <div style="margin-top: 5px;">${datasetLabel}: ${formatCurrency(value)}</div>
-                                `;
-                                tooltipEl.innerHTML = innerHtml;
+                    backgroundColor: isDarkMode ? '#252229' : '#FFFFFF',
+                    titleColor: isDarkMode ? '#F4F2F6' : '#36323A',
+                    bodyColor: isDarkMode ? '#F4F2F6' : '#36323A',
+                    borderColor: isDarkMode ? '#3A373E' : '#D7D4DC',
+                    borderWidth: 1,
+                    padding: 12,
+                    cornerRadius: 4,
+                    displayColors: true,
+                    boxWidth: 8,
+                    boxHeight: 8,
+                    boxPadding: 4,
+                    usePointStyle: true,
+                    titleFont: {
+                        size: 14,
+                        weight: 'bold'
+                    },
+                    bodyFont: {
+                        size: 13
+                    },
+                    callbacks: {
+                        title: function(tooltipItems) {
+                            const index = tooltipItems[0].dataIndex;
+                            if (chartData && chartData[index]) {
+                                const originalData = chartData[index];
+                                return `${originalData.primeName}\n(${originalData.id})`;
                             }
+                            return '';
+                        },
+                        label: function(context) {
+                            let label = context.dataset.label || '';
+                            if (label) { label += ': '; }
+                            if (context.parsed.x !== null) {
+                                label += formatCurrency(context.parsed.x);
+                            }
+                            return label;
                         }
-                        
-                        // Position tooltip
-                        const position = context.chart.canvas.getBoundingClientRect();
-                        tooltipEl.style.opacity = 1;
-                        tooltipEl.style.left = position.left + window.pageXOffset + tooltipModel.caretX + 10 + 'px';
-                        tooltipEl.style.top = position.top + window.pageYOffset + tooltipModel.caretY - 30 + 'px';
                     }
                 },
                 legend: {
@@ -2193,24 +2171,25 @@ function initializeThemeToggle() {
     
     // Toggle theme when button is clicked
     if (toggleBtn) {
-        toggleBtn.addEventListener('click', function() {
-            const currentTheme = document.documentElement.getAttribute('data-theme');
-            
-            if (currentTheme === 'dark') {
-                document.documentElement.removeAttribute('data-theme');
-                localStorage.setItem('theme', 'light');
-                moonIcon.style.display = 'block';
-                sunIcon.style.display = 'none';
-            } else {
-                document.documentElement.setAttribute('data-theme', 'dark');
-                localStorage.setItem('theme', 'dark');
-                moonIcon.style.display = 'none';
-                sunIcon.style.display = 'block';
-            }
-            
-            // If charts are initialized, update them for the new theme
-            updateChartsForTheme();
-        });
+        // In the theme toggle click handler
+toggleBtn.addEventListener('click', function() {
+    const currentTheme = document.documentElement.getAttribute('data-theme');
+    
+    if (currentTheme === 'dark') {
+        document.documentElement.removeAttribute('data-theme');
+        localStorage.setItem('theme', 'light');
+        moonIcon.style.display = 'block';
+        sunIcon.style.display = 'none';
+    } else {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        localStorage.setItem('theme', 'dark');
+        moonIcon.style.display = 'none';
+        sunIcon.style.display = 'block';
+    }
+    
+    // Force immediate update of all charts with theme-aware colors
+    setTimeout(updateChartsForTheme, 50);
+});
     }
 }
 
