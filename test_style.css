@@ -149,7 +149,7 @@ body {
     gap: var(--bento-gap);
     grid-template-columns: repeat(4, 1fr);
     grid-template-areas:
-        "controls controls search arr"
+        "controls controls controls search"
         "tavtcv tavtcv leaders leaders"
         "sankey sankey map map"
         "expiring expiring expiring expiring";
@@ -160,12 +160,15 @@ body {
 #bento-search { grid-area: search; }
 #bento-tavtcv { grid-area: tavtcv; }
 #bento-leaders { grid-area: leaders; }
-#bento-arr { grid-area: arr; }
-#bento-notes { grid-area: notes; }
 #bento-expiring { grid-area: expiring; }
 #bento-map { grid-area: map; }
 #bento-sankey { grid-area: sankey; }
 
+#bento-controls .filters-arr-section {
+     margin-top: 20px;
+     padding-top: 20px;
+     border-top: 1px solid var(--color-border);
+}
 /* ========================================= */
 /* Card Styles                               */
 /* ========================================= */
@@ -222,7 +225,7 @@ body {
 }
 
 /* Make cards fill their grid cells */
-#bento-leaders, #bento-arr, #bento-sankey, #bento-map, #bento-notes, #bento-tavtcv {
+#bento-leaders, #bento-sankey, #bento-map, #bento-notes, #bento-tavtcv {
     display: flex;
     flex-direction: column;
     height: 100%;
@@ -230,7 +233,6 @@ body {
 
 /* Make card content expand to fill available space */
 #bento-leaders .card-content, 
-#bento-arr .card-content,
 #bento-sankey .card-content,
 #bento-map .card-content,
 #bento-notes .card-content,
@@ -646,7 +648,6 @@ tr:hover td {
         grid-template-columns: repeat(2, 1fr);
         grid-template-areas:
             "controls search"
-            "arr arr"
             "tavtcv tavtcv"
             "leaders leaders"
             "sankey map"
@@ -670,7 +671,6 @@ tr:hover td {
         grid-template-areas:
             "controls"
             "search"
-            "arr"
             "tavtcv"
             "leaders"
             "sankey"
@@ -694,7 +694,7 @@ tr:hover td {
     }
     
     /* Make smaller cards on mobile not take up too much vertical space */
-    #bento-controls, #bento-search, #bento-arr {
+    #bento-controls, #bento-search {
         min-height: 0;
     }
     
