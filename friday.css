@@ -946,6 +946,6 @@ tr:hover td {
 #contract-leaders-table-container td:nth-child(6) {
     white-space: normal;
     word-wrap: break-word;
-    max-width: 250px;
-    font-size: 12px; /* Reduced from default 14px - Adjust if needed */
+    max-width: 350px;
+    font-size: 11px; /* Reduced from default 14px - Adjust if needed */
 }
