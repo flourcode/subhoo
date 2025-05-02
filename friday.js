@@ -1276,8 +1276,11 @@ function displaySankeyChart(sankeyData) {
             .style("border", "1px solid " + (isDarkMode ? "#3A373E" : "#D7D4DC"))
             .style("z-index", "9999");
         
+        // Create D3 selection for the SVG element
+        const svgSelection = d3.select(svg);
+        
         // Set SVG dimensions
-        d3.select(svg)
+        svgSelection
             .attr("width", width)
             .attr("height", height);
         
@@ -1310,13 +1313,17 @@ function displaySankeyChart(sankeyData) {
             .nodePadding(10)
             .extent([[margin.left, margin.top], [width - margin.right, height - margin.bottom]]);
         
-        const graph = sankey({
-            nodes: JSON.parse(JSON.stringify(nodes)), // Create deep copy to avoid reference issues
+        // Create a deep copy of the data to avoid reference issues
+        const graphData = {
+            nodes: JSON.parse(JSON.stringify(nodes)),
             links: JSON.parse(JSON.stringify(links))
-        });
+        };
         
-        // Draw links
-        svg.append("g")
+        // Process the data through the sankey generator
+        const graph = sankey(graphData);
+        
+        // Draw links - use svgSelection instead of svg
+        svgSelection.append("g")
             .selectAll("path")
             .data(graph.links)
             .join("path")
@@ -1354,8 +1361,8 @@ function displaySankeyChart(sankeyData) {
                 d3.select(this).attr("stroke-opacity", 0.5);
             });
         
-        // Draw nodes
-        svg.append("g")
+        // Draw nodes - use svgSelection instead of svg
+        svgSelection.append("g")
             .selectAll("rect")
             .data(graph.nodes)
             .join("rect")
@@ -1396,8 +1403,8 @@ function displaySankeyChart(sankeyData) {
                     .attr("stroke-width", 1);
             });
         
-        // Add node labels
-        svg.append("g")
+        // Add node labels - use svgSelection instead of svg
+        svgSelection.append("g")
             .selectAll("text")
             .data(graph.nodes)
             .join("text")
