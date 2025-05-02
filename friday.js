@@ -456,7 +456,7 @@ function displayContractLeadersTable(leaderData) {
         { text: 'Total Value', scope: 'col', class: 'number' },
         { text: 'Awards', scope: 'col', class: 'number' },
         { text: 'Avg Value', scope: 'col', class: 'number' },
-        { text: 'Length (Days)', scope: 'col', class: 'number' },
+        { text: 'Length in Days', scope: 'col', class: 'number' },
         { text: 'Majority Work', scope: 'col' },
         { text: 'USASpending', scope: 'col', class: 'text-center' }
     ];
