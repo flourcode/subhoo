@@ -300,13 +300,9 @@ body {
 
     grid-template-areas:
 
-        "controls controls search arr"
-
-        "tavtcv tavtcv leaders leaders"
-
         "sankey sankey map map"
-
-        "expiring expiring expiring expiring";
+		"tavtcv tavtcv leaders leaders"
+        "expiring expiring expiring arr";
 
     grid-template-rows: auto 600px 600px auto;
 
