@@ -232,17 +232,27 @@ a:hover {
 /* ========================================= */
 /* Bento Grid Layout                         */
 /* ========================================= */
+/* ========================================= */
+/* Bento Grid Layout                         */
+/* ========================================= */
 .bento-grid {
     display: grid;
     gap: var(--bento-gap);
-    grid-template-columns: repeat(5, 1fr); /* Use 5 columns from the tweak */
+    grid-template-columns: repeat(5, 1fr);
     grid-template-areas:
         "sankey sankey map map arr"
         "tavtcv tavtcv leaders leaders leaders"
         "expiring expiring expiring expiring expiring";
-    /* Adjust rows based on content or set min-height */
-    grid-auto-rows: minmax(200px, auto);
-    /* grid-template-rows: auto auto auto; */ /* Simplified row definition */
+    /* Define row heights explicitly */
+    /* Adjust the '500px' value as needed for Sankey/Map row */
+    /* The 'auto' rows will size based on their content */
+    grid-template-rows: minmax(450px, auto) auto auto; /* Give first row a minimum height */
+
+    /* --- OR --- Use fr units for relative sizing (might need tweaking) */
+    /* grid-template-rows: 1fr 1fr auto; */ /* Example: Divide space more evenly */
+
+    /* --- OR --- If 'auto' was working before, maybe just increase min-height */
+    /* grid-auto-rows: minmax(300px, auto); */ /* Increased minimum */
 }
 
 /* Assign grid areas (ensure IDs match HTML) */
