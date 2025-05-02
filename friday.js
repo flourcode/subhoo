@@ -2260,16 +2260,13 @@ function setupEventListeners() {
 const downloadReportBtn = document.getElementById('download-report-btn');
     if (downloadReportBtn) {
         downloadReportBtn.addEventListener('click', function() {
-            // Check if jsPDF is loaded
-            if (typeof jspdf === 'undefined') {
-                // Load jsPDF dynamically if not already loaded
-                loadJsPDF(function() {
-                    generatePDFReport();
-                });
-            } else {
+            // Load required libraries first
+            loadPDFGenerationLibraries(function() {
                 generatePDFReport();
-            }
+            });
         });
+    } else {
+        console.error("Download report button not found");
     }
 }
 
@@ -2527,9 +2524,8 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log("Dashboard initialized.");
 });
 
-// Update the date display every minute
-setInterval(updateDateDisplay, 60000);
-// --- PDF Report Generation ---
+
+// --- PDF Report Generation with Visualizations ---
 function generatePDFReport() {
     // Check if we have data to report on
     if (!rawData || rawData.length === 0 || !currentDataset) {
@@ -2566,9 +2562,42 @@ function generatePDFReport() {
     loadingToast.style.boxShadow = 'var(--shadow-lg)';
     document.body.appendChild(loadingToast);
     
-    // Use setTimeout to allow UI to update before intensive PDF generation
-    setTimeout(() => {
+    // Function to capture chart as image
+    async function captureChartAsImage(elementId) {
         try {
+            const element = document.getElementById(elementId);
+            if (!element) {
+                console.error(`Element with ID ${elementId} not found`);
+                return null;
+            }
+            
+            // Use html2canvas to capture the chart
+            const canvas = await html2canvas(element, { 
+                scale: 2, // Higher scale for better quality
+                useCORS: true,
+                allowTaint: true,
+                backgroundColor: null
+            });
+            
+            return canvas.toDataURL('image/png');
+        } catch (error) {
+            console.error(`Error capturing chart ${elementId}:`, error);
+            return null;
+        }
+    }
+    
+    // Use setTimeout to allow UI to update before intensive PDF generation
+    setTimeout(async () => {
+        try {
+            // First, capture all chart images
+            const chartPromises = [
+                captureChartAsImage('tav-tcv-chart-container'),
+                captureChartAsImage('sankey-chart-container'),
+                captureChartAsImage('map-container')
+            ];
+            
+            const [tavTcvImage, sankeyImage, mapImage] = await Promise.all(chartPromises);
+            
             // Initialize jsPDF
             const doc = new jspdf.jsPDF({
                 orientation: 'portrait',
@@ -2739,6 +2768,7 @@ function generatePDFReport() {
             doc.text("Recipient", 25, yPos + 5.5);
             doc.text("# Awards", 100, yPos + 5.5);
             doc.text("Total Value", 130, yPos + 5.5);
+            doc.text("USASpending", 170, yPos + 5.5);
             yPos += 8;
             
             // Draw recipient rows
@@ -2752,8 +2782,221 @@ function generatePDFReport() {
                 doc.text(truncateText(recipient.siName, 50), 25, yPos + 5);
                 doc.text(recipient.numAwards.toLocaleString(), 100, yPos + 5);
                 doc.text(formatCurrency(recipient.totalValue), 130, yPos + 5);
+                
+                // Add link text
+                doc.setTextColor(primaryColor);
+                doc.text("Link", 170, yPos + 5);
+                doc.setTextColor(textColor);
+                
+                // Add actual link if we have a unique contract ID
+                if (recipient.uniqueContractKeys && recipient.uniqueContractKeys.length === 1) {
+                    doc.link(170, yPos + 1, 10, 5, { url: `https://www.usaspending.gov/award/${recipient.uniqueContractKeys[0]}` });
+                }
+                
                 yPos += 7;
             });
+            
+            // Add note about USASpending links
+            yPos += 5;
+            doc.setFontSize(9);
+            doc.setTextColor('#777777');
+            doc.text("Note: 'Link' text connects to USASpending.gov data when clicked in PDF viewers.", 20, yPos);
+            
+            // Add footer
+            doc.setFontSize(8);
+            doc.setTextColor('#999999');
+            doc.text("© Subhoo | All data from USAspending.gov", 20, 285);
+            doc.text(`Page ${page}`, 180, 285);
+            
+            // --- TAV vs TCV Chart Page ---
+            doc.addPage();
+            page++;
+            yPos = 20;
+            
+            // Header
+            doc.setFontSize(16);
+            doc.setTextColor(primaryColor);
+            doc.text("TAV vs TCV Analysis", 20, yPos);
+            yPos += 10;
+            
+            // Add explanation
+            doc.setFontSize(11);
+            doc.setTextColor(textColor);
+            doc.text("Comparison of Total Award Value (TAV) vs Total Contract Value (TCV) for top contracts.", 20, yPos);
+            doc.text("This shows the relationship between obligated funds and total contract ceiling.", 20, yPos + 6);
+            yPos += 20;
+            
+            // Add TAV vs TCV chart
+            if (tavTcvImage) {
+                try {
+                    doc.addImage(tavTcvImage, 'PNG', 15, yPos, 180, 100);
+                    yPos += 105;
+                    
+                    // Add chart explanation
+                    doc.setFontSize(10);
+                    doc.text("• TAV (Obligated): The total funds that have been obligated to the contract so far", 25, yPos);
+                    yPos += 6;
+                    doc.text("• TCV (Current Total): The total value of the contract including all options", 25, yPos);
+                    yPos += 10;
+                    
+                    // Add note about clicking through to USASpending
+                    doc.setFontSize(9);
+                    doc.setTextColor('#777777');
+                    doc.text("In the interactive dashboard, clicking on a bar opens the corresponding contract on USASpending.gov", 20, yPos);
+                } catch (error) {
+                    console.error("Error adding TAV/TCV chart to PDF:", error);
+                    doc.text("Chart image could not be included. Please view in the dashboard.", 20, yPos);
+                }
+            } else {
+                doc.text("Chart image could not be included. Please view in the dashboard.", 20, yPos);
+            }
+            
+            // Add footer
+            doc.setFontSize(8);
+            doc.setTextColor('#999999');
+            doc.text("© Subhoo | All data from USAspending.gov", 20, 285);
+            doc.text(`Page ${page}`, 180, 285);
+            
+            // --- Sankey Chart Page ---
+            doc.addPage();
+            page++;
+            yPos = 20;
+            
+            // Header
+            doc.setFontSize(16);
+            doc.setTextColor(primaryColor);
+            doc.text("Award Flow Analysis", 20, yPos);
+            yPos += 10;
+            
+            // Add explanation
+            doc.setFontSize(11);
+            doc.setTextColor(textColor);
+            doc.text("Visualization of how contract funds flow from sub-agencies to prime contractors.", 20, yPos);
+            doc.text("The width of the connections represents the relative value of contracts.", 20, yPos + 6);
+            yPos += 20;
+            
+            // Add Sankey chart
+            if (sankeyImage) {
+                try {
+                    doc.addImage(sankeyImage, 'PNG', 15, yPos, 180, 100);
+                    yPos += 105;
+                    
+                    // Add chart explanation
+                    doc.setFontSize(10);
+                    doc.text("• Left side: Awarding sub-agencies", 25, yPos);
+                    yPos += 6;
+                    doc.text("• Right side: Prime contractors receiving awards", 25, yPos);
+                    yPos += 6;
+                    doc.text("• Connection thickness: Proportional to award value", 25, yPos);
+                } catch (error) {
+                    console.error("Error adding Sankey chart to PDF:", error);
+                    doc.text("Chart image could not be included. Please view in the dashboard.", 20, yPos);
+                }
+            } else {
+                doc.text("Chart image could not be included. Please view in the dashboard.", 20, yPos);
+            }
+            
+            // Add footer
+            doc.setFontSize(8);
+            doc.setTextColor('#999999');
+            doc.text("© Subhoo | All data from USAspending.gov", 20, 285);
+            doc.text(`Page ${page}`, 180, 285);
+            
+            // --- Geographic Distribution Page ---
+            doc.addPage();
+            page++;
+            yPos = 20;
+            
+            // Header
+            doc.setFontSize(16);
+            doc.setTextColor(primaryColor);
+            doc.text("Geographic Distribution", 20, yPos);
+            yPos += 10;
+            
+            // Process map data
+            const mapData = processMapData(filteredData);
+            const stateCount = Object.keys(mapData).length;
+            
+            doc.setFontSize(11);
+            doc.setTextColor(textColor);
+            doc.text(`Contract work is being performed in ${stateCount} states/territories.`, 20, yPos);
+            yPos += 15;
+            
+            // Add map image
+            if (mapImage) {
+                try {
+                    doc.addImage(mapImage, 'PNG', 15, yPos, 180, 100);
+                    yPos += 105;
+                } catch (error) {
+                    console.error("Error adding map to PDF:", error);
+                    doc.text("Map image could not be included. Please view in the dashboard.", 20, yPos);
+                    yPos += 20;
+                }
+            } else {
+                doc.text("Map image could not be included. Please view in the dashboard.", 20, yPos);
+                yPos += 20;
+            }
+            
+            // Create a table for top states by value
+            if (stateCount > 0) {
+                const stateArray = Object.entries(mapData).map(([fipsCode, data]) => {
+                    // Get state name from FIPS code
+                    const stateNames = {
+                        "01": "Alabama", "02": "Alaska", "04": "Arizona", "05": "Arkansas",
+                        "06": "California", "08": "Colorado", "09": "Connecticut", "10": "Delaware",
+                        "11": "District of Columbia", "12": "Florida", "13": "Georgia", "15": "Hawaii",
+                        "16": "Idaho", "17": "Illinois", "18": "Indiana", "19": "Iowa", "20": "Kansas",
+                        "21": "Kentucky", "22": "Louisiana", "23": "Maine", "24": "Maryland",
+                        "25": "Massachusetts", "26": "Michigan", "27": "Minnesota", "28": "Mississippi",
+                        "29": "Missouri", "30": "Montana", "31": "Nebraska", "32": "Nevada",
+                        "33": "New Hampshire", "34": "New Jersey", "35": "New Mexico", "36": "New York",
+                        "37": "North Carolina", "38": "North Dakota", "39": "Ohio", "40": "Oklahoma",
+                        "41": "Oregon", "42": "Pennsylvania", "44": "Rhode Island", "45": "South Carolina",
+                        "46": "South Dakota", "47": "Tennessee", "48": "Texas", "49": "Utah",
+                        "50": "Vermont", "51": "Virginia", "53": "Washington", "54": "West Virginia",
+                        "55": "Wisconsin", "56": "Wyoming", "72": "Puerto Rico"
+                    };
+                    
+                    return {
+                        fipsCode: fipsCode,
+                        stateName: stateNames[fipsCode] || `State ${fipsCode}`,
+                        value: data.value,
+                        count: data.count
+                    };
+                }).sort((a, b) => b.value - a.value);
+                
+                // Top 5 states by value
+                const topStates = stateArray.slice(0, 5);
+                
+                doc.setFontSize(14);
+                doc.setTextColor(primaryColor);
+                doc.text("Top States by Contract Value", 20, yPos);
+                yPos += 8;
+                
+                // Create header
+                doc.setFillColor(lightGray);
+                doc.rect(20, yPos, 170, 8, 'F');
+                doc.setFontSize(10);
+                doc.setTextColor(textColor);
+                doc.text("State", 25, yPos + 5.5);
+                doc.text("# Contracts", 80, yPos + 5.5);
+                doc.text("Total Value", 130, yPos + 5.5);
+                yPos += 8;
+                
+                // Draw state rows
+                topStates.forEach((state, i) => {
+                    // Alternate row background
+                    if (i % 2 === 0) {
+                        doc.setFillColor(245, 245, 245);
+                        doc.rect(20, yPos, 170, 7, 'F');
+                    }
+                    
+                    doc.text(state.stateName, 25, yPos + 5);
+                    doc.text(state.count.toLocaleString(), 80, yPos + 5);
+                    doc.text(formatCurrency(state.value), 130, yPos + 5);
+                    yPos += 7;
+                });
+            }
             
             // Add footer
             doc.setFontSize(8);
@@ -2828,15 +3071,26 @@ function generatePDFReport() {
                     doc.text(piid, 50, yPos + 5);
                     doc.text(recipient, 85, yPos + 5);
                     doc.text(value, 155, yPos + 5);
+                    
+                    // Add USASpending link if we have a unique contract ID
+                    const contractId = contract.contract_award_unique_key || contract.award_id_piid;
+                    if (contractId) {
+                        doc.setTextColor(primaryColor);
+                        doc.textWithLink("Link", 180, yPos + 5, { url: `https://www.usaspending.gov/award/${contractId}` });
+                        doc.setTextColor(textColor);
+                    }
+                    
                     yPos += 7;
                 });
                 
-                // Note if showing partial results
+                // Note if showing partial results and USASpending links
                 if (expiringCount > 10) {
                     yPos += 5;
                     doc.setFontSize(9);
                     doc.setTextColor('#777777');
                     doc.text(`Note: Showing 10 of ${expiringCount} expiring contracts. Full data available in the dashboard.`, 20, yPos);
+                    yPos += 5;
+                    doc.text("'Link' text connects to USASpending.gov contract data when clicked in PDF viewers.", 20, yPos);
                 }
             } else {
                 doc.text("No contracts are expiring in the next 6 months.", 20, yPos);
@@ -2848,95 +3102,13 @@ function generatePDFReport() {
             doc.text("© Subhoo | All data from USAspending.gov", 20, 285);
             doc.text(`Page ${page}`, 180, 285);
             
-            // --- Geographic Distribution Page ---
+            // --- Key Insights & Recommendations ---
             doc.addPage();
             page++;
             yPos = 20;
             
             // Header
             doc.setFontSize(16);
-            doc.setTextColor(primaryColor);
-            doc.text("Geographic Distribution", 20, yPos);
-            yPos += 10;
-            
-            // Process map data
-            const mapData = processMapData(filteredData);
-            const stateCount = Object.keys(mapData).length;
-            
-            doc.setFontSize(11);
-            doc.setTextColor(textColor);
-            doc.text(`Contract work is being performed in ${stateCount} states/territories.`, 20, yPos);
-            yPos += 15;
-            
-            // Create a table for top states by value
-            if (stateCount > 0) {
-                const stateArray = Object.entries(mapData).map(([fipsCode, data]) => {
-                    // Get state name from FIPS code
-                    const stateNames = {
-                        "01": "Alabama", "02": "Alaska", "04": "Arizona", "05": "Arkansas",
-                        "06": "California", "08": "Colorado", "09": "Connecticut", "10": "Delaware",
-                        "11": "District of Columbia", "12": "Florida", "13": "Georgia", "15": "Hawaii",
-                        "16": "Idaho", "17": "Illinois", "18": "Indiana", "19": "Iowa", "20": "Kansas",
-                        "21": "Kentucky", "22": "Louisiana", "23": "Maine", "24": "Maryland",
-                        "25": "Massachusetts", "26": "Michigan", "27": "Minnesota", "28": "Mississippi",
-                        "29": "Missouri", "30": "Montana", "31": "Nebraska", "32": "Nevada",
-                        "33": "New Hampshire", "34": "New Jersey", "35": "New Mexico", "36": "New York",
-                        "37": "North Carolina", "38": "North Dakota", "39": "Ohio", "40": "Oklahoma",
-                        "41": "Oregon", "42": "Pennsylvania", "44": "Rhode Island", "45": "South Carolina",
-                        "46": "South Dakota", "47": "Tennessee", "48": "Texas", "49": "Utah",
-                        "50": "Vermont", "51": "Virginia", "53": "Washington", "54": "West Virginia",
-                        "55": "Wisconsin", "56": "Wyoming", "72": "Puerto Rico"
-                    };
-                    
-                    return {
-                        fipsCode: fipsCode,
-                        stateName: stateNames[fipsCode] || `State ${fipsCode}`,
-                        value: data.value,
-                        count: data.count
-                    };
-                }).sort((a, b) => b.value - a.value);
-                
-                // Top 10 states by value
-                const topStates = stateArray.slice(0, 10);
-                
-                // Create header
-                doc.setFillColor(lightGray);
-                doc.rect(20, yPos, 170, 8, 'F');
-                doc.setFontSize(10);
-                doc.setTextColor(textColor);
-                doc.text("State", 25, yPos + 5.5);
-                doc.text("# Contracts", 80, yPos + 5.5);
-                doc.text("Total Value", 130, yPos + 5.5);
-                yPos += 8;
-                
-                // Draw state rows
-                topStates.forEach((state, i) => {
-                    // Alternate row background
-                    if (i % 2 === 0) {
-                        doc.setFillColor(245, 245, 245);
-                        doc.rect(20, yPos, 170, 7, 'F');
-                    }
-                    
-                    doc.text(state.stateName, 25, yPos + 5);
-                    doc.text(state.count.toLocaleString(), 80, yPos + 5);
-                    doc.text(formatCurrency(state.value), 130, yPos + 5);
-                    yPos += 7;
-                });
-                
-                // Note if showing partial results
-                if (stateArray.length > 10) {
-                    yPos += 5;
-                    doc.setFontSize(9);
-                    doc.setTextColor('#777777');
-                    doc.text(`Note: Showing top 10 of ${stateArray.length} states. Full data available in the dashboard.`, 20, yPos);
-                }
-            } else {
-                doc.text("No geographic distribution data available.", 20, yPos);
-            }
-            
-            // Add recommendation section
-            yPos += 20;
-            doc.setFontSize(14);
             doc.setTextColor(primaryColor);
             doc.text("Key Insights & Recommendations", 20, yPos);
             yPos += 10;
@@ -2948,11 +3120,8 @@ function generatePDFReport() {
             const insights = generateDataInsights(filteredData, currentDataset.name);
             
             insights.forEach(insight => {
-                doc.text(`• ${insight}`, 25, yPos);
-                yPos += 8;
-                
                 // Check if we need a new page
-                if (yPos > 270) {
+                if (yPos > 250) {
                     // Add footer to current page
                     doc.setFontSize(8);
                     doc.setTextColor('#999999');
@@ -2963,7 +3132,19 @@ function generatePDFReport() {
                     doc.addPage();
                     page++;
                     yPos = 30;
+                    
+                    // Continue with header on new page
+                    doc.setFontSize(16);
+                    doc.setTextColor(primaryColor);
+                    doc.text("Key Insights & Recommendations (continued)", 20, yPos);
+                    yPos += 10;
+                    
+                    doc.setFontSize(11);
+                    doc.setTextColor(textColor);
                 }
+                
+                doc.text(`• ${insight}`, 25, yPos);
+                yPos += 8;
             });
             
             // Add footer
@@ -3013,6 +3194,23 @@ function generatePDFReport() {
             yPos += 7;
             
             doc.text("• Geographic distribution is based on the Place of Performance data.", 25, yPos);
+            yPos += 7;
+            
+            doc.text("• TAV refers to Total Award Value (obligated funds), while TCV refers to", 25, yPos);
+            yPos += 5;
+            doc.text("  Total Contract Value (including all options and modifications).", 25, yPos);
+            yPos += 15;
+            
+            doc.setFontSize(11);
+            doc.text("USASpending.gov Links", 20, yPos);
+            yPos += 6;
+            
+			doc.setFontSize(10);
+            doc.text("Throughout this report, 'Link' text indicates a clickable link to the corresponding", 25, yPos);
+            yPos += 5;
+            doc.text("contract data on USAspending.gov. These links are active when viewing the PDF", 25, yPos);
+            yPos += 5;
+            doc.text("in most PDF readers and provide direct access to the official government data.", 25, yPos);
             yPos += 15;
             
             doc.setFontSize(11);
@@ -3055,7 +3253,7 @@ function generatePDFReport() {
         }
     }, 100); // Short delay to allow UI updates
 }
-
+           
 // Helper function to calculate ARR for reports
 function calculateAverageARRValue(dataForARR) {
     if (!dataForARR || dataForARR.length === 0) {
@@ -3244,19 +3442,47 @@ function generateDataInsights(data, agencyName) {
     
     return insights;
 }
-// Add this function to dynamically load jsPDF when needed
-function loadJsPDF(callback) {
-    const script = document.createElement('script');
-    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
-    script.async = true;
-    script.onload = callback;
+
+function loadPDFGenerationLibraries(callback) {
+    const libraries = [
+        { name: 'jsPDF', url: 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js' },
+        { name: 'html2canvas', url: 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js' }
+    ];
     
-    document.head.appendChild(script);
+    let loadedCount = 0;
     
-    // Also load the font for better PDF rendering
-    const fontScript = document.createElement('script');
-    fontScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
-    fontScript.async = true;
-    
-    document.head.appendChild(fontScript);
+    libraries.forEach(lib => {
+        // Skip if already loaded
+        if (window[lib.name]) {
+            loadedCount++;
+            if (loadedCount === libraries.length) {
+                callback();
+            }
+            return;
+        }
+        
+        const script = document.createElement('script');
+        script.src = lib.url;
+        script.async = true;
+        
+        script.onload = function() {
+            console.log(`${lib.name} loaded successfully`);
+            loadedCount++;
+            if (loadedCount === libraries.length) {
+                callback();
+            }
+        };
+        
+        script.onerror = function() {
+            console.error(`Failed to load ${lib.name}`);
+            alert(`Failed to load required library: ${lib.name}. PDF generation may not work correctly.`);
+            
+            loadedCount++;
+            if (loadedCount === libraries.length) {
+                callback();
+            }
+        };
+        
+        document.head.appendChild(script);
+    });
 }
