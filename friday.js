@@ -751,37 +751,23 @@ function displayTavTcvChart(chartData) {
 
     setLoading(containerId, false); // Turn off loading
     
-    // Ensure container is clean before adding canvas back
-    while (container.firstChild) {
-        container.removeChild(container.firstChild);
-    }
-    container.appendChild(canvas); // Add canvas
+    // Ensure container is clean
+    container.innerHTML = '';
+    
+    // Recreate canvas element to avoid any issues
+    const newCanvas = document.createElement('canvas');
+    newCanvas.id = 'tavTcvChart';
+    container.appendChild(newCanvas);
 
     if (!chartData || chartData.length === 0) {
         displayNoData(containerId, 'No contracts found for TAV/TCV comparison.');
-        if (tavTcvChartInstance) {
-            tavTcvChartInstance.destroy();
-            tavTcvChartInstance = null;
-        }
-        canvas.style.display = 'none'; // Hide canvas if no data
         return;
     }
 
-    canvas.style.display = 'block'; // Ensure canvas is visible
-    const containerWidth = container.clientWidth;
-    const containerHeight = container.clientHeight;
-    canvas.width = containerWidth;
-    canvas.height = containerHeight;
+    // Check theme
+    const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
     
-    const ctx = canvas.getContext('2d');
-
-    // Destroy previous chart instance if it exists
-    if (tavTcvChartInstance) {
-        tavTcvChartInstance.destroy();
-        tavTcvChartInstance = null;
-    }
-
-    // Create container for clickable links that will replace the chart labels
+    // Create the container for our custom labels
     const labelsContainer = document.createElement('div');
     labelsContainer.className = 'chart-y-labels-container';
     labelsContainer.style.position = 'absolute';
@@ -789,146 +775,97 @@ function displayTavTcvChart(chartData) {
     labelsContainer.style.left = '0';
     labelsContainer.style.width = '100%';
     labelsContainer.style.height = '100%';
-    labelsContainer.style.pointerEvents = 'none'; // Start with no pointer events
+    labelsContainer.style.pointerEvents = 'none';
     
-    // Add the labels container to the chart container
+    // Add the labels container
     container.style.position = 'relative';
     container.appendChild(labelsContainer);
-
-    // Prepare data for Chart.js - use empty labels for Y axis
-    // We'll replace them with our custom links later
-    const emptyLabels = chartData.map(() => '');
+    
+    // Set dimensions
+    const containerWidth = container.clientWidth;
+    const containerHeight = container.clientHeight;
+    newCanvas.width = containerWidth;
+    newCanvas.height = containerHeight;
+    
+    // Get context
+    const ctx = newCanvas.getContext('2d');
+    
+    // Choose colors based on theme
+    const primaryColor = isDarkMode ? '#A29AAA' : '#9993A1';
+    const secondaryColor = isDarkMode ? '#8C85A0' : '#797484';
+    const textColor = isDarkMode ? '#D7D4DC' : '#615C66';
+    
+    // Prepare data
+    const labels = chartData.map(d => d.primeName);
     const tavData = chartData.map(d => d.tav);
     const tcvData = chartData.map(d => d.tcv);
-
-    // Check if we're in dark mode
-    const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
     
-    // Get computed styles for chart colors
-    const computedStyle = getComputedStyle(document.documentElement);
-    const primaryColor = computedStyle.getPropertyValue('--chart-color-primary').trim() || (isDarkMode ? '#A29AAA' : '#9993A1');
-    const secondaryColor = computedStyle.getPropertyValue('--chart-color-secondary').trim() || (isDarkMode ? '#8C85A0' : '#797484');
-    const textColor = computedStyle.getPropertyValue('--color-text-secondary').trim() || (isDarkMode ? '#D7D4DC' : '#615C66');
-    const textPrimaryColor = computedStyle.getPropertyValue('--color-text-primary').trim() || (isDarkMode ? '#F4F2F6' : '#36323A');
-    const surfaceColor = computedStyle.getPropertyValue('--color-surface').trim() || (isDarkMode ? '#252229' : '#F4F2F6');
-    const outlineColor = computedStyle.getPropertyValue('--color-outline').trim() || (isDarkMode ? '#3A373E' : '#B5B0BD');
-
-    // Calculate appropriate left padding based on longest company name
-    // Find longest name to determine padding needed
-    const longestNameLength = Math.max(...chartData.map(d => d.primeName.length));
-    // Estimate ~8px per character for the company name width (adjust as needed)
-    const estimatedLabelWidth = Math.min(Math.max(longestNameLength * 8, 150), 220);
+    // Destroy previous instance if it exists
+    if (tavTcvChartInstance) {
+        tavTcvChartInstance.destroy();
+        tavTcvChartInstance = null;
+    }
     
-    // Create the new chart instance with empty Y labels
+    // Create new chart with simplified options
     tavTcvChartInstance = new Chart(ctx, {
         type: 'bar',
         data: {
-            labels: emptyLabels, // Empty labels - we'll use custom links instead
+            labels: labels,
             datasets: [
                 {
                     label: 'TAV (Obligated)',
                     data: tavData,
                     backgroundColor: primaryColor,
                     borderColor: primaryColor,
-                    borderWidth: 0,
-                    barPercentage: 0.85,
-                    categoryPercentage: 0.8,
-                    borderRadius: 4,
+                    borderWidth: 0
                 },
                 {
                     label: 'TCV (Current Total)',
                     data: tcvData,
                     backgroundColor: secondaryColor,
                     borderColor: secondaryColor,
-                    borderWidth: 0,
-                    barPercentage: 0.85,
-                    categoryPercentage: 0.8,
-                    borderRadius: 4,
+                    borderWidth: 0
                 }
             ]
         },
         options: {
+            indexAxis: 'y',
             responsive: true,
             maintainAspectRatio: false,
-            indexAxis: 'y', // Horizontal bars
-            font: {
-                family: "'Inter', sans-serif",
-                size: 13
-            },
-            scales: {
-                x: {
-                    beginAtZero: true,
-                    title: { display: false },
-                    ticks: {
-                        callback: function(value) {
-                            if (Math.abs(value) >= 1e6) {
-                                return '$' + (value / 1e6).toFixed(1) + 'M';
-                            } else if (Math.abs(value) >= 1e3) {
-                                return '$' + (value / 1e3).toFixed(0) + 'K';
-                            }
-                            return value !== 0 ? formatCurrency(value) : '$0';
-                        },
-                        color: textColor,
-                        font: { size: 13 },
-                        padding: 8,
-                        maxTicksLimit: 6,
-                    },
-                    grid: {
-                        display: false,
-                        drawBorder: false,
-                    },
-                    border: {
-                        display: false,
-                    }
-                },
-                y: {
-                    ticks: {
-                        // Hide the default Y-axis ticks since we're replacing them
-                        display: false,
-                        padding: 30, // Add space for our custom labels
-                    },
-                    grid: {
-                        display: false,
-                        drawBorder: false,
-                    },
-                    border: {
-                        display: false,
-                    }
-                }
-            },
             plugins: {
                 tooltip: {
+                    enabled: true,
+                    position: 'nearest',
                     backgroundColor: isDarkMode ? '#252229' : '#FFFFFF',
                     titleColor: isDarkMode ? '#F4F2F6' : '#36323A',
                     bodyColor: isDarkMode ? '#F4F2F6' : '#36323A',
-                    borderColor: isDarkMode ? '#3A373E' : '#D7D4DC',
-                    borderWidth: 1,
-                    padding: 12,
-                    cornerRadius: 4,
-                    displayColors: true,
-                    boxWidth: 8,
-                    boxHeight: 8,
-                    boxPadding: 4,
-                    usePointStyle: true,
                     titleFont: {
-                        size: 14,
-                        weight: 'bold'
+                        family: "'Inter', sans-serif",
+                        size: 14
                     },
                     bodyFont: {
+                        family: "'Inter', sans-serif",
                         size: 13
                     },
+                    padding: 12,
+                    cornerRadius: 4,
+                    caretPadding: 5,
+                    displayColors: true,
+                    borderColor: isDarkMode ? '#3A373E' : '#D7D4DC',
+                    borderWidth: 1,
                     callbacks: {
                         title: function(tooltipItems) {
                             const index = tooltipItems[0].dataIndex;
-                            if (chartData && chartData[index]) {
-                                const originalData = chartData[index];
-                                return `${originalData.primeName}\n(${originalData.id})`;
+                            if (index >= 0 && chartData && chartData[index]) {
+                                return chartData[index].primeName;
                             }
                             return '';
                         },
                         label: function(context) {
                             let label = context.dataset.label || '';
-                            if (label) { label += ': '; }
+                            if (label) {
+                                label += ': ';
+                            }
                             if (context.parsed.x !== null) {
                                 label += formatCurrency(context.parsed.x);
                             }
@@ -937,72 +874,71 @@ function displayTavTcvChart(chartData) {
                     }
                 },
                 legend: {
+                    display: true,
                     position: 'bottom',
-                    align: 'center',
                     labels: {
-                        color: textPrimaryColor,
-                        boxWidth: 18,
-                        padding: 20,
-                        font: { 
-                            size: 14,
-                            weight: 'bold'
+                        color: isDarkMode ? '#F4F2F6' : '#36323A',
+                        font: {
+                            family: "'Inter', sans-serif",
+                            size: 14
                         }
                     }
                 }
             },
-            layout: {
-                padding: { 
-                    top: 16, 
-                    bottom: 16, 
-                    left: estimatedLabelWidth, // Dynamic left padding based on name length
-                    right: 20 
-                }
-            },
-            animation: {
-                duration: 800,
-                easing: 'easeOutQuart'
-            },
-            // Add click handler for the chart bars
-            onClick: function(e, elements) {
-                if (!elements || elements.length === 0) return;
-                
-                const index = elements[0].index;
-                if (chartData && chartData[index] && chartData[index].id) {
-                    // Open USA Spending link for the clicked bar
-                    window.open(`https://www.usaspending.gov/award/${chartData[index].id}`, '_blank');
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    grid: {
+                        display: false
+                    },
+                    ticks: {
+                        callback: function(value) {
+                            if (value >= 1e6) {
+                                return '$' + (value / 1e6).toFixed(1) + 'M';
+                            } else if (value >= 1e3) {
+                                return '$' + (value / 1e3).toFixed(0) + 'K';
+                            }
+                            return '$' + value;
+                        },
+                        color: textColor
+                    }
+                },
+                y: {
+                    ticks: {
+                        display: false
+                    },
+                    grid: {
+                        display: false
+                    }
                 }
             }
         }
     });
     
-    // Add custom clickable labels after chart has rendered
+    // After chart is created, add custom labels
     setTimeout(() => {
-        // Get the Y axis position
         const yAxis = tavTcvChartInstance.scales.y;
         
-        // Enable pointer events for custom labels container
+        // Enable pointer events
         labelsContainer.style.pointerEvents = 'auto';
         
-        // Create custom labels
+        // Add custom labels
         chartData.forEach((contract, index) => {
             if (!contract.id) return;
             
-            // Calculate position (centered on the bar)
             const yCenter = yAxis.getPixelForValue(index);
             
-            // Create the clickable link
             const link = document.createElement('a');
             link.href = `https://www.usaspending.gov/award/${contract.id}`;
             link.target = '_blank';
             link.rel = 'noopener noreferrer';
-            link.textContent = contract.primeName; // Use full name, don't truncate
+            link.textContent = contract.primeName;
             link.title = `View ${contract.primeName} on USA Spending`;
             
-            // Style the link
             link.style.position = 'absolute';
-            link.style.left = '10px'; // Position to the left of the chart
-            link.style.top = (yCenter - 10) + 'px'; // Center with the bar
-            link.style.transform = 'translateY(-50%)'; // Center vertically
+            link.style.left = '10px';
+            link.style.top = (yCenter - 10) + 'px';
+            link.style.transform = 'translateY(-50%)';
             link.style.fontFamily = "'Inter', sans-serif";
             link.style.fontSize = '13px';
             link.style.fontWeight = 'bold';
@@ -1011,22 +947,19 @@ function displayTavTcvChart(chartData) {
             link.style.cursor = 'pointer';
             link.style.padding = '5px';
             link.style.whiteSpace = 'nowrap';
-            link.style.maxWidth = (estimatedLabelWidth - 30) + 'px'; // Leave some margin
             link.style.overflow = 'hidden';
             link.style.textOverflow = 'ellipsis';
+            link.style.maxWidth = '180px';
+            link.style.zIndex = '2';
             
-            // Add hover effect
             link.addEventListener('mouseover', () => {
-                link.style.textDecoration = 'none';
                 link.style.color = primaryColor;
             });
             
             link.addEventListener('mouseout', () => {
-                link.style.textDecoration = 'none';
                 link.style.color = textColor;
             });
             
-            // Add to container
             labelsContainer.appendChild(link);
         });
     }, 100);
