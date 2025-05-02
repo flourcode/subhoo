@@ -911,3 +911,36 @@ tr:hover td {
      .side-panel > div[style*="font-size: 12px"] /* Info */
      { font-size: 11px !important; }
 }
+/* Force tooltips to be visible */
+#chartjs-tooltip {
+  opacity: 1 !important;
+  position: absolute;
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-md);
+  padding: 10px;
+  pointer-events: none;
+  z-index: 9999;
+  max-width: 300px;
+  box-shadow: var(--shadow-md);
+  font-size: 12px;
+}
+
+/* Ensure tooltips are visible in both themes */
+.chartjs-tooltip {
+  opacity: 1 !important;
+  z-index: 9999 !important;
+  pointer-events: none !important;
+  border-radius: var(--border-radius-md) !important;
+  box-shadow: var(--shadow-md) !important;
+}
+
+/* Apply theme-aware colors to all Chart.js tooltips */
+.chartjs-tooltip,
+.chart-tooltip,
+canvas[role="img"] + div {
+  background-color: var(--color-surface) !important;
+  color: var(--color-text-primary) !important;
+  border: 1px solid var(--color-border) !important;
+}
