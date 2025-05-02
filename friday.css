@@ -703,6 +703,7 @@ tr:hover td {
 /* ========================================= */
 /* Tooltip Styles                            */
 /* ========================================= */
+/* Base tooltip styles for all tooltip types */
 .tooltip,
 .sankey-tooltip,
 .map-tooltip,
@@ -717,14 +718,15 @@ tr:hover td {
     border: 1px solid var(--color-border) !important;
     z-index: 9999 !important;
     box-shadow: var(--shadow-md) !important;
-    white-space: normal;
-    max-width: 250px;
+    /* Hidden by default */
     opacity: 0;
     visibility: hidden;
+    display: none;
+    /* Transitions */
     transition: opacity 0.3s ease, visibility 0s linear 0.3s;
 }
 
-/* Visible state for tooltips */
+/* Visible states - multiple selectors to ensure high specificity */
 .tooltip.visible,
 .sankey-tooltip.visible,
 .map-tooltip.visible,
@@ -732,13 +734,18 @@ tr:hover td {
 #tav-tcv-tooltip[style*="opacity: 1"],
 .sankey-tooltip[style*="opacity: 1"],
 .map-tooltip[style*="opacity: 1"],
-.tooltip[style*="opacity: 1"] {
+.tooltip[style*="opacity: 1"],
+#tav-tcv-tooltip[style*="display: block"],
+.sankey-tooltip[style*="display: block"],
+.map-tooltip[style*="display: block"],
+.tooltip[style*="display: block"] {
     opacity: 1 !important;
     visibility: visible !important;
+    display: block !important;
     transition: opacity 0.3s ease, visibility 0s linear 0s !important;
 }
 
-/* Tooltip hover content styling */
+/* Tooltip content styling */
 .tooltip strong,
 .sankey-tooltip strong,
 .map-tooltip strong,
@@ -747,6 +754,18 @@ tr:hover td {
     font-weight: 600;
     display: block;
     margin-bottom: 5px;
+}
+
+/* Additional styles for more reliable tooltips */
+.tooltip-visible {
+    opacity: 1 !important;
+    visibility: visible !important;
+    display: block !important;
+}
+
+/* Ensure tooltip container has proper styling */
+.chart-container {
+    position: relative !important;
 }
 
 /* ========================================= */
