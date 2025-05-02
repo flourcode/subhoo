@@ -173,7 +173,7 @@ a:hover {
 /* Style for Sidebar Info Text */
 /* Recommendation: Add a class like "sidebar-info" to this div in HTML for robustness */
 .side-panel > div[style*="font-size: 12px"] {
-    font-size: 13px !important; /* Increased from 12px - !important needed to override inline style */
+    font-size: 13px !important; /* Keeping this at 13px */
 }
 
 /* Style for Sidebar Footer */
@@ -182,7 +182,7 @@ a:hover {
      margin-top: auto; /* Push footer to bottom */
      padding-top: 10px; /* Add padding above footer */
      border-top: 1px solid var(--color-border); /* Add border above footer */
-     font-size: 12px !important; /* Increased from 10px - !important needed to override inline style */
+     font-size: 12px !important; /* Increased from 10px */
 }
 
 .main-content {
@@ -257,10 +257,10 @@ a:hover {
         "sankey sankey map map arr"
         "tavtcv tavtcv leaders leaders leaders"
         "expiring expiring expiring expiring expiring";
-    grid-template-rows: minmax(450px, auto) auto auto; /* Give first row a minimum height */
+    grid-template-rows: minmax(450px, auto) auto auto;
 }
 
-/* Assign grid areas (ensure IDs match HTML) */
+/* Assign grid areas */
 #bento-arr { grid-area: arr; }
 #bento-sankey { grid-area: sankey; }
 #bento-map { grid-area: map; }
@@ -284,18 +284,18 @@ a:hover {
     padding: 20px;
     transition: var(--transition-standard);
     position: relative;
-    overflow: hidden; /* Prevent content spill unless intended */
+    overflow: hidden;
     border: 1px solid var(--color-border);
-    display: flex; /* Use flexbox for internal layout */
-    flex-direction: column; /* Stack header and content vertically */
-    height: 100%; /* Make cards fill their grid cell height */
+    display: flex;
+    flex-direction: column;
+    height: 100%;
 }
 /* Specific style for ARR bento background */
 #bento-arr {
-    background-color: var(--color-surface-container); /* Slightly different light mode background */
+    background-color: var(--color-surface-container);
 }
 [data-theme="dark"] #bento-arr {
-    background-color: var(--color-background); /* Slightly different dark mode background */
+    background-color: var(--color-background);
 }
 
 
@@ -312,7 +312,7 @@ a:hover {
     margin-bottom: 16px;
     border-bottom: 1px solid var(--color-border);
     padding-bottom: 12px;
-    flex-shrink: 0; /* Prevent header from shrinking */
+    flex-shrink: 0;
 }
 
 .card-header h2 {
@@ -320,7 +320,7 @@ a:hover {
     font-weight: 600;
     color: var(--color-text-primary);
     flex-grow: 1;
-    margin: 0; /* Remove default h2 margin */
+    margin: 0;
 }
 
 .card-icon-circle {
@@ -330,30 +330,30 @@ a:hover {
     width: 32px;
     height: 32px;
     border-radius: 50%;
-    background-color: var(--color-surface-container); /* Adjusted for contrast */
+    background-color: var(--color-surface-container);
     color: var(--color-primary);
     flex-shrink: 0;
 }
 
 /* Card Content Area */
-.card-content, /* Generic content area if used */
+.card-content,
 .chart-container,
 .table-container,
 .arr-display-grid,
-.notes-content /* Style specific content containers */
+.notes-content
 {
-    flex: 1; /* Allow content area to grow and fill space */
+    flex: 1;
     display: flex;
     flex-direction: column;
-    position: relative; /* Needed for absolute positioned placeholders */
-    min-height: 0; /* Prevent flex item overflow issues */
+    position: relative;
+    min-height: 0;
 }
 
 /* ========================================= */
 /* Form Element Styles (Inputs, Selects)     */
 /* ========================================= */
 .input-select,
-.input-date, /* If you use date inputs */
+.input-date,
 input[type="search"],
 input[type="text"] {
     width: 100%;
@@ -362,7 +362,7 @@ input[type="text"] {
     border-radius: var(--border-radius-md);
     font-size: 14px; /* Form Inputs */
     color: var(--color-text-primary);
-    background-color: var(--color-surface-container); /* Adjusted background */
+    background-color: var(--color-surface-container);
 }
 
 .input-select:focus,
@@ -371,11 +371,11 @@ input[type="search"]:focus,
 input[type="text"]:focus {
     outline: none;
     border-color: var(--color-primary);
-    box-shadow: 0 0 0 3px rgba(var(--color-primary), 0.2); /* Use color variable */
+    box-shadow: 0 0 0 3px rgba(var(--color-primary), 0.2);
 }
 
 .input-select option {
-    background-color: var(--color-surface-container); /* Match select background */
+    background-color: var(--color-surface-container);
     color: var(--color-text-primary);
 }
 
@@ -389,7 +389,7 @@ input[type="text"]:focus {
 /* Button Styles                             */
 /* ========================================= */
 button, .button, .primary-button {
-    display: inline-flex; /* Use inline-flex */
+    display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
@@ -409,7 +409,7 @@ button, .button, .primary-button {
 button, .button {
     background-color: var(--color-surface);
     color: var(--color-text-primary);
-    border-color: var(--color-outline); /* Use outline color for border */
+    border-color: var(--color-outline);
 }
 
 button:hover:not(:disabled), .button:hover:not(:disabled) {
@@ -425,10 +425,10 @@ button:hover:not(:disabled), .button:hover:not(:disabled) {
 }
 
 .primary-button:hover:not(:disabled) {
-    background-color: var(--light-purple-500); /* Needs dark mode adjustment */
+    background-color: var(--light-purple-500);
 }
 [data-theme="dark"] .primary-button:hover:not(:disabled) {
-    background-color: var(--color-secondary); /* Adjust hover for dark */
+    background-color: var(--color-secondary);
 }
 
 
@@ -444,7 +444,7 @@ button:disabled, .button:disabled, .primary-button:disabled {
     border: none;
     cursor: pointer;
     padding: 4px;
-    margin-left: auto; /* Positioned in sidebar header */
+    margin-left: auto;
 }
 
 .theme-icon {
@@ -460,14 +460,14 @@ button:disabled, .button:disabled, .primary-button:disabled {
 /* ========================================= */
 /* Sidebar Specific Controls                 */
 /* ========================================= */
-.dataset-selector { /* If used as a container */
+.dataset-selector {
     display: flex;
     align-items: center;
     gap: 12px;
     margin-bottom: 10px;
 }
 
-.dataset-selector label { /* If used */
+.dataset-selector label {
     font-size: 14px;
     font-weight: 500;
     color: var(--color-text-primary);
@@ -480,12 +480,12 @@ button:disabled, .button:disabled, .primary-button:disabled {
     color: var(--color-text-secondary);
     background-color: var(--color-surface);
     border: 1px solid var(--color-border);
-    flex-grow: 1; /* Allow it to take space if in flex */
+    flex-grow: 1;
     margin-top: 10px;
 }
 
 #status-banner.error {
-    background-color: rgba(var(--red-500), 0.1); /* Use RGB for opacity */
+    background-color: rgba(var(--red-500), 0.1);
     color: var(--color-error);
     border-color: var(--color-error);
 }
@@ -500,27 +500,26 @@ button:disabled, .button:disabled, .primary-button:disabled {
     border-color: var(--color-info);
 }
 
-.filter-container { /* If used */
+.filter-container {
     display: flex;
     flex-direction: column;
     gap: 16px;
 }
 
-.filter-row { /* If used */
+.filter-row {
     display: flex;
     gap: 16px;
 }
 
-.filter-item { /* If used */
+.filter-item {
     display: flex;
     flex-direction: column;
     gap: 6px;
     flex: 1;
 }
 
-/* Filter Labels (If you add specific classes/elements) */
 .filter-item label {
-    font-size: 13px; /* Increased from 12px */
+    font-size: 13px; /* Filter Labels */
     font-weight: 500;
     color: var(--color-text-secondary);
 }
@@ -529,18 +528,18 @@ button:disabled, .button:disabled, .primary-button:disabled {
 /* Table Styles                              */
 /* ========================================= */
 .table-container {
-    /* flex: 1 applied in Card Styles */
-    overflow: hidden; /* Let wrapper handle scroll */
-    margin-top: 16px; /* Spacing from header */
+    overflow: hidden;
+    margin-top: 16px;
 }
 
 .table-wrapper {
-    overflow: auto; /* Enable scrolling */
-    height: 100%; /* Fill the container */
-    max-height: 900px; /* Max height for leaders table */
+    overflow: auto;
+    height: 100%;
+    /* Reduced max-height for leaders table */
+    max-height: 450px;
 }
 #expiring-contracts-table-container .table-wrapper {
-     max-height: 300px; /* Max height for expiring table */
+     max-height: 300px; /* Keep expiring table shorter */
 }
 
 table {
@@ -549,26 +548,26 @@ table {
 }
 
 th, td {
-    padding: 12px 16px;
+    padding: 10px 14px; /* Slightly reduced padding */
     text-align: left;
     border-bottom: 1px solid var(--color-border);
-    white-space: nowrap; /* Prevent wrapping by default */
+    white-space: nowrap;
 }
 
 th {
     font-weight: 600;
-    font-size: 13px; /* --- UPDATED from 12px --- */
+    font-size: 12px; /* --- UPDATED from 13px --- */
     color: var(--color-text-secondary);
     text-transform: uppercase;
     letter-spacing: 0.05em;
     background-color: var(--color-surface-variant);
     position: sticky;
     top: 0;
-    z-index: 1; /* Keep header above scrolling content */
+    z-index: 1;
 }
 
 td {
-    font-size: 14px; /* --- UPDATED from 13px --- */
+    font-size: 12px; /* --- UPDATED from 14px --- */
     color: var(--color-text-primary);
 }
 td.number {
@@ -576,14 +575,12 @@ td.number {
     font-variant-numeric: tabular-nums;
     font-weight: 500;
 }
-td .font-medium { font-weight: 500; }
-td .text-gray-900 { color: var(--color-text-primary); } /* Adapt Tailwind-like class */
-td .text-gray-600 { color: var(--color-text-secondary); } /* Adapt */
-td .font-bold { font-weight: 700; }
-td .text-xs { font-size: 12px; } /* Keep specific small utility if needed */
-td .text-center { text-align: center; }
-td .text-red-600 { color: var(--color-error); } /* Adapt */
-
+/* Removed Tailwind-like classes - apply styles directly or create new classes */
+td.font-medium { font-weight: 500; }
+td.font-bold { font-weight: 700; }
+td.text-xs { font-size: 11px; } /* Adjusted utility */
+td.text-center { text-align: center; }
+td.text-red-600 { color: var(--color-error); }
 
 tr:hover td {
     background-color: var(--color-surface-container);
@@ -596,16 +593,15 @@ tr:hover td {
     margin-top: 12px;
     padding-top: 8px;
     border-top: 1px solid var(--color-border);
-    flex-shrink: 0; /* Prevent summary shrinking */
+    flex-shrink: 0;
 }
 
-/* Allow description column to wrap */
-#expiring-contracts-table-container td:nth-child(3), /* Assuming Description is 3rd */
-#contract-leaders-table-container td:nth-child(6) /* Assuming Work Type is 6th */
-{
+/* Allow specific columns to wrap */
+#expiring-contracts-table-container td:nth-child(3),
+#contract-leaders-table-container td:nth-child(6) {
     white-space: normal;
     word-wrap: break-word;
-    max-width: 250px; /* Limit width */
+    max-width: 250px; /* Keep original max-width or adjust */
 }
 
 
@@ -613,28 +609,27 @@ tr:hover td {
 /* Chart & Visualization Containers          */
 /* ========================================= */
 .chart-container {
-     /* flex: 1 applied in Card Styles */
-     min-height: 200px; /* Ensure minimum space */
+     min-height: 200px;
 }
 
 /* Specific Chart/SVG elements */
 #sankeyChart,
 #choroplethMap svg,
 #tavTcvChart {
-    display: block; /* Prevent extra space below canvas/svg */
+    display: block;
     width: 100%;
     height: 100%;
-    max-height: none; /* Allow charts to fill container */
+    max-height: none;
 }
 
 /* TAV/TCV Chart Specifics */
-.chart-y-labels-container { /* Container for custom labels */
+.chart-y-labels-container {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    pointer-events: none; /* Allow interaction with chart below */
+    pointer-events: none;
     overflow: hidden;
 }
 
@@ -644,31 +639,29 @@ tr:hover td {
 
 /* ARR Display */
 .arr-display-grid {
-    /* flex: 1 applied in Card Styles */
-    justify-content: center; /* Center vertically */
-    align-items: center; /* Center horizontally */
-    padding: 20px 0; /* Add some padding */
+    justify-content: center;
+    align-items: center;
+    padding: 20px 0;
     text-align: center;
 }
 
 .arr-grid-value {
     font-size: 36px; /* ARR Value */
     font-weight: 700;
-    color: var(--color-primary); /* Use default primary or specific accent */
+    color: var(--color-primary);
     margin-bottom: 10px;
 }
 
 .arr-description {
-    font-size: 14px; /* --- UPDATED from 13px --- */
+    font-size: 14px; /* ARR Description */
     color: var(--color-text-secondary);
 }
 
 /* Notes Section */
 .notes-content {
-    /* flex: 1 applied in Card Styles */
     color: var(--color-text-secondary);
-    font-size: 14px; /* --- UPDATED from 13px --- */
-    overflow-y: auto; /* Allow scrolling if notes are long */
+    font-size: 14px; /* Notes Text */
+    overflow-y: auto;
 }
 .notes-content p { margin-bottom: 12px; }
 .notes-content p:last-child { margin-bottom: 0; }
@@ -686,7 +679,7 @@ tr:hover td {
 #sankeyChart path:hover { stroke-opacity: 0.8; }
 #sankeyChart rect { fill: var(--chart-color-primary); }
 #sankeyChart text {
-    font-size: 12px; /* --- UPDATED from 10px --- */
+    font-size: 12px; /* Sankey Labels */
     fill: var(--color-text-secondary);
     pointer-events: none;
 }
@@ -694,7 +687,7 @@ tr:hover td {
 /* Choropleth Map */
 #choroplethMap path {
     transition: fill 0.3s ease, stroke-width 0.3s ease;
-    stroke: var(--color-border); /* Use border color for separation */
+    stroke: var(--color-border);
     stroke-width: 0.5px;
 }
 #choroplethMap path:hover {
@@ -702,7 +695,7 @@ tr:hover td {
     stroke: var(--color-primary);
 }
 #choroplethMap text { /* Legend text */
-    font-size: 12px; /* --- UPDATED from 10px --- */
+    font-size: 12px; /* Map Legend */
     fill: var(--color-text-secondary);
     text-anchor: middle;
 }
@@ -710,45 +703,25 @@ tr:hover td {
 /* ========================================= */
 /* Tooltip Styles                            */
 /* ========================================= */
-/* Generic Tooltip Style (can be applied to D3/ChartJS) */
-.tooltip {
+.tooltip,
+.sankey-tooltip,
+.map-tooltip,
+#tav-tcv-tooltip,
+.chartjs-tooltip { /* Apply base style to all tooltips */
     position: absolute;
     visibility: hidden;
-    background-color: var(--color-surface);
-    color: var(--color-text-primary);
-    padding: 8px 12px;
-    border-radius: var(--border-radius-md);
-    font-size: 12px; /* Tooltip Text */
-    pointer-events: none;
-    border: 1px solid var(--color-border);
-    z-index: 9999;
-    box-shadow: var(--shadow-md);
+    background-color: var(--color-surface) !important; /* Use important if needed */
+    color: var(--color-text-primary) !important;
+    padding: 8px 12px !important;
+    border-radius: var(--border-radius-md) !important;
+    font-size: 12px !important; /* Tooltip Text */
+    pointer-events: none !important;
+    border: 1px solid var(--color-border) !important;
+    z-index: 9999 !important;
+    box-shadow: var(--shadow-md) !important;
     white-space: nowrap;
     opacity: 0;
     transition: opacity 0.2s ease;
-}
-
-/* Specific Tooltips if needed (ensure JS uses these classes) */
-.sankey-tooltip,
-.map-tooltip,
-#tav-tcv-tooltip {
-    /* Inherits from .tooltip or define specific styles */
-     font-size: 12px; /* Ensure specific tooltips also use 12px */
-}
-
-/* Ensure Chart.js default tooltip uses themed colors */
-/* This might be needed if default tooltips are ever enabled */
-.chartjs-tooltip {
-  background-color: var(--color-surface) !important;
-  color: var(--color-text-primary) !important;
-  border: 1px solid var(--color-border) !important;
-  border-radius: var(--border-radius-md) !important;
-  box-shadow: var(--shadow-md) !important;
-  padding: 10px !important;
-  font-size: 12px !important; /* Tooltip Text */
-  opacity: 1 !important; /* Override default fade */
-  pointer-events: none !important;
-  z-index: 9999 !important;
 }
 
 
@@ -758,7 +731,7 @@ tr:hover td {
 .loading-placeholder,
 .error-placeholder,
 .no-data-placeholder {
-    display: flex; /* Keep display:flex */
+    display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
@@ -767,21 +740,20 @@ tr:hover td {
     text-align: center;
     color: var(--color-text-tertiary);
     font-size: 14px; /* Placeholder Text */
-    position: absolute; /* Cover the parent container */
+    position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(var(--color-surface-rgb, 255, 255, 255), 0.8); /* Use RGB for opacity */
-    border-radius: var(--border-radius-lg); /* Match card radius */
-    z-index: 10; /* Above content */
+    background-color: rgba(var(--color-surface-rgb, 255, 255, 255), 0.8);
+    border-radius: var(--border-radius-lg);
+    z-index: 10;
 }
 /* Define RGB versions for background opacity */
 :root { --color-surface-rgb: 244, 242, 246; }
 [data-theme="dark"] { --color-surface-rgb: 37, 34, 41; }
 
 .error-placeholder { color: var(--color-error); }
-.no-data-placeholder { /* Can be styled same as loading or differently */ }
 
 /* Loading Spinner */
 .spinner {
@@ -797,14 +769,14 @@ tr:hover td {
     to { transform: rotate(360deg); }
 }
 
-/* Hide placeholders by default (JS controls visibility) */
+/* Hide placeholders by default */
 .loading-placeholder,
 .error-placeholder,
 .no-data-placeholder {
-    display: none; /* Hide initially */
+    display: none;
 }
 
-/* Display when needed (JS should add this class or set style) */
+/* Display when needed */
 .is-loading .loading-placeholder,
 .has-error .error-placeholder,
 .no-data .no-data-placeholder {
@@ -815,7 +787,7 @@ tr:hover td {
 /* ========================================= */
 /* Utility Classes                           */
 /* ========================================= */
-.detail-link { /* Specific styling for links in tables */
+.detail-link {
     color: var(--color-primary);
     text-decoration: none;
     font-weight: 500;
@@ -825,68 +797,62 @@ tr:hover td {
     text-decoration: underline;
 }
 
-/* Add other utilities if needed */
-
-
 /* ========================================= */
 /* Responsive Adjustments                    */
 /* ========================================= */
 @media (max-width: 1200px) {
-    /* No specific size changes here, but could adjust if needed */
+    /* No changes needed here based on request */
 }
 
 @media (max-width: 992px) { /* Tablet */
-     .side-panel {
-         width: 220px; /* Slightly narrower */
-     }
+     .side-panel { width: 220px; }
      .bento-grid {
          grid-template-columns: repeat(2, 1fr);
-         grid-template-areas: /* Example stacking */
+         grid-template-areas:
             "arr sankey"
             "map tavtcv"
             "leaders leaders"
             "expiring expiring";
-         grid-auto-rows: minmax(300px, auto); /* Adjust row height */
+         grid-auto-rows: minmax(300px, auto);
      }
-     .arr-grid-value { font-size: 30px; } /* Smaller on tablet */
-     .card-header h2 { font-size: 15px; } /* Smaller on tablet */
+     .arr-grid-value { font-size: 30px; }
+     .card-header h2 { font-size: 15px; }
 }
 
 
 @media (max-width: 768px) { /* Mobile Landscape / Small Tablet */
     .dashboard-layout {
-        flex-direction: column; /* Stack sidebar and main content */
-        height: auto; /* Allow page to scroll */
+        flex-direction: column;
+        height: auto;
         overflow: auto;
     }
     .side-panel {
-        width: 100%; /* Full width */
-        height: auto; /* Height based on content */
+        width: 100%;
+        height: auto;
         border-right: none;
         border-bottom: 1px solid var(--color-border);
         overflow-y: visible;
-        /* Footer positioning might need adjustment here if flex breaks */
     }
     .main-content {
-        height: auto; /* Height based on content */
+        height: auto;
         overflow-y: visible;
-        padding: 16px; /* Reduce padding */
+        padding: 16px;
     }
     body {
-        overflow: auto; /* Allow body scroll */
+        overflow: auto;
         padding: 0;
     }
 
     .bento-grid {
-        grid-template-columns: 1fr; /* Single column */
-        grid-template-areas: /* Stack all items */
+        grid-template-columns: 1fr;
+        grid-template-areas:
             "arr"
             "sankey"
             "map"
             "tavtcv"
             "leaders"
             "expiring";
-         grid-auto-rows: minmax(250px, auto); /* Adjust row height */
+         grid-auto-rows: minmax(250px, auto);
     }
     /* Reset column spans */
     .col-span-2, .col-span-4, .col-span-5 { grid-column: span 1; }
@@ -904,20 +870,16 @@ tr:hover td {
     }
 
     /* Make first column sticky for horizontal scroll on small tables */
-     .table-wrapper { overflow-x: auto; } /* Ensure horizontal scroll enabled */
+     .table-wrapper { overflow-x: auto; }
     th:first-child,
     td:first-child {
         position: sticky;
         left: 0;
-        background-color: var(--color-surface-variant); /* Match header bg */
-        z-index: 2; /* Above other cells */
+        background-color: var(--color-surface-variant);
+        z-index: 2;
     }
-     td:first-child {
-         background-color: var(--color-surface); /* Match row bg */
-     }
-     tr:hover td:first-child {
-         background-color: var(--color-surface-container); /* Match row hover bg */
-     }
+     td:first-child { background-color: var(--color-surface); }
+     tr:hover td:first-child { background-color: var(--color-surface-container); }
 
     /* Adjust chart heights for mobile */
     #sankey-chart-container,
@@ -931,21 +893,21 @@ tr:hover td {
 }
 
 @media (max-width: 480px) { /* Small Mobile */
-    .title-area h1 { font-size: 20px; } /* Smaller */
-    .title-area p { font-size: 13px; } /* Smaller */
-    .arr-grid-value { font-size: 28px; } /* Smaller */
-    .card-header h2 { font-size: 14px; } /* Smaller */
+    .title-area h1 { font-size: 20px; }
+    .title-area p { font-size: 13px; }
+    .arr-grid-value { font-size: 28px; }
+    .card-header h2 { font-size: 14px; }
     .side-panel, .main-content { padding: 12px; }
-    /* Further reduce smallest text sizes if absolutely needed on smallest screens */
-     th { font-size: 12px; }
-     td { font-size: 13px; }
-     .arr-description, .notes-content { font-size: 13px; }
-     #sankeyChart text, #choroplethMap text { font-size: 10px; }
-     .side-panel > div[style*="font-size: 10px"], .side-panel > div[style*="font-size: 12px"] { font-size: 11px !important; }
-}
-#contract-leaders-table-container td:nth-child(6) {
-    white-space: normal;
-    word-wrap: break-word;
-    max-width: 350px;
-    font-size: 11px; /* Reduced from default 14px - Adjust if needed */
+
+    /* Keep table text at 12px even on smallest screens */
+    /* th { font-size: 12px; } /* Base is already 12px */
+    /* td { font-size: 12px; } /* Base is already 12px */
+
+    .arr-description, .notes-content { font-size: 13px; } /* Slightly larger than table text */
+
+    /* Optionally reduce chart label/footer size slightly more */
+     #sankeyChart text, #choroplethMap text { font-size: 11px; }
+     .side-panel > div[style*="font-size: 10px"], /* Footer */
+     .side-panel > div[style*="font-size: 12px"] /* Info */
+     { font-size: 11px !important; }
 }
