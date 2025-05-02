@@ -46,21 +46,13 @@
 </div>
     <!-- Main Controls - Tighter spacing -->
     <div style="display: flex; flex-direction: column; gap: 8px;">
+	<h2 style="font-size: 14px; margin: 0;">Select Agency</h2>
         <!-- Dataset Selector -->
         <select id="dataset-select" class="input-select" style="width: 100%;">
             <option value="">Choose a dataset...</option>
         </select>
         
-        <!-- Reset Button -->
-        <button id="refresh-button" style="width: 100%;" disabled>
-            <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none">
-                <path d="M23 4v6h-6"></path>
-                <path d="M1 20v-6h6"></path>
-                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"></path>
-                <path d="M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
-            </svg>
-            Reset
-        </button>
+        <h2 style="font-size: 14px; margin: 0;">Search & Filters</h2>
         
         <!-- Search Input -->
         <input type="search" id="search-input" placeholder="Search by keyword, recipient, description..." style="width: 100%;">
@@ -73,7 +65,16 @@
         <select id="naics-filter" class="input-select" style="width: 100%;">
             <option value="">All NAICS</option>
         </select>
-        
+        <!-- Reset Button -->
+        <button id="refresh-button" style="width: 100%;" disabled>
+            <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none">
+                <path d="M23 4v6h-6"></path>
+                <path d="M1 20v-6h6"></path>
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"></path>
+                <path d="M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+            </svg>
+            Reset
+        </button>
     </div>
     
     <!-- Info Text - More compact -->
