@@ -2476,6 +2476,555 @@ window.addEventListener('resize', function() {
     }, 250);
 });
 
+// -----------------------------------------------------
+// Chart & Table Export Functionality
+// -----------------------------------------------------
+
+/**
+ * Initializes chart and table export functionality for the dashboard
+ */
+function initializeExportFunctionality() {
+  // Load html2canvas library if not already loaded
+  if (typeof html2canvas === 'undefined') {
+    const html2canvasScript = document.createElement('script');
+    html2canvasScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+    html2canvasScript.onload = function() {
+      console.log('html2canvas loaded');
+      addExportButtonsToCharts();
+    };
+    document.head.appendChild(html2canvasScript);
+  } else {
+    addExportButtonsToCharts();
+  }
+  
+  // Load Font Awesome if not already loaded
+  if (!document.querySelector('link[href*="font-awesome"]')) {
+    const fontAwesome = document.createElement('link');
+    fontAwesome.rel = 'stylesheet';
+    fontAwesome.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css';
+    document.head.appendChild(fontAwesome);
+  }
+  
+  // Create export button in dashboard header
+  addExportButtonToDashboard();
+}
+
+/**
+ * Adds export buttons to all chart and table containers
+ */
+function addExportButtonsToCharts() {
+  const containers = [
+    { id: 'contract-leaders-table-container', type: 'table' },
+    { id: 'tav-tcv-chart-container', type: 'chart' },
+    { id: 'expiring-contracts-table-container', type: 'table' },
+    { id: 'sankey-chart-container', type: 'sankey' },
+    { id: 'map-container', type: 'chart' }
+  ];
+  
+  containers.forEach(container => {
+    const element = document.getElementById(container.id);
+    if (element) {
+      addExportButtonsToContainer(container.id, container.type);
+    }
+  });
+}
+
+/**
+ * Adds a dashboard export button to the header
+ */
+function addExportButtonToDashboard() {
+  // Add to the refresh button container
+  const refreshButton = document.getElementById('refresh-button');
+  if (!refreshButton) return;
+  
+  const buttonContainer = refreshButton.parentNode;
+  if (!buttonContainer) return;
+  
+  // Create the export button
+  const exportButton = document.createElement('button');
+  exportButton.id = 'dashboard-export-button';
+  exportButton.innerHTML = '<i class="fas fa-camera"></i> Capture Dashboard';
+  exportButton.title = 'Capture entire dashboard as image';
+  exportButton.className = 'dashboard-button';
+  
+  // Style to match your existing buttons
+  exportButton.style.marginLeft = '10px';
+  
+  // Add click event
+  exportButton.addEventListener('click', function() {
+    captureDashboard();
+  });
+  
+  // Add to the container
+  buttonContainer.appendChild(exportButton);
+}
+
+/**
+ * Adds export buttons to a specific container
+ */
+function addExportButtonsToContainer(containerId, chartType = 'chart') {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  
+  // Create button container
+  const buttonContainer = document.createElement('div');
+  buttonContainer.className = 'export-controls';
+  buttonContainer.style.position = 'absolute';
+  buttonContainer.style.top = '5px';
+  buttonContainer.style.right = '5px';
+  buttonContainer.style.zIndex = '100';
+  buttonContainer.style.display = 'flex';
+  buttonContainer.style.gap = '5px';
+  
+  // Copy to clipboard button
+  const copyButton = document.createElement('button');
+  copyButton.className = 'export-button copy-button';
+  copyButton.innerHTML = '<i class="fas fa-copy"></i>';
+  copyButton.title = 'Copy to clipboard';
+  copyButton.style.border = 'none';
+  copyButton.style.borderRadius = '4px';
+  copyButton.style.padding = '5px 8px';
+  copyButton.style.background = 'rgba(153, 147, 161, 0.8)';
+  copyButton.style.color = 'white';
+  copyButton.style.cursor = 'pointer';
+  
+  // Download as image button
+  const downloadButton = document.createElement('button');
+  downloadButton.className = 'export-button download-button';
+  downloadButton.innerHTML = '<i class="fas fa-download"></i>';
+  downloadButton.title = 'Download as image';
+  downloadButton.style.border = 'none';
+  downloadButton.style.borderRadius = '4px';
+  downloadButton.style.padding = '5px 8px';
+  downloadButton.style.background = 'rgba(153, 147, 161, 0.8)';
+  downloadButton.style.color = 'white';
+  downloadButton.style.cursor = 'pointer';
+  
+  // Add hover effects
+  copyButton.onmouseover = function() {
+    this.style.background = 'rgba(153, 147, 161, 1)';
+  };
+  copyButton.onmouseout = function() {
+    this.style.background = 'rgba(153, 147, 161, 0.8)';
+  };
+  
+  downloadButton.onmouseover = function() {
+    this.style.background = 'rgba(153, 147, 161, 1)';
+  };
+  downloadButton.onmouseout = function() {
+    this.style.background = 'rgba(153, 147, 161, 0.8)';
+  };
+  
+  // Add event listeners
+  copyButton.addEventListener('click', function() {
+    copyElementToClipboard(containerId);
+  });
+  
+  downloadButton.addEventListener('click', function() {
+    downloadElementAsImage(containerId, getFilenameFromContainer(containerId, chartType));
+  });
+  
+  // Add buttons to container
+  buttonContainer.appendChild(copyButton);
+  buttonContainer.appendChild(downloadButton);
+  
+  // Make sure the container is position:relative for absolute positioning to work
+  if (window.getComputedStyle(container).position === 'static') {
+    container.style.position = 'relative';
+  }
+  
+  // Add button container to chart container
+  container.appendChild(buttonContainer);
+}
+
+/**
+ * Generates a filename based on the container ID and content type
+ */
+function getFilenameFromContainer(containerId, chartType) {
+  const cleanName = containerId
+    .replace('-container', '')
+    .replace('-chart', '')
+    .replace('-table', '')
+    .replace(/-/g, '_');
+    
+  const datasetName = currentDataset ? currentDataset.name.toLowerCase().replace(/\s+/g, '_') : 'dashboard';
+  const date = new Date().toISOString().split('T')[0];
+  
+  return `${datasetName}_${cleanName}_${date}.png`;
+}
+
+/**
+ * Copies an element to the clipboard as an image
+ */
+function copyElementToClipboard(elementId) {
+  const element = document.getElementById(elementId);
+  if (!element) return;
+  
+  showToast('Capturing content...');
+  
+  // Hide export buttons temporarily
+  const exportButtons = element.querySelectorAll('.export-controls');
+  exportButtons.forEach(btn => btn.style.display = 'none');
+  
+  html2canvas(element, {
+    scale: 2,
+    logging: false,
+    useCORS: true,
+    allowTaint: true,
+    backgroundColor: null
+  }).then(canvas => {
+    // Show export buttons again
+    exportButtons.forEach(btn => btn.style.display = 'flex');
+    
+    // Copy to clipboard
+    canvas.toBlob(blob => {
+      try {
+        if (navigator.clipboard && navigator.clipboard.write) {
+          const item = new ClipboardItem({ 'image/png': blob });
+          navigator.clipboard.write([item])
+            .then(() => showToast('Copied to clipboard!', 'success'))
+            .catch(err => {
+              console.error('Clipboard API error:', err);
+              showFallbackCopyMethod(canvas);
+            });
+        } else {
+          showFallbackCopyMethod(canvas);
+        }
+      } catch (err) {
+        console.error('Copy to clipboard error:', err);
+        showFallbackCopyMethod(canvas);
+      }
+    });
+  }).catch(err => {
+    console.error('Error capturing element:', err);
+    showToast('Failed to capture content', 'error');
+    
+    // Show export buttons again
+    exportButtons.forEach(btn => btn.style.display = 'flex');
+  });
+}
+/**
+ * Fallback method for copying when Clipboard API is not available
+ */
+function showFallbackCopyMethod(canvas) {
+  // Create an image and display it in a modal for manual copying
+  const imgUrl = canvas.toDataURL('image/png');
+  
+  const modal = document.createElement('div');
+  modal.className = 'copy-modal';
+  modal.style.position = 'fixed';
+  modal.style.top = '0';
+  modal.style.left = '0';
+  modal.style.width = '100%';
+  modal.style.height = '100%';
+  modal.style.backgroundColor = 'rgba(0,0,0,0.8)';
+  modal.style.zIndex = '10000';
+  modal.style.display = 'flex';
+  modal.style.flexDirection = 'column';
+  modal.style.alignItems = 'center';
+  modal.style.justifyContent = 'center';
+  modal.style.padding = '20px';
+  
+  const modalContent = document.createElement('div');
+  modalContent.style.backgroundColor = 'white';
+  modalContent.style.borderRadius = '8px';
+  modalContent.style.padding = '20px';
+  modalContent.style.maxWidth = '90%';
+  modalContent.style.maxHeight = '90%';
+  modalContent.style.overflow = 'auto';
+  modalContent.style.textAlign = 'center';
+  
+  const title = document.createElement('h3');
+  title.textContent = 'Right-click the image below and select "Copy Image"';
+  title.style.marginBottom = '15px';
+  
+  const img = document.createElement('img');
+  img.src = imgUrl;
+  img.style.maxWidth = '100%';
+  img.style.border = '1px solid #ccc';
+  
+  const closeButton = document.createElement('button');
+  closeButton.textContent = 'Close';
+  closeButton.style.marginTop = '15px';
+  closeButton.style.padding = '8px 16px';
+  closeButton.style.backgroundColor = '#9993A1';
+  closeButton.style.color = 'white';
+  closeButton.style.border = 'none';
+  closeButton.style.borderRadius = '4px';
+  closeButton.style.cursor = 'pointer';
+  
+  closeButton.onclick = function() {
+    document.body.removeChild(modal);
+  };
+  
+  modalContent.appendChild(title);
+  modalContent.appendChild(img);
+  modalContent.appendChild(closeButton);
+  modal.appendChild(modalContent);
+  
+  document.body.appendChild(modal);
+  
+  showToast('Please use the dialog to copy the image', 'info');
+}
+
+/**
+ * Downloads an element as an image
+ */
+function downloadElementAsImage(elementId, filename) {
+  const element = document.getElementById(elementId);
+  if (!element) return;
+  
+  showToast('Preparing download...');
+  
+  // Temporarily hide export buttons for the screenshot
+  const exportButtons = element.querySelectorAll('.export-controls');
+  exportButtons.forEach(btn => btn.style.display = 'none');
+  
+  // Use html2canvas to capture the element
+  html2canvas(element, {
+    scale: 2,
+    logging: false,
+    useCORS: true,
+    allowTaint: true,
+    backgroundColor: null
+  }).then(canvas => {
+    // Show export buttons again
+    exportButtons.forEach(btn => btn.style.display = 'flex');
+    
+    // Create download link
+    const link = document.createElement('a');
+    link.download = filename;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+    
+    showToast('Download started!', 'success');
+  }).catch(err => {
+    console.error('Error capturing element:', err);
+    showToast('Failed to capture content', 'error');
+    
+    // Show export buttons again
+    exportButtons.forEach(btn => btn.style.display = 'flex');
+  });
+}
+
+/**
+ * Captures the entire dashboard as an image
+ */
+function captureDashboard() {
+  // Find the dashboard container
+  const dashboard = document.querySelector('.dashboard-container') || 
+                   document.querySelector('.dashboard-grid') || 
+                   document.querySelector('main') || 
+                   document.body;
+  
+  showToast('Capturing dashboard (this may take a moment)...');
+  
+  // Temporarily hide all export controls
+  const exportControls = document.querySelectorAll('.export-controls');
+  exportControls.forEach(control => {
+    control.style.display = 'none';
+  });
+  
+  // Use html2canvas with higher quality settings
+  html2canvas(dashboard, {
+    scale: 2,
+    logging: false,
+    useCORS: true,
+    allowTaint: true,
+    backgroundColor: null,
+    windowWidth: document.documentElement.offsetWidth,
+    windowHeight: document.documentElement.offsetHeight
+  }).then(canvas => {
+    // Show export controls again
+    exportControls.forEach(control => {
+      control.style.display = 'flex';
+    });
+    
+    // Create an image and display in a modal
+    const imgUrl = canvas.toDataURL('image/png');
+    
+    const modal = document.createElement('div');
+    modal.className = 'dashboard-capture-modal';
+    modal.style.position = 'fixed';
+    modal.style.top = '0';
+    modal.style.left = '0';
+    modal.style.width = '100%';
+    modal.style.height = '100%';
+    modal.style.backgroundColor = 'rgba(0,0,0,0.8)';
+    modal.style.zIndex = '10000';
+    modal.style.display = 'flex';
+    modal.style.flexDirection = 'column';
+    modal.style.alignItems = 'center';
+    modal.style.justifyContent = 'center';
+    modal.style.padding = '20px';
+    
+    const modalContent = document.createElement('div');
+    modalContent.style.backgroundColor = 'white';
+    modalContent.style.borderRadius = '8px';
+    modalContent.style.padding = '20px';
+    modalContent.style.maxWidth = '90%';
+    modalContent.style.maxHeight = '90%';
+    modalContent.style.overflow = 'auto';
+    modalContent.style.display = 'flex';
+    modalContent.style.flexDirection = 'column';
+    modalContent.style.alignItems = 'center';
+    
+    const title = document.createElement('h3');
+    title.textContent = 'Dashboard Capture';
+    title.style.marginBottom = '15px';
+    
+    const img = document.createElement('img');
+    img.src = imgUrl;
+    img.style.maxWidth = '100%';
+    img.style.maxHeight = '70vh';
+    img.style.border = '1px solid #ccc';
+    
+    const buttonContainer = document.createElement('div');
+    buttonContainer.style.display = 'flex';
+    buttonContainer.style.gap = '10px';
+    buttonContainer.style.marginTop = '15px';
+    
+    const copyButton = document.createElement('button');
+    copyButton.textContent = 'Copy to Clipboard';
+    copyButton.style.padding = '8px 16px';
+    copyButton.style.backgroundColor = '#9993A1';
+    copyButton.style.color = 'white';
+    copyButton.style.border = 'none';
+    copyButton.style.borderRadius = '4px';
+    copyButton.style.cursor = 'pointer';
+    
+    copyButton.onclick = function() {
+      canvas.toBlob(blob => {
+        try {
+          if (navigator.clipboard && navigator.clipboard.write) {
+            const item = new ClipboardItem({ 'image/png': blob });
+            navigator.clipboard.write([item])
+              .then(() => showToast('Dashboard copied to clipboard!', 'success'))
+              .catch(err => {
+                console.error('Clipboard API error:', err);
+                showToast('Please right-click on the image and select "Copy Image"', 'info');
+              });
+          } else {
+            showToast('Please right-click on the image and select "Copy Image"', 'info');
+          }
+        } catch (err) {
+          console.error('Copy to clipboard error:', err);
+          showToast('Please right-click on the image and select "Copy Image"', 'info');
+        }
+      });
+    };
+    
+    const downloadButton = document.createElement('button');
+    downloadButton.textContent = 'Download Image';
+    downloadButton.style.padding = '8px 16px';
+    downloadButton.style.backgroundColor = '#9993A1';
+    downloadButton.style.color = 'white';
+    downloadButton.style.border = 'none';
+    downloadButton.style.borderRadius = '4px';
+    downloadButton.style.cursor = 'pointer';
+    
+    downloadButton.onclick = function() {
+      const datasetName = currentDataset ? currentDataset.name.toLowerCase().replace(/\s+/g, '_') : 'dashboard';
+      const date = new Date().toISOString().split('T')[0];
+      const filename = `${datasetName}_dashboard_${date}.png`;
+      
+      const link = document.createElement('a');
+      link.download = filename;
+      link.href = imgUrl;
+      link.click();
+      
+      showToast('Download started!', 'success');
+    };
+    
+    const closeButton = document.createElement('button');
+    closeButton.textContent = 'Close';
+    closeButton.style.padding = '8px 16px';
+    closeButton.style.backgroundColor = '#ccc';
+    closeButton.style.color = 'black';
+    closeButton.style.border = 'none';
+    closeButton.style.borderRadius = '4px';
+    closeButton.style.cursor = 'pointer';
+    
+    closeButton.onclick = function() {
+      document.body.removeChild(modal);
+    };
+    
+    buttonContainer.appendChild(copyButton);
+    buttonContainer.appendChild(downloadButton);
+    buttonContainer.appendChild(closeButton);
+    
+    modalContent.appendChild(title);
+    modalContent.appendChild(img);
+    modalContent.appendChild(buttonContainer);
+    modal.appendChild(modalContent);
+    
+    document.body.appendChild(modal);
+    
+    showToast('Dashboard captured! Choose copy or download.', 'success');
+  }).catch(err => {
+    console.error('Error capturing dashboard:', err);
+    showToast('Failed to capture dashboard', 'error');
+    
+    // Show export controls again
+    exportControls.forEach(control => {
+      control.style.display = 'flex';
+    });
+  });
+}
+
+/**
+ * Shows a toast notification message
+ */
+function showToast(message, type = 'info') {
+  // Remove any existing toasts
+  const existingToasts = document.querySelectorAll('.export-toast');
+  existingToasts.forEach(toast => {
+    if (toast.parentNode) {
+      document.body.removeChild(toast);
+    }
+  });
+  
+  // Create toast element
+  const toast = document.createElement('div');
+  toast.className = 'export-toast';
+  toast.textContent = message;
+  toast.style.position = 'fixed';
+  toast.style.bottom = '20px';
+  toast.style.right = '20px';
+  toast.style.padding = '10px 15px';
+  toast.style.borderRadius = '4px';
+  toast.style.zIndex = '10000';
+  toast.style.fontFamily = 'sans-serif';
+  toast.style.fontSize = '14px';
+  toast.style.transition = 'opacity 0.3s ease';
+  
+  // Set style based on type
+  if (type === 'error') {
+    toast.style.backgroundColor = '#f44336';
+    toast.style.color = 'white';
+  } else if (type === 'success') {
+    toast.style.backgroundColor = '#4CAF50';
+    toast.style.color = 'white';
+  } else {
+    toast.style.backgroundColor = '#9993A1';
+    toast.style.color = 'white';
+  }
+  
+  // Add to document
+  document.body.appendChild(toast);
+  
+  // Remove after 3 seconds
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    setTimeout(() => {
+      if (toast.parentNode) {
+        document.body.removeChild(toast);
+      }
+    }, 300);
+  }, 3000);
+}
+
+
 document.addEventListener('DOMContentLoaded', function() {
     console.log("DOM fully loaded and parsed");
     
@@ -2509,6 +3058,16 @@ document.addEventListener('DOMContentLoaded', function() {
     } else {
         console.error("SOCOM dataset not found in the DATASETS array");
     }
-
+    
+    // Initialize export functionality with a slight delay to ensure all charts are rendered
+    setTimeout(function() {
+        if (typeof initializeExportFunctionality === 'function') {
+            console.log("Initializing export functionality...");
+            initializeExportFunctionality();
+        } else {
+            console.warn("Export functionality not available");
+        }
+    }, 1500);
+    
     console.log("Dashboard initialized.");
 });
