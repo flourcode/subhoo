@@ -911,36 +911,38 @@ tr:hover td {
      .side-panel > div[style*="font-size: 12px"] /* Info */
      { font-size: 11px !important; }
 }
-/* Force tooltips to be visible */
-#chartjs-tooltip {
-  opacity: 1 !important;
-  position: absolute;
-  background: var(--color-surface);
-  color: var(--color-text-primary);
-  border: 1px solid var(--color-border);
-  border-radius: var(--border-radius-md);
-  padding: 10px;
-  pointer-events: none;
-  z-index: 9999;
-  max-width: 300px;
-  box-shadow: var(--shadow-md);
-  font-size: 12px;
+/* Base tooltip styles */
+.tooltip-base {
+    position: absolute;
+    background-color: var(--color-surface) !important;
+    color: var(--color-text-primary) !important;
+    padding: 8px 12px !important;
+    border-radius: var(--border-radius-md) !important;
+    font-size: 12px !important;
+    pointer-events: none !important;
+    border: 1px solid var(--color-border) !important;
+    z-index: 9999 !important;
+    box-shadow: var(--shadow-md) !important;
 }
 
-/* Ensure tooltips are visible in both themes */
-.chartjs-tooltip {
-  opacity: 1 !important;
-  z-index: 9999 !important;
-  pointer-events: none !important;
-  border-radius: var(--border-radius-md) !important;
-  box-shadow: var(--shadow-md) !important;
+/* Dynamic tooltips that are shown/hidden via JS */
+.tooltip,
+.sankey-tooltip,
+.map-tooltip,
+#tav-tcv-tooltip {
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
 }
 
-/* Apply theme-aware colors to all Chart.js tooltips */
+/* Chart.js tooltips - always visible when triggered */
 .chartjs-tooltip,
-.chart-tooltip,
+#chartjs-tooltip,
 canvas[role="img"] + div {
-  background-color: var(--color-surface) !important;
-  color: var(--color-text-primary) !important;
-  border: 1px solid var(--color-border) !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: none !important;
+    background-color: var(--color-surface) !important;
+    color: var(--color-text-primary) !important;
+    border: 1px solid var(--color-border) !important;
 }
