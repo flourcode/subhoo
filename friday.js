@@ -779,8 +779,8 @@ function displayTavTcvChart(chartData) {
     const secondaryColor = isDarkMode ? '#8C85A0' : '#797484';
     const textColor = isDarkMode ? '#F4F2F6' : '#36323A';
     
-    // Prepare data - we'll use the actual labels for the chart
-    const labels = chartData.map(d => d.primeName);
+    // Prepare data - use empty labels, we'll add them as overlays
+    const emptyLabels = chartData.map(() => '');
     const tavData = chartData.map(d => d.tav);
     const tcvData = chartData.map(d => d.tcv);
     
@@ -807,11 +807,11 @@ function displayTavTcvChart(chartData) {
     tooltipEl.style.boxShadow = isDarkMode ? '0 2px 4px rgba(0,0,0,0.3)' : '0 2px 4px rgba(0,0,0,0.1)';
     document.body.appendChild(tooltipEl);
     
-    // Create chart with actual company names as labels
+    // Create chart with empty labels
     tavTcvChartInstance = new Chart(ctx, {
         type: 'bar',
         data: {
-            labels: labels,
+            labels: emptyLabels,
             datasets: [
                 {
                     label: 'TAV (Obligated)',
@@ -871,28 +871,39 @@ function displayTavTcvChart(chartData) {
                     }
                 },
                 y: {
-                    // Show the labels as company names
                     ticks: {
-                        color: textColor,
-                        font: {
-                            size: 13,
-                            weight: 'bold'
-                        },
-                        // Truncate long names
-                        callback: function(value, index) {
-                            const name = this.getLabelForValue(value);
-                            if (name.length > 25) {
-                                return name.substring(0, 22) + '...';
-                            }
-                            return name;
-                        }
+                        display: false // Hide default labels
+                    },
+                    grid: {
+                        display: false
                     }
+                }
+            },
+            // No padding needed since we're not using labels on the y-axis
+            layout: {
+                padding: {
+                    left: 5,
+                    right: 20
                 }
             }
         }
     });
     
-    // Add hover event to entire canvas
+    // Create container for label overlays
+    const labelsContainer = document.createElement('div');
+    labelsContainer.className = 'chart-y-labels-container';
+    labelsContainer.style.position = 'absolute';
+    labelsContainer.style.top = '0';
+    labelsContainer.style.left = '0';
+    labelsContainer.style.width = '100%';
+    labelsContainer.style.height = '100%';
+    labelsContainer.style.pointerEvents = 'none';
+    
+    // Add the labels container
+    container.style.position = 'relative';
+    container.appendChild(labelsContainer);
+    
+    // Add hover and click events to the chart
     newCanvas.addEventListener('mousemove', function(event) {
         const activePoints = tavTcvChartInstance.getElementsAtEventForMode(
             event,
@@ -955,6 +966,47 @@ function displayTavTcvChart(chartData) {
             }
         }
     });
+    
+    // After chart is rendered, add label overlays inside the bars
+    setTimeout(() => {
+        const yAxis = tavTcvChartInstance.scales.y;
+        const xAxis = tavTcvChartInstance.scales.x;
+        const chartArea = tavTcvChartInstance.chartArea;
+        
+        chartData.forEach((contract, index) => {
+            if (!contract.id) return;
+            
+            const yCenter = yAxis.getPixelForValue(index);
+            
+            // Create the label element
+            const label = document.createElement('div');
+            label.textContent = contract.primeName;
+            label.style.position = 'absolute';
+            label.style.left = (chartArea.left + 10) + 'px'; // Position inside the bar
+            label.style.top = (yCenter - 10) + 'px';
+            label.style.transform = 'translateY(-50%)';
+            label.style.fontFamily = "'Inter', sans-serif";
+            label.style.fontSize = '12px';
+            label.style.fontWeight = 'bold';
+            label.style.color = isDarkMode ? '#FFFFFF' : '#FFFFFF'; // White text for contrast on the bars
+            label.style.textShadow = '0px 0px 2px rgba(0,0,0,0.5)'; // Add shadow for better visibility
+            label.style.pointerEvents = 'none'; // Allow clicks to go through to the chart
+            label.style.whiteSpace = 'nowrap';
+            label.style.overflow = 'hidden';
+            label.style.textOverflow = 'ellipsis';
+            
+            // Determine maximum width based on the shortest bar
+            const minValueForRow = Math.min(tavData[index], tcvData[index]);
+            const xPosition = xAxis.getPixelForValue(minValueForRow);
+            const maxWidth = xPosition - chartArea.left - 20; // Leave some padding
+            
+            // Set max width but ensure it's at least 50px
+            label.style.maxWidth = Math.max(maxWidth, 50) + 'px';
+            
+            // Add to container
+            labelsContainer.appendChild(label);
+        });
+    }, 100);
     
     // Clean up tooltip when chart is destroyed
     newCanvas.addEventListener('remove', () => {
