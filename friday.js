@@ -1315,7 +1315,6 @@ function processMapData(data) {
     console.log("State data:", stateData);
     return stateData;
 }
-
 function displayChoroplethMap(mapData) {
     const containerId = 'map-container';
     const container = document.getElementById(containerId);
@@ -1473,56 +1472,18 @@ function displayChoroplethMap(mapData) {
                             .attr("stroke-width", 0.5);
                     });
                     
-                // Add legend
+                // IMPROVED LEGEND: Create discrete color bins instead of continuous gradient
                 const legendWidth = 200;
                 const legendHeight = 15;
                 const legendX = width - legendWidth - 20;
                 const legendY = height - 40;
                 
-                // Create a linear gradient for the legend
-                const defs = svg.append('defs');
-                const linearGradient = defs.append('linearGradient')
-                    .attr('id', 'legend-gradient')
-                    .attr('x1', '0%')
-                    .attr('y1', '0%')
-                    .attr('x2', '100%')
-                    .attr('y2', '0%');
-                    
-                // Add color stops to the gradient
-                const stops = [0, 0.25, 0.5, 0.75, 1];
-                stops.forEach(stop => {
-                    linearGradient.append('stop')
-                        .attr('offset', `${stop * 100}%`)
-                        .attr('stop-color', colorScale(stop * maxValue));
-                });
+                // Create discrete color bins
+                const numBins = 5;
+                const bins = Array.from({length: numBins}, (_, i) => maxValue * i / (numBins - 1));
+                const binWidth = legendWidth / numBins;
                 
-                // Draw the legend rectangle
-                svg.append('rect')
-                    .attr('x', legendX)
-                    .attr('y', legendY)
-                    .attr('width', legendWidth)
-                    .attr('height', legendHeight)
-                    .style('fill', 'url(#legend-gradient)')
-                    .attr('stroke', isDarkMode ? '#3A373E' : '#D7D4DC')
-                    .attr('stroke-width', 1);
-                    
-                // Add legend labels with theme-aware colors
-                svg.append('text')
-                    .attr('x', legendX)
-                    .attr('y', legendY - 5)
-                    .attr('text-anchor', 'start')
-                    .attr('font-size', '10px')
-                    .attr('fill', textColor)
-                    .text('$0');
-                    
-                svg.append('text')
-                    .attr('x', legendX + legendWidth)
-                    .attr('y', legendY - 5)
-                    .attr('text-anchor', 'end')
-                    .attr('font-size', '10px')
-                    .attr('fill', textColor)
-                    .text(formatCurrency(maxValue));
-                    
+                // Add legend title
                 svg.append('text')
                     .attr('x', legendX + (legendWidth / 2))
                     .attr('y', legendY - 5)
@@ -1530,6 +1491,35 @@ function displayChoroplethMap(mapData) {
                     .attr('font-size', '10px')
                     .attr('fill', textColor)
                     .text('Contract Value by State');
+                
+                // Create discrete color blocks
+                bins.forEach((bin, i) => {
+                    svg.append('rect')
+                        .attr('x', legendX + (i * binWidth))
+                        .attr('y', legendY)
+                        .attr('width', binWidth)
+                        .attr('height', legendHeight)
+                        .attr('fill', colorScale(bin))
+                        .attr('stroke', isDarkMode ? '#3A373E' : '#D7D4DC')
+                        .attr('stroke-width', 0.5);
+                });
+                
+                // Add min/max labels
+                svg.append('text')
+                    .attr('x', legendX)
+                    .attr('y', legendY + legendHeight + 12)
+                    .attr('text-anchor', 'start')
+                    .attr('font-size', '10px')
+                    .attr('fill', textColor)
+                    .text('Low');
+                    
+                svg.append('text')
+                    .attr('x', legendX + legendWidth)
+                    .attr('y', legendY + legendHeight + 12)
+                    .attr('text-anchor', 'end')
+                    .attr('font-size', '10px')
+                    .attr('fill', textColor)
+                    .text('High');
             })
             .catch(error => {
                 console.error("Error loading GeoJSON:", error);
