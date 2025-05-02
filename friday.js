@@ -2061,17 +2061,92 @@ function setupEventListeners() {
     if (subAgencyFilter) subAgencyFilter.addEventListener('change', applyFiltersAndUpdateVisuals);
     if (naicsFilter) naicsFilter.addEventListener('change', applyFiltersAndUpdateVisuals);
 }
+// Theme toggle functionality
+function initializeThemeToggle() {
+    const toggleBtn = document.getElementById('theme-toggle-btn');
+    const moonIcon = document.getElementById('moon-icon');
+    const sunIcon = document.getElementById('sun-icon');
+    
+    // Check for saved theme preference or use device preference
+    const savedTheme = localStorage.getItem('theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    
+    // Apply the theme on page load
+    if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        moonIcon.style.display = 'none';
+        sunIcon.style.display = 'block';
+    }
+    
+    // Toggle theme when button is clicked
+    if (toggleBtn) {
+        toggleBtn.addEventListener('click', function() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            
+            if (currentTheme === 'dark') {
+                document.documentElement.removeAttribute('data-theme');
+                localStorage.setItem('theme', 'light');
+                moonIcon.style.display = 'block';
+                sunIcon.style.display = 'none';
+            } else {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                localStorage.setItem('theme', 'dark');
+                moonIcon.style.display = 'none';
+                sunIcon.style.display = 'block';
+            }
+            
+            // If charts are initialized, update them for the new theme
+            updateChartsForTheme();
+        });
+    }
+}
 
-// --- Initialize Dashboard ---
+// Update chart colors when theme changes
+function updateChartsForTheme() {
+    // Update TAV/TCV chart if it exists
+    if (tavTcvChartInstance) {
+        const computedStyle = getComputedStyle(document.documentElement);
+        const primaryColor = computedStyle.getPropertyValue('--chart-color-primary').trim() || '#9993A1';
+        const secondaryColor = computedStyle.getPropertyValue('--chart-color-secondary').trim() || '#797484';
+        
+        tavTcvChartInstance.data.datasets[0].backgroundColor = primaryColor;
+        tavTcvChartInstance.data.datasets[0].borderColor = primaryColor;
+        tavTcvChartInstance.data.datasets[1].backgroundColor = secondaryColor;
+        tavTcvChartInstance.data.datasets[1].borderColor = secondaryColor;
+        
+        tavTcvChartInstance.update();
+    }
+    
+    // Other charts could be updated here as well
+    
+    // For Sankey chart and Map, it's better to redraw them
+    if (document.getElementById('sankeyChart') && 
+        document.getElementById('sankey-chart-container')) {
+        if (rawData && rawData.length > 0) {
+            const sankeyData = processSankeyData(rawData);
+            displaySankeyChart(sankeyData);
+        }
+    }
+    
+    if (document.getElementById('choroplethMap') && 
+        document.getElementById('map-container')) {
+        if (rawData && rawData.length > 0) {
+            const mapData = processMapData(rawData);
+            displayChoroplethMap(mapData);
+        }
+    }
+}
 document.addEventListener('DOMContentLoaded', function() {
     console.log("DOM fully loaded and parsed");
     
     // Initialize the dataset selector dropdown
     initializeDatasetSelector();
+    
+    // Initialize theme toggle
+    initializeThemeToggle();
 
-    // Set initial UI state
+    // Existing code remains the same
     updateDashboardTitle(null);
-    updateStatusBanner('Please select a dataset to begin', 'info');
     resetUIForNoDataset();
     updateDateDisplay();
     
@@ -2097,7 +2172,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     console.log("Dashboard initialized.");
 });
-
 // Update the date display every minute
 setInterval(updateDateDisplay, 60000);
 
