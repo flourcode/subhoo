@@ -616,7 +616,7 @@ function displayExpiringTable(expiringData) {
         { text: 'Recipient Name', key: 'recipient_name' },
         { text: 'Description', key: 'transaction_description' }, // Added description column
         { text: 'End Date', key: 'period_of_performance_current_end_date' },
-        { text: 'Current Value', key: 'current_total_value_of_award', format: 'currency', class: 'text-center' },
+        { text: 'Current Value', key: 'current_total_value_of_award', format: 'currency', class: 'text-left' },
         { text: 'USA Spending', key: 'usa_spending', class: 'text-center' }
     ];
 
