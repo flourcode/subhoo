@@ -1777,3 +1777,33 @@ tr:hover td {
     background-color: var(--color-surface-container);
     color: var(--color-text-primary);
 }
+/* Hyperlink styling for light and dark modes */
+a {
+    color: var(--color-primary);
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+a:hover {
+    color: var(--color-secondary);
+}
+
+/* Ensure hyperlinks in dark mode also use muted colors */
+[data-theme="dark"] a {
+    color: var(--color-primary);
+}
+
+[data-theme="dark"] a:hover {
+    color: var(--color-secondary);
+}
+
+/* Special styling for the detail links in tables */
+.detail-link {
+    color: var(--color-primary);
+    text-decoration: none;
+}
+
+.detail-link:hover {
+    color: var(--color-secondary);
+    text-decoration: underline;
+}

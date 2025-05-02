@@ -1370,21 +1370,21 @@ function displayChoroplethMap(mapData) {
                 d3.interpolate('#3A373E', '#A29AAA') : // Dark mode: darker to lighter purple
                 d3.interpolate('#E9E6ED', '#9993A1')); // Light mode: light to medium purple
         
-        // Create tooltip - position it fixed relative to the map container
-        const tooltip = d3.select(mapDiv)
-            .append('div')
-            .attr('class', 'tooltip')
-            .style('opacity', 0)
-            .style('position', 'absolute')
-            .style('background-color', isDarkMode ? '#252229' : '#FFFFFF')
-            .style('color', isDarkMode ? '#F4F2F6' : '#36323A')
-            .style('padding', '8px')
-            .style('border-radius', '4px')
-            .style('font-size', '12px')
-            .style('pointer-events', 'none')
-            .style('border', '1px solid ' + (isDarkMode ? '#3A373E' : '#D7D4DC'))
-            .style('z-index', '1000')
-            .style('box-shadow', isDarkMode ? 
+        // Create tooltip - attach to body for better positioning
+        const tooltip = d3.select("body")
+            .append("div")
+            .attr("class", "map-tooltip")
+            .style("position", "absolute")
+            .style("visibility", "hidden")
+            .style("background-color", isDarkMode ? "#252229" : "#FFFFFF")
+            .style("color", isDarkMode ? "#F4F2F6" : "#36323A")
+            .style("padding", "8px")
+            .style("border-radius", "4px")
+            .style("font-size", "12px")
+            .style("pointer-events", "none")
+            .style("border", "1px solid " + (isDarkMode ? "#3A373E" : "#D7D4DC"))
+            .style("z-index", "9999")
+            .style("box-shadow", isDarkMode ? 
                 '0 2px 4px rgba(0, 0, 0, 0.3)' : 
                 '0 2px 4px rgba(0, 0, 0, 0.1)');
         
@@ -1438,43 +1438,39 @@ function displayChoroplethMap(mapData) {
                         const stateName = fipsToStateName[fipsCode] || "Unknown";
                         
                         if (stateData) {
-                            // Position tooltip to follow mouse
-                            const [mouseX, mouseY] = d3.pointer(event, document.body);
-                            
-                            tooltip.transition()
-                                .duration(200)
-                                .style('opacity', 0.9);
+                            tooltip
+                                .style("visibility", "visible")
+                                .html(`
+                                    <strong>${stateName}</strong><br>
+                                    Total Value: ${formatCurrency(stateData.value)}<br>
+                                    Contracts: ${stateData.count}
+                                `);
                                 
-                            tooltip.html(`
-                                <strong>${stateName}</strong><br>
-                                Total Value: ${formatCurrency(stateData.value)}<br>
-                                Contracts: ${stateData.count}
-                            `)
-                            .style('left', (mouseX + 10) + 'px')
-                            .style('top', (mouseY - 28) + 'px');
-                            
+                            // Position tooltip
+                            tooltip
+                                .style("left", (event.pageX + 10) + "px")
+                                .style("top", (event.pageY - 28) + "px");
+                                
                             // Highlight the state
                             d3.select(this)
-                                .attr('stroke', isDarkMode ? '#A29AAA' : '#9993A1')
-                                .attr('stroke-width', 1.5);
+                                .attr("stroke", isDarkMode ? "#A29AAA" : "#9993A1")
+                                .attr("stroke-width", 1.5);
                         }
                     })
                     .on('mousemove', function(event) {
                         // Update tooltip position as mouse moves
-                        const [mouseX, mouseY] = d3.pointer(event, document.body);
                         tooltip
-                            .style('left', (mouseX + 10) + 'px')
-                            .style('top', (mouseY - 28) + 'px');
+                            .style("left", (event.pageX + 10) + "px")
+                            .style("top", (event.pageY - 28) + "px");
                     })
                     .on('mouseout', function() {
-                        tooltip.transition()
-                            .duration(500)
-                            .style('opacity', 0);
-                            
+                        // Hide tooltip
+                        tooltip.style("visibility", "hidden");
+                        
                         // Remove highlight
                         d3.select(this)
-                            .attr('stroke', isDarkMode ? '#3A373E' : '#FFFFFF')
-                            .attr('stroke-width', 0.5);
+                            .attr("stroke", isDarkMode ? "#3A373E" : "#FFFFFF")
+                            .attr("stroke-width", 0.5);
                     });
                     
                 // Add legend
@@ -2139,7 +2135,22 @@ function updateChartsForTheme() {
     }
     
     // Other charts could be updated here as well
+    if (document.getElementById('choroplethMap') && 
+    document.getElementById('map-container')) {
+    const container = document.getElementById('map-container');
+    const mapDiv = document.getElementById('choroplethMap');
     
+    // Clear previous map completely
+    if (mapDiv) {
+        mapDiv.innerHTML = '';
+    }
+    
+    // Redraw with current data
+    if (rawData && rawData.length > 0) {
+        const mapData = processMapData(rawData);
+        displayChoroplethMap(mapData);
+    }
+}
 if (document.getElementById('sankeyChart') && 
         document.getElementById('sankey-chart-container')) {
         const container = document.getElementById('sankey-chart-container');
