@@ -117,7 +117,7 @@ body {
     background-color: var(--color-background);
     color: var(--color-text-primary);
     line-height: 1.5;
-    font-size: 14px;
+    font-size: 14px; /* Base size */
     margin: 0; /* Ensure no default margin */
     padding: 0; /* Ensure no default padding */
     height: 100%;
@@ -166,6 +166,23 @@ a:hover {
     padding: 20px;
     overflow-y: auto; /* Allow sidebar content to scroll if needed */
     flex-shrink: 0; /* Prevent sidebar from shrinking */
+    display: flex; /* Use flex for footer positioning */
+    flex-direction: column; /* Stack sidebar content vertically */
+}
+
+/* Style for Sidebar Info Text */
+/* Recommendation: Add a class like "sidebar-info" to this div in HTML for robustness */
+.side-panel > div[style*="font-size: 12px"] {
+    font-size: 13px !important; /* Increased from 12px - !important needed to override inline style */
+}
+
+/* Style for Sidebar Footer */
+/* Recommendation: Add a class like "sidebar-footer" to this div in HTML for robustness */
+.side-panel > div[style*="font-size: 10px"] {
+     margin-top: auto; /* Push footer to bottom */
+     padding-top: 10px; /* Add padding above footer */
+     border-top: 1px solid var(--color-border); /* Add border above footer */
+     font-size: 12px !important; /* Increased from 10px - !important needed to override inline style */
 }
 
 .main-content {
@@ -189,14 +206,14 @@ a:hover {
 }
 
 .title-area h1 {
-    font-size: 24px;
+    font-size: 24px; /* Main dashboard title */
     font-weight: 700;
     color: var(--color-text-primary);
     margin-bottom: 4px;
 }
 
 .title-area p {
-    font-size: 14px;
+    font-size: 14px; /* Subtitle */
     color: var(--color-text-secondary);
 }
 
@@ -215,7 +232,7 @@ a:hover {
     border-radius: var(--border-radius-lg);
     box-shadow: var(--shadow-sm);
     border: 1px solid var(--color-border);
-    font-size: 14px;
+    font-size: 14px; /* Date/Time */
     color: var(--color-text-primary);
 }
 
@@ -232,9 +249,6 @@ a:hover {
 /* ========================================= */
 /* Bento Grid Layout                         */
 /* ========================================= */
-/* ========================================= */
-/* Bento Grid Layout                         */
-/* ========================================= */
 .bento-grid {
     display: grid;
     gap: var(--bento-gap);
@@ -243,16 +257,7 @@ a:hover {
         "sankey sankey map map arr"
         "tavtcv tavtcv leaders leaders leaders"
         "expiring expiring expiring expiring expiring";
-    /* Define row heights explicitly */
-    /* Adjust the '500px' value as needed for Sankey/Map row */
-    /* The 'auto' rows will size based on their content */
     grid-template-rows: minmax(450px, auto) auto auto; /* Give first row a minimum height */
-
-    /* --- OR --- Use fr units for relative sizing (might need tweaking) */
-    /* grid-template-rows: 1fr 1fr auto; */ /* Example: Divide space more evenly */
-
-    /* --- OR --- If 'auto' was working before, maybe just increase min-height */
-    /* grid-auto-rows: minmax(300px, auto); */ /* Increased minimum */
 }
 
 /* Assign grid areas (ensure IDs match HTML) */
@@ -262,22 +267,11 @@ a:hover {
 #bento-tavtcv { grid-area: tavtcv; }
 #bento-leaders { grid-area: leaders; }
 #bento-expiring { grid-area: expiring; }
-/* #bento-notes { grid-area: notes; } /* Example if notes area exists */
-/* #bento-controls { grid-area: controls; } /* Example if controls area exists */
-/* #bento-search { grid-area: search; } /* Example if search area exists */
 
 /* Column Span Utility */
-.col-span-2 {
-    grid-column: span 2;
-}
-/* Add other spans if needed, like .col-span-4 from original */
-.col-span-4 {
-    grid-column: span 4;
-}
-/* Add span 5 if the expiring one needs it explicitly */
-.col-span-5 {
-    grid-column: span 5;
-}
+.col-span-2 { grid-column: span 2; }
+.col-span-4 { grid-column: span 4; }
+.col-span-5 { grid-column: span 5; }
 
 
 /* ========================================= */
@@ -296,6 +290,14 @@ a:hover {
     flex-direction: column; /* Stack header and content vertically */
     height: 100%; /* Make cards fill their grid cell height */
 }
+/* Specific style for ARR bento background */
+#bento-arr {
+    background-color: var(--color-surface-container); /* Slightly different light mode background */
+}
+[data-theme="dark"] #bento-arr {
+    background-color: var(--color-background); /* Slightly different dark mode background */
+}
+
 
 .bento-box:hover {
     box-shadow: var(--shadow-lg);
@@ -314,7 +316,7 @@ a:hover {
 }
 
 .card-header h2 {
-    font-size: 16px;
+    font-size: 16px; /* Card Titles */
     font-weight: 600;
     color: var(--color-text-primary);
     flex-grow: 1;
@@ -358,7 +360,7 @@ input[type="text"] {
     padding: 10px 14px;
     border: 1px solid var(--color-outline);
     border-radius: var(--border-radius-md);
-    font-size: 14px;
+    font-size: 14px; /* Form Inputs */
     color: var(--color-text-primary);
     background-color: var(--color-surface-container); /* Adjusted background */
 }
@@ -393,7 +395,7 @@ button, .button, .primary-button {
     gap: 8px;
     padding: 10px 16px;
     border-radius: var(--border-radius-md);
-    font-size: 14px;
+    font-size: 14px; /* Buttons */
     font-weight: 500;
     cursor: pointer;
     transition: var(--transition-standard);
@@ -474,7 +476,7 @@ button:disabled, .button:disabled, .primary-button:disabled {
 #status-banner {
     padding: 8px 12px;
     border-radius: var(--border-radius-md);
-    font-size: 13px;
+    font-size: 13px; /* Status Banner Text */
     color: var(--color-text-secondary);
     background-color: var(--color-surface);
     border: 1px solid var(--color-border);
@@ -516,8 +518,9 @@ button:disabled, .button:disabled, .primary-button:disabled {
     flex: 1;
 }
 
-.filter-item label { /* If used */
-    font-size: 12px;
+/* Filter Labels (If you add specific classes/elements) */
+.filter-item label {
+    font-size: 13px; /* Increased from 12px */
     font-weight: 500;
     color: var(--color-text-secondary);
 }
@@ -554,7 +557,7 @@ th, td {
 
 th {
     font-weight: 600;
-    font-size: 12px;
+    font-size: 13px; /* --- UPDATED from 12px --- */
     color: var(--color-text-secondary);
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -565,7 +568,7 @@ th {
 }
 
 td {
-    font-size: 13px;
+    font-size: 14px; /* --- UPDATED from 13px --- */
     color: var(--color-text-primary);
 }
 td.number {
@@ -577,7 +580,7 @@ td .font-medium { font-weight: 500; }
 td .text-gray-900 { color: var(--color-text-primary); } /* Adapt Tailwind-like class */
 td .text-gray-600 { color: var(--color-text-secondary); } /* Adapt */
 td .font-bold { font-weight: 700; }
-td .text-xs { font-size: 12px; }
+td .text-xs { font-size: 12px; } /* Keep specific small utility if needed */
 td .text-center { text-align: center; }
 td .text-red-600 { color: var(--color-error); } /* Adapt */
 
@@ -588,7 +591,7 @@ tr:hover td {
 
 .summary-text {
     text-align: center;
-    font-size: 12px;
+    font-size: 12px; /* Table summary text */
     color: var(--color-text-secondary);
     margin-top: 12px;
     padding-top: 8px;
@@ -624,12 +627,6 @@ tr:hover td {
     max-height: none; /* Allow charts to fill container */
 }
 
-/* Explicit heights for grid cells containing charts */
-/* These might be redundant if grid-auto-rows and flex works well */
-/* #bento-sankey, #bento-map, #bento-tavtcv, #bento-leaders {
-    height: 600px;
-} */
-
 /* TAV/TCV Chart Specifics */
 .chart-y-labels-container { /* Container for custom labels */
     position: absolute;
@@ -655,14 +652,14 @@ tr:hover td {
 }
 
 .arr-grid-value {
-    font-size: 36px;
+    font-size: 36px; /* ARR Value */
     font-weight: 700;
-    color: var(--color-primary);
+    color: var(--color-primary); /* Use default primary or specific accent */
     margin-bottom: 10px;
 }
 
 .arr-description {
-    font-size: 13px;
+    font-size: 14px; /* --- UPDATED from 13px --- */
     color: var(--color-text-secondary);
 }
 
@@ -670,7 +667,7 @@ tr:hover td {
 .notes-content {
     /* flex: 1 applied in Card Styles */
     color: var(--color-text-secondary);
-    font-size: 13px;
+    font-size: 14px; /* --- UPDATED from 13px --- */
     overflow-y: auto; /* Allow scrolling if notes are long */
 }
 .notes-content p { margin-bottom: 12px; }
@@ -689,7 +686,7 @@ tr:hover td {
 #sankeyChart path:hover { stroke-opacity: 0.8; }
 #sankeyChart rect { fill: var(--chart-color-primary); }
 #sankeyChart text {
-    font-size: 10px;
+    font-size: 12px; /* --- UPDATED from 10px --- */
     fill: var(--color-text-secondary);
     pointer-events: none;
 }
@@ -705,7 +702,7 @@ tr:hover td {
     stroke: var(--color-primary);
 }
 #choroplethMap text { /* Legend text */
-    font-size: 10px;
+    font-size: 12px; /* --- UPDATED from 10px --- */
     fill: var(--color-text-secondary);
     text-anchor: middle;
 }
@@ -721,7 +718,7 @@ tr:hover td {
     color: var(--color-text-primary);
     padding: 8px 12px;
     border-radius: var(--border-radius-md);
-    font-size: 12px;
+    font-size: 12px; /* Tooltip Text */
     pointer-events: none;
     border: 1px solid var(--color-border);
     z-index: 9999;
@@ -736,6 +733,7 @@ tr:hover td {
 .map-tooltip,
 #tav-tcv-tooltip {
     /* Inherits from .tooltip or define specific styles */
+     font-size: 12px; /* Ensure specific tooltips also use 12px */
 }
 
 /* Ensure Chart.js default tooltip uses themed colors */
@@ -747,7 +745,7 @@ tr:hover td {
   border-radius: var(--border-radius-md) !important;
   box-shadow: var(--shadow-md) !important;
   padding: 10px !important;
-  font-size: 12px !important;
+  font-size: 12px !important; /* Tooltip Text */
   opacity: 1 !important; /* Override default fade */
   pointer-events: none !important;
   z-index: 9999 !important;
@@ -768,7 +766,7 @@ tr:hover td {
     padding: 24px;
     text-align: center;
     color: var(--color-text-tertiary);
-    font-size: 14px;
+    font-size: 14px; /* Placeholder Text */
     position: absolute; /* Cover the parent container */
     top: 0;
     left: 0;
@@ -834,36 +832,24 @@ tr:hover td {
 /* Responsive Adjustments                    */
 /* ========================================= */
 @media (max-width: 1200px) {
-    /* Example: Switch to 2 columns */
-    /* Adjust grid-template-columns and areas as needed */
-    /* .bento-grid {
-        grid-template-columns: repeat(2, 1fr);
-        grid-template-areas:
-            "controls controls"
-            "tavtcv tavtcv"
-            "leaders arr"
-            "sankey map"
-            "notes notes"
-            "expiring expiring";
-    } */
+    /* No specific size changes here, but could adjust if needed */
 }
 
 @media (max-width: 992px) { /* Tablet */
      .side-panel {
-        width: 220px; /* Slightly narrower */
+         width: 220px; /* Slightly narrower */
      }
      .bento-grid {
-        /* Adjust columns/areas for tablet */
-        grid-template-columns: repeat(2, 1fr);
+         grid-template-columns: repeat(2, 1fr);
          grid-template-areas: /* Example stacking */
             "arr sankey"
             "map tavtcv"
             "leaders leaders"
             "expiring expiring";
-        grid-auto-rows: minmax(300px, auto); /* Adjust row height */
+         grid-auto-rows: minmax(300px, auto); /* Adjust row height */
      }
-     .arr-grid-value { font-size: 30px; }
-     .card-header h2 { font-size: 15px; }
+     .arr-grid-value { font-size: 30px; } /* Smaller on tablet */
+     .card-header h2 { font-size: 15px; } /* Smaller on tablet */
 }
 
 
@@ -879,6 +865,7 @@ tr:hover td {
         border-right: none;
         border-bottom: 1px solid var(--color-border);
         overflow-y: visible;
+        /* Footer positioning might need adjustment here if flex breaks */
     }
     .main-content {
         height: auto; /* Height based on content */
@@ -944,14 +931,15 @@ tr:hover td {
 }
 
 @media (max-width: 480px) { /* Small Mobile */
-    .title-area h1 { font-size: 20px; }
-    .title-area p { font-size: 13px; }
-    .arr-grid-value { font-size: 28px; }
-    .card-header h2 { font-size: 14px; }
+    .title-area h1 { font-size: 20px; } /* Smaller */
+    .title-area p { font-size: 13px; } /* Smaller */
+    .arr-grid-value { font-size: 28px; } /* Smaller */
+    .card-header h2 { font-size: 14px; } /* Smaller */
     .side-panel, .main-content { padding: 12px; }
+    /* Further reduce smallest text sizes if absolutely needed on smallest screens */
+     th { font-size: 12px; }
+     td { font-size: 13px; }
+     .arr-description, .notes-content { font-size: 13px; }
+     #sankeyChart text, #choroplethMap text { font-size: 10px; }
+     .side-panel > div[style*="font-size: 10px"], .side-panel > div[style*="font-size: 12px"] { font-size: 11px !important; }
 }
-/* In Light Mode */
-#bento-arr { background-color: var(--color-surface-container); /* Slightly darker than --color-surface */ }
-
-/* In Dark Mode */
-[data-theme="dark"] #bento-arr { background-color: var(--color-background); /* Slightly darker than --color-surface */ }
