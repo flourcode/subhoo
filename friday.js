@@ -452,13 +452,13 @@ function displayContractLeadersTable(leaderData) {
     thead.className = 'bg-gray-50';
     const headerRow = thead.insertRow();
     const headers = [
-        { text: 'Recipient Name', scope: 'col' },
+        { text: 'Recipient', scope: 'col' },
         { text: 'Total Value', scope: 'col', class: 'number' },
-        { text: '# Awards', scope: 'col', class: 'number' },
+        { text: 'Awards', scope: 'col', class: 'number' },
         { text: 'Avg Value', scope: 'col', class: 'number' },
-        { text: 'Avg Duration (Days)', scope: 'col', class: 'number' },
-        { text: 'Dominant Desc.', scope: 'col' },
-        { text: 'USA Spending', scope: 'col', class: 'text-center' }
+        { text: 'Length (Days)', scope: 'col', class: 'number' },
+        { text: 'Majority Work', scope: 'col' },
+        { text: 'USASpending', scope: 'col', class: 'text-center' }
     ];
     
     headers.forEach(headerInfo => {
