@@ -1800,11 +1800,10 @@ function calculateAverageARR(dataForARR) {
             errorDiv.textContent = `Error calculating ARR: ${error.message}`;
             errorDiv.style.display = 'block';
             resultDiv.style.display = 'none';
-        } finally {
-            // Always hide the loading spinner
-            loadingDiv.style.display = 'none';
-        }
-    }, 50);
+    } finally {
+        // Always hide the loading spinner
+        loadingDiv.style.display = 'none';
+    }
 }
 // --- Load Dataset Functions ---
 function updateStatusBanner(message, type = 'info') {
