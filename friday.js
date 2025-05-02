@@ -1535,21 +1535,18 @@ function displayChoroplethMap(mapData) {
         // Create tooltip - attach to body for better positioning
         const tooltip = d3.select("body")
             .append("div")
-            .attr("class", "map-tooltip tooltip") // Add generic tooltip class too
+            .attr("class", "map-tooltip")
             .style("position", "absolute")
             .style("visibility", "hidden")
-            .style("opacity", 0) // Start invisible for transition
+            .style("opacity", 0)
             .style("background-color", isDarkMode ? "#252229" : "#FFFFFF")
             .style("color", isDarkMode ? "#F4F2F6" : "#36323A")
-            .style("padding", "8px")
+            .style("padding", "10px")
             .style("border-radius", "4px")
             .style("font-size", "12px")
             .style("pointer-events", "none")
             .style("border", "1px solid " + (isDarkMode ? "#3A373E" : "#D7D4DC"))
-            .style("z-index", "9999")
-            .style("box-shadow", isDarkMode ?
-                '0 2px 4px rgba(0, 0, 0, 0.3)' :
-                '0 2px 4px rgba(0, 0, 0, 0.1)');
+            .style("z-index", "9999");
 
         // State name mapping
         const fipsToStateName = {
@@ -1603,12 +1600,12 @@ function displayChoroplethMap(mapData) {
                    })
                    .attr('stroke', isDarkMode ? '#3A373E' : '#FFFFFF') // Border color between states
                    .attr('stroke-width', 0.5)
-                   .style('pointer-events', 'all') // Ensure map areas are clickable
+                   .style('cursor', 'pointer')
                    .on('mouseover', function(event, d) {
                        // Show tooltip with transition
-                       tooltip.transition().duration(200)
+                       tooltip
                             .style("visibility", "visible")
-                            .style("opacity", 0.9); // Fade in
+                            .style("opacity", 1); 
                             
                        tooltip.html(() => {
                            const fipsCode = d.id.toString().padStart(2, '0');
@@ -1616,9 +1613,9 @@ function displayChoroplethMap(mapData) {
                            const stateName = fipsToStateName[fipsCode] || "Unknown";
                            if (stateData) {
                                return `
-                                   <strong>${stateName}</strong><br>
-                                   Total Value: ${formatCurrency(stateData.value)}<br>
-                                   Contracts: ${stateData.count.toLocaleString()}
+                                   <strong>${stateName}</strong>
+                                   <div>Total Value: ${formatCurrency(stateData.value)}</div>
+                                   <div>Contracts: ${stateData.count.toLocaleString()}</div>
                                `;
                            } else {
                                return `<strong>${stateName}</strong><br>No data`;
@@ -1635,14 +1632,15 @@ function displayChoroplethMap(mapData) {
                    })
                    .on('mousemove', function(event) {
                        // Update tooltip position as mouse moves
-                       tooltip.style("left", (event.pageX + 10) + "px")
-                              .style("top", (event.pageY - 28) + "px");
+                       tooltip
+                          .style("left", (event.pageX + 10) + "px")
+                          .style("top", (event.pageY - 28) + "px");
                    })
                    .on('mouseout', function() {
                        // Hide tooltip with transition
-                       tooltip.transition().duration(500)
-                              .style("visibility", "hidden")
-                              .style("opacity", 0); // Fade out
+                       tooltip
+                          .style("visibility", "hidden")
+                          .style("opacity", 0);
                               
                        // Remove highlight
                        d3.select(this)
@@ -1720,7 +1718,6 @@ function displayChoroplethMap(mapData) {
         d3.select("body").selectAll(".map-tooltip").remove();
     }
 }
-
 function applyFiltersAndUpdateVisuals() {
     // --- Get Filter & Search Values ---
     const subAgencyFilter = document.getElementById('sub-agency-filter')?.value || '';
