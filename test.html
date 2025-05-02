@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>QBR Dashboard from Subhoo</title>
+    <!-- Load external libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-sankey/0.12.3/d3-sankey.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
@@ -43,71 +44,28 @@
                     <label for="dataset-select">Select Dataset:</label>
                     <select id="dataset-select" class="input-select">
                         <option value="">Choose a dataset...</option>
-                        </select>
+                        <!-- Options will be populated by JavaScript -->
+                    </select>
                 </div>
                 <div class="status-section">
                     <div id="status-banner" class="info">
                         <span id="status-message">Select a dataset to begin</span>
-                    </div>
-                    <button id="refresh-button" disabled>
-                        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
-                            <path d="M23 4v6h-6"></path>
-                            <path d="M1 20v-6h6"></path>
-                            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"></path>
-                            <path d="M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
-                        </svg>
-                        Refresh
-                    </button>
-                </div>
-
-                <div class="filters-arr-section" style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--color-border);">
-                     <h3 style="font-size: 14px; font-weight: 600; margin-bottom: 16px;">Filters & ARR Estimator</h3>
-                     <div class="arr-filters">
-                        <div class="filter-row">
-                            <div class="filter-item">
-                                <label for="sub-agency-filter">Sub-Agency:</label>
-                                <select id="sub-agency-filter" class="input-select">
-                                    <option value="">All Sub-Agencies</option>
-                                </select>
-                            </div>
-                            <div class="filter-item">
-                                <label for="naics-filter">NAICS Code:</label>
-                                <select id="naics-filter" class="input-select">
-                                    <option value="">All NAICS</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="arr-result-section">
-                        <div class="arr-display">
-                            <label>Estimated ARR:</label>
-                            <div class="arr-value-display">
-                                <div id="arr-loading" style="display: none;">
-                                    <div class="spinner"></div>
-                                </div>
-                                <div id="arr-error" style="display: none;" class="error-message"></div>
-                                <div id="arr-no-data" style="display: none;" class="no-data-message"></div>
-                                <div id="arr-result" class="value">$0 / year</div>
-                            </div>
-                        </div>
-                        <button id="arr-calculate-button" class="primary-button">
-                            Estimate ARR
+                        <button id="refresh-button" disabled>
+                            <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+                                <path d="M23 4v6h-6"></path>
+                                <path d="M1 20v-6h6"></path>
+                                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"></path>
+                                <path d="M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                            </svg>
+                            Refresh
                         </button>
-                        <div style="margin-top: 16px; font-size: 13px; color: var(--color-text-secondary); text-align: left;">
-                             <p style="margin-bottom: 10px; text-align: left;"><strong>Estimate ARR for Your Segment</strong></p>
-                             <p style="margin-bottom: 10px; text-align: left;">
-                                Use the <strong>Search</strong> and <strong>Agency/NAICS filters</strong> to zero in on the part of the market you're focused on. Based on historical contract size and duration, Subhoo gives you a ballpark estimate of potential ARR.
-                            </p>
-                            <p style="margin-bottom: 10px; text-align: left;">
-                                It's not perfect—your actual ARR will depend on pricing, scope, delivery, and margin—but if you're sizing up a new market or pitching internal investment, this gives you a solid starting point.
-                            </p>
-                        </div>
                     </div>
                 </div>
-
-                <div class="dashboard-notes" style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--color-border);">
-                     <h3 style="font-size: 14px; font-weight: 600; margin-bottom: 8px;">Notes</h3>
-                     <p style="font-size: 13px; color: var(--color-text-secondary); margin-bottom: 8px;">
+                
+                <!-- Dashboard Notes integrated into controls bento -->
+                <div class="dashboard-notes" style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--color-border);">
+                    <h3 style="font-size: 14px; font-weight: 600; margin-bottom: 8px;">Notes</h3>
+                    <p style="font-size: 13px; color: var(--color-text-secondary); margin-bottom: 8px;">
                         This dashboard provides insights into contract data across different agencies. All data is sourced from USAspending.gov.
                     </p>
                     <ul style="font-size: 13px; color: var(--color-text-secondary); margin-left: 16px; margin-bottom: 8px;">
@@ -135,7 +93,7 @@
             <div class="card-content">
                 <div class="search-container">
                     <input type="search" id="search-input" placeholder="Search by keyword, recipient, description, etc..." class="input-select" style="width: 100%;">
-                    <p class="text-sm text-gray-500 mt-2" style="font-size: 13px; color: var(--color-text-secondary); margin-top: 8px;">Search across contracts by recipient name, contract ID, or description.</p>
+                    <p class="text-sm text-gray-500 mt-2">Search across contracts by recipient name, contract ID, or description.</p>
                 </div>
             </div>
         </div>
@@ -150,7 +108,7 @@
                 <h2>TAV vs TCV (Top Contracts)</h2>
             </div>
             <div id="tav-tcv-chart-container" class="chart-container">
-                <div class="loading-placeholder" style="display: none;">
+                <div class="loading-placeholder">
                     <div class="spinner"></div>
                     <span>Loading TAV/TCV data...</span>
                 </div>
@@ -170,11 +128,65 @@
                 <h2>Contract Value Leaders</h2>
             </div>
             <div id="contract-leaders-table-container" class="table-container">
-                <div class="loading-placeholder" style="display: none;">
+                <div class="loading-placeholder">
                     <div class="spinner"></div>
                     <span>Loading leader data...</span>
                 </div>
+            </div>
+        </div>
+
+        <div id="bento-arr" class="bento-box">
+            <div class="card-header">
+                <div class="card-icon-circle">
+                    <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 2v20M2 12h20"></path>
+                    </svg>
                 </div>
+                <h2>Filters and ARR Estimator</h2>
+            </div>
+            <div class="card-content">
+                <div class="arr-filters">
+                    <div class="filter-row">
+                        <div class="filter-item">
+                            <label for="sub-agency-filter">Sub-Agency:</label>
+                            <select id="sub-agency-filter" class="input-select">
+                                <option value="">All Sub-Agencies</option>
+                            </select>
+                        </div>
+                        <div class="filter-item">
+                            <label for="naics-filter">NAICS Code:</label>
+                            <select id="naics-filter" class="input-select">
+                                <option value="">All NAICS</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="arr-result-section">
+                    <div class="arr-display">
+                        <label>Estimated ARR:</label>
+                        <div class="arr-value-display">
+                            <div id="arr-loading" style="display: none;">
+                                <div class="spinner"></div>
+                            </div>
+                            <div id="arr-error" style="display: none;" class="error-message"></div>
+                            <div id="arr-no-data" style="display: none;" class="no-data-message"></div>
+                            <div id="arr-result" class="value">$0 / year</div>
+                        </div>
+                    </div>
+                    <button id="arr-calculate-button" class="primary-button">
+                        Estimate ARR
+                    </button>
+					<div style="margin-top: 16px; font-size: 13px; color: var(--color-text-secondary); text-align: left;">
+        <p style="margin-bottom: 10px; text-align: left;"><strong>Estimate ARR for Your Segment</strong></p>
+        <p style="margin-bottom: 10px; text-align: left;">
+            Use the <strong>Search</strong> and <strong>Agency/NAICS filters</strong> to zero in on the part of the market you're focused on. Based on historical contract size and duration, Subhoo gives you a ballpark estimate of potential ARR.
+        </p>
+        <p style="margin-bottom: 10px; text-align: left;">
+            It's not perfect—your actual ARR will depend on pricing, scope, delivery, and margin—but if you're sizing up a new market or pitching internal investment, this gives you a solid starting point.
+        </p>
+    </div>
+                </div>
+            </div>
         </div>
 
         <div id="bento-expiring" class="bento-box">
@@ -192,11 +204,11 @@
                 <h2>Expiring Soon (Next 6 Months)</h2>
             </div>
             <div id="expiring-contracts-table-container" class="table-container">
-                <div class="loading-placeholder" style="display: none;">
+                <div class="loading-placeholder">
                     <div class="spinner"></div>
                     <span>Loading expiring contracts...</span>
                 </div>
-                 </div>
+            </div>
         </div>
 
         <div id="bento-sankey" class="bento-box">
@@ -210,7 +222,7 @@
                 <h2>Award Flow (Agency to Prime)</h2>
             </div>
             <div id="sankey-chart-container" class="chart-container" style="min-height: 300px;">
-                <div class="loading-placeholder" style="display: none;">
+                <div class="loading-placeholder">
                     <div class="spinner"></div>
                     <span>Loading Sankey data...</span>
                 </div>
@@ -229,12 +241,12 @@
                 <h2>Place of Performance Value</h2>
             </div>
             <div id="map-container" class="chart-container" style="min-height: 300px;">
-                <div class="loading-placeholder" style="display: none;">
+                <div class="loading-placeholder">
                     <div class="spinner"></div>
                     <span>Loading map data...</span>
                 </div>
                 <div id="choroplethMap" style="width: 100%; height: 100%;"></div>
-                 </div>
+            </div>
         </div>
     </main>
     <script src="test_script.js" defer></script>
