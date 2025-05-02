@@ -149,7 +149,7 @@ body {
     gap: var(--bento-gap);
     grid-template-columns: repeat(4, 1fr);
     grid-template-areas:
-        "controls controls controls search"
+        "controls controls search arr"
         "tavtcv tavtcv leaders leaders"
         "sankey sankey map map"
         "expiring expiring expiring expiring";
@@ -160,15 +160,12 @@ body {
 #bento-search { grid-area: search; }
 #bento-tavtcv { grid-area: tavtcv; }
 #bento-leaders { grid-area: leaders; }
+#bento-arr { grid-area: arr; }
+#bento-notes { grid-area: notes; }
 #bento-expiring { grid-area: expiring; }
 #bento-map { grid-area: map; }
 #bento-sankey { grid-area: sankey; }
 
-#bento-controls .filters-arr-section {
-     margin-top: 20px;
-     padding-top: 20px;
-     border-top: 1px solid var(--color-border);
-}
 /* ========================================= */
 /* Card Styles                               */
 /* ========================================= */
@@ -225,7 +222,7 @@ body {
 }
 
 /* Make cards fill their grid cells */
-#bento-leaders, #bento-sankey, #bento-map, #bento-notes, #bento-tavtcv {
+#bento-leaders, #bento-arr, #bento-sankey, #bento-map, #bento-notes, #bento-tavtcv {
     display: flex;
     flex-direction: column;
     height: 100%;
@@ -233,6 +230,7 @@ body {
 
 /* Make card content expand to fill available space */
 #bento-leaders .card-content, 
+#bento-arr .card-content,
 #bento-sankey .card-content,
 #bento-map .card-content,
 #bento-notes .card-content,
@@ -648,6 +646,7 @@ tr:hover td {
         grid-template-columns: repeat(2, 1fr);
         grid-template-areas:
             "controls search"
+            "arr arr"
             "tavtcv tavtcv"
             "leaders leaders"
             "sankey map"
@@ -671,6 +670,7 @@ tr:hover td {
         grid-template-areas:
             "controls"
             "search"
+            "arr"
             "tavtcv"
             "leaders"
             "sankey"
@@ -694,7 +694,7 @@ tr:hover td {
     }
     
     /* Make smaller cards on mobile not take up too much vertical space */
-    #bento-controls, #bento-search {
+    #bento-controls, #bento-search, #bento-arr {
         min-height: 0;
     }
     
@@ -787,85 +787,4 @@ tr:hover td {
     width: 100%;
     height: 100%;
     max-height: none;
-}
-/* --- Font Hierarchy Enhancements --- */
-
-/* Increase main dashboard title size */
-.title-area h1#dashboard-title {
-    font-size: 42px; /* Example: Larger size */
-    font-weight: 800;
-    margin-bottom: 8px; /* Adjust spacing if needed */
-}
-
-/* Increase card title size and weight */
-.card-header h2 {
-    font-size: 20px; /* Example: Larger size */
-    font-weight: 700; /* Example: Bolder */
-}
-
-/* Adjust base body font size if desired (ensure readability) */
-body {
-    /* font-size: 15px; */ /* Optional: Slightly larger base */
-    /* ... other body styles ... */
-}
-
-/* Define size for less prominent text (e.g., notes, labels) */
-p, .text-sm, .notes-content, td { /* Target appropriate elements */
-    font-size: 14px; /* Ensure readability for standard text */
-}
-.notes-content ul li, .filter-item label {
-     font-size: 13px; /* Slightly smaller for less critical info */
-     color: var(--color-text-secondary);
-}
-
-/* Make key metrics pop */
-.arr-value-display {
-    font-size: 32px; /* Example: Significantly larger */
-    font-weight: 700;
-    color: var(--color-primary);
-}
-
-/* Ensure table headers are distinct */
-th {
-    font-size: 12px; /* Keep small but clear */
-    font-weight: 600;
-    color: var(--color-text-secondary);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-}
-/* --- Wow Factor Enhancements --- */
-
-/* Smoother transitions for bento boxes */
-.bento-box {
-    /* ... existing styles ... */
-    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease; /* Added border-color */
-}
-
-.bento-box:hover {
-    transform: translateY(-3px); /* Slightly more lift */
-    box-shadow: var(--shadow-lg);
-    border-color: var(--color-primary); /* Example: Highlight border on hover */
-}
-
-/* Example: Subtle fade-in animation class (Apply with JS when content loads) */
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-.fade-in-element {
-  animation: fadeIn 0.5s ease-out forwards;
-}
-
-/* Example: Style for clickable links/details */
-.detail-link {
-    color: var(--color-primary);
-    text-decoration: none;
-    font-weight: 500;
-    transition: color 0.2s ease;
-}
-
-.detail-link:hover {
-    color: var(--color-secondary);
-    text-decoration: underline;
 }
