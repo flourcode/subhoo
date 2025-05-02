@@ -10,57 +10,57 @@
     --light-purple-400: #9993A1; /* Mid Dark - Primary */
     --light-purple-500: #797484; /* Dark - Secondary */
     --light-purple-600: #615C66; /* Darkest - Text */
-    
+
     /* Neutral Colors */
     --white: #FFFFFF;
     --light-text: #36323A;      /* Dark Purple-Gray Text */
     --dark-text: #252327;       /* Darkest Text */
-    
+
     /* Status Colors */
     --red-500: #ef4444;         /* Error */
     --green-500: #10b981;       /* Success */
     --blue-500: #3e95cd;        /* Info */
-    
+
     /* Semantic Color Mapping */
     --color-background: var(--white);
-    --color-surface: var(--light-purple-50); 
+    --color-surface: var(--light-purple-50);
     --color-surface-container: var(--light-purple-100);
     --color-surface-variant: var(--light-purple-200);
-    
+
     /* Text Colors */
     --color-text-primary: var(--light-text);
     --color-text-secondary: var(--light-purple-600);
     --color-text-tertiary: var(--light-purple-500);
-    
+
     /* Action Colors */
     --color-primary: var(--light-purple-400);
     --color-on-primary: var(--white);
     --color-secondary: var(--light-purple-500);
     --color-on-secondary: var(--white);
-    
+
     /* Border & Outline */
     --color-outline: var(--light-purple-300);
     --color-border: var(--light-purple-200);
-    
+
     /* Chart Colors */
-    --chart-color-primary: var(--light-purple-400);   
+    --chart-color-primary: var(--light-purple-400);
     --chart-color-secondary: var(--light-purple-500);
-    --chart-color-tertiary: var(--light-purple-300);  
-    
+    --chart-color-tertiary: var(--light-purple-300);
+
     /* Status Colors */
     --color-error: var(--red-500);
     --color-success: var(--green-500);
     --color-info: var(--blue-500);
-    
+
     /* Layout Values */
     --border-radius-sm: 8px;
     --border-radius-md: 12px;
     --border-radius-lg: 16px;
-    
+
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
     --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.08);
     --shadow-lg: 0 4px 6px rgba(0, 0, 0, 0.12);
-    
+
     --transition-standard: all 0.2s ease;
     --bento-gap: 20px;
 }
@@ -80,7 +80,8 @@ body {
     color: var(--color-text-primary);
     line-height: 1.5;
     padding: 24px;
-    font-size: 14px;
+    /* font-size: 15px; */ /* Optional base size increase */
+    font-size: 14px; /* Keeping original */
 }
 
 /* ========================================= */
@@ -96,11 +97,11 @@ body {
     align-items: center;
 }
 
-.title-area h1 {
-    font-size: 24px;
-    font-weight: 700;
+.title-area h1#dashboard-title { /* Added ID for specificity */
+    font-size: 36px; /* Example: Larger title */
+    font-weight: 700; /* Example: Bolder title */
     color: var(--color-text-primary);
-    margin-bottom: 4px;
+    margin-bottom: 8px;
 }
 
 .title-area p {
@@ -149,22 +150,36 @@ body {
     gap: var(--bento-gap);
     grid-template-columns: repeat(4, 1fr);
     grid-template-areas:
-        "controls controls search arr"
+        "controls controls controls search"
         "tavtcv tavtcv leaders leaders"
         "sankey sankey map map"
         "expiring expiring expiring expiring";
-    grid-template-rows: auto 600px 600px auto;
+    /* Keep or adjust row heights as desired */
+    /* grid-template-rows: auto auto auto auto; */ /* Example: Fully auto rows */
+     grid-template-rows: auto 600px 600px auto; /* Keeping original fixed heights for now */
 }
+
 /* Assign grid areas */
 #bento-controls { grid-area: controls; }
 #bento-search { grid-area: search; }
 #bento-tavtcv { grid-area: tavtcv; }
 #bento-leaders { grid-area: leaders; }
-#bento-arr { grid-area: arr; }
-#bento-notes { grid-area: notes; }
 #bento-expiring { grid-area: expiring; }
 #bento-map { grid-area: map; }
 #bento-sankey { grid-area: sankey; }
+/* #bento-arr { grid-area: arr; } <--- REMOVED */
+
+/* Style for separator within controls box */
+#bento-controls .filters-arr-section {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid var(--color-border);
+}
+#bento-controls .dashboard-notes {
+     margin-top: 20px;
+     padding-top: 20px;
+     border-top: 1px solid var(--color-border);
+}
 
 /* ========================================= */
 /* Card Styles                               */
@@ -174,15 +189,20 @@ body {
     border-radius: var(--border-radius-lg);
     box-shadow: var(--shadow-md);
     padding: 20px;
-    transition: var(--transition-standard);
+    /* transition: var(--transition-standard); */ /* Original */
+    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease; /* Enhanced */
     position: relative;
-    overflow: hidden;
+    overflow: hidden; /* Change to visible ONLY if content absolutely needs to overflow */
     border: 1px solid var(--color-border);
+    display: flex; /* Added to help with column flex layout */
+    flex-direction: column; /* Added to help with column flex layout */
 }
 
 .bento-box:hover {
     box-shadow: var(--shadow-lg);
-    transform: translateY(-2px);
+    /* transform: translateY(-2px); */ /* Original */
+    transform: translateY(-3px); /* Enhanced lift */
+    border-color: var(--color-primary); /* Enhanced border */
 }
 
 /* Card Header Styles */
@@ -193,11 +213,12 @@ body {
     margin-bottom: 16px;
     border-bottom: 1px solid var(--color-border);
     padding-bottom: 12px;
+    flex-shrink: 0; /* Prevent header from shrinking */
 }
 
 .card-header h2 {
-    font-size: 16px;
-    font-weight: 600;
+    font-size: 18px; /* Example: Larger card titles */
+    font-weight: 700; /* Example: Bolder card titles */
     color: var(--color-text-primary);
     flex-grow: 1;
 }
@@ -211,6 +232,7 @@ body {
     border-radius: 50%;
     background-color: var(--color-surface);
     color: var(--color-primary);
+    flex-shrink: 0; /* Prevent icon from shrinking */
 }
 
 /* Card Content Styles */
@@ -218,19 +240,24 @@ body {
     display: flex;
     flex-direction: column;
     gap: 16px;
-    flex-grow: 1;
+    flex-grow: 1; /* Allow content to take available space */
+    /* Added to ensure content area can scroll if needed, when box overflow is hidden */
+    overflow-y: auto;
+    min-height: 0; /* Prevent flexbox blowout in some browsers */
 }
 
-/* Make cards fill their grid cells */
-#bento-leaders, #bento-arr, #bento-sankey, #bento-map, #bento-notes, #bento-tavtcv {
+/* Remove rules making specific boxes flex - handled by .bento-box now */
+/*
+#bento-leaders, #bento-sankey, #bento-map, #bento-notes, #bento-tavtcv {
     display: flex;
     flex-direction: column;
     height: 100%;
 }
+*/
 
-/* Make card content expand to fill available space */
-#bento-leaders .card-content, 
-#bento-arr .card-content,
+/* Remove rules making specific content flex - handled by .card-content now */
+/*
+#bento-leaders .card-content,
 #bento-sankey .card-content,
 #bento-map .card-content,
 #bento-notes .card-content,
@@ -239,6 +266,8 @@ body {
     display: flex;
     flex-direction: column;
 }
+*/
+
 
 /* ========================================= */
 /* Form Element Styles                       */
@@ -278,6 +307,7 @@ button, .button, .primary-button {
     cursor: pointer;
     transition: var(--transition-standard);
     border: 1px solid var(--color-border);
+    flex-shrink: 0; /* Prevent buttons shrinking in flex layouts */
 }
 
 button, .button {
@@ -317,6 +347,7 @@ button:disabled, .button:disabled, .primary-button:disabled {
     font-size: 14px;
     font-weight: 500;
     color: var(--color-text-primary);
+    flex-shrink: 0; /* Prevent label shrinking */
 }
 
 .status-section {
@@ -334,6 +365,11 @@ button:disabled, .button:disabled, .primary-button:disabled {
     background-color: var(--color-surface);
     border: 1px solid var(--color-border);
     flex-grow: 1;
+    /* Added flex properties for better alignment with button */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
 }
 
 #status-banner.error {
@@ -354,7 +390,7 @@ button:disabled, .button:disabled, .primary-button:disabled {
     border-color: var(--color-info);
 }
 
-/* Filter Styles */
+/* Filter Styles (Now inside #bento-controls) */
 .filter-container, .arr-filters {
     display: flex;
     flex-direction: column;
@@ -364,30 +400,33 @@ button:disabled, .button:disabled, .primary-button:disabled {
 .filter-row {
     display: flex;
     gap: 16px;
+    align-items: flex-end; /* Align items at bottom if labels cause height diff */
 }
 
 .filter-item {
     display: flex;
     flex-direction: column;
     gap: 6px;
-    flex: 1;
+    flex: 1; /* Allow items to take equal space */
+    min-width: 0; /* Prevent overflow in flex */
 }
 
 .filter-item label {
     font-size: 12px;
     font-weight: 500;
     color: var(--color-text-secondary);
+    margin-bottom: 2px; /* Small space between label and select */
 }
 
 /* ========================================= */
-/* ARR Section                               */
+/* ARR Section (Now inside #bento-controls)  */
 /* ========================================= */
 .arr-result-section {
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: center; /* Center items horizontally */
     gap: 16px;
-    margin-top: 20px;
+    margin-top: 20px; /* Spacing from filters */
     text-align: center;
 }
 
@@ -397,80 +436,112 @@ button:disabled, .button:disabled, .primary-button:disabled {
     align-items: center;
     gap: 4px;
 }
+.arr-display label { /* Style the ARR label */
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--color-text-primary);
+}
 
 .arr-value-display {
-    font-size: 28px;
+    font-size: 32px; /* Make key metrics pop */
     font-weight: 700;
     color: var(--color-primary);
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 10px;
+    min-height: 40px; /* Ensure space even when loading */
 }
 
 #arr-result {
-    font-size: 28px;
+    font-size: inherit; /* Inherit size from parent */
 }
 
 #arr-calculate-button {
     min-width: 180px;
+    margin-top: 8px; /* Space above button */
 }
+#arr-calculate-button + div { /* Style the explanation text */
+     margin-top: 16px;
+     font-size: 13px;
+     color: var(--color-text-secondary);
+     text-align: left;
+}
+#arr-calculate-button + div p {
+    margin-bottom: 10px;
+    text-align: left;
+}
+
 /* ========================================= */
 /* Chart & Table Containers                  */
 /* ========================================= */
 .chart-container {
-    position: relative;
+    position: relative; /* Needed for absolute positioned placeholders */
     width: 100%;
-    height: 100%;
-    min-height: 200px;
-    display: flex;
+    height: 100%; /* Occupy container height */
+    min-height: 250px; /* Ensure minimum space for smaller charts */
+    display: flex; /* Use flex to center canvas/svg */
     align-items: center;
     justify-content: center;
-    flex: 1;
+    flex-grow: 1; /* Allow container to grow */
 }
 
-/* Fixed TAV/TCV Chart Container */
+/* Specific TAV/TCV Chart Container - Adjust if not using fixed row heights */
 #bento-tavtcv .chart-container {
-    height: auto !important; /* Remove fixed height */
-    min-height: 450px !important; 
-    flex: 1 !important; /* Allow it to grow */
-    overflow: visible !important; /* Allow content to be visible */
-    margin-top: 10px;
+     /* height: auto !important; */ /* Remove if using fixed row height */
+     /* min-height: 450px !important; */ /* Adjust if needed */
+     flex: 1 !important; /* Allow it to grow */
+     overflow: visible !important; /* Allow labels/tooltips to overflow if needed */
+     margin-top: 10px;
 }
 
-/* Ensure the canvas can expand properly */
+/* Ensure the canvas itself doesn't dictate container size */
 #tavTcvChart {
-    width: 100% !important;
-    height: 100% !important;
-    max-height: none !important;
+    display: block; /* Prevent extra space below canvas */
+    max-width: 100%; /* Ensure responsiveness */
+    max-height: 100%; /* Ensure responsiveness */
+    height: 100%; /* Try to fill container */
+    width: 100%; /* Try to fill container */
 }
 
 .table-container {
     width: 100%;
-    height: 100%;
-    min-height: 300px;
-    overflow: auto;
+    height: 100%; /* Occupy container height */
+    min-height: 250px; /* Minimum height for tables */
+    overflow: hidden; /* Hide overflow, scrolling handled by inner wrapper */
     margin-top: 16px;
-    position: relative;
-    flex: 1;
-    display: flex;
+    position: relative; /* For placeholders */
+    flex-grow: 1; /* Allow container to grow */
+    display: flex; /* Use flex for structure */
     flex-direction: column;
 }
 
-/* Chart container specific styling */
+/* Specific Chart/Map container adjustments */
 #sankey-chart-container, #map-container {
-    flex: 1;
-    min-height: 300px;
+    flex-grow: 1;
+    min-height: 300px; /* Ensure enough space */
+    display: flex; /* Ensure SVG/Map div fills */
+    align-items: stretch;
+    justify-content: stretch;
+}
+#choroplethMap {
+    width: 100%;
+    height: 100%;
 }
 
-/* Ensure parent containers allow charts to expand */
-#bento-sankey .card-content, 
+/* Ensure parent containers allow charts/tables to expand */
+/* These are now handled by the main .bento-box and .card-content rules */
+/*
+#bento-sankey .card-content,
 #bento-map .card-content,
-#bento-tavtcv .card-content {
+#bento-tavtcv .card-content,
+#bento-leaders .card-content,
+#bento-expiring .card-content {
     flex: 1;
     display: flex;
     flex-direction: column;
 }
+*/
 
 /* ========================================= */
 /* Table Styles                              */
@@ -484,6 +555,7 @@ th, td {
     padding: 12px 16px;
     text-align: left;
     border-bottom: 1px solid var(--color-border);
+    font-size: 13px; /* Consistent table text size */
 }
 
 th {
@@ -493,13 +565,12 @@ th {
     text-transform: uppercase;
     letter-spacing: 0.05em;
     background-color: var(--color-surface);
-    position: sticky;
-    top: 0;
+    position: sticky; /* Make header sticky */
+    top: 0; /* Stick to top of scrollable container */
     z-index: 1;
 }
 
 td {
-    font-size: 13px;
     color: var(--color-text-primary);
 }
 
@@ -513,6 +584,14 @@ tr:hover td {
     background-color: var(--color-surface);
 }
 
+/* Table wrapper for scrolling within containers */
+.table-wrapper {
+    flex-grow: 1; /* Allow wrapper to fill space */
+    overflow-y: auto; /* Enable vertical scrolling */
+    min-height: 0; /* Prevent flexbox blowout */
+}
+
+
 .table-summary, .summary-text {
     text-align: center;
     font-size: 12px;
@@ -520,30 +599,40 @@ tr:hover td {
     margin-top: 12px;
     padding-top: 8px;
     border-top: 1px solid var(--color-border);
+    flex-shrink: 0; /* Prevent summary shrinking */
 }
 
-/* Leaders table specific styling */
-#bento-leaders .table-container {
+/* Specific table container adjustments */
+#contract-leaders-table-container,
+#expiring-contracts-table-container {
+    /* These containers use .table-wrapper inside for scrolling */
     display: flex;
     flex-direction: column;
-    flex: 1;
+    flex-grow: 1;
+    overflow: hidden; /* Hide overflow, wrapper handles scroll */
 }
 
+/* Remove min/max height constraints if using auto rows */
+/*
 #contract-leaders-table-container {
     min-height: 400px;
-    max-height: none; /* Remove max height constraint */
+    max-height: none;
     flex: 1;
 }
+*/
 
-/* Make the table wrapper taller to show more rows */
+/* Remove fixed max-height if wrapper handles scroll */
+/*
 #contract-leaders-table-container .table-wrapper {
     max-height: none;
     height: 100%;
     overflow-y: auto;
 }
+*/
+
 
 /* ========================================= */
-/* Notes Section                             */
+/* Notes Section (Now inside #bento-controls)*/
 /* ========================================= */
 .notes-content {
     color: var(--color-text-secondary);
@@ -559,7 +648,9 @@ tr:hover td {
 }
 
 .notes-content ul {
-    margin-left: 20px;
+    list-style-position: inside; /* Adjust list style */
+    margin-left: 0; /* Remove default margin */
+    padding-left: 16px; /* Indent using padding */
     margin-bottom: 12px;
 }
 
@@ -573,10 +664,10 @@ tr:hover td {
 }
 
 /* ========================================= */
-/* Loading States                            */
+/* Loading / Placeholder States              */
 /* ========================================= */
 .loading-placeholder, .error-placeholder, .no-data-placeholder {
-    display: flex;
+    display: flex; /* Keep using flex */
     flex-direction: column;
     align-items: center;
     justify-content: center;
@@ -585,19 +676,26 @@ tr:hover td {
     text-align: center;
     color: var(--color-text-tertiary);
     font-size: 14px;
-    position: absolute;
+    position: absolute; /* Position over content */
     top: 0;
     left: 0;
     width: 100%;
-    height: 100%;
-    background-color: rgba(255, 255, 255, 0.8);
-    border-radius: var(--border-radius-md);
-    z-index: 10;
+    height: 100%; /* Cover entire container */
+    background-color: rgba(255, 255, 255, 0.85); /* Slightly more opaque */
+    border-radius: var(--border-radius-lg); /* Match card radius */
+    z-index: 10; /* Ensure it's above content */
+    pointer-events: none; /* Allow clicks through if needed (though usually covers content) */
 }
 
 .error-placeholder {
     color: var(--color-error);
 }
+
+/* Ensure placeholders only show when needed (JS handles display) */
+/* Example: Hide them by default if JS adds/removes them */
+/* .loading-placeholder, .error-placeholder, .no-data-placeholder {
+    display: none;
+} */
 
 .spinner {
     width: 24px;
@@ -637,154 +735,156 @@ tr:hover td {
 
 #choroplethMap path:hover {
     stroke-width: 1.5px;
-    stroke: var(--color-primary);
+    stroke: var(--color-primary); /* Use primary color for hover stroke */
+    /* fill-opacity: 0.8; */ /* Optional: slightly fade on hover */
+}
+#choroplethMap svg {
+    width: 100%;
+    height: 100%;
+    max-height: none;
 }
 
-/* Better responsive adjustments */
+
+/* ========================================= */
+/* Responsive Adjustments                    */
+/* ========================================= */
+
+/* --- Medium Screens --- */
 @media (max-width: 1200px) {
     .bento-grid {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(2, 1fr); /* Switch to 2 columns */
+        /* Update areas for 2 columns */
         grid-template-areas:
-            "controls search"
-            "arr arr"
-            "tavtcv tavtcv"
-            "leaders leaders"
-            "sankey map"
-            "expiring expiring";
-        grid-template-rows: auto auto auto auto auto auto;
+            "controls controls" /* Controls full width */
+            "search search"     /* Search full width */
+            "tavtcv leaders"    /* Side by side */
+            "sankey map"        /* Side by side */
+            "expiring expiring";  /* Expiring full width */
+        grid-template-rows: auto auto auto auto auto; /* Auto rows */
     }
-    
-    /* Adjust heights for smaller screens */
+
+    /* Adjust heights if needed for medium screens, or rely on auto */
     #bento-tavtcv, #bento-leaders, #bento-sankey, #bento-map {
-        height: 450px;
+        /* height: 450px; */ /* Consider removing if using auto rows */
+         min-height: 400px; /* Set minimum */
     }
 }
 
+/* --- Small Screens (Tablets) --- */
 @media (max-width: 768px) {
     body {
         padding: 16px;
     }
 
     .bento-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr; /* Single column */
+        /* Update areas for single column */
         grid-template-areas:
             "controls"
             "search"
-            "arr"
             "tavtcv"
             "leaders"
             "sankey"
             "map"
             "expiring";
-        grid-template-rows: repeat(8, auto);
+        grid-template-rows: repeat(7, auto); /* Auto rows for all */
     }
-    
-    /* Adjust card padding for mobile */
+
     .bento-box {
         padding: 16px;
     }
-    
-    /* Make sure charts have minimum heights on mobile */
-    #bento-tavtcv, #bento-leaders {
-        height: 400px;
+
+    /* Reset fixed heights, rely on auto-sizing */
+    #bento-tavtcv, #bento-leaders, #bento-sankey, #bento-map, #bento-expiring {
+        height: auto;
+        min-height: 350px; /* Set minimum */
     }
-    
-    #bento-sankey, #bento-map {
-        height: 350px;
-    }
-    
-    /* Make smaller cards on mobile not take up too much vertical space */
-    #bento-controls, #bento-search, #bento-arr {
-        min-height: 0;
-    }
-    
-    /* Ensure the header is responsive */
+     #bento-controls, #bento-search {
+         min-height: 0; /* Allow control/search to be short */
+     }
+
     .dashboard-header {
         margin-bottom: 16px;
     }
-}
 
-@media (max-width: 480px) {
-    /* Extra small screen adjustments */
-    body {
-        padding: 12px;
-    }
-    
-    .bento-grid {
-        gap: 12px; /* Smaller gap on very small screens */
-    }
-    
-    .bento-box {
-        padding: 12px;
-    }
-    
-    /* Fixed heights for smaller screens */
-    #bento-tavtcv, #bento-leaders, #bento-sankey, #bento-map {
-        height: 300px;
-    }
-    
-    /* Make sure filters stack vertically */
+    /* Stack filters vertically earlier */
     .filter-row {
         flex-direction: column;
         gap: 12px;
-    }
-    
-    /* Ensure dashboard title fits */
-    .title-area h1 {
-        font-size: 20px;
+        align-items: stretch; /* Stretch items to full width */
     }
 }
-/* Add this to your CSS to make both containers have consistent heights */
-#bento-tavtcv, #bento-leaders {
-  height: 600px; /* Set a fixed height for both containers */
+
+/* --- Extra Small Screens (Phones) --- */
+@media (max-width: 480px) {
+    body {
+        padding: 12px;
+    }
+
+    .bento-grid {
+        gap: 12px; /* Smaller gap */
+    }
+
+    .bento-box {
+        padding: 12px;
+    }
+
+     /* Adjust min heights for very small screens */
+    #bento-tavtcv, #bento-leaders, #bento-sankey, #bento-map, #bento-expiring {
+        min-height: 300px;
+    }
+
+    .title-area h1#dashboard-title {
+        font-size: 24px; /* Smaller main title */
+    }
+     .card-header h2 {
+         font-size: 16px; /* Smaller card titles */
+     }
+      .arr-value-display {
+          font-size: 28px; /* Smaller ARR display */
+      }
+
 }
 
-/* Make the chart containers fill their parents properly */
-#bento-tavtcv .chart-container,
-#bento-leaders .table-container {
-  height: calc(100% - 60px) !important; /* Account for header height */
-  min-height: auto !important;
-  max-height: none !important;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
+
+/* --- Height Consistency Rules (Keep or Remove depending on grid-template-rows choice) --- */
+/* If using fixed rows (e.g., 600px), these help ensure content fits */
+/* If using auto rows, these might be less necessary or need adjustment */
+
+/* Example: If using fixed 600px rows */
+ #bento-tavtcv, #bento-leaders, #bento-sankey, #bento-map {
+     height: 600px; /* Match the fixed row height */
+     /* overflow: hidden; */ /* Let card-content handle overflow */
+ }
+
+/* Make the chart/table containers fill their parents properly */
+ #bento-tavtcv .chart-container,
+ #bento-leaders .table-container,
+ #bento-sankey .chart-container,
+ #bento-map .chart-container,
+ #bento-expiring .table-container {
+     height: 100%; /* Fill the flex space */
+     /* The flex: 1 on .card-content should handle this */
+     /* min-height: auto !important; */
+     /* max-height: none !important; */
+     /* flex: 1; */
+     /* display: flex; */
+     /* flex-direction: column; */
+ }
+
+/* Style for clickable links/details (Enhanced) */
+.detail-link {
+    color: var(--color-primary);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s ease;
+    display: inline-block; /* Prevents odd spacing */
+    padding: 2px 4px; /* Add slight padding */
+    border-radius: 4px; /* Slightly rounded */
 }
 
-/* Fix the table wrapper to fill its container */
-#contract-leaders-table-container .table-wrapper {
-  max-height: none;
-  height: 100%;
-  overflow-y: auto;
-  flex: 1;
-}
-
-/* Ensure chart canvas behaves properly */
-#tavTcvChart {
-  height: 100% !important;
-  max-height: none !important;
-}
-/* Add these to control specific container heights */
-#bento-sankey, #bento-map {
-    height: 600px; /* Match the height in grid-template-rows */
-    overflow: hidden; /* Prevent content from overflowing */
-}
-
-/* Make chart containers fill their parent containers */
-#sankey-chart-container, #map-container {
-    height: calc(100% - 60px); /* Account for header height */
-    min-height: auto;
-    max-height: none;
-}
-
-/* Ensure choropleth map fills its container properly */
-#choroplethMap {
-    height: 100%;
-    width: 100%;
-}
-
-/* Ensure SVG fits properly in the container */
-#choroplethMap svg {
-    width: 100%;
-    height: 100%;
-    max-height: none;
+.detail-link:hover {
+    color: var(--color-secondary);
+    text-decoration: underline;
+    background-color: var(--color-surface-container); /* Subtle background on hover */
 }
