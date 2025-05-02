@@ -302,7 +302,7 @@ body {
 
         "sankey sankey map map"
 		"tavtcv tavtcv leaders leaders"
-        "expiring expiring expiring arr";
+        "expiring expiring expiring expiring";
 
     grid-template-rows: auto 600px 600px auto;
 
@@ -317,8 +317,6 @@ body {
 #bento-tavtcv { grid-area: tavtcv; }
 
 #bento-leaders { grid-area: leaders; }
-
-#bento-arr { grid-area: arr; }
 
 #bento-notes { grid-area: notes; }
 
@@ -772,7 +770,7 @@ button:disabled, .button:disabled, .primary-button:disabled {
 
     gap: 16px;
 
-    margin-top: 20px;
+    margin-top: 16px;
 
     text-align: center;
 
@@ -796,7 +794,7 @@ button:disabled, .button:disabled, .primary-button:disabled {
 
 .arr-value-display {
 
-    font-size: 28px;
+    font-size: 24px;
 
     font-weight: 700;
 
@@ -816,7 +814,7 @@ button:disabled, .button:disabled, .primary-button:disabled {
 
 #arr-result {
 
-    font-size: 28px;
+    font-size: 24px;
 
 }
 
