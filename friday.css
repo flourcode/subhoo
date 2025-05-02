@@ -1844,11 +1844,11 @@ canvas[role="img"] + div {
 .bento-grid {
     display: grid;
     gap: var(--bento-gap);
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(5, 1fr);
     grid-template-areas:
-        "sankey sankey map arr"
-        "tavtcv tavtcv leaders leaders"
-        "expiring expiring expiring expiring";
+        "sankey sankey map map arr"
+        "tavtcv tavtcv leaders leaders leaders"
+        "expiring expiring expiring expiring expiring";
     grid-template-rows: auto auto auto;
 }
 
