@@ -1188,6 +1188,12 @@ function displaySankeyChart(sankeyData) {
     const innerWidth = width - margin.left - margin.right;
     const innerHeight = height - margin.top - margin.bottom;
     
+    // Get text color based on current theme
+    const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
+    const textColor = isDarkMode ? '#F4F2F6' : '#36323A'; // Light text for dark mode, dark text for light mode
+    const nodeColor = isDarkMode ? '#A29AAA' : '#9993A1'; // Brighter in dark mode
+    const linkColor = isDarkMode ? '#3A373E' : '#D7D4DC'; // Different opacity for links
+    
     // Create the sankey generator
     const sankey = d3.sankey()
         .nodeWidth(15)
@@ -1207,13 +1213,7 @@ function displaySankeyChart(sankeyData) {
         .append('g')
         .attr('transform', `translate(${margin.left},${margin.top})`);
     
-    // Set better colors for nodes and links
-    const nodeColor = '#9993A1';      // Keep your existing color for nodes
-    const linkColor = '#D7D4DC';      // Lighter color for links (your light-purple-200)
-    const textColor = '#36323A';      // Dark text instead of white (your light-text)
-    const textBackground = 'rgba(255, 255, 255, 0.7)'; // Semi-transparent white background for text
-    
-    // Add links with better colors
+    // Add links with theme-aware colors
     g.append('g')
         .selectAll('path')
         .data(links)
@@ -1221,13 +1221,13 @@ function displaySankeyChart(sankeyData) {
         .append('path')
         .attr('d', d3.sankeyLinkHorizontal())
         .attr('stroke-width', d => Math.max(1, d.width))
-        .attr('stroke', linkColor)    // Lighter color for links
-        .attr('stroke-opacity', 0.7)  // Higher opacity
+        .attr('stroke', linkColor)
+        .attr('stroke-opacity', isDarkMode ? 0.6 : 0.7) // Adjust opacity based on theme
         .attr('fill', 'none')
         .append('title')
         .text(d => `${d.source.name} → ${d.target.name}\n${formatCurrency(d.value)}`);
     
-    // Add nodes with existing color
+    // Add nodes with theme-aware colors
     const node = g.append('g')
         .selectAll('rect')
         .data(nodes)
@@ -1238,11 +1238,11 @@ function displaySankeyChart(sankeyData) {
         .attr('height', d => d.y1 - d.y0)
         .attr('width', d => d.x1 - d.x0)
         .attr('fill', nodeColor)
-        .attr('stroke', '#E9E6ED')
+        .attr('stroke', isDarkMode ? '#4A474E' : '#E9E6ED')
         .append('title')
         .text(d => `${d.name}\n${formatCurrency(d.value)}`);
        
-    // Add node labels with dark text
+    // Add node labels with theme-aware color (no background)
     g.append('g')
         .selectAll('text')
         .data(nodes)
@@ -1254,10 +1254,9 @@ function displaySankeyChart(sankeyData) {
         .attr('text-anchor', d => d.x0 < innerWidth / 2 ? 'start' : 'end')
         .text(d => d.name)
         .attr('font-size', '10px')
-        .attr('fill', textColor)      // Dark text instead of white
+        .attr('fill', textColor)      // Theme-aware text color
         .style('pointer-events', 'none'); // Ensures clicks go through to the node
 }
-
 // --- Choropleth Map Functions ---
 function processMapData(data) {
     console.log("Processing data for performance map...");
@@ -2119,20 +2118,20 @@ function updateChartsForTheme() {
     
     // Other charts could be updated here as well
     
-    // For Sankey chart and Map, it's better to redraw them
-    if (document.getElementById('sankeyChart') && 
+if (document.getElementById('sankeyChart') && 
         document.getElementById('sankey-chart-container')) {
+        const container = document.getElementById('sankey-chart-container');
+        const svg = document.getElementById('sankeyChart');
+        
+        // Clear previous chart completely
+        if (svg) {
+            svg.innerHTML = '';
+        }
+        
+        // Redraw with current data
         if (rawData && rawData.length > 0) {
             const sankeyData = processSankeyData(rawData);
             displaySankeyChart(sankeyData);
-        }
-    }
-    
-    if (document.getElementById('choroplethMap') && 
-        document.getElementById('map-container')) {
-        if (rawData && rawData.length > 0) {
-            const mapData = processMapData(rawData);
-            displayChoroplethMap(mapData);
         }
     }
 }
