@@ -2475,13 +2475,19 @@ function displayEnhancedSankeyChart(model) {
             .attr('width', width)
             .attr('height', height);
         
+        // Filter links to only show top 10 connections by value
+        const topAgencyToPrime = model.relationships.agencyToPrime
+            .sort((a, b) => b.value - a.value)
+            .slice(0, 10);
+            
+        const topPrimeToSub = model.relationships.primeToSub
+            .sort((a, b) => b.value - a.value)
+            .slice(0, 10);
+        
         // Prepare nodes and links for Sankey
         const nodes = [];
         const links = [];
         const nodeMap = {};
-        
-        // Add agency nodes first
-        let nodeIndex = 0;
         
         // Function to get or create a node
         const getNode = (id, name, type) => {
@@ -2489,56 +2495,76 @@ function displayEnhancedSankeyChart(model) {
                 return nodeMap[id];
             }
             
+            // Get entity from model
+            let entity;
+            switch (type) {
+                case 'agency':
+                    entity = model.agencies[id];
+                    break;
+                case 'subagency':
+                    entity = model.subAgencies[id];
+                    break;
+                case 'office':
+                    entity = model.offices[id];
+                    break;
+                case 'prime':
+                    entity = model.primes[id];
+                    break;
+                case 'sub':
+                    entity = model.subs[id];
+                    break;
+            }
+            
+            if (!entity) {
+                console.warn(`Entity not found: ${id} (${type})`);
+                return null;
+            }
+            
+            const nodeIndex = nodes.length;
             const node = {
-                name: truncateText(name, 30),
+                name: truncateText(entity.name, 30),
                 id: id,
                 type: type,
-                index: nodeIndex++
+                index: nodeIndex
             };
             
             nodes.push(node);
-            nodeMap[id] = node.index;
-            return node.index;
+            nodeMap[id] = nodeIndex;
+            return nodeIndex;
         };
         
         // Add Agency to Prime links
-        model.relationships.agencyToPrime.forEach(link => {
+        topAgencyToPrime.forEach(link => {
             const agencyId = link.source;
             const primeId = link.target;
             
-            const agency = model.agencies[agencyId];
-            const prime = model.primes[primeId];
+            const sourceIndex = getNode(agencyId, null, 'agency');
+            const targetIndex = getNode(primeId, null, 'prime');
             
-            if (!agency || !prime) return;
-            
-            const sourceIndex = getNode(agencyId, agency.name, 'agency');
-            const targetIndex = getNode(primeId, prime.name, 'prime');
-            
-            links.push({
-                source: sourceIndex,
-                target: targetIndex,
-                value: link.value
-            });
+            if (sourceIndex !== null && targetIndex !== null) {
+                links.push({
+                    source: sourceIndex,
+                    target: targetIndex,
+                    value: link.value
+                });
+            }
         });
         
         // Add Prime to Sub links
-        model.relationships.primeToSub.forEach(link => {
+        topPrimeToSub.forEach(link => {
             const primeId = link.source;
             const subId = link.target;
             
-            const prime = model.primes[primeId];
-            const sub = model.subs[subId];
+            const sourceIndex = getNode(primeId, null, 'prime');
+            const targetIndex = getNode(subId, null, 'sub');
             
-            if (!prime || !sub) return;
-            
-            const sourceIndex = getNode(primeId, prime.name, 'prime');
-            const targetIndex = getNode(subId, sub.name, 'sub');
-            
-            links.push({
-                source: sourceIndex,
-                target: targetIndex,
-                value: link.value
-            });
+            if (sourceIndex !== null && targetIndex !== null) {
+                links.push({
+                    source: sourceIndex,
+                    target: targetIndex,
+                    value: link.value
+                });
+            }
         });
         
         // Create Sankey generator
@@ -2676,6 +2702,16 @@ function displayEnhancedSankeyChart(model) {
                     d3.select(this).remove();
                 }
             });
+
+        // Add a note about showing only top connections
+        svgSelection.append("text")
+            .attr("x", width - 10)
+            .attr("y", height - 10)
+            .attr("text-anchor", "end")
+            .attr("font-size", "10px")
+            .attr("fill", textColor)
+            .attr("opacity", 0.7)
+            .text("Showing top 10 flows by value");
         
     } catch (error) {
         console.error("Error rendering Sankey chart:", error);
