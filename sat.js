@@ -229,7 +229,34 @@ function cleanupTooltips() {
         }
     });
 }
+function updateStatusBanner(message, type = 'info') {
+    const banner = document.getElementById('status-banner');
+    const statusMessage = document.getElementById('status-message');
+    
+    if (!banner || !statusMessage) {
+        console.warn("Status banner elements not found");
+        return;
+    }
 
+    // Update the message text
+    statusMessage.textContent = message;
+
+    // Update banner styling/class based on type
+    banner.className = '';
+    if (type === 'error') {
+        banner.classList.add('error');
+    } else if (type === 'success') {
+        banner.classList.add('success');
+    } else {
+        banner.classList.add('info');
+    }
+
+    // Enable/disable refresh button based on loading state
+    const refreshButton = document.getElementById('refresh-button');
+    if (refreshButton) {
+        refreshButton.disabled = isLoading;
+    }
+}
 // --- UI Helper Functions ---
 function setLoading(containerId, isLoading, message = 'Loading...') {
     const container = document.getElementById(containerId);
