@@ -3778,7 +3778,7 @@ function displayContractLeadersTable(leaderData) {
         { text: 'Total Value', scope: 'col', class: 'number' },
         { text: 'Awards', scope: 'col', class: 'number' },
         { text: 'Avg Value', scope: 'col', class: 'number' },
-        { text: 'Days', scope: 'col', class: 'number' },
+        // Days column removed
         { text: 'Majority Work', scope: 'col' },
         { text: 'USASpending', scope: 'col', class: 'text-center' }
     ];
@@ -3818,10 +3818,7 @@ function displayContractLeadersTable(leaderData) {
         cell.className = 'number text-gray-600';
         cell.textContent = formatCurrency(leader.avgValue);
         
-        // Avg Duration
-        cell = row.insertCell();
-        cell.className = 'number text-gray-600';
-        cell.textContent = leader.avgDurationDays > 0 ? leader.avgDurationDays.toLocaleString() : '-';
+        // Days column removed
         
         // Dominant Type/NAICS
         cell = row.insertCell();
