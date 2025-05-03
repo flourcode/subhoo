@@ -2484,6 +2484,15 @@ function displayEnhancedSankeyChart(model) {
             .sort((a, b) => b.value - a.value)
             .slice(0, 10);
         
+        // Add a logarithmic scale for link values
+        const minLinkValue = d3.min([...topAgencyToPrime, ...topPrimeToSub], d => d.value) || 1;
+        const maxLinkValue = d3.max([...topAgencyToPrime, ...topPrimeToSub], d => d.value) || 1;
+        
+        const linkWidthScale = d3.scaleLog()
+            .domain([minLinkValue, maxLinkValue])
+            .range([2, 30])
+            .clamp(true);
+        
         // Prepare nodes and links for Sankey
         const nodes = [];
         const links = [];
@@ -2608,6 +2617,7 @@ function displayEnhancedSankeyChart(model) {
             link.gradientId = gradientId;
         });
         
+        // Draw links with logarithmic scaling
         svgSelection.append('g')
             .selectAll('path')
             .data(graph.links)
@@ -2615,10 +2625,11 @@ function displayEnhancedSankeyChart(model) {
             .append('path')
             .attr('d', d3.sankeyLinkHorizontal())
             .attr('stroke', (d) => `url(#${d.gradientId})`)
-            .attr('stroke-width', d => Math.max(1, d.width))
+            .attr('stroke-width', d => linkWidthScale(d.value))
             .attr('stroke-opacity', 0.5)
             .attr('fill', 'none')
             .attr('cursor', 'pointer')
+            .attr('data-type', d => `${d.source.type}-${d.target.type}`)
             .on('mouseover', function(event, d) {
                 // Show tooltip
                 const html = `
@@ -2712,6 +2723,39 @@ function displayEnhancedSankeyChart(model) {
             .attr("fill", textColor)
             .attr("opacity", 0.7)
             .text("Showing top 10 flows by value");
+        
+        // Add a scaling control UI element
+        const scaleControls = container.appendChild(document.createElement('div'));
+        scaleControls.className = 'scale-controls';
+        scaleControls.style.position = 'absolute';
+        scaleControls.style.top = '10px';
+        scaleControls.style.right = '10px';
+        
+        const scaleLabel = document.createElement('label');
+        scaleLabel.textContent = 'Subcontract Scale: ';
+        scaleLabel.style.fontSize = '12px';
+        scaleLabel.style.color = textColor;
+        
+        const scaleSlider = document.createElement('input');
+        scaleSlider.type = 'range';
+        scaleSlider.min = '0.1';
+        scaleSlider.max = '10';
+        scaleSlider.step = '0.1';
+        scaleSlider.value = '1';
+        scaleSlider.style.width = '100px';
+        
+        scaleControls.appendChild(scaleLabel);
+        scaleControls.appendChild(scaleSlider);
+        
+        // Add event listener to adjust scaling dynamically
+        scaleSlider.addEventListener('input', function() {
+            const scaleFactor = parseFloat(this.value);
+            
+            // Rescale only the subcontractor links
+            svgSelection.selectAll('path')
+                .filter(d => d.source.type === 'prime' && d.target.type === 'sub')
+                .attr('stroke-width', d => linkWidthScale(d.value * scaleFactor));
+        });
         
     } catch (error) {
         console.error("Error rendering Sankey chart:", error);
