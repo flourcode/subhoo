@@ -299,13 +299,6 @@ a:hover {
     flex-direction: column;
     height: 100%;
 }
-/* Specific style for ARR bento background */
-#bento-arr {
-    background-color: var(--color-surface-container);
-}
-[data-theme="dark"] #bento-arr {
-    background-color: var(--color-background);
-}
 
 
 .bento-box:hover {

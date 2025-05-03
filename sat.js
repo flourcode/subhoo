@@ -2021,35 +2021,56 @@ function displayTavTcvChart(chartData) {
         const xAxis = tavTcvChartInstance.scales.x;
         const chartArea = tavTcvChartInstance.chartArea;
         
+        // Determine text color based on theme BEFORE the loop
+        const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
+        const textColor = isDarkMode
+             ? getComputedStyle(document.documentElement).getPropertyValue('--color-text-secondary').trim() // Lighter text for dark mode
+             : getComputedStyle(document.documentElement).getPropertyValue('--color-text-primary').trim(); // Darker text for light mode
+
+        // Clear previous labels if any exist in the container
+        labelsContainer.innerHTML = '';
+
         chartData.forEach((contract, index) => {
-            if (!contract || !contract.id) return;
-            
+            if (!contract || !contract.id || index >= yAxis.ticks.length) return; // Safety checks
+
             const yCenter = yAxis.getPixelForValue(index);
-            
+
             // Create the label element
             const label = document.createElement('div');
-            label.textContent = contract.primeName;
+            label.textContent = contract.primeName; // Use full name
+
+            // --- Apply New Styles ---
             label.style.position = 'absolute';
-            label.style.left = (chartArea.left + 10) + 'px';
-            label.style.top = (yCenter - 10) + 'px';
-            label.style.transform = 'translateY(-50%)';
+            label.style.top = (yCenter) + 'px'; // Center based on tick position
+            label.style.transform = 'translateY(-50%)'; // Vertical centering adjustment
             label.style.fontFamily = "'Inter', sans-serif";
-            label.style.fontSize = '12px';
-            label.style.fontWeight = 'bold';
-            label.style.color = '#FFFFFF';
-            label.style.textShadow = '0px 0px 2px rgba(0,0,0,0.5)';
+            label.style.fontSize = '11px'; // Slightly smaller? Adjust as needed
+            label.style.fontWeight = '500'; // Medium weight instead of bold? Adjust as needed
+
+            // **Fix 1: Set appropriate text color**
+            label.style.color = textColor;
+            // label.style.color = 'var(--color-text-primary)'; // Alternative using CSS variable directly
+
+            // **Remove text shadow** (no longer needed with contrast color)
+            // label.style.textShadow = '0px 0px 2px rgba(0,0,0,0.5)'; // REMOVE THIS LINE
+
             label.style.pointerEvents = 'none';
+
+            // **Fix 2: Position labels to the LEFT of the bars**
+            label.style.left = '5px'; // Small padding from the container edge
+            label.style.textAlign = 'right'; // Align text to the right, before the bars start
+
+            // **Fix 3: Calculate maxWidth based on available space to the left**
+            const labelMaxWidth = chartArea.left - 15; // Space from container edge up to chart area start, minus some padding
+            label.style.maxWidth = Math.max(labelMaxWidth, 60) + 'px'; // Ensure a minimum width
+
+            // Keep ellipsis for overflow if needed with the new maxWidth
             label.style.whiteSpace = 'nowrap';
             label.style.overflow = 'hidden';
             label.style.textOverflow = 'ellipsis';
-            
-            // Determine maximum width based on the shortest bar
-            const minValueForRow = Math.min(tavData[index], tcvData[index]);
-            const xPosition = xAxis.getPixelForValue(minValueForRow);
-            const maxWidth = xPosition - chartArea.left - 20;
-            
-            label.style.maxWidth = Math.max(maxWidth, 50) + 'px';
-            
+            // --- End New Styles ---
+
+
             labelsContainer.appendChild(label);
         });
     }, 100);
