@@ -1049,3 +1049,118 @@ tr:hover td {
     min-height: 200px;
   }
 }
+/* saturday.css */
+
+/* --- Ensure Table styles use the correct variables (Verify existing rules) --- */
+/* These should already be correct if you used the previous variable blocks */
+th {
+    background-color: var(--color-surface-variant);
+    color: var(--color-text-secondary);
+    /* other th styles */
+}
+td {
+    color: var(--color-text-primary);
+    /* other td styles */
+}
+tr:hover td {
+    background-color: var(--color-surface-container);
+}
+th, td {
+    border-bottom: 1px solid var(--color-border);
+}
+.summary-text {
+    color: var(--color-text-tertiary);
+    border-top: 1px solid var(--color-border);
+}
+/* Add styles for sticky table headers/cells if used, referencing surface/variant */
+th:first-child { background-color: var(--color-surface-variant); }
+td:first-child { background-color: var(--color-surface); }
+tr:hover td:first-child { background-color: var(--color-surface-container); }
+
+
+/* --- Sankey Chart SVG Styles --- */
+#sankeyChart rect { /* Sankey Nodes */
+    stroke: var(--color-surface); /* Use surface for subtle stroke */
+    stroke-width: 0.5px;
+    /* Default fill, override below if needed */
+    fill: var(--chart-color-tertiary);
+}
+/* Optional: Specific node type colors using the chart vars */
+#sankeyChart rect[data-type="agency"] { fill: var(--chart-color-tertiary); }
+#sankeyChart rect[data-type="prime"] { fill: var(--chart-color-primary); }
+#sankeyChart rect[data-type="sub"] { fill: var(--chart-color-secondary); }
+
+#sankeyChart path { /* Sankey Links */
+    stroke: var(--color-border); /* Use border color for links */
+    stroke-opacity: 0.4;
+    transition: stroke-opacity 0.3s ease;
+    fill: none;
+}
+#sankeyChart path:hover {
+    stroke-opacity: 0.7;
+}
+#sankeyChart text { /* Sankey Labels */
+    font-size: 10px; /* Adjust size as needed */
+    fill: var(--color-text-secondary);
+    pointer-events: none;
+    text-shadow: 0 0 2px var(--color-background); /* Help readability against links */
+}
+
+/* --- Choropleth Map SVG Styles --- */
+#choroplethMap path {
+    transition: fill 0.3s ease, stroke-width 0.3s ease;
+    stroke: var(--color-background); /* Use background for state borders (gap effect) */
+    stroke-width: 0.5px;
+    /* Default fill for states with no data */
+    fill: var(--color-surface-variant);
+}
+#choroplethMap path:hover {
+    stroke-width: 1.5px;
+    stroke: var(--color-primary); /* Use primary accent for hover */
+}
+#choroplethMap .legend-text, /* Add class to legend text elements if needed */
+#choroplethMap text { /* General map text */
+    font-size: 10px; /* Adjust size as needed */
+    fill: var(--color-text-secondary);
+    text-anchor: middle;
+}
+#choroplethMap .legend-rect { /* Add class to legend rect elements if needed */
+     stroke: var(--color-border);
+     stroke-width: 0.5px;
+}
+
+
+/* --- Tooltip Styles (Verify existing rules use semantic vars) --- */
+.tooltip, /* Add other tooltip classes/IDs */
+#tav-tcv-tooltip {
+    /* other styles like position, padding, etc. */
+    background-color: var(--color-surface) !important;
+    color: var(--color-text-primary) !important;
+    border: 1px solid var(--color-border) !important;
+    box-shadow: var(--shadow-md) !important;
+}
+.tooltip strong,
+#tav-tcv-tooltip strong {
+    color: var(--color-text-primary); /* Ensure strong text uses primary text color */
+    font-weight: 600; /* Keep or adjust weight */
+}
+
+
+/* --- Status Banner Styles --- */
+/* Using relative colors (modern browsers) */
+#status-banner.error {
+    background-color: oklch(from var(--color-error) l c h / 10%);
+    color: var(--color-error);
+    border: 1px solid var(--color-error); /* Optional border */
+}
+#status-banner.success {
+    background-color: oklch(from var(--color-success) l c h / 10%);
+    color: var(--color-success);
+    border: 1px solid var(--color-success); /* Optional border */
+}
+#status-banner.info {
+    background-color: oklch(from var(--color-info) l c h / 15%); /* Info slightly more visible */
+    color: var(--color-info);
+    border: 1px solid var(--color-info); /* Optional border */
+}
+/* Add fallbacks if needed for older browsers using rgba */

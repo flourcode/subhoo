@@ -295,6 +295,18 @@ function updateStatusBanner(message, type = 'info') {
     }
 }
 // --- UI Helper Functions ---
+// sat.js - Add this near the top or in a utility section
+function getCssVar(varName) {
+  try {
+    return getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+  } catch (e) {
+    console.warn(`Could not get CSS variable ${varName}`, e);
+    // Fallbacks (adjust if needed)
+    if (varName.includes('text')) return document.documentElement.getAttribute('data-theme') === 'dark' ? '#FDFBF5' : '#312d2a';
+    if (varName.includes('border')) return '#D8D4D7';
+    return '#7A747B';
+  }
+}
 function setLoading(containerId, isLoading, message = 'Loading...') {
     const container = document.getElementById(containerId);
     if (!container) return;
@@ -1799,13 +1811,13 @@ function displayTavTcvChart(chartData) {
     const totalTcvValues = chartData.map(d => d.tcv || 0); // Store total TCV for tooltip
 
     // --- Get Theme Colors ---
-    const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
-    const computedStyle = getComputedStyle(document.documentElement);
-    // Use distinct colors for the segments
-    const tavColor = computedStyle.getPropertyValue('--chart-color-primary').trim(); // e.g., Main Accent
-    const remainderColor = computedStyle.getPropertyValue('--chart-color-tertiary').trim(); // e.g., Muted/Grayish color
-    const textColor = computedStyle.getPropertyValue(isDarkMode ? '--color-text-secondary' : '--color-text-primary').trim();
-    const gridColor = computedStyle.getPropertyValue('--color-border').trim();
+const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
+const tavColor = getCssVar('--chart-color-primary');   // Uses desat purple 400/dark accent
+const remainderColor = getCssVar('--chart-color-tertiary'); // Uses desat purple 300/dark accent tertiary
+const textColor = getCssVar(isDarkMode ? '--color-text-secondary' : '--color-text-primary'); // Creamy (dark) / Black-Brown (light)
+const gridColor = getCssVar('--color-border');        // Desat purple 200 / Dark surface 2
+const legendColor = getCssVar('--color-text-secondary'); // Desat purple 600 / Light desat purple 300
+
 
 
     // --- Destroy previous chart instance if it exists ---
@@ -2069,26 +2081,53 @@ function displayExpiringTable(expiringData) {
     summaryPara.textContent = `Showing ${expiringData.length} expiring contracts.`;
     container.appendChild(summaryPara);
 }
+// sat.js
+
+// Ensure this helper function is defined:
+function getCssVar(varName) {
+  try {
+    // Ensure styles are loaded before calling this, maybe add a small delay or check
+    return getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+  } catch (e) {
+    console.warn(`Could not get CSS variable ${varName}`, e);
+    // Provide reasonable fallbacks based on the latest theme (Hue 281)
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+     if (varName === '--color-text-secondary') return isDark ? 'oklch(82.74% 0.033 281)' : 'oklch(57.81% 0.033 281)';
+     if (varName === '--color-surface') return isDark ? 'oklch(71.57% 0.066 281 / 4%)' : 'oklch(71.48% 0.066 281 / 4%)';
+     if (varName === '--color-text-primary') return isDark ? 'oklch(100% 0 0)' : 'oklch(0% 0 0)';
+     if (varName === '--color-border') return isDark ? 'oklch(71.57% 0.066 281 / 8%)' : 'oklch(71.48% 0.066 281 / 8%)';
+     if (varName === '--shadow-md') return '0 2px 4px rgba(0, 0, 0, 0.08)'; // Simple fallback
+     if (varName === '--color-surface-variant') return isDark ? 'oklch(71.57% 0.066 281 / 16%)' : 'oklch(71.48% 0.066 281 / 16%)';
+     if (varName === '--color-background') return isDark ? 'oklch(24% 0.0033 281)' : 'oklch(100% 0 281)';
+     if (varName === '--color-primary') return 'oklch(63.18% 0.218 281)';
+     if (varName === '--color-surface-container') return isDark ? 'oklch(71.57% 0.066 281 / 8%)' : 'oklch(71.48% 0.066 281 / 8%)';
+     if (varName === '--chart-color-primary') return 'oklch(63.18% 0.218 281)';
+
+    return '#888888'; // Generic fallback
+  }
+}
+
+
+// Updated displayChoroplethMap function
 function displayChoroplethMap(mapData) {
     const containerId = 'map-container';
     const container = document.getElementById(containerId);
-    
+
     if (!container) {
         console.error("Map container not found.");
         return;
     }
 
-    // Clean up any existing tooltips
-    cleanupTooltips();
-    
-    // Clear any previous content and create a new div
+    cleanupTooltips(); // Assumes this function exists to remove old D3/HTML tooltips
+
+    // Clear previous content and create map container
     container.innerHTML = '';
     const mapDiv = document.createElement('div');
-    mapDiv.id = 'choroplethMap';
+    mapDiv.id = 'choroplethMap'; // Keep ID for potential CSS targeting
     mapDiv.style.width = '100%';
     mapDiv.style.height = '100%';
     container.appendChild(mapDiv);
-    
+
     setLoading(containerId, false); // Turn off loading spinner
 
     if (!mapData || Object.keys(mapData).length === 0) {
@@ -2097,227 +2136,221 @@ function displayChoroplethMap(mapData) {
     }
 
     try {
-        // Set up map dimensions based on the container div
         const width = container.clientWidth;
-        const height = container.clientHeight || 400; // Default height if not set
+        // Ensure minimum height for map visibility
+        const height = Math.max(container.clientHeight || 0, 300); // Use clientHeight or default
 
-        // Check if dimensions are valid
-        if (width <= 0 || height <= 0) {
-             console.warn(`Map container has invalid dimensions: ${width}x${height}. Map rendering skipped.`);
-             displayError(containerId, 'Map container has zero size. Cannot render map.');
-             return;
+        if (width <= 0 || height <= 100) { // Increased minimum height check
+            console.warn(`Map container has invalid dimensions: ${width}x${height}.`);
+            displayError(containerId, 'Map container has insufficient size.');
+            return;
         }
 
-        // Check if we're in dark mode
-        const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
-        const textColor = isDarkMode ? '#F4F2F6' : '#36323A';
+        // --- Get Colors from CSS Variables ---
+        const textColor = getCssVar('--color-text-secondary');
+        const tooltipBgColor = getCssVar('--color-surface');
+        const tooltipTextColor = getCssVar('--color-text-primary');
+        const tooltipBorderColor = getCssVar('--color-border');
+        const defaultFillColor = getCssVar('--color-surface-variant'); // For states with no data
+        const mapStrokeColor = getCssVar('--color-background'); // For state borders (gap effect)
+        const hoverStrokeColor = getCssVar('--color-primary'); // Primary accent on hover
+        const legendBorderColor = getCssVar('--color-border');
+        // Define start and end colors for the sequential scale
+        // Using a subtle surface color -> primary chart color feels appropriate
+        const scaleStartColor = getCssVar('--color-surface-container');
+        const scaleEndColor = getCssVar('--chart-color-primary');
+        // --- End Get Colors ---
 
-        // Create SVG element inside the map div
         const svg = d3.select(mapDiv)
             .append('svg')
             .attr('width', width)
             .attr('height', height)
-            .attr('viewBox', `0 0 ${width} ${height}`) // Add viewBox for better scaling
-            .style('max-width', '100%') // Ensure SVG scales down if needed
-            .style('height', 'auto');
+            .attr('viewBox', `0 0 ${width} ${height}`)
+            .style('max-width', '100%')
+            .style('height', 'auto'); // Maintain aspect ratio
 
-        // Define color scale for the map
         const stateValues = Object.values(mapData).map(d => d.value);
         const maxValue = d3.max(stateValues) || 0;
 
-        // Create color scale for map - use different colors for dark/light mode
-        const colorScale = d3.scaleSequential()
-            .domain([0, maxValue === 0 ? 1 : maxValue]) // Ensure domain is valid if max is 0
-            .interpolator(isDarkMode ?
-                d3.interpolate('#3A373E', '#A29AAA') : // Dark mode: darker to lighter purple
-                d3.interpolate('#E9E6ED', '#9993A1')); // Light mode: light to medium purple
+        // --- Create Color Scale using fetched CSS variable colors ---
+        const colorScale = d3.scaleSequential(d3.interpolateRgb(scaleStartColor, scaleEndColor))
+            .domain([0, maxValue === 0 ? 1 : maxValue]); // Ensure domain starts at 0
+        // --- End Create Color Scale ---
 
-        // Remove existing tooltips first
+        // Ensure previous body tooltips are gone (belt-and-suspenders)
         d3.select("body").selectAll(".map-tooltip").remove();
-        
-        // Create tooltip - attach to body for better positioning
+
+        // --- Create Tooltip using fetched CSS variable colors ---
         const tooltip = d3.select("body")
             .append("div")
-            .attr("class", "map-tooltip")
+            .attr("class", "map-tooltip") // Use class for potential CSS overrides
             .style("position", "absolute")
             .style("visibility", "hidden")
             .style("opacity", 0)
-            .style("background-color", isDarkMode ? "#252229" : "#FFFFFF")
-            .style("color", isDarkMode ? "#F4F2F6" : "#36323A")
-            .style("padding", "10px")
-            .style("border-radius", "4px")
+            .style("background-color", tooltipBgColor)
+            .style("color", tooltipTextColor)
+            .style("border", `1px solid ${tooltipBorderColor}`)
+            .style("padding", "8px 12px") // Adjusted padding
+            .style("border-radius", getCssVar('--border-radius-sm')) // Use radius variable
             .style("font-size", "12px")
+            .style("line-height", "1.4") // Improve line spacing
             .style("pointer-events", "none")
-            .style("border", "1px solid " + (isDarkMode ? "#3A373E" : "#D7D4DC"))
-            .style("z-index", "9999");
+            .style("z-index", "9999")
+            .style("box-shadow", getCssVar('--shadow-md')) // Use shadow variable
+            .style("max-width", "200px") // Prevent tooltip from becoming too wide
+            .style("transition", "opacity 0.2s ease"); // Add transition
+        // --- End Create Tooltip ---
 
-        // State name mapping
+        // FIPS mapping (ensure this object is complete)
         const fipsToStateName = {
-            "01": "Alabama", "02": "Alaska", "04": "Arizona", "05": "Arkansas",
-            "06": "California", "08": "Colorado", "09": "Connecticut", "10": "Delaware",
-            "11": "District of Columbia", "12": "Florida", "13": "Georgia", "15": "Hawaii",
-            "16": "Idaho", "17": "Illinois", "18": "Indiana", "19": "Iowa", "20": "Kansas",
-            "21": "Kentucky", "22": "Louisiana", "23": "Maine", "24": "Maryland",
-            "25": "Massachusetts", "26": "Michigan", "27": "Minnesota", "28": "Mississippi",
-            "29": "Missouri", "30": "Montana", "31": "Nebraska", "32": "Nevada",
-            "33": "New Hampshire", "34": "New Jersey", "35": "New Mexico", "36": "New York",
-            "37": "North Carolina", "38": "North Dakota", "39": "Ohio", "40": "Oklahoma",
-            "41": "Oregon", "42": "Pennsylvania", "44": "Rhode Island", "45": "South Carolina",
-            "46": "South Dakota", "47": "Tennessee", "48": "Texas", "49": "Utah",
-            "50": "Vermont", "51": "Virginia", "53": "Washington", "54": "West Virginia",
-            "55": "Wisconsin", "56": "Wyoming", "72": "Puerto Rico"
-        };
+             "01": "Alabama", "02": "Alaska", "04": "Arizona", "05": "Arkansas",
+             "06": "California", "08": "Colorado", "09": "Connecticut", "10": "Delaware",
+             "11": "District of Columbia", "12": "Florida", "13": "Georgia", "15": "Hawaii",
+             "16": "Idaho", "17": "Illinois", "18": "Indiana", "19": "Iowa", "20": "Kansas",
+             "21": "Kentucky", "22": "Louisiana", "23": "Maine", "24": "Maryland",
+             "25": "Massachusetts", "26": "Michigan", "27": "Minnesota", "28": "Mississippi",
+             "29": "Missouri", "30": "Montana", "31": "Nebraska", "32": "Nevada",
+             "33": "New Hampshire", "34": "New Jersey", "35": "New Mexico", "36": "New York",
+             "37": "North Carolina", "38": "North Dakota", "39": "Ohio", "40": "Oklahoma",
+             "41": "Oregon", "42": "Pennsylvania", "44": "Rhode Island", "45": "South Carolina",
+             "46": "South Dakota", "47": "Tennessee", "48": "Texas", "49": "Utah",
+             "50": "Vermont", "51": "Virginia", "53": "Washington", "54": "West Virginia",
+             "55": "Wisconsin", "56": "Wyoming", "72": "Puerto Rico"
+         };
 
-        // Load US state boundaries GeoJSON
+        // Load map data
         d3.json('https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json')
             .then(us => {
                 if (!us || !us.objects || !us.objects.states) {
-                    throw new Error("Invalid GeoJSON data");
+                    throw new Error("Invalid GeoJSON data loaded");
                 }
 
-                // Convert TopoJSON to GeoJSON features
-                const states = topojson.feature(us, us.objects.states); // Keep the FeatureCollection
+                const states = topojson.feature(us, us.objects.states);
+                const projection = d3.geoAlbersUsa().fitSize([width, height], states);
+                const pathGenerator = d3.geoPath().projection(projection); // Renamed for clarity
 
-                // --- Projection Fitting Logic ---
-                const projection = d3.geoAlbersUsa(); // Create projection
-
-                // Fit the projection to the container size using the GeoJSON data
-                projection.fitSize([width, height], states);
-
-                // Create the path generator using the FITTED projection
-                const path = d3.geoPath().projection(projection);
-                // --- End Projection Fitting ---
-
-                // Draw state boundaries
-                svg.append('g') // Group map paths
+                // --- Draw States ---
+                svg.append('g')
+                   .attr('class', 'states') // Add class for potential CSS targeting
                    .selectAll('path')
-                   .data(states.features) // Use the features array
-                   .enter()
-                   .append('path')
-                   .attr('d', path)
+                   .data(states.features)
+                   .join('path') // Use join for enter/update/exit
+                   .attr('d', pathGenerator)
                    .attr('fill', d => {
-                       // Use the state FIPS code to lookup data
-                       const fipsCode = d.id.toString().padStart(2, '0');
-                       const stateData = mapData[fipsCode];
-                       return stateData ? colorScale(stateData.value) : (isDarkMode ? '#2D2A31' : '#ccc'); // Default color
+                       const fipsCode = d.id?.toString().padStart(2, '0'); // Optional chaining for safety
+                       const stateData = fipsCode ? mapData[fipsCode] : null;
+                       return stateData ? colorScale(stateData.value) : defaultFillColor;
                    })
-                   .attr('stroke', isDarkMode ? '#3A373E' : '#FFFFFF') // Border color between states
+                   .attr('stroke', mapStrokeColor)
                    .attr('stroke-width', 0.5)
                    .style('cursor', 'pointer')
                    .on('mouseover', function(event, d) {
-                       // Show tooltip with transition
-                       tooltip
-                            .style("visibility", "visible")
-                            .style("opacity", 1); 
-                            
-                       tooltip.html(() => {
-                           const fipsCode = d.id.toString().padStart(2, '0');
-                           const stateData = mapData[fipsCode];
-                           const stateName = fipsToStateName[fipsCode] || "Unknown";
-                           if (stateData) {
-                               return `
-                                   <strong>${stateName}</strong>
-                                   <div>Total Value: ${formatCurrency(stateData.value)}</div>
-                                   <div>Contracts: ${stateData.count.toLocaleString()}</div>
-                               `;
-                           } else {
-                               return `<strong>${stateName}</strong><br>No data`;
-                           }
-                       })
-                       .style("left", (event.pageX + 10) + "px")
-                       .style("top", (event.pageY - 28) + "px");
+                       tooltip.style("visibility", "visible").style("opacity", 1);
 
-                       // Highlight the state
+                       const fipsCode = d.id?.toString().padStart(2, '0');
+                       const stateData = fipsCode ? mapData[fipsCode] : null;
+                       const stateName = fipsCode ? (fipsToStateName[fipsCode] || `ID: ${fipsCode}`) : "Unknown";
+
+                       let tooltipHtml = `<strong>${stateName}</strong>`;
+                       if (stateData) {
+                           tooltipHtml += `
+                               <div style="margin-top: 4px;">Total Value: ${formatCurrency(stateData.value)}</div>
+                               <div>Contracts: ${stateData.count.toLocaleString()}</div>`;
+                       } else {
+                           tooltipHtml += `<br>No data`;
+                       }
+                       tooltip.html(tooltipHtml);
+
                        d3.select(this)
-                           .attr("stroke", isDarkMode ? "#A29AAA" : "#9993A1")
+                           .attr("stroke", hoverStrokeColor)
                            .attr("stroke-width", 1.5)
-                           .raise(); // Bring hovered path to front
+                           .raise(); // Bring to front
                    })
                    .on('mousemove', function(event) {
-                       // Update tooltip position as mouse moves
-                       tooltip
-                          .style("left", (event.pageX + 10) + "px")
-                          .style("top", (event.pageY - 28) + "px");
+                       // Tooltip positioning slightly improved
+                       const tooltipNode = tooltip.node();
+                       const tooltipWidth = tooltipNode ? tooltipNode.offsetWidth : 150;
+                       const tooltipHeight = tooltipNode ? tooltipNode.offsetHeight : 50;
+                       let left = event.pageX + 15;
+                       let top = event.pageY - tooltipHeight / 2; // Vertically center
+
+                       // Adjust if tooltip goes off-screen right
+                       if (left + tooltipWidth > window.innerWidth) {
+                           left = event.pageX - tooltipWidth - 15;
+                       }
+                       // Adjust if tooltip goes off-screen bottom/top (basic)
+                       if (top + tooltipHeight > window.innerHeight) {
+                          top = event.pageY - tooltipHeight - 10;
+                       }
+                       if (top < 0) {
+                          top = event.pageY + 10;
+                       }
+
+                       tooltip.style("left", `${left}px`).style("top", `${top}px`);
                    })
                    .on('mouseout', function() {
-                       // Hide tooltip with transition
-                       tooltip
-                          .style("visibility", "hidden")
-                          .style("opacity", 0);
-                              
-                       // Remove highlight
+                       tooltip.style("visibility", "hidden").style("opacity", 0);
                        d3.select(this)
-                           .attr("stroke", isDarkMode ? '#3A373E' : '#FFFFFF')
+                           .attr("stroke", mapStrokeColor)
                            .attr("stroke-width", 0.5);
                    });
+                // --- End Draw States ---
 
-                // --- Legend ---
-                const legendWidth = Math.min(width * 0.4, 200); // Adjust width relative to map size
-                const legendHeight = 10; // Slimmer legend bar
-                const legendX = width - legendWidth - 20; // Position bottom right
-                const legendY = height - 35; // Position bottom right
 
-                const legendGroup = svg.append("g")
-                                       .attr("transform", `translate(${legendX}, ${legendY})`);
-
-                // Create discrete color bins for legend
+                // --- Draw Legend ---
+                const legendWidth = Math.min(width * 0.4, 180); // Slightly narrower legend
+                const legendHeight = 8; // Slimmer bar
+                const legendX = width - legendWidth - 15; // Adjust positioning
+                const legendY = height - 30; // Adjust positioning
+                const legendGroup = svg.append("g").attr("transform", `translate(${legendX}, ${legendY})`);
                 const numBins = 5;
-                // Ensure bins work even if maxValue is 0
-                 const binMaxValue = maxValue === 0 ? 1 : maxValue;
-                 const bins = Array.from({length: numBins}, (_, i) => binMaxValue * i / (numBins -1));
-                 const binWidth = legendWidth / numBins;
+                const binMaxValue = maxValue === 0 ? 1 : maxValue;
+                // Create domain for legend bins
+                const legendDomain = d3.range(0, binMaxValue, binMaxValue / numBins);
+                legendDomain.push(binMaxValue); // Ensure max value is included
+                const binWidth = legendWidth / numBins;
 
-
-                // Add legend title
                 legendGroup.append('text')
-                    .attr('x', legendWidth / 2)
-                    .attr('y', -6) // Position above the legend rect
-                    .attr('text-anchor', 'middle')
-                    .attr('font-size', '10px')
-                    .attr('fill', textColor)
+                    .attr('class', 'legend-text')
+                    .attr('x', legendWidth / 2).attr('y', -5)
+                    .attr('text-anchor', 'middle').attr('font-size', '10px')
+                    .attr('fill', textColor) // Use var
                     .text('Contract Value');
 
-                // Create discrete color blocks
                 legendGroup.selectAll('rect')
-                    .data(bins)
-                    .enter()
-                    .append('rect')
-                    .attr('x', (d, i) => i * binWidth)
-                    .attr('y', 0)
-                    .attr('width', binWidth)
-                    .attr('height', legendHeight)
-                    .attr('fill', d => colorScale(d))
-                    .attr('stroke', isDarkMode ? '#3A373E' : '#D7D4DC')
+                    .data(legendDomain.slice(0, numBins)) // Use N bins
+                    .join('rect') // Use join
+                    .attr('class', 'legend-rect')
+                    .attr('x', (d, i) => i * binWidth).attr('y', 0)
+                    .attr('width', binWidth).attr('height', legendHeight)
+                    .attr('fill', d => colorScale(d)) // Color based on start of bin range
+                    .attr('stroke', legendBorderColor) // Use var
                     .attr('stroke-width', 0.5);
 
-                // Add min/max labels
                 legendGroup.append('text')
-                    .attr('x', 0)
-                    .attr('y', legendHeight + 10) // Below legend rect
-                    .attr('text-anchor', 'start')
-                    .attr('font-size', '10px')
-                    .attr('fill', textColor)
+                    .attr('class', 'legend-text')
+                    .attr('x', 0).attr('y', legendHeight + 9) // Adjust spacing
+                    .attr('text-anchor', 'start').attr('font-size', '9px') // Slightly smaller
+                    .attr('fill', textColor) // Use var
                     .text('Low');
 
                 legendGroup.append('text')
-                    .attr('x', legendWidth)
-                    .attr('y', legendHeight + 10) // Below legend rect
-                    .attr('text-anchor', 'end')
-                    .attr('font-size', '10px')
-                    .attr('fill', textColor)
+                    .attr('class', 'legend-text')
+                    .attr('x', legendWidth).attr('y', legendHeight + 9) // Adjust spacing
+                    .attr('text-anchor', 'end').attr('font-size', '9px') // Slightly smaller
+                    .attr('fill', textColor) // Use var
                     .text('High');
+                // --- End Draw Legend ---
 
             })
             .catch(error => {
                 console.error("Error loading or processing GeoJSON for map:", error);
                 displayError(containerId, `Error rendering map: ${error.message}`);
-                // Clean up tooltip if it exists
                 d3.select("body").selectAll(".map-tooltip").remove();
             });
     } catch (error) {
         console.error("Error creating choropleth map:", error);
-        displayError(containerId, "Failed to render map: " + error.message);
-        // Clean up tooltip if it exists
+        displayError(containerId, `Failed to render map: ${error.message}`);
         d3.select("body").selectAll(".map-tooltip").remove();
     }
 }
@@ -2420,18 +2453,17 @@ function displayEnhancedSankeyChart(model) {
         const panelHeight = leftPanelContainer.clientHeight || 400;
         const margin = {top: 20, right: 20, bottom: 20, left: 20};
         
-        // Choose colors based on theme
-        const nodeColors = {
-            agency: isDarkMode ? '#A29AAA' : '#9993A1',
-            subagency: isDarkMode ? '#9993A1' : '#878094',
-            office: isDarkMode ? '#878094' : '#797484',
-            prime: isDarkMode ? '#797484' : '#706877',
-            sub: isDarkMode ? '#706877' : '#615C66'
-        };
-        
-        const linkColor = isDarkMode ? '#3A373E' : '#D7D4DC';
-        const textColor = isDarkMode ? '#F4F2F6' : '#36323A';
-        
+       // Choose colors based on theme
+    const nodeColors = {
+        agency: getCssVar('--chart-color-tertiary'),    // Desat purple 300 / Dark tertiary accent
+        prime: getCssVar('--chart-color-primary'),     // Desat purple 400 / Dark primary accent
+        sub: getCssVar('--chart-color-secondary')      // Desat purple 500 / Dark secondary accent
+    };
+    const linkColor = getCssVar('--color-border');     // Desat purple 200 / Dark surface 2
+    const textColor = getCssVar('--color-text-secondary'); // Desat purple 600 / Light desat purple 300
+    const nodeStrokeColor = getCssVar('--color-surface'); // Desat purple 50 / Dark surface 1
+
+     
         // Create D3 selections
         const leftSvgSelection = d3.select(leftSvg)
             .attr('width', panelWidth)
