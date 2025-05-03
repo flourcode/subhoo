@@ -2997,7 +2997,141 @@ function updateDashboardTitle(datasets) {
         dashboardSubtitle.textContent = `Analyzing ${datasets.type} data from USAspending.gov`;
     }
 }
-
+function displayContractLeadersTable(leaderData) {
+    const containerId = 'contract-leaders-table-container';
+    const container = document.getElementById(containerId);
+    if (!container) {
+        console.error(`Container ${containerId} not found.`);
+        return;
+    }
+    setLoading(containerId, false); // Turn off loading spinner
+    
+    // Remove any existing table or placeholders
+    container.innerHTML = '';
+    
+    if (!leaderData || leaderData.length === 0) {
+        displayNoData(containerId, 'No contract leader data found.');
+        return;
+    }
+    
+    // Create a table wrapper div
+    const tableWrapper = document.createElement('div');
+    tableWrapper.className = 'table-wrapper';
+    tableWrapper.style.overflow = 'auto';
+    tableWrapper.style.maxHeight = '900px';
+    
+    // Display top 10 leaders
+    const displayData = leaderData.slice(0, 10);
+    
+    // Create Table Structure
+    const table = document.createElement('table');
+    table.className = 'min-w-full divide-y';
+    
+    const thead = table.createTHead();
+    thead.className = 'bg-gray-50';
+    const headerRow = thead.insertRow();
+    const headers = [
+        { text: 'Recipient', scope: 'col' },
+        { text: 'Total Value', scope: 'col', class: 'number' },
+        { text: 'Awards', scope: 'col', class: 'number' },
+        { text: 'Avg Value', scope: 'col', class: 'number' },
+        { text: 'Days', scope: 'col', class: 'number' },
+        { text: 'Majority Work', scope: 'col' },
+        { text: 'USASpending', scope: 'col', class: 'text-center' }
+    ];
+    
+    headers.forEach(headerInfo => {
+        const th = document.createElement('th');
+        th.textContent = headerInfo.text;
+        th.scope = headerInfo.scope;
+        if (headerInfo.class) th.className = headerInfo.class;
+        headerRow.appendChild(th);
+    });
+    
+    const tbody = table.createTBody();
+    tbody.className = 'divide-y';
+    
+    displayData.forEach(leader => {
+        const row = tbody.insertRow();
+        
+        // Recipient Name
+        let cell = row.insertCell();
+        cell.className = 'font-medium text-gray-900';
+        cell.textContent = truncateText(leader.siName, 35);
+        cell.title = leader.siName;
+        
+        // Total Value
+        cell = row.insertCell();
+        cell.className = 'number text-gray-600 font-bold';
+        cell.textContent = formatCurrency(leader.totalValue);
+        
+        // Num Awards
+        cell = row.insertCell();
+        cell.className = 'number text-gray-600';
+        cell.textContent = leader.numAwards.toLocaleString();
+        
+        // Avg Value
+        cell = row.insertCell();
+        cell.className = 'number text-gray-600';
+        cell.textContent = formatCurrency(leader.avgValue);
+        
+        // Avg Duration
+        cell = row.insertCell();
+        cell.className = 'number text-gray-600';
+        cell.textContent = leader.avgDurationDays > 0 ? leader.avgDurationDays.toLocaleString() : '-';
+        
+        // Dominant Type/NAICS
+        cell = row.insertCell();
+        cell.className = 'text-gray-600 text-xs';
+        // Check if using dominantNaics or dominantType
+        if (leader.dominantNaics) {
+            cell.textContent = truncateText(leader.dominantNaics.desc || "Unknown", 30);
+            cell.title = `${leader.dominantNaics.code} - ${leader.dominantNaics.desc}`;
+        } else {
+            cell.textContent = truncateText(leader.dominantType || "Unknown", 30);
+            cell.title = leader.dominantType || "Unknown";
+        }
+        
+        // USASpending Link
+        cell = row.insertCell();
+        cell.className = 'text-center';
+        
+        // Only create links when we have a specific contract ID
+        if (leader.uniqueContractKeys && leader.uniqueContractKeys.length > 0) {
+            // If there's only one contract
+            if (leader.uniqueContractKeys.length === 1) {
+                const contractId = leader.uniqueContractKeys[0];
+                const link = document.createElement('a');
+                link.href = `https://www.usaspending.gov/award/${contractId}`;
+                link.target = '_blank';
+                link.rel = 'noopener noreferrer';
+                link.className = 'detail-link';
+                link.textContent = 'View';
+                cell.appendChild(link);
+            } 
+            // If there are multiple contracts, note that
+            else {
+                cell.textContent = `${leader.uniqueContractKeys.length} contracts`;
+            }
+        } else {
+            cell.textContent = '-';
+        }
+    });
+    
+    // Append the table to the wrapper
+    tableWrapper.appendChild(table);
+    
+    // Append the wrapper to the container
+    container.appendChild(tableWrapper);
+    
+    // Add summary text if more leaders exist
+    if (leaderData.length > 10) {
+        const summaryPara = document.createElement('p');
+        summaryPara.className = 'text-center text-sm text-gray-500 summary-text';
+        summaryPara.textContent = `Showing Top 10 of ${leaderData.length} leaders by Total Value`;
+        container.appendChild(summaryPara);
+    }
+}
 document.addEventListener('DOMContentLoaded', function() {
     console.log("DOM fully loaded and parsed");
     
