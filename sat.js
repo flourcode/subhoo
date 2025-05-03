@@ -2484,14 +2484,34 @@ function displayEnhancedSankeyChart(model) {
             .sort((a, b) => b.value - a.value)
             .slice(0, 10);
         
-        // Add a logarithmic scale for link values
+        // ===== IMPROVED SCALING APPROACH =====
+        
+        // Find min and max values for links
         const minLinkValue = d3.min([...topAgencyToPrime, ...topPrimeToSub], d => d.value) || 1;
         const maxLinkValue = d3.max([...topAgencyToPrime, ...topPrimeToSub], d => d.value) || 1;
         
-        const linkWidthScale = d3.scaleLog()
+        // Option 1: Square root scaling (better visibility for small values while preserving relative differences)
+        const sqrtScale = d => Math.sqrt(d.value) * 2;
+        
+        // Option 2: Power scaling with base width (ensures minimum visibility for small values)
+        const baseWidth = 2; // Minimum width for smallest links
+        const powerScaleFactor = 0.5; // Adjustable power factor (0.5 = square root)
+        const powerScale = d => baseWidth + Math.pow(d.value / minLinkValue, powerScaleFactor) * 5;
+        
+        // Option 3: Binned/categorical scaling (groups values into discrete width categories)
+        const numBins = 5;
+        const binScale = d3.scaleQuantize()
             .domain([minLinkValue, maxLinkValue])
-            .range([2, 30])
+            .range([3, 6, 12, 18, 28]); // Predefined widths for each bin
+            
+        // Option 4: Clamped linear scale with adjusted minimum (compromise approach)
+        const clampedLinearScale = d3.scaleLinear()
+            .domain([minLinkValue, maxLinkValue])
+            .range([3, 30])
             .clamp(true);
+        
+        // Choose which scaling function to use
+        const linkWidthScale = powerScale; // Change this to use different scaling approaches
         
         // Prepare nodes and links for Sankey
         const nodes = [];
@@ -2617,7 +2637,7 @@ function displayEnhancedSankeyChart(model) {
             link.gradientId = gradientId;
         });
         
-        // Draw links with logarithmic scaling
+        // Draw links with custom width scaling
         svgSelection.append('g')
             .selectAll('path')
             .data(graph.links)
@@ -2625,7 +2645,7 @@ function displayEnhancedSankeyChart(model) {
             .append('path')
             .attr('d', d3.sankeyLinkHorizontal())
             .attr('stroke', (d) => `url(#${d.gradientId})`)
-            .attr('stroke-width', d => linkWidthScale(d.value))
+            .attr('stroke-width', linkWidthScale)
             .attr('stroke-opacity', 0.5)
             .attr('fill', 'none')
             .attr('cursor', 'pointer')
@@ -2713,7 +2733,105 @@ function displayEnhancedSankeyChart(model) {
                     d3.select(this).remove();
                 }
             });
-
+            
+        // Add a scaling control UI with multiple options
+        const scaleControls = container.appendChild(document.createElement('div'));
+        scaleControls.className = 'scale-controls';
+        scaleControls.style.position = 'absolute';
+        scaleControls.style.top = '10px';
+        scaleControls.style.right = '10px';
+        scaleControls.style.backgroundColor = isDarkMode ? 'rgba(37, 34, 41, 0.8)' : 'rgba(255, 255, 255, 0.8)';
+        scaleControls.style.padding = '10px';
+        scaleControls.style.borderRadius = '4px';
+        scaleControls.style.border = isDarkMode ? '1px solid #3A373E' : '1px solid #D7D4DC';
+        
+        // Add scale method selector
+        const scaleMethodLabel = document.createElement('div');
+        scaleMethodLabel.textContent = 'Scaling Method:';
+        scaleMethodLabel.style.fontSize = '12px';
+        scaleMethodLabel.style.color = textColor;
+        scaleMethodLabel.style.marginBottom = '5px';
+        
+        const scaleMethodSelect = document.createElement('select');
+        scaleMethodSelect.style.width = '100%';
+        scaleMethodSelect.style.marginBottom = '10px';
+        scaleMethodSelect.style.fontSize = '12px';
+        scaleMethodSelect.style.padding = '3px';
+        
+        const methods = [
+            { value: 'sqrt', text: 'Square Root (Balanced)' },
+            { value: 'power', text: 'Power Scale (Small Links Visible)' },
+            { value: 'binned', text: 'Binned Categories (Discrete Widths)' },
+            { value: 'linear', text: 'Linear (True Proportions)' }
+        ];
+        
+        methods.forEach(method => {
+            const option = document.createElement('option');
+            option.value = method.value;
+            option.textContent = method.text;
+            if (method.value === 'power') {
+                option.selected = true;
+            }
+            scaleMethodSelect.appendChild(option);
+        });
+        
+        // Add subcontract scale factor slider
+        const scaleFactorLabel = document.createElement('div');
+        scaleFactorLabel.textContent = 'Subcontract Scale:';
+        scaleFactorLabel.style.fontSize = '12px';
+        scaleFactorLabel.style.color = textColor;
+        scaleFactorLabel.style.marginBottom = '5px';
+        
+        const scaleFactorSlider = document.createElement('input');
+        scaleFactorSlider.type = 'range';
+        scaleFactorSlider.min = '0.1';
+        scaleFactorSlider.max = '10';
+        scaleFactorSlider.step = '0.1';
+        scaleFactorSlider.value = '1';
+        scaleFactorSlider.style.width = '100%';
+        
+        scaleControls.appendChild(scaleMethodLabel);
+        scaleControls.appendChild(scaleMethodSelect);
+        scaleControls.appendChild(scaleFactorLabel);
+        scaleControls.appendChild(scaleFactorSlider);
+        
+        // Add event listeners to adjust scaling dynamically
+        const updateLinkWidths = () => {
+            const method = scaleMethodSelect.value;
+            const scaleFactor = parseFloat(scaleFactorSlider.value);
+            
+            // Apply selected scaling method
+            let scalingFunction;
+            switch (method) {
+                case 'sqrt':
+                    scalingFunction = d => Math.sqrt(d.value * scaleFactor) * 2;
+                    break;
+                case 'power':
+                    scalingFunction = d => baseWidth + Math.pow((d.value * scaleFactor) / minLinkValue, powerScaleFactor) * 5;
+                    break;
+                case 'binned':
+                    scalingFunction = d => binScale(d.value * scaleFactor);
+                    break;
+                case 'linear':
+                    scalingFunction = d => clampedLinearScale(d.value * scaleFactor);
+                    break;
+                default:
+                    scalingFunction = d => Math.sqrt(d.value * scaleFactor) * 2;
+            }
+            
+            // Update all links
+            svgSelection.selectAll('path')
+                .attr('stroke-width', scalingFunction);
+            
+            // Additional adjustment for subcontractor links
+            svgSelection.selectAll('path')
+                .filter(d => d.source.type === 'prime' && d.target.type === 'sub')
+                .attr('stroke-width', d => scalingFunction(d) * 1.0); // Additional factor can be applied here
+        };
+        
+        scaleMethodSelect.addEventListener('change', updateLinkWidths);
+        scaleFactorSlider.addEventListener('input', updateLinkWidths);
+        
         // Add a note about showing only top connections
         svgSelection.append("text")
             .attr("x", width - 10)
@@ -2723,39 +2841,6 @@ function displayEnhancedSankeyChart(model) {
             .attr("fill", textColor)
             .attr("opacity", 0.7)
             .text("Showing top 10 flows by value");
-        
-        // Add a scaling control UI element
-        const scaleControls = container.appendChild(document.createElement('div'));
-        scaleControls.className = 'scale-controls';
-        scaleControls.style.position = 'absolute';
-        scaleControls.style.top = '10px';
-        scaleControls.style.right = '10px';
-        
-        const scaleLabel = document.createElement('label');
-        scaleLabel.textContent = 'Subcontract Scale: ';
-        scaleLabel.style.fontSize = '12px';
-        scaleLabel.style.color = textColor;
-        
-        const scaleSlider = document.createElement('input');
-        scaleSlider.type = 'range';
-        scaleSlider.min = '0.1';
-        scaleSlider.max = '10';
-        scaleSlider.step = '0.1';
-        scaleSlider.value = '1';
-        scaleSlider.style.width = '100px';
-        
-        scaleControls.appendChild(scaleLabel);
-        scaleControls.appendChild(scaleSlider);
-        
-        // Add event listener to adjust scaling dynamically
-        scaleSlider.addEventListener('input', function() {
-            const scaleFactor = parseFloat(this.value);
-            
-            // Rescale only the subcontractor links
-            svgSelection.selectAll('path')
-                .filter(d => d.source.type === 'prime' && d.target.type === 'sub')
-                .attr('stroke-width', d => linkWidthScale(d.value * scaleFactor));
-        });
         
     } catch (error) {
         console.error("Error rendering Sankey chart:", error);
