@@ -1,90 +1,58 @@
 /* ========================================= */
-/* CSS Variables - Light Mode (Green & Stone) */
+/* CSS Variables - Light Mode (Warm Purples) */
 /* ========================================= */
 :root {
-    /* --- Core Palette --- */
-    /* Stone Grays (Warmer/Neutral) */
-    --stone-0: #FAFAF9;
-    --stone-1: #F5F5F4;
-    --stone-2: #E7E5E4;
-    --stone-3: #D6D3D1;
-    --stone-4: #A8A29E;
-    --stone-5: #78716C;
-    --stone-6: #57534E;
-    --stone-7: #44403C;
-    --stone-8: #292524;
-    --stone-9: #1C1917;
+    /* --- Core Palette - Warmer "Toasted" Purples --- */
+    --warm-purple-50: #F5F1F3;    /* Warmer Off-White/Lilac */
+    --warm-purple-100: #EAE4E8;   /* Warmer Light Gray-Purple */
+    --warm-purple-200: #D9D1D7;   /* Warmer Mid-Light Gray-Purple */
+    --warm-purple-300: #B5ABB3;   /* Warmer Mid Gray-Purple (Outline) */
+    --warm-purple-400: #998D96;   /* Warmer Purple-Mauve (Primary) */
+    --warm-purple-500: #796E7A;   /* Deeper Warm Purple (Secondary/Tertiary Text) */
+    --warm-purple-600: #61555E;   /* Darker Warm Purple (Secondary Text) */
 
-    /* Greens */
-    --green-0: #F0FDF4;
-    --green-1: #DCFCE7;
-    --green-2: #BBF7D0;
-    --green-3: #86EFAC; /* Lighter Accent */
-    --green-4: #4ADE80; /* Main Accent */
-    --green-5: #22C55E; /* Darker Accent */
-    --green-6: #16A34A;
-    --green-7: #15803D;
-    --green-8: #166534;
-    --green-9: #14532D;
+    /* Neutral Colors */
+    --base-white: #FAF7F2;       /* Creamy White */
+    --warm-dark-text: #362F33;   /* Warmer Dark Gray (Primary Text) */
+    --warm-darker-text: #252024; /* Warmer Very Dark Gray */
 
-    /* Neutrals */
-    --white: #FFFFFF;
-    --black: #000000;
+    /* Status Colors (Keep original for clarity) */
+    --red-500: #ef4444;
+    --green-500: #10b981;
+    --blue-500: #3e95cd;
 
-    /* --- Semantic Color Mapping (Light Mode) --- */
-    --color-background: var(--stone-0);
-    --color-surface: var(--white);
-    --color-surface-container: var(--stone-1);
-    --color-surface-variant: var(--stone-2);
+    /* --- Semantic Color Mapping - Light Mode --- */
+    --color-background: var(--base-white);
+    --color-surface: var(--warm-purple-50);            /* Use warmest off-white for surfaces */
+    --color-surface-container: var(--warm-purple-100);
+    --color-surface-variant: var(--warm-purple-200);
 
     /* Text Colors */
-    --color-text-primary: var(--stone-8);
-    --color-text-secondary: var(--stone-6);
-    --color-text-tertiary: var(--stone-5);
+    --color-text-primary: var(--warm-dark-text);
+    --color-text-secondary: var(--warm-purple-600);
+    --color-text-tertiary: var(--warm-purple-500);
 
     /* Action Colors */
-    --color-primary: var(--green-6);
-    --color-on-primary: var(--white);
-    --color-secondary: var(--green-7);
-    --color-on-secondary: var(--white);
+    --color-primary: var(--warm-purple-400);
+    --color-on-primary: var(--base-white);
+    --color-secondary: var(--warm-purple-500);
+    --color-on-secondary: var(--base-white);
 
     /* Border & Outline */
-    --color-outline: var(--stone-4);
-    --color-border: var(--stone-3);
+    --color-outline: var(--warm-purple-300);
+    --color-border: var(--warm-purple-200);
 
-    /* --- Chart & Data Visualization Colors --- */
-    /* Categorical Palette (Example: ColorBrewer Paired - selected) */
-    --cat-color-1: #a6cee3; /* Light Blue */
-    --cat-color-2: #1f78b4; /* Dark Blue */
-    --cat-color-3: #b2df8a; /* Light Green */
-    --cat-color-4: #33a02c; /* Dark Green */
-    --cat-color-5: #fb9a99; /* Light Red */
-    --cat-color-6: #e31a1c; /* Dark Red */
-    --cat-color-7: #fdbf6f; /* Light Orange */
-    --cat-color-8: #ff7f00; /* Dark Orange */
-    /* Use distinct pairs or single colors from this */
+    /* Chart Colors */
+    --chart-color-primary: var(--warm-purple-400);
+    --chart-color-secondary: var(--warm-purple-500);
+    --chart-color-tertiary: var(--warm-purple-300);
 
-    /* Sequential Palette (Example: Green-based for Maps/Magnitude) */
-    --seq-color-1: var(--green-1); /* Lightest */
-    --seq-color-2: var(--green-2);
-    --seq-color-3: var(--green-3);
-    --seq-color-4: var(--green-4);
-    --seq-color-5: var(--green-5); /* Mid */
-    --seq-color-6: var(--green-6);
-    --seq-color-7: var(--green-7); /* Darkest */
+    /* Status Colors */
+    --color-error: var(--red-500);
+    --color-success: var(--green-500);
+    --color-info: var(--blue-500);
 
-    /* Chart Base Colors */
-    --chart-color-primary: var(--green-5);
-    --chart-color-secondary: var(--green-3);
-    --chart-color-tertiary: var(--stone-4);
-
-    /* --- Status Colors --- */
-    --color-error: #DC2626;
-    --color-success: #16A34A; /* Matches primary green */
-    --color-warning: #D97706;
-    --color-info: #0EA5E9;    /* Sky Blue */
-
-    /* --- Layout Values (Keep Existing) --- */
+    /* Layout Values (Keep Existing) */
     --border-radius-sm: 8px;
     --border-radius-md: 12px;
     --border-radius-lg: 16px;
@@ -96,60 +64,34 @@
 }
 
 /* ========================================= */
-/* CSS Variables - Dark Mode (Green & Stone)  */
+/* CSS Variables - Dark Mode (Warm Purples)  */
 /* ========================================= */
 [data-theme="dark"] {
-    /* Dark Mode - Core Color Palette Re-Mapping */
-    --color-background: var(--stone-9);
-    --color-surface: var(--stone-8);
-    --color-surface-container: #3a3633; /* Custom slightly lighter */
-    --color-surface-variant: var(--stone-7);
+    /* Dark Mode - Warmer Core Palette */
+    --color-background: #221E20;          /* Dark Warm Gray/Brown */
+    --color-surface: #2D282A;             /* Warmer Dark Surface */
+    --color-surface-container: #383335;   /* Warmer Dark Container */
+    --color-surface-variant: #454043;     /* Warmer Dark Variant/Border */
 
     /* Text Colors */
-    --color-text-primary: var(--stone-1);
-    --color-text-secondary: var(--stone-3);
-    --color-text-tertiary: var(--stone-4);
+    --color-text-primary: var(--warm-purple-50);   /* Use warm off-white from light mode */
+    --color-text-secondary: var(--warm-purple-200);/* Use light warm gray-purple */
+    --color-text-tertiary: var(--warm-purple-300); /* Use mid warm gray-purple */
 
-    /* Action Colors - Lighter Greens */
-    --color-primary: var(--green-4);
-    --color-on-primary: var(--stone-9);
-    --color-secondary: var(--green-3);
-    --color-on-secondary: var(--stone-9);
+    /* Action Colors - Brighter warm purples */
+    --color-primary: #A89CA3;             /* Lighter Warm Purple (adjusted from #A29AAA) */
+    --color-on-primary: #221E20;          /* Use dark background for text */
+    --color-secondary: #998D96;           /* Mid Warm Purple (from light mode) */
+    --color-on-secondary: #221E20;        /* Use dark background for text */
 
     /* Border & Outline */
-    --color-outline: var(--stone-6);
-    --color-border: var(--stone-7);
+    --color-outline: var(--color-surface-variant); /* Use surface variant */
+    --color-border: #312c2e; /* Slightly darker than surface */
 
-    /* --- Chart & Data Visualization Colors (Dark Mode) --- */
-    /* Categorical Palette (Adjusted) */
-    --cat-color-1: #a6cee3; /* Light Blue */
-    --cat-color-2: #70a1d0; /* Mid Blue */
-    --cat-color-3: #b2df8a; /* Light Green */
-    --cat-color-4: #72c15a; /* Mid Green */
-    --cat-color-5: #fb9a99; /* Light Red */
-    --cat-color-6: #f05a59; /* Mid Red */
-    --cat-color-7: #fdbf6f; /* Light Orange */
-    --cat-color-8: #ff9933; /* Mid Orange */
-
-    /* Sequential Palette (Reversed or adjusted greens) */
-    --seq-color-1: var(--green-7); /* Darkest */
-    --seq-color-2: var(--green-6);
-    --seq-color-3: var(--green-5);
-    --seq-color-4: var(--green-4);
-    --seq-color-5: var(--green-3); /* Mid */
-    --seq-color-6: var(--green-2);
-    --seq-color-7: var(--green-1); /* Lightest */
-
-    /* Chart Base Colors */
-    --chart-color-primary: var(--green-4);
-    --chart-color-secondary: var(--green-6);
-    --chart-color-tertiary: var(--stone-5);
-
-    /* --- Status Colors (Adjusted) --- */
-    --color-error: #F87171;
-    --color-success: #4ADE80; /* Matches primary green */
-    --color-warning: #FBBF24;
-    --color-info: #7DD3FC; /* Light Sky Blue */
+    /* Chart Colors - Brighter warm purples */
+    --chart-color-primary: #A89CA3;
+    --chart-color-secondary: #998D96;
+    --chart-color-tertiary: #796E7A;      /* Darker warm purple */
 
     /* Shadow adjustments (Keep Existing) */
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
