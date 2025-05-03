@@ -1669,7 +1669,293 @@ function processMapDataFromModel(model) {
     console.log(`Processed map data for ${Object.keys(stateData).length} states.`);
     return stateData;
 }
+function displayTavTcvChart(chartData) {
+    const containerId = 'tav-tcv-chart-container';
+    const container = document.getElementById(containerId);
+    
+    if (!container) {
+        console.error("TAV/TCV chart container element not found.");
+        return;
+    }
 
+    setLoading(containerId, false);
+    
+    // Clear container and recreate canvas
+    container.innerHTML = '';
+    const newCanvas = document.createElement('canvas');
+    newCanvas.id = 'tavTcvChart';
+    container.appendChild(newCanvas);
+
+    if (!chartData || chartData.length === 0) {
+        displayNoData(containerId, 'No contracts found for TAV/TCV comparison.');
+        return;
+    }
+
+    // Create a completely separate tooltip div
+    let tooltip = document.createElement('div');
+    tooltip.id = 'tav-tcv-tooltip';
+    tooltip.style.position = 'absolute';
+    tooltip.style.padding = '10px';
+    tooltip.style.background = 'white';
+    tooltip.style.border = '1px solid #ccc';
+    tooltip.style.borderRadius = '4px';
+    tooltip.style.pointerEvents = 'none';
+    tooltip.style.zIndex = '9999';
+    tooltip.style.display = 'none';
+    document.body.appendChild(tooltip);
+
+    // Store chart data globally for resize events
+    window.chartData = chartData;
+    
+    // Get theme
+    const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
+    if (isDarkMode) {
+        tooltip.style.background = '#252229';
+        tooltip.style.color = '#F4F2F6';
+        tooltip.style.border = '1px solid #3A373E';
+    }
+    
+    // Set dimensions
+    const containerWidth = container.clientWidth || 600;
+    const containerHeight = container.clientHeight || 400;
+    newCanvas.width = containerWidth;
+    newCanvas.height = containerHeight;
+    
+    // Get context
+    const ctx = newCanvas.getContext('2d');
+    if (!ctx) {
+        console.error("Could not get canvas context for TAV/TCV chart");
+        displayError(containerId, "Could not initialize chart canvas");
+        return;
+    }
+    
+    // Choose colors based on theme
+    const primaryColor = isDarkMode ? '#A29AAA' : '#9993A1';
+    const secondaryColor = isDarkMode ? '#8C85A0' : '#797484';
+    const textColor = isDarkMode ? '#F4F2F6' : '#36323A';
+    
+    // Prepare data - use empty labels, we'll add them as overlays
+    const emptyLabels = chartData.map(() => '');
+    const tavData = chartData.map(d => d.tav);
+    const tcvData = chartData.map(d => d.tcv);
+    
+    // Destroy previous instance if it exists
+    if (tavTcvChartInstance) {
+        try {
+            tavTcvChartInstance.destroy();
+        } catch (error) {
+            console.warn("Error destroying previous chart instance:", error);
+        }
+        tavTcvChartInstance = null;
+    }
+    
+    // Create chart with empty labels
+    tavTcvChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: emptyLabels,
+            datasets: [
+                {
+                    label: 'TAV (Obligated)',
+                    data: tavData,
+                    backgroundColor: primaryColor,
+                    borderWidth: 0,
+                    barPercentage: 0.85,
+                    categoryPercentage: 0.8,
+                    borderRadius: 4
+                },
+                {
+                    label: 'TCV (Current Total)',
+                    data: tcvData,
+                    backgroundColor: secondaryColor,
+                    borderWidth: 0,
+                    barPercentage: 0.85,
+                    categoryPercentage: 0.8,
+                    borderRadius: 4
+                }
+            ]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        color: textColor,
+                        font: {
+                            family: "'Inter', sans-serif",
+                            size: 14
+                        }
+                    }
+                },
+                tooltip: {
+                    enabled: false // Disable built-in tooltips
+                }
+            },
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    grid: {
+                        display: false
+                    },
+                    ticks: {
+                        callback: function(value) {
+                            if (value >= 1e6) {
+                                return '$' + (value / 1e6).toFixed(1) + 'M';
+                            } else if (value >= 1e3) {
+                                return '$' + (value / 1e3).toFixed(0) + 'K';
+                            }
+                            return '$' + value;
+                        },
+                        color: textColor
+                    }
+                },
+                y: {
+                    ticks: {
+                        display: false // Hide default labels
+                    },
+                    grid: {
+                        display: false
+                    }
+                }
+            },
+            layout: {
+                padding: {
+                    left: 5,
+                    right: 20
+                }
+            }
+        }
+    });
+    
+    // Create container for label overlays
+    const labelsContainer = document.createElement('div');
+    labelsContainer.className = 'chart-y-labels-container';
+    labelsContainer.style.position = 'absolute';
+    labelsContainer.style.top = '0';
+    labelsContainer.style.left = '0';
+    labelsContainer.style.width = '100%';
+    labelsContainer.style.height = '100%';
+    labelsContainer.style.pointerEvents = 'none';
+    
+    // Add the labels container
+    container.style.position = 'relative';
+    container.appendChild(labelsContainer);
+    
+    // Handle mouse events manually 
+    newCanvas.onclick = function(event) {
+        const rect = newCanvas.getBoundingClientRect();
+        const x = event.clientX - rect.left;
+        const y = event.clientY - rect.top;
+        
+        const activePoints = tavTcvChartInstance.getElementsAtEventForMode(
+            event,
+            'nearest',
+            { intersect: true },
+            false
+        );
+        
+        if (activePoints && activePoints.length > 0) {
+            const idx = activePoints[0].index;
+            if (idx >= 0 && chartData[idx] && chartData[idx].id) {
+                window.open(`https://www.usaspending.gov/award/${chartData[idx].id}`, '_blank');
+            }
+        }
+    };
+    
+    // Handle mousemove for tooltips
+    newCanvas.onmousemove = function(event) {
+        const rect = newCanvas.getBoundingClientRect();
+        const x = event.clientX - rect.left;
+        const y = event.clientY - rect.top;
+        
+        const activePoints = tavTcvChartInstance.getElementsAtEventForMode(
+            event,
+            'nearest',
+            { intersect: true },
+            false
+        );
+        
+        if (activePoints && activePoints.length > 0) {
+            const idx = activePoints[0].index;
+            const datasetIdx = activePoints[0].datasetIndex;
+            
+            if (idx >= 0 && idx < chartData.length && datasetIdx >= 0) {
+                const contract = chartData[idx];
+                const datasetLabel = tavTcvChartInstance.data.datasets[datasetIdx].label;
+                const value = tavTcvChartInstance.data.datasets[datasetIdx].data[idx];
+                
+                tooltip.innerHTML = `
+                    <div style="font-weight: bold; margin-bottom: 5px;">${contract.primeName}</div>
+                    <div style="font-size: 11px; opacity: 0.7; margin-bottom: 8px;">(ID: ${contract.id})</div>
+                    <div>${datasetLabel}: ${formatCurrency(value)}</div>
+                    <div>Click to view on USAspending.gov</div>
+                `;
+                
+                tooltip.style.display = 'block';
+                tooltip.style.left = (event.pageX + 10) + 'px';
+                tooltip.style.top = (event.pageY - 28) + 'px';
+                
+                newCanvas.style.cursor = 'pointer';
+            } else {
+                tooltip.style.display = 'none';
+                newCanvas.style.cursor = 'default';
+            }
+        } else {
+            tooltip.style.display = 'none';
+            newCanvas.style.cursor = 'default';
+        }
+    };
+    
+    // Handle mouseout
+    newCanvas.onmouseout = function() {
+        tooltip.style.display = 'none';
+        newCanvas.style.cursor = 'default';
+    };
+    
+    // After chart is rendered, add label overlays inside the bars
+    setTimeout(() => {
+        if (!tavTcvChartInstance) return;
+        
+        const yAxis = tavTcvChartInstance.scales.y;
+        const xAxis = tavTcvChartInstance.scales.x;
+        const chartArea = tavTcvChartInstance.chartArea;
+        
+        chartData.forEach((contract, index) => {
+            if (!contract || !contract.id) return;
+            
+            const yCenter = yAxis.getPixelForValue(index);
+            
+            // Create the label element
+            const label = document.createElement('div');
+            label.textContent = contract.primeName;
+            label.style.position = 'absolute';
+            label.style.left = (chartArea.left + 10) + 'px';
+            label.style.top = (yCenter - 10) + 'px';
+            label.style.transform = 'translateY(-50%)';
+            label.style.fontFamily = "'Inter', sans-serif";
+            label.style.fontSize = '12px';
+            label.style.fontWeight = 'bold';
+            label.style.color = '#FFFFFF';
+            label.style.textShadow = '0px 0px 2px rgba(0,0,0,0.5)';
+            label.style.pointerEvents = 'none';
+            label.style.whiteSpace = 'nowrap';
+            label.style.overflow = 'hidden';
+            label.style.textOverflow = 'ellipsis';
+            
+            // Determine maximum width based on the shortest bar
+            const minValueForRow = Math.min(tavData[index], tcvData[index]);
+            const xPosition = xAxis.getPixelForValue(minValueForRow);
+            const maxWidth = xPosition - chartArea.left - 20;
+            
+            label.style.maxWidth = Math.max(maxWidth, 50) + 'px';
+            
+            labelsContainer.appendChild(label);
+        });
+    }, 100);
+}
 function displayEnhancedSankeyChart(model) {
     const containerId = 'sankey-chart-container';
     const container = document.getElementById(containerId);
