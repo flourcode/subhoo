@@ -954,3 +954,27 @@ tr:hover td {
      .side-panel > div[style*="font-size: 12px"] /* Info */
      { font-size: 11px !important; }
 }
+/* Add this to your CSS */
+.app-container {
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  background-color: #fff;
+  max-width: 1800px;
+  margin: 15px auto;
+  height: calc(100vh - 40px);
+}
+
+/* For dark mode support */
+[data-theme="dark"] .app-container {
+  background-color: #252229;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* Optional: Add a subtle border */
+.app-container {
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+[data-theme="dark"] .app-container {
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
