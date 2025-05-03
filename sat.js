@@ -2403,6 +2403,7 @@ function displayChoroplethMap(mapData) {
         d3.select("body").selectAll(".map-tooltip").remove();
     }
 }
+
 function displayEnhancedSankeyChart(model) {
     const containerId = 'sankey-chart-container';
     const container = document.getElementById(containerId);
@@ -2776,6 +2777,10 @@ function displayEnhancedSankeyChart(model) {
             switch (type) {
                 case 'prime':
                     entity = model.primes[id];
+                    // Add visual indicator for primes that appear in both panels
+                    if (leftNodeMap[id] !== undefined) {
+                        entity.inBothPanels = true;
+                    }
                     break;
                 case 'sub':
                     entity = model.subs[id];
@@ -2817,13 +2822,21 @@ function displayEnhancedSankeyChart(model) {
             }
         });
         
-        // Square root scaling for the right panel
-        const sqrtScale = d => Math.sqrt(d.value) * 1.5;
+        // Find min and max values for right panel links
+        const minSubValue = d3.min(topPrimeToSub, d => d.value) || 1;
+        const maxSubValue = d3.max(topPrimeToSub, d => d.value) || 1;
         
-        // Create Sankey generator for right panel
+        // Improved scaling for the right panel to better distinguish flows
+        const baseWidth = 2; // Minimum width for smallest links
+        const sqrtScale = d => {
+            const normalizedValue = Math.sqrt(d.value / minSubValue);
+            return baseWidth + normalizedValue * 8; // Amplify the differences with larger scale factor
+        };
+        
+        // Customize Sankey generator for right panel
         const rightSankey = d3.sankey()
             .nodeWidth(15)
-            .nodePadding(10)
+            .nodePadding(20) // Increased padding for better separation
             .extent([[margin.left, margin.top], [panelWidth - margin.right, panelHeight - margin.bottom]]);
         
         // Apply Sankey to right panel data
@@ -2869,7 +2882,7 @@ function displayEnhancedSankeyChart(model) {
             .append('path')
             .attr('d', d3.sankeyLinkHorizontal())
             .attr('stroke', (d) => `url(#${d.gradientId})`)
-            .attr('stroke-width', sqrtScale) // Using square root scaling
+            .attr('stroke-width', d => sqrtScale(d)) // Fixed: proper function invocation
             .attr('stroke-opacity', 0.5)
             .attr('fill', 'none')
             .attr('cursor', 'pointer')
