@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QBR Dashboard from Subhoo</title>
+    <!-- Load external libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-sankey/0.12.3/d3-sankey.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/date-fns/2.30.0/date-fns.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <script src="https://unpkg.com/topojson@3"></script>
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="saturday.css">
+</head>
+<body>
+<div class="app-container">
+    <div class="dashboard-layout">
+        <!-- Side Panel -->
+<aside class="side-panel">
+    <!-- Header with logo -->
+    <div class="card-header" style="margin-bottom: 12px; padding-bottom: 8px;">
+  <div class="card-icon-circle">
+    <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M19 3v14m-7-11v11m-7-7v7"></path>
+    </svg>
+  </div>
+  <h1 style="font-size: 18px; margin: 0;">Subhoo.</h1>
+  
+  <!-- Theme toggle right next to title -->
+  <button id="theme-toggle-btn" aria-label="Toggle dark mode" style="background: none; border: none; cursor: pointer; padding: 4px; margin-left: auto;">
+    <svg id="moon-icon" viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" class="theme-icon">
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+    </svg>
+    <svg id="sun-icon" viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" class="theme-icon" style="display: none;">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </button>
+</div>
+    <!-- Main Controls - Tighter spacing -->
+    <div style="display: flex; flex-direction: column; gap: 8px;">
+	<h2 style="font-size: 14px; margin: 0;">Select Agency</h2>
+        <!-- Dataset Selector -->
+        <select id="dataset-select" class="input-select" style="width: 100%;">
+            <option value="">Choose a dataset...</option>
+        </select>
+        
+        <h2 style="font-size: 14px; margin: 0;">Search & Filters</h2>
+        
+        <!-- Search Input -->
+        <input type="search" id="search-input" placeholder="Search by keyword, recipient, description..." style="width: 100%;">
+        
+        <!-- Filters - Tighter spacing -->
+        <select id="sub-agency-filter" class="input-select" style="width: 100%;">
+            <option value="">All Sub-Agencies</option>
+        </select>
+        
+        <select id="naics-filter" class="input-select" style="width: 100%;">
+            <option value="">All NAICS</option>
+        </select>
+        <!-- Reset Button -->
+        <button id="refresh-button" style="width: 100%;" disabled>
+            <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none">
+                <path d="M23 4v6h-6"></path>
+                <path d="M1 20v-6h6"></path>
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"></path>
+                <path d="M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+            </svg>
+            Reset
+        </button>
+    </div>
+    
+    <!-- Info Text - More compact -->
+    <div style="margin: 10px 0 0; font-size: 12px; line-height: 1.4; color: var(--color-text-secondary); background-color: var(--color-surface); padding: 8px; border-radius: var(--border-radius-md); border: 1px solid var(--color-border);">
+ <strong>Subhoo</strong> maps prime-to-subcontractor relationships so you can follow the money, identify teaming partners, and assess the competitive landscape.<br><br> <strong>How To:</strong> Select an agency, then use Search and NAICS filters to refine your view.
+</div>
+
+    
+    <!-- Footer - Tighter -->
+    <div style="margin-top: 10px; font-size: 10px; color: var(--color-text-tertiary); text-align: center; padding-top: 6px; border-top: 1px solid var(--color-border);">
+        © 2025 Subhoo | Built on AWS | All data from USAspending.gov
+    </div>
+</aside>
+        
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <header class="dashboard-header">
+                <div class="header-content">
+                    <div class="title-area">
+                        <h1 id="dashboard-title">QBR Dashboard</h1>
+                        <p id="dashboard-subtitle">Analyze contract data from USAspending.gov</p>
+                    </div>
+                    <div class="header-controls">
+                        <div class="date-container">
+                            <span id="date-text">--</span>
+                            <span class="date-separator">|</span>
+                            <span id="time-text">--</span>
+                        </div>
+                    </div>
+                </div>
+            </header>
+            
+            <!-- Bento Grid Layout -->
+<!-- Replace this part of your HTML with the corrected version -->
+<div class="bento-grid">
+    <!-- ARR Display Box -->
+    <div id="bento-arr" class="bento-box">
+        <div class="card-header">
+            <div class="card-icon-circle">
+                <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                </svg>
+            </div>
+            <h2>Estimated ARR</h2>
+        </div>
+        <div class="arr-display-grid">
+            <div id="arr-loading" style="display: none;">
+                <div class="spinner"></div>
+            </div>
+            <div id="arr-error" style="display: none;" class="error-message"></div>
+            <div id="arr-no-data" style="display: none;" class="no-data-message"></div>
+            <div id="arr-result" class="arr-grid-value">$0 / yr</div>
+            <div class="arr-description">ARR is based on average contract value divided by duration—directional only, but helpful for sizing up new markets. </div>
+        </div>
+    </div>
+    
+    <!-- Sankey Chart -->
+    <div id="bento-sankey" class="bento-box col-span-2">
+        <div class="card-header">
+            <div class="card-icon-circle">
+                <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M7 10a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-4.5a1 1 0 0 0-1 1v1a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1v-1a1 1 0 0 0-1-1H4a1 1 0 0 1-1-1v-2a1 1 0 0 1 1-1h3Z"></path>
+                    <path d="M19 14a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-3a1 1 0 0 1-1-1v-1a1 1 0 0 0-1-1H9.5a1 1 0 0 0-1 1v1a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-2a1 1 0 0 1 1-1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h4.5a1 1 0 0 1 1 1v1a1 1 0 0 0 1 1h3Z"></path>
+                </svg>
+            </div>
+            <h2>Money Flow (Agency to Prime)</h2>
+        </div>
+        <div id="sankey-chart-container" class="chart-container">
+            <div class="loading-placeholder" style="display: none;">
+                <div class="spinner"></div>
+                <span>Loading Sankey data...</span>
+            </div>
+            <svg id="sankeyChart" width="100%" height="100%"></svg>
+        </div>
+    </div>
+
+    <!-- Map Visualization -->
+    <div id="bento-map" class="bento-box">
+        <div class="card-header">
+            <div class="card-icon-circle">
+                <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path>
+                    <circle cx="12" cy="10" r="3"></circle>
+                </svg>
+            </div>
+            <h2>Place of Performance</h2>
+        </div>
+        <div id="map-container" class="chart-container">
+            <div class="loading-placeholder" style="display: none;">
+                <div class="spinner"></div>
+                <span>Loading map data...</span>
+            </div>
+            <div id="choroplethMap" style="width: 100%; height: 100%;"></div>
+        </div>
+    </div>
+
+    <!-- TAV vs TCV Chart -->
+    <div id="bento-tavtcv" class="bento-box col-span-2">
+        <div class="card-header">
+            <div class="card-icon-circle">
+                <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M19 3v14m-7-11v11m-7-7v7"></path>
+                </svg>
+            </div>
+            <h2>Top Contracts TAV vs TCV</h2>
+        </div>
+        <div id="tav-tcv-chart-container" class="chart-container">
+            <div class="loading-placeholder" style="display: none;">
+                <div class="spinner"></div>
+                <span>Loading TAV/TCV data...</span>
+            </div>
+            <canvas id="tavTcvChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Contract Leaders Table -->
+    <div id="bento-leaders" class="bento-box col-span-2">
+        <div class="card-header">
+            <div class="card-icon-circle">
+                <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M16 6h4a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4"></path>
+                    <rect width="8" height="4" x="8" y="2" rx="1" ry="1"></rect>
+                    <path d="M12 16h.01"></path>
+                </svg>
+            </div>
+            <h2>Top Contractors</h2>
+        </div>
+        <div id="contract-leaders-table-container" class="table-container">
+            <div class="loading-placeholder" style="display: none;">
+                <div class="spinner"></div>
+                <span>Loading leader data...</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Expiring Contracts -->
+    <div id="bento-expiring" class="bento-box col-span-4">
+        <div class="card-header">
+            <div class="card-icon-circle">
+                <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M8 3v3a2 2 0 0 1-4 0V3"></path>
+                    <path d="M17 3v3a2 2 0 0 1-4 0V3"></path>
+                    <rect width="18" height="18" x="3" y="4" rx="2"></rect>
+                    <path d="M3 10h18"></path>
+                    <path d="M12 14v4"></path>
+                    <path d="M12 18h-2"></path>
+                </svg>
+            </div>
+            <h2>Expiring Contracts (Next 6 Months)</h2>
+        </div>
+        <div id="expiring-contracts-table-container" class="table-container">
+            <div class="loading-placeholder" style="display: none;">
+                <div class="spinner"></div>
+                <span>Loading expiring contracts...</span>
+            </div>
+        </div>
+    </div>
+</div>
+        </main>
+    </div>
+
+    <script src="saturday.js" defer></script>
+		</div>
+</body>
+</html>
