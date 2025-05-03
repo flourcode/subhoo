@@ -3571,14 +3571,26 @@ if (refreshButton) {
             }
         }
         
-        // Then continue with normal refresh behavior
-        if (selectedAgencies.length === 1) {
-            loadSingleDataset(selectedAgencies[0]);
-        } else if (selectedAgencies.length > 1) {
-            fetchDataSequentially(selectedAgencies);
+        // Get the currently selected dataset from the dropdown
+        const datasetSelect = document.getElementById('dataset-select');
+        if (datasetSelect && datasetSelect.value) {
+            const selectedValue = datasetSelect.value;
+            
+            if (selectedValue.startsWith('combined:')) {
+                // Handle combined dataset selection
+                const datasetIds = selectedValue.split(':')[1].split(',');
+                loadCombinedDatasets(datasetIds);
+            } else {
+                // Handle single dataset selection
+                const selectedDataset = DATASETS.find(d => d.id === selectedValue);
+                if (selectedDataset) {
+                    loadSingleDataset(selectedDataset);
+                } else {
+                    updateStatusBanner(`Invalid dataset selected: ${selectedValue}`, 'error');
+                }
+            }
         } else {
-            console.warn("Cannot refresh - no agency selected");
-            updateStatusBanner("Please select an agency first", "error");
+            updateStatusBanner("Please select a dataset first", "info");
         }
     });
 }
