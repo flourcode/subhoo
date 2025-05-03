@@ -2649,7 +2649,6 @@ function displayEnhancedSankeyChart(model) {
         displayError(containerId, `Error rendering Sankey chart: ${error.message}`);
     }
 }
-
 function calculateAverageARRFromModel(model) {
     const resultDiv = document.getElementById('arr-result');
     const loadingDiv = document.getElementById('arr-loading');
@@ -2663,76 +2662,69 @@ function calculateAverageARRFromModel(model) {
     noDataDiv.style.display = 'none';
 
     try {
-        console.log(`Calculating ARR based on ${Object.keys(model.contracts).length} contracts.`);
-
-        if (Object.keys(model.contracts).length === 0) {
+        // Collect all prime contract data for ARR calculation
+        const contracts = [];
+        
+        // Get contracts from the model
+        Object.values(model.contracts).forEach(contract => {
+            // Skip contracts without value
+            if (!contract.value || contract.value <= 0) return;
+            
+            // Extract the raw data
+            const row = contract.raw;
+            if (!row) return;
+            
+            // Get period of performance dates
+            const startDate = row.period_of_performance_start_date;
+            const endDate = row.period_of_performance_current_end_date;
+            
+            // Calculate duration if dates are available
+            let durationDays = 0;
+            if (startDate && endDate) {
+                durationDays = calculateDurationDays(startDate, endDate);
+            }
+            
+            // Add to contracts array if there's a valid duration
+            if (durationDays > 0) {
+                contracts.push({
+                    value: contract.value,
+                    durationDays: durationDays
+                });
+            }
+        });
+        
+        console.log(`Found ${contracts.length} contracts with valid dates and values for ARR calculation`);
+        
+        if (contracts.length === 0) {
             loadingDiv.style.display = 'none';
             noDataDiv.style.display = 'block';
             resultDiv.textContent = formatConciseCurrency(0) + " / yr";
             resultDiv.style.display = 'block';
             return;
         }
-
-        // Variables for simplified ARR calculation
-        let totalAnnualizedValue = 0;
-        let validContractsCount = 0;
         
-        // Process all contracts
-        Object.values(model.contracts).forEach(contract => {
-            // Get the contract value
-            const value = contract.value || 0;
-            
-            // Skip contracts with no value
-            if (value <= 0) return;
-            
-            // Check if we have valid dates for duration
-            let startDate = contract.startDate;
-            let endDate = contract.endDate;
-            
-            // Try alternate fields if needed
-            if ((!startDate || !endDate) && contract.raw) {
-                if (!startDate && contract.raw.period_of_performance_start_date) 
-                    startDate = parseDate(contract.raw.period_of_performance_start_date);
-                    
-                if (!endDate && contract.raw.period_of_performance_current_end_date) 
-                    endDate = parseDate(contract.raw.period_of_performance_current_end_date);
-            }
-            
-            // Calculate duration if we have both dates
-            if (startDate && endDate) {
-                const durationDays = calculateDurationDays(startDate, endDate);
-                
-                // Only process if we have a valid duration
-                if (durationDays > 0) {
-                    // Simple annualized value: (contract value / duration in days) * days in year
-                    const annualizedValue = (value / durationDays) * 365.25;
-                    totalAnnualizedValue += annualizedValue;
-                    validContractsCount++;
-                }
-            }
+        // Calculate simple ARR for each contract and average them
+        let totalAnnualizedValue = 0;
+        contracts.forEach(contract => {
+            const annualizedValue = (contract.value / contract.durationDays) * 365.25;
+            totalAnnualizedValue += annualizedValue;
         });
-
-        // Calculate average ARR
-        if (validContractsCount > 0) {
-            const avgARR = totalAnnualizedValue / validContractsCount;
-            resultDiv.textContent = formatConciseCurrency(avgARR) + " / yr";
-            resultDiv.style.display = 'block';
-            console.log(`Average ARR: ${avgARR.toFixed(0)} (from ${validContractsCount} valid contracts)`);
-            noDataDiv.style.display = 'none';
-        } else {
-            noDataDiv.textContent = 'No contracts with valid duration found.';
-            noDataDiv.style.display = 'block';
-            resultDiv.textContent = formatConciseCurrency(0) + " / yr";
-            resultDiv.style.display = 'block';
-            console.log("No valid contracts found for ARR calculation.");
-        }
+        
+        const averageARR = totalAnnualizedValue / contracts.length;
+        
+        // Display the result
+        resultDiv.textContent = formatConciseCurrency(averageARR) + " / yr";
+        resultDiv.style.display = 'block';
+        loadingDiv.style.display = 'none';
+        noDataDiv.style.display = 'none';
+        
+        console.log(`Calculated ARR: ${formatCurrency(averageARR)} from ${contracts.length} contracts`);
+        
     } catch (error) {
         console.error("Error calculating ARR:", error);
         errorDiv.textContent = `Error calculating ARR: ${error.message}`;
         errorDiv.style.display = 'block';
         resultDiv.style.display = 'none';
-    } finally {
-        // Always hide the loading spinner
         loadingDiv.style.display = 'none';
     }
 }
