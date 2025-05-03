@@ -2115,8 +2115,6 @@ function getCssVar(varName) {
     return '#cccccc'; // Generic fallback
   }
 }
-// sat.js - Replace your existing function with this one
-
 function displayChoroplethMap(mapData) {
     const containerId = 'map-container';
     const container = document.getElementById(containerId);
@@ -2126,34 +2124,39 @@ function displayChoroplethMap(mapData) {
         return;
     }
 
-    cleanupTooltips(); // Assumes this function exists
+    // Assumes cleanupTooltips() function exists and works
+    cleanupTooltips();
 
     // Clear previous content and create map container
     container.innerHTML = '';
     const mapDiv = document.createElement('div');
-    mapDiv.id = 'choroplethMap';
+    mapDiv.id = 'choroplethMap'; // Keep ID for potential CSS targeting
     mapDiv.style.width = '100%';
     mapDiv.style.height = '100%';
     container.appendChild(mapDiv);
 
-    setLoading(containerId, false); // Assumes this function exists
+    // Assumes setLoading() function exists and works
+    setLoading(containerId, false); // Turn off loading spinner
 
     if (!mapData || Object.keys(mapData).length === 0) {
-        displayNoData(containerId, 'No geographic data available for mapping.'); // Assumes this function exists
+        // Assumes displayNoData() function exists and works
+        displayNoData(containerId, 'No geographic data available for mapping.');
         return;
     }
 
     try {
         const width = container.clientWidth;
-        const height = Math.max(container.clientHeight || 0, 300);
+        // Ensure minimum height for map visibility
+        const height = Math.max(container.clientHeight || 0, 300); // Use clientHeight or default
 
-        if (width <= 0 || height <= 100) {
+        if (width <= 0 || height <= 100) { // Increased minimum height check
             console.warn(`Map container has invalid dimensions: ${width}x${height}.`);
-            displayError(containerId, 'Map container has insufficient size.'); // Assumes this function exists
+            // Assumes displayError() function exists and works
+            displayError(containerId, 'Map container has insufficient size.');
             return;
         }
 
-        // --- Get Colors from CSS Variables (Monocle/Print theme) ---
+        // --- Get Colors from CSS Variables ---
         const textColor = getCssVar('--color-text-secondary');
         const tooltipBgColor = getCssVar('--color-surface');
         const tooltipTextColor = getCssVar('--color-text-primary');
@@ -2162,11 +2165,10 @@ function displayChoroplethMap(mapData) {
         const mapStrokeColor = getCssVar('--color-background'); // For state borders (gap effect)
         const hoverStrokeColor = getCssVar('--color-primary'); // Primary accent on hover
         const legendBorderColor = getCssVar('--color-border');
-        // Use a scale from a light surface to the primary chart color
-        const scaleStartColor = getCssVar('--color-surface-container');
-        const scaleEndColor = getCssVar('--chart-color-primary');
-        const tooltipShadow = getCssVar('--shadow-md');
-        const tooltipRadius = getCssVar('--border-radius-sm');
+        const scaleStartColor = getCssVar('--color-surface-container'); // Lightest color for scale
+        const scaleEndColor = getCssVar('--chart-color-primary'); // Darkest color for scale (main accent)
+        const tooltipShadow = getCssVar('--shadow-md'); // Get shadow value
+        const tooltipRadius = getCssVar('--border-radius-sm'); // Get radius value
         // --- End Get Colors ---
 
         const svg = d3.select(mapDiv)
@@ -2175,47 +2177,58 @@ function displayChoroplethMap(mapData) {
             .attr('height', height)
             .attr('viewBox', `0 0 ${width} ${height}`)
             .style('max-width', '100%')
-            .style('height', 'auto');
+            .style('height', 'auto'); // Maintain aspect ratio
 
         const stateValues = Object.values(mapData)
                               .map(d => d.value)
-                              .filter(v => typeof v === 'number' && !isNaN(v));
-        const maxValue = stateValues.length > 0 ? d3.max(stateValues) : 0;
+                              .filter(v => typeof v === 'number' && !isNaN(v)); // Ensure only valid numbers
+        const maxValue = stateValues.length > 0 ? d3.max(stateValues) : 0; // Calculate max from valid numbers
 
-        // --- Define Color Scale ---
+        // --- Define Color Scale using OKLCH Interpolator ---
         let colorScale;
-        // Try OKLCH interpolation first, as it often gives better results
-        // Use the Monocle/Print theme variables fetched above
         try {
+             // Use d3.interpolateOklch since our variables are in OKLCH format
              colorScale = d3.scaleSequential(d3.interpolateOklch(scaleStartColor, scaleEndColor))
-                           .domain([0, maxValue === 0 ? 1 : maxValue])
-                           .clamp(true);
-             // Basic validation
-             if (!colorScale(0) || !colorScale(maxValue)) { throw new Error("Scale returned invalid color"); }
+                           .domain([0, maxValue === 0 ? 1 : maxValue]) // Ensure domain starts at 0
+                           .clamp(true); // Clamp values outside the domain
+
+             // Test if scale returns valid colors - basic check
+             if (!colorScale(0) || !colorScale(maxValue)) {
+                 throw new Error("Color scale generated invalid colors (returned falsy value).");
+             }
         } catch (e) {
-            console.warn("OKLCH interpolation failed for map scale, falling back to RGB.", e);
+            console.error("Failed to create OKLCH color scale, falling back to RGB.", e);
+            // Fallback to a simpler RGB interpolation if OKLCH fails
+            // Note: RGB interpolation might not look as good with OKLCH inputs
             colorScale = d3.scaleSequential(d3.interpolateRgb(scaleStartColor, scaleEndColor))
                            .domain([0, maxValue === 0 ? 1 : maxValue])
                            .clamp(true);
         }
         // --- End Define Color Scale ---
 
-        d3.select("body").selectAll(".map-tooltip").remove(); // Cleanup just in case
 
-        // --- Create Tooltip ---
+        // Ensure previous body tooltips are gone
+        d3.select("body").selectAll(".map-tooltip").remove();
+
+        // --- Create Tooltip using fetched CSS variable colors ---
         const tooltip = d3.select("body")
             .append("div")
             .attr("class", "map-tooltip") // Use class for potential CSS overrides
-            .style("position", "absolute").style("visibility", "hidden").style("opacity", 0)
+            .style("position", "absolute")
+            .style("visibility", "hidden")
+            .style("opacity", 0)
             .style("background-color", tooltipBgColor)
             .style("color", tooltipTextColor)
             .style("border", `1px solid ${tooltipBorderColor}`)
             .style("padding", "8px 12px")
-            .style("border-radius", tooltipRadius)
-            .style("font-size", "12px").style("line-height", "1.4")
-            .style("pointer-events", "none").style("z-index", "9999")
-            .style("box-shadow", tooltipShadow)
-            .style("max-width", "200px").style("transition", "opacity 0.2s ease");
+            .style("border-radius", tooltipRadius) // Use radius variable
+            .style("font-size", "12px")
+            .style("line-height", "1.4")
+            .style("pointer-events", "none")
+            .style("z-index", "9999")
+            .style("box-shadow", tooltipShadow) // Use shadow variable
+            .style("max-width", "200px")
+            .style("transition", "opacity 0.2s ease");
         // --- End Create Tooltip ---
 
         // FIPS to State Name Mapping
@@ -2233,12 +2246,15 @@ function displayChoroplethMap(mapData) {
              "46": "South Dakota", "47": "Tennessee", "48": "Texas", "49": "Utah",
              "50": "Vermont", "51": "Virginia", "53": "Washington", "54": "West Virginia",
              "55": "Wisconsin", "56": "Wyoming", "72": "Puerto Rico"
+             // Add other territories if needed
          };
 
         // Load map data
         d3.json('https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json')
             .then(us => {
-                if (!us || !us.objects || !us.objects.states) { throw new Error("Invalid GeoJSON data"); }
+                if (!us || !us.objects || !us.objects.states) {
+                    throw new Error("Invalid GeoJSON data loaded");
+                }
 
                 const states = topojson.feature(us, us.objects.states);
                 const projection = d3.geoAlbersUsa().fitSize([width, height], states);
@@ -2249,349 +2265,811 @@ function displayChoroplethMap(mapData) {
                    .attr('class', 'states')
                    .selectAll('path')
                    .data(states.features)
-                   .join('path')
+                   .join('path') // Use join for enter/update/exit
                    .attr('d', pathGenerator)
-                   .attr('fill', d => { // ** Fill Logic **
+                   .attr('fill', d => { // ** Critical Fill Logic **
                        const geoJsonId = d.id;
                        const fipsCode = geoJsonId?.toString().padStart(2, '0');
                        const stateData = fipsCode ? mapData[fipsCode] : null;
                        const value = stateData ? stateData.value : null;
 
+                       // Check if data exists and value is a valid number >= 0
                        if (stateData && typeof value === 'number' && !isNaN(value) && value >= 0) {
                            try {
                                const calculatedColor = colorScale(value);
-                               if (calculatedColor && typeof calculatedColor === 'string') { return calculatedColor; }
-                               else { console.warn(`Invalid color from scale for FIPS ${fipsCode}`, calculatedColor); return defaultFillColor; }
-                           } catch(scaleError) { console.error(`Scale error FIPS ${fipsCode}:`, scaleError); return defaultFillColor; }
-                       } else { return defaultFillColor; }
+                               // Basic check if colorScale returned a valid string
+                               if (calculatedColor && typeof calculatedColor === 'string') {
+                                    return calculatedColor;
+                               } else {
+                                    console.warn(`Invalid color from scale for FIPS ${fipsCode}, value ${value}:`, calculatedColor);
+                                    return defaultFillColor; // Fallback if scale returns odd value
+                               }
+                           } catch(scaleError) {
+                                console.error(`Error applying scale for FIPS ${fipsCode}, value ${value}:`, scaleError);
+                                return defaultFillColor; // Fallback on error
+                           }
+                       } else {
+                           // Use default color if no data or invalid value
+                           // console.log(`Using default fill for FIPS ${fipsCode}`); // Optional debug
+                           return defaultFillColor;
+                       }
                    })
                    .attr('stroke', mapStrokeColor)
                    .attr('stroke-width', 0.5)
                    .style('cursor', 'pointer')
                    .on('mouseover', function(event, d) {
-                        tooltip.style("visibility", "visible").style("opacity", 1);
-                        const fipsCode = d.id?.toString().padStart(2, '0');
-                        const stateData = fipsCode ? mapData[fipsCode] : null;
-                        const stateName = fipsCode ? (fipsToStateName[fipsCode] || `ID: ${fipsCode}`) : "Unknown";
-                        let tooltipHtml = `<strong>${stateName}</strong>`;
-                        if (stateData && typeof stateData.value === 'number') {
-                           tooltipHtml += `<div style="margin-top: 4px;">Total Value: ${formatCurrency(stateData.value)}</div><div>Contracts: ${stateData.count ? stateData.count.toLocaleString() : 'N/A'}</div>`;
-                        } else { tooltipHtml += `<br><span style="opacity: 0.7;">No data available</span>`; }
-                        tooltip.html(tooltipHtml);
-                        d3.select(this).attr("stroke", hoverStrokeColor).attr("stroke-width", 1.5).raise();
+                       tooltip.style("visibility", "visible").style("opacity", 1);
+
+                       const fipsCode = d.id?.toString().padStart(2, '0');
+                       const stateData = fipsCode ? mapData[fipsCode] : null;
+                       const stateName = fipsCode ? (fipsToStateName[fipsCode] || `ID: ${fipsCode}`) : "Unknown";
+
+                       let tooltipHtml = `<strong>${stateName}</strong>`;
+                       if (stateData && typeof stateData.value === 'number') { // Check value type
+                           tooltipHtml += `
+                               <div style="margin-top: 4px;">Total Value: ${formatCurrency(stateData.value)}</div>
+                               <div>Contracts: ${stateData.count ? stateData.count.toLocaleString() : 'N/A'}</div>`;
+                       } else {
+                           tooltipHtml += `<br><span style="opacity: 0.7;">No data available</span>`; // Clearer message
+                       }
+                       tooltip.html(tooltipHtml);
+
+                       d3.select(this)
+                           .attr("stroke", hoverStrokeColor)
+                           .attr("stroke-width", 1.5)
+                           .raise();
                    })
-                   .on('mousemove', function(event) { /* ... tooltip positioning logic ... */
-                       const tooltipNode = tooltip.node(); if (!tooltipNode) return;
-                       const tooltipWidth = tooltipNode.offsetWidth; const tooltipHeight = tooltipNode.offsetHeight; const padding = 15;
-                       let left = event.pageX + padding; let top = event.pageY - (tooltipHeight / 2);
-                       if (left + tooltipWidth > window.innerWidth - padding) { left = event.pageX - tooltipWidth - padding; }
-                       if (left < padding) { left = padding; }
-                       if (top + tooltipHeight > window.innerHeight - padding) { top = window.innerHeight - tooltipHeight - padding; }
-                       if (top < padding) { top = padding; }
-                       tooltip.style("left", `${left}px`).style("top", `${top}px`);
+                   .on('mousemove', function(event) {
+                        // Improved tooltip positioning logic
+                        const tooltipNode = tooltip.node();
+                        if (!tooltipNode) return; // Exit if tooltip node isn't available yet
+
+                        const tooltipWidth = tooltipNode.offsetWidth;
+                        const tooltipHeight = tooltipNode.offsetHeight;
+                        const padding = 15; // Space from cursor
+                        let left = event.pageX + padding;
+                        let top = event.pageY - (tooltipHeight / 2); // Attempt vertical center
+
+                        // Adjust horizontal position if off-screen right
+                        if (left + tooltipWidth > window.innerWidth - padding) {
+                            left = event.pageX - tooltipWidth - padding;
+                        }
+                         // Adjust horizontal position if off-screen left
+                        if (left < padding) {
+                           left = padding;
+                        }
+                        // Adjust vertical position if off-screen bottom
+                        if (top + tooltipHeight > window.innerHeight - padding) {
+                           top = window.innerHeight - tooltipHeight - padding;
+                        }
+                         // Adjust vertical position if off-screen top
+                        if (top < padding) {
+                           top = padding;
+                        }
+
+                        tooltip.style("left", `${left}px`).style("top", `${top}px`);
                    })
                    .on('mouseout', function() {
-                        tooltip.style("visibility", "hidden").style("opacity", 0);
-                        d3.select(this).attr("stroke", mapStrokeColor).attr("stroke-width", 0.5);
+                       tooltip.style("visibility", "hidden").style("opacity", 0);
+                       d3.select(this)
+                           .attr("stroke", mapStrokeColor)
+                           .attr("stroke-width", 0.5);
                    });
                 // --- End Draw States ---
 
+
                 // --- Draw Legend ---
-                const legendWidth = Math.min(width * 0.4, 180); const legendHeight = 8;
-                const legendX = width - legendWidth - 15; const legendY = height - 30;
+                const legendWidth = Math.min(width * 0.4, 180);
+                const legendHeight = 8;
+                const legendX = width - legendWidth - 15;
+                const legendY = height - 30;
                 const legendGroup = svg.append("g").attr("transform", `translate(${legendX}, ${legendY})`);
-                const numBins = 5; const binMaxValue = maxValue === 0 ? 1 : maxValue;
-                const legendDomain = d3.range(0, binMaxValue, binMaxValue / numBins); legendDomain.push(binMaxValue);
+                const numBins = 5;
+                const binMaxValue = maxValue === 0 ? 1 : maxValue;
+                const legendDomain = d3.range(0, binMaxValue, binMaxValue / numBins);
+                legendDomain.push(binMaxValue); // Ensure max value is included for range mapping
                 const binWidth = legendWidth / numBins;
-                legendGroup.append('text').attr('class', 'legend-text')
-                    .attr('x', legendWidth / 2).attr('y', -5).attr('text-anchor', 'middle').attr('font-size', '10px')
-                    .attr('fill', textColor).text('Contract Value');
-                legendGroup.selectAll('rect').data(legendDomain.slice(0, numBins)).join('rect').attr('class', 'legend-rect')
-                    .attr('x', (d, i) => i * binWidth).attr('y', 0).attr('width', binWidth).attr('height', legendHeight)
-                    .attr('fill', d => colorScale(d)).attr('stroke', legendBorderColor).attr('stroke-width', 0.5);
-                legendGroup.append('text').attr('class', 'legend-text')
-                    .attr('x', 0).attr('y', legendHeight + 9).attr('text-anchor', 'start').attr('font-size', '9px')
-                    .attr('fill', textColor).text('Low');
-                legendGroup.append('text').attr('class', 'legend-text')
-                    .attr('x', legendWidth).attr('y', legendHeight + 9).attr('text-anchor', 'end').attr('font-size', '9px')
-                    .attr('fill', textColor).text('High');
+
+                legendGroup.append('text')
+                    .attr('class', 'legend-text')
+                    .attr('x', legendWidth / 2).attr('y', -5)
+                    .attr('text-anchor', 'middle').attr('font-size', '10px')
+                    .attr('fill', textColor) // Use var
+                    .text('Contract Value');
+
+                legendGroup.selectAll('rect')
+                    .data(legendDomain.slice(0, numBins))
+                    .join('rect')
+                    .attr('class', 'legend-rect')
+                    .attr('x', (d, i) => i * binWidth).attr('y', 0)
+                    .attr('width', binWidth).attr('height', legendHeight)
+                    .attr('fill', d => colorScale(d)) // Color based on start of bin range
+                    .attr('stroke', legendBorderColor) // Use var
+                    .attr('stroke-width', 0.5);
+
+                legendGroup.append('text')
+                    .attr('class', 'legend-text')
+                    .attr('x', 0).attr('y', legendHeight + 9)
+                    .attr('text-anchor', 'start').attr('font-size', '9px')
+                    .attr('fill', textColor) // Use var
+                    .text('Low');
+
+                legendGroup.append('text')
+                    .attr('class', 'legend-text')
+                    .attr('x', legendWidth).attr('y', legendHeight + 9)
+                    .attr('text-anchor', 'end').attr('font-size', '9px')
+                    .attr('fill', textColor) // Use var
+                    .text('High');
                 // --- End Draw Legend ---
 
             })
             .catch(error => {
-                console.error("Error loading or processing GeoJSON/Map:", error);
+                console.error("Error loading or processing GeoJSON for map:", error);
+                // Assumes displayError() exists
                 displayError(containerId, `Error rendering map: ${error.message}`);
                 d3.select("body").selectAll(".map-tooltip").remove();
             });
     } catch (error) {
         console.error("Error creating choropleth map:", error);
+         // Assumes displayError() exists
         displayError(containerId, `Failed to render map: ${error.message}`);
         d3.select("body").selectAll(".map-tooltip").remove();
     }
 }
 function displayEnhancedSankeyChart(model) {
-    console.log("Rendering Split Panel Sankey with 'Monocle/Print' theme");
-
+    console.log("Rendering Simplified Split Panel Sankey chart with model data");
+    
     const containerId = 'sankey-chart-container';
     const container = document.getElementById(containerId);
-
-    if (!container) { /* ... error handling ... */ return; }
-
-    container.innerHTML = ''; // Clear previous
-    cleanupTooltips(); // Ensure old tooltips are gone
-
-    // Setup container layout
-    container.style.display = 'flex';
-    container.style.flexDirection = 'row';
-    container.style.gap = getCssVar('--bento-gap') || '20px'; // Use gap variable
-
-    // Create panels and SVGs
-    const leftPanelContainer = document.createElement('div');
-    leftPanelContainer.id = 'agency-prime-panel'; leftPanelContainer.style.flex = '1';
-    const rightPanelContainer = document.createElement('div');
-    rightPanelContainer.id = 'prime-sub-panel'; rightPanelContainer.style.flex = '1';
-    container.appendChild(leftPanelContainer); container.appendChild(rightPanelContainer);
-
-    const leftSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    leftSvg.id = 'agency-prime-sankey'; leftSvg.style.width = '100%'; leftSvg.style.height = '100%';
-    leftPanelContainer.appendChild(leftSvg);
-    const rightSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    rightSvg.id = 'prime-sub-sankey'; rightSvg.style.width = '100%'; rightSvg.style.height = '100%';
-    rightPanelContainer.appendChild(rightSvg);
-
-    setLoading(containerId, false);
-
-    if (!model || (!model.relationships.agencyToPrime?.length && !model.relationships.primeToSub?.length)) {
-        displayNoData(containerId, 'No data available for Sankey diagram.');
+    
+    if (!container) {
+        console.error("Sankey chart container not found.");
         return;
     }
 
+    // Clear any previous content
+    container.innerHTML = '';
+    
+    // Set up container layout for split panels
+    container.style.display = 'flex';
+    container.style.flexDirection = 'row';
+    container.style.gap = '20px';
+    
+    // Create container for each panel
+    const leftPanelContainer = document.createElement('div');
+    leftPanelContainer.id = 'agency-prime-panel';
+    leftPanelContainer.style.flex = '1';
+    
+    const rightPanelContainer = document.createElement('div');
+    rightPanelContainer.id = 'prime-sub-panel';
+    rightPanelContainer.style.flex = '1';
+    
+    container.appendChild(leftPanelContainer);
+    container.appendChild(rightPanelContainer);
+    
+    // Create SVGs for each panel
+    const leftSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    leftSvg.id = 'agency-prime-sankey';
+    leftSvg.setAttribute('width', '100%');
+    leftSvg.setAttribute('height', '100%');
+    leftPanelContainer.appendChild(leftSvg);
+    
+    const rightSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    rightSvg.id = 'prime-sub-sankey';
+    rightSvg.setAttribute('width', '100%');
+    rightSvg.setAttribute('height', '100%');
+    rightPanelContainer.appendChild(rightSvg);
+    
+    setLoading(containerId, false);
+    
+    // Check if we have valid model data
+    if (!model || 
+        (!model.relationships.agencyToPrime.length && !model.relationships.primeToSub.length)) {
+        displayNoData(containerId, 'No data available for Sankey diagram.');
+        return;
+    }
+    
     try {
-        // --- Get Theme Colors ("Monocle/Print") ---
-        const nodeColors = {
-            agency: getCssVar('--chart-color-tertiary'),    // Desat purple 300 / Dark Accent 3
-            prime: getCssVar('--chart-color-primary'),     // Desat purple 400 / Dark Accent 1
-            sub: getCssVar('--chart-color-secondary')      // Desat purple 500 / Dark Accent 2
-        };
-        const linkColor = getCssVar('--color-border');     // Desat purple 200 / Dark Surface 2
-        const textColor = getCssVar('--color-text-secondary'); // Desat purple 600 / Light Desat P 300
-        const nodeStrokeColor = getCssVar('--color-surface'); // Desat purple 50 / Dark Surface 1
-        const tooltipBgColor = getCssVar('--color-surface');
-        const tooltipTextColor = getCssVar('--color-text-primary');
-        const tooltipBorderColor = getCssVar('--color-border');
-        const panelTitleColor = getCssVar('--color-text-primary');
-        // --- End Get Theme Colors ---
-
-
-        // Tooltip setup (ensure only one)
-        d3.select("body").selectAll(".sankey-tooltip").remove(); // Remove any old ones first
-        const tooltip = d3.select("body").append("div")
-            .attr("class", "sankey-tooltip") // Use class for CSS targeting
-            .style("position", "absolute").style("visibility", "hidden").style("opacity", 0)
-            .style("background-color", tooltipBgColor)
-            .style("color", tooltipTextColor)
-            .style("border", `1px solid ${tooltipBorderColor}`)
-            .style("padding", "8px 12px")
-            .style("border-radius", getCssVar('--border-radius-sm'))
-            .style("font-size", "11px").style("line-height", "1.3") // Slightly smaller tooltip
-            .style("pointer-events", "none").style("z-index", "9999")
-            .style("box-shadow", getCssVar('--shadow-md'))
-            .style("max-width", "250px").style("transition", "opacity 0.2s ease");
-
-
+        // Create a simple tooltip div
+        let tooltip = document.getElementById('sankey-tooltip');
+        if (!tooltip) {
+            tooltip = document.createElement('div');
+            tooltip.id = 'sankey-tooltip';
+            tooltip.style.position = 'absolute';
+            tooltip.style.padding = '10px';
+            tooltip.style.backgroundColor = '#FFFFFF';
+            tooltip.style.color = '#36323A';
+            tooltip.style.border = '1px solid #D7D4DC';
+            tooltip.style.borderRadius = '4px';
+            tooltip.style.pointerEvents = 'none';
+            tooltip.style.zIndex = '9999';
+            tooltip.style.display = 'none';
+            tooltip.style.fontSize = '12px';
+            tooltip.style.boxShadow = '0 2px 4px rgba(0,0,0,0.2)';
+            document.body.appendChild(tooltip);
+        }
+        
+        // Check theme for tooltip appearance
+        const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
+        if (isDarkMode) {
+            tooltip.style.backgroundColor = '#252229';
+            tooltip.style.color = '#F4F2F6';
+            tooltip.style.border = '1px solid #3A373E';
+        }
+        
         // Add panel titles
-        leftPanelContainer.insertAdjacentHTML('afterbegin',
-            `<div style="text-align: center; margin-bottom: 10px; font-weight: 500; font-size: 12px; color: ${panelTitleColor};">
+        leftPanelContainer.insertAdjacentHTML('afterbegin', 
+            `<div style="text-align: center; margin-bottom: 10px; font-weight: bold; color: ${isDarkMode ? '#F4F2F6' : '#36323A'};">
                 Agency to Prime Contractors
             </div>`
         );
-        rightPanelContainer.insertAdjacentHTML('afterbegin',
-            `<div style="text-align: center; margin-bottom: 10px; font-weight: 500; font-size: 12px; color: ${panelTitleColor};">
+        
+        rightPanelContainer.insertAdjacentHTML('afterbegin', 
+            `<div style="text-align: center; margin-bottom: 10px; font-weight: bold; color: ${isDarkMode ? '#F4F2F6' : '#36323A'};">
                 Prime to Subcontractors
             </div>`
         );
+        
+        // Set dimensions for each panel
+        const panelWidth = leftPanelContainer.clientWidth || 300;
+        const panelHeight = leftPanelContainer.clientHeight || 400;
+        const margin = {top: 20, right: 20, bottom: 20, left: 20};
+        
+       // Choose colors based on theme
+    const nodeColors = {
+        agency: getCssVar('--chart-color-tertiary'),    // Desat purple 300 / Dark tertiary accent
+        prime: getCssVar('--chart-color-primary'),     // Desat purple 400 / Dark primary accent
+        sub: getCssVar('--chart-color-secondary')      // Desat purple 500 / Dark secondary accent
+    };
+    const linkColor = getCssVar('--color-border');     // Desat purple 200 / Dark surface 2
+    const textColor = getCssVar('--color-text-secondary'); // Desat purple 600 / Light desat purple 300
+    const nodeStrokeColor = getCssVar('--color-surface'); // Desat purple 50 / Dark surface 1
 
-        // Dimensions (ensure panels are rendered before getting clientWidth/Height)
-        // Use a fallback or wait slightly if dimensions are 0 initially
-        let panelWidth = leftPanelContainer.clientWidth;
-        let panelHeight = leftPanelContainer.clientHeight;
-        if (!panelWidth || panelWidth <=0 ) panelWidth = (container.clientWidth / 2) - 20 || 300;
-        if (!panelHeight || panelHeight <= 0) panelHeight = 400; // Default height
-
-        const margin = {top: 30, right: 10, bottom: 20, left: 10}; // Adjust margin for titles
-        const sankeyWidth = panelWidth - margin.left - margin.right;
-        const sankeyHeight = panelHeight - margin.top - margin.bottom;
-
-
-        const leftSvgSelection = d3.select(leftSvg).attr('width', panelWidth).attr('height', panelHeight);
-        const rightSvgSelection = d3.select(rightSvg).attr('width', panelWidth).attr('height', panelHeight);
-
-        // Filter top N links for clarity
-        const topN = 10;
+     
+        // Create D3 selections
+        const leftSvgSelection = d3.select(leftSvg)
+            .attr('width', panelWidth)
+            .attr('height', panelHeight);
+            
+        const rightSvgSelection = d3.select(rightSvg)
+            .attr('width', panelWidth)
+            .attr('height', panelHeight);
+        
+        console.log("Processing relationships for Sankey diagram...");
+        console.log("Agency to Prime links:", model.relationships.agencyToPrime.length);
+        console.log("Prime to Sub links:", model.relationships.primeToSub.length);
+        
+        // Filter links to only show top 10 connections by value for each panel
         const topAgencyToPrime = model.relationships.agencyToPrime
             .sort((a, b) => b.value - a.value)
-            .slice(0, topN);
+            .slice(0, 10);
+            
         const topPrimeToSub = model.relationships.primeToSub
             .sort((a, b) => b.value - a.value)
-            .slice(0, topN);
-
-        // Square root scaling for link width (optional, makes smaller links more visible)
-         const linkWidthScale = d3.scaleSqrt()
-             .domain([0, d3.max([...topAgencyToPrime, ...topPrimeToSub], d => d.value) || 1])
-             .range([1, 12]); // Min width 1px, Max width 12px
-
-
-        // --- Process and Draw Left Panel (Agency -> Prime) ---
-        if (topAgencyToPrime.length > 0) {
-            const leftNodes = []; const leftLinks = []; const leftNodeMap = {};
-            const getLeftNode = (id, type, name) => { // Pass name directly
-                 if (leftNodeMap[id] !== undefined) return leftNodeMap[id];
-                 const nodeIndex = leftNodes.length;
-                 leftNodes.push({ name: truncateText(name, 25), id: id, type: type, index: nodeIndex });
-                 leftNodeMap[id] = nodeIndex;
-                 return nodeIndex;
+            .slice(0, 10);
+            
+        console.log("Top agency to prime links:", topAgencyToPrime.length);
+        console.log("Top prime to sub links:", topPrimeToSub.length);
+        
+        // Find min and max values for right panel links to calculate scaling factor
+        const minSubValue = topPrimeToSub.length > 0 ? 
+            d3.min(topPrimeToSub, d => d.value) || 1 : 1;
+        const maxSubValue = topPrimeToSub.length > 0 ? 
+            d3.max(topPrimeToSub, d => d.value) || 1 : 1;
+        
+        // Square root scaling for the right panel
+        // This provides good balance for visualizing small vs. large values
+        const sqrtScale = d => {
+            // Base width ensures that small links are still visible
+            const baseWidth = 1.5;
+            // Use square root scaling to give better visual balance
+            const normalizedValue = Math.sqrt(d.value / minSubValue);
+            return baseWidth + normalizedValue * 6;
+        };
+        
+        // ===== FIRST PANEL: AGENCY TO PRIME =====
+        
+        // Setup for the first panel
+        const leftNodes = [];
+        const leftLinks = [];
+        const leftNodeMap = {};
+        
+        // Function to get or create a node for left panel
+        const getLeftNode = (id, type) => {
+            if (leftNodeMap[id] !== undefined) {
+                return leftNodeMap[id];
+            }
+            
+            // Get entity from model
+            let entity;
+            switch (type) {
+                case 'agency':
+                    entity = model.agencies[id];
+                    break;
+                case 'prime':
+                    entity = model.primes[id];
+                    break;
+            }
+            
+            if (!entity) {
+                console.warn(`Entity not found for left panel: ${id} (${type})`);
+                return null;
+            }
+            
+            const nodeIndex = leftNodes.length;
+            const node = {
+                name: truncateText(entity.name, 30),
+                id: id,
+                type: type,
+                index: nodeIndex
             };
-            topAgencyToPrime.forEach(link => {
-                const agencyName = model.agencies[link.source]?.name || "Unknown Agency";
-                const primeName = model.primes[link.target]?.name || "Unknown Prime";
-                const sourceIndex = getLeftNode(link.source, 'agency', agencyName);
-                const targetIndex = getLeftNode(link.target, 'prime', primeName);
-                if (sourceIndex !== null && targetIndex !== null) {
-                     leftLinks.push({ source: sourceIndex, target: targetIndex, value: link.value });
+            
+            leftNodes.push(node);
+            leftNodeMap[id] = nodeIndex;
+            return nodeIndex;
+        };
+        
+        // Add Agency to Prime links for left panel
+        topAgencyToPrime.forEach(link => {
+            const agencyId = link.source;
+            const primeId = link.target;
+            
+            const sourceIndex = getLeftNode(agencyId, 'agency');
+            const targetIndex = getLeftNode(primeId, 'prime');
+            
+            if (sourceIndex !== null && targetIndex !== null) {
+                leftLinks.push({
+                    source: sourceIndex,
+                    target: targetIndex,
+                    value: link.value
+                });
+            }
+        });
+        
+        console.log("Left panel nodes:", leftNodes.length);
+        console.log("Left panel links:", leftLinks.length);
+        
+        // Create Sankey generator for left panel
+        const leftSankey = d3.sankey()
+            .nodeWidth(15)
+            .nodePadding(10)
+            .extent([[margin.left, margin.top], [panelWidth - margin.right, panelHeight - margin.bottom]]);
+        
+        // Apply Sankey to left panel data
+        const leftGraph = leftSankey({
+            nodes: leftNodes.map(d => Object.assign({}, d)),
+            links: leftLinks.map(d => Object.assign({}, d))
+        });
+        
+        // Draw links with gradients for left panel
+        const leftDefs = leftSvgSelection.append('defs');
+        
+        leftGraph.links.forEach((link, i) => {
+            const gradientId = `left-link-gradient-${i}`;
+            const sourceColor = nodeColors[link.source.type] || '#999';
+            const targetColor = nodeColors[link.target.type] || '#999';
+            
+            const gradient = leftDefs.append('linearGradient')
+                .attr('id', gradientId)
+                .attr('gradientUnits', 'userSpaceOnUse')
+                .attr('x1', link.source.x1)
+                .attr('y1', link.source.y0 + (link.source.y1 - link.source.y0) / 2)
+                .attr('x2', link.target.x0)
+                .attr('y2', link.target.y0 + (link.target.y1 - link.target.y0) / 2);
+                
+            gradient.append('stop')
+                .attr('offset', '0%')
+                .attr('stop-color', sourceColor)
+                .attr('stop-opacity', 0.8);
+                
+            gradient.append('stop')
+                .attr('offset', '100%')
+                .attr('stop-color', targetColor)
+                .attr('stop-opacity', 0.8);
+                
+            link.gradientId = gradientId;
+        });
+        
+        // Store prime contractor nodes from left panel for reference
+        const primeNodes = leftGraph.nodes.filter(node => node.type === 'prime');
+        const primeNodeLookup = {}; // For cross-panel highlighting
+        primeNodes.forEach(node => {
+            primeNodeLookup[node.id] = node;
+        });
+        
+        // Draw links for left panel
+        leftSvgSelection.append('g')
+            .selectAll('path')
+            .data(leftGraph.links)
+            .enter()
+            .append('path')
+            .attr('d', d3.sankeyLinkHorizontal())
+            .attr('stroke', (d) => `url(#${d.gradientId})`)
+            .attr('stroke-width', d => Math.max(1, d.width))
+            .attr('stroke-opacity', 0.5)
+            .attr('fill', 'none')
+            .attr('cursor', 'pointer')
+            .on('mouseover', function(event, d) {
+                // Show tooltip
+                const html = `
+                    <div style="font-weight: bold; margin-bottom: 5px;">${d.source.name} → ${d.target.name}</div>
+                    <div>Value: ${formatCurrency(d.value)}</div>
+                `;
+                tooltip.innerHTML = html;
+                tooltip.style.display = 'block';
+                tooltip.style.left = (event.pageX + 10) + 'px';
+                tooltip.style.top = (event.pageY - 28) + 'px';
+                
+                // Highlight link
+                d3.select(this).attr('stroke-opacity', 0.8);
+                
+                // Also highlight the corresponding prime contractor in right panel if it exists
+                if (d.target.type === 'prime') {
+                    rightSvgSelection.selectAll('rect')
+                        .filter(node => node.type === 'prime' && node.id === d.target.id)
+                        .attr('stroke', isDarkMode ? '#A29AAA' : '#9993A1')
+                        .attr('stroke-width', 2);
+                }
+            })
+            .on('mousemove', function(event) {
+                tooltip.style.left = (event.pageX + 10) + 'px';
+                tooltip.style.top = (event.pageY - 28) + 'px';
+            })
+            .on('mouseout', function() {
+                tooltip.style.display = 'none';
+                d3.select(this).attr('stroke-opacity', 0.5);
+                
+                // Remove highlighting from right panel
+                rightSvgSelection.selectAll('rect')
+                    .attr('stroke', isDarkMode ? '#4A474E' : '#E9E6ED')
+                    .attr('stroke-width', 1);
+            });
+        
+        // Draw nodes for left panel
+        leftSvgSelection.append('g')
+            .selectAll('rect')
+            .data(leftGraph.nodes)
+            .enter()
+            .append('rect')
+            .attr('x', d => d.x0)
+            .attr('y', d => d.y0)
+            .attr('height', d => Math.max(1, d.y1 - d.y0))
+            .attr('width', d => Math.max(1, d.x1 - d.x0))
+            .attr('fill', d => nodeColors[d.type] || '#999')
+            .attr('stroke', isDarkMode ? '#4A474E' : '#E9E6ED')
+            .attr('cursor', 'pointer')
+            .attr('data-id', d => d.id)
+            .attr('data-type', d => d.type)
+            .on('mouseover', function(event, d) {
+                // Show tooltip
+                const html = `
+                    <div style="font-weight: bold; margin-bottom: 5px;">${d.name}</div>
+                    <div>Type: ${d.type.charAt(0).toUpperCase() + d.type.slice(1)}</div>
+                    <div>Total Value: ${formatCurrency(d.value)}</div>
+                `;
+                tooltip.innerHTML = html;
+                tooltip.style.display = 'block';
+                tooltip.style.left = (event.pageX + 10) + 'px';
+                tooltip.style.top = (event.pageY - 28) + 'px';
+                
+                // Highlight node
+                d3.select(this)
+                    .attr('stroke', isDarkMode ? '#A29AAA' : '#9993A1')
+                    .attr('stroke-width', 2);
+                
+                // Cross-panel highlighting for primes
+                if (d.type === 'prime') {
+                    rightSvgSelection.selectAll('rect')
+                        .filter(node => node.type === 'prime' && node.id === d.id)
+                        .attr('stroke', isDarkMode ? '#A29AAA' : '#9993A1')
+                        .attr('stroke-width', 2);
+                }
+            })
+            .on('mousemove', function(event) {
+                tooltip.style.left = (event.pageX + 10) + 'px';
+                tooltip.style.top = (event.pageY - 28) + 'px';
+            })
+            .on('mouseout', function() {
+                tooltip.style.display = 'none';
+                d3.select(this)
+                    .attr('stroke', isDarkMode ? '#4A474E' : '#E9E6ED')
+                    .attr('stroke-width', 1);
+                
+                // Remove highlight from right panel
+                rightSvgSelection.selectAll('rect')
+                    .attr('stroke', isDarkMode ? '#4A474E' : '#E9E6ED')
+                    .attr('stroke-width', 1);
+            });
+        
+        // Add node labels for left panel
+        leftSvgSelection.append('g')
+            .selectAll('text')
+            .data(leftGraph.nodes)
+            .enter()
+            .append('text')
+            .attr('x', d => d.x0 < panelWidth / 2 ? d.x1 + 6 : d.x0 - 6)
+            .attr('y', d => (d.y1 + d.y0) / 2)
+            .attr('dy', '0.35em')
+            .attr('text-anchor', d => d.x0 < panelWidth / 2 ? 'start' : 'end')
+            .text(d => d.name)
+            .attr('font-size', '10px')
+            .attr('fill', textColor)
+            .each(function(d) {
+                // Hide labels for small nodes
+                if ((d.y1 - d.y0) < 10) {
+                    d3.select(this).remove();
                 }
             });
-
-            const leftSankey = d3.sankey()
-                .nodeWidth(10).nodePadding(8) // Slimmer nodes/padding
-                .extent([[margin.left, margin.top], [sankeyWidth + margin.left, sankeyHeight + margin.top]]); // Use calculated dimensions
-            const leftGraph = leftSankey({ nodes: leftNodes.map(d => ({...d})), links: leftLinks.map(d => ({...d})) });
-
-            // Draw Links
-            leftSvgSelection.append('g').selectAll('path')
-                .data(leftGraph.links).join('path')
-                .attr('d', d3.sankeyLinkHorizontal())
-                .attr('stroke', linkColor) // Use var
-                .attr('stroke-width', d => linkWidthScale(d.value)) // Use scale
-                .attr('stroke-opacity', 0.4)
-                .attr('fill', 'none')
-                .style('cursor', 'pointer')
-                .on('mouseover', function(event, d) { /* ... tooltip logic ... */ tooltip.html(/* ... */); d3.select(this).attr('stroke-opacity', 0.7); })
-                .on('mousemove', function(event) { /* ... tooltip position ... */ })
-                .on('mouseout', function() { /* ... hide tooltip ... */ d3.select(this).attr('stroke-opacity', 0.4); });
-
-            // Draw Nodes
-            leftSvgSelection.append('g').selectAll('rect')
-                .data(leftGraph.nodes).join('rect')
-                .attr('x', d => d.x0).attr('y', d => d.y0)
-                .attr('height', d => Math.max(1, d.y1 - d.y0))
-                .attr('width', d => d.x1 - d.x0)
-                .attr('fill', d => nodeColors[d.type] || nodeColors.agency) // Use vars
-                .attr('stroke', nodeStrokeColor) // Use var
-                .attr('stroke-width', 0.5)
-                .style('cursor', 'pointer')
-                .on('mouseover', function(event, d) { /* ... tooltip logic ... */ tooltip.html(/* ... */); d3.select(this).attr('stroke', hoverStrokeColor); })
-                .on('mousemove', function(event) { /* ... tooltip position ... */ })
-                .on('mouseout', function() { /* ... hide tooltip ... */ d3.select(this).attr('stroke', nodeStrokeColor); });
-
-            // Draw Labels
-            leftSvgSelection.append('g').selectAll('text')
-                .data(leftGraph.nodes).join('text')
-                .attr('x', d => d.x0 < sankeyWidth / 2 ? d.x1 + 6 : d.x0 - 6)
-                .attr('y', d => (d.y1 + d.y0) / 2).attr('dy', '0.35em')
-                .attr('text-anchor', d => d.x0 < sankeyWidth / 2 ? 'start' : 'end')
-                .text(d => d.name)
-                .attr('font-size', '10px').attr('fill', textColor); // Use var
-        } else {
-            // Show message if no Agency->Prime data
-            leftSvgSelection.append("text").attr("x", panelWidth / 2).attr("y", panelHeight / 2)
-                .attr("text-anchor", "middle").attr("font-size", "12px").attr("fill", textColor)
-                .text("No Agency to Prime data");
-        }
-
-
-        // --- Process and Draw Right Panel (Prime -> Sub) ---
+            
+        // Add note about showing only top connections
+        leftSvgSelection.append("text")
+            .attr("x", panelWidth - 10)
+            .attr("y", panelHeight - 10)
+            .attr("text-anchor", "end")
+            .attr("font-size", "10px")
+            .attr("fill", textColor)
+            .attr("opacity", 0.7)
+            .text("Showing top 10 flows by value");
+        
+        // ===== SECOND PANEL: PRIME TO SUB =====
         if (topPrimeToSub.length > 0) {
-            const rightNodes = []; const rightLinks = []; const rightNodeMap = {};
-             const getRightNode = (id, type, name) => { // Pass name directly
-                 if (rightNodeMap[id] !== undefined) return rightNodeMap[id];
-                 const nodeIndex = rightNodes.length;
-                 rightNodes.push({ name: truncateText(name, 25), id: id, type: type, index: nodeIndex });
-                 rightNodeMap[id] = nodeIndex;
-                 return nodeIndex;
+            // Setup for the second panel
+            const rightNodes = [];
+            const rightLinks = [];
+            const rightNodeMap = {};
+            
+            // Function to get or create a node for right panel
+            const getRightNode = (id, type) => {
+                if (rightNodeMap[id] !== undefined) {
+                    return rightNodeMap[id];
+                }
+                
+                // Get entity from model
+                let entity;
+                switch (type) {
+                    case 'prime':
+                        entity = model.primes[id];
+                        // Add visual indicator for primes that appear in both panels
+                        if (leftNodeMap[id] !== undefined) {
+                            entity.inBothPanels = true;
+                        }
+                        break;
+                    case 'sub':
+                        entity = model.subs[id];
+                        break;
+                }
+                
+                if (!entity) {
+                    console.warn(`Entity not found for right panel: ${id} (${type})`);
+                    return null;
+                }
+                
+                const nodeIndex = rightNodes.length;
+                const node = {
+                    name: truncateText(entity.name, 30),
+                    id: id,
+                    type: type,
+                    index: nodeIndex,
+                    inBothPanels: entity.inBothPanels
+                };
+                
+                rightNodes.push(node);
+                rightNodeMap[id] = nodeIndex;
+                return nodeIndex;
             };
-             topPrimeToSub.forEach(link => {
-                const primeName = model.primes[link.source]?.name || "Unknown Prime";
-                const subName = model.subs[link.target]?.name || "Unknown Sub";
-                const sourceIndex = getRightNode(link.source, 'prime', primeName);
-                const targetIndex = getRightNode(link.target, 'sub', subName);
+            
+            // Add Prime to Sub links for right panel
+            topPrimeToSub.forEach(link => {
+                const primeId = link.source;
+                const subId = link.target;
+                
+                const sourceIndex = getRightNode(primeId, 'prime');
+                const targetIndex = getRightNode(subId, 'sub');
+                
                 if (sourceIndex !== null && targetIndex !== null) {
-                     rightLinks.push({ source: sourceIndex, target: targetIndex, value: link.value });
+                    rightLinks.push({
+                        source: sourceIndex,
+                        target: targetIndex,
+                        value: link.value
+                    });
                 }
             });
-
+            
+            console.log("Right panel nodes:", rightNodes.length);
+            console.log("Right panel links:", rightLinks.length);
+            
+            // Customize Sankey generator for right panel
             const rightSankey = d3.sankey()
-                .nodeWidth(10).nodePadding(8)
-                .extent([[margin.left, margin.top], [sankeyWidth + margin.left, sankeyHeight + margin.top]]);
-            const rightGraph = rightSankey({ nodes: rightNodes.map(d => ({...d})), links: rightLinks.map(d => ({...d})) });
-
-             // Draw Links, Nodes, Labels similarly to Left Panel, using rightSvgSelection
-             // and applying the same color variables (nodeColors, linkColor, textColor, etc.)
-             // Remember to use linkWidthScale for stroke-width on links.
-
-            // Links (Right)
-            rightSvgSelection.append('g').selectAll('path')
-                .data(rightGraph.links).join('path')
+                .nodeWidth(15)
+                .nodePadding(20) // Increased padding for better separation
+                .extent([[margin.left, margin.top], [panelWidth - margin.right, panelHeight - margin.bottom]]);
+            
+            // Apply Sankey to right panel data
+            const rightGraph = rightSankey({
+                nodes: rightNodes.map(d => Object.assign({}, d)),
+                links: rightLinks.map(d => Object.assign({}, d))
+            });
+            
+            // Draw links with gradients for right panel
+            const rightDefs = rightSvgSelection.append('defs');
+            
+            rightGraph.links.forEach((link, i) => {
+                const gradientId = `right-link-gradient-${i}`;
+                const sourceColor = nodeColors[link.source.type] || '#999';
+                const targetColor = nodeColors[link.target.type] || '#999';
+                
+                const gradient = rightDefs.append('linearGradient')
+                    .attr('id', gradientId)
+                    .attr('gradientUnits', 'userSpaceOnUse')
+                    .attr('x1', link.source.x1)
+                    .attr('y1', link.source.y0 + (link.source.y1 - link.source.y0) / 2)
+                    .attr('x2', link.target.x0)
+                    .attr('y2', link.target.y0 + (link.target.y1 - link.target.y0) / 2);
+                    
+                gradient.append('stop')
+                    .attr('offset', '0%')
+                    .attr('stop-color', sourceColor)
+                    .attr('stop-opacity', 0.8);
+                    
+                gradient.append('stop')
+                    .attr('offset', '100%')
+                    .attr('stop-color', targetColor)
+                    .attr('stop-opacity', 0.8);
+                    
+                link.gradientId = gradientId;
+            });
+            
+            // Draw links for right panel with square root scaling
+            rightSvgSelection.append('g')
+                .selectAll('path')
+                .data(rightGraph.links)
+                .enter()
+                .append('path')
                 .attr('d', d3.sankeyLinkHorizontal())
-                .attr('stroke', linkColor)
-                .attr('stroke-width', d => linkWidthScale(d.value))
-                .attr('stroke-opacity', 0.4).attr('fill', 'none').style('cursor', 'pointer')
-                .on('mouseover', function(event, d) { /* ... */ tooltip.html(/* ... */); d3.select(this).attr('stroke-opacity', 0.7); })
-                .on('mousemove', function(event) { /* ... */ })
-                .on('mouseout', function() { /* ... */ d3.select(this).attr('stroke-opacity', 0.4); });
-
-            // Nodes (Right)
-            rightSvgSelection.append('g').selectAll('rect')
-                .data(rightGraph.nodes).join('rect')
-                .attr('x', d => d.x0).attr('y', d => d.y0).attr('height', d => Math.max(1, d.y1 - d.y0)).attr('width', d => d.x1 - d.x0)
-                .attr('fill', d => nodeColors[d.type] || nodeColors.prime).attr('stroke', nodeStrokeColor).attr('stroke-width', 0.5).style('cursor', 'pointer')
-                .on('mouseover', function(event, d) { /* ... */ tooltip.html(/* ... */); d3.select(this).attr('stroke', hoverStrokeColor); })
-                .on('mousemove', function(event) { /* ... */ })
-                .on('mouseout', function() { /* ... */ d3.select(this).attr('stroke', nodeStrokeColor); });
-
-            // Labels (Right)
-            rightSvgSelection.append('g').selectAll('text')
-                .data(rightGraph.nodes).join('text')
-                .attr('x', d => d.x0 < sankeyWidth / 2 ? d.x1 + 6 : d.x0 - 6).attr('y', d => (d.y1 + d.y0) / 2).attr('dy', '0.35em')
-                .attr('text-anchor', d => d.x0 < sankeyWidth / 2 ? 'start' : 'end').text(d => d.name)
-                .attr('font-size', '10px').attr('fill', textColor);
-
-        } else {
-            // Show message if no Prime->Sub data
-            rightSvgSelection.append("text").attr("x", panelWidth / 2).attr("y", panelHeight / 2)
-                 .attr("text-anchor", "middle").attr("font-size", "12px").attr("fill", textColor)
-                 .text("No Prime to Sub data");
-        }
-
-        // Add note about top N filtering (optional)
-        const addNote = (selection) => {
-            selection.append("text")
-                .attr("x", panelWidth - margin.right)
-                .attr("y", panelHeight - 5) // Position near bottom right
+                .attr('stroke', (d) => `url(#${d.gradientId})`)
+                .attr('stroke-width', d => sqrtScale(d)) // Apply the square root scaling
+                .attr('stroke-opacity', 0.5)
+                .attr('fill', 'none')
+                .attr('cursor', 'pointer')
+                .on('mouseover', function(event, d) {
+                    // Show tooltip
+                    const html = `
+                        <div style="font-weight: bold; margin-bottom: 5px;">${d.source.name} → ${d.target.name}</div>
+                        <div>Value: ${formatCurrency(d.value)}</div>
+                    `;
+                    tooltip.innerHTML = html;
+                    tooltip.style.display = 'block';
+                    tooltip.style.left = (event.pageX + 10) + 'px';
+                    tooltip.style.top = (event.pageY - 28) + 'px';
+                    
+                    // Highlight link
+                    d3.select(this).attr('stroke-opacity', 0.8);
+                    
+                    // Also highlight the corresponding prime contractor in left panel if it exists
+                    if (d.source.type === 'prime') {
+                        leftSvgSelection.selectAll('rect')
+                            .filter(node => node.type === 'prime' && node.id === d.source.id)
+                            .attr('stroke', isDarkMode ? '#A29AAA' : '#9993A1')
+                            .attr('stroke-width', 2);
+                    }
+                })
+                .on('mousemove', function(event) {
+                    tooltip.style.left = (event.pageX + 10) + 'px';
+                    tooltip.style.top = (event.pageY - 28) + 'px';
+                })
+                .on('mouseout', function() {
+                    tooltip.style.display = 'none';
+                    d3.select(this).attr('stroke-opacity', 0.5);
+                    
+                    // Remove highlighting from left panel
+                    leftSvgSelection.selectAll('rect')
+                        .attr('stroke', isDarkMode ? '#4A474E' : '#E9E6ED')
+                        .attr('stroke-width', 1);
+                });
+            
+            // Draw nodes for right panel
+            rightSvgSelection.append('g')
+                .selectAll('rect')
+                .data(rightGraph.nodes)
+                .enter()
+                .append('rect')
+                .attr('x', d => d.x0)
+                .attr('y', d => d.y0)
+                .attr('height', d => Math.max(1, d.y1 - d.y0))
+                .attr('width', d => Math.max(1, d.x1 - d.x0))
+                .attr('fill', d => nodeColors[d.type] || '#999')
+                .attr('stroke', isDarkMode ? '#4A474E' : '#E9E6ED')
+                .attr('cursor', 'pointer')
+                .attr('data-id', d => d.id)
+                .attr('data-type', d => d.type)
+                .on('mouseover', function(event, d) {
+                    // Show tooltip
+                    const html = `
+                        <div style="font-weight: bold; margin-bottom: 5px;">${d.name}</div>
+                        <div>Type: ${d.type.charAt(0).toUpperCase() + d.type.slice(1)}</div>
+                        <div>Total Value: ${formatCurrency(d.value)}</div>
+                    `;
+                    tooltip.innerHTML = html;
+                    tooltip.style.display = 'block';
+                    tooltip.style.left = (event.pageX + 10) + 'px';
+                    tooltip.style.top = (event.pageY - 28) + 'px';
+                    
+                    // Highlight node
+                    d3.select(this)
+                        .attr('stroke', isDarkMode ? '#A29AAA' : '#9993A1')
+                        .attr('stroke-width', 2);
+                    
+                    // Cross-panel highlighting for primes
+                    if (d.type === 'prime') {
+                        leftSvgSelection.selectAll('rect')
+                            .filter(node => node.type === 'prime' && node.id === d.id)
+                            .attr('stroke', isDarkMode ? '#A29AAA' : '#9993A1')
+                            .attr('stroke-width', 2);
+                    }
+                })
+                .on('mousemove', function(event) {
+                    tooltip.style.left = (event.pageX + 10) + 'px';
+                    tooltip.style.top = (event.pageY - 28) + 'px';
+                })
+                .on('mouseout', function() {
+                    tooltip.style.display = 'none';
+                    d3.select(this)
+                        .attr('stroke', isDarkMode ? '#4A474E' : '#E9E6ED')
+                        .attr('stroke-width', 1);
+                    
+                    // Remove highlight from left panel
+                    leftSvgSelection.selectAll('rect')
+                        .attr('stroke', isDarkMode ? '#4A474E' : '#E9E6ED')
+                        .attr('stroke-width', 1);
+                });
+            
+            // Add node labels for right panel
+            rightSvgSelection.append('g')
+                .selectAll('text')
+                .data(rightGraph.nodes)
+                .enter()
+                .append('text')
+                .attr('x', d => d.x0 < panelWidth / 2 ? d.x1 + 6 : d.x0 - 6)
+                .attr('y', d => (d.y1 + d.y0) / 2)
+                .attr('dy', '0.35em')
+                .attr('text-anchor', d => d.x0 < panelWidth / 2 ? 'start' : 'end')
+                .text(d => d.name)
+                .attr('font-size', '10px')
+                .attr('fill', textColor)
+                .each(function(d) {
+                    // Hide labels for small nodes
+                    if ((d.y1 - d.y0) < 10) {
+                        d3.select(this).remove();
+                    }
+                });
+                
+            // Add note about showing only top connections
+            rightSvgSelection.append("text")
+                .attr("x", panelWidth - 10)
+                .attr("y", panelHeight - 10)
                 .attr("text-anchor", "end")
-                .attr("font-size", "9px")
+                .attr("font-size", "10px")
                 .attr("fill", textColor)
                 .attr("opacity", 0.7)
-                .text(`Showing top ${topN} flows by value`);
-        };
-        if (topAgencyToPrime.length > 0) addNote(leftSvgSelection);
-        if (topPrimeToSub.length > 0) addNote(rightSvgSelection);
-
-
+                .text("Showing top 10 flows by value");
+        } else {
+            // No subcontract data to display - still show an empty panel without "No Data" message
+            rightSvgSelection.append("text")
+                .attr("x", panelWidth / 2)
+                .attr("y", panelHeight / 2)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "12px")
+                .attr("fill", textColor)
+                .attr("opacity", 0.7)
+                .text("No subcontractor data available");
+        }
+        
     } catch (error) {
         console.error("Error rendering Split Panel Sankey charts:", error);
         displayError(containerId, `Error rendering Sankey charts: ${error.message}`);
     }
 }
+
 function calculateAverageARRFromModel(model) {
     const resultDiv = document.getElementById('arr-result');
     const loadingDiv = document.getElementById('arr-loading');
