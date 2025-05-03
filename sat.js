@@ -627,11 +627,44 @@ function resetUIForNoDataset() {
     if (subAgencyFilter) subAgencyFilter.innerHTML = '<option value="">All Sub-Agencies</option>';
     if (naicsFilter) naicsFilter.innerHTML = '<option value="">All NAICS</option>';
     
-    // Reset search
+    // Reset search - Enhanced version
     const searchInput = document.getElementById('search-input');
-    if (searchInput) searchInput.value = '';
+    if (searchInput) {
+        // Clear the input value
+        searchInput.value = '';
+        
+        // Reset global search term variable
+        currentSearchTerm = '';
+        
+        // Trigger any input event listeners
+        if (typeof Event === 'function') {
+            const event = new Event('input', {
+                bubbles: true,
+                cancelable: true,
+            });
+            searchInput.dispatchEvent(event);
+        }
+        
+        // Find and click any clear button
+        const clearBtn = document.getElementById('search-clear-btn');
+        if (clearBtn) {
+            // If the clear button has a click handler, trigger it
+            clearBtn.click();
+        } else {
+            // If there's a clear button with a different ID or class
+            const altClearBtn = document.querySelector('.search-clear-btn, button[aria-label="Clear search"]');
+            if (altClearBtn) {
+                altClearBtn.click();
+            }
+        }
+        
+        // Force a re-filter of the data if needed
+        if (typeof applyFiltersAndUpdateVisuals === 'function') {
+            // Delay slightly to ensure the search value change is processed
+            setTimeout(applyFiltersAndUpdateVisuals, 50);
+        }
+    }
 }
-
 // --- Enhanced Data Loading Functions ---
 function loadSingleDataset(dataset) {
     if (!dataset || !dataset.id || isLoading) {
@@ -3514,20 +3547,41 @@ function calculateAverageARRCombined(primeData, subData) {
 
 // --- Events and initialize the page ---
 function setupEventListeners() {
-    // Refresh button
-    const refreshButton = document.getElementById('refresh-button');
-    if (refreshButton) {
-        refreshButton.addEventListener('click', () => {
-            if (selectedAgencies.length === 1) {
-                loadSingleDataset(selectedAgencies[0]);
-            } else if (selectedAgencies.length > 1) {
-                fetchDataSequentially(selectedAgencies);
-            } else {
-                console.warn("Cannot refresh - no agency selected");
-                updateStatusBanner("Please select an agency first", "error");
+// Refresh button
+const refreshButton = document.getElementById('refresh-button');
+if (refreshButton) {
+    refreshButton.addEventListener('click', function() {
+        // Clear search input
+        const searchInput = document.getElementById('search-input');
+        if (searchInput) {
+            searchInput.value = '';
+            currentSearchTerm = ''; // Reset tracking variable
+            
+            // Trigger input event to ensure listeners are notified
+            const inputEvent = new Event('input', {
+                bubbles: true,
+                cancelable: true
+            });
+            searchInput.dispatchEvent(inputEvent);
+            
+            // Also try to trigger clear button if it exists
+            const clearBtn = document.querySelector('#search-clear-btn, .search-clear-btn');
+            if (clearBtn) {
+                clearBtn.style.display = 'none'; // Hide the clear button
             }
-        });
-    }
+        }
+        
+        // Then continue with normal refresh behavior
+        if (selectedAgencies.length === 1) {
+            loadSingleDataset(selectedAgencies[0]);
+        } else if (selectedAgencies.length > 1) {
+            fetchDataSequentially(selectedAgencies);
+        } else {
+            console.warn("Cannot refresh - no agency selected");
+            updateStatusBanner("Please select an agency first", "error");
+        }
+    });
+}
     
     // Search input with debounce
     const searchInput = document.getElementById('search-input');
