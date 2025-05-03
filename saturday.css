@@ -256,24 +256,13 @@ a:hover {
 
     /* --- Replace this line --- */
     grid-template-areas:
-        "sankey sankey sankey sankey map"
-        "sankey sankey sankey sankey arr"
+        "sankey sankey sankey map map"
+        "sankey sankey sankey arr arr"
         "tavtcv tavtcv leaders leaders leaders"
         "expiring expiring expiring expiring expiring";
-
-    /* --- Update this line to define 4 row sizes --- */
-    /* Option 1: Split the original 450px min-height across the first two rows */
     grid-template-rows: minmax(225px, auto) minmax(225px, auto) auto auto;
-    /* Option 2: Give first two rows specific auto height, adjust as needed */
-    /* grid-template-rows: auto auto auto auto; */
-    /* Option 3: Give first two rows more fixed height */
-    /* grid-template-rows: 300px 150px auto auto; /* Example - Adjust heights as needed */
-
-    /* Other styles like padding, etc., remain */
 }
 
-/* --- Ensure these assignments match the names used above --- */
-/* (These should already be correct in your existing file) */
 #bento-sankey { grid-area: sankey; }
 #bento-map { grid-area: map; }
 #bento-arr { grid-area: arr; }
