@@ -314,7 +314,7 @@ a:hover {
 /* Card Styles                               */
 /* ========================================= */
 .bento-box {
-    background-color: var(--color-surface);
+    background-color: var(--white);
     border-radius: var(--border-radius-lg);
     box-shadow: var(--shadow-md);
     padding: 20px;
@@ -326,7 +326,21 @@ a:hover {
     flex-direction: column;
     height: 100%;
 }
+/* --- Add dark theme override for bento boxes --- */
+[data-theme="dark"] .bento-box {
+    background-color: var(--color-surface-container); /* Use ds-2 (#312d2a) for boxes */
+    border-color: var(--color-outline); /* Use slightly more visible border */
+}
 
+/* --- Adjust the #bento-arr specific override --- */
+#bento-arr {
+    /* Make it one step different from other boxes */
+    background-color: var(--color-surface-container); /* Was already this - subtle diff now */
+}
+[data-theme="dark"] #bento-arr {
+     /* Make it one step different from other dark boxes */
+    background-color: var(--color-surface-variant); /* Use ds-3 (#3f3a37) */
+}
 
 .bento-box:hover {
     box-shadow: var(--shadow-lg);
