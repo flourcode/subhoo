@@ -2404,7 +2404,7 @@ function displayChoroplethMap(mapData) {
     }
 }
 function displayEnhancedSankeyChart(model) {
-    console.log("Rendering Enhanced Split Panel Sankey chart with model data");
+    console.log("Rendering Simplified Split Panel Sankey chart with model data");
     
     const containerId = 'sankey-chart-container';
     const container = document.getElementById(containerId);
@@ -2539,67 +2539,21 @@ function displayEnhancedSankeyChart(model) {
         console.log("Top agency to prime links:", topAgencyToPrime.length);
         console.log("Top prime to sub links:", topPrimeToSub.length);
         
-        // Add controls container for scaling
-        const controlsContainer = document.createElement('div');
-        controlsContainer.className = 'split-view-controls';
-        controlsContainer.style.position = 'absolute';
-        controlsContainer.style.top = '10px';
-        controlsContainer.style.right = '10px';
-        controlsContainer.style.backgroundColor = isDarkMode ? 'rgba(37, 34, 41, 0.8)' : 'rgba(255, 255, 255, 0.8)';
-        controlsContainer.style.padding = '8px';
-        controlsContainer.style.borderRadius = '4px';
-        controlsContainer.style.boxShadow = '0 2px 4px rgba(0,0,0,0.2)';
-        controlsContainer.style.zIndex = '100';
-        container.appendChild(controlsContainer);
-        
-        // Find min and max values for right panel links
+        // Find min and max values for right panel links to calculate scaling factor
         const minSubValue = topPrimeToSub.length > 0 ? 
             d3.min(topPrimeToSub, d => d.value) || 1 : 1;
         const maxSubValue = topPrimeToSub.length > 0 ? 
             d3.max(topPrimeToSub, d => d.value) || 1 : 1;
         
-        // Improved scaling for the right panel to better distinguish flows
-        const baseWidth = 2; // Minimum width for smallest links
+        // Square root scaling for the right panel
+        // This provides good balance for visualizing small vs. large values
         const sqrtScale = d => {
+            // Base width ensures that small links are still visible
+            const baseWidth = 1.5;
+            // Use square root scaling to give better visual balance
             const normalizedValue = Math.sqrt(d.value / minSubValue);
-            return baseWidth + normalizedValue * 8; // Amplify the differences with larger scale factor
+            return baseWidth + normalizedValue * 6;
         };
-        
-        // Create subcontractor scaling control
-        const subScaleContainer = document.createElement('div');
-        subScaleContainer.style.marginBottom = '8px';
-        
-        const subScaleLabel = document.createElement('label');
-        subScaleLabel.textContent = 'Subcontractor Scale: ';
-        subScaleLabel.style.fontSize = '12px';
-        subScaleLabel.style.color = textColor;
-        subScaleLabel.style.display = 'block';
-        subScaleLabel.style.marginBottom = '4px';
-        
-        const subScaleSlider = document.createElement('input');
-        subScaleSlider.type = 'range';
-        subScaleSlider.min = '0.5';
-        subScaleSlider.max = '5';
-        subScaleSlider.step = '0.1';
-        subScaleSlider.value = '1';
-        subScaleSlider.style.width = '150px';
-        
-        subScaleContainer.appendChild(subScaleLabel);
-        subScaleContainer.appendChild(subScaleSlider);
-        controlsContainer.appendChild(subScaleContainer);
-        
-        // Add information about the panels
-        const infoText = document.createElement('div');
-        infoText.style.fontSize = '11px';
-        infoText.style.color = textColor;
-        infoText.style.marginTop = '8px';
-        infoText.innerHTML = `
-            <div style="font-weight: bold; margin-bottom: 4px;">Split Panel View</div>
-            <div>Left panel: Agency to Prime flows</div>
-            <div>Right panel: Prime to Sub flows</div>
-            <div style="margin-top: 5px; font-style: italic;">Hover across panels to see connections</div>
-        `;
-        controlsContainer.appendChild(infoText);
         
         // ===== FIRST PANEL: AGENCY TO PRIME =====
         
@@ -2961,7 +2915,7 @@ function displayEnhancedSankeyChart(model) {
                 .append('path')
                 .attr('d', d3.sankeyLinkHorizontal())
                 .attr('stroke', (d) => `url(#${d.gradientId})`)
-                .attr('stroke-width', d => sqrtScale(d)) // Fixed: properly invoking the scale function
+                .attr('stroke-width', d => sqrtScale(d)) // Apply the square root scaling
                 .attr('stroke-opacity', 0.5)
                 .attr('fill', 'none')
                 .attr('cursor', 'pointer')
@@ -3086,27 +3040,16 @@ function displayEnhancedSankeyChart(model) {
                 .attr("fill", textColor)
                 .attr("opacity", 0.7)
                 .text("Showing top 10 flows by value");
-                
-            // Add event listener to adjust subcontractor scaling
-            subScaleSlider.addEventListener('input', function() {
-                const scaleFactor = parseFloat(this.value);
-                
-                // Update the scaling function with the new factor
-                const updatedSqrtScale = d => {
-                    const normalizedValue = Math.sqrt(d.value / minSubValue);
-                    return baseWidth + normalizedValue * (8 * scaleFactor); 
-                };
-                
-                // Apply the updated scaling to the links
-                rightSvgSelection.selectAll('path')
-                    .attr('stroke-width', d => updatedSqrtScale(d));
-            });
         } else {
-            // No subcontract data to display
-            displayNoData(rightPanelContainer.id, 'No subcontract data available.');
-            
-            // Hide the scale slider since there's no data to scale
-            subScaleContainer.style.display = 'none';
+            // No subcontract data to display - still show an empty panel without "No Data" message
+            rightSvgSelection.append("text")
+                .attr("x", panelWidth / 2)
+                .attr("y", panelHeight / 2)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "12px")
+                .attr("fill", textColor)
+                .attr("opacity", 0.7)
+                .text("No subcontractor data available");
         }
         
     } catch (error) {
