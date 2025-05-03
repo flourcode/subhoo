@@ -960,9 +960,10 @@ tr:hover td {
   overflow: hidden;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
   background-color: #fff;
-  max-width: 1800px;
-  margin: 15px auto;
-  height: calc(100vh - 40px);
+  margin: 20px;
+  min-height: calc(100vh - 40px); /* Minimum height based on viewport */
+  display: flex;
+  flex-direction: column;
 }
 
 /* For dark mode support */
@@ -977,4 +978,46 @@ tr:hover td {
 }
 [data-theme="dark"] .app-container {
   border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Media query for small screens */
+@media (max-width: 600px) {
+  .app-container {
+    margin: 10px;
+    border-radius: 8px;
+    min-height: calc(100vh - 20px);
+  }
+}
+/* Example of responsive grid layout for dashboard */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+  padding: 20px;
+}
+
+/* Card styling for each chart/visualization */
+.dashboard-card {
+  background: white;
+  border-radius: 8px;
+  padding: 15px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  min-height: 250px;
+}
+
+[data-theme="dark"] .dashboard-card {
+  background: #2D2A31;
+}
+
+/* For mobile devices */
+@media (max-width: 600px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+    gap: 15px;
+    padding: 15px;
+  }
+  
+  .dashboard-card {
+    min-height: 200px;
+  }
 }
