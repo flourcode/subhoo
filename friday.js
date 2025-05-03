@@ -24,7 +24,26 @@ function formatCurrency(value) {
     if (value === null || value === undefined || isNaN(Number(value))) return '$ -';
     return Number(value).toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 });
 }
-
+/**
+ * Format currency in a concise way using K for thousands and M for millions
+ * @param {number} value - The value to format
+ * @returns {string} Formatted currency string
+ */
+function formatConciseCurrency(value) {
+    if (value === null || value === undefined || isNaN(Number(value))) return '$ -';
+    
+    // Format differently based on the size of the number
+    if (value >= 1000000) {
+        // Format as millions
+        return `~$${(value / 1000000).toFixed(2)}M/yr`;
+    } else if (value >= 1000) {
+        // Format as thousands
+        return `~$${(value / 1000).toFixed(1)}K/yr`;
+    } else {
+        // Format small values normally
+        return `~$${value.toFixed(0)}/yr`;
+    }
+}
 function parseSafeFloat(value) {
      if (value === null || value === undefined || value === '') return 0;
      const cleanedString = String(value).replace(/[^0-9.-]+/g,'');
@@ -1906,17 +1925,17 @@ function calculateAverageARR(dataForARR) {
             }
 
             if (validContractsCount > 0) {
-                resultDiv.textContent = formatCurrency(weightedARR) + " / yr";
-                resultDiv.style.display = 'block';
-                console.log(`Weighted Average ARR: ${weightedARR.toFixed(0)} (from ${validContractsCount} valid contracts)`);
-                noDataDiv.style.display = 'none';
-            } else {
-                noDataDiv.textContent = 'No contracts suitable for ARR calculation found in the filtered set.';
-                noDataDiv.style.display = 'block';
-                resultDiv.textContent = formatCurrency(0) + " / yr";
-                resultDiv.style.display = 'block';
-                console.log("No valid contracts found for ARR calculation after filtering.");
-            }
+    resultDiv.textContent = formatConciseCurrency(weightedARR);
+    resultDiv.style.display = 'block';
+    console.log(`Weighted Average ARR: ${weightedARR.toFixed(0)} (from ${validContractsCount} valid contracts)`);
+    noDataDiv.style.display = 'none';
+	} else {
+    noDataDiv.textContent = 'No contracts suitable for ARR calculation found in the filtered set.';
+    noDataDiv.style.display = 'block';
+    resultDiv.textContent = formatConciseCurrency(0);
+    resultDiv.style.display = 'block';
+    console.log("No valid contracts found for ARR calculation after filtering.");
+}
         } catch (error) {
             console.error("Error calculating ARR:", error);
             errorDiv.textContent = `Error calculating ARR: ${error.message}`;
