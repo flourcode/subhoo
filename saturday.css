@@ -1,58 +1,89 @@
 /* ========================================= */
-/* CSS Variables - Light Mode Muted Purples  */
+/* CSS Variables - Light Mode (Teal & Gray)  */
 /* ========================================= */
 :root {
-    /* Core Color Palette - Muted Purples */
-    --light-purple-50: #F4F2F6;  /* Lightest - Background */
-    --light-purple-100: #E9E6ED; /* Light - Surface Container */
-    --light-purple-200: #D7D4DC; /* Light Mid - Surface Variant */
-    --light-purple-300: #B5B0BD; /* Mid - Outline */
-    --light-purple-400: #9993A1; /* Mid Dark - Primary */
-    --light-purple-500: #797484; /* Dark - Secondary */
-    --light-purple-600: #615C66; /* Darkest - Text */
+    /* --- Core Palette --- */
+    /* Grays (Neutral Base) */
+    --gray-0: #F8F9FA;
+    --gray-1: #F1F3F5;
+    --gray-2: #E9ECEF;
+    --gray-3: #DEE2E6;
+    --gray-4: #CED4DA;
+    --gray-5: #ADB5BD;
+    --gray-6: #868E96;
+    --gray-7: #495057;
+    --gray-8: #343A40;
+    --gray-9: #212529;
 
-    /* Neutral Colors */
+    /* Teals (Primary Accent) */
+    --teal-0: #E6FFFA;
+    --teal-1: #B2F5EA;
+    --teal-2: #81E6D9;
+    --teal-3: #4FD1C5; /* Lighter Accent */
+    --teal-4: #38B2AC; /* Main Accent */
+    --teal-5: #319795; /* Darker Accent */
+    --teal-6: #2C7A7B;
+    --teal-7: #285E61;
+    --teal-8: #234E52;
+    --teal-9: #1D4044;
+
+    /* Neutrals */
     --white: #FFFFFF;
-    --light-text: #36323A;      /* Dark Purple-Gray Text */
-    --dark-text: #252327;       /* Darkest Text */
+    --black: #000000;
 
-    /* Status Colors */
-    --red-500: #ef4444;         /* Error */
-    --green-500: #10b981;       /* Success */
-    --blue-500: #3e95cd;        /* Info */
-
-    /* Semantic Color Mapping - Light Mode Default */
-    --color-background: var(--white);
-    --color-surface: var(--light-purple-50);
-    --color-surface-container: var(--light-purple-100);
-    --color-surface-variant: var(--light-purple-200);
+    /* --- Semantic Color Mapping (Light Mode) --- */
+    --color-background: var(--gray-0);          /* Very light gray background */
+    --color-surface: var(--white);             /* White surfaces (cards) */
+    --color-surface-container: var(--gray-1);  /* Slightly off-white containers */
+    --color-surface-variant: var(--gray-2);    /* Subtle variant bg (e.g., table headers) */
 
     /* Text Colors */
-    --color-text-primary: var(--light-text);
-    --color-text-secondary: var(--light-purple-600);
-    --color-text-tertiary: var(--light-purple-500);
+    --color-text-primary: var(--gray-8);       /* Dark gray for main text */
+    --color-text-secondary: var(--gray-7);     /* Medium gray for secondary text */
+    --color-text-tertiary: var(--gray-6);      /* Lighter gray for hints, placeholders */
 
     /* Action Colors */
-    --color-primary: var(--light-purple-400);
-    --color-on-primary: var(--white);
-    --color-secondary: var(--light-purple-500);
-    --color-on-secondary: var(--white);
+    --color-primary: var(--teal-5);            /* Primary actions (buttons, links) */
+    --color-on-primary: var(--white);          /* Text on primary color */
+    --color-secondary: var(--teal-6);          /* Secondary actions */
+    --color-on-secondary: var(--white);        /* Text on secondary color */
 
     /* Border & Outline */
-    --color-outline: var(--light-purple-300);
-    --color-border: var(--light-purple-200);
+    --color-outline: var(--gray-4);            /* Input borders, outlines */
+    --color-border: var(--gray-3);             /* Card borders, dividers */
 
-    /* Chart Colors */
-    --chart-color-primary: var(--light-purple-400);
-    --chart-color-secondary: var(--light-purple-500);
-    --chart-color-tertiary: var(--light-purple-300);
+    /* --- Chart & Data Visualization Colors --- */
+    /* Categorical Palette (Example: ColorBrewer Set1) */
+    --cat-color-1: #e41a1c; /* Red */
+    --cat-color-2: #377eb8; /* Blue */
+    --cat-color-3: #4daf4a; /* Green */
+    --cat-color-4: #984ea3; /* Purple */
+    --cat-color-5: #ff7f00; /* Orange */
+    --cat-color-6: #ffff33; /* Yellow */
+    --cat-color-7: #a65628; /* Brown */
+    --cat-color-8: #f781bf; /* Pink */
 
-    /* Status Colors */
-    --color-error: var(--red-500);
-    --color-success: var(--green-500);
-    --color-info: var(--blue-500);
+    /* Sequential Palette (Example: Teal-based for Maps/Magnitude) */
+    --seq-color-1: var(--teal-1); /* Lightest */
+    --seq-color-2: var(--teal-2);
+    --seq-color-3: var(--teal-3);
+    --seq-color-4: var(--teal-4);
+    --seq-color-5: var(--teal-5); /* Mid */
+    --seq-color-6: var(--teal-6);
+    --seq-color-7: var(--teal-7); /* Darkest */
 
-    /* Layout Values */
+    /* Chart Base Colors (If not using specific palettes above) */
+    --chart-color-primary: var(--teal-5);
+    --chart-color-secondary: var(--teal-3);
+    --chart-color-tertiary: var(--gray-5);
+
+    /* --- Status Colors --- */
+    --color-error: #e03131;    /* Red */
+    --color-success: #2f9e44;  /* Green */
+    --color-warning: #f08c00;  /* Amber/Orange */
+    --color-info: #1971c2;     /* Blue */
+
+    /* --- Layout Values (Keep Existing) --- */
     --border-radius-sm: 8px;
     --border-radius-md: 12px;
     --border-radius-lg: 16px;
@@ -64,41 +95,68 @@
 }
 
 /* ========================================= */
-/* CSS Variables - Dark Mode                 */
+/* CSS Variables - Dark Mode (Teal & Gray)   */
 /* ========================================= */
 [data-theme="dark"] {
-    /* Dark Mode - Core Color Palette */
-    --color-background: #1E1A22;
-    --color-surface: #252229;
-    --color-surface-container: #2D2A31;
-    --color-surface-variant: #3A373E;
+    /* Dark Mode - Core Color Palette Re-Mapping */
+    --color-background: var(--gray-9);          /* Very dark gray background */
+    --color-surface: var(--gray-8);             /* Dark surfaces (cards) */
+    --color-surface-container: var(--gray-7);   /* Slightly lighter dark containers */
+    --color-surface-variant: var(--gray-6);     /* Subtle variant bg */
 
     /* Text Colors */
-    --color-text-primary: #F4F2F6;
-    --color-text-secondary: #D7D4DC;
-    --color-text-tertiary: #B5B0BD;
+    --color-text-primary: var(--gray-1);        /* Light gray for main text */
+    --color-text-secondary: var(--gray-3);      /* Medium light gray */
+    --color-text-tertiary: var(--gray-5);       /* Darker light gray */
 
-    /* Action Colors - Brighter for dark mode */
-    --color-primary: #A29AAA;
-    --color-on-primary: #1E1A22;
-    --color-secondary: #8C85A0;
-    --color-on-secondary: #1E1A22;
+    /* Action Colors - Use lighter teals for contrast */
+    --color-primary: var(--teal-3);             /* Lighter teal for primary */
+    --color-on-primary: var(--gray-9);          /* Dark text on light teal */
+    --color-secondary: var(--teal-2);           /* Even lighter teal */
+    --color-on-secondary: var(--gray-9);        /* Dark text on lighter teal */
 
     /* Border & Outline */
-    --color-outline: #3A373E;
-    --color-border: #3A373E;
+    --color-outline: var(--gray-6);
+    --color-border: var(--gray-7);
 
-    /* Chart Colors - Brighter for dark mode */
-    --chart-color-primary: #A29AAA;
-    --chart-color-secondary: #8C85A0;
-    --chart-color-tertiary: #635C7A;
+    /* --- Chart & Data Visualization Colors (Dark Mode) --- */
+    /* Categorical Palette (Adjusted for Dark Mode - Brighter/Different Hues If Needed) */
+    /* Example: Using ColorBrewer Dark2 - often better on dark bg */
+    --cat-color-1: #1b9e77; /* Dark Teal */
+    --cat-color-2: #d95f02; /* Dark Orange */
+    --cat-color-3: #7570b3; /* Dark Purple */
+    --cat-color-4: #e7298a; /* Dark Pink */
+    --cat-color-5: #66a61e; /* Dark Green */
+    --cat-color-6: #e6ab02; /* Dark Yellow */
+    --cat-color-7: #a6761d; /* Dark Brown */
+    --cat-color-8: #666666; /* Dark Gray */
 
-    /* Shadow adjustments for dark mode */
+    /* Sequential Palette (Example: Teal-based - Reversed or Different Scale) */
+    /* Using lighter teals */
+    --seq-color-1: var(--teal-7); /* Darkest */
+    --seq-color-2: var(--teal-6);
+    --seq-color-3: var(--teal-5);
+    --seq-color-4: var(--teal-4);
+    --seq-color-5: var(--teal-3); /* Mid */
+    --seq-color-6: var(--teal-2);
+    --seq-color-7: var(--teal-1); /* Lightest */
+
+    /* Chart Base Colors (Adjusted) */
+    --chart-color-primary: var(--teal-4);
+    --chart-color-secondary: var(--teal-6);
+    --chart-color-tertiary: var(--gray-5);
+
+    /* --- Status Colors (Adjusted for Dark Contrast) --- */
+    --color-error: #ffa8a8;     /* Lighter Red */
+    --color-success: #8ce99a;   /* Lighter Green */
+    --color-warning: #ffd43b;   /* Lighter Yellow */
+    --color-info: #91a7ff;      /* Lighter Blue */
+
+    /* Shadow adjustments for dark mode (Keep Existing) */
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
     --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.25);
     --shadow-lg: 0 4px 6px rgba(0, 0, 0, 0.3);
 }
-
 /* ========================================= */
 /* Base Styles & Reset                       */
 /* ========================================= */
