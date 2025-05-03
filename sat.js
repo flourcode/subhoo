@@ -1519,7 +1519,35 @@ function filterUnifiedModel(subAgencyFilter, naicsFilter, searchTerm) {
     filtered.stats.totalSubContracts = Object.keys(filtered.subcontracts).length;
     filtered.stats.totalContractValue = Object.values(filtered.contracts)
         .reduce((sum, contract) => sum + contract.value, 0);
-    
+    // --- BEGIN INSERTED CODE ---
+
+// Refine primeToSub relationships to ensure they link through filtered contracts
+// Create a set of Prime IDs that are definitely included due to contracts passing ALL filters
+const validPrimeIdsFromFilteredContracts = new Set();
+Object.values(filtered.contracts).forEach(contract => {
+    validPrimeIdsFromFilteredContracts.add(contract.primeId);
+});
+
+console.log(`Refining Prime-Sub relationships. Primes linked to filtered contracts: ${validPrimeIdsFromFilteredContracts.size}`);
+
+// Filter the primeToSub relationships:
+// Keep only those where the source (prime) is in our valid set
+// AND the target (sub) exists in the already filtered subs list.
+const fullyFilteredPrimeToSub = filtered.relationships.primeToSub.filter(rel =>
+    validPrimeIdsFromFilteredContracts.has(rel.source) && // Prime MUST be linked to a contract that passed filters
+    filtered.subs[rel.target]                             // Sub must also exist after its own filtering
+);
+
+console.log(`Original primeToSub count: ${filtered.relationships.primeToSub.length}, Fully filtered count: ${fullyFilteredPrimeToSub.length}`);
+
+// Replace the potentially over-inclusive relationships in the model being returned
+filtered.relationships.primeToSub = fullyFilteredPrimeToSub;
+
+// Optional: Recalculate prime/sub values based only on these filtered relationships if needed downstream.
+// Currently, Sankey likely uses the relationship value directly, so this might not be necessary.
+
+// --- END INSERTED CODE ---
+
     return filtered;
 }
 
