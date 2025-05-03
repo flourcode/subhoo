@@ -1956,6 +1956,131 @@ function displayTavTcvChart(chartData) {
         });
     }, 100);
 }
+function displayExpiringTable(expiringData) {
+    const containerId = 'expiring-contracts-table-container';
+    const container = document.getElementById(containerId);
+    if (!container) {
+        console.error(`Container ${containerId} not found.`);
+        return;
+    }
+
+    setLoading(containerId, false); // Turn off loading spinner
+
+    // Clear previous content
+    container.innerHTML = '';
+
+    if (!expiringData || expiringData.length === 0) {
+        displayNoData(containerId, 'No contracts found expiring in the next 6 months.');
+        return;
+    }
+
+    // Create Table Structure
+    const tableWrapper = document.createElement('div');
+    tableWrapper.className = 'table-wrapper';
+    tableWrapper.style.overflow = 'auto';
+    tableWrapper.style.maxHeight = '300px';
+
+    const table = document.createElement('table');
+    table.className = 'min-w-full divide-y';
+
+    const thead = table.createTHead();
+    thead.className = 'bg-gray-50';
+    const headerRow = thead.insertRow();
+    
+    const headers = [
+        { text: 'Contract ID / PIID', key: 'award_id_piid' },
+        { text: 'Recipient Name', key: 'recipient_name' },
+        { text: 'Description', key: 'transaction_description' },
+        { text: 'End Date', key: 'period_of_performance_current_end_date' },
+        { text: 'Current Value', key: 'current_total_value_of_award', format: 'currency' },
+        { text: 'USA Spending', key: 'usa_spending', class: 'text-center' }
+    ];
+
+    headers.forEach(headerInfo => {
+        const th = document.createElement('th');
+        th.textContent = headerInfo.text;
+        th.scope = 'col';
+        if (headerInfo.class) th.className = headerInfo.class;
+        if (headerInfo.key === 'current_total_value_of_award') {
+            th.style.textAlign = 'right';
+        }
+        headerRow.appendChild(th);
+    });
+
+    const tbody = table.createTBody();
+    tbody.className = 'divide-y';
+
+    expiringData.forEach(contract => {
+        const row = tbody.insertRow();
+        
+        // Process each column defined in headers
+        headers.forEach(headerInfo => {
+            let cell = row.insertCell();
+            
+            // Special handling for USA Spending column
+            if (headerInfo.key === 'usa_spending') {
+                cell.className = 'text-center';
+                const contractId = contract.contract_award_unique_key || contract.award_id_piid;
+                
+                if (contractId) {
+                    const link = document.createElement('a');
+                    link.href = `https://www.usaspending.gov/award/${contractId}`;
+                    link.target = '_blank';
+                    link.rel = 'noopener noreferrer';
+                    link.className = 'detail-link';
+                    link.textContent = 'View';
+                    cell.appendChild(link);
+                } else {
+                    cell.textContent = '-';
+                }
+                return;
+            }
+            
+            // Regular column processing
+            let value = contract[headerInfo.key] || '-';
+
+            // For description, look for alternative fields if the main one is empty
+            if (headerInfo.key === 'transaction_description' && (value === '-' || value === '')) {
+                value = contract.prime_award_base_transaction_description || 
+                        contract.award_description || 
+                        contract.description || '-';
+            }
+
+            // Format date or currency if specified
+            if (headerInfo.key === 'period_of_performance_current_end_date') {
+                if (contract.period_of_performance_current_end_date_parsed instanceof Date) {
+                    value = contract.period_of_performance_current_end_date_parsed.toISOString().split('T')[0];
+                } else if (contract.formatted_end_date) {
+                    value = contract.formatted_end_date;
+                }
+            } else if (headerInfo.format === 'currency') {
+                value = formatCurrency(value);
+                cell.className = 'number'; // Add number class for right alignment
+            }
+
+            // Determine max length based on column
+            let maxLength = 40;
+            if (headerInfo.key === 'transaction_description') {
+                maxLength = 60; // Allow longer text for description
+                cell.style.maxWidth = '250px'; // Limit width of description cell
+                cell.style.wordWrap = 'break-word'; // Allow word wrapping
+            }
+
+            cell.textContent = truncateText(value, maxLength);
+            cell.title = value !== '-' ? value : ''; // Set title for full text on hover
+            if (headerInfo.class) cell.className = headerInfo.class;
+        });
+    });
+
+    tableWrapper.appendChild(table);
+    container.appendChild(tableWrapper);
+
+    // Add summary text
+    const summaryPara = document.createElement('p');
+    summaryPara.className = 'text-center text-sm text-gray-500 summary-text';
+    summaryPara.textContent = `Showing ${expiringData.length} expiring contracts.`;
+    container.appendChild(summaryPara);
+}
 function displayEnhancedSankeyChart(model) {
     const containerId = 'sankey-chart-container';
     const container = document.getElementById(containerId);
