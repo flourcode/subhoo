@@ -1,88 +1,87 @@
 /* ========================================= */
-/* CSS Variables - Light Mode (Orange & Slate) */
+/* CSS Variables - Light Mode (Blue & Gray)  */
 /* ========================================= */
 :root {
     /* --- Core Palette --- */
-    /* Slate Grays */
-    --slate-0: #F8FAFC;
-    --slate-1: #F1F5F9;
-    --slate-2: #E2E8F0;
-    --slate-3: #CBD5E1;
-    --slate-4: #94A3B8;
-    --slate-5: #64748B;
-    --slate-6: #475569;
-    --slate-7: #334155;
-    --slate-8: #1E293B;
-    --slate-9: #0F172A;
+    /* Cool Grays */
+    --cool-gray-0: #F9FAFB;
+    --cool-gray-1: #F3F4F6;
+    --cool-gray-2: #E5E7EB;
+    --cool-gray-3: #D1D5DB;
+    --cool-gray-4: #9CA3AF;
+    --cool-gray-5: #6B7280;
+    --cool-gray-6: #4B5563;
+    --cool-gray-7: #374151;
+    --cool-gray-8: #1F2937;
+    --cool-gray-9: #111827;
 
-    /* Oranges */
-    --orange-0: #FFF7ED;
-    --orange-1: #FFEDD5;
-    --orange-2: #FED7AA;
-    --orange-3: #FDBA74; /* Lighter Accent */
-    --orange-4: #FB923C; /* Main Accent */
-    --orange-5: #F97316; /* Darker Accent */
-    --orange-6: #EA580C;
-    --orange-7: #C2410C;
-    --orange-8: #9A3412;
-    --orange-9: #7C2D12;
+    /* Blues */
+    --blue-0: #EFF6FF;
+    --blue-1: #DBEAFE;
+    --blue-2: #BFDBFE;
+    --blue-3: #93C5FD; /* Lighter Accent */
+    --blue-4: #60A5FA; /* Main Accent */
+    --blue-5: #3B82F6; /* Darker Accent */
+    --blue-6: #2563EB;
+    --blue-7: #1D4ED8;
+    --blue-8: #1E40AF;
+    --blue-9: #1E3A8A;
 
     /* Neutrals */
     --white: #FFFFFF;
     --black: #000000;
 
     /* --- Semantic Color Mapping (Light Mode) --- */
-    --color-background: var(--slate-0);
+    --color-background: var(--cool-gray-0);
     --color-surface: var(--white);
-    --color-surface-container: var(--slate-1);
-    --color-surface-variant: var(--slate-2);
+    --color-surface-container: var(--cool-gray-1);
+    --color-surface-variant: var(--cool-gray-2);
 
     /* Text Colors */
-    --color-text-primary: var(--slate-8);
-    --color-text-secondary: var(--slate-6);
-    --color-text-tertiary: var(--slate-5);
+    --color-text-primary: var(--cool-gray-8);
+    --color-text-secondary: var(--cool-gray-6);
+    --color-text-tertiary: var(--cool-gray-5);
 
     /* Action Colors */
-    --color-primary: var(--orange-6);
+    --color-primary: var(--blue-6);
     --color-on-primary: var(--white);
-    --color-secondary: var(--orange-7);
+    --color-secondary: var(--blue-7);
     --color-on-secondary: var(--white);
 
     /* Border & Outline */
-    --color-outline: var(--slate-4);
-    --color-border: var(--slate-3);
+    --color-outline: var(--cool-gray-4);
+    --color-border: var(--cool-gray-3);
 
     /* --- Chart & Data Visualization Colors --- */
-    /* Categorical Palette (Example: ColorBrewer Set3) */
-    --cat-color-1: #8dd3c7; /* Teal */
-    --cat-color-2: #ffffb3; /* Yellow */
-    --cat-color-3: #bebada; /* Lavender */
-    --cat-color-4: #fb8072; /* Red/Pink */
-    --cat-color-5: #80b1d3; /* Blue */
-    --cat-color-6: #fdb462; /* Light Orange */
-    --cat-color-7: #b3de69; /* Green */
-    --cat-color-8: #fccde5; /* Pink */
-    /* Note: Removed gray/purple from default Set3 to avoid clashing with base */
+    /* Categorical Palette (Example: ColorBrewer Accent) */
+    --cat-color-1: #7fc97f; /* Green */
+    --cat-color-2: #beaed4; /* Purple */
+    --cat-color-3: #fdc086; /* Orange */
+    --cat-color-4: #ffff99; /* Yellow */
+    --cat-color-5: #386cb0; /* Blue */
+    --cat-color-6: #f0027f; /* Pink */
+    --cat-color-7: #bf5b17; /* Brown */
+    --cat-color-8: #666666; /* Gray */
 
-    /* Sequential Palette (Example: Yellow-Orange-Brown for Maps/Magnitude) */
-    --seq-color-1: #fff7bc; /* Lightest Yellow */
-    --seq-color-2: #fee391;
-    --seq-color-3: #fec44f;
-    --seq-color-4: #fe9929;
-    --seq-color-5: #ec7014; /* Mid Orange */
-    --seq-color-6: #cc4c02;
-    --seq-color-7: #8c2d04; /* Darkest Brown */
+    /* Sequential Palette (Example: Blue-based for Maps/Magnitude) */
+    --seq-color-1: var(--blue-1); /* Lightest */
+    --seq-color-2: var(--blue-2);
+    --seq-color-3: var(--blue-3);
+    --seq-color-4: var(--blue-4);
+    --seq-color-5: var(--blue-5); /* Mid */
+    --seq-color-6: var(--blue-6);
+    --seq-color-7: var(--blue-7); /* Darkest */
 
     /* Chart Base Colors */
-    --chart-color-primary: var(--orange-5);
-    --chart-color-secondary: var(--orange-3);
-    --chart-color-tertiary: var(--slate-4);
+    --chart-color-primary: var(--blue-5);
+    --chart-color-secondary: var(--blue-3);
+    --chart-color-tertiary: var(--cool-gray-4);
 
     /* --- Status Colors --- */
-    --color-error: #DC2626;
-    --color-success: #16A34A;
-    --color-warning: #D97706; /* Amber */
-    --color-info: #0284C7;    /* Sky Blue */
+    --color-error: #DC2626;    /* Red */
+    --color-success: #16A34A;  /* Green */
+    --color-warning: #D97706;  /* Amber */
+    --color-info: #2563EB;     /* Blue */
 
     /* --- Layout Values (Keep Existing) --- */
     --border-radius-sm: 8px;
@@ -96,60 +95,60 @@
 }
 
 /* ========================================= */
-/* CSS Variables - Dark Mode (Orange & Slate) */
+/* CSS Variables - Dark Mode (Blue & Gray)   */
 /* ========================================= */
 [data-theme="dark"] {
     /* Dark Mode - Core Color Palette Re-Mapping */
-    --color-background: var(--slate-9);
-    --color-surface: var(--slate-8);
-    --color-surface-container: #293548; /* Custom slightly lighter */
-    --color-surface-variant: var(--slate-7);
+    --color-background: var(--cool-gray-9);
+    --color-surface: var(--cool-gray-8);
+    --color-surface-container: #2c3a4f; /* Custom slightly lighter */
+    --color-surface-variant: var(--cool-gray-7);
 
     /* Text Colors */
-    --color-text-primary: var(--slate-1);
-    --color-text-secondary: var(--slate-3);
-    --color-text-tertiary: var(--slate-4);
+    --color-text-primary: var(--cool-gray-1);
+    --color-text-secondary: var(--cool-gray-3);
+    --color-text-tertiary: var(--cool-gray-4);
 
-    /* Action Colors - Lighter Oranges */
-    --color-primary: var(--orange-4);
-    --color-on-primary: var(--slate-9);
-    --color-secondary: var(--orange-3);
-    --color-on-secondary: var(--slate-9);
+    /* Action Colors - Lighter Blues */
+    --color-primary: var(--blue-4);
+    --color-on-primary: var(--cool-gray-9);
+    --color-secondary: var(--blue-3);
+    --color-on-secondary: var(--cool-gray-9);
 
     /* Border & Outline */
-    --color-outline: var(--slate-6);
-    --color-border: var(--slate-7);
+    --color-outline: var(--cool-gray-6);
+    --color-border: var(--cool-gray-7);
 
     /* --- Chart & Data Visualization Colors (Dark Mode) --- */
-    /* Categorical Palette (Adjusted) */
-    --cat-color-1: #a6cee3; /* Light Blue */
-    --cat-color-2: #b2df8a; /* Light Green */
-    --cat-color-3: #fb9a99; /* Light Red */
-    --cat-color-4: #fdbf6f; /* Light Orange */
-    --cat-color-5: #cab2d6; /* Light Purple */
-    --cat-color-6: #ffff99; /* Yellow */
-    --cat-color-7: #8dd3c7; /* Light Teal */
-    --cat-color-8: #fccde5; /* Pink */
+    /* Categorical Palette (Adjusted - Use brighter/lighter versions) */
+    --cat-color-1: #a1d99b; /* Lighter Green */
+    --cat-color-2: #cab2d6; /* Lighter Purple */
+    --cat-color-3: #fdc086; /* Orange (ok) */
+    --cat-color-4: #ffffcc; /* Lighter Yellow */
+    --cat-color-5: #74a9cf; /* Lighter Blue */
+    --cat-color-6: #f1a3e0; /* Lighter Pink */
+    --cat-color-7: #d98c50; /* Lighter Brown */
+    --cat-color-8: #b3b3b3; /* Lighter Gray */
 
-    /* Sequential Palette (Reversed or adjusted oranges) */
-    --seq-color-1: var(--orange-7); /* Darkest */
-    --seq-color-2: var(--orange-6);
-    --seq-color-3: var(--orange-5);
-    --seq-color-4: var(--orange-4);
-    --seq-color-5: var(--orange-3); /* Mid */
-    --seq-color-6: var(--orange-2);
-    --seq-color-7: var(--orange-1); /* Lightest */
+    /* Sequential Palette (Reversed or adjusted blues) */
+    --seq-color-1: var(--blue-7); /* Darkest */
+    --seq-color-2: var(--blue-6);
+    --seq-color-3: var(--blue-5);
+    --seq-color-4: var(--blue-4);
+    --seq-color-5: var(--blue-3); /* Mid */
+    --seq-color-6: var(--blue-2);
+    --seq-color-7: var(--blue-1); /* Lightest */
 
     /* Chart Base Colors */
-    --chart-color-primary: var(--orange-4);
-    --chart-color-secondary: var(--orange-6);
-    --chart-color-tertiary: var(--slate-5);
+    --chart-color-primary: var(--blue-4);
+    --chart-color-secondary: var(--blue-6);
+    --chart-color-tertiary: var(--cool-gray-5);
 
     /* --- Status Colors (Adjusted) --- */
-    --color-error: #F87171;
-    --color-success: #4ADE80;
-    --color-warning: #FBBF24;
-    --color-info: #7DD3FC; /* Light Sky Blue */
+    --color-error: #F87171;     /* Lighter Red */
+    --color-success: #4ADE80;   /* Lighter Green */
+    --color-warning: #FBBF24;   /* Lighter Amber */
+    --color-info: #93C5FD;      /* Lighter Blue */
 
     /* Shadow adjustments (Keep Existing) */
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
