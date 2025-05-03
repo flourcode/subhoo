@@ -2081,6 +2081,258 @@ function displayExpiringTable(expiringData) {
     summaryPara.textContent = `Showing ${expiringData.length} expiring contracts.`;
     container.appendChild(summaryPara);
 }
+function displayChoroplethMap(mapData) {
+    const containerId = 'map-container';
+    const container = document.getElementById(containerId);
+    
+    if (!container) {
+        console.error("Map container not found.");
+        return;
+    }
+
+    // Clean up any existing tooltips
+    cleanupTooltips();
+    
+    // Clear any previous content and create a new div
+    container.innerHTML = '';
+    const mapDiv = document.createElement('div');
+    mapDiv.id = 'choroplethMap';
+    mapDiv.style.width = '100%';
+    mapDiv.style.height = '100%';
+    container.appendChild(mapDiv);
+    
+    setLoading(containerId, false); // Turn off loading spinner
+
+    if (!mapData || Object.keys(mapData).length === 0) {
+        displayNoData(containerId, 'No geographic data available for mapping.');
+        return;
+    }
+
+    try {
+        // Set up map dimensions based on the container div
+        const width = container.clientWidth;
+        const height = container.clientHeight || 400; // Default height if not set
+
+        // Check if dimensions are valid
+        if (width <= 0 || height <= 0) {
+             console.warn(`Map container has invalid dimensions: ${width}x${height}. Map rendering skipped.`);
+             displayError(containerId, 'Map container has zero size. Cannot render map.');
+             return;
+        }
+
+        // Check if we're in dark mode
+        const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
+        const textColor = isDarkMode ? '#F4F2F6' : '#36323A';
+
+        // Create SVG element inside the map div
+        const svg = d3.select(mapDiv)
+            .append('svg')
+            .attr('width', width)
+            .attr('height', height)
+            .attr('viewBox', `0 0 ${width} ${height}`) // Add viewBox for better scaling
+            .style('max-width', '100%') // Ensure SVG scales down if needed
+            .style('height', 'auto');
+
+        // Define color scale for the map
+        const stateValues = Object.values(mapData).map(d => d.value);
+        const maxValue = d3.max(stateValues) || 0;
+
+        // Create color scale for map - use different colors for dark/light mode
+        const colorScale = d3.scaleSequential()
+            .domain([0, maxValue === 0 ? 1 : maxValue]) // Ensure domain is valid if max is 0
+            .interpolator(isDarkMode ?
+                d3.interpolate('#3A373E', '#A29AAA') : // Dark mode: darker to lighter purple
+                d3.interpolate('#E9E6ED', '#9993A1')); // Light mode: light to medium purple
+
+        // Remove existing tooltips first
+        d3.select("body").selectAll(".map-tooltip").remove();
+        
+        // Create tooltip - attach to body for better positioning
+        const tooltip = d3.select("body")
+            .append("div")
+            .attr("class", "map-tooltip")
+            .style("position", "absolute")
+            .style("visibility", "hidden")
+            .style("opacity", 0)
+            .style("background-color", isDarkMode ? "#252229" : "#FFFFFF")
+            .style("color", isDarkMode ? "#F4F2F6" : "#36323A")
+            .style("padding", "10px")
+            .style("border-radius", "4px")
+            .style("font-size", "12px")
+            .style("pointer-events", "none")
+            .style("border", "1px solid " + (isDarkMode ? "#3A373E" : "#D7D4DC"))
+            .style("z-index", "9999");
+
+        // State name mapping
+        const fipsToStateName = {
+            "01": "Alabama", "02": "Alaska", "04": "Arizona", "05": "Arkansas",
+            "06": "California", "08": "Colorado", "09": "Connecticut", "10": "Delaware",
+            "11": "District of Columbia", "12": "Florida", "13": "Georgia", "15": "Hawaii",
+            "16": "Idaho", "17": "Illinois", "18": "Indiana", "19": "Iowa", "20": "Kansas",
+            "21": "Kentucky", "22": "Louisiana", "23": "Maine", "24": "Maryland",
+            "25": "Massachusetts", "26": "Michigan", "27": "Minnesota", "28": "Mississippi",
+            "29": "Missouri", "30": "Montana", "31": "Nebraska", "32": "Nevada",
+            "33": "New Hampshire", "34": "New Jersey", "35": "New Mexico", "36": "New York",
+            "37": "North Carolina", "38": "North Dakota", "39": "Ohio", "40": "Oklahoma",
+            "41": "Oregon", "42": "Pennsylvania", "44": "Rhode Island", "45": "South Carolina",
+            "46": "South Dakota", "47": "Tennessee", "48": "Texas", "49": "Utah",
+            "50": "Vermont", "51": "Virginia", "53": "Washington", "54": "West Virginia",
+            "55": "Wisconsin", "56": "Wyoming", "72": "Puerto Rico"
+        };
+
+        // Load US state boundaries GeoJSON
+        d3.json('https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json')
+            .then(us => {
+                if (!us || !us.objects || !us.objects.states) {
+                    throw new Error("Invalid GeoJSON data");
+                }
+
+                // Convert TopoJSON to GeoJSON features
+                const states = topojson.feature(us, us.objects.states); // Keep the FeatureCollection
+
+                // --- Projection Fitting Logic ---
+                const projection = d3.geoAlbersUsa(); // Create projection
+
+                // Fit the projection to the container size using the GeoJSON data
+                projection.fitSize([width, height], states);
+
+                // Create the path generator using the FITTED projection
+                const path = d3.geoPath().projection(projection);
+                // --- End Projection Fitting ---
+
+                // Draw state boundaries
+                svg.append('g') // Group map paths
+                   .selectAll('path')
+                   .data(states.features) // Use the features array
+                   .enter()
+                   .append('path')
+                   .attr('d', path)
+                   .attr('fill', d => {
+                       // Use the state FIPS code to lookup data
+                       const fipsCode = d.id.toString().padStart(2, '0');
+                       const stateData = mapData[fipsCode];
+                       return stateData ? colorScale(stateData.value) : (isDarkMode ? '#2D2A31' : '#ccc'); // Default color
+                   })
+                   .attr('stroke', isDarkMode ? '#3A373E' : '#FFFFFF') // Border color between states
+                   .attr('stroke-width', 0.5)
+                   .style('cursor', 'pointer')
+                   .on('mouseover', function(event, d) {
+                       // Show tooltip with transition
+                       tooltip
+                            .style("visibility", "visible")
+                            .style("opacity", 1); 
+                            
+                       tooltip.html(() => {
+                           const fipsCode = d.id.toString().padStart(2, '0');
+                           const stateData = mapData[fipsCode];
+                           const stateName = fipsToStateName[fipsCode] || "Unknown";
+                           if (stateData) {
+                               return `
+                                   <strong>${stateName}</strong>
+                                   <div>Total Value: ${formatCurrency(stateData.value)}</div>
+                                   <div>Contracts: ${stateData.count.toLocaleString()}</div>
+                               `;
+                           } else {
+                               return `<strong>${stateName}</strong><br>No data`;
+                           }
+                       })
+                       .style("left", (event.pageX + 10) + "px")
+                       .style("top", (event.pageY - 28) + "px");
+
+                       // Highlight the state
+                       d3.select(this)
+                           .attr("stroke", isDarkMode ? "#A29AAA" : "#9993A1")
+                           .attr("stroke-width", 1.5)
+                           .raise(); // Bring hovered path to front
+                   })
+                   .on('mousemove', function(event) {
+                       // Update tooltip position as mouse moves
+                       tooltip
+                          .style("left", (event.pageX + 10) + "px")
+                          .style("top", (event.pageY - 28) + "px");
+                   })
+                   .on('mouseout', function() {
+                       // Hide tooltip with transition
+                       tooltip
+                          .style("visibility", "hidden")
+                          .style("opacity", 0);
+                              
+                       // Remove highlight
+                       d3.select(this)
+                           .attr("stroke", isDarkMode ? '#3A373E' : '#FFFFFF')
+                           .attr("stroke-width", 0.5);
+                   });
+
+                // --- Legend ---
+                const legendWidth = Math.min(width * 0.4, 200); // Adjust width relative to map size
+                const legendHeight = 10; // Slimmer legend bar
+                const legendX = width - legendWidth - 20; // Position bottom right
+                const legendY = height - 35; // Position bottom right
+
+                const legendGroup = svg.append("g")
+                                       .attr("transform", `translate(${legendX}, ${legendY})`);
+
+                // Create discrete color bins for legend
+                const numBins = 5;
+                // Ensure bins work even if maxValue is 0
+                 const binMaxValue = maxValue === 0 ? 1 : maxValue;
+                 const bins = Array.from({length: numBins}, (_, i) => binMaxValue * i / (numBins -1));
+                 const binWidth = legendWidth / numBins;
+
+
+                // Add legend title
+                legendGroup.append('text')
+                    .attr('x', legendWidth / 2)
+                    .attr('y', -6) // Position above the legend rect
+                    .attr('text-anchor', 'middle')
+                    .attr('font-size', '10px')
+                    .attr('fill', textColor)
+                    .text('Contract Value');
+
+                // Create discrete color blocks
+                legendGroup.selectAll('rect')
+                    .data(bins)
+                    .enter()
+                    .append('rect')
+                    .attr('x', (d, i) => i * binWidth)
+                    .attr('y', 0)
+                    .attr('width', binWidth)
+                    .attr('height', legendHeight)
+                    .attr('fill', d => colorScale(d))
+                    .attr('stroke', isDarkMode ? '#3A373E' : '#D7D4DC')
+                    .attr('stroke-width', 0.5);
+
+                // Add min/max labels
+                legendGroup.append('text')
+                    .attr('x', 0)
+                    .attr('y', legendHeight + 10) // Below legend rect
+                    .attr('text-anchor', 'start')
+                    .attr('font-size', '10px')
+                    .attr('fill', textColor)
+                    .text('Low');
+
+                legendGroup.append('text')
+                    .attr('x', legendWidth)
+                    .attr('y', legendHeight + 10) // Below legend rect
+                    .attr('text-anchor', 'end')
+                    .attr('font-size', '10px')
+                    .attr('fill', textColor)
+                    .text('High');
+
+            })
+            .catch(error => {
+                console.error("Error loading or processing GeoJSON for map:", error);
+                displayError(containerId, `Error rendering map: ${error.message}`);
+                // Clean up tooltip if it exists
+                d3.select("body").selectAll(".map-tooltip").remove();
+            });
+    } catch (error) {
+        console.error("Error creating choropleth map:", error);
+        displayError(containerId, "Failed to render map: " + error.message);
+        // Clean up tooltip if it exists
+        d3.select("body").selectAll(".map-tooltip").remove();
+    }
+}
 function displayEnhancedSankeyChart(model) {
     const containerId = 'sankey-chart-container';
     const container = document.getElementById(containerId);
