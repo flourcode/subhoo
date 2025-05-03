@@ -1,87 +1,88 @@
 /* ========================================= */
-/* CSS Variables - Light Mode (Teal & Gray)  */
+/* CSS Variables - Light Mode (Orange & Slate) */
 /* ========================================= */
 :root {
     /* --- Core Palette --- */
-    /* Grays (Neutral Base) */
-    --gray-0: #F8F9FA;
-    --gray-1: #F1F3F5;
-    --gray-2: #E9ECEF;
-    --gray-3: #DEE2E6;
-    --gray-4: #CED4DA;
-    --gray-5: #ADB5BD;
-    --gray-6: #868E96;
-    --gray-7: #495057;
-    --gray-8: #343A40;
-    --gray-9: #212529;
+    /* Slate Grays */
+    --slate-0: #F8FAFC;
+    --slate-1: #F1F5F9;
+    --slate-2: #E2E8F0;
+    --slate-3: #CBD5E1;
+    --slate-4: #94A3B8;
+    --slate-5: #64748B;
+    --slate-6: #475569;
+    --slate-7: #334155;
+    --slate-8: #1E293B;
+    --slate-9: #0F172A;
 
-    /* Teals (Primary Accent) */
-    --teal-0: #E6FFFA;
-    --teal-1: #B2F5EA;
-    --teal-2: #81E6D9;
-    --teal-3: #4FD1C5; /* Lighter Accent */
-    --teal-4: #38B2AC; /* Main Accent */
-    --teal-5: #319795; /* Darker Accent */
-    --teal-6: #2C7A7B;
-    --teal-7: #285E61;
-    --teal-8: #234E52;
-    --teal-9: #1D4044;
+    /* Oranges */
+    --orange-0: #FFF7ED;
+    --orange-1: #FFEDD5;
+    --orange-2: #FED7AA;
+    --orange-3: #FDBA74; /* Lighter Accent */
+    --orange-4: #FB923C; /* Main Accent */
+    --orange-5: #F97316; /* Darker Accent */
+    --orange-6: #EA580C;
+    --orange-7: #C2410C;
+    --orange-8: #9A3412;
+    --orange-9: #7C2D12;
 
     /* Neutrals */
     --white: #FFFFFF;
     --black: #000000;
 
     /* --- Semantic Color Mapping (Light Mode) --- */
-    --color-background: var(--gray-0);          /* Very light gray background */
-    --color-surface: var(--white);             /* White surfaces (cards) */
-    --color-surface-container: var(--gray-1);  /* Slightly off-white containers */
-    --color-surface-variant: var(--gray-2);    /* Subtle variant bg (e.g., table headers) */
+    --color-background: var(--slate-0);
+    --color-surface: var(--white);
+    --color-surface-container: var(--slate-1);
+    --color-surface-variant: var(--slate-2);
 
     /* Text Colors */
-    --color-text-primary: var(--gray-8);       /* Dark gray for main text */
-    --color-text-secondary: var(--gray-7);     /* Medium gray for secondary text */
-    --color-text-tertiary: var(--gray-6);      /* Lighter gray for hints, placeholders */
+    --color-text-primary: var(--slate-8);
+    --color-text-secondary: var(--slate-6);
+    --color-text-tertiary: var(--slate-5);
 
     /* Action Colors */
-    --color-primary: var(--teal-5);            /* Primary actions (buttons, links) */
-    --color-on-primary: var(--white);          /* Text on primary color */
-    --color-secondary: var(--teal-6);          /* Secondary actions */
-    --color-on-secondary: var(--white);        /* Text on secondary color */
+    --color-primary: var(--orange-6);
+    --color-on-primary: var(--white);
+    --color-secondary: var(--orange-7);
+    --color-on-secondary: var(--white);
 
     /* Border & Outline */
-    --color-outline: var(--gray-4);            /* Input borders, outlines */
-    --color-border: var(--gray-3);             /* Card borders, dividers */
+    --color-outline: var(--slate-4);
+    --color-border: var(--slate-3);
 
     /* --- Chart & Data Visualization Colors --- */
-    /* Categorical Palette (Example: ColorBrewer Set1) */
-    --cat-color-1: #e41a1c; /* Red */
-    --cat-color-2: #377eb8; /* Blue */
-    --cat-color-3: #4daf4a; /* Green */
-    --cat-color-4: #984ea3; /* Purple */
-    --cat-color-5: #ff7f00; /* Orange */
-    --cat-color-6: #ffff33; /* Yellow */
-    --cat-color-7: #a65628; /* Brown */
-    --cat-color-8: #f781bf; /* Pink */
+    /* Categorical Palette (Example: ColorBrewer Set3) */
+    --cat-color-1: #8dd3c7; /* Teal */
+    --cat-color-2: #ffffb3; /* Yellow */
+    --cat-color-3: #bebada; /* Lavender */
+    --cat-color-4: #fb8072; /* Red/Pink */
+    --cat-color-5: #80b1d3; /* Blue */
+    --cat-color-6: #fdb462; /* Light Orange */
+    --cat-color-7: #b3de69; /* Green */
+    --cat-color-8: #fccde5; /* Pink */
+    /* Note: Removed gray/purple from default Set3 to avoid clashing with base */
 
-    /* Sequential Palette (Example: Teal-based for Maps/Magnitude) */
-    --seq-color-1: var(--teal-1); /* Lightest */
-    --seq-color-2: var(--teal-2);
-    --seq-color-3: var(--teal-3);
-    --seq-color-4: var(--teal-4);
-    --seq-color-5: var(--teal-5); /* Mid */
-    --seq-color-6: var(--teal-6);
-    --seq-color-7: var(--teal-7); /* Darkest */
+    /* Sequential Palette (Example: Yellow-Orange-Brown for Maps/Magnitude) */
+    --seq-color-1: #fff7bc; /* Lightest Yellow */
+    --seq-color-2: #fee391;
+    --seq-color-3: #fec44f;
+    --seq-color-4: #fe9929;
+    --seq-color-5: #ec7014; /* Mid Orange */
+    --seq-color-6: #cc4c02;
+    --seq-color-7: #8c2d04; /* Darkest Brown */
 
-    /* Chart Base Colors (If not using specific palettes above) */
-    --chart-color-primary: var(--teal-5);
-    --chart-color-secondary: var(--teal-3);
-    --chart-color-tertiary: var(--gray-5);
+    /* Chart Base Colors */
+    --chart-color-primary: var(--orange-5);
+    --chart-color-secondary: var(--orange-3);
+    --chart-color-tertiary: var(--slate-4);
 
     /* --- Status Colors --- */
-    --color-error: #e03131;    /* Red */
-    --color-success: #2f9e44;  /* Green */
-    --color-warning: #f08c00;  /* Amber/Orange */
-    --color-info: #1971c2;     /* Blue */
+    --color-error: #DC2626;
+    --color-success: #16A34A;
+    --color-warning: #D97706; /* Amber */
+    --color-info: #0284C7;    /* Sky Blue */
 
     /* --- Layout Values (Keep Existing) --- */
     --border-radius-sm: 8px;
@@ -95,64 +96,62 @@
 }
 
 /* ========================================= */
-/* CSS Variables - Dark Mode (Teal & Gray)   */
+/* CSS Variables - Dark Mode (Orange & Slate) */
 /* ========================================= */
 [data-theme="dark"] {
     /* Dark Mode - Core Color Palette Re-Mapping */
-    --color-background: var(--gray-9);          /* Very dark gray background */
-    --color-surface: var(--gray-8);             /* Dark surfaces (cards) */
-    --color-surface-container: var(--gray-7);   /* Slightly lighter dark containers */
-    --color-surface-variant: var(--gray-6);     /* Subtle variant bg */
+    --color-background: var(--slate-9);
+    --color-surface: var(--slate-8);
+    --color-surface-container: #293548; /* Custom slightly lighter */
+    --color-surface-variant: var(--slate-7);
 
     /* Text Colors */
-    --color-text-primary: var(--gray-1);        /* Light gray for main text */
-    --color-text-secondary: var(--gray-3);      /* Medium light gray */
-    --color-text-tertiary: var(--gray-5);       /* Darker light gray */
+    --color-text-primary: var(--slate-1);
+    --color-text-secondary: var(--slate-3);
+    --color-text-tertiary: var(--slate-4);
 
-    /* Action Colors - Use lighter teals for contrast */
-    --color-primary: var(--teal-3);             /* Lighter teal for primary */
-    --color-on-primary: var(--gray-9);          /* Dark text on light teal */
-    --color-secondary: var(--teal-2);           /* Even lighter teal */
-    --color-on-secondary: var(--gray-9);        /* Dark text on lighter teal */
+    /* Action Colors - Lighter Oranges */
+    --color-primary: var(--orange-4);
+    --color-on-primary: var(--slate-9);
+    --color-secondary: var(--orange-3);
+    --color-on-secondary: var(--slate-9);
 
     /* Border & Outline */
-    --color-outline: var(--gray-6);
-    --color-border: var(--gray-7);
+    --color-outline: var(--slate-6);
+    --color-border: var(--slate-7);
 
     /* --- Chart & Data Visualization Colors (Dark Mode) --- */
-    /* Categorical Palette (Adjusted for Dark Mode - Brighter/Different Hues If Needed) */
-    /* Example: Using ColorBrewer Dark2 - often better on dark bg */
-    --cat-color-1: #1b9e77; /* Dark Teal */
-    --cat-color-2: #d95f02; /* Dark Orange */
-    --cat-color-3: #7570b3; /* Dark Purple */
-    --cat-color-4: #e7298a; /* Dark Pink */
-    --cat-color-5: #66a61e; /* Dark Green */
-    --cat-color-6: #e6ab02; /* Dark Yellow */
-    --cat-color-7: #a6761d; /* Dark Brown */
-    --cat-color-8: #666666; /* Dark Gray */
+    /* Categorical Palette (Adjusted) */
+    --cat-color-1: #a6cee3; /* Light Blue */
+    --cat-color-2: #b2df8a; /* Light Green */
+    --cat-color-3: #fb9a99; /* Light Red */
+    --cat-color-4: #fdbf6f; /* Light Orange */
+    --cat-color-5: #cab2d6; /* Light Purple */
+    --cat-color-6: #ffff99; /* Yellow */
+    --cat-color-7: #8dd3c7; /* Light Teal */
+    --cat-color-8: #fccde5; /* Pink */
 
-    /* Sequential Palette (Example: Teal-based - Reversed or Different Scale) */
-    /* Using lighter teals */
-    --seq-color-1: var(--teal-7); /* Darkest */
-    --seq-color-2: var(--teal-6);
-    --seq-color-3: var(--teal-5);
-    --seq-color-4: var(--teal-4);
-    --seq-color-5: var(--teal-3); /* Mid */
-    --seq-color-6: var(--teal-2);
-    --seq-color-7: var(--teal-1); /* Lightest */
+    /* Sequential Palette (Reversed or adjusted oranges) */
+    --seq-color-1: var(--orange-7); /* Darkest */
+    --seq-color-2: var(--orange-6);
+    --seq-color-3: var(--orange-5);
+    --seq-color-4: var(--orange-4);
+    --seq-color-5: var(--orange-3); /* Mid */
+    --seq-color-6: var(--orange-2);
+    --seq-color-7: var(--orange-1); /* Lightest */
 
-    /* Chart Base Colors (Adjusted) */
-    --chart-color-primary: var(--teal-4);
-    --chart-color-secondary: var(--teal-6);
-    --chart-color-tertiary: var(--gray-5);
+    /* Chart Base Colors */
+    --chart-color-primary: var(--orange-4);
+    --chart-color-secondary: var(--orange-6);
+    --chart-color-tertiary: var(--slate-5);
 
-    /* --- Status Colors (Adjusted for Dark Contrast) --- */
-    --color-error: #ffa8a8;     /* Lighter Red */
-    --color-success: #8ce99a;   /* Lighter Green */
-    --color-warning: #ffd43b;   /* Lighter Yellow */
-    --color-info: #91a7ff;      /* Lighter Blue */
+    /* --- Status Colors (Adjusted) --- */
+    --color-error: #F87171;
+    --color-success: #4ADE80;
+    --color-warning: #FBBF24;
+    --color-info: #7DD3FC; /* Light Sky Blue */
 
-    /* Shadow adjustments for dark mode (Keep Existing) */
+    /* Shadow adjustments (Keep Existing) */
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
     --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.25);
     --shadow-lg: 0 4px 6px rgba(0, 0, 0, 0.3);
