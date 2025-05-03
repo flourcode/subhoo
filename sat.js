@@ -295,16 +295,27 @@ function updateStatusBanner(message, type = 'info') {
     }
 }
 // --- UI Helper Functions ---
-// sat.js - Add this near the top or in a utility section
 function getCssVar(varName) {
   try {
-    return getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+    // Ensure styles are loaded before calling this
+    const value = getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+    return value || undefined; // Return undefined if empty string
   } catch (e) {
     console.warn(`Could not get CSS variable ${varName}`, e);
-    // Fallbacks (adjust if needed)
-    if (varName.includes('text')) return document.documentElement.getAttribute('data-theme') === 'dark' ? '#FDFBF5' : '#312d2a';
-    if (varName.includes('border')) return '#D8D4D7';
-    return '#7A747B';
+    // Provide reasonable fallbacks based on the LAST theme (Hue 281)
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+     if (varName === '--color-text-secondary') return isDark ? 'oklch(82.74% 0.033 281)' : 'oklch(57.81% 0.033 281)';
+     if (varName === '--color-surface') return isDark ? 'oklch(71.57% 0.066 281 / 4%)' : 'oklch(71.48% 0.066 281 / 4%)';
+     if (varName === '--color-text-primary') return isDark ? 'oklch(100% 0 0)' : 'oklch(0% 0 0)';
+     if (varName === '--color-border') return isDark ? 'oklch(71.57% 0.066 281 / 8%)' : 'oklch(71.48% 0.066 281 / 8%)';
+     if (varName === '--shadow-md') return isDark ? '0 2px 4px rgba(0, 0, 0, 0.25)' : '0 2px 4px rgba(0, 0, 0, 0.08)';
+     if (varName === '--color-surface-variant') return isDark ? 'oklch(71.57% 0.066 281 / 16%)' : 'oklch(71.48% 0.066 281 / 16%)';
+     if (varName === '--color-background') return isDark ? 'oklch(24% 0.0033 281)' : 'oklch(100% 0 281)';
+     if (varName === '--color-primary') return 'oklch(63.18% 0.218 281)';
+     if (varName === '--color-surface-container') return isDark ? 'oklch(71.57% 0.066 281 / 8%)' : 'oklch(71.48% 0.066 281 / 8%)';
+     if (varName === '--chart-color-primary') return 'oklch(63.18% 0.218 281)';
+    console.error(`Fallback used for CSS variable ${varName}`);
+    return '#cccccc'; // Generic fallback
   }
 }
 function setLoading(containerId, isLoading, message = 'Loading...') {
@@ -2108,7 +2119,8 @@ function getCssVar(varName) {
 }
 
 
-// Updated displayChoroplethMap function
+// sat.js - Replace your existing function with this one
+
 function displayChoroplethMap(mapData) {
     const containerId = 'map-container';
     const container = document.getElementById(containerId);
@@ -2118,7 +2130,8 @@ function displayChoroplethMap(mapData) {
         return;
     }
 
-    cleanupTooltips(); // Assumes this function exists to remove old D3/HTML tooltips
+    // Assumes cleanupTooltips() function exists and works
+    cleanupTooltips();
 
     // Clear previous content and create map container
     container.innerHTML = '';
@@ -2128,9 +2141,11 @@ function displayChoroplethMap(mapData) {
     mapDiv.style.height = '100%';
     container.appendChild(mapDiv);
 
+    // Assumes setLoading() function exists and works
     setLoading(containerId, false); // Turn off loading spinner
 
     if (!mapData || Object.keys(mapData).length === 0) {
+        // Assumes displayNoData() function exists and works
         displayNoData(containerId, 'No geographic data available for mapping.');
         return;
     }
@@ -2142,6 +2157,7 @@ function displayChoroplethMap(mapData) {
 
         if (width <= 0 || height <= 100) { // Increased minimum height check
             console.warn(`Map container has invalid dimensions: ${width}x${height}.`);
+            // Assumes displayError() function exists and works
             displayError(containerId, 'Map container has insufficient size.');
             return;
         }
@@ -2155,10 +2171,10 @@ function displayChoroplethMap(mapData) {
         const mapStrokeColor = getCssVar('--color-background'); // For state borders (gap effect)
         const hoverStrokeColor = getCssVar('--color-primary'); // Primary accent on hover
         const legendBorderColor = getCssVar('--color-border');
-        // Define start and end colors for the sequential scale
-        // Using a subtle surface color -> primary chart color feels appropriate
-        const scaleStartColor = getCssVar('--color-surface-container');
-        const scaleEndColor = getCssVar('--chart-color-primary');
+        const scaleStartColor = getCssVar('--color-surface-container'); // Lightest color for scale
+        const scaleEndColor = getCssVar('--chart-color-primary'); // Darkest color for scale (main accent)
+        const tooltipShadow = getCssVar('--shadow-md'); // Get shadow value
+        const tooltipRadius = getCssVar('--border-radius-sm'); // Get radius value
         // --- End Get Colors ---
 
         const svg = d3.select(mapDiv)
@@ -2169,15 +2185,35 @@ function displayChoroplethMap(mapData) {
             .style('max-width', '100%')
             .style('height', 'auto'); // Maintain aspect ratio
 
-        const stateValues = Object.values(mapData).map(d => d.value);
-        const maxValue = d3.max(stateValues) || 0;
+        const stateValues = Object.values(mapData)
+                              .map(d => d.value)
+                              .filter(v => typeof v === 'number' && !isNaN(v)); // Ensure only valid numbers
+        const maxValue = stateValues.length > 0 ? d3.max(stateValues) : 0; // Calculate max from valid numbers
 
-        // --- Create Color Scale using fetched CSS variable colors ---
-        const colorScale = d3.scaleSequential(d3.interpolateRgb(scaleStartColor, scaleEndColor))
-            .domain([0, maxValue === 0 ? 1 : maxValue]); // Ensure domain starts at 0
-        // --- End Create Color Scale ---
+        // --- Define Color Scale using OKLCH Interpolator ---
+        let colorScale;
+        try {
+             // Use d3.interpolateOklch since our variables are in OKLCH format
+             colorScale = d3.scaleSequential(d3.interpolateOklch(scaleStartColor, scaleEndColor))
+                           .domain([0, maxValue === 0 ? 1 : maxValue]) // Ensure domain starts at 0
+                           .clamp(true); // Clamp values outside the domain
 
-        // Ensure previous body tooltips are gone (belt-and-suspenders)
+             // Test if scale returns valid colors - basic check
+             if (!colorScale(0) || !colorScale(maxValue)) {
+                 throw new Error("Color scale generated invalid colors (returned falsy value).");
+             }
+        } catch (e) {
+            console.error("Failed to create OKLCH color scale, falling back to RGB.", e);
+            // Fallback to a simpler RGB interpolation if OKLCH fails
+            // Note: RGB interpolation might not look as good with OKLCH inputs
+            colorScale = d3.scaleSequential(d3.interpolateRgb(scaleStartColor, scaleEndColor))
+                           .domain([0, maxValue === 0 ? 1 : maxValue])
+                           .clamp(true);
+        }
+        // --- End Define Color Scale ---
+
+
+        // Ensure previous body tooltips are gone
         d3.select("body").selectAll(".map-tooltip").remove();
 
         // --- Create Tooltip using fetched CSS variable colors ---
@@ -2190,18 +2226,18 @@ function displayChoroplethMap(mapData) {
             .style("background-color", tooltipBgColor)
             .style("color", tooltipTextColor)
             .style("border", `1px solid ${tooltipBorderColor}`)
-            .style("padding", "8px 12px") // Adjusted padding
-            .style("border-radius", getCssVar('--border-radius-sm')) // Use radius variable
+            .style("padding", "8px 12px")
+            .style("border-radius", tooltipRadius) // Use radius variable
             .style("font-size", "12px")
-            .style("line-height", "1.4") // Improve line spacing
+            .style("line-height", "1.4")
             .style("pointer-events", "none")
             .style("z-index", "9999")
-            .style("box-shadow", getCssVar('--shadow-md')) // Use shadow variable
-            .style("max-width", "200px") // Prevent tooltip from becoming too wide
-            .style("transition", "opacity 0.2s ease"); // Add transition
+            .style("box-shadow", tooltipShadow) // Use shadow variable
+            .style("max-width", "200px")
+            .style("transition", "opacity 0.2s ease");
         // --- End Create Tooltip ---
 
-        // FIPS mapping (ensure this object is complete)
+        // FIPS to State Name Mapping
         const fipsToStateName = {
              "01": "Alabama", "02": "Alaska", "04": "Arizona", "05": "Arkansas",
              "06": "California", "08": "Colorado", "09": "Connecticut", "10": "Delaware",
@@ -2216,6 +2252,7 @@ function displayChoroplethMap(mapData) {
              "46": "South Dakota", "47": "Tennessee", "48": "Texas", "49": "Utah",
              "50": "Vermont", "51": "Virginia", "53": "Washington", "54": "West Virginia",
              "55": "Wisconsin", "56": "Wyoming", "72": "Puerto Rico"
+             // Add other territories if needed
          };
 
         // Load map data
@@ -2227,19 +2264,41 @@ function displayChoroplethMap(mapData) {
 
                 const states = topojson.feature(us, us.objects.states);
                 const projection = d3.geoAlbersUsa().fitSize([width, height], states);
-                const pathGenerator = d3.geoPath().projection(projection); // Renamed for clarity
+                const pathGenerator = d3.geoPath().projection(projection);
 
                 // --- Draw States ---
                 svg.append('g')
-                   .attr('class', 'states') // Add class for potential CSS targeting
+                   .attr('class', 'states')
                    .selectAll('path')
                    .data(states.features)
                    .join('path') // Use join for enter/update/exit
                    .attr('d', pathGenerator)
-                   .attr('fill', d => {
-                       const fipsCode = d.id?.toString().padStart(2, '0'); // Optional chaining for safety
+                   .attr('fill', d => { // ** Critical Fill Logic **
+                       const geoJsonId = d.id;
+                       const fipsCode = geoJsonId?.toString().padStart(2, '0');
                        const stateData = fipsCode ? mapData[fipsCode] : null;
-                       return stateData ? colorScale(stateData.value) : defaultFillColor;
+                       const value = stateData ? stateData.value : null;
+
+                       // Check if data exists and value is a valid number >= 0
+                       if (stateData && typeof value === 'number' && !isNaN(value) && value >= 0) {
+                           try {
+                               const calculatedColor = colorScale(value);
+                               // Basic check if colorScale returned a valid string
+                               if (calculatedColor && typeof calculatedColor === 'string') {
+                                    return calculatedColor;
+                               } else {
+                                    console.warn(`Invalid color from scale for FIPS ${fipsCode}, value ${value}:`, calculatedColor);
+                                    return defaultFillColor; // Fallback if scale returns odd value
+                               }
+                           } catch(scaleError) {
+                                console.error(`Error applying scale for FIPS ${fipsCode}, value ${value}:`, scaleError);
+                                return defaultFillColor; // Fallback on error
+                           }
+                       } else {
+                           // Use default color if no data or invalid value
+                           // console.log(`Using default fill for FIPS ${fipsCode}`); // Optional debug
+                           return defaultFillColor;
+                       }
                    })
                    .attr('stroke', mapStrokeColor)
                    .attr('stroke-width', 0.5)
@@ -2252,41 +2311,49 @@ function displayChoroplethMap(mapData) {
                        const stateName = fipsCode ? (fipsToStateName[fipsCode] || `ID: ${fipsCode}`) : "Unknown";
 
                        let tooltipHtml = `<strong>${stateName}</strong>`;
-                       if (stateData) {
+                       if (stateData && typeof stateData.value === 'number') { // Check value type
                            tooltipHtml += `
                                <div style="margin-top: 4px;">Total Value: ${formatCurrency(stateData.value)}</div>
-                               <div>Contracts: ${stateData.count.toLocaleString()}</div>`;
+                               <div>Contracts: ${stateData.count ? stateData.count.toLocaleString() : 'N/A'}</div>`;
                        } else {
-                           tooltipHtml += `<br>No data`;
+                           tooltipHtml += `<br><span style="opacity: 0.7;">No data available</span>`; // Clearer message
                        }
                        tooltip.html(tooltipHtml);
 
                        d3.select(this)
                            .attr("stroke", hoverStrokeColor)
                            .attr("stroke-width", 1.5)
-                           .raise(); // Bring to front
+                           .raise();
                    })
                    .on('mousemove', function(event) {
-                       // Tooltip positioning slightly improved
-                       const tooltipNode = tooltip.node();
-                       const tooltipWidth = tooltipNode ? tooltipNode.offsetWidth : 150;
-                       const tooltipHeight = tooltipNode ? tooltipNode.offsetHeight : 50;
-                       let left = event.pageX + 15;
-                       let top = event.pageY - tooltipHeight / 2; // Vertically center
+                        // Improved tooltip positioning logic
+                        const tooltipNode = tooltip.node();
+                        if (!tooltipNode) return; // Exit if tooltip node isn't available yet
 
-                       // Adjust if tooltip goes off-screen right
-                       if (left + tooltipWidth > window.innerWidth) {
-                           left = event.pageX - tooltipWidth - 15;
-                       }
-                       // Adjust if tooltip goes off-screen bottom/top (basic)
-                       if (top + tooltipHeight > window.innerHeight) {
-                          top = event.pageY - tooltipHeight - 10;
-                       }
-                       if (top < 0) {
-                          top = event.pageY + 10;
-                       }
+                        const tooltipWidth = tooltipNode.offsetWidth;
+                        const tooltipHeight = tooltipNode.offsetHeight;
+                        const padding = 15; // Space from cursor
+                        let left = event.pageX + padding;
+                        let top = event.pageY - (tooltipHeight / 2); // Attempt vertical center
 
-                       tooltip.style("left", `${left}px`).style("top", `${top}px`);
+                        // Adjust horizontal position if off-screen right
+                        if (left + tooltipWidth > window.innerWidth - padding) {
+                            left = event.pageX - tooltipWidth - padding;
+                        }
+                         // Adjust horizontal position if off-screen left
+                        if (left < padding) {
+                           left = padding;
+                        }
+                        // Adjust vertical position if off-screen bottom
+                        if (top + tooltipHeight > window.innerHeight - padding) {
+                           top = window.innerHeight - tooltipHeight - padding;
+                        }
+                         // Adjust vertical position if off-screen top
+                        if (top < padding) {
+                           top = padding;
+                        }
+
+                        tooltip.style("left", `${left}px`).style("top", `${top}px`);
                    })
                    .on('mouseout', function() {
                        tooltip.style("visibility", "hidden").style("opacity", 0);
@@ -2298,16 +2365,15 @@ function displayChoroplethMap(mapData) {
 
 
                 // --- Draw Legend ---
-                const legendWidth = Math.min(width * 0.4, 180); // Slightly narrower legend
-                const legendHeight = 8; // Slimmer bar
-                const legendX = width - legendWidth - 15; // Adjust positioning
-                const legendY = height - 30; // Adjust positioning
+                const legendWidth = Math.min(width * 0.4, 180);
+                const legendHeight = 8;
+                const legendX = width - legendWidth - 15;
+                const legendY = height - 30;
                 const legendGroup = svg.append("g").attr("transform", `translate(${legendX}, ${legendY})`);
                 const numBins = 5;
                 const binMaxValue = maxValue === 0 ? 1 : maxValue;
-                // Create domain for legend bins
                 const legendDomain = d3.range(0, binMaxValue, binMaxValue / numBins);
-                legendDomain.push(binMaxValue); // Ensure max value is included
+                legendDomain.push(binMaxValue); // Ensure max value is included for range mapping
                 const binWidth = legendWidth / numBins;
 
                 legendGroup.append('text')
@@ -2318,8 +2384,8 @@ function displayChoroplethMap(mapData) {
                     .text('Contract Value');
 
                 legendGroup.selectAll('rect')
-                    .data(legendDomain.slice(0, numBins)) // Use N bins
-                    .join('rect') // Use join
+                    .data(legendDomain.slice(0, numBins))
+                    .join('rect')
                     .attr('class', 'legend-rect')
                     .attr('x', (d, i) => i * binWidth).attr('y', 0)
                     .attr('width', binWidth).attr('height', legendHeight)
@@ -2329,15 +2395,15 @@ function displayChoroplethMap(mapData) {
 
                 legendGroup.append('text')
                     .attr('class', 'legend-text')
-                    .attr('x', 0).attr('y', legendHeight + 9) // Adjust spacing
-                    .attr('text-anchor', 'start').attr('font-size', '9px') // Slightly smaller
+                    .attr('x', 0).attr('y', legendHeight + 9)
+                    .attr('text-anchor', 'start').attr('font-size', '9px')
                     .attr('fill', textColor) // Use var
                     .text('Low');
 
                 legendGroup.append('text')
                     .attr('class', 'legend-text')
-                    .attr('x', legendWidth).attr('y', legendHeight + 9) // Adjust spacing
-                    .attr('text-anchor', 'end').attr('font-size', '9px') // Slightly smaller
+                    .attr('x', legendWidth).attr('y', legendHeight + 9)
+                    .attr('text-anchor', 'end').attr('font-size', '9px')
                     .attr('fill', textColor) // Use var
                     .text('High');
                 // --- End Draw Legend ---
@@ -2345,11 +2411,13 @@ function displayChoroplethMap(mapData) {
             })
             .catch(error => {
                 console.error("Error loading or processing GeoJSON for map:", error);
+                // Assumes displayError() exists
                 displayError(containerId, `Error rendering map: ${error.message}`);
                 d3.select("body").selectAll(".map-tooltip").remove();
             });
     } catch (error) {
         console.error("Error creating choropleth map:", error);
+         // Assumes displayError() exists
         displayError(containerId, `Failed to render map: ${error.message}`);
         d3.select("body").selectAll(".map-tooltip").remove();
     }
