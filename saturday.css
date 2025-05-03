@@ -219,10 +219,11 @@ a:hover {
 }
 
 .main-content {
-    flex: 1; /* Take remaining width */
-    height: 100vh;
-    overflow-y: auto; /* Allow main content area to scroll */
-    padding: 20px;
+    flex: 1; /* Keep existing */
+    height: 100vh; /* Keep existing */
+    overflow-y: auto; /* Keep existing */
+    padding: 20px; /* Keep existing */
+    background-color: var(--color-surface);
 }
 
 /* ========================================= */
