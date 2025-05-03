@@ -1,43 +1,43 @@
 /* ========================================= */
-/* CSS Variables - Light Mode (OKLCH Mapped) */
+/* CSS Variables - Light Mode (OKLCH Orange/Brown Mapped) */
 /* ========================================= */
 :root {
-    /* --- Mapped OKLCH Palette --- */
+    /* --- Mapped OKLCH Palette (Hue 40) --- */
     /* Background */
-    --color-background: oklch(100% 0 135); /* Was --background */
+    --color-background: oklch(100% 0 40); /* Was --background - Pure White */
 
-    /* Surfaces (Using surface-level-1, 2, 3) */
-    --color-surface: oklch(70.80078078792195% 0.04 135 / 4%); /* Mapped from --surface-level-1 */
-    --color-surface-container: oklch(70.80078078792195% 0.04 135 / 8%); /* Mapped from --surface-level-2 */
-    --color-surface-variant: oklch(70.80078078792195% 0.04 135 / 16%); /* Mapped from --surface-level-3 */
+    /* Surfaces (Using surface-level-1, 2, 3 - Light Beige Tones) */
+    --color-surface: oklch(71.77734328154847% 0.066 40 / 4%);  /* Mapped from --surface-level-1 */
+    --color-surface-container: oklch(71.77734328154847% 0.066 40 / 8%);  /* Mapped from --surface-level-2 */
+    --color-surface-variant: oklch(71.77734328154847% 0.066 40 / 16%); /* Mapped from --surface-level-3 */
 
     /* Text Colors */
-    --color-text-primary: oklch(0% 0 0); /* Mapped from --text-primary */
-    --color-text-secondary: oklch(57.51953087460143% 0.02 135); /* Mapped from --text-secondary */
-    --color-text-tertiary: oklch(74.07226514157075% 0.02 135); /* Mapped from --text-tertiary */
+    --color-text-primary: oklch(0% 0 0); /* Mapped from --text-primary - Pure Black */
+    --color-text-secondary: oklch(58.007812121414695% 0.033 40); /* Mapped from --text-secondary - Mid Beige/Brown */
+    --color-text-tertiary: oklch(74.51171826370269% 0.033 40); /* Mapped from --text-tertiary - Light Beige/Brown */
 
     /* Action Colors */
-    --color-primary: oklch(59.7656246099424% 0.20312500000000006 135); /* Mapped from --accent */
-    --color-on-primary: oklch(100% 0 0); /* Mapped from --on-accent */
-    /* No direct secondary in new scheme, reusing primary. Consider using --accent-b if needed */
-    --color-secondary: oklch(59.7656246099424% 0.20312500000000006 135);
+    --color-primary: oklch(63.28124958699783% 0.22343750000000007 40); /* Mapped from --accent - Orange/Brown */
+    --color-on-primary: oklch(100% 0 0); /* Mapped from --on-accent - White */
+    /* Reusing primary for secondary as no distinct secondary accent provided */
+    --color-secondary: oklch(63.28124958699783% 0.22343750000000007 40);
     --color-on-secondary: oklch(100% 0 0);
 
-    /* Border & Outline (Using border-level-1, 2) */
-    --color-border: oklch(70.80078078792195% 0.04 135 / 8%); /* Mapped from --border-level-1 */
-    --color-outline: oklch(70.80078078792195% 0.04 135 / 16%); /* Mapped from --border-level-2 */
+    /* Border & Outline (Using border-level-1, 2 - Light Beige Tones) */
+    --color-border: oklch(71.77734328154847% 0.066 40 / 8%);  /* Mapped from --border-level-1 */
+    --color-outline: oklch(71.77734328154847% 0.066 40 / 16%); /* Mapped from --border-level-2 */
     /* Tweak: Add focus ring based on primary */
-    --color-focus-ring: oklch(59.76% 0.203 135 / 50%);
+    --color-focus-ring: oklch(63.28% 0.223 40 / 50%);
 
-    /* Chart Colors (Derived from Accent: L=60%, L=70%, L=50%) */
-    --chart-color-primary: oklch(59.76% 0.203 135); /* Accent */
-    --chart-color-secondary: oklch(70% 0.203 135);   /* Lighter */
-    --chart-color-tertiary: oklch(50% 0.203 135);    /* Darker */
+    /* Chart Colors (Derived from Accent: L=63%, L=73%, L=53%) */
+    --chart-color-primary: oklch(63.28% 0.223 40); /* Accent */
+    --chart-color-secondary: oklch(73% 0.223 40);   /* Lighter */
+    --chart-color-tertiary: oklch(53% 0.223 40);    /* Darker */
 
     /* Status Colors (Added Standard Hex) */
     --color-error: #e03131;
     --color-success: #2f9e44;
-    --color-warning: #f08c00;
+    --color-warning: #f08c00; /* Orange/Amber */
     --color-info: #1971c2;
 
     /* --- Original Layout Values (Keep) --- */
@@ -51,52 +51,52 @@
     --bento-gap: 20px;
 
     /* --- Unmapped OKLCH Variables (for potential use) --- */
-    /* --accent-b: oklch(59.7656246099424% 0.20312500000000006 135 / 16%); */
-    /* --gradient-bg-start: oklch(59.7656246099424% 0.20312500000000006 135 / 8%); */
-    /* --gradient-bg-end: oklch(59.7656246099424% 0.20312500000000006 135 / 0%); */
-    /* --border-level-3: oklch(70.80078078792195% 0.04 135 / 32%); */
+    /* --accent-b: oklch(63.28124958699783% 0.22343750000000007 40 / 16%); */
+    /* --gradient-bg-start: oklch(63.28124958699783% 0.22343750000000007 40 / 8%); */
+    /* --gradient-bg-end: oklch(63.28124958699783% 0.22343750000000007 40 / 0%); */
+    /* --border-level-3: oklch(71.77734328154847% 0.066 40 / 32%); */
 }
 
 /* ========================================= */
-/* CSS Variables - Dark Mode (OKLCH Mapped)  */
+/* CSS Variables - Dark Mode (OKLCH Orange/Brown Mapped)  */
 /* ========================================= */
 [data-theme="dark"] {
-    /* --- Mapped OKLCH Palette --- */
+    /* --- Mapped OKLCH Palette (Hue 40) --- */
     /* Background */
-    --color-background: oklch(24% 0.002 135); /* Was --background */
+    --color-background: oklch(24% 0.0033 40); /* Was --background - Dark Brownish Gray */
 
-    /* Surfaces */
-    --color-surface: oklch(70.88769531249999% 0.04 135 / 4%); /* Mapped from --surface-level-1 */
-    --color-surface-container: oklch(70.88769531249999% 0.04 135 / 8%); /* Mapped from --surface-level-2 */
-    --color-surface-variant: oklch(70.88769531249999% 0.04 135 / 16%); /* Mapped from --surface-level-3 */
+    /* Surfaces (Subtle Light Beige/Brown Tones on Dark BG) */
+    --color-surface: oklch(71.87109374999999% 0.066 40 / 4%);  /* Mapped from --surface-level-1 */
+    --color-surface-container: oklch(71.87109374999999% 0.066 40 / 8%);  /* Mapped from --surface-level-2 */
+    --color-surface-variant: oklch(71.87109374999999% 0.066 40 / 16%); /* Mapped from --surface-level-3 */
 
     /* Text Colors */
-    --color-text-primary: oklch(100% 0 0); /* Mapped from --text-primary */
-    --color-text-secondary: oklch(82.41015625000003% 0.02 135); /* Mapped from --text-secondary */
-    --color-text-tertiary: oklch(67.99316406249999% 0.02 135); /* Mapped from --text-tertiary */
+    --color-text-primary: oklch(100% 0 0); /* Mapped from --text-primary - White */
+    --color-text-secondary: oklch(82.92968750000003% 0.033 40); /* Mapped from --text-secondary - Very Light Beige/Brown */
+    --color-text-tertiary: oklch(68.47558593749997% 0.033 40); /* Mapped from --text-tertiary - Light Beige/Brown */
 
     /* Action Colors */
-    --color-primary: oklch(59.7656246099424% 0.20312500000000006 135); /* Mapped from --accent */
-    --color-on-primary: oklch(100% 0 0); /* Mapped from --on-accent */
+    --color-primary: oklch(63.28124958699783% 0.22343750000000007 40); /* Mapped from --accent - Orange/Brown */
+    --color-on-primary: oklch(100% 0 0); /* Mapped from --on-accent - White */
     /* Reusing primary for secondary */
-    --color-secondary: oklch(59.7656246099424% 0.20312500000000006 135);
+    --color-secondary: oklch(63.28124958699783% 0.22343750000000007 40);
     --color-on-secondary: oklch(100% 0 0);
 
     /* Border & Outline */
-    --color-border: oklch(70.88769531249999% 0.04 135 / 8%); /* Mapped from --border-level-1 */
-    --color-outline: oklch(70.88769531249999% 0.04 135 / 16%); /* Mapped from --border-level-2 */
+    --color-border: oklch(71.87109374999999% 0.066 40 / 8%);  /* Mapped from --border-level-1 */
+    --color-outline: oklch(71.87109374999999% 0.066 40 / 16%); /* Mapped from --border-level-2 */
     /* Tweak: Dark mode focus ring */
-    --color-focus-ring: oklch(59.76% 0.203 135 / 60%);
+    --color-focus-ring: oklch(63.28% 0.223 40 / 60%);
 
     /* Chart Colors (Derived - Same as light mode, OKLCH handles perception) */
-    --chart-color-primary: oklch(59.76% 0.203 135);
-    --chart-color-secondary: oklch(70% 0.203 135);
-    --chart-color-tertiary: oklch(50% 0.203 135);
+    --chart-color-primary: oklch(63.28% 0.223 40);
+    --chart-color-secondary: oklch(73% 0.223 40);
+    --chart-color-tertiary: oklch(53% 0.223 40);
 
     /* Status Colors (Added Lighter Hex for Dark Mode) */
     --color-error: #f87171;
     --color-success: #4ade80;
-    --color-warning: #fbbf24;
+    --color-warning: #fbbf24; /* Lighter Amber */
     --color-info: #60a5fa;
 
     /* Shadow adjustments for dark mode (Keep Original) */
@@ -105,10 +105,10 @@
     --shadow-lg: 0 4px 6px rgba(0, 0, 0, 0.3);
 
     /* --- Unmapped OKLCH Variables (for potential use) --- */
-    /* --accent-b: oklch(59.7656246099424% 0.20312500000000006 135 / 24%); */
-    /* --gradient-bg-start: oklch(59.7656246099424% 0.20312500000000006 135 / 12%); */
-    /* --gradient-bg-end: oklch(59.7656246099424% 0.20312500000000006 135 / 0%); */
-    /* --border-level-3: oklch(70.88769531249999% 0.04 135 / 32%); */
+    /* --accent-b: oklch(63.28124958699783% 0.22343750000000007 40 / 24%); */
+    /* --gradient-bg-start: oklch(63.28124958699783% 0.22343750000000007 40 / 12%); */
+    /* --gradient-bg-end: oklch(63.28124958699783% 0.22343750000000007 40 / 0%); */
+    /* --border-level-3: oklch(71.87109374999999% 0.066 40 / 32%); */
 }
 /* ========================================= */
 /* Base Styles & Reset                       */
