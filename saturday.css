@@ -264,8 +264,8 @@ a:hover {
 }
 
 #bento-sankey { grid-area: sankey; }
-#bento-map { grid-area: map; }
-#bento-arr { grid-area: arr; }
+#bento-map { grid-area: arr; }
+#bento-arr { grid-area: map; }
 #bento-tavtcv { grid-area: tavtcv; }
 #bento-leaders { grid-area: leaders; }
 #bento-expiring { grid-area: expiring; }
