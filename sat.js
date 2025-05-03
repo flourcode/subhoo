@@ -295,6 +295,19 @@ function updateStatusBanner(message, type = 'info') {
     }
 }
 // --- UI Helper Functions ---
+// sat.js Utility Function
+function getCssVar(varName) {
+  // Ensure this runs after styles are loaded, or default gracefully
+  try {
+    return getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+  } catch (e) {
+    console.warn(`Could not get CSS variable ${varName}`, e);
+    // Provide fallbacks based on the variable type if needed
+    if (varName.includes('text')) return '#000000'; // Default fallback for text
+    if (varName.includes('border')) return '#cccccc'; // Default fallback for border
+    return '#888888'; // Generic fallback
+  }
+}
 function setLoading(containerId, isLoading, message = 'Loading...') {
     const container = document.getElementById(containerId);
     if (!container) return;
@@ -2422,17 +2435,15 @@ function displayEnhancedSankeyChart(model) {
         
         // Choose colors based on theme
         const nodeColors = {
-            agency: isDarkMode ? '#A29AAA' : '#9993A1',
-            subagency: isDarkMode ? '#9993A1' : '#878094',
-            office: isDarkMode ? '#878094' : '#797484',
-            prime: isDarkMode ? '#797484' : '#706877',
-            sub: isDarkMode ? '#706877' : '#615C66'
-        };
-        
-        const linkColor = isDarkMode ? '#3A373E' : '#D7D4DC';
-        const textColor = isDarkMode ? '#F4F2F6' : '#36323A';
-        
-        // Create D3 selections
+        agency: getCssVar('--chart-color-tertiary'), // e.g., Muted text color
+        prime: getCssVar('--chart-color-primary'),  // e.g., Main accent
+        sub: getCssVar('--chart-color-secondary')   // e.g., Lighter accent
+    };
+    const linkColor = getCssVar('--color-border'); // Use border color for links
+    const textColor = getCssVar('--color-text-secondary'); // Secondary text for labels
+    const nodeStrokeColor = getCssVar('--color-surface'); // Use surface for subtle stroke
+
+    // Create D3 selections
         const leftSvgSelection = d3.select(leftSvg)
             .attr('width', panelWidth)
             .attr('height', panelHeight);

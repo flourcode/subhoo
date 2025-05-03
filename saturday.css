@@ -1043,3 +1043,81 @@ tr:hover td {
     min-height: 200px;
   }
 }
+/* saturday.css */
+
+/* === Existing Table Styles - Update Colors === */
+th, td {
+    /* padding, text-align, white-space... keep existing */
+    border-bottom: 1px solid var(--color-border); /* Use mapped border color */
+}
+
+th {
+    /* font-weight, font-size, text-transform, letter-spacing, position, top, z-index... keep existing */
+    background-color: var(--color-surface-variant); /* Use surface-variant for header BG */
+    color: var(--color-text-secondary); /* Use secondary text color for header text */
+}
+
+td {
+    /* font-size... keep existing */
+    color: var(--color-text-primary); /* Use primary text color for cell text */
+}
+
+td.number {
+    /* text-align, font-variant-numeric, font-weight... keep existing */
+    color: var(--color-text-primary); /* Ensure numbers use primary text color too */
+}
+
+/* Removed Tailwind-like classes - apply styles directly or create new classes if needed */
+/* td.font-medium { font-weight: 500; } ... etc */
+
+/* Update hover state */
+tr:hover td {
+    background-color: var(--color-surface-container); /* Use surface-container for hover */
+}
+
+/* Update summary text */
+.summary-text {
+    /* text-align, font-size, margin-top, padding-top... keep existing */
+    border-top: 1px solid var(--color-border);
+    color: var(--color-text-tertiary); /* Use tertiary text for less emphasis */
+}
+
+/* Sticky header/column background colors (if using sticky positioning) */
+th:first-child, /* Example for sticky first column header */
+td:first-child { /* Example for sticky first column cell */
+    /* position, left, z-index... keep existing */
+    background-color: var(--color-surface-variant); /* Match header bg */
+}
+td:first-child {
+     background-color: var(--color-surface); /* Match cell row bg */
+}
+tr:hover td:first-child {
+     background-color: var(--color-surface-container); /* Match hover bg */
+}
+/* saturday.css */
+.tooltip, /* Add any other specific tooltip classes */
+#tav-tcv-tooltip { /* Example ID */
+    /* position, padding, border-radius, font-size, pointer-events, z-index, display, opacity, visibility, transition... keep existing */
+    background-color: var(--color-surface) !important; /* Use surface color */
+    color: var(--color-text-primary) !important; /* Use primary text */
+    border: 1px solid var(--color-border) !important; /* Use border color */
+    box-shadow: var(--shadow-md) !important; /* Use shadow */
+}
+/* Ensure dark mode overrides are handled by the [data-theme="dark"] block */
+/* saturday.css - Example using relative color syntax */
+#status-banner.error {
+    background-color: oklch(from var(--color-error) l c h / 10%); /* 10% alpha */
+    color: var(--color-error);
+    border-color: var(--color-error);
+}
+#status-banner.success {
+    background-color: oklch(from var(--color-success) l c h / 10%);
+    color: var(--color-success);
+    border-color: var(--color-success);
+}
+#status-banner.info {
+    background-color: oklch(from var(--color-info) l c h / 10%);
+    color: var(--color-info);
+    border-color: var(--color-info);
+}
+/* Add similar styles within [data-theme="dark"] if needed, potentially adjusting alpha */
