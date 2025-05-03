@@ -161,33 +161,54 @@ function parseSafeFloat(value) {
      const num = parseFloat(cleanedString);
      return isNaN(num) ? 0 : num;
 }
-
 function parseDate(dateString) {
     if (!dateString || typeof dateString !== 'string') return null;
+    
+    // If already a Date object, return it
+    if (dateString instanceof Date && !isNaN(dateString.getTime())) return dateString;
+    
     try {
-        // Prioritize ISO 8601 format (YYYY-MM-DD or YYYY-MM-DDTHH:mm:ss)
+        // Common date formats found in USAspending data
+        let date = null;
+        
+        // Try ISO 8601 format (YYYY-MM-DD)
         if (dateString.match(/^\d{4}-\d{2}-\d{2}/)) {
-            const dateTimeStr = dateString.includes('T') ? dateString : dateString.split(' ')[0] + 'T00:00:00Z'; // Assume UTC if no timezone
-            const date = new Date(dateTimeStr);
-             if (!isNaN(date.getTime())) return date;
+            date = new Date(dateString);
+            if (!isNaN(date.getTime())) return date;
         }
-        // Fallback to other potential formats if date-fns is available
+        
+        // Try MM/DD/YYYY format
+        if (dateString.match(/^\d{1,2}\/\d{1,2}\/\d{4}$/)) {
+            const parts = dateString.split('/');
+            date = new Date(parts[2], parts[0] - 1, parts[1]);
+            if (!isNaN(date.getTime())) return date;
+        }
+        
+        // Try date-fns if available
         if (typeof dateFns !== 'undefined') {
             const parsedDate = dateFns.parseISO(dateString);
             if (!isNaN(parsedDate.getTime())) return parsedDate;
         }
-        // Final fallback to browser's native parsing
-        const nativeDate = new Date(dateString);
-        if (!isNaN(nativeDate.getTime())) return nativeDate;
-
-        console.warn(`Could not parse date reliably: ${dateString}`);
+        
+        // Last resort: browser's native parsing
+        date = new Date(dateString);
+        if (!isNaN(date.getTime())) return date;
+        
+        // Extra fallback for fiscal year format like "FY18" or "FY 2018"
+        const fyMatch = dateString.match(/FY\s*(\d{2,4})/i);
+        if (fyMatch) {
+            let year = parseInt(fyMatch[1]);
+            if (year < 100) year += 2000; // Assume 20xx for 2-digit years
+            return new Date(year, 9, 1); // October 1st of the fiscal year (FY starts Oct 1 in US)
+        }
+        
+        console.log(`Could not parse date: "${dateString}"`);
         return null;
     } catch (e) {
-        console.error(`Error parsing date: ${dateString}`, e);
+        console.error(`Error parsing date: "${dateString}"`, e);
         return null;
     }
 }
-
 function calculateDurationDays(startDateStr, endDateStr) {
     const start = parseDate(startDateStr);
     const end = parseDate(endDateStr);
