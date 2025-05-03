@@ -2647,73 +2647,59 @@ function calculateAverageARRFromModel(model) {
         if (Object.keys(model.contracts).length === 0) {
             loadingDiv.style.display = 'none';
             noDataDiv.style.display = 'block';
-            resultDiv.textContent = formatCurrency(0) + " / yr";
+            resultDiv.textContent = formatConciseCurrency(0) + " / yr";
             resultDiv.style.display = 'block';
             return;
         }
 
-        // Group contracts by duration for weighted ARR calculation
-        const shortTermContracts = []; // Less than 90 days
-        const mediumTermContracts = []; // 90 days to 270 days
-        const longTermContracts = []; // More than 270 days
+        // Variables for simplified ARR calculation
+        let totalAnnualizedValue = 0;
         let validContractsCount = 0;
         
+        // Process all contracts
         Object.values(model.contracts).forEach(contract => {
-            if (!contract.startDate || !contract.endDate) return;
-            
+            // Get the contract value
             const value = contract.value || 0;
-            const durationDays = calculateDurationDays(contract.startDate, contract.endDate);
             
-            if (value > 0 && durationDays > 0) {
-                // Categorize by duration
-                if (durationDays < 90) {
-                    shortTermContracts.push({ value, durationDays });
-                } else if (durationDays < 270) {
-                    mediumTermContracts.push({ value, durationDays });
-                } else {
-                    longTermContracts.push({ value, durationDays });
+            // Skip contracts with no value
+            if (value <= 0) return;
+            
+            // Check if we have valid dates for duration
+            let startDate = contract.startDate;
+            let endDate = contract.endDate;
+            
+            // Try alternate fields if needed
+            if ((!startDate || !endDate) && contract.raw) {
+                if (!startDate && contract.raw.period_of_performance_start_date) 
+                    startDate = parseDate(contract.raw.period_of_performance_start_date);
+                    
+                if (!endDate && contract.raw.period_of_performance_current_end_date) 
+                    endDate = parseDate(contract.raw.period_of_performance_current_end_date);
+            }
+            
+            // Calculate duration if we have both dates
+            if (startDate && endDate) {
+                const durationDays = calculateDurationDays(startDate, endDate);
+                
+                // Only process if we have a valid duration
+                if (durationDays > 0) {
+                    // Simple annualized value: (contract value / duration in days) * days in year
+                    const annualizedValue = (value / durationDays) * 365.25;
+                    totalAnnualizedValue += annualizedValue;
+                    validContractsCount++;
                 }
-                validContractsCount++;
             }
         });
-        
-        // Calculate ARR with appropriate weighting based on contract duration
-        let weightedARR = 0;
-        
-        // Short-term contracts are weighted less (50%)
-        if (shortTermContracts.length > 0) {
-            const shortTermARR = shortTermContracts.reduce((sum, contract) => {
-                return sum + (contract.value / contract.durationDays) * 365.25 * 0.5;
-            }, 0) / shortTermContracts.length;
-            
-            weightedARR += shortTermARR * (shortTermContracts.length / validContractsCount);
-        }
-        
-        // Medium-term contracts are weighted at 80%
-        if (mediumTermContracts.length > 0) {
-            const mediumTermARR = mediumTermContracts.reduce((sum, contract) => {
-                return sum + (contract.value / contract.durationDays) * 365.25 * 0.8;
-            }, 0) / mediumTermContracts.length;
-            
-            weightedARR += mediumTermARR * (mediumTermContracts.length / validContractsCount);
-        }
-        
-        // Long-term contracts are weighted at 100%
-        if (longTermContracts.length > 0) {
-            const longTermARR = longTermContracts.reduce((sum, contract) => {
-                return sum + (contract.value / contract.durationDays) * 365.25;
-            }, 0) / longTermContracts.length;
-            
-            weightedARR += longTermARR * (longTermContracts.length / validContractsCount);
-        }
 
+        // Calculate average ARR
         if (validContractsCount > 0) {
-            resultDiv.textContent = formatConciseCurrency(weightedARR) + " / yr";
+            const avgARR = totalAnnualizedValue / validContractsCount;
+            resultDiv.textContent = formatConciseCurrency(avgARR) + " / yr";
             resultDiv.style.display = 'block';
-            console.log(`Weighted Average ARR: ${weightedARR.toFixed(0)} (from ${validContractsCount} valid contracts)`);
+            console.log(`Average ARR: ${avgARR.toFixed(0)} (from ${validContractsCount} valid contracts)`);
             noDataDiv.style.display = 'none';
         } else {
-            noDataDiv.textContent = 'No contracts suitable for ARR calculation found.';
+            noDataDiv.textContent = 'No contracts with valid duration found.';
             noDataDiv.style.display = 'block';
             resultDiv.textContent = formatConciseCurrency(0) + " / yr";
             resultDiv.style.display = 'block';
@@ -2729,7 +2715,6 @@ function calculateAverageARRFromModel(model) {
         loadingDiv.style.display = 'none';
     }
 }
-
 // --- Legacy Functions for Raw Data Processing ---
 function updateVisualsFromRawData(subAgencyFilter, naicsFilter, searchTerm) {
     // --- Check for Raw Data ---
