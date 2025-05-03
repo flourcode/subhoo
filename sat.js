@@ -1,6 +1,7 @@
 // Constants
 const S3_BASE_URL = 'https://subhoodata.s3.us-east-1.amazonaws.com/data/';
 const DATASETS = [
+    // Prime contract datasets
     { id: 'army_primes', name: 'Army (Primes)', type: 'primes' },
     { id: 'dhs_primes', name: 'DHS (Primes)', type: 'primes' },
     { id: 'doj_primes', name: 'DOJ (Primes)', type: 'primes' },
@@ -10,23 +11,38 @@ const DATASETS = [
     { id: 'uscc_primes', name: 'USCC (Primes)', type: 'primes' },
     { id: 'usmc_primes', name: 'USMC (Primes)', type: 'primes' },
     { id: 'va_primes', name: 'VA (Primes)', type: 'primes' },
+    
+    // Subcontract datasets
     { id: 'army', name: 'Army (Subs)', type: 'subs' },
     { id: 'navy', name: 'Navy (Subs)', type: 'subs' },
-    { id: 'usmc', name: 'Marine Corps (Subs)', type: 'subs' },
+    { id: 'usmc', name: 'USMC (Subs)', type: 'subs' },
     { id: 'airforce', name: 'Air Force (Subs)', type: 'subs' },
     { id: 'dla', name: 'DLA (Subs)', type: 'subs' },
     { id: 'disa', name: 'DISA (Subs)', type: 'subs' },
     { id: 'mda', name: 'MDA (Subs)', type: 'subs' },
-    { id: 'socom', name: 'USSOCOM (Subs)', type: 'subs' },
-    { id: 'uscc', name: 'Cyber Command (Subs)', type: 'subs' },
+    { id: 'socom', name: 'SOCOM (Subs)', type: 'subs' },
+    { id: 'uscc', name: 'USCC (Subs)', type: 'subs' },
     { id: 'hhs', name: 'HHS (Subs)', type: 'subs' },
     { id: 'va', name: 'VA (Subs)', type: 'subs' },
     { id: 'dhs', name: 'DHS (Subs)', type: 'subs' },
+    { id: 'cbp', name: 'CBP (Subs)', type: 'subs' },
     { id: 'treasury', name: 'Treasury (Subs)', type: 'subs' },
     { id: 'epa', name: 'EPA (Subs)', type: 'subs' },
     { id: 'faa', name: 'FAA (Subs)', type: 'subs' },
-    { id: 'doj', name: 'Dept of Justice (Subs)', type: 'subs' },
-    { id: 'doe', name: 'Dept of Energy (Subs)', type: 'subs' }
+    { id: 'doj', name: 'DOJ (Subs)', type: 'subs' },
+    { id: 'doe', name: 'DOE (Subs)', type: 'subs' },
+    { id: 'doc', name: 'DOC (Subs)', type: 'subs' },
+    { id: 'dol', name: 'DOL (Subs)', type: 'subs' },
+    { id: 'dos', name: 'DOS (Subs)', type: 'subs' },
+    { id: 'dot', name: 'DOT (Subs)', type: 'subs' },
+    { id: 'ssa', name: 'SSA (Subs)', type: 'subs' },
+    { id: 'usda', name: 'USDA (Subs)', type: 'subs' },
+    { id: 'nasa', name: 'NASA (Subs)', type: 'subs' },
+    { id: 'md', name: 'Maryland (Subs)', type: 'subs' },
+    { id: 'fas', name: 'FAS (Subs)', type: 'subs' },
+    { id: 'gsa', name: 'GSA (Subs)', type: 'subs' },
+    { id: 'darpa', name: 'DARPA (Subs)', type: 'subs' },
+    { id: 'doi', name: 'DOI (Subs)', type: 'subs' }
 ];
 
 // Global variables
