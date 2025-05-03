@@ -1086,10 +1086,7 @@ th, td {
     color: var(--color-text-tertiary);
     border-top: 1px solid var(--color-border);
 }
-/* Add styles for sticky table headers/cells if used, referencing surface/variant */
-th:first-child { background-color: var(--color-surface-variant); }
-td:first-child { background-color: var(--color-surface); }
-tr:hover td:first-child { background-color: var(--color-surface-container); }
+
 
 
 /* --- Sankey Chart SVG Styles --- */
@@ -1119,19 +1116,6 @@ tr:hover td:first-child { background-color: var(--color-surface-container); }
     pointer-events: none;
     text-shadow: 0 0 2px var(--color-background); /* Help readability against links */
 }
-
-/* /* --- Choropleth Map SVG Styles --- */
-#choroplethMap path {
-    transition: fill 0.3s ease, stroke-width 0.3s ease;
-    stroke: var(--color-background); /* Use background for state borders (gap effect) */
-    stroke-width: 0.5px;
-    /* Default fill for states with no data */
-    fill: var(--color-surface-variant);
-}
-#choroplethMap path:hover {
-    stroke-width: 1.5px;
-    stroke: var(--color-primary); /* Use primary accent for hover */
-}
 #choroplethMap .legend-text, /* Add class to legend text elements if needed */
 #choroplethMap text { /* General map text */
     font-size: 10px; /* Adjust size as needed */
@@ -1144,20 +1128,6 @@ tr:hover td:first-child { background-color: var(--color-surface-container); }
 } */
 
 
-/* --- Tooltip Styles (Verify existing rules use semantic vars) --- */
-.tooltip, /* Add other tooltip classes/IDs */
-#tav-tcv-tooltip {
-    /* other styles like position, padding, etc. */
-    background-color: var(--color-surface) !important;
-    color: var(--color-text-primary) !important;
-    border: 1px solid var(--color-border) !important;
-    box-shadow: var(--shadow-md) !important;
-}
-.tooltip strong,
-#tav-tcv-tooltip strong {
-    color: var(--color-text-primary); /* Ensure strong text uses primary text color */
-    font-weight: 600; /* Keep or adjust weight */
-}
 
 
 /* --- Status Banner Styles --- */
