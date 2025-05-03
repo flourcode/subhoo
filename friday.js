@@ -35,7 +35,7 @@ function formatConciseCurrency(value) {
     // Format differently based on the size of the number
     if (value >= 1000000) {
         // Format as millions
-        return `~$${(value / 1000000).toFixed(2)}M/yr`;
+        return `~$${(value / 1000000).toFixed(1}M/yr`;
     } else if (value >= 1000) {
         // Format as thousands
         return `~$${(value / 1000).toFixed(1)}K/yr`;
