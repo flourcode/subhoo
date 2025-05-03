@@ -34,14 +34,14 @@ function formatConciseCurrency(value) {
     
     // Format differently based on the size of the number
     if (value >= 1000000) {
-        // Format as millions
-        return `~$${(value / 1000000).toFixed(1}M/yr`;
+        // Format as millions with one decimal place
+        return `~$${(value / 1000000).toFixed(1)}M`;
     } else if (value >= 1000) {
-        // Format as thousands
-        return `~$${(value / 1000).toFixed(1)}K/yr`;
+        // Format as thousands with one decimal place
+        return `~$${(value / 1000).toFixed(1)}K`;
     } else {
-        // Format small values normally
-        return `~$${value.toFixed(0)}/yr`;
+        // Format small values normally without decimals
+        return `~$${value.toFixed(0)}`;
     }
 }
 function parseSafeFloat(value) {
