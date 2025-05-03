@@ -2403,8 +2403,9 @@ function displayChoroplethMap(mapData) {
         d3.select("body").selectAll(".map-tooltip").remove();
     }
 }
-
 function displayEnhancedSankeyChart(model) {
+    console.log("Rendering Enhanced Split Panel Sankey chart with model data");
+    
     const containerId = 'sankey-chart-container';
     const container = document.getElementById(containerId);
     
@@ -2457,20 +2458,23 @@ function displayEnhancedSankeyChart(model) {
     
     try {
         // Create a simple tooltip div
-        const tooltip = document.createElement('div');
-        tooltip.id = 'sankey-tooltip';
-        tooltip.style.position = 'absolute';
-        tooltip.style.padding = '10px';
-        tooltip.style.backgroundColor = '#FFFFFF';
-        tooltip.style.color = '#36323A';
-        tooltip.style.border = '1px solid #D7D4DC';
-        tooltip.style.borderRadius = '4px';
-        tooltip.style.pointerEvents = 'none';
-        tooltip.style.zIndex = '9999';
-        tooltip.style.display = 'none';
-        tooltip.style.fontSize = '12px';
-        tooltip.style.boxShadow = '0 2px 4px rgba(0,0,0,0.2)';
-        document.body.appendChild(tooltip);
+        let tooltip = document.getElementById('sankey-tooltip');
+        if (!tooltip) {
+            tooltip = document.createElement('div');
+            tooltip.id = 'sankey-tooltip';
+            tooltip.style.position = 'absolute';
+            tooltip.style.padding = '10px';
+            tooltip.style.backgroundColor = '#FFFFFF';
+            tooltip.style.color = '#36323A';
+            tooltip.style.border = '1px solid #D7D4DC';
+            tooltip.style.borderRadius = '4px';
+            tooltip.style.pointerEvents = 'none';
+            tooltip.style.zIndex = '9999';
+            tooltip.style.display = 'none';
+            tooltip.style.fontSize = '12px';
+            tooltip.style.boxShadow = '0 2px 4px rgba(0,0,0,0.2)';
+            document.body.appendChild(tooltip);
+        }
         
         // Check theme for tooltip appearance
         const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
@@ -2479,6 +2483,19 @@ function displayEnhancedSankeyChart(model) {
             tooltip.style.color = '#F4F2F6';
             tooltip.style.border = '1px solid #3A373E';
         }
+        
+        // Add panel titles
+        leftPanelContainer.insertAdjacentHTML('afterbegin', 
+            `<div style="text-align: center; margin-bottom: 10px; font-weight: bold; color: ${isDarkMode ? '#F4F2F6' : '#36323A'};">
+                Agency to Prime Contractors
+            </div>`
+        );
+        
+        rightPanelContainer.insertAdjacentHTML('afterbegin', 
+            `<div style="text-align: center; margin-bottom: 10px; font-weight: bold; color: ${isDarkMode ? '#F4F2F6' : '#36323A'};">
+                Prime to Subcontractors
+            </div>`
+        );
         
         // Set dimensions for each panel
         const panelWidth = leftPanelContainer.clientWidth || 300;
@@ -2506,6 +2523,10 @@ function displayEnhancedSankeyChart(model) {
             .attr('width', panelWidth)
             .attr('height', panelHeight);
         
+        console.log("Processing relationships for Sankey diagram...");
+        console.log("Agency to Prime links:", model.relationships.agencyToPrime.length);
+        console.log("Prime to Sub links:", model.relationships.primeToSub.length);
+        
         // Filter links to only show top 10 connections by value for each panel
         const topAgencyToPrime = model.relationships.agencyToPrime
             .sort((a, b) => b.value - a.value)
@@ -2514,19 +2535,71 @@ function displayEnhancedSankeyChart(model) {
         const topPrimeToSub = model.relationships.primeToSub
             .sort((a, b) => b.value - a.value)
             .slice(0, 10);
+            
+        console.log("Top agency to prime links:", topAgencyToPrime.length);
+        console.log("Top prime to sub links:", topPrimeToSub.length);
         
-        // Add panel titles
-        leftPanelContainer.insertAdjacentHTML('afterbegin', 
-            `<div style="text-align: center; margin-bottom: 10px; font-weight: bold; color: ${textColor};">
-                Agency to Prime Contractors
-            </div>`
-        );
+        // Add controls container for scaling
+        const controlsContainer = document.createElement('div');
+        controlsContainer.className = 'split-view-controls';
+        controlsContainer.style.position = 'absolute';
+        controlsContainer.style.top = '10px';
+        controlsContainer.style.right = '10px';
+        controlsContainer.style.backgroundColor = isDarkMode ? 'rgba(37, 34, 41, 0.8)' : 'rgba(255, 255, 255, 0.8)';
+        controlsContainer.style.padding = '8px';
+        controlsContainer.style.borderRadius = '4px';
+        controlsContainer.style.boxShadow = '0 2px 4px rgba(0,0,0,0.2)';
+        controlsContainer.style.zIndex = '100';
+        container.appendChild(controlsContainer);
         
-        rightPanelContainer.insertAdjacentHTML('afterbegin', 
-            `<div style="text-align: center; margin-bottom: 10px; font-weight: bold; color: ${textColor};">
-                Prime to Subcontractors
-            </div>`
-        );
+        // Find min and max values for right panel links
+        const minSubValue = topPrimeToSub.length > 0 ? 
+            d3.min(topPrimeToSub, d => d.value) || 1 : 1;
+        const maxSubValue = topPrimeToSub.length > 0 ? 
+            d3.max(topPrimeToSub, d => d.value) || 1 : 1;
+        
+        // Improved scaling for the right panel to better distinguish flows
+        const baseWidth = 2; // Minimum width for smallest links
+        const sqrtScale = d => {
+            const normalizedValue = Math.sqrt(d.value / minSubValue);
+            return baseWidth + normalizedValue * 8; // Amplify the differences with larger scale factor
+        };
+        
+        // Create subcontractor scaling control
+        const subScaleContainer = document.createElement('div');
+        subScaleContainer.style.marginBottom = '8px';
+        
+        const subScaleLabel = document.createElement('label');
+        subScaleLabel.textContent = 'Subcontractor Scale: ';
+        subScaleLabel.style.fontSize = '12px';
+        subScaleLabel.style.color = textColor;
+        subScaleLabel.style.display = 'block';
+        subScaleLabel.style.marginBottom = '4px';
+        
+        const subScaleSlider = document.createElement('input');
+        subScaleSlider.type = 'range';
+        subScaleSlider.min = '0.5';
+        subScaleSlider.max = '5';
+        subScaleSlider.step = '0.1';
+        subScaleSlider.value = '1';
+        subScaleSlider.style.width = '150px';
+        
+        subScaleContainer.appendChild(subScaleLabel);
+        subScaleContainer.appendChild(subScaleSlider);
+        controlsContainer.appendChild(subScaleContainer);
+        
+        // Add information about the panels
+        const infoText = document.createElement('div');
+        infoText.style.fontSize = '11px';
+        infoText.style.color = textColor;
+        infoText.style.marginTop = '8px';
+        infoText.innerHTML = `
+            <div style="font-weight: bold; margin-bottom: 4px;">Split Panel View</div>
+            <div>Left panel: Agency to Prime flows</div>
+            <div>Right panel: Prime to Sub flows</div>
+            <div style="margin-top: 5px; font-style: italic;">Hover across panels to see connections</div>
+        `;
+        controlsContainer.appendChild(infoText);
         
         // ===== FIRST PANEL: AGENCY TO PRIME =====
         
@@ -2553,7 +2626,7 @@ function displayEnhancedSankeyChart(model) {
             }
             
             if (!entity) {
-                console.warn(`Entity not found: ${id} (${type})`);
+                console.warn(`Entity not found for left panel: ${id} (${type})`);
                 return null;
             }
             
@@ -2586,6 +2659,9 @@ function displayEnhancedSankeyChart(model) {
                 });
             }
         });
+        
+        console.log("Left panel nodes:", leftNodes.length);
+        console.log("Left panel links:", leftLinks.length);
         
         // Create Sankey generator for left panel
         const leftSankey = d3.sankey()
@@ -2758,247 +2834,8 @@ function displayEnhancedSankeyChart(model) {
                     d3.select(this).remove();
                 }
             });
-        
-        // ===== SECOND PANEL: PRIME TO SUB =====
-        
-        // Setup for the second panel
-        const rightNodes = [];
-        const rightLinks = [];
-        const rightNodeMap = {};
-        
-        // Function to get or create a node for right panel
-        const getRightNode = (id, type) => {
-            if (rightNodeMap[id] !== undefined) {
-                return rightNodeMap[id];
-            }
             
-            // Get entity from model
-            let entity;
-            switch (type) {
-                case 'prime':
-                    entity = model.primes[id];
-                    // Add visual indicator for primes that appear in both panels
-                    if (leftNodeMap[id] !== undefined) {
-                        entity.inBothPanels = true;
-                    }
-                    break;
-                case 'sub':
-                    entity = model.subs[id];
-                    break;
-            }
-            
-            if (!entity) {
-                console.warn(`Entity not found: ${id} (${type})`);
-                return null;
-            }
-            
-            const nodeIndex = rightNodes.length;
-            const node = {
-                name: truncateText(entity.name, 30),
-                id: id,
-                type: type,
-                index: nodeIndex
-            };
-            
-            rightNodes.push(node);
-            rightNodeMap[id] = nodeIndex;
-            return nodeIndex;
-        };
-        
-        // Add Prime to Sub links for right panel
-        topPrimeToSub.forEach(link => {
-            const primeId = link.source;
-            const subId = link.target;
-            
-            const sourceIndex = getRightNode(primeId, 'prime');
-            const targetIndex = getRightNode(subId, 'sub');
-            
-            if (sourceIndex !== null && targetIndex !== null) {
-                rightLinks.push({
-                    source: sourceIndex,
-                    target: targetIndex,
-                    value: link.value
-                });
-            }
-        });
-        
-        // Find min and max values for right panel links
-        const minSubValue = d3.min(topPrimeToSub, d => d.value) || 1;
-        const maxSubValue = d3.max(topPrimeToSub, d => d.value) || 1;
-        
-        // Improved scaling for the right panel to better distinguish flows
-        const baseWidth = 2; // Minimum width for smallest links
-        const sqrtScale = d => {
-            const normalizedValue = Math.sqrt(d.value / minSubValue);
-            return baseWidth + normalizedValue * 8; // Amplify the differences with larger scale factor
-        };
-        
-        // Customize Sankey generator for right panel
-        const rightSankey = d3.sankey()
-            .nodeWidth(15)
-            .nodePadding(20) // Increased padding for better separation
-            .extent([[margin.left, margin.top], [panelWidth - margin.right, panelHeight - margin.bottom]]);
-        
-        // Apply Sankey to right panel data
-        const rightGraph = rightSankey({
-            nodes: rightNodes.map(d => Object.assign({}, d)),
-            links: rightLinks.map(d => Object.assign({}, d))
-        });
-        
-        // Draw links with gradients for right panel
-        const rightDefs = rightSvgSelection.append('defs');
-        
-        rightGraph.links.forEach((link, i) => {
-            const gradientId = `right-link-gradient-${i}`;
-            const sourceColor = nodeColors[link.source.type] || '#999';
-            const targetColor = nodeColors[link.target.type] || '#999';
-            
-            const gradient = rightDefs.append('linearGradient')
-                .attr('id', gradientId)
-                .attr('gradientUnits', 'userSpaceOnUse')
-                .attr('x1', link.source.x1)
-                .attr('y1', link.source.y0 + (link.source.y1 - link.source.y0) / 2)
-                .attr('x2', link.target.x0)
-                .attr('y2', link.target.y0 + (link.target.y1 - link.target.y0) / 2);
-                
-            gradient.append('stop')
-                .attr('offset', '0%')
-                .attr('stop-color', sourceColor)
-                .attr('stop-opacity', 0.8);
-                
-            gradient.append('stop')
-                .attr('offset', '100%')
-                .attr('stop-color', targetColor)
-                .attr('stop-opacity', 0.8);
-                
-            link.gradientId = gradientId;
-        });
-        
-        // Draw links for right panel with square root scaling
-        rightSvgSelection.append('g')
-            .selectAll('path')
-            .data(rightGraph.links)
-            .enter()
-            .append('path')
-            .attr('d', d3.sankeyLinkHorizontal())
-            .attr('stroke', (d) => `url(#${d.gradientId})`)
-            .attr('stroke-width', d => sqrtScale(d)) // Fixed: proper function invocation
-            .attr('stroke-opacity', 0.5)
-            .attr('fill', 'none')
-            .attr('cursor', 'pointer')
-            .on('mouseover', function(event, d) {
-                // Show tooltip
-                const html = `
-                    <div style="font-weight: bold; margin-bottom: 5px;">${d.source.name} → ${d.target.name}</div>
-                    <div>Value: ${formatCurrency(d.value)}</div>
-                `;
-                tooltip.innerHTML = html;
-                tooltip.style.display = 'block';
-                tooltip.style.left = (event.pageX + 10) + 'px';
-                tooltip.style.top = (event.pageY - 28) + 'px';
-                
-                // Highlight link
-                d3.select(this).attr('stroke-opacity', 0.8);
-                
-                // Also highlight the corresponding prime contractor in left panel if it exists
-                if (d.source.type === 'prime') {
-                    leftSvgSelection.selectAll('rect')
-                        .filter(node => node.type === 'prime' && node.id === d.source.id)
-                        .attr('stroke', isDarkMode ? '#A29AAA' : '#9993A1')
-                        .attr('stroke-width', 2);
-                }
-            })
-            .on('mousemove', function(event) {
-                tooltip.style.left = (event.pageX + 10) + 'px';
-                tooltip.style.top = (event.pageY - 28) + 'px';
-            })
-            .on('mouseout', function() {
-                tooltip.style.display = 'none';
-                d3.select(this).attr('stroke-opacity', 0.5);
-                
-                // Remove highlighting from left panel
-                leftSvgSelection.selectAll('rect')
-                    .attr('stroke', isDarkMode ? '#4A474E' : '#E9E6ED')
-                    .attr('stroke-width', 1);
-            });
-        
-        // Draw nodes for right panel
-        rightSvgSelection.append('g')
-            .selectAll('rect')
-            .data(rightGraph.nodes)
-            .enter()
-            .append('rect')
-            .attr('x', d => d.x0)
-            .attr('y', d => d.y0)
-            .attr('height', d => Math.max(1, d.y1 - d.y0))
-            .attr('width', d => Math.max(1, d.x1 - d.x0))
-            .attr('fill', d => nodeColors[d.type] || '#999')
-            .attr('stroke', isDarkMode ? '#4A474E' : '#E9E6ED')
-            .attr('cursor', 'pointer')
-            .attr('data-id', d => d.id)
-            .attr('data-type', d => d.type)
-            .on('mouseover', function(event, d) {
-                // Show tooltip
-                const html = `
-                    <div style="font-weight: bold; margin-bottom: 5px;">${d.name}</div>
-                    <div>Type: ${d.type.charAt(0).toUpperCase() + d.type.slice(1)}</div>
-                    <div>Total Value: ${formatCurrency(d.value)}</div>
-                `;
-                tooltip.innerHTML = html;
-                tooltip.style.display = 'block';
-                tooltip.style.left = (event.pageX + 10) + 'px';
-                tooltip.style.top = (event.pageY - 28) + 'px';
-                
-                // Highlight node
-                d3.select(this)
-                    .attr('stroke', isDarkMode ? '#A29AAA' : '#9993A1')
-                    .attr('stroke-width', 2);
-                
-                // Cross-panel highlighting for primes
-                if (d.type === 'prime') {
-                    leftSvgSelection.selectAll('rect')
-                        .filter(node => node.type === 'prime' && node.id === d.id)
-                        .attr('stroke', isDarkMode ? '#A29AAA' : '#9993A1')
-                        .attr('stroke-width', 2);
-                }
-            })
-            .on('mousemove', function(event) {
-                tooltip.style.left = (event.pageX + 10) + 'px';
-                tooltip.style.top = (event.pageY - 28) + 'px';
-            })
-            .on('mouseout', function() {
-                tooltip.style.display = 'none';
-                d3.select(this)
-                    .attr('stroke', isDarkMode ? '#4A474E' : '#E9E6ED')
-                    .attr('stroke-width', 1);
-                
-                // Remove highlight from left panel
-                leftSvgSelection.selectAll('rect')
-                    .attr('stroke', isDarkMode ? '#4A474E' : '#E9E6ED')
-                    .attr('stroke-width', 1);
-            });
-        
-        // Add node labels for right panel
-        rightSvgSelection.append('g')
-            .selectAll('text')
-            .data(rightGraph.nodes)
-            .enter()
-            .append('text')
-            .attr('x', d => d.x0 < panelWidth / 2 ? d.x1 + 6 : d.x0 - 6)
-            .attr('y', d => (d.y1 + d.y0) / 2)
-            .attr('dy', '0.35em')
-            .attr('text-anchor', d => d.x0 < panelWidth / 2 ? 'start' : 'end')
-            .text(d => d.name)
-            .attr('font-size', '10px')
-            .attr('fill', textColor)
-            .each(function(d) {
-                // Hide labels for small nodes
-                if ((d.y1 - d.y0) < 10) {
-                    d3.select(this).remove();
-                }
-            });
-        
-        // Add notes about showing only top connections
+        // Add note about showing only top connections
         leftSvgSelection.append("text")
             .attr("x", panelWidth - 10)
             .attr("y", panelHeight - 10)
@@ -3007,21 +2844,277 @@ function displayEnhancedSankeyChart(model) {
             .attr("fill", textColor)
             .attr("opacity", 0.7)
             .text("Showing top 10 flows by value");
+        
+        // ===== SECOND PANEL: PRIME TO SUB =====
+        if (topPrimeToSub.length > 0) {
+            // Setup for the second panel
+            const rightNodes = [];
+            const rightLinks = [];
+            const rightNodeMap = {};
             
-        rightSvgSelection.append("text")
-            .attr("x", panelWidth - 10)
-            .attr("y", panelHeight - 10)
-            .attr("text-anchor", "end")
-            .attr("font-size", "10px")
-            .attr("fill", textColor)
-            .attr("opacity", 0.7)
-            .text("Showing top 10 flows by value");
+            // Function to get or create a node for right panel
+            const getRightNode = (id, type) => {
+                if (rightNodeMap[id] !== undefined) {
+                    return rightNodeMap[id];
+                }
+                
+                // Get entity from model
+                let entity;
+                switch (type) {
+                    case 'prime':
+                        entity = model.primes[id];
+                        // Add visual indicator for primes that appear in both panels
+                        if (leftNodeMap[id] !== undefined) {
+                            entity.inBothPanels = true;
+                        }
+                        break;
+                    case 'sub':
+                        entity = model.subs[id];
+                        break;
+                }
+                
+                if (!entity) {
+                    console.warn(`Entity not found for right panel: ${id} (${type})`);
+                    return null;
+                }
+                
+                const nodeIndex = rightNodes.length;
+                const node = {
+                    name: truncateText(entity.name, 30),
+                    id: id,
+                    type: type,
+                    index: nodeIndex,
+                    inBothPanels: entity.inBothPanels
+                };
+                
+                rightNodes.push(node);
+                rightNodeMap[id] = nodeIndex;
+                return nodeIndex;
+            };
+            
+            // Add Prime to Sub links for right panel
+            topPrimeToSub.forEach(link => {
+                const primeId = link.source;
+                const subId = link.target;
+                
+                const sourceIndex = getRightNode(primeId, 'prime');
+                const targetIndex = getRightNode(subId, 'sub');
+                
+                if (sourceIndex !== null && targetIndex !== null) {
+                    rightLinks.push({
+                        source: sourceIndex,
+                        target: targetIndex,
+                        value: link.value
+                    });
+                }
+            });
+            
+            console.log("Right panel nodes:", rightNodes.length);
+            console.log("Right panel links:", rightLinks.length);
+            
+            // Customize Sankey generator for right panel
+            const rightSankey = d3.sankey()
+                .nodeWidth(15)
+                .nodePadding(20) // Increased padding for better separation
+                .extent([[margin.left, margin.top], [panelWidth - margin.right, panelHeight - margin.bottom]]);
+            
+            // Apply Sankey to right panel data
+            const rightGraph = rightSankey({
+                nodes: rightNodes.map(d => Object.assign({}, d)),
+                links: rightLinks.map(d => Object.assign({}, d))
+            });
+            
+            // Draw links with gradients for right panel
+            const rightDefs = rightSvgSelection.append('defs');
+            
+            rightGraph.links.forEach((link, i) => {
+                const gradientId = `right-link-gradient-${i}`;
+                const sourceColor = nodeColors[link.source.type] || '#999';
+                const targetColor = nodeColors[link.target.type] || '#999';
+                
+                const gradient = rightDefs.append('linearGradient')
+                    .attr('id', gradientId)
+                    .attr('gradientUnits', 'userSpaceOnUse')
+                    .attr('x1', link.source.x1)
+                    .attr('y1', link.source.y0 + (link.source.y1 - link.source.y0) / 2)
+                    .attr('x2', link.target.x0)
+                    .attr('y2', link.target.y0 + (link.target.y1 - link.target.y0) / 2);
+                    
+                gradient.append('stop')
+                    .attr('offset', '0%')
+                    .attr('stop-color', sourceColor)
+                    .attr('stop-opacity', 0.8);
+                    
+                gradient.append('stop')
+                    .attr('offset', '100%')
+                    .attr('stop-color', targetColor)
+                    .attr('stop-opacity', 0.8);
+                    
+                link.gradientId = gradientId;
+            });
+            
+            // Draw links for right panel with square root scaling
+            rightSvgSelection.append('g')
+                .selectAll('path')
+                .data(rightGraph.links)
+                .enter()
+                .append('path')
+                .attr('d', d3.sankeyLinkHorizontal())
+                .attr('stroke', (d) => `url(#${d.gradientId})`)
+                .attr('stroke-width', d => sqrtScale(d)) // Fixed: properly invoking the scale function
+                .attr('stroke-opacity', 0.5)
+                .attr('fill', 'none')
+                .attr('cursor', 'pointer')
+                .on('mouseover', function(event, d) {
+                    // Show tooltip
+                    const html = `
+                        <div style="font-weight: bold; margin-bottom: 5px;">${d.source.name} → ${d.target.name}</div>
+                        <div>Value: ${formatCurrency(d.value)}</div>
+                    `;
+                    tooltip.innerHTML = html;
+                    tooltip.style.display = 'block';
+                    tooltip.style.left = (event.pageX + 10) + 'px';
+                    tooltip.style.top = (event.pageY - 28) + 'px';
+                    
+                    // Highlight link
+                    d3.select(this).attr('stroke-opacity', 0.8);
+                    
+                    // Also highlight the corresponding prime contractor in left panel if it exists
+                    if (d.source.type === 'prime') {
+                        leftSvgSelection.selectAll('rect')
+                            .filter(node => node.type === 'prime' && node.id === d.source.id)
+                            .attr('stroke', isDarkMode ? '#A29AAA' : '#9993A1')
+                            .attr('stroke-width', 2);
+                    }
+                })
+                .on('mousemove', function(event) {
+                    tooltip.style.left = (event.pageX + 10) + 'px';
+                    tooltip.style.top = (event.pageY - 28) + 'px';
+                })
+                .on('mouseout', function() {
+                    tooltip.style.display = 'none';
+                    d3.select(this).attr('stroke-opacity', 0.5);
+                    
+                    // Remove highlighting from left panel
+                    leftSvgSelection.selectAll('rect')
+                        .attr('stroke', isDarkMode ? '#4A474E' : '#E9E6ED')
+                        .attr('stroke-width', 1);
+                });
+            
+            // Draw nodes for right panel
+            rightSvgSelection.append('g')
+                .selectAll('rect')
+                .data(rightGraph.nodes)
+                .enter()
+                .append('rect')
+                .attr('x', d => d.x0)
+                .attr('y', d => d.y0)
+                .attr('height', d => Math.max(1, d.y1 - d.y0))
+                .attr('width', d => Math.max(1, d.x1 - d.x0))
+                .attr('fill', d => nodeColors[d.type] || '#999')
+                .attr('stroke', isDarkMode ? '#4A474E' : '#E9E6ED')
+                .attr('cursor', 'pointer')
+                .attr('data-id', d => d.id)
+                .attr('data-type', d => d.type)
+                .on('mouseover', function(event, d) {
+                    // Show tooltip
+                    const html = `
+                        <div style="font-weight: bold; margin-bottom: 5px;">${d.name}</div>
+                        <div>Type: ${d.type.charAt(0).toUpperCase() + d.type.slice(1)}</div>
+                        <div>Total Value: ${formatCurrency(d.value)}</div>
+                    `;
+                    tooltip.innerHTML = html;
+                    tooltip.style.display = 'block';
+                    tooltip.style.left = (event.pageX + 10) + 'px';
+                    tooltip.style.top = (event.pageY - 28) + 'px';
+                    
+                    // Highlight node
+                    d3.select(this)
+                        .attr('stroke', isDarkMode ? '#A29AAA' : '#9993A1')
+                        .attr('stroke-width', 2);
+                    
+                    // Cross-panel highlighting for primes
+                    if (d.type === 'prime') {
+                        leftSvgSelection.selectAll('rect')
+                            .filter(node => node.type === 'prime' && node.id === d.id)
+                            .attr('stroke', isDarkMode ? '#A29AAA' : '#9993A1')
+                            .attr('stroke-width', 2);
+                    }
+                })
+                .on('mousemove', function(event) {
+                    tooltip.style.left = (event.pageX + 10) + 'px';
+                    tooltip.style.top = (event.pageY - 28) + 'px';
+                })
+                .on('mouseout', function() {
+                    tooltip.style.display = 'none';
+                    d3.select(this)
+                        .attr('stroke', isDarkMode ? '#4A474E' : '#E9E6ED')
+                        .attr('stroke-width', 1);
+                    
+                    // Remove highlight from left panel
+                    leftSvgSelection.selectAll('rect')
+                        .attr('stroke', isDarkMode ? '#4A474E' : '#E9E6ED')
+                        .attr('stroke-width', 1);
+                });
+            
+            // Add node labels for right panel
+            rightSvgSelection.append('g')
+                .selectAll('text')
+                .data(rightGraph.nodes)
+                .enter()
+                .append('text')
+                .attr('x', d => d.x0 < panelWidth / 2 ? d.x1 + 6 : d.x0 - 6)
+                .attr('y', d => (d.y1 + d.y0) / 2)
+                .attr('dy', '0.35em')
+                .attr('text-anchor', d => d.x0 < panelWidth / 2 ? 'start' : 'end')
+                .text(d => d.name)
+                .attr('font-size', '10px')
+                .attr('fill', textColor)
+                .each(function(d) {
+                    // Hide labels for small nodes
+                    if ((d.y1 - d.y0) < 10) {
+                        d3.select(this).remove();
+                    }
+                });
+                
+            // Add note about showing only top connections
+            rightSvgSelection.append("text")
+                .attr("x", panelWidth - 10)
+                .attr("y", panelHeight - 10)
+                .attr("text-anchor", "end")
+                .attr("font-size", "10px")
+                .attr("fill", textColor)
+                .attr("opacity", 0.7)
+                .text("Showing top 10 flows by value");
+                
+            // Add event listener to adjust subcontractor scaling
+            subScaleSlider.addEventListener('input', function() {
+                const scaleFactor = parseFloat(this.value);
+                
+                // Update the scaling function with the new factor
+                const updatedSqrtScale = d => {
+                    const normalizedValue = Math.sqrt(d.value / minSubValue);
+                    return baseWidth + normalizedValue * (8 * scaleFactor); 
+                };
+                
+                // Apply the updated scaling to the links
+                rightSvgSelection.selectAll('path')
+                    .attr('stroke-width', d => updatedSqrtScale(d));
+            });
+        } else {
+            // No subcontract data to display
+            displayNoData(rightPanelContainer.id, 'No subcontract data available.');
+            
+            // Hide the scale slider since there's no data to scale
+            subScaleContainer.style.display = 'none';
+        }
         
     } catch (error) {
         console.error("Error rendering Split Panel Sankey charts:", error);
         displayError(containerId, `Error rendering Sankey charts: ${error.message}`);
     }
 }
+
 function calculateAverageARRFromModel(model) {
     const resultDiv = document.getElementById('arr-result');
     const loadingDiv = document.getElementById('arr-loading');
