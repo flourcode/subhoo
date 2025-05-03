@@ -2675,11 +2675,10 @@ function displayEnhancedSankeyChart(model) {
             .nodePadding(15) // Increased padding for better separation
             .extent([[margin.left, margin.top], [panelWidth - margin.right, panelHeight - margin.bottom]]);
         
-        // Apply Sankey to left panel data
-        const leftGraph = leftSankey({
-            nodes: leftNodes.map(d => Object.assign({}, d)),
-                            links: leftLinks.map(d => Object.assign({}, d))
-            }
+// Apply Sankey to left panel data
+        const leftGraph = leftSankey({ // Call leftSankey with an object argument
+            nodes: leftNodes.map(d => Object.assign({}, d)), // nodes property
+            links: leftLinks.map(d => Object.assign({}, d))  // links property
         });
         
         // Draw links with gradients for left panel
