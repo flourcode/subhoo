@@ -250,29 +250,37 @@ a:hover {
 /* Bento Grid Layout                         */
 /* ========================================= */
 .bento-grid {
-    /* ... */
+    display: grid;
+    gap: var(--bento-gap);
+    grid-template-columns: repeat(5, 1fr); /* Keep this as 5 columns */
+
+    /* --- Replace this line --- */
     grid-template-areas:
-        "sankey sankey sankey map    arr"       /* Row 1 */
-        "sankey sankey sankey tavtcv tavtcv"    /* Row 2 - sankey spans here, tavtcv moved right */
-        "leaders leaders leaders leaders leaders" /* Row 3 - leaders moved down */
-        "expiring expiring expiring expiring expiring"; /* Row 4 - expiring moved down */
-    grid-template-rows: minmax(225px, auto) minmax(225px, auto) auto auto; /* Adjust row heights as needed */
-    /* ... */
+        "sankey sankey sankey sankey map"
+        "sankey sankey sankey sankey arr"
+        "tavtcv tavtcv leaders leaders leaders"
+        "expiring expiring expiring expiring expiring";
+
+    /* --- Update this line to define 4 row sizes --- */
+    /* Option 1: Split the original 450px min-height across the first two rows */
+    grid-template-rows: minmax(225px, auto) minmax(225px, auto) auto auto;
+    /* Option 2: Give first two rows specific auto height, adjust as needed */
+    /* grid-template-rows: auto auto auto auto; */
+    /* Option 3: Give first two rows more fixed height */
+    /* grid-template-rows: 300px 150px auto auto; /* Example - Adjust heights as needed */
+
+    /* Other styles like padding, etc., remain */
 }
 
-/* Ensure #bento-sankey still uses grid-row: span 2; */
-#bento-sankey {
-    grid-area: sankey;
-    grid-row: span 2;
-}
-
-/* Update grid-area assignments for moved items */
+/* --- Ensure these assignments match the names used above --- */
+/* (These should already be correct in your existing file) */
+#bento-sankey { grid-area: sankey; }
+#bento-map { grid-area: map; }
+#bento-arr { grid-area: arr; }
 #bento-tavtcv { grid-area: tavtcv; }
 #bento-leaders { grid-area: leaders; }
 #bento-expiring { grid-area: expiring; }
-/* Map and Arr assignments remain the same */
-#bento-map { grid-area: map; }
-#bento-arr { grid-area: arr; }
+
 /* Column Span Utility */
 .col-span-2 { grid-column: span 2; }
 .col-span-4 { grid-column: span 4; }
