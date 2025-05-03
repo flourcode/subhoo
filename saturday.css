@@ -1120,7 +1120,7 @@ tr:hover td:first-child { background-color: var(--color-surface-container); }
     text-shadow: 0 0 2px var(--color-background); /* Help readability against links */
 }
 
-/* --- Choropleth Map SVG Styles --- */
+/* /* --- Choropleth Map SVG Styles --- */
 #choroplethMap path {
     transition: fill 0.3s ease, stroke-width 0.3s ease;
     stroke: var(--color-background); /* Use background for state borders (gap effect) */
@@ -1141,7 +1141,7 @@ tr:hover td:first-child { background-color: var(--color-surface-container); }
 #choroplethMap .legend-rect { /* Add class to legend rect elements if needed */
      stroke: var(--color-border);
      stroke-width: 0.5px;
-}
+} */
 
 
 /* --- Tooltip Styles (Verify existing rules use semantic vars) --- */
