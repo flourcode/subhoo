@@ -2468,24 +2468,25 @@ function displayEnhancedSankeyChart(model) {
     }
     
     try {
-        // Create a simple tooltip div
-        let tooltip = document.getElementById('sankey-tooltip');
-        if (!tooltip) {
-            tooltip = document.createElement('div');
-            tooltip.id = 'sankey-tooltip';
-            tooltip.style.position = 'absolute';
-            tooltip.style.padding = '10px';
-            tooltip.style.backgroundColor = getCssVar('--color-surface');
-            tooltip.style.color = getCssVar('--color-text-primary');
-            tooltip.style.border = `1px solid ${getCssVar('--color-border')}`;
-            tooltip.style.borderRadius = '4px';
-            tooltip.style.pointerEvents = 'none';
-            tooltip.style.zIndex = '9999';
-            tooltip.style.display = 'none';
-            tooltip.style.fontSize = '12px';
-            tooltip.style.boxShadow = '0 2px 4px rgba(0,0,0,0.2)';
-            document.body.appendChild(tooltip);
-        }
+        // Create a tooltip using D3 for better control
+        d3.select("body").selectAll(".sankey-tooltip").remove(); // Remove any existing tooltips
+        
+        const tooltip = d3.select("body")
+            .append("div")
+            .attr("class", "sankey-tooltip")
+            .style("position", "absolute")
+            .style("visibility", "hidden")
+            .style("opacity", "0")
+            .style("background-color", getCssVar('--color-surface'))
+            .style("color", getCssVar('--color-text-primary'))
+            .style("border", `1px solid ${getCssVar('--color-border')}`)
+            .style("border-radius", "4px")
+            .style("padding", "10px")
+            .style("font-size", "12px")
+            .style("pointer-events", "none")
+            .style("z-index", "9999")
+            .style("box-shadow", "0 2px 4px rgba(0,0,0,0.2)")
+            .style("transition", "opacity 0.2s ease");
         
         // Add panel titles
         const textColor = getCssVar('--color-text-primary');
@@ -2654,15 +2655,16 @@ function displayEnhancedSankeyChart(model) {
             .attr('fill', 'none')
             .attr('cursor', 'pointer')
             .on('mouseover', function(event, d) {
-                // Show tooltip
-                const html = `
-                    <div style="font-weight: bold; margin-bottom: 5px;">${d.source.name} → ${d.target.name}</div>
-                    <div>Value: ${formatCurrency(d.value)}</div>
-                `;
-                tooltip.innerHTML = html;
-                tooltip.style.display = 'block';
-                tooltip.style.left = (event.pageX + 10) + 'px';
-                tooltip.style.top = (event.pageY - 28) + 'px';
+                // Show tooltip with a transition
+                tooltip
+                    .html(`
+                        <div style="font-weight: bold; margin-bottom: 5px;">${d.source.name} → ${d.target.name}</div>
+                        <div>Value: ${formatCurrency(d.value)}</div>
+                    `)
+                    .style("left", (event.pageX + 10) + "px")
+                    .style("top", (event.pageY - 28) + "px")
+                    .style("visibility", "visible")
+                    .style("opacity", "1");
                 
                 // Highlight link
                 d3.select(this).attr('stroke-opacity', 0.8);
@@ -2676,11 +2678,17 @@ function displayEnhancedSankeyChart(model) {
                 }
             })
             .on('mousemove', function(event) {
-                tooltip.style.left = (event.pageX + 10) + 'px';
-                tooltip.style.top = (event.pageY - 28) + 'px';
+                // Update tooltip position as mouse moves
+                tooltip
+                    .style("left", (event.pageX + 10) + "px")
+                    .style("top", (event.pageY - 28) + "px");
             })
             .on('mouseout', function() {
-                tooltip.style.display = 'none';
+                // Hide tooltip with a transition
+                tooltip
+                    .style("visibility", "hidden")
+                    .style("opacity", "0");
+                
                 d3.select(this).attr('stroke-opacity', 0.5);
                 
                 // Remove highlighting from right panel
@@ -2706,16 +2714,17 @@ function displayEnhancedSankeyChart(model) {
             .attr('data-id', d => d.id)
             .attr('data-type', d => d.type)
             .on('mouseover', function(event, d) {
-                // Show tooltip
-                const html = `
-                    <div style="font-weight: bold; margin-bottom: 5px;">${d.name}</div>
-                    <div>Type: ${d.type.charAt(0).toUpperCase() + d.type.slice(1)}</div>
-                    <div>Total Value: ${formatCurrency(d.value)}</div>
-                `;
-                tooltip.innerHTML = html;
-                tooltip.style.display = 'block';
-                tooltip.style.left = (event.pageX + 10) + 'px';
-                tooltip.style.top = (event.pageY - 28) + 'px';
+                // Show tooltip with a transition
+                tooltip
+                    .html(`
+                        <div style="font-weight: bold; margin-bottom: 5px;">${d.name}</div>
+                        <div>Type: ${d.type.charAt(0).toUpperCase() + d.type.slice(1)}</div>
+                        <div>Total Value: ${formatCurrency(d.value)}</div>
+                    `)
+                    .style("left", (event.pageX + 10) + "px")
+                    .style("top", (event.pageY - 28) + "px")
+                    .style("visibility", "visible")
+                    .style("opacity", "1");
                 
                 // Highlight node
                 d3.select(this)
@@ -2731,11 +2740,17 @@ function displayEnhancedSankeyChart(model) {
                 }
             })
             .on('mousemove', function(event) {
-                tooltip.style.left = (event.pageX + 10) + 'px';
-                tooltip.style.top = (event.pageY - 28) + 'px';
+                // Update tooltip position as mouse moves
+                tooltip
+                    .style("left", (event.pageX + 10) + "px")
+                    .style("top", (event.pageY - 28) + "px");
             })
             .on('mouseout', function() {
-                tooltip.style.display = 'none';
+                // Hide tooltip with a transition
+                tooltip
+                    .style("visibility", "hidden")
+                    .style("opacity", "0");
+                
                 d3.select(this)
                     .attr('stroke', nodeStrokeColor)
                     .attr('stroke-width', 1);
@@ -2880,12 +2895,17 @@ function displayEnhancedSankeyChart(model) {
                     
                 link.gradientId = gradientId;
             });
-// Draw links for right panel with square root scaling
+            
+            // Draw links for right panel with square root scaling
             const sqrtScale = d => {
                 // Base width ensures small links are visible
                 const baseWidth = 1.5;
-                const minValue = d3.min(rightGraph.links, l => l.value);
-                const maxValue = d3.max(rightGraph.links, l => l.value);
+                const minValue = d3.min(rightGraph.links, l => l.value) || 0; // Ensure not undefined
+                const maxValue = d3.max(rightGraph.links, l => l.value) || 1; // Ensure not undefined
+                
+                // Avoid division by zero
+                if (maxValue === minValue) return baseWidth + 3;
+                
                 // Use square root scaling for better visual balance
                 const normalizedValue = Math.sqrt((d.value - minValue) / (maxValue - minValue + 0.1));
                 return baseWidth + normalizedValue * 6;
@@ -2903,15 +2923,16 @@ function displayEnhancedSankeyChart(model) {
                 .attr('fill', 'none')
                 .attr('cursor', 'pointer')
                 .on('mouseover', function(event, d) {
-                    // Show tooltip
-                    const html = `
-                        <div style="font-weight: bold; margin-bottom: 5px;">${d.source.name} → ${d.target.name}</div>
-                        <div>Value: ${formatCurrency(d.value)}</div>
-                    `;
-                    tooltip.innerHTML = html;
-                    tooltip.style.display = 'block';
-                    tooltip.style.left = (event.pageX + 10) + 'px';
-                    tooltip.style.top = (event.pageY - 28) + 'px';
+                    // Show tooltip with a transition
+                    tooltip
+                        .html(`
+                            <div style="font-weight: bold; margin-bottom: 5px;">${d.source.name} → ${d.target.name}</div>
+                            <div>Value: ${formatCurrency(d.value)}</div>
+                        `)
+                        .style("left", (event.pageX + 10) + "px")
+                        .style("top", (event.pageY - 28) + "px")
+                        .style("visibility", "visible")
+                        .style("opacity", "1");
                     
                     // Highlight link
                     d3.select(this).attr('stroke-opacity', 0.8);
@@ -2925,11 +2946,17 @@ function displayEnhancedSankeyChart(model) {
                     }
                 })
                 .on('mousemove', function(event) {
-                    tooltip.style.left = (event.pageX + 10) + 'px';
-                    tooltip.style.top = (event.pageY - 28) + 'px';
+                    // Update tooltip position as mouse moves
+                    tooltip
+                        .style("left", (event.pageX + 10) + "px")
+                        .style("top", (event.pageY - 28) + "px");
                 })
                 .on('mouseout', function() {
-                    tooltip.style.display = 'none';
+                    // Hide tooltip with a transition
+                    tooltip
+                        .style("visibility", "hidden")
+                        .style("opacity", "0");
+                    
                     d3.select(this).attr('stroke-opacity', 0.5);
                     
                     // Remove highlighting from left panel
@@ -2955,16 +2982,17 @@ function displayEnhancedSankeyChart(model) {
                 .attr('data-id', d => d.id)
                 .attr('data-type', d => d.type)
                 .on('mouseover', function(event, d) {
-                    // Show tooltip
-                    const html = `
-                        <div style="font-weight: bold; margin-bottom: 5px;">${d.name}</div>
-                        <div>Type: ${d.type.charAt(0).toUpperCase() + d.type.slice(1)}</div>
-                        <div>Total Value: ${formatCurrency(d.value)}</div>
-                    `;
-                    tooltip.innerHTML = html;
-                    tooltip.style.display = 'block';
-                    tooltip.style.left = (event.pageX + 10) + 'px';
-                    tooltip.style.top = (event.pageY - 28) + 'px';
+                    // Show tooltip with a transition
+                    tooltip
+                        .html(`
+                            <div style="font-weight: bold; margin-bottom: 5px;">${d.name}</div>
+                            <div>Type: ${d.type.charAt(0).toUpperCase() + d.type.slice(1)}</div>
+                            <div>Total Value: ${formatCurrency(d.value)}</div>
+                        `)
+                        .style("left", (event.pageX + 10) + "px")
+                        .style("top", (event.pageY - 28) + "px")
+                        .style("visibility", "visible")
+                        .style("opacity", "1");
                     
                     // Highlight node
                     d3.select(this)
@@ -2980,11 +3008,17 @@ function displayEnhancedSankeyChart(model) {
                     }
                 })
                 .on('mousemove', function(event) {
-                    tooltip.style.left = (event.pageX + 10) + 'px';
-                    tooltip.style.top = (event.pageY - 28) + 'px';
+                    // Update tooltip position as mouse moves
+                    tooltip
+                        .style("left", (event.pageX + 10) + "px")
+                        .style("top", (event.pageY - 28) + "px");
                 })
                 .on('mouseout', function() {
-                    tooltip.style.display = 'none';
+                    // Hide tooltip with a transition
+                    tooltip
+                        .style("visibility", "hidden")
+                        .style("opacity", "0");
+                    
                     d3.select(this)
                         .attr('stroke', nodeStrokeColor)
                         .attr('stroke-width', 1);
