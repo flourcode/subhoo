@@ -332,16 +332,6 @@ a:hover {
     border-color: var(--color-outline); /* Use slightly more visible border */
 }
 
-/* --- Adjust the #bento-arr specific override --- */
-#bento-arr {
-    /* Make it one step different from other boxes */
-    background-color: var(--color-surface-container); /* Was already this - subtle diff now */
-}
-[data-theme="dark"] #bento-arr {
-     /* Make it one step different from other dark boxes */
-    background-color: var(--color-surface-variant); /* Use ds-3 (#3f3a37) */
-}
-
 .bento-box:hover {
     box-shadow: var(--shadow-lg);
     transform: translateY(-2px);
@@ -1111,10 +1101,10 @@ th, td {
     stroke-opacity: 0.7;
 }
 #sankeyChart text { /* Sankey Labels */
-    font-size: 10px; /* Adjust size as needed */
+    font-size: 12px; /* Adjust size as needed */
     fill: var(--color-text-secondary);
     pointer-events: none;
-    text-shadow: 0 0 2px var(--color-background); /* Help readability against links */
+    text-shadow: 0 0 0px var(--color-background); /* Help readability against links */
 }
 #choroplethMap .legend-text, /* Add class to legend text elements if needed */
 #choroplethMap text { /* General map text */
