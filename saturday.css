@@ -1,58 +1,71 @@
 /* ========================================= */
-/* CSS Variables - Light Mode (Print/Monocle Style) */
+/* CSS Variables - Light Mode (Mapped New Palette) */
 /* ========================================= */
 :root {
-    /* --- Core Palette - Desaturated Purples & Warm Neutrals --- */
-    /* Based on original purples but desaturated */
-    --dsp-purple-50: #F5F3F5;    /* Desaturated Lightest */
-    --dsp-purple-100: #EDEAEB;
-    --dsp-purple-200: #D8D4D7;
-    --dsp-purple-300: #B6B1B7;   /* Mid Gray-Purple (Outline/Tertiary Chart) */
-    --dsp-purple-400: #9A949B;   /* Muted Purple (Primary Action/Chart) */
-    --dsp-purple-500: #7A747B;   /* Darker Muted Purple (Secondary Action/Tertiary Text) */
-    --dsp-purple-600: #625C61;   /* Darkest Muted Purple (Secondary Text) */
+    /* --- Base Hex Palette (from user) --- */
+    --clr-dark-a0: #000000;
+    --clr-light-a0: #ffffff;
+    /* Light Surfaces (formerly called 'primary') */
+    --clr-light-surface-a0: #f2ebeb;
+    --clr-light-surface-a10: #f3eded;
+    --clr-light-surface-a20: #f5efef;
+    --clr-light-surface-a30: #f6f2f2;
+    --clr-light-surface-a40: #f8f4f4;
+    --clr-light-surface-a50: #f9f6f6;
+    /* Dark Surfaces / Light Text */
+    --clr-dark-surface-a0: #20241e;
+    --clr-dark-surface-a10: #353833;
+    --clr-dark-surface-a20: #4b4e49;
+    --clr-dark-surface-a30: #626560;
+    --clr-dark-surface-a40: #7a7d79;
+    --clr-dark-surface-a50: #939592;
+    /* Neutral Tonal Surfaces / Borders */
+    --clr-tonal-a0: #81807c;
+    --clr-tonal-a10: #8e8d8a;
+    --clr-tonal-a20: #9c9b98;
+    --clr-tonal-a30: #a9a9a6;
+    --clr-tonal-a40: #b7b6b4;
+    --clr-tonal-a50: #c5c5c3;
 
-    /* Neutrals */
-    --creamy-white: #FDFBF5;     /* Off-white for BG/Light Text */
-    --black-brown: #312d2a;      /* Dark brown/black for Text */
-    --darker-charcoal: #1c1a19;  /* Very dark brown/black */
-
-    /* Status Colors (Slightly Desaturated Option) */
-    --red-desat: #e06c75;      /* Softer Red */
-    --green-desat: #98c379;    /* Softer Green */
-    --blue-desat: #61afef;     /* Softer Blue */
-
-    /* --- Semantic Color Mapping --- */
-    --color-background: var(--creamy-white);           /* Use creamy background */
-    --color-surface: var(--dsp-purple-50);             /* Use desaturated purple for surfaces */
-    --color-surface-container: var(--dsp-purple-100);
-    --color-surface-variant: var(--dsp-purple-200);
+    /* --- Semantic Color Mapping (Light Mode) --- */
+    --color-background: var(--clr-light-a0);            /* White */
+    --color-surface: var(--clr-light-surface-a0);      /* Lightest Pink/Beige */
+    --color-surface-container: var(--clr-light-surface-a10);
+    --color-surface-variant: var(--clr-light-surface-a20);
 
     /* Text Colors */
-    --color-text-primary: var(--black-brown);          /* Use black-brown for primary text */
-    --color-text-secondary: var(--dsp-purple-600);     /* Use darkest desat purple */
-    --color-text-tertiary: var(--dsp-purple-500);      /* Use darker desat purple */
+    --color-text-primary: var(--clr-dark-surface-a0);    /* Darkest Green/Gray */
+    --color-text-secondary: var(--clr-dark-surface-a10);
+    --color-text-tertiary: var(--clr-dark-surface-a20);
+
+    /* --- ACTION REQUIRED: Define Accent Colors --- */
+    --hex-primary-accent-light: #663399; /* Placeholder: Rebeccapurple - REPLACE ME */
+    --hex-secondary-accent-light: #81807c; /* Placeholder: Using tonal-a0 - REPLACE ME if needed */
+    /* --- End Action Required --- */
 
     /* Action Colors */
-    --color-primary: var(--dsp-purple-400);            /* Muted purple action */
-    --color-on-primary: var(--creamy-white);           /* Creamy text on action */
-    --color-secondary: var(--dsp-purple-500);          /* Darker muted purple secondary action */
-    --color-on-secondary: var(--creamy-white);         /* Creamy text on action */
+    --color-primary: var(--hex-primary-accent-light);
+    --color-on-primary: var(--clr-light-a0);           /* Assuming accent is dark enough for light text */
+    --color-secondary: var(--hex-secondary-accent-light);
+    --color-on-secondary: var(--clr-light-a0);         /* Assuming accent is dark enough for light text */
 
     /* Border & Outline */
-    --color-border: var(--dsp-purple-200);             /* Lighter desat purple border */
-    --color-outline: var(--dsp-purple-300);            /* Mid desat purple outline */
-    --color-focus-ring: rgba(154, 148, 155, 0.5);      /* Based on dsp-purple-400 */
+    --color-border: var(--clr-tonal-a50);              /* Lightest Tonal Gray */
+    --color-outline: var(--clr-tonal-a40);
+    /* Update focus ring based on chosen primary accent */
+    --color-focus-ring: rgba(102, 51, 153, 0.5);       /* Based on placeholder */
 
     /* Chart Colors */
-    --chart-color-primary: var(--dsp-purple-400);
-    --chart-color-secondary: var(--dsp-purple-500);
-    --chart-color-tertiary: var(--dsp-purple-300);
+    /* Using placeholders - Update based on chosen accents */
+    --chart-color-primary: var(--hex-primary-accent-light);
+    --chart-color-secondary: var(--hex-secondary-accent-light);
+    --chart-color-tertiary: var(--clr-tonal-a20);      /* Using a mid tonal gray */
 
-    /* Status Colors */
-    --color-error: var(--red-desat);
-    --color-success: var(--green-desat);
-    --color-info: var(--blue-desat);
+    /* Status Colors (Standard Hex) */
+    --color-error: #e03131;
+    --color-success: #2f9e44;
+    --color-warning: #f08c00;
+    --color-info: #1971c2;
 
     /* --- Original Layout Values (Keep) --- */
     --border-radius-sm: 8px;
@@ -66,66 +79,51 @@
 }
 
 /* ========================================= */
-/* CSS Variables - Dark Mode (Print/Monocle Style) */
+/* CSS Variables - Dark Mode (Mapped New Palette w/ #f8f4f4 Accents) */
 /* ========================================= */
 [data-theme="dark"] {
-    /* --- Core Palette - Desaturated Purples & Warm Darks --- */
-    /* Re-use desaturated purples from light mode where appropriate */
-    --dsp-purple-50: #F5F3F5;
-    --dsp-purple-100: #EDEAEB;
-    --dsp-purple-200: #D8D4D7;
-    --dsp-purple-300: #B6B1B7;   /* Used for Secondary Text */
-    --dsp-purple-400: #9A949B;   /* Used for Tertiary Text */
-    /* Brighter versions for dark mode accents */
-    --dsp-dark-accent-primary: #A59FA8;  /* Brighter dsp-400 */
-    --dsp-dark-accent-secondary: #908A91;/* Brighter dsp-500 */
-    --dsp-dark-chart-tertiary: #767077; /* Brighter dsp-600 */
+    /* --- Base Hex Palette References (Defined in :root) --- */
+    /* Uses --clr-dark-a0, --clr-light-a0, --clr-primary-a*, --clr-surface-a*, --clr-tonal-a* */
 
-    /* Neutrals */
-    --creamy-white: #FDFBF5;     /* Used for Primary Text */
-    --black-brown: #312d2a;      /* Used for Dark Surface Container */
-    --darker-charcoal: #1c1a19;  /* Used for BG */
-    /* Define dark surfaces */
-    --dark-surface-1: #262321;
-    --dark-surface-2: var(--black-brown); /* Reuse black-brown */
-    --dark-surface-3: #3f3a37;
-
-    /* Status Colors (Brighter Desaturated) */
-    --red-desat-dark: #e5737d;
-    --green-desat-dark: #a5d6a7;
-    --blue-desat-dark: #79b6f2;
-
-    /* --- Semantic Color Mapping --- */
-    --color-background: var(--darker-charcoal);        /* Dark charcoal BG */
-    --color-surface: var(--dark-surface-1);            /* Dark warm gray surface */
-    --color-surface-container: var(--dark-surface-2);
-    --color-surface-variant: var(--dark-surface-3);
+    /* --- Semantic Color Mapping (Dark Mode) --- */
+    --color-background: var(--clr-dark-surface-a0);    /* #20241e - Darkest Green/Gray */
+    --color-surface: var(--clr-dark-surface-a10);      /* #353833 */
+    --color-surface-container: var(--clr-dark-surface-a20); /* #4b4e49 */
+    --color-surface-variant: var(--clr-dark-surface-a30);   /* #626560 */
 
     /* Text Colors */
-    --color-text-primary: var(--creamy-white);         /* Use creamy off-white */
-    --color-text-secondary: var(--dsp-purple-300);     /* Use light desat purple */
-    --color-text-tertiary: var(--dsp-purple-400);      /* Use mid desat purple */
+    --color-text-primary: var(--clr-light-surface-a50);  /* #f9f6f6 - Lightest Pink/Beige */
+    --color-text-secondary: var(--clr-light-surface-a30);/* #f6f2f2 */
+    --color-text-tertiary: var(--clr-light-surface-a10); /* #f3eded */
+
+    /* --- ACTION DEFINED: Use #f8f4f4 for Dark Mode Accents --- */
+    --hex-primary-accent-dark: #f8f4f4;  /* Your specified accent */
+    --hex-secondary-accent-dark: #f8f4f4;/* Using same for secondary */
+    /* --- End Action Defined --- */
 
     /* Action Colors */
-    --color-primary: var(--dsp-dark-accent-primary);   /* Brighter muted purple */
-    --color-on-primary: var(--darker-charcoal);        /* Dark text on action */
-    --color-secondary: var(--dsp-dark-accent-secondary);/* Brighter darker muted purple */
-    --color-on-secondary: var(--darker-charcoal);       /* Dark text on action */
+    --color-primary: var(--hex-primary-accent-dark);
+    --color-on-primary: var(--clr-dark-a0);            /* Black text on light accent */
+    --color-secondary: var(--hex-secondary-accent-dark);
+    --color-on-secondary: var(--clr-dark-a0);          /* Black text on light accent */
 
     /* Border & Outline */
-    --color-border: var(--dark-surface-2);             /* Use surface container for border */
-    --color-outline: var(--dark-surface-3);            /* Use surface variant for outline */
-    --color-focus-ring: rgba(165, 159, 168, 0.6);      /* Based on dsp-dark-accent-primary */
+    --color-border: var(--clr-dark-surface-a20);       /* #4b4e49 */
+    --color-outline: var(--clr-dark-surface-a30);      /* #626560 */
+    /* Update focus ring based on chosen dark primary accent */
+    --color-focus-ring: rgba(248, 244, 244, 0.6);      /* Based on #f8f4f4 */
 
     /* Chart Colors */
-    --chart-color-primary: var(--dsp-dark-accent-primary);
-    --chart-color-secondary: var(--dsp-dark-accent-secondary);
-    --chart-color-tertiary: var(--dsp-dark-chart-tertiary);
+    /* Using #f8f4f4 for all as requested */
+    --chart-color-primary: var(--hex-primary-accent-dark);   /* #f8f4f4 */
+    --chart-color-secondary: var(--hex-secondary-accent-dark); /* #f8f4f4 */
+    --chart-color-tertiary: var(--hex-primary-accent-dark);  /* #f8f4f4 - Note: charts will be monochromatic */
 
-    /* Status Colors */
-    --color-error: var(--red-desat-dark);
-    --color-success: var(--green-desat-dark);
-    --color-info: var(--blue-desat-dark);
+    /* Status Colors (Lighter Hex for Dark Mode - Keeping standard) */
+    --color-error: #f87171;
+    --color-success: #4ade80;
+    --color-warning: #fbbf24;
+    --color-info: #60a5fa;
 
     /* Shadow adjustments for dark mode (Keep Original) */
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
