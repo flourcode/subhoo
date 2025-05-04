@@ -8,10 +8,10 @@
     --hex-mid-dark-gray: #3A3B3C;
     --hex-light-gray: #B0B3B8;
     --hex-lightest-gray: #E4E6EB;
-    --hex-white: #FFFFFF; /* Keep pure white for contrast */
+    --hex-white: #FFFFFF; /* Keep pure white for max contrast surface */
 
-    /* Status Colors (Standard Hex - Add color back here) */
-    --status-red: #D81B60;    /* Using Pink/Red */
+    /* Status Colors (Standard Hex - Provides necessary color) */
+    --status-red: #D81B60;    /* Using a Pink/Red for better distinction */
     --status-green: #388E3C;  /* Standard Green */
     --status-blue: #1E88E5;   /* Standard Blue */
     --status-yellow: #FBC02D; /* Warning */
@@ -26,19 +26,21 @@
     --color-text-secondary: var(--hex-mid-dark-gray);  /* Mid-dark gray text */
     --color-text-tertiary: var(--hex-light-gray);      /* Mid-light gray text */
 
+    /* Primary action uses darkest gray for high contrast */
     --color-primary: var(--hex-dark-gray);           /* Dark Gray for primary action */
     --color-on-primary: var(--hex-white);            /* White text on dark gray */
-    --color-secondary: var(--hex-mid-dark-gray);     /* Mid-dark gray for secondary */
-    --color-on-secondary: var(--hex-white);          /* White text on mid-dark gray */
+    /* Secondary action uses mid-dark gray */
+    --color-secondary: var(--hex-mid-dark-gray);
+    --color-on-secondary: var(--hex-white);
 
-    --color-border: #DCDCDC;                         /* Slightly darker than light surfaces */
+    --color-border: #DCDCDC;                         /* Consistent light border */
     --color-outline: var(--hex-light-gray);          /* Mid-light gray for outlines */
-    --color-focus-ring: rgba(58, 59, 60, 0.5);       /* Based on mid-dark gray */
+    --color-focus-ring: rgba(58, 59, 60, 0.5);       /* Based on secondary gray */
 
     /* Chart Colors (Grayscale) */
-    --chart-color-primary: var(--hex-dark-gray);
-    --chart-color-secondary: var(--hex-mid-dark-gray);
-    --chart-color-tertiary: var(--hex-light-gray);
+    --chart-color-primary: var(--hex-dark-gray);        /* #242526 */
+    --chart-color-secondary: var(--hex-mid-dark-gray);  /* #3A3B3C */
+    --chart-color-tertiary: var(--hex-light-gray);      /* #B0B3B8 */
 
     /* Status Colors */
     --color-error: var(--status-red);
@@ -56,6 +58,7 @@
     --shadow-lg: 0 6px 12px rgba(0, 0, 0, 0.1);
     --transition-standard: all 0.2s ease-in-out; /* Added ease */
     --bento-gap: 16px; /* Slightly tighter gap */
+    --scale-interactive: scale(1.02); /* Subtle hover scale */
 }
 
 /* ========================================= */
@@ -81,10 +84,12 @@
     --color-text-secondary: var(--hex-light-gray);   /* #B0B3B8 */
     --color-text-tertiary: #8A8D91;                 /* Slightly darker light gray */
 
-    --color-primary: var(--hex-lightest-gray);     /* Lightest gray for primary action */
+    /* Primary action uses lightest gray */
+    --color-primary: var(--hex-lightest-gray);
     --color-on-primary: var(--hex-darkest);        /* Darkest text on light gray */
-    --color-secondary: var(--hex-light-gray);      /* Mid-light gray for secondary action */
-    --color-on-secondary: var(--hex-darkest);      /* Darkest text on light gray */
+     /* Secondary action uses mid-light gray */
+    --color-secondary: var(--hex-light-gray);
+    --color-on-secondary: var(--hex-darkest);
 
     --color-border: var(--hex-mid-dark-gray);      /* Mid-dark gray for borders */
     --color-outline: #4A4B4C;                     /* Slightly lighter gray for outlines */
@@ -102,7 +107,7 @@
     --color-info: var(--status-blue-dark);
 
     /* Dark Mode Shadows */
-    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3); /* Slightly darker */
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
     --shadow-md: 0 3px 6px rgba(0, 0, 0, 0.35);
     --shadow-lg: 0 6px 12px rgba(0, 0, 0, 0.4);
     /* Inherits border-radius, transition, bento-gap from :root */
@@ -121,6 +126,7 @@ html {
     height: 100%;
     -webkit-font-smoothing: antialiased; /* App-like font smoothing */
     -moz-osx-font-smoothing: grayscale;
+    scroll-behavior: smooth; /* Add smooth scroll */
 }
 
 body {
@@ -128,32 +134,32 @@ body {
     background-color: var(--color-background);
     color: var(--color-text-primary);
     line-height: 1.5;
-    font-size: 14px; /* Base size */
+    font-size: 14px;
     margin: 0;
     padding: 0;
     height: 100%;
     overflow: hidden; /* Prevent body scroll */
-    transition: background-color 0.3s ease, color 0.3s ease;
+    transition: background-color 0.2s ease, color 0.2s ease; /* Slightly faster transition */
 }
 
 /* ========================================= */
 /* Base Links & Transitions                  */
 /* ========================================= */
 a {
-    color: var(--color-primary); /* Will be dark/light gray based on mode */
+    color: var(--color-primary); /* Use primary accent (gray in this theme) */
     text-decoration: none;
-    font-weight: 500; /* Make links slightly bolder */
+    font-weight: 500;
     transition: color 0.2s ease;
 }
 a:hover {
     color: var(--color-secondary);
-    text-decoration: underline; /* Add underline on hover for clarity */
+    text-decoration: underline;
 }
 
-/* Apply theme transitions */
-.bento-box, .date-container, .side-panel, th, td, button, input, select,
-.card-icon-circle, #status-banner {
-    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+/* Apply theme transitions broadly */
+.bento-box, .date-container, .side-panel, th, td, button, input, select, label,
+.card-icon-circle, #status-banner, .tooltip, .sidebar-info, .sidebar-footer {
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease, opacity 0.2s ease;
 }
 
 /* ========================================= */
@@ -166,106 +172,91 @@ a:hover {
 }
 
 .side-panel {
-    width: 240px; /* Slightly narrower */
+    width: 240px; /* Consistent width */
     height: 100vh;
-    background-color: var(--color-surface); /* Use distinct surface color */
+    background-color: var(--color-surface); /* Use surface color */
     border-right: 1px solid var(--color-border);
-    padding: 16px; /* Slightly reduced padding */
-    overflow-y: auto;
+    padding: 16px; /* Consistent padding */
+    overflow-y: auto; /* Enable scroll ONLY if needed */
     flex-shrink: 0;
     display: flex;
     flex-direction: column;
+    scrollbar-width: thin; /* Style scrollbar (Firefox) */
+    scrollbar-color: var(--color-outline) var(--color-surface-container); /* Style scrollbar */
 }
+/* Style scrollbar for Webkit browsers */
+.side-panel::-webkit-scrollbar { width: 6px; }
+.side-panel::-webkit-scrollbar-track { background: var(--color-surface-container); border-radius: 3px;}
+.side-panel::-webkit-scrollbar-thumb { background-color: var(--color-outline); border-radius: 3px; border: 1px solid var(--color-surface-container); }
+
 
 /* --- Sidebar Info/Footer - Use Classes! --- */
 /* Suggestion: Replace inline styles in HTML with these classes */
 .sidebar-info {
-    margin: 10px 0;
-    font-size: 12px; /* Smaller info text */
-    line-height: 1.4;
-    color: var(--color-text-secondary);
-    background-color: var(--color-surface-container); /* Use container bg */
-    padding: 12px; /* Adjusted padding */
-    border-radius: var(--border-radius-md);
-    border: 1px solid var(--color-border);
+    margin: 10px 0; font-size: 12px; line-height: 1.4;
+    color: var(--color-text-secondary); background-color: var(--color-surface-container);
+    padding: 12px; border-radius: var(--border-radius-md); border: 1px solid var(--color-border);
 }
 .sidebar-footer {
-     margin-top: auto; /* Push footer to bottom */
-     padding-top: 12px; /* Consistent padding */
-     border-top: 1px solid var(--color-border);
-     font-size: 11px; /* Smaller footer text */
-     color: var(--color-text-tertiary);
-     text-align: center;
+     margin-top: auto; padding-top: 12px; border-top: 1px solid var(--color-border);
+     font-size: 11px; color: var(--color-text-tertiary); text-align: center;
 }
-/* Fallback for existing inline styles (remove once HTML is updated) */
+/* Fallback for existing inline styles (REMOVE once HTML is updated with classes) */
 .side-panel > div[style*="font-size: 12px"] { font-size: 12px !important; }
 .side-panel > div[style*="font-size: 10px"] { font-size: 11px !important; }
-/* --- End Sidebar --- */
+/* --- End Sidebar Specific --- */
 
 
 .main-content {
     flex: 1;
     height: 100vh;
-    overflow-y: auto;
-    padding: var(--bento-gap); /* Use gap variable for padding */
-    background-color: var(--color-background); /* Use main background */
+    overflow-y: auto; /* Allow main area to scroll */
+    padding: var(--bento-gap); /* Use gap variable */
+    background-color: var(--color-background); /* Use MAIN background */
+    scrollbar-width: thin; /* Style scrollbar (Firefox) */
+    scrollbar-color: var(--color-outline) var(--color-surface-container); /* Style scrollbar */
 }
+/* Style scrollbar for Webkit browsers */
+.main-content::-webkit-scrollbar { width: 8px; }
+.main-content::-webkit-scrollbar-track { background: var(--color-surface-container); border-radius: 4px; }
+.main-content::-webkit-scrollbar-thumb { background-color: var(--color-outline); border-radius: 4px; border: 2px solid var(--color-surface-container); }
+
 
 /* ========================================= */
 /* Header Styles                             */
 /* ========================================= */
 .dashboard-header {
-    margin-bottom: var(--bento-gap); /* Use gap variable */
-    padding-bottom: var(--bento-gap); /* Add padding below header */
-    border-bottom: 1px solid var(--color-border); /* Add divider */
+    margin-bottom: var(--bento-gap);
+    padding-bottom: var(--bento-gap);
+    border-bottom: 1px solid var(--color-border);
 }
-.header-content {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 16px; /* Ensure gap */
-}
-.title-area h1 {
-    font-size: 22px; /* Slightly smaller */
-    font-weight: 600; /* Adjusted weight */
-    color: var(--color-text-primary);
-    margin: 0; /* Remove bottom margin */
-}
-.title-area p {
-    font-size: 13px; /* Slightly smaller */
-    color: var(--color-text-secondary);
-    margin-top: 2px; /* Add small top margin */
-}
+.header-content { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+.title-area h1 { font-size: 22px; font-weight: 600; color: var(--color-text-primary); margin: 0; }
+.title-area p { font-size: 13px; color: var(--color-text-secondary); margin-top: 2px; }
 .header-controls { display: flex; align-items: center; gap: 16px; }
-
 .date-container {
-    display: flex; align-items: center; gap: 8px; /* Tighter gap */
-    padding: 6px 12px; /* Reduced padding */
-    background-color: var(--color-surface-container);
-    border-radius: var(--border-radius-md);
-    box-shadow: none; /* Remove shadow for flatter look */
-    border: 1px solid var(--color-border);
-    font-size: 13px; /* Slightly smaller */
-    color: var(--color-text-secondary); /* Muted text */
+    display: flex; align-items: center; gap: 8px; padding: 6px 12px;
+    background-color: var(--color-surface-container); border-radius: var(--border-radius-md);
+    border: 1px solid var(--color-border); font-size: 13px; color: var(--color-text-secondary);
 }
 .date-separator { color: var(--color-text-tertiary); opacity: 0.7; }
 #date-text, #time-text { font-weight: 500; color: var(--color-text-primary); }
 
 /* ========================================= */
-/* Bento Grid Layout (Reverted to Original 3-Row) */
+/* Bento Grid Layout (Reverted & Corrected)  */
 /* ========================================= */
 .bento-grid {
     display: grid;
     gap: var(--bento-gap);
     grid-template-columns: repeat(5, 1fr);
-    /* --- Reverted to original layout --- */
+    /* --- Original 3-row Layout --- */
     grid-template-areas:
         "sankey sankey sankey map arr"
         "tavtcv tavtcv leaders leaders leaders"
         "expiring expiring expiring expiring expiring";
-    grid-template-rows: minmax(400px, auto) auto auto; /* Adjusted min height */
+    grid-template-rows: minmax(400px, auto) auto auto; /* Adjusted min */
 }
-/* --- Corrected Area Assignments --- */
+/* --- Correct Area Assignments --- */
 #bento-arr { grid-area: arr; }
 #bento-sankey { grid-area: sankey; }
 #bento-map { grid-area: map; }
@@ -281,81 +272,55 @@ a:hover {
 /* Card Styles (`.bento-box`)                */
 /* ========================================= */
 .bento-box {
-    background-color: var(--color-surface); /* Use surface color (White / Dark Gray) */
+    background-color: var(--color-surface); /* White / Dark Gray */
     border-radius: var(--border-radius-lg);
-    box-shadow: var(--shadow-md); /* Keep moderate shadow */
-    padding: 16px; /* Slightly reduced padding */
+    box-shadow: var(--shadow-sm); /* Use lighter shadow by default */
+    padding: 16px;
     border: 1px solid var(--color-border);
     display: flex; flex-direction: column; height: 100%;
     position: relative; overflow: hidden;
-    transition: var(--transition-standard); /* Ensure transition applies */
+    transition: var(--transition-standard);
 }
-/* No dark theme override needed if light uses var(--color-surface) */
-
-/* Remove specific #bento-arr override if present */
-/* #bento-arr { background-color: ... ; } */
-/* [data-theme="dark"] #bento-arr { background-color: ... ; } */
+/* No theme override needed if vars are mapped correctly */
 
 .bento-box:hover {
-    box-shadow: var(--shadow-lg);
-    transform: translateY(-2px); /* Keep subtle hover */
-    border-color: var(--color-outline); /* Add outline color on hover */
+    box-shadow: var(--shadow-md); /* Increase shadow on hover */
+    transform: translateY(-1px); /* More subtle hover */
+    border-color: var(--color-outline);
 }
 
 .card-header {
-    display: flex; align-items: center; gap: 10px; /* Smaller gap */
-    margin-bottom: 12px; /* Reduced margin */
-    border-bottom: 1px solid var(--color-border);
-    padding-bottom: 10px; /* Reduced padding */
-    flex-shrink: 0;
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 12px; border-bottom: 1px solid var(--color-border);
+    padding-bottom: 10px; flex-shrink: 0;
 }
-.card-header h2 {
-    font-size: 15px; /* Slightly smaller */
-    font-weight: 600;
-    color: var(--color-text-primary);
-    flex-grow: 1; margin: 0;
-}
+.card-header h2 { font-size: 15px; font-weight: 600; color: var(--color-text-primary); flex-grow: 1; margin: 0; }
 .card-icon-circle {
     display: flex; align-items: center; justify-content: center;
-    width: 28px; height: 28px; /* Smaller icon */
-    border-radius: 50%;
-    background-color: var(--color-surface-container);
-    color: var(--color-primary); /* Use primary color */
-    flex-shrink: 0;
+    width: 28px; height: 28px; border-radius: 50%;
+    background-color: var(--color-surface-container); color: var(--color-primary); flex-shrink: 0;
 }
-.card-icon-circle svg { width: 16px; height: 16px; } /* Adjust icon size */
+.card-icon-circle svg { width: 16px; height: 16px; }
 
 .card-content, .chart-container, .table-container, .arr-display-grid, .notes-content {
-    flex-grow: 1; /* Ensure content fills space */
-    display: flex; flex-direction: column;
-    position: relative; min-height: 0; /* Prevent shrinking issues */
+    flex-grow: 1; display: flex; flex-direction: column; position: relative; min-height: 0;
 }
 
 /* ========================================= */
 /* Form Element Styles                       */
 /* ========================================= */
 .input-select, .input-date, input[type="search"], input[type="text"] {
-    width: 100%;
-    padding: 8px 12px; /* Slightly reduced padding */
-    border: 1px solid var(--color-border); /* Use border, not outline initially */
-    border-radius: var(--border-radius-md);
-    font-size: 13px; /* Slightly smaller */
-    color: var(--color-text-primary);
-    background-color: var(--color-surface); /* Match surface */
+    width: 100%; padding: 8px 12px; border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-md); font-size: 13px;
+    color: var(--color-text-primary); background-color: var(--color-surface);
     transition: var(--transition-standard);
 }
-.input-select:focus, .input-date:focus,
-input[type="search"]:focus, input[type="text"]:focus {
-    outline: 2px solid transparent; /* Remove default outline */
-    outline-offset: 2px;
-    border-color: var(--color-primary); /* Use primary color for border */
-    box-shadow: 0 0 0 2px var(--color-focus-ring); /* Use focus ring variable */
-    background-color: var(--color-surface); /* Keep background */
+.input-select:focus, .input-date:focus, input[type="search"]:focus, input[type="text"]:focus {
+    outline: 2px solid transparent; outline-offset: 2px;
+    border-color: var(--color-primary); box-shadow: 0 0 0 2px var(--color-focus-ring);
+    background-color: var(--color-surface);
 }
-.input-select option { /* May need adjustments based on browser */
-    background-color: var(--color-background); /* Use main BG */
-    color: var(--color-text-primary);
-}
+.input-select option { background-color: var(--color-background); color: var(--color-text-primary); }
 ::placeholder { color: var(--color-text-tertiary); opacity: 0.8; }
 
 /* ========================================= */
@@ -363,98 +328,86 @@ input[type="search"]:focus, input[type="text"]:focus {
 /* ========================================= */
 button, .button, .primary-button {
     display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-    padding: 8px 14px; /* Adjusted padding */
-    border-radius: var(--border-radius-md);
-    font-size: 13px; /* Slightly smaller */
-    font-weight: 500; cursor: pointer;
-    transition: var(--transition-standard);
-    border: 1px solid var(--color-border); /* Use standard border */
-    text-align: center; vertical-align: middle; white-space: nowrap;
+    padding: 8px 14px; border-radius: var(--border-radius-md);
+    font-size: 13px; font-weight: 500; cursor: pointer;
+    border: 1px solid var(--color-border); text-align: center;
+    vertical-align: middle; white-space: nowrap;
+    transition: var(--transition-standard); /* Ensure transition */
 }
-button svg, .button svg, .primary-button svg { width: 14px; height: 14px; } /* Consistent icon size */
+button svg, .button svg, .primary-button svg { width: 14px; height: 14px; }
 
 /* Standard Button */
 button, .button {
-    background-color: var(--color-surface);
-    color: var(--color-text-primary);
-    border-color: var(--color-outline); /* Use outline color for border */
+    background-color: var(--color-surface); color: var(--color-text-primary);
+    border-color: var(--color-outline);
 }
 button:hover:not(:disabled), .button:hover:not(:disabled) {
-    background-color: var(--color-surface-container);
-    border-color: var(--color-primary); /* Primary border on hover */
-    transform: var(--scale-interactive); /* Add subtle scale from vars */
+    background-color: var(--color-surface-container); border-color: var(--color-primary);
+    transform: var(--scale-interactive);
 }
 
 /* Primary Button */
 .primary-button {
-    background-color: var(--color-primary);
-    color: var(--color-on-primary);
-    border-color: var(--color-primary); /* Match background */
+    background-color: var(--color-primary); color: var(--color-on-primary);
+    border-color: var(--color-primary);
 }
 .primary-button:hover:not(:disabled) {
-    /* Mix primary with background to desaturate/darken slightly on hover */
+    /* Mix with background for subtle hover */
     background-color: color-mix(in srgb, var(--color-primary) 85%, var(--color-background));
     border-color: color-mix(in srgb, var(--color-primary) 85%, var(--color-background));
     transform: var(--scale-interactive);
 }
-/* Ensure dark mode primary button hover is also handled (it uses --color-secondary currently) */
-[data-theme="dark"] .primary-button:hover:not(:disabled) {
-     background-color: color-mix(in srgb, var(--color-primary) 85%, var(--color-background));
-     border-color: color-mix(in srgb, var(--color-primary) 85%, var(--color-background));
-}
-
 
 /* Disabled State */
-button:disabled, .button:disabled, .primary-button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+button:disabled, .button:disabled, .primary-button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
 
 /* Theme Toggle Button */
 #theme-toggle-btn { background: none; border: none; cursor: pointer; padding: 4px; margin-left: auto; }
-.theme-icon { color: var(--color-text-secondary); transition: var(--transition-standard); }
+.theme-icon { color: var(--color-text-secondary); }
 #theme-toggle-btn:hover .theme-icon { color: var(--color-primary); }
 
 /* ========================================= */
 /* Sidebar Specific Controls                 */
 /* ========================================= */
-/* Style the container holding the controls */
-.side-panel > div:has(#dataset-select) { /* Assuming controls are in a div */
-    display: flex; flex-direction: column; gap: 10px; /* Adjusted gap */
-}
-.side-panel h2 { /* Sidebar Subheadings */
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--color-text-secondary);
-    margin: 8px 0 0 0; /* Adjusted margin */
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+.side-panel > div:has(#dataset-select) { display: flex; flex-direction: column; gap: 10px; }
+.side-panel h2 {
+    font-size: 11px; /* Smaller heading */
+    font-weight: 600; color: var(--color-text-secondary);
+    margin: 12px 0 4px 0; /* Adjusted spacing */
+    text-transform: uppercase; letter-spacing: 0.07em; /* Increased spacing */
 }
 #status-banner {
     padding: 8px 10px; border-radius: var(--border-radius-sm); font-size: 12px;
     color: var(--color-text-secondary); background-color: var(--color-surface-container);
-    border: 1px solid var(--color-border); text-align: center; margin-top: 8px;
+    border: 1px solid transparent; /* Make border transparent by default */
+    text-align: center; margin-top: 8px;
 }
-/* Status banner colors using relative color syntax (modern browsers) */
-/* Add !important if needed, but try without first */
-#status-banner.error { background-color: oklch(from var(--color-error) l c h / 10%); color: var(--color-error); border-color: var(--color-error); }
-#status-banner.success { background-color: oklch(from var(--color-success) l c h / 10%); color: var(--color-success); border-color: var(--color-success); }
-#status-banner.info { background-color: oklch(from var(--color-info) l c h / 15%); color: var(--color-info); border-color: var(--color-info); }
+/* Status banner colors using relative color syntax */
+#status-banner.error { background-color: oklch(from var(--color-error) l c h / 10%); color: var(--color-error); border-color: oklch(from var(--color-error) l c h / 30%); }
+#status-banner.success { background-color: oklch(from var(--color-success) l c h / 10%); color: var(--color-success); border-color: oklch(from var(--color-success) l c h / 30%); }
+#status-banner.info { background-color: oklch(from var(--color-info) l c h / 15%); color: var(--color-info); border-color: oklch(from var(--color-info) l c h / 30%); }
 /* Fallback using semi-transparent rgba if needed */
-/* #status-banner.error { background-color: rgba(var(--status-red-rgb), 0.1); ... } */
+/* @supports not (background-color: oklch(from red l c h / 10%)) { ... } */
 
+/* Filter elements - kept original, assuming vars work */
+.filter-container { display: flex; flex-direction: column; gap: 16px; }
+.filter-row { display: flex; gap: 16px; }
+.filter-item { display: flex; flex-direction: column; gap: 6px; flex: 1; }
+.filter-item label { font-size: 13px; font-weight: 500; color: var(--color-text-secondary); }
 
 /* ========================================= */
 /* Table Styles                              */
 /* ========================================= */
-.table-container { overflow: hidden; margin-top: 16px; flex-grow: 1;} /* Allow table container to grow */
-.table-wrapper { overflow: auto; max-height: 100%; } /* Let wrapper scroll within container */
-/* Adjust max-height constraints if needed */
+.table-container { overflow: hidden; margin-top: 12px; flex-grow: 1; display: flex; flex-direction: column; }
+.table-wrapper { overflow: auto; flex-grow: 1; } /* Let wrapper handle scroll & fill space */
+/* Remove fixed max-heights, let flexbox handle sizing */
 /* #contract-leaders-table-container .table-wrapper { max-height: 450px; } */
 /* #expiring-contracts-table-container .table-wrapper { max-height: 300px; } */
 
 table { width: 100%; border-collapse: collapse; }
 th, td {
-    padding: 8px 12px; /* Slightly reduced padding */
-    text-align: left; border-bottom: 1px solid var(--color-border);
-    white-space: nowrap; font-size: 12px; /* Consistent smaller size */
+    padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--color-border);
+    white-space: nowrap; font-size: 12px;
 }
 th {
     font-weight: 600; color: var(--color-text-secondary);
@@ -463,20 +416,24 @@ th {
     position: sticky; top: 0; z-index: 1;
 }
 td { color: var(--color-text-primary); }
-td.number { text-align: right; font-variant-numeric: tabular-nums; }
+td.number { text-align: right; font-variant-numeric: tabular-nums; font-weight: 500; }
 td.font-medium { font-weight: 500; }
 td.font-bold { font-weight: 700; }
 td.text-center { text-align: center; }
-td.text-red-600 { color: var(--color-error); } /* Use status color */
+td.text-red-600 { color: var(--color-error); }
 
+/* Refined Hover */
 tr:hover td { background-color: var(--color-surface-container); }
-.summary-text { /* Keep styles */ }
-/* Wrapping columns (Keep) */
-#expiring-contracts-table-container td:nth-child(3),
-#contract-leaders-table-container td:nth-child(6) { /* Update if columns change */
-    white-space: normal; word-wrap: break-word; max-width: 200px; /* Adjusted max-width */
+.summary-text {
+    text-align: center; font-size: 11px; /* Smaller */ color: var(--color-text-tertiary);
+    margin-top: 8px; padding: 8px 0; border-top: 1px solid var(--color-border); flex-shrink: 0; /* Prevent shrinking */
 }
-/* Sticky Column styles (Keep) */
+/* Keep Wrapping styles */
+#expiring-contracts-table-container td:nth-child(3),
+#contract-leaders-table-container td:nth-child(6) {
+    white-space: normal; word-wrap: break-word; max-width: 200px;
+}
+/* Keep Mobile Sticky styles */
 @media (max-width: 768px) {
     .table-wrapper { overflow-x: auto; }
     th:first-child, td:first-child { position: sticky; left: 0; z-index: 2; }
@@ -488,30 +445,34 @@ tr:hover td { background-color: var(--color-surface-container); }
 /* ========================================= */
 /* Chart & Visualization Containers          */
 /* ========================================= */
-.chart-container { min-height: 200px; flex-grow: 1; position: relative; } /* Added position relative */
+.chart-container { min-height: 200px; flex-grow: 1; position: relative; }
 #sankeyChart, #choroplethMap svg, #tavTcvChart { display: block; width: 100%; height: 100%; max-height: none; }
 
-/* Remove TAV/TCV specific label container - assuming JS uses native labels now */
+/* Remove obsolete TAV/TCV label container rule */
 /* .chart-y-labels-container { ... } */
+
 
 /* ========================================= */
 /* Specific Component Styles                 */
 /* ========================================= */
 /* ARR Display */
-.arr-display-grid { /* Keep styles, maybe adjust font size */ }
-.arr-grid-value { font-size: 2.2rem; /* Slightly smaller */ color: var(--color-primary); margin-bottom: 8px; font-weight: 600;}
-.arr-description { font-size: 13px; color: var(--color-text-secondary); }
+.arr-display-grid { justify-content: center; align-items: center; padding: 16px 0; text-align: center; }
+.arr-grid-value { font-size: 2.2rem; color: var(--color-primary); margin-bottom: 8px; font-weight: 600;}
+.arr-description { font-size: 13px; color: var(--color-text-secondary); max-width: 90%; margin: 0 auto; } /* Constrain width */
+/* Notes Section (Keep if used) */
+.notes-content { color: var(--color-text-secondary); font-size: 13px; overflow-y: auto; padding: 0 4px; }
+.notes-content p { margin-bottom: 10px; }
+.notes-content p:last-child { margin-bottom: 0; }
+.notes-content ul { margin-left: 16px; margin-bottom: 10px; }
+.notes-content ul li { margin-bottom: 5px; }
+.notes-content strong { color: var(--color-text-primary); font-weight: 600; }
 
-/* Notes Section (Keep styles) */
-
-/* --- Chart Element Styling (Moved from JS if possible) --- */
+/* --- Chart Element Styling (Ensure consistency) --- */
 /* Sankey */
 #sankeyChart path { stroke: var(--color-border); stroke-opacity: 0.4; transition: stroke-opacity 0.2s ease; fill: none; }
 #sankeyChart path:hover { stroke-opacity: 0.7; }
 #sankeyChart rect { stroke: var(--color-surface); stroke-width: 0.5px; }
-#sankeyChart rect[data-type="agency"] { fill: var(--chart-color-tertiary); }
-#sankeyChart rect[data-type="prime"] { fill: var(--chart-color-primary); }
-#sankeyChart rect[data-type="sub"] { fill: var(--chart-color-secondary); }
+/* Ensure JS applies correct fills using chart vars */
 #sankeyChart text { font-size: 10px; fill: var(--color-text-secondary); pointer-events: none; }
 
 /* Map */
@@ -524,158 +485,170 @@ tr:hover td { background-color: var(--color-surface-container); }
 /* ========================================= */
 /* Tooltip Styles                            */
 /* ========================================= */
-/* Base tooltip (Keep styles, ensure vars are used) */
 .tooltip, .sankey-tooltip, .map-tooltip, #tav-tcv-tooltip {
     position: absolute !important;
     background-color: var(--color-surface) !important;
     color: var(--color-text-primary) !important;
-    padding: 8px 12px !important; /* Slightly smaller padding */
-    border-radius: var(--border-radius-sm) !important; /* Smaller radius */
-    font-size: 12px !important;
-    line-height: 1.4 !important;
+    padding: 8px 12px !important;
+    border-radius: var(--border-radius-sm) !important;
+    font-size: 12px !important; line-height: 1.4 !important;
     pointer-events: none !important;
     border: 1px solid var(--color-border) !important;
     z-index: 9999 !important;
-    box-shadow: var(--shadow-lg) !important; /* Slightly larger shadow for pop */
-    max-width: 250px; /* Limit width */
-    /* Transition */
+    box-shadow: var(--shadow-lg) !important;
+    max-width: 250px;
     opacity: 0; transform: translateY(5px);
     transition: opacity 0.2s ease, transform 0.2s ease, visibility 0s linear 0.2s;
-    visibility: hidden; display: none; /* Start hidden */
+    visibility: hidden; display: none;
 }
-/* Visible state */
 .tooltip.visible, .sankey-tooltip.visible, .map-tooltip.visible, #tav-tcv-tooltip.visible,
-/* Fallbacks for JS setting style directly */
 .tooltip[style*="opacity: 1"], .sankey-tooltip[style*="opacity: 1"],
 .map-tooltip[style*="opacity: 1"], #tav-tcv-tooltip[style*="opacity: 1"],
 .tooltip[style*="display: block"], .sankey-tooltip[style*="display: block"],
 .map-tooltip[style*="display: block"], #tav-tcv-tooltip[style*="display: block"] {
-    opacity: 1 !important;
-    visibility: visible !important;
-    display: block !important;
+    opacity: 1 !important; visibility: visible !important; display: block !important;
     transform: translateY(0) !important;
     transition: opacity 0.2s ease, transform 0.2s ease, visibility 0s linear 0s !important;
 }
-/* Tooltip content */
 .tooltip strong, .sankey-tooltip strong, .map-tooltip strong, #tav-tcv-tooltip strong {
     color: var(--color-text-primary); font-weight: 600; display: block; margin-bottom: 4px;
 }
+/* .tooltip-visible class kept for potential JS use */
+.tooltip-visible { opacity: 1 !important; visibility: visible !important; display: block !important; transform: translateY(0) !important; }
 
 
 /* ========================================= */
 /* Loading, Error, No Data States            */
 /* ========================================= */
 .loading-placeholder, .error-placeholder, .no-data-placeholder {
-    /* Keep structure - adjust colors */
-    display: none; /* Hide by default */
-    flex-direction: column; align-items: center; justify-content: center;
+    display: none; flex-direction: column; align-items: center; justify-content: center;
     gap: 10px; padding: 20px; text-align: center;
-    color: var(--color-text-tertiary); font-size: 13px; /* Smaller text */
-    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-    /* Use surface color with slight opacity for overlay */
+    color: var(--color-text-tertiary); font-size: 13px;
+    position: absolute; inset: 0; /* simpler positioning */
+    /* Use surface color with slight opacity */
     background-color: color-mix(in srgb, var(--color-surface) 90%, transparent);
     border-radius: var(--border-radius-lg); /* Match card */
-    z-index: 10;
+    z-index: 10; backdrop-filter: blur(2px); /* Optional: blur background */
 }
-/* Remove RGB vars, rely on color-mix or rgba directly if needed */
-/* :root { --color-surface-rgb: ... } */
-/* [data-theme="dark"] { --color-surface-rgb: ... } */
-
 .error-placeholder { color: var(--color-error); }
-.spinner { /* Keep styles */ }
+.spinner { /* Keep styles */ width: 24px; height: 24px; border-radius: 50%; border: 3px solid var(--color-surface-variant); border-top-color: var(--color-primary); }
 @keyframes spin { to { transform: rotate(360deg); } }
-/* Pulse animation */
 .spinner { animation: spin 1s linear infinite, pulse 1.5s ease-in-out infinite alternate; }
 @keyframes pulse { 0% { opacity: 0.6; } 100% { opacity: 1; } }
-
-/* Display logic */
-.is-loading .loading-placeholder, .has-error .error-placeholder, .no-data .no-data-placeholder {
-    display: flex;
-}
+.is-loading .loading-placeholder, .has-error .error-placeholder, .no-data .no-data-placeholder { display: flex; }
 
 
 /* ========================================= */
 /* Utility Classes                           */
 /* ========================================= */
-.detail-link { /* Keep styles */ }
+.detail-link { color: var(--color-primary); text-decoration: none; font-weight: 500; }
+.detail-link:hover { color: var(--color-secondary); text-decoration: underline; }
 
 
 /* ========================================= */
 /* Responsive Adjustments                    */
 /* ========================================= */
-/* Keep existing responsive styles, verify they work with new theme */
-@media (max-width: 1200px) {}
+@media (max-width: 1200px) {} /* Keep */
+
 @media (max-width: 992px) { /* Tablet */
-    .side-panel { width: 220px; }
+     .side-panel { width: 200px; } /* Further reduce sidebar */
      .bento-grid {
-         grid-template-columns: repeat(3, 1fr); /* Adjusted columns */
-         grid-template-areas: /* Simpler mobile grid */
-            "sankey sankey map"
-            "sankey sankey arr"
-            "tavtcv leaders leaders"
-            "expiring expiring expiring";
+         /* Revert to original responsive layout */
+         grid-template-columns: repeat(2, 1fr);
+         grid-template-areas:
+            "arr sankey"
+            "map tavtcv"
+            "leaders leaders"
+            "expiring expiring";
          grid-auto-rows: minmax(300px, auto);
      }
-     /* Update spans if needed */
-    .col-span-2 { grid-column: span 2; }
-    .col-span-3 { grid-column: span 3; } /* Add if needed */
-    .col-span-4, .col-span-5 { grid-column: span 3; } /* Adjust larger spans */
+     /* Reset spans for 2-col */
+     .col-span-3, .col-span-4, .col-span-5 { grid-column: span 2; }
+     .col-span-2 { grid-column: span 2; } /* Stays same or specific overrides needed */
+     #bento-arr, #bento-map, #bento-tavtcv { grid-column: span 1; } /* Ensure single span */
+     #bento-sankey, #bento-leaders, #bento-expiring { grid-column: span 2; } /* Ensure full span */
 
      .arr-grid-value { font-size: 2rem; }
      .card-header h2 { font-size: 14px; }
+     .main-content { padding: 12px; } /* Reduce padding */
+     body { font-size: 13px; } /* Slightly smaller base */
 }
 
 @media (max-width: 768px) { /* Mobile Landscape / Small Tablet */
-    /* Keep layout changes */
-    .main-content { padding: 16px; }
+    .dashboard-layout { flex-direction: column; height: auto; overflow: auto; }
+    .side-panel { width: 100%; height: auto; border-right: none; border-bottom: 1px solid var(--color-border); overflow-y: visible; }
+    .main-content { height: auto; overflow-y: visible; padding: 12px; }
+    body { overflow: auto; padding: 0; font-size: 13px; }
+
     .bento-grid {
         grid-template-columns: 1fr; /* Single column */
         grid-template-areas: /* Explicitly define single column areas */
-            "arr"
+            "arr"       /* Define order */
+            "map"       /* Define order */
             "sankey"
-            "map"
             "tavtcv"
             "leaders"
             "expiring";
-         grid-auto-rows: minmax(250px, auto);
+         grid-auto-rows: auto; /* Let content define height */
+         gap: 12px; /* Reduce gap */
     }
-    /* Reset column spans */
-    .col-span-2, .col-span-3, .col-span-4, .col-span-5 { grid-column: span 1; }
-    .header-content { /* Stack header */ }
+    /* Reset all spans to 1 */
+    .col-span-2, .col-span-3, .col-span-4, .col-span-5 { grid-column: span 1 !important; }
+    /* Force order */
+    #bento-arr { grid-area: arr; } #bento-map { grid-area: map; } #bento-sankey { grid-area: sankey; }
+    #bento-tavtcv { grid-area: tavtcv; } #bento-leaders { grid-area: leaders; } #bento-expiring { grid-area: expiring; }
+
+
+    .header-content { flex-direction: column; align-items: flex-start; gap: 12px; }
+    .header-controls { width: 100%; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+    .title-area h1 { font-size: 20px; } .title-area p { font-size: 12px; }
     /* Keep sticky table styles */
     /* Adjust chart heights */
-    #sankey-chart-container, #map-container { min-height: 280px; height: 320px; }
-    #expiring-contracts-table-container .table-wrapper { max-height: 250px; }
+    .chart-container { min-height: 250px; } /* Reduce min height */
+    #sankey-chart-container, #map-container { height: 300px; } /* Set explicit shorter height */
+    #expiring-contracts-table-container .table-wrapper { max-height: 200px; }
 }
 
 @media (max-width: 480px) { /* Small Mobile */
-    /* Keep font size adjustments */
-     .arr-grid-value { font-size: 1.8rem; }
-     .side-panel, .main-content { padding: 12px; }
-     .bento-gap { --bento-gap: 12px; } /* Reduce gap */
-     /* Adjust sidebar text sizes if needed */
+    body { font-size: 12px; } /* Smaller base */
+    .title-area h1 { font-size: 18px; } .title-area p { font-size: 11px; }
+    .arr-grid-value { font-size: 1.8rem; }
+    .card-header h2 { font-size: 13px; }
+    .side-panel, .main-content { padding: 10px; }
+    .bento-gap { --bento-gap: 10px; }
+    button, .button, .primary-button { padding: 6px 10px; font-size: 12px; }
+    .input-select, .input-date, input[type="search"], input[type="text"] { padding: 6px 10px; font-size: 12px; }
+    th, td { padding: 6px 10px; font-size: 11px; }
+    .sidebar-info { font-size: 11px; }
+    .sidebar-footer { font-size: 10px; }
+    .chart-container { min-height: 220px; }
+    #sankey-chart-container, #map-container { height: 250px; }
 }
 
 
 /* ========================================= */
-/* Remove Conflicting Rules                  */
+/* Remove Conflicting/Redundant Rules        */
 /* ========================================= */
-/* Delete the following rules if they exist: */
-/* .app-container { ... } */
-/* [data-theme="dark"] .app-container { ... } */
-/* .dashboard-grid { ... } */
-/* .dashboard-card { ... } */
-/* [data-theme="dark"] .dashboard-card { ... } */
-/* @media (max-width: 600px) .dashboard-grid { ... } */
-/* @media (max-width: 600px) .dashboard-card { ... } */
+/* The .app-container, .dashboard-grid, and .dashboard-card rules were removed */
+/* as they defined a different layout structure conflicting with the */
+/* .dashboard-layout and .bento-grid structure primarily used. */
 
 
 /* ========================================= */
-/* Keep Enhancements (If separate)           */
+/* Final Polish & Enhancements              */
 /* ========================================= */
-/* Enhanced hover states for table rows (adjust color mix if needed) */
-.table-wrapper tr:hover td { /* Combined with main rule */
-     background-color: color-mix(in srgb, var(--color-primary) 8%, var(--color-surface)); /* Subtle primary mix */
+/* Ensure focus states are clear */
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+    box-shadow: 0 0 0 2px var(--color-focus-ring); /* Use focus ring */
 }
-/* Tooltip animations (Keep base styles) */
-/* Spinner pulse animation (Keep base styles) */
+/* Override specific input focus if needed */
+.input-select:focus, .input-date:focus, input[type="search"]:focus, input[type="text"]:focus {
+     box-shadow: 0 0 0 2px var(--color-focus-ring); /* Ensure input focus uses ring */
+     /* Keep primary border */
+}
+
+/* Table row hover animation retained via transition property */
+/* Tooltip animation retained via transition property */
+/* Spinner animation retained via keyframes */
