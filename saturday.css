@@ -1,116 +1,150 @@
 /* ========================================= */
-/* Theme Variables (Grayscale App Theme)     */
+/* CSS Variables - Light Mode (Hex Orange/Brown Mapped) */
 /* ========================================= */
 :root {
-    /* --- Core Hex Palette (User Provided Grays) --- */
-    --hex-darkest: #18191A;
-    --hex-dark-gray: #242526;
-    --hex-mid-dark-gray: #3A3B3C;
-    --hex-light-gray: #B0B3B8;
-    --hex-lightest-gray: #E4E6EB;
-    --hex-white: #FFFFFF; /* Keep pure white for max contrast surface */
+    /* --- Core Hex Palette (Derived from OKLCH Hue 40 v2) --- */
+    /* Neutrals */
+    --base-white: #FFFFFF;
+    --base-black: #000000;
 
-    /* Status Colors (Standard Hex - Provides necessary color) */
-    --status-red: #D81B60;    /* Using a Pink/Red for better distinction */
-    --status-green: #388E3C;  /* Standard Green */
-    --status-blue: #1E88E5;   /* Standard Blue */
-    --status-yellow: #FBC02D; /* Warning */
+    /* Accent (Orange/Brown) */
+    --accent-500: #E8790D; /* Approx oklch(63.28% 0.223 40) */
+    --accent-400: #F59C40; /* Approx oklch(73% 0.223 40) - Lighter for charts */
+    --accent-600: #C56200; /* Approx oklch(53% 0.223 40) - Darker for charts */
+
+    /* Text (Beige/Brown Tones) */
+    --text-900: var(--base-black);        /* Primary Text */
+    --text-700: #8A7F70; /* Mid - Approx oklch(58% 0.04 40) */
+    --text-500: #B8ADA0; /* Light - Approx oklch(74.6% 0.04 40) */
+
+    /* Surfaces (Light Beige Tones - Approximating OKLCH overlays on white) */
+    --surface-100: #FBF9F7; /* Approx surface-1 */
+    --surface-200: #F8F5F1; /* Approx surface-2 / border-1 */
+    --surface-300: #F4F0EB; /* Approx surface-3 / border-2 */
+    --surface-400: #EDE7E0; /* Approx border-3 */
+
+    /* Status Colors (Standard Hex) */
+    --status-red: #e03131;
+    --status-green: #2f9e44;
+    --status-orange: #f08c00; /* Warning */
+    --status-blue: #1971c2;   /* Info */
 
     /* --- Semantic Color Mapping (Light Mode) --- */
-    --color-background: var(--hex-lightest-gray);     /* Lightest gray BG */
-    --color-surface: var(--hex-white);               /* White surfaces for cards */
-    --color-surface-container: #F5F5F5;              /* Slightly off-white container */
-    --color-surface-variant: #EEEEEE;                /* Subtle variant (e.g., table header) */
+    --color-background: var(--base-white);
+    --color-surface: var(--surface-100);
+    --color-surface-container: var(--surface-200);
+    --color-surface-variant: var(--surface-300);
 
-    --color-text-primary: var(--hex-darkest);          /* Darkest gray text */
-    --color-text-secondary: var(--hex-mid-dark-gray);  /* Mid-dark gray text */
-    --color-text-tertiary: var(--hex-light-gray);      /* Mid-light gray text */
+    /* Text Colors */
+    --color-text-primary: var(--text-900);
+    --color-text-secondary: var(--text-700);
+    --color-text-tertiary: var(--text-500);
 
-    /* Primary action uses darkest gray for high contrast */
-    --color-primary: var(--hex-dark-gray);           /* Dark Gray for primary action */
-    --color-on-primary: var(--hex-white);            /* White text on dark gray */
-    /* Secondary action uses mid-dark gray */
-    --color-secondary: var(--hex-mid-dark-gray);
-    --color-on-secondary: var(--hex-white);
+    /* Action Colors */
+    --color-primary: var(--accent-500);
+    --color-on-primary: var(--base-white);
+    /* Secondary action uses surface color background + primary text */
+    --color-secondary: var(--color-surface-container);
+    --color-on-secondary: var(--color-text-primary);
 
-    --color-border: #DCDCDC;                         /* Consistent light border */
-    --color-outline: var(--hex-light-gray);          /* Mid-light gray for outlines */
-    --color-focus-ring: rgba(58, 59, 60, 0.5);       /* Based on secondary gray */
+    /* Border & Outline */
+    --color-border: var(--surface-200); /* Using surface colors for subtle borders */
+    --color-outline: var(--surface-300);
+    /* Focus ring using RGBA */
+    --color-focus-ring: rgba(232, 121, 13, 0.5); /* RGBA derived from accent-500 */
 
-    /* Chart Colors (Grayscale) */
-    --chart-color-primary: var(--hex-dark-gray);        /* #242526 */
-    --chart-color-secondary: var(--hex-mid-dark-gray);  /* #3A3B3C */
-    --chart-color-tertiary: var(--hex-light-gray);      /* #B0B3B8 */
+    /* Chart Colors */
+    --chart-color-primary: var(--accent-500);
+    --chart-color-secondary: var(--accent-400); /* Lighter orange */
+    --chart-color-tertiary: var(--text-700);    /* Muted text color */
 
     /* Status Colors */
     --color-error: var(--status-red);
     --color-success: var(--status-green);
-    --color-warning: var(--status-yellow);
+    --color-warning: var(--status-orange);
     --color-info: var(--status-blue);
 
-    /* --- Layout & Feel Adjustments --- */
-    --border-radius-sm: 6px;  /* Slightly tighter radius */
-    --border-radius-md: 8px;
-    --border-radius-lg: 12px;
-    /* Softer Shadows */
-    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
-    --shadow-md: 0 3px 6px rgba(0, 0, 0, 0.09);
-    --shadow-lg: 0 6px 12px rgba(0, 0, 0, 0.1);
-    --transition-standard: all 0.2s ease-in-out; /* Added ease */
-    --bento-gap: 16px; /* Slightly tighter gap */
-    --scale-interactive: scale(1.02); /* Subtle hover scale */
+    /* --- Original Layout Values (Keep) --- */
+    --border-radius-sm: 8px;
+    --border-radius-md: 12px;
+    --border-radius-lg: 16px;
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.08);
+    --shadow-lg: 0 4px 6px rgba(0, 0, 0, 0.12);
+    --transition-standard: all 0.2s ease;
+    --bento-gap: 20px;
 }
 
 /* ========================================= */
-/* CSS Variables - Dark Mode (Grayscale App Theme) */
+/* CSS Variables - Dark Mode (Hex Orange/Brown Mapped) */
 /* ========================================= */
 [data-theme="dark"] {
-    /* --- Core Hex Palette References --- */
-    /* Using names defined in :root */
+    /* --- Core Hex Palette (Dark Mode) --- */
+    /* Neutrals */
+    --base-white-dark: #FFFFFF; /* Pure white for text */
+    --dark-bg: #3D3B38;         /* Approx oklch(24% 0.004 40) */
 
-    /* Status Colors (Brighter for Dark Mode) */
-    --status-red-dark: #f06292;
-    --status-green-dark: #81c784;
-    --status-blue-dark: #64b5f6;
-    --status-yellow-dark: #ffd54f;
+    /* Accent (Same visual accent color) */
+    --accent-500-dark: #E8790D; /* Same as light mode */
+    --accent-400-dark: #F59C40; /* Lighter derived */
+    --accent-600-dark: #C56200; /* Darker derived */
+
+    /* Text (Light Beige/Brown Tones) */
+    --text-100-dark: var(--base-white-dark);   /* Primary Text */
+    --text-300-dark: #D1C8BC; /* Very Light - Approx oklch(83% 0.04 40) */
+    --text-500-dark: #A9A093; /* Light-Mid - Approx oklch(68.5% 0.04 40) */
+
+    /* Surfaces (Dark Beige/Brown Tones - Approximating OKLCH light overlays on dark) */
+    --surface-100-dark: #4A4744; /* Approx surface-1 */
+    --surface-200-dark: #524E4A; /* Approx surface-2 / border-1 */
+    --surface-300-dark: #5A5651; /* Approx surface-3 / border-2 */
+    --surface-400-dark: #67625C; /* Approx border-3 */
+
+    /* Status Colors (Lighter Hex for Dark Mode) */
+    --status-red-dark: #f87171;
+    --status-green-dark: #4ade80;
+    --status-orange-dark: #fbbf24;
+    --status-blue-dark: #60a5fa;
 
     /* --- Semantic Color Mapping (Dark Mode) --- */
-    --color-background: var(--hex-darkest);        /* #18191A */
-    --color-surface: var(--hex-dark-gray);         /* #242526 */
-    --color-surface-container: var(--hex-mid-dark-gray); /* #3A3B3C */
-    --color-surface-variant: #4A4B4C;              /* Slightly lighter gray */
+    --color-background: var(--dark-bg);
+    --color-surface: var(--surface-100-dark);
+    --color-surface-container: var(--surface-200-dark);
+    --color-surface-variant: var(--surface-300-dark);
 
-    --color-text-primary: var(--hex-lightest-gray);  /* #E4E6EB */
-    --color-text-secondary: var(--hex-light-gray);   /* #B0B3B8 */
-    --color-text-tertiary: #8A8D91;                 /* Slightly darker light gray */
+    /* Text Colors */
+    --color-text-primary: var(--text-100-dark);
+    --color-text-secondary: var(--text-300-dark);
+    --color-text-tertiary: var(--text-500-dark);
 
-    /* Primary action uses lightest gray */
-    --color-primary: var(--hex-lightest-gray);
-    --color-on-primary: var(--hex-darkest);        /* Darkest text on light gray */
-     /* Secondary action uses mid-light gray */
-    --color-secondary: var(--hex-light-gray);
-    --color-on-secondary: var(--hex-darkest);
+    /* Action Colors */
+    --color-primary: var(--accent-500-dark);
+    --color-on-primary: var(--base-white-dark); /* White text still works */
+    /* Secondary action uses surface color background + primary text */
+    --color-secondary: var(--color-surface-container);
+    --color-on-secondary: var(--color-text-primary);
 
-    --color-border: var(--hex-mid-dark-gray);      /* Mid-dark gray for borders */
-    --color-outline: #4A4B4C;                     /* Slightly lighter gray for outlines */
-    --color-focus-ring: rgba(228, 230, 235, 0.6);  /* Based on light gray primary */
+    /* Border & Outline */
+    --color-border: var(--surface-200-dark);
+    --color-outline: var(--surface-300-dark);
+    /* Focus ring using RGBA */
+    --color-focus-ring: rgba(232, 121, 13, 0.6); /* RGBA derived from accent-500 */
 
-    /* Chart Colors (Grayscale) */
-    --chart-color-primary: var(--hex-lightest-gray);
-    --chart-color-secondary: var(--hex-light-gray);
-    --chart-color-tertiary: #8A8D91;                /* Tertiary text color */
+    /* Chart Colors */
+    --chart-color-primary: var(--accent-500-dark);
+    --chart-color-secondary: var(--accent-400-dark); /* Lighter orange */
+    --chart-color-tertiary: var(--text-300-dark);    /* Muted light text color */
 
     /* Status Colors */
     --color-error: var(--status-red-dark);
     --color-success: var(--status-green-dark);
-    --color-warning: var(--status-yellow-dark);
+    --color-warning: var(--status-orange-dark);
     --color-info: var(--status-blue-dark);
 
-    /* Dark Mode Shadows */
-    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
-    --shadow-md: 0 3px 6px rgba(0, 0, 0, 0.35);
-    --shadow-lg: 0 6px 12px rgba(0, 0, 0, 0.4);
-    /* Inherits border-radius, transition, bento-gap from :root */
+    /* Shadow adjustments for dark mode (Keep Original) */
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
+    --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.25);
+    --shadow-lg: 0 4px 6px rgba(0, 0, 0, 0.3);
 }
 
 /* ========================================= */
