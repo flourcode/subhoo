@@ -665,3 +665,60 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 /* Table row hover animation retained via transition property */
 /* Tooltip animation retained via transition property */
 /* Spinner animation retained via keyframes */
+/* saturday.css */
+
+/* ========================================= */
+/* App Container Styles (Panel Look)         */
+/* ========================================= */
+.app-container {
+  /* --- Use Theme Variables --- */
+  background-color: var(--color-surface); /* Use surface color for the panel */
+  border: 1px solid var(--color-border);   /* Use theme border color */
+  border-radius: var(--border-radius-lg);/* Use large theme radius */
+  box-shadow: var(--shadow-lg);            /* Use large theme shadow for elevation */
+  /* --- Layout & Positioning --- */
+  margin: 32px; /* Adjust margin for desired float */
+  min-height: calc(100vh - 64px); /* Adjust height based on margin */
+  overflow: hidden; /* Keep contents rounded */
+  display: flex; /* Keep flex for internal layout */
+  flex-direction: column; /* Keep flex direction */
+  transition: var(--transition-standard); /* Add transition */
+}
+
+/* Dark mode variables are handled by the main [data-theme="dark"] block,
+   so no specific background/border/shadow overrides needed here anymore unless
+   you want a DIFFERENT surface/border/shadow specifically for the container
+   in dark mode. */
+/* Example: If you wanted a different dark surface for the container: */
+/* [data-theme="dark"] .app-container { */
+/* background-color: var(--color-surface-container); */
+/* border-color: var(--color-outline); */
+/* } */
+
+
+/* --- Responsive Adjustments for App Container --- */
+@media (max-width: 768px) { /* Adjusted breakpoint */
+  .app-container {
+    margin: 16px; /* Reduced margin */
+    min-height: calc(100vh - 32px);
+    border-radius: var(--border-radius-md); /* Slightly smaller radius */
+  }
+}
+
+@media (max-width: 480px) {
+  .app-container {
+    margin: 8px; /* Further reduced margin */
+    min-height: calc(100vh - 16px);
+    border-radius: var(--border-radius-sm); /* Smallest radius */
+    box-shadow: var(--shadow-md); /* Reduce shadow */
+  }
+}
+
+/* --- Remove Conflicting/Redundant Rules --- */
+/* Delete the following rules if they still exist elsewhere in your file, */
+/* as the .app-container now handles the outer frame. */
+/* .dashboard-grid { ... } */
+/* .dashboard-card { ... } */
+/* [data-theme="dark"] .dashboard-card { ... } */
+/* @media (max-width: 600px) .dashboard-grid { ... } */
+/* @media (max-width: 600px) .dashboard-card { ... } */
