@@ -1,130 +1,154 @@
 /* ========================================= */
-/* CSS Variables - Light Mode (OKLCH Blue v2 Mapped) */
+/* CSS Variables - Light Mode (Chart-Focused Neutral) */
 /* ========================================= */
 :root {
-    /* --- Base OKLCH Palette (Hue 223 - from user) --- */
-    --oklch-background-light: oklch(100% 0 223);
-    --oklch-on-accent-light: oklch(100% 0 0);
-    --oklch-accent-light: oklch(60.15624960739301% 0.14687500000000003 223);
-    --oklch-accent-b-light: oklch(60.15624960739301% 0.14687500000000003 223 / 16%);
-    --oklch-gradient-start-light: oklch(60.15624960739301% 0.14687500000000003 223 / 8%);
-    --oklch-gradient-end-light: oklch(60.15624960739301% 0.14687500000000003 223 / 0%);
-    --oklch-text-primary-light: oklch(0% 0 0);
-    --oklch-text-secondary-light: oklch(57.27539025119479% 0.05 223);  /* C=0.05 */
-    --oklch-text-tertiary-light: oklch(73.87695264284545% 0.05 223);   /* C=0.05 */
-    --oklch-border-1-light: oklch(70.31249954110872% 0.1 223 / 8%);   /* C=0.1 */
-    --oklch-border-2-light: oklch(70.31249954110872% 0.1 223 / 16%);  /* C=0.1 */
-    --oklch-border-3-light: oklch(70.31249954110872% 0.1 223 / 32%);  /* C=0.1 */
-    --oklch-surface-1-light: oklch(70.31249954110872% 0.1 223 / 4%);   /* C=0.1 */
-    --oklch-surface-2-light: oklch(70.31249954110872% 0.1 223 / 8%);   /* C=0.1 */
-    --oklch-surface-3-light: oklch(70.31249954110872% 0.1 223 / 16%);  /* C=0.1 */
+    /* --- Core Hex Palette --- */
+    /* Neutral Grays */
+    --hex-white: #FFFFFF;
+    --hex-gray-50: #F9FAFB;     /* Subtle Background */
+    --hex-gray-100: #F3F4F6;    /* Surface Container */
+    --hex-gray-200: #E5E7EB;    /* Surface Variant */
+    --hex-gray-300: #D1D5DB;    /* Border */
+    --hex-gray-400: #9CA3AF;    /* Outline / Muted Chart Gray */
+    --hex-gray-500: #6B7280;    /* Tertiary Text / Secondary Action BG */
+    --hex-gray-700: #374151;    /* Secondary Text */
+    --hex-gray-900: #111827;    /* Primary Text (Near Black) */
+    /* UI Accent (Muted Blue) */
+    --hex-accent-blue-500: #60A5FA; /* Using a standard, accessible blue */
+    --hex-accent-blue-600: #3B82F6; /* Darker for hover/secondary */
 
-    /* --- Semantic Color Mapping (Light Mode - Mapped from Visuals) --- */
-    --color-background: var(--oklch-background-light);         /* Page background (White) */
-    --color-surface: var(--oklch-surface-1-light);             /* Card background (Light Blue Tint) */
-    --color-surface-container: var(--oklch-surface-2-light);   /* Nested surface / Secondary Button BG */
-    --color-surface-variant: var(--oklch-surface-3-light);     /* Subtle variant BG / Tertiary Button BG */
-
-    /* Text Colors */
-    --color-text-primary: var(--oklch-text-primary-light);     /* Black */
-    --color-text-secondary: var(--oklch-text-secondary-light); /* Mid Blue/Gray */
-    --color-text-tertiary: var(--oklch-text-tertiary-light);   /* Light Blue/Gray */
-
-    /* Action Colors */
-    --color-primary: var(--oklch-accent-light);                /* Accent Blue Button BG */
-    --color-on-primary: var(--oklch-on-accent-light);          /* White Button Text */
-    /* Secondary action uses surface color background + primary text */
-    --color-secondary: var(--color-surface-container);         /* Secondary Button BG */
-    --color-on-secondary: var(--color-text-primary);           /* Secondary Button Text (Black) */
-
-    /* Border & Outline */
-    --color-border: var(--oklch-border-1-light);
-    --color-outline: var(--oklch-border-2-light);
-    /* Focus ring based on primary */
-    --color-focus-ring: oklch(60.15% 0.147 223 / 50%);
-
-    /* Chart Colors (Derived from Accent + Text Colors) */
-    --chart-color-primary: var(--oklch-accent-light);           /* Accent Blue */
-    --chart-color-secondary: oklch(70% 0.147 223);               /* Lighter Blue */
-    --chart-color-tertiary: var(--oklch-text-secondary-light);  /* Use Mid Blue/Gray text color as muted chart tone */
+    /* --- CHART PALETTES --- */
+    /* Categorical (Example: ColorBrewer Set2 - Accessible) */
+    --chart-cat-1: #66c2a5; /* Teal */
+    --chart-cat-2: #fc8d62; /* Orange */
+    --chart-cat-3: #8da0cb; /* Blue */
+    --chart-cat-4: #e78ac3; /* Pink */
+    --chart-cat-5: #a6d854; /* Green */
+    --chart-cat-6: #ffd92f; /* Yellow */
+    --chart-cat-7: #e5c494; /* Brown */
+    --chart-cat-8: #b3b3b3; /* Gray */
+    /* Sequential (Example: ColorBrewer Blues) */
+    --chart-seq-blue-1: #eff3ff;
+    --chart-seq-blue-2: #bdd7e7;
+    --chart-seq-blue-3: #6baed6;
+    --chart-seq-blue-4: #3182bd;
+    --chart-seq-blue-5: #08519c;
 
     /* Status Colors (Standard Hex) */
-    --color-error: #e03131;
-    --color-success: #2f9e44;
-    --color-warning: #f08c00;
-    --color-info: #1971c2;    /* Standard Blue */
+    --status-red: #D81B60; --status-green: #388E3C; --status-blue: #1E88E5; --status-yellow: #FBC02D;
 
-    /* --- Original Layout Values (Keep) --- */
-    --border-radius-sm: 8px;
-    --border-radius-md: 12px;
-    --border-radius-lg: 16px;
-    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
-    --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.08);
-    --shadow-lg: 0 4px 6px rgba(0, 0, 0, 0.12);
-    --transition-standard: all 0.2s ease;
-    --bento-gap: 20px;
+    /* --- Semantic Color Mapping --- */
+    --color-background: var(--hex-gray-50);
+    --color-surface: var(--hex-white);
+    --color-surface-container: var(--hex-gray-100);
+    --color-surface-variant: var(--hex-gray-200);
+
+    --color-text-primary: var(--hex-gray-900);
+    --color-text-secondary: var(--hex-gray-700);
+    --color-text-tertiary: var(--hex-gray-500);
+
+    --color-primary: var(--hex-accent-blue-500); /* Muted Blue accent for UI */
+    --color-on-primary: var(--hex-white);
+    --color-secondary: var(--hex-gray-500);     /* Use gray for secondary action */
+    --color-on-secondary: var(--hex-white);     /* White text on mid-gray */
+
+    --color-border: var(--hex-gray-300);
+    --color-outline: var(--hex-gray-400);
+    --color-focus-ring: rgba(96, 165, 250, 0.5); /* Based on blue primary */
+
+    /* Default Chart Colors (Use first few categorical) */
+    --chart-color-primary: var(--chart-cat-1);
+    --chart-color-secondary: var(--chart-cat-2);
+    --chart-color-tertiary: var(--chart-cat-3);
+
+    --color-error: var(--status-red); /* ... map other status colors ... */
+    --color-success: var(--status-green);
+    --color-warning: var(--status-yellow);
+    --color-info: var(--status-blue);
+
+    /* --- Layout Values (Keep consistent) --- */
+    --border-radius-sm: 6px;
+    --border-radius-md: 8px;
+    --border-radius-lg: 12px;
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
+    --shadow-md: 0 3px 6px rgba(0, 0, 0, 0.09);
+    --shadow-lg: 0 6px 12px rgba(0, 0, 0, 0.1);
+    --transition-standard: all 0.2s ease-in-out;
+    --bento-gap: 16px;
+    --scale-interactive: scale(1.02);
 }
 
 /* ========================================= */
-/* CSS Variables - Dark Mode (OKLCH Blue v2 Mapped) */
+/* CSS Variables - Dark Mode (Chart-Focused Neutral) */
 /* ========================================= */
 [data-theme="dark"] {
-    /* --- Base OKLCH Palette (Hue 223 - from user) --- */
-    --oklch-background-dark: oklch(24% 0.005 223);
-    --oklch-on-accent-dark: oklch(100% 0 0);
-    --oklch-accent-dark: oklch(60.15624960739301% 0.14687500000000003 223);
-    --oklch-accent-b-dark: oklch(60.15624960739301% 0.14687500000000003 223 / 24%);
-    --oklch-gradient-start-dark: oklch(60.15624960739301% 0.14687500000000003 223 / 12%);
-    --oklch-gradient-end-dark: oklch(60.15624960739301% 0.14687500000000003 223 / 0%);
-    --oklch-text-primary-dark: oklch(100% 0 0);
-    --oklch-text-secondary-dark: oklch(82.18750000000001% 0.05 223); /* C=0.05 */
-    --oklch-text-tertiary-dark: oklch(67.78906249999999% 0.05 223);  /* C=0.05 */
-    --oklch-border-1-dark: oklch(70.46093749999999% 0.1 223 / 8%);   /* C=0.1 */
-    --oklch-border-2-dark: oklch(70.46093749999999% 0.1 223 / 16%);  /* C=0.1 */
-    --oklch-border-3-dark: oklch(70.46093749999999% 0.1 223 / 32%);  /* C=0.1 */
-    --oklch-surface-1-dark: oklch(70.46093749999999% 0.1 223 / 4%);   /* C=0.1 */
-    --oklch-surface-2-dark: oklch(70.46093749999999% 0.1 223 / 8%);   /* C=0.1 */
-    --oklch-surface-3-dark: oklch(70.46093749999999% 0.1 223 / 16%);  /* C=0.1 */
+    /* --- Core Hex Palette References --- */
+    /* Light Grays for Text */
+    --hex-gray-white-dark: #F3F4F6; /* Slightly off-white */
+    --hex-gray-100-dark: #D1D5DB;
+    --hex-gray-300-dark: #9CA3AF;
+    /* Dark Grays for Surfaces */
+    --hex-gray-600-dark: #4B5563;
+    --hex-gray-700-dark: #374151;
+    --hex-gray-800-dark: #1F2937;
+    --hex-gray-900-dark: #111827; /* Background */
+    /* Brighter UI accent */
+    --hex-accent-blue-400-dark: #93C5FD; /* Lighter blue */
+    --hex-accent-blue-500-dark: var(--hex-accent-blue-500); /* Keep mid blue */
 
-    /* --- Semantic Color Mapping (Dark Mode - Mapped from Visuals) --- */
-    --color-background: var(--oklch-background-dark);         /* Dark Page background */
-    --color-surface: var(--oklch-surface-1-dark);             /* Card background (Light Blue Tint Overlay) */
-    --color-surface-container: var(--oklch-surface-2-dark);   /* Nested surface / Secondary Button BG */
-    --color-surface-variant: var(--oklch-surface-3-dark);     /* Subtle variant BG / Tertiary Button BG */
+    /* --- CHART PALETTES (Dark Mode) --- */
+    /* Categorical (Example: ColorBrewer Dark2 - Good on dark) */
+    --chart-cat-1: #1b9e77; /* Dark Teal */
+    --chart-cat-2: #d95f02; /* Dark Orange */
+    --chart-cat-3: #7570b3; /* Dark Purple */
+    --chart-cat-4: #e7298a; /* Dark Pink */
+    --chart-cat-5: #66a61e; /* Dark Green */
+    --chart-cat-6: #e6ab02; /* Dark Yellow */
+    --chart-cat-7: #a6761d; /* Dark Brown */
+    --chart-cat-8: #666666; /* Dark Gray */
+    /* Sequential (Example: Reversed Blues or different hue like Purples) */
+    --chart-seq-blue-1: #084594; /* Darkest */
+    --chart-seq-blue-2: #2171b5;
+    --chart-seq-blue-3: #4292c6;
+    --chart-seq-blue-4: #6baed6;
+    --chart-seq-blue-5: #9ecae1; /* Lightest */
 
-    /* Text Colors */
-    --color-text-primary: var(--oklch-text-primary-dark);     /* White */
-    --color-text-secondary: var(--oklch-text-secondary-dark); /* Very Light Blue/Gray */
-    --color-text-tertiary: var(--oklch-text-tertiary-dark);   /* Lighter Blue/Gray */
+    /* Status Colors (Brighter) */
+    --status-red-dark: #f472b6; --status-green-dark: #4ade80; --status-blue-dark: #60a5fa; --status-yellow-dark: #facc15;
 
-    /* Action Colors */
-    --color-primary: var(--oklch-accent-dark);                /* Accent Blue Button BG */
-    --color-on-primary: var(--oklch-on-accent-dark);          /* White Button Text */
-    /* Secondary action uses surface color background + primary text */
-    --color-secondary: var(--color-surface-container);        /* Secondary Button BG */
-    --color-on-secondary: var(--color-text-primary);          /* Secondary Button Text (White) */
+    /* --- Semantic Color Mapping --- */
+    --color-background: var(--hex-gray-900-dark);
+    --color-surface: var(--hex-gray-800-dark);
+    --color-surface-container: var(--hex-gray-700-dark);
+    --color-surface-variant: var(--hex-gray-600-dark);
 
-    /* Border & Outline */
-    --color-border: var(--oklch-border-1-dark);
-    --color-outline: var(--oklch-border-2-dark);
-    /* Dark mode focus ring */
-    --color-focus-ring: oklch(60.15% 0.147 223 / 60%);
+    --color-text-primary: var(--hex-gray-white-dark);
+    --color-text-secondary: var(--hex-gray-100-dark);
+    --color-text-tertiary: var(--hex-gray-300-dark);
 
-    /* Chart Colors */
-    --chart-color-primary: var(--oklch-accent-dark);          /* Accent Blue */
-    --chart-color-secondary: oklch(70% 0.147 223);             /* Lighter Blue */
-    --chart-color-tertiary: var(--oklch-text-secondary-dark); /* Use Very Light Blue/Gray as muted chart tone */
+    --color-primary: var(--hex-accent-blue-400-dark); /* Lighter blue accent */
+    --color-on-primary: var(--hex-gray-900-dark);     /* Dark text on light blue */
+    --color-secondary: var(--hex-gray-600-dark);
+    --color-on-secondary: var(--hex-gray-white-dark);
 
-    /* Status Colors (Lighter Hex for Dark Mode) */
-    --color-error: #f87171;
-    --color-success: #4ade80;
-    --color-warning: #fbbf24;
-    --color-info: #60a5fa;    /* Lighter standard blue */
+    --color-border: var(--hex-gray-700-dark);
+    --color-outline: var(--hex-gray-600-dark);
+    --color-focus-ring: rgba(147, 197, 253, 0.5); /* Based on dark primary */
 
-    /* Shadow adjustments for dark mode (Keep Original) */
-    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
-    --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.25);
-    --shadow-lg: 0 4px 6px rgba(0, 0, 0, 0.3);
+    /* Default Chart Colors (Use first few dark categorical) */
+    --chart-color-primary: var(--chart-cat-1);
+    --chart-color-secondary: var(--chart-cat-2);
+    --chart-color-tertiary: var(--chart-cat-3);
+
+    --color-error: var(--status-red-dark); /* ... map other status colors ... */
+    --color-success: var(--status-green-dark);
+    --color-warning: var(--status-yellow-dark);
+    --color-info: var(--status-blue-dark);
+
+    /* --- Layout Values (Keep Existing Dark) --- */
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 3px 6px rgba(0, 0, 0, 0.35);
+    --shadow-lg: 0 6px 12px rgba(0, 0, 0, 0.4);
 }
 /* ========================================= */
 /* Base Styles & Reset                       */
