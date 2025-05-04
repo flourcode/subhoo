@@ -1045,86 +1045,30 @@ tr:hover td {
   }
 }
 
-/* --- Ensure Table styles use the correct variables (Verify existing rules) --- */
-/* These should already be correct if you used the previous variable blocks */
-th {
-    background-color: var(--color-surface-variant);
-    color: var(--color-text-secondary);
-    /* other th styles */
-}
-td {
-    color: var(--color-text-primary);
-    /* other td styles */
-}
-tr:hover td {
-    background-color: var(--color-surface-container);
-}
-th, td {
-    border-bottom: 1px solid var(--color-border);
-}
-.summary-text {
-    color: var(--color-text-tertiary);
-    border-top: 1px solid var(--color-border);
+/* Enhanced hover states for interactive elements */
+.table-wrapper tr:hover {
+    background-color: color-mix(in oklch, var(--color-primary) 10%, var(--color-surface-container));
+    transition: background-color 0.2s ease;
 }
 
+/* Subtle tooltip animations */
+.tooltip, .sankey-tooltip, .map-tooltip, #tav-tcv-tooltip {
+    opacity: 0;
+    transform: translateY(5px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
 
+.tooltip.visible, .sankey-tooltip.visible, .map-tooltip.visible, #tav-tcv-tooltip.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
 
-/* --- Sankey Chart SVG Styles --- */
-#sankeyChart rect { /* Sankey Nodes */
-    stroke: var(--color-surface); /* Use surface for subtle stroke */
-    stroke-width: 0.5px;
-    /* Default fill, override below if needed */
-    fill: var(--chart-color-tertiary);
+/* Pulsing effect for loading spinner */
+.spinner {
+    animation: spin 1s linear infinite, pulse 1.5s ease-in-out infinite;
 }
-/* Optional: Specific node type colors using the chart vars */
-#sankeyChart rect[data-type="agency"] { fill: var(--chart-color-tertiary); }
-#sankeyChart rect[data-type="prime"] { fill: var(--chart-color-primary); }
-#sankeyChart rect[data-type="sub"] { fill: var(--chart-color-secondary); }
 
-#sankeyChart path { /* Sankey Links */
-    stroke: var(--color-border); /* Use border color for links */
-    stroke-opacity: 0.4;
-    transition: stroke-opacity 0.3s ease;
-    fill: none;
+@keyframes pulse {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
 }
-#sankeyChart path:hover {
-    stroke-opacity: 0.7;
-}
-#sankeyChart text { /* Sankey Labels */
-    font-size: 12px; /* Adjust size as needed */
-    fill: var(--color-text-primary);
-    pointer-events: none;
-    text-shadow: 0 0 0px var(--color-background); /* Help readability against links */
-}
-#choroplethMap .legend-text, /* Add class to legend text elements if needed */
-#choroplethMap text { /* General map text */
-    font-size: 10px; /* Adjust size as needed */
-    fill: var(--color-text-secondary);
-    text-anchor: middle;
-}
-#choroplethMap .legend-rect { /* Add class to legend rect elements if needed */
-     stroke: var(--color-border);
-     stroke-width: 0.5px;
-} */
-
-
-
-
-/* --- Status Banner Styles --- */
-/* Using relative colors (modern browsers) */
-#status-banner.error {
-    background-color: oklch(from var(--color-error) l c h / 10%);
-    color: var(--color-error);
-    border: 1px solid var(--color-error); /* Optional border */
-}
-#status-banner.success {
-    background-color: oklch(from var(--color-success) l c h / 10%);
-    color: var(--color-success);
-    border: 1px solid var(--color-success); /* Optional border */
-}
-#status-banner.info {
-    background-color: oklch(from var(--color-info) l c h / 15%); /* Info slightly more visible */
-    color: var(--color-info);
-    border: 1px solid var(--color-info); /* Optional border */
-}
-/* Add fallbacks if needed for older browsers using rgba */
