@@ -2255,9 +2255,12 @@ function displayEnhancedSankeyChart(model) {
                                 .filter(v => typeof v === 'number' && !isNaN(v) && v > 0);
              const maxValue = allValues.length > 0 ? d3.max(allValues) : 1;
 
+
             const linkWidthScale = d3.scaleSqrt()
-                .domain([0, maxValue])
-                .range([1, 10]) // Min/Max link stroke width
+                .domain([0, d3.max([...topAgencyToPrime, ...topPrimeToSub], d => d.value) || 1])
+                // --- UPDATED RANGE ---
+                .range([2, 18]) // Example: Min width 2px, Max width 18px
+                // --- END UPDATE ---
                 .clamp(true);
 
 
