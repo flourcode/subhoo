@@ -277,16 +277,13 @@ a:hover {
     display: grid;
     gap: var(--bento-gap);
     grid-template-columns: repeat(5, 1fr); /* Keep this as 5 columns */
-
-    /* --- Replace this line --- */
     grid-template-areas:
-        "sankey sankey sankey map map"
-        "sankey sankey sankey arr arr"
+        "sankey sankey sankey sankey arr"
+        "sankey sankey sankey sankey map"
         "tavtcv tavtcv leaders leaders leaders"
         "expiring expiring expiring expiring expiring";
     grid-template-rows: minmax(225px, auto) minmax(225px, auto) auto auto;
 }
-
 #bento-sankey { grid-area: sankey; }
 #bento-map { grid-area: arr; }
 #bento-arr { grid-area: map; }
