@@ -3031,7 +3031,6 @@ function displayChoroplethMap(mapData) {
         d3.select("body").selectAll(".map-tooltip").remove();
     }
 }
-
 function calculateAverageARRFromModel(model) {
     const resultDiv = document.getElementById('arr-result');
     const loadingDiv = document.getElementById('arr-loading');
