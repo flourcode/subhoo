@@ -2500,7 +2500,7 @@ function displayEnhancedSankeyChart(model) {
             .attr('dy', '0.35em')
             .attr('text-anchor', d => d.x0 < panelWidth / 2 ? 'start' : 'end')
             .text(d => d.name)
-            .attr('font-size', '12px')
+            .attr('font-size', '11px')
             .attr('fill', getCssVar('--color-text-primary'))
             .each(function(d) {
                 // Hide labels for small nodes
@@ -2754,7 +2754,7 @@ function displayEnhancedSankeyChart(model) {
                 .attr('dy', '0.35em')
                 .attr('text-anchor', d => d.x0 < panelWidth / 2 ? 'start' : 'end')
                 .text(d => d.name)
-                .attr('font-size', '12px')
+                .attr('font-size', '11px')
                 .attr('fill', getCssVar('--color-text-primary'))
                 .each(function(d) {
                     // Hide labels for small nodes
