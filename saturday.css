@@ -1102,7 +1102,7 @@ th, td {
 }
 #sankeyChart text { /* Sankey Labels */
     font-size: 12px; /* Adjust size as needed */
-    fill: var(--color-text-secondary);
+    fill: var(--color-text-primary);
     pointer-events: none;
     text-shadow: 0 0 0px var(--color-background); /* Help readability against links */
 }
