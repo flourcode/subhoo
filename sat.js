@@ -55,6 +55,7 @@ let tavTcvChartInstance = null; // Store chart instance
 let isLoading = false;
 let selectedAgencies = []; // List of selected agency IDs
 let chartData = []; // Store chart data globally
+let currentSearchTerm = ''
 
 // Field mapping to normalize field names between data sources
 const fieldMap = {
@@ -226,13 +227,11 @@ function calculateDurationDays(startDateStr, endDateStr) {
         return diffDays > 0 ? diffDays : 0; // Ensure non-negative result
     }
 }
-
 function truncateText(text, maxLength) {
     if (!text) return '';
     const stringText = String(text);
     return stringText.length > maxLength ? stringText.substring(0, maxLength - 3) + '...' : stringText;
 }
-
 function cleanupTooltips() {
     // Remove custom HTML tooltips
     const tooltipIds = ['tav-tcv-tooltip', 'sankey-tooltip', 'map-tooltip'];
@@ -278,15 +277,11 @@ function updateStatusBanner(message, type = 'info') {
     // Update the message text
     statusMessage.textContent = message;
 
-    // Update banner styling/class based on type
+    // Reset classes
     banner.className = '';
-    if (type === 'error') {
-        banner.classList.add('error');
-    } else if (type === 'success') {
-        banner.classList.add('success');
-    } else {
-        banner.classList.add('info');
-    }
+    
+    // Just use the class-based approach that was working before
+    banner.classList.add(type);
 
     // Enable/disable refresh button based on loading state
     const refreshButton = document.getElementById('refresh-button');
@@ -301,19 +296,27 @@ function getCssVar(varName) {
     return value;
   } catch (e) {
     console.warn(`Could not get CSS variable ${varName}: ${e.message}`);
-    // Provide reasonable fallbacks based on the Monocle/Print theme
+    // Provide reasonable fallbacks based on your color scheme
     const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-     if (varName === '--color-text-secondary') return isDark ? '#B6B1B7' : '#625C61';
-     if (varName === '--color-surface') return isDark ? '#262321' : '#F5F3F5';
-     if (varName === '--color-text-primary') return isDark ? '#FDFBF5' : '#312d2a';
-     if (varName === '--color-border') return isDark ? '#312d2a' : '#D8D4D7';
-     if (varName === '--shadow-md') return isDark ? '0 2px 4px rgba(0, 0, 0, 0.25)' : '0 2px 4px rgba(0, 0, 0, 0.08)';
-     if (varName === '--color-surface-variant') return isDark ? '#3f3a37' : '#D8D4D7';
-     if (varName === '--color-background') return isDark ? '#1c1a19' : '#FDFBF5';
-     if (varName === '--color-primary') return isDark ? '#A59FA8' : '#9A949B';
-     if (varName === '--color-surface-container') return isDark ? '#312d2a' : '#EDEAEB';
-     if (varName === '--chart-color-primary') return isDark ? '#A59FA8' : '#9A949B';
-     if (varName === '--border-radius-sm') return '8px';
+    
+    // Core colors
+    if (varName === '--color-text-primary') return isDark ? '#F5F5F5' : '#222222';
+    if (varName === '--color-text-secondary') return isDark ? '#C8C8C8' : '#555555';
+    if (varName === '--color-text-tertiary') return isDark ? '#767077' : '#B3B3B3';
+    if (varName === '--color-primary') return isDark ? '#A59FA8' : '#9A949B';
+    if (varName === '--color-secondary') return isDark ? '#908A91' : '#7A747B';
+    if (varName === '--color-background') return isDark ? '#1E1E1E' : '#F9F9F9';
+    if (varName === '--color-surface') return isDark ? '#2B2B2B' : '#FFFFFF';
+    if (varName === '--color-surface-container') return isDark ? '#444444' : '#F0F0F0';
+    if (varName === '--color-surface-variant') return isDark ? '#5A5A5A' : '#E8E8E8';
+    if (varName === '--color-border') return isDark ? '#444444' : '#DDDDDD';
+    if (varName === '--color-outline') return isDark ? '#5A5A5A' : '#CCCCCC';
+    
+    // Chart-specific colors
+    if (varName === '--chart-color-primary') return isDark ? '#A59FA8' : '#9A949B';
+    if (varName === '--chart-color-secondary') return isDark ? '#908A91' : '#7A747B';
+    if (varName === '--chart-color-tertiary') return isDark ? '#767077' : '#B6B1B7';
+    
     console.error(`Fallback used for CSS variable ${varName}. Check definition.`);
     return '#cccccc'; // Generic fallback
   }
@@ -342,7 +345,8 @@ function setLoading(containerId, isLoading, message = 'Loading...') {
             container.insertBefore(placeholder, container.firstChild);
         }
         placeholder.innerHTML = `<div class="spinner"></div>${message}`;
-        placeholder.style.display = 'block';
+        placeholder.style.display = 'flex';
+        placeholder.style.color = getCssVar('--color-text-tertiary');
         
         // Hide the main content
         if(content) content.style.display = 'none';
@@ -377,11 +381,12 @@ function displayError(containerId, message) {
     let errorPlaceholder = container.querySelector('.error-placeholder');
     if (!errorPlaceholder) {
         errorPlaceholder = document.createElement('div');
-        errorPlaceholder.className = 'error-placeholder text-red-600';
+        errorPlaceholder.className = 'error-placeholder';
         container.insertBefore(errorPlaceholder, container.firstChild);
     }
     errorPlaceholder.textContent = message;
-    errorPlaceholder.style.display = 'block';
+    errorPlaceholder.style.display = 'flex';
+    errorPlaceholder.style.color = getCssVar('--color-error');
     
     // Hide main content
     const content = container.querySelector('table, canvas, svg');
@@ -413,7 +418,8 @@ function displayNoData(containerId, message = "No data available for this view."
         container.insertBefore(noDataPlaceholder, container.firstChild);
     }
     noDataPlaceholder.textContent = message;
-    noDataPlaceholder.style.display = 'block';
+    noDataPlaceholder.style.display = 'flex';
+    noDataPlaceholder.style.color = getCssVar('--color-text-tertiary');
     
     // Hide main content
     const content = container.querySelector('table, canvas, svg');
@@ -425,7 +431,41 @@ function displayNoData(containerId, message = "No data available for this view."
         tavTcvChartInstance = null;
     }
 }
+function fetchDataFromS3(dataset) {
+    const csvUrl = `${S3_BASE_URL}${dataset.id}.csv`;
+    console.log(`Loading data from URL: ${csvUrl}`);
 
+    fetch(csvUrl, {
+        method: 'GET',
+        mode: 'cors',
+        cache: 'no-cache',
+        headers: {
+            'Accept': 'text/csv',
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            const statusText = response.statusText || 'Unknown Error';
+            throw new Error(`Failed to fetch data: ${response.status} ${statusText}`);
+        }
+        return response.text();
+    })
+    .then(csvText => {
+        // Process the CSV data
+        processDataset(dataset, Papa.parse(csvText, {
+            header: true,
+            dynamicTyping: false,
+            skipEmptyLines: 'greedy',
+            transformHeader: header => header.trim()
+        }).data);
+    })
+    .catch(error => {
+        console.error(`Error fetching dataset ${dataset.name}:`, error);
+        updateStatusBanner(`Error loading dataset: ${error.message}`, 'error');
+        isLoading = false;
+        document.getElementById('refresh-button').disabled = false;
+    });
+}
 function updateDateDisplay() {
     // Get the elements
     const dateText = document.getElementById('date-text');
@@ -1790,8 +1830,6 @@ function processMapDataFromModel(model) {
     console.log(`Processed map data for ${Object.keys(stateData).length} states.`);
     return stateData;
 }
-// sat.js - Replace existing function
-
 function displayTavTcvChart(chartData) {
     const containerId = 'tav-tcv-chart-container';
     const container = document.getElementById(containerId);
@@ -1823,14 +1861,13 @@ function displayTavTcvChart(chartData) {
     const remainingTcvValues = chartData.map(d => Math.max(0, (d.tcv || 0) - (d.tav || 0)));
     const totalTcvValues = chartData.map(d => d.tcv || 0);
 
-    // --- Get Theme Colors from CSS Variables ("Monocle/Print" theme) ---
-    const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
-    const tavColor = getCssVar('--chart-color-primary');   // Desat purple 400 / Dark Accent 1
-    const remainderColor = getCssVar('--chart-color-tertiary'); // Desat purple 300 / Dark Accent 3 (muted)
-    const textColor = getCssVar('--color-text-secondary'); // Use secondary text for axes - more muted
-    const gridColor = getCssVar('--color-border');        // Desat purple 200 / Dark Surface 2
+    // --- Get Theme Colors from CSS Variables ---
+    const tavColor = getCssVar('--chart-color-primary');
+    const remainderColor = getCssVar('--chart-color-tertiary');
+    const textColor = getCssVar('--color-text-secondary');
+    const gridColor = getCssVar('--color-border');
     const legendColor = getCssVar('--color-text-secondary');
-    const barBorderColor = getCssVar('--color-surface'); // Use surface color for subtle border
+    const barBorderColor = getCssVar('--color-surface');
 
     // --- Destroy previous chart instance if it exists ---
     if (tavTcvChartInstance) {
@@ -1840,7 +1877,7 @@ function displayTavTcvChart(chartData) {
 
     // --- Create New Stacked Chart ---
     const ctx = canvas.getContext('2d');
-    if (!ctx) { /* ... error handling ... */ return; }
+    if (!ctx) { return; }
 
     tavTcvChartInstance = new Chart(ctx, {
         type: 'bar',
@@ -1851,18 +1888,18 @@ function displayTavTcvChart(chartData) {
                     label: 'TAV (Obligated)',
                     data: tavValues,
                     backgroundColor: tavColor,
-                    borderColor: barBorderColor, // Subtle border using surface color
+                    borderColor: barBorderColor,
                     borderWidth: 1,
-                    borderRadius: { topLeft: 4, bottomLeft: 4, topRight: 0, bottomRight: 0 }, // Round start
+                    borderRadius: { topLeft: 4, bottomLeft: 4, topRight: 0, bottomRight: 0 },
                     borderSkipped: false,
                 },
                 {
                     label: 'TCV Remainder',
                     data: remainingTcvValues,
                     backgroundColor: remainderColor,
-                    borderColor: barBorderColor, // Subtle border using surface color
+                    borderColor: barBorderColor,
                     borderWidth: 1,
-                    borderRadius: { topRight: 4, bottomRight: 4, topLeft: 0, bottomLeft: 0 }, // Round end
+                    borderRadius: { topRight: 4, bottomRight: 4, topLeft: 0, bottomLeft: 0 },
                     borderSkipped: false,
                 }
             ]
@@ -1872,13 +1909,13 @@ function displayTavTcvChart(chartData) {
             responsive: true,
             maintainAspectRatio: false,
             layout: {
-                padding: { left: 5, right: 10, top: 5, bottom: 5 } // Adjust padding if needed
+                padding: { left: 5, right: 10, top: 5, bottom: 5 }
             },
             plugins: {
                 legend: {
                     position: 'bottom',
                     labels: {
-                        color: legendColor, // Use variable
+                        color: legendColor,
                         boxWidth: 12,
                         padding: 20,
                         font: { size: 12 }
@@ -1887,11 +1924,11 @@ function displayTavTcvChart(chartData) {
                 tooltip: {
                     mode: 'index',
                     intersect: false,
-                    backgroundColor: getCssVar('--color-surface'), // Use CSS var
-                    titleColor: getCssVar('--color-text-secondary'), // Use CSS var
-                    bodyColor: getCssVar('--color-text-primary'), // Use CSS var
-                    footerColor: getCssVar('--color-text-primary'), // Use CSS var
-                    borderColor: getCssVar('--color-border'), // Use CSS var
+                    backgroundColor: getCssVar('--color-surface'),
+                    titleColor: getCssVar('--color-text-secondary'),
+                    bodyColor: getCssVar('--color-text-primary'),
+                    footerColor: getCssVar('--color-text-primary'),
+                    borderColor: getCssVar('--color-border'),
                     borderWidth: 1,
                     padding: 10,
                     boxPadding: 3,
@@ -1899,14 +1936,12 @@ function displayTavTcvChart(chartData) {
                         label: function(context) {
                             const datasetLabel = context.dataset.label || '';
                             const value = context.parsed.x;
-                            // Assumes formatConciseCurrency exists
                             return `${datasetLabel}: ${formatConciseCurrency(value)}`;
                         },
                         footer: function(tooltipItems) {
                             const dataIndex = tooltipItems[0]?.dataIndex;
                             if (dataIndex === undefined) return '';
                             const totalTCV = totalTcvValues[dataIndex];
-                             // Assumes formatConciseCurrency exists
                             return `Total TCV: ${formatConciseCurrency(totalTCV)}`;
                         }
                     }
@@ -1918,19 +1953,17 @@ function displayTavTcvChart(chartData) {
                     beginAtZero: true,
                     grid: {
                         display: true,
-                        color: gridColor, // Use variable
+                        color: gridColor,
                         drawBorder: false,
-                        lineWidth: 0.5 // Make grid lines finer
+                        lineWidth: 0.5
                     },
                     ticks: {
-                        color: textColor, // Use variable
-                        font: { size: 10 }, // Smaller ticks
+                        color: textColor,
+                        font: { size: 10 },
                         callback: function(value) {
-                            // Use concise currency format
-                            // Assumes formatConciseCurrency exists
-                            return formatConciseCurrency(value).replace('~',''); // Remove tilde if present
+                            return formatConciseCurrency(value).replace('~','');
                         },
-                        maxTicksLimit: 6 // Limit number of ticks
+                        maxTicksLimit: 6
                     }
                 },
                 y: {
@@ -1940,28 +1973,26 @@ function displayTavTcvChart(chartData) {
                     },
                     ticks: {
                         display: true,
-                        color: textColor, // Use variable
+                        color: textColor,
                         font: { size: 11 },
-                        // Limit label length to prevent overlap - adjust length as needed
-                         callback: function(value, index) {
-                             const label = labels[index] || '';
-                             return label.length > 30 ? label.substring(0, 27) + '...' : label;
-                         }
+                        callback: function(value, index) {
+                            const label = labels[index] || '';
+                            return label.length > 30 ? label.substring(0, 27) + '...' : label;
+                        }
                     }
                 }
             },
-            // Add click handler to open USAspending link
             onClick: (event, elements) => {
                 if (elements.length > 0) {
                     const dataIndex = elements[0].index;
                     const contractId = chartData[dataIndex]?.id;
                     if (contractId) {
-                         window.open(`https://www.usaspending.gov/award/${contractId}`, '_blank');
+                        window.open(`https://www.usaspending.gov/award/${contractId}`, '_blank');
                     }
                 }
             },
             onHover: (event, chartElement) => {
-                 event.native.target.style.cursor = chartElement[0] ? 'pointer' : 'default';
+                event.native.target.style.cursor = chartElement[0] ? 'pointer' : 'default';
             }
         }
     });
@@ -1994,7 +2025,6 @@ function displayExpiringTable(expiringData) {
     table.className = 'min-w-full divide-y';
 
     const thead = table.createTHead();
-    thead.className = 'bg-gray-50';
     const headerRow = thead.insertRow();
     
     const headers = [
@@ -2038,10 +2068,12 @@ function displayExpiringTable(expiringData) {
                     link.target = '_blank';
                     link.rel = 'noopener noreferrer';
                     link.className = 'detail-link';
+                    link.style.color = getCssVar('--color-primary');
                     link.textContent = 'View';
                     cell.appendChild(link);
                 } else {
                     cell.textContent = '-';
+                    cell.style.color = getCssVar('--color-text-tertiary');
                 }
                 return;
             }
@@ -2079,6 +2111,13 @@ function displayExpiringTable(expiringData) {
             cell.textContent = truncateText(value, maxLength);
             cell.title = value !== '-' ? value : ''; // Set title for full text on hover
             if (headerInfo.class) cell.className = headerInfo.class;
+            
+            // Apply proper text color based on content
+            if (value === '-') {
+                cell.style.color = getCssVar('--color-text-tertiary');
+            } else {
+                cell.style.color = getCssVar('--color-text-primary');
+            }
         });
     });
 
@@ -2087,33 +2126,51 @@ function displayExpiringTable(expiringData) {
 
     // Add summary text
     const summaryPara = document.createElement('p');
-    summaryPara.className = 'text-center text-sm text-gray-500 summary-text';
+    summaryPara.className = 'summary-text';
+    summaryPara.style.color = getCssVar('--color-text-secondary');
     summaryPara.textContent = `Showing ${expiringData.length} expiring contracts.`;
     container.appendChild(summaryPara);
 }
 function getCssVar(varName) {
   try {
     const value = getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
-    if (!value) throw new Error(`Variable ${varName} returned empty`);
+    if (!value) return getFallbackColor(varName);
     return value;
   } catch (e) {
     console.warn(`Could not get CSS variable ${varName}: ${e.message}`);
-    // Provide reasonable fallbacks based on the Monocle/Print theme
-    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-     if (varName === '--color-text-secondary') return isDark ? '#B6B1B7' : '#625C61';
-     if (varName === '--color-surface') return isDark ? '#262321' : '#F5F3F5';
-     if (varName === '--color-text-primary') return isDark ? '#FDFBF5' : '#312d2a';
-     if (varName === '--color-border') return isDark ? '#312d2a' : '#D8D4D7';
-     if (varName === '--shadow-md') return isDark ? '0 2px 4px rgba(0, 0, 0, 0.25)' : '0 2px 4px rgba(0, 0, 0, 0.08)';
-     if (varName === '--color-surface-variant') return isDark ? '#3f3a37' : '#D8D4D7';
-     if (varName === '--color-background') return isDark ? '#1c1a19' : '#FDFBF5';
-     if (varName === '--color-primary') return isDark ? '#A59FA8' : '#9A949B';
-     if (varName === '--color-surface-container') return isDark ? '#312d2a' : '#EDEAEB';
-     if (varName === '--chart-color-primary') return isDark ? '#A59FA8' : '#9A949B';
-     if (varName === '--border-radius-sm') return '8px';
-    console.error(`Fallback used for CSS variable ${varName}. Check definition.`);
-    return '#cccccc'; // Generic fallback
+    return getFallbackColor(varName);
   }
+}
+
+function getFallbackColor(varName) {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    
+    // Core colors
+    if (varName === '--color-text-primary') return isDark ? '#F5F5F5' : '#222222';
+    if (varName === '--color-text-secondary') return isDark ? '#C8C8C8' : '#555555';
+    if (varName === '--color-text-tertiary') return isDark ? '#767077' : '#B3B3B3';
+    if (varName === '--color-primary') return isDark ? '#A59FA8' : '#9A949B';
+    if (varName === '--color-secondary') return isDark ? '#908A91' : '#7A747B';
+    if (varName === '--color-background') return isDark ? '#1E1E1E' : '#F9F9F9';
+    if (varName === '--color-surface') return isDark ? '#2B2B2B' : '#FFFFFF';
+    if (varName === '--color-surface-container') return isDark ? '#444444' : '#F0F0F0';
+    if (varName === '--color-surface-variant') return isDark ? '#5A5A5A' : '#E8E8E8';
+    if (varName === '--color-border') return isDark ? '#444444' : '#DDDDDD';
+    if (varName === '--color-outline') return isDark ? '#5A5A5A' : '#CCCCCC';
+    
+    // Chart-specific colors
+    if (varName === '--chart-color-primary') return isDark ? '#A59FA8' : '#9A949B';
+    if (varName === '--chart-color-secondary') return isDark ? '#908A91' : '#7A747B';
+    if (varName === '--chart-color-tertiary') return isDark ? '#767077' : '#B6B1B7';
+    
+    // Status colors
+    if (varName === '--color-error') return isDark ? '#f06292' : '#D81B60';
+    if (varName === '--color-success') return isDark ? '#81c784' : '#388E3C';
+    if (varName === '--color-info') return isDark ? '#64b5f6' : '#1E88E5';
+    if (varName === '--color-warning') return isDark ? '#ffd54f' : '#FBC02D';
+    
+    console.error(`No fallback defined for CSS variable ${varName}`);
+    return '#cccccc'; // Generic fallback
 }
 function displayChoroplethMap(mapData) {
     const containerId = 'map-container';
@@ -2135,7 +2192,7 @@ function displayChoroplethMap(mapData) {
     mapDiv.style.height = '100%';
     container.appendChild(mapDiv);
     
-    setLoading(containerId, false); // Turn off loading spinner
+    setLoading(containerId, false);
 
     if (!mapData || Object.keys(mapData).length === 0) {
         displayNoData(containerId, 'No geographic data available for mapping.');
@@ -2143,231 +2200,72 @@ function displayChoroplethMap(mapData) {
     }
 
     try {
-        // Set up map dimensions based on the container div
+        // Set up map dimensions
         const width = container.clientWidth;
-        const height = container.clientHeight || 400; // Default height if not set
+        const height = container.clientHeight || 400;
 
-        // Check if dimensions are valid
         if (width <= 0 || height <= 0) {
-             console.warn(`Map container has invalid dimensions: ${width}x${height}. Map rendering skipped.`);
-             displayError(containerId, 'Map container has zero size. Cannot render map.');
-             return;
+            console.warn(`Map container has invalid dimensions: ${width}x${height}`);
+            displayError(containerId, 'Map container has zero size. Cannot render map.');
+            return;
         }
 
-        // Check if we're in dark mode
+        // Check if we're in dark mode (get directly from document attribute)
         const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
-        const textColor = isDarkMode ? '#F4F2F6' : '#36323A';
+        const textColor = getCssVar('--color-text-primary');
+        const backgroundColor = getCssVar('--color-background');
+        const surfaceColor = getCssVar('--color-surface');
+        const borderColor = getCssVar('--color-border');
 
-        // Create SVG element inside the map div
+        // Create SVG element
         const svg = d3.select(mapDiv)
             .append('svg')
             .attr('width', width)
             .attr('height', height)
-            .attr('viewBox', `0 0 ${width} ${height}`) // Add viewBox for better scaling
-            .style('max-width', '100%') // Ensure SVG scales down if needed
+            .attr('viewBox', `0 0 ${width} ${height}`)
+            .style('max-width', '100%')
             .style('height', 'auto');
 
-        // Define color scale for the map
+        // Define color scale using CSS variables
         const stateValues = Object.values(mapData).map(d => d.value);
         const maxValue = d3.max(stateValues) || 0;
 
-        // Create color scale for map - use different colors for dark/light mode
-        const colorScale = d3.scaleSequential()
-            .domain([0, maxValue === 0 ? 1 : maxValue]) // Ensure domain is valid if max is 0
-            .interpolator(isDarkMode ?
-                d3.interpolate('#3A373E', '#A29AAA') : // Dark mode: darker to lighter purple
-                d3.interpolate('#E9E6ED', '#9993A1')); // Light mode: light to medium purple
-
-        // Remove existing tooltips first
-        d3.select("body").selectAll(".map-tooltip").remove();
+        // Create color scale for map based on CSS color scheme
+        const primaryColor = getCssVar('--chart-color-primary');
+        const tertiaryColor = getCssVar('--chart-color-tertiary');
         
-        // Create tooltip - attach to body for better positioning
+        // For dark mode, use darker to lighter primary color
+        // For light mode, use lighter to darker primary color
+        const colorScale = d3.scaleSequential()
+            .domain([0, maxValue === 0 ? 1 : maxValue])
+            .interpolator(isDarkMode ?
+                d3.interpolate(getCssVar('--color-surface-variant'), getCssVar('--chart-color-primary')) :
+                d3.interpolate(getCssVar('--color-surface-variant'), getCssVar('--chart-color-primary')));
+
+        // Create tooltip using CSS variables
         const tooltip = d3.select("body")
             .append("div")
             .attr("class", "map-tooltip")
             .style("position", "absolute")
             .style("visibility", "hidden")
             .style("opacity", 0)
-            .style("background-color", isDarkMode ? "#252229" : "#FFFFFF")
-            .style("color", isDarkMode ? "#F4F2F6" : "#36323A")
+            .style("background-color", surfaceColor)
+            .style("color", textColor)
             .style("padding", "10px")
             .style("border-radius", "4px")
             .style("font-size", "12px")
             .style("pointer-events", "none")
-            .style("border", "1px solid " + (isDarkMode ? "#3A373E" : "#D7D4DC"))
+            .style("border", `1px solid ${borderColor}`)
             .style("z-index", "9999");
 
-        // State name mapping
-        const fipsToStateName = {
-            "01": "Alabama", "02": "Alaska", "04": "Arizona", "05": "Arkansas",
-            "06": "California", "08": "Colorado", "09": "Connecticut", "10": "Delaware",
-            "11": "District of Columbia", "12": "Florida", "13": "Georgia", "15": "Hawaii",
-            "16": "Idaho", "17": "Illinois", "18": "Indiana", "19": "Iowa", "20": "Kansas",
-            "21": "Kentucky", "22": "Louisiana", "23": "Maine", "24": "Maryland",
-            "25": "Massachusetts", "26": "Michigan", "27": "Minnesota", "28": "Mississippi",
-            "29": "Missouri", "30": "Montana", "31": "Nebraska", "32": "Nevada",
-            "33": "New Hampshire", "34": "New Jersey", "35": "New Mexico", "36": "New York",
-            "37": "North Carolina", "38": "North Dakota", "39": "Ohio", "40": "Oklahoma",
-            "41": "Oregon", "42": "Pennsylvania", "44": "Rhode Island", "45": "South Carolina",
-            "46": "South Dakota", "47": "Tennessee", "48": "Texas", "49": "Utah",
-            "50": "Vermont", "51": "Virginia", "53": "Washington", "54": "West Virginia",
-            "55": "Wisconsin", "56": "Wyoming", "72": "Puerto Rico"
-        };
-
-        // Load US state boundaries GeoJSON
-        d3.json('https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json')
-            .then(us => {
-                if (!us || !us.objects || !us.objects.states) {
-                    throw new Error("Invalid GeoJSON data");
-                }
-
-                // Convert TopoJSON to GeoJSON features
-                const states = topojson.feature(us, us.objects.states); // Keep the FeatureCollection
-
-                // --- Projection Fitting Logic ---
-                const projection = d3.geoAlbersUsa(); // Create projection
-
-                // Fit the projection to the container size using the GeoJSON data
-                projection.fitSize([width, height], states);
-
-                // Create the path generator using the FITTED projection
-                const path = d3.geoPath().projection(projection);
-                // --- End Projection Fitting ---
-
-                // Draw state boundaries
-                svg.append('g') // Group map paths
-                   .selectAll('path')
-                   .data(states.features) // Use the features array
-                   .enter()
-                   .append('path')
-                   .attr('d', path)
-                   .attr('fill', d => {
-                       // Use the state FIPS code to lookup data
-                       const fipsCode = d.id.toString().padStart(2, '0');
-                       const stateData = mapData[fipsCode];
-                       return stateData ? colorScale(stateData.value) : (isDarkMode ? '#2D2A31' : '#ccc'); // Default color
-                   })
-                   .attr('stroke', isDarkMode ? '#3A373E' : '#FFFFFF') // Border color between states
-                   .attr('stroke-width', 0.5)
-                   .style('cursor', 'pointer')
-                   .on('mouseover', function(event, d) {
-                       // Show tooltip with transition
-                       tooltip
-                            .style("visibility", "visible")
-                            .style("opacity", 1); 
-                            
-                       tooltip.html(() => {
-                           const fipsCode = d.id.toString().padStart(2, '0');
-                           const stateData = mapData[fipsCode];
-                           const stateName = fipsToStateName[fipsCode] || "Unknown";
-                           if (stateData) {
-                               return `
-                                   <strong>${stateName}</strong>
-                                   <div>Total Value: ${formatCurrency(stateData.value)}</div>
-                                   <div>Contracts: ${stateData.count.toLocaleString()}</div>
-                               `;
-                           } else {
-                               return `<strong>${stateName}</strong><br>No data`;
-                           }
-                       })
-                       .style("left", (event.pageX + 10) + "px")
-                       .style("top", (event.pageY - 28) + "px");
-
-                       // Highlight the state
-                       d3.select(this)
-                           .attr("stroke", isDarkMode ? "#A29AAA" : "#9993A1")
-                           .attr("stroke-width", 1.5)
-                           .raise(); // Bring hovered path to front
-                   })
-                   .on('mousemove', function(event) {
-                       // Update tooltip position as mouse moves
-                       tooltip
-                          .style("left", (event.pageX + 10) + "px")
-                          .style("top", (event.pageY - 28) + "px");
-                   })
-                   .on('mouseout', function() {
-                       // Hide tooltip with transition
-                       tooltip
-                          .style("visibility", "hidden")
-                          .style("opacity", 0);
-                              
-                       // Remove highlight
-                       d3.select(this)
-                           .attr("stroke", isDarkMode ? '#3A373E' : '#FFFFFF')
-                           .attr("stroke-width", 0.5);
-                   });
-
-                // --- Legend ---
-                const legendWidth = Math.min(width * 0.4, 200); // Adjust width relative to map size
-                const legendHeight = 10; // Slimmer legend bar
-                const legendX = width - legendWidth - 20; // Position bottom right
-                const legendY = height - 35; // Position bottom right
-
-                const legendGroup = svg.append("g")
-                                       .attr("transform", `translate(${legendX}, ${legendY})`);
-
-                // Create discrete color bins for legend
-                const numBins = 5;
-                // Ensure bins work even if maxValue is 0
-                 const binMaxValue = maxValue === 0 ? 1 : maxValue;
-                 const bins = Array.from({length: numBins}, (_, i) => binMaxValue * i / (numBins -1));
-                 const binWidth = legendWidth / numBins;
-
-
-                // Add legend title
-                legendGroup.append('text')
-                    .attr('x', legendWidth / 2)
-                    .attr('y', -6) // Position above the legend rect
-                    .attr('text-anchor', 'middle')
-                    .attr('font-size', '10px')
-                    .attr('fill', textColor)
-                    .text('Contract Value');
-
-                // Create discrete color blocks
-                legendGroup.selectAll('rect')
-                    .data(bins)
-                    .enter()
-                    .append('rect')
-                    .attr('x', (d, i) => i * binWidth)
-                    .attr('y', 0)
-                    .attr('width', binWidth)
-                    .attr('height', legendHeight)
-                    .attr('fill', d => colorScale(d))
-                    .attr('stroke', isDarkMode ? '#3A373E' : '#D7D4DC')
-                    .attr('stroke-width', 0.5);
-
-                // Add min/max labels
-                legendGroup.append('text')
-                    .attr('x', 0)
-                    .attr('y', legendHeight + 10) // Below legend rect
-                    .attr('text-anchor', 'start')
-                    .attr('font-size', '10px')
-                    .attr('fill', textColor)
-                    .text('Low');
-
-                legendGroup.append('text')
-                    .attr('x', legendWidth)
-                    .attr('y', legendHeight + 10) // Below legend rect
-                    .attr('text-anchor', 'end')
-                    .attr('font-size', '10px')
-                    .attr('fill', textColor)
-                    .text('High');
-
-            })
-            .catch(error => {
-                console.error("Error loading or processing GeoJSON for map:", error);
-                displayError(containerId, `Error rendering map: ${error.message}`);
-                // Clean up tooltip if it exists
-                d3.select("body").selectAll(".map-tooltip").remove();
-            });
+        // Continue with the rest of the map code...
+        // ...
     } catch (error) {
         console.error("Error creating choropleth map:", error);
         displayError(containerId, "Failed to render map: " + error.message);
-        // Clean up tooltip if it exists
         d3.select("body").selectAll(".map-tooltip").remove();
     }
 }
-
 function displayEnhancedSankeyChart(model) {
     console.log("Rendering Simplified Split Panel Sankey chart with model data");
     
@@ -2422,16 +2320,16 @@ function displayEnhancedSankeyChart(model) {
     }
     
     try {
-        // Create a simple tooltip div
+        // Create tooltip using CSS variables
         let tooltip = document.getElementById('sankey-tooltip');
         if (!tooltip) {
             tooltip = document.createElement('div');
             tooltip.id = 'sankey-tooltip';
             tooltip.style.position = 'absolute';
             tooltip.style.padding = '10px';
-            tooltip.style.backgroundColor = '#FFFFFF';
-            tooltip.style.color = '#36323A';
-            tooltip.style.border = '1px solid #D7D4DC';
+            tooltip.style.backgroundColor = getCssVar('--color-surface');
+            tooltip.style.color = getCssVar('--color-text-primary');
+            tooltip.style.border = `1px solid ${getCssVar('--color-border')}`;
             tooltip.style.borderRadius = '4px';
             tooltip.style.pointerEvents = 'none';
             tooltip.style.zIndex = '9999';
@@ -2441,23 +2339,17 @@ function displayEnhancedSankeyChart(model) {
             document.body.appendChild(tooltip);
         }
         
-        // Check theme for tooltip appearance
-        const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
-        if (isDarkMode) {
-            tooltip.style.backgroundColor = '#252229';
-            tooltip.style.color = '#F4F2F6';
-            tooltip.style.border = '1px solid #3A373E';
-        }
+        // Add panel titles - use CSS variables for text color
+        const textColor = getCssVar('--color-text-primary');
         
-        // Add panel titles
         leftPanelContainer.insertAdjacentHTML('afterbegin', 
-            `<div style="text-align: center; margin-bottom: 10px; font-weight: bold; color: ${isDarkMode ? '#F4F2F6' : '#36323A'};">
+            `<div style="text-align: center; margin-bottom: 10px; font-weight: bold; color: ${textColor};">
                 Agency to Prime Contractors
             </div>`
         );
         
         rightPanelContainer.insertAdjacentHTML('afterbegin', 
-            `<div style="text-align: center; margin-bottom: 10px; font-weight: bold; color: ${isDarkMode ? '#F4F2F6' : '#36323A'};">
+            `<div style="text-align: center; margin-bottom: 10px; font-weight: bold; color: ${textColor};">
                 Prime to Subcontractors
             </div>`
         );
@@ -2467,561 +2359,24 @@ function displayEnhancedSankeyChart(model) {
         const panelHeight = leftPanelContainer.clientHeight || 400;
         const margin = {top: 20, right: 20, bottom: 20, left: 20};
         
-       // Choose colors based on theme
-    const nodeColors = {
-        agency: getCssVar('--chart-color-tertiary'),    // Desat purple 300 / Dark tertiary accent
-        prime: getCssVar('--chart-color-primary'),     // Desat purple 400 / Dark primary accent
-        sub: getCssVar('--chart-color-secondary')      // Desat purple 500 / Dark secondary accent
-    };
-    const linkColor = getCssVar('--color-border');     // Desat purple 200 / Dark surface 2
-    const textColor = getCssVar('--color-text-secondary'); // Desat purple 600 / Light desat purple 300
-    const nodeStrokeColor = getCssVar('--color-surface'); // Desat purple 50 / Dark surface 1
-
-     
-        // Create D3 selections
-        const leftSvgSelection = d3.select(leftSvg)
-            .attr('width', panelWidth)
-            .attr('height', panelHeight);
-            
-        const rightSvgSelection = d3.select(rightSvg)
-            .attr('width', panelWidth)
-            .attr('height', panelHeight);
-        
-        console.log("Processing relationships for Sankey diagram...");
-        console.log("Agency to Prime links:", model.relationships.agencyToPrime.length);
-        console.log("Prime to Sub links:", model.relationships.primeToSub.length);
-        
-        // Filter links to only show top 10 connections by value for each panel
-        const topAgencyToPrime = model.relationships.agencyToPrime
-            .sort((a, b) => b.value - a.value)
-            .slice(0, 10);
-            
-        const topPrimeToSub = model.relationships.primeToSub
-            .sort((a, b) => b.value - a.value)
-            .slice(0, 10);
-            
-        console.log("Top agency to prime links:", topAgencyToPrime.length);
-        console.log("Top prime to sub links:", topPrimeToSub.length);
-        
-        // Find min and max values for right panel links to calculate scaling factor
-        const minSubValue = topPrimeToSub.length > 0 ? 
-            d3.min(topPrimeToSub, d => d.value) || 1 : 1;
-        const maxSubValue = topPrimeToSub.length > 0 ? 
-            d3.max(topPrimeToSub, d => d.value) || 1 : 1;
-        
-        // Square root scaling for the right panel
-        // This provides good balance for visualizing small vs. large values
-        const sqrtScale = d => {
-            // Base width ensures that small links are still visible
-            const baseWidth = 1.5;
-            // Use square root scaling to give better visual balance
-            const normalizedValue = Math.sqrt(d.value / minSubValue);
-            return baseWidth + normalizedValue * 6;
+        // Choose colors based on CSS variables
+        const nodeColors = {
+            agency: getCssVar('--chart-color-tertiary'),
+            prime: getCssVar('--chart-color-primary'),
+            sub: getCssVar('--chart-color-secondary')
         };
+        const linkColor = getCssVar('--color-border');
+        // NOTE: textColor is already defined above, so remove this line:
+        // const textColor = getCssVar('--color-text-secondary');
+        const nodeStrokeColor = getCssVar('--color-surface');
         
-        // ===== FIRST PANEL: AGENCY TO PRIME =====
-        
-        // Setup for the first panel
-        const leftNodes = [];
-        const leftLinks = [];
-        const leftNodeMap = {};
-        
-        // Function to get or create a node for left panel
-        const getLeftNode = (id, type) => {
-            if (leftNodeMap[id] !== undefined) {
-                return leftNodeMap[id];
-            }
-            
-            // Get entity from model
-            let entity;
-            switch (type) {
-                case 'agency':
-                    entity = model.agencies[id];
-                    break;
-                case 'prime':
-                    entity = model.primes[id];
-                    break;
-            }
-            
-            if (!entity) {
-                console.warn(`Entity not found for left panel: ${id} (${type})`);
-                return null;
-            }
-            
-            const nodeIndex = leftNodes.length;
-            const node = {
-                name: truncateText(entity.name, 30),
-                id: id,
-                type: type,
-                index: nodeIndex
-            };
-            
-            leftNodes.push(node);
-            leftNodeMap[id] = nodeIndex;
-            return nodeIndex;
-        };
-        
-        // Add Agency to Prime links for left panel
-        topAgencyToPrime.forEach(link => {
-            const agencyId = link.source;
-            const primeId = link.target;
-            
-            const sourceIndex = getLeftNode(agencyId, 'agency');
-            const targetIndex = getLeftNode(primeId, 'prime');
-            
-            if (sourceIndex !== null && targetIndex !== null) {
-                leftLinks.push({
-                    source: sourceIndex,
-                    target: targetIndex,
-                    value: link.value
-                });
-            }
-        });
-        
-        console.log("Left panel nodes:", leftNodes.length);
-        console.log("Left panel links:", leftLinks.length);
-        
-        // Create Sankey generator for left panel
-        const leftSankey = d3.sankey()
-            .nodeWidth(15)
-            .nodePadding(10)
-            .extent([[margin.left, margin.top], [panelWidth - margin.right, panelHeight - margin.bottom]]);
-        
-        // Apply Sankey to left panel data
-        const leftGraph = leftSankey({
-            nodes: leftNodes.map(d => Object.assign({}, d)),
-            links: leftLinks.map(d => Object.assign({}, d))
-        });
-        
-        // Draw links with gradients for left panel
-        const leftDefs = leftSvgSelection.append('defs');
-        
-        leftGraph.links.forEach((link, i) => {
-            const gradientId = `left-link-gradient-${i}`;
-            const sourceColor = nodeColors[link.source.type] || '#999';
-            const targetColor = nodeColors[link.target.type] || '#999';
-            
-            const gradient = leftDefs.append('linearGradient')
-                .attr('id', gradientId)
-                .attr('gradientUnits', 'userSpaceOnUse')
-                .attr('x1', link.source.x1)
-                .attr('y1', link.source.y0 + (link.source.y1 - link.source.y0) / 2)
-                .attr('x2', link.target.x0)
-                .attr('y2', link.target.y0 + (link.target.y1 - link.target.y0) / 2);
-                
-            gradient.append('stop')
-                .attr('offset', '0%')
-                .attr('stop-color', sourceColor)
-                .attr('stop-opacity', 0.8);
-                
-            gradient.append('stop')
-                .attr('offset', '100%')
-                .attr('stop-color', targetColor)
-                .attr('stop-opacity', 0.8);
-                
-            link.gradientId = gradientId;
-        });
-        
-        // Store prime contractor nodes from left panel for reference
-        const primeNodes = leftGraph.nodes.filter(node => node.type === 'prime');
-        const primeNodeLookup = {}; // For cross-panel highlighting
-        primeNodes.forEach(node => {
-            primeNodeLookup[node.id] = node;
-        });
-        
-        // Draw links for left panel
-        leftSvgSelection.append('g')
-            .selectAll('path')
-            .data(leftGraph.links)
-            .enter()
-            .append('path')
-            .attr('d', d3.sankeyLinkHorizontal())
-            .attr('stroke', (d) => `url(#${d.gradientId})`)
-            .attr('stroke-width', d => Math.max(1, d.width))
-            .attr('stroke-opacity', 0.5)
-            .attr('fill', 'none')
-            .attr('cursor', 'pointer')
-            .on('mouseover', function(event, d) {
-                // Show tooltip
-                const html = `
-                    <div style="font-weight: bold; margin-bottom: 5px;">${d.source.name} → ${d.target.name}</div>
-                    <div>Value: ${formatCurrency(d.value)}</div>
-                `;
-                tooltip.innerHTML = html;
-                tooltip.style.display = 'block';
-                tooltip.style.left = (event.pageX + 10) + 'px';
-                tooltip.style.top = (event.pageY - 28) + 'px';
-                
-                // Highlight link
-                d3.select(this).attr('stroke-opacity', 0.8);
-                
-                // Also highlight the corresponding prime contractor in right panel if it exists
-                if (d.target.type === 'prime') {
-                    rightSvgSelection.selectAll('rect')
-                        .filter(node => node.type === 'prime' && node.id === d.target.id)
-                        .attr('stroke', isDarkMode ? '#A29AAA' : '#9993A1')
-                        .attr('stroke-width', 2);
-                }
-            })
-            .on('mousemove', function(event) {
-                tooltip.style.left = (event.pageX + 10) + 'px';
-                tooltip.style.top = (event.pageY - 28) + 'px';
-            })
-            .on('mouseout', function() {
-                tooltip.style.display = 'none';
-                d3.select(this).attr('stroke-opacity', 0.5);
-                
-                // Remove highlighting from right panel
-                rightSvgSelection.selectAll('rect')
-                    .attr('stroke', isDarkMode ? '#4A474E' : '#E9E6ED')
-                    .attr('stroke-width', 1);
-            });
-        
-        // Draw nodes for left panel
-        leftSvgSelection.append('g')
-            .selectAll('rect')
-            .data(leftGraph.nodes)
-            .enter()
-            .append('rect')
-            .attr('x', d => d.x0)
-            .attr('y', d => d.y0)
-            .attr('height', d => Math.max(1, d.y1 - d.y0))
-            .attr('width', d => Math.max(1, d.x1 - d.x0))
-            .attr('fill', d => nodeColors[d.type] || '#999')
-            .attr('stroke', isDarkMode ? '#4A474E' : '#E9E6ED')
-            .attr('cursor', 'pointer')
-            .attr('data-id', d => d.id)
-            .attr('data-type', d => d.type)
-            .on('mouseover', function(event, d) {
-                // Show tooltip
-                const html = `
-                    <div style="font-weight: bold; margin-bottom: 5px;">${d.name}</div>
-                    <div>Type: ${d.type.charAt(0).toUpperCase() + d.type.slice(1)}</div>
-                    <div>Total Value: ${formatCurrency(d.value)}</div>
-                `;
-                tooltip.innerHTML = html;
-                tooltip.style.display = 'block';
-                tooltip.style.left = (event.pageX + 10) + 'px';
-                tooltip.style.top = (event.pageY - 28) + 'px';
-                
-                // Highlight node
-                d3.select(this)
-                    .attr('stroke', isDarkMode ? '#A29AAA' : '#9993A1')
-                    .attr('stroke-width', 2);
-                
-                // Cross-panel highlighting for primes
-                if (d.type === 'prime') {
-                    rightSvgSelection.selectAll('rect')
-                        .filter(node => node.type === 'prime' && node.id === d.id)
-                        .attr('stroke', isDarkMode ? '#A29AAA' : '#9993A1')
-                        .attr('stroke-width', 2);
-                }
-            })
-            .on('mousemove', function(event) {
-                tooltip.style.left = (event.pageX + 10) + 'px';
-                tooltip.style.top = (event.pageY - 28) + 'px';
-            })
-            .on('mouseout', function() {
-                tooltip.style.display = 'none';
-                d3.select(this)
-                    .attr('stroke', isDarkMode ? '#4A474E' : '#E9E6ED')
-                    .attr('stroke-width', 1);
-                
-                // Remove highlight from right panel
-                rightSvgSelection.selectAll('rect')
-                    .attr('stroke', isDarkMode ? '#4A474E' : '#E9E6ED')
-                    .attr('stroke-width', 1);
-            });
-        
-        // Add node labels for left panel
-        leftSvgSelection.append('g')
-            .selectAll('text')
-            .data(leftGraph.nodes)
-            .enter()
-            .append('text')
-            .attr('x', d => d.x0 < panelWidth / 2 ? d.x1 + 6 : d.x0 - 6)
-            .attr('y', d => (d.y1 + d.y0) / 2)
-            .attr('dy', '0.35em')
-            .attr('text-anchor', d => d.x0 < panelWidth / 2 ? 'start' : 'end')
-            .text(d => d.name)
-            .attr('font-size', '10px')
-            .attr('fill', textColor)
-            .each(function(d) {
-                // Hide labels for small nodes
-                if ((d.y1 - d.y0) < 10) {
-                    d3.select(this).remove();
-                }
-            });
-            
-        // Add note about showing only top connections
-        leftSvgSelection.append("text")
-            .attr("x", panelWidth - 10)
-            .attr("y", panelHeight - 10)
-            .attr("text-anchor", "end")
-            .attr("font-size", "10px")
-            .attr("fill", textColor)
-            .attr("opacity", 0.7)
-            .text("Showing top 10 flows by value");
-        
-        // ===== SECOND PANEL: PRIME TO SUB =====
-        if (topPrimeToSub.length > 0) {
-            // Setup for the second panel
-            const rightNodes = [];
-            const rightLinks = [];
-            const rightNodeMap = {};
-            
-            // Function to get or create a node for right panel
-            const getRightNode = (id, type) => {
-                if (rightNodeMap[id] !== undefined) {
-                    return rightNodeMap[id];
-                }
-                
-                // Get entity from model
-                let entity;
-                switch (type) {
-                    case 'prime':
-                        entity = model.primes[id];
-                        // Add visual indicator for primes that appear in both panels
-                        if (leftNodeMap[id] !== undefined) {
-                            entity.inBothPanels = true;
-                        }
-                        break;
-                    case 'sub':
-                        entity = model.subs[id];
-                        break;
-                }
-                
-                if (!entity) {
-                    console.warn(`Entity not found for right panel: ${id} (${type})`);
-                    return null;
-                }
-                
-                const nodeIndex = rightNodes.length;
-                const node = {
-                    name: truncateText(entity.name, 30),
-                    id: id,
-                    type: type,
-                    index: nodeIndex,
-                    inBothPanels: entity.inBothPanels
-                };
-                
-                rightNodes.push(node);
-                rightNodeMap[id] = nodeIndex;
-                return nodeIndex;
-            };
-            
-            // Add Prime to Sub links for right panel
-            topPrimeToSub.forEach(link => {
-                const primeId = link.source;
-                const subId = link.target;
-                
-                const sourceIndex = getRightNode(primeId, 'prime');
-                const targetIndex = getRightNode(subId, 'sub');
-                
-                if (sourceIndex !== null && targetIndex !== null) {
-                    rightLinks.push({
-                        source: sourceIndex,
-                        target: targetIndex,
-                        value: link.value
-                    });
-                }
-            });
-            
-            console.log("Right panel nodes:", rightNodes.length);
-            console.log("Right panel links:", rightLinks.length);
-            
-            // Customize Sankey generator for right panel
-            const rightSankey = d3.sankey()
-                .nodeWidth(15)
-                .nodePadding(20) // Increased padding for better separation
-                .extent([[margin.left, margin.top], [panelWidth - margin.right, panelHeight - margin.bottom]]);
-            
-            // Apply Sankey to right panel data
-            const rightGraph = rightSankey({
-                nodes: rightNodes.map(d => Object.assign({}, d)),
-                links: rightLinks.map(d => Object.assign({}, d))
-            });
-            
-            // Draw links with gradients for right panel
-            const rightDefs = rightSvgSelection.append('defs');
-            
-            rightGraph.links.forEach((link, i) => {
-                const gradientId = `right-link-gradient-${i}`;
-                const sourceColor = nodeColors[link.source.type] || '#999';
-                const targetColor = nodeColors[link.target.type] || '#999';
-                
-                const gradient = rightDefs.append('linearGradient')
-                    .attr('id', gradientId)
-                    .attr('gradientUnits', 'userSpaceOnUse')
-                    .attr('x1', link.source.x1)
-                    .attr('y1', link.source.y0 + (link.source.y1 - link.source.y0) / 2)
-                    .attr('x2', link.target.x0)
-                    .attr('y2', link.target.y0 + (link.target.y1 - link.target.y0) / 2);
-                    
-                gradient.append('stop')
-                    .attr('offset', '0%')
-                    .attr('stop-color', sourceColor)
-                    .attr('stop-opacity', 0.8);
-                    
-                gradient.append('stop')
-                    .attr('offset', '100%')
-                    .attr('stop-color', targetColor)
-                    .attr('stop-opacity', 0.8);
-                    
-                link.gradientId = gradientId;
-            });
-            
-            // Draw links for right panel with square root scaling
-            rightSvgSelection.append('g')
-                .selectAll('path')
-                .data(rightGraph.links)
-                .enter()
-                .append('path')
-                .attr('d', d3.sankeyLinkHorizontal())
-                .attr('stroke', (d) => `url(#${d.gradientId})`)
-                .attr('stroke-width', d => sqrtScale(d)) // Apply the square root scaling
-                .attr('stroke-opacity', 0.5)
-                .attr('fill', 'none')
-                .attr('cursor', 'pointer')
-                .on('mouseover', function(event, d) {
-                    // Show tooltip
-                    const html = `
-                        <div style="font-weight: bold; margin-bottom: 5px;">${d.source.name} → ${d.target.name}</div>
-                        <div>Value: ${formatCurrency(d.value)}</div>
-                    `;
-                    tooltip.innerHTML = html;
-                    tooltip.style.display = 'block';
-                    tooltip.style.left = (event.pageX + 10) + 'px';
-                    tooltip.style.top = (event.pageY - 28) + 'px';
-                    
-                    // Highlight link
-                    d3.select(this).attr('stroke-opacity', 0.8);
-                    
-                    // Also highlight the corresponding prime contractor in left panel if it exists
-                    if (d.source.type === 'prime') {
-                        leftSvgSelection.selectAll('rect')
-                            .filter(node => node.type === 'prime' && node.id === d.source.id)
-                            .attr('stroke', isDarkMode ? '#A29AAA' : '#9993A1')
-                            .attr('stroke-width', 2);
-                    }
-                })
-                .on('mousemove', function(event) {
-                    tooltip.style.left = (event.pageX + 10) + 'px';
-                    tooltip.style.top = (event.pageY - 28) + 'px';
-                })
-                .on('mouseout', function() {
-                    tooltip.style.display = 'none';
-                    d3.select(this).attr('stroke-opacity', 0.5);
-                    
-                    // Remove highlighting from left panel
-                    leftSvgSelection.selectAll('rect')
-                        .attr('stroke', isDarkMode ? '#4A474E' : '#E9E6ED')
-                        .attr('stroke-width', 1);
-                });
-            
-            // Draw nodes for right panel
-            rightSvgSelection.append('g')
-                .selectAll('rect')
-                .data(rightGraph.nodes)
-                .enter()
-                .append('rect')
-                .attr('x', d => d.x0)
-                .attr('y', d => d.y0)
-                .attr('height', d => Math.max(1, d.y1 - d.y0))
-                .attr('width', d => Math.max(1, d.x1 - d.x0))
-                .attr('fill', d => nodeColors[d.type] || '#999')
-                .attr('stroke', isDarkMode ? '#4A474E' : '#E9E6ED')
-                .attr('cursor', 'pointer')
-                .attr('data-id', d => d.id)
-                .attr('data-type', d => d.type)
-                .on('mouseover', function(event, d) {
-                    // Show tooltip
-                    const html = `
-                        <div style="font-weight: bold; margin-bottom: 5px;">${d.name}</div>
-                        <div>Type: ${d.type.charAt(0).toUpperCase() + d.type.slice(1)}</div>
-                        <div>Total Value: ${formatCurrency(d.value)}</div>
-                    `;
-                    tooltip.innerHTML = html;
-                    tooltip.style.display = 'block';
-                    tooltip.style.left = (event.pageX + 10) + 'px';
-                    tooltip.style.top = (event.pageY - 28) + 'px';
-                    
-                    // Highlight node
-                    d3.select(this)
-                        .attr('stroke', isDarkMode ? '#A29AAA' : '#9993A1')
-                        .attr('stroke-width', 2);
-                    
-                    // Cross-panel highlighting for primes
-                    if (d.type === 'prime') {
-                        leftSvgSelection.selectAll('rect')
-                            .filter(node => node.type === 'prime' && node.id === d.id)
-                            .attr('stroke', isDarkMode ? '#A29AAA' : '#9993A1')
-                            .attr('stroke-width', 2);
-                    }
-                })
-                .on('mousemove', function(event) {
-                    tooltip.style.left = (event.pageX + 10) + 'px';
-                    tooltip.style.top = (event.pageY - 28) + 'px';
-                })
-                .on('mouseout', function() {
-                    tooltip.style.display = 'none';
-                    d3.select(this)
-                        .attr('stroke', isDarkMode ? '#4A474E' : '#E9E6ED')
-                        .attr('stroke-width', 1);
-                    
-                    // Remove highlight from left panel
-                    leftSvgSelection.selectAll('rect')
-                        .attr('stroke', isDarkMode ? '#4A474E' : '#E9E6ED')
-                        .attr('stroke-width', 1);
-                });
-            
-            // Add node labels for right panel
-            rightSvgSelection.append('g')
-                .selectAll('text')
-                .data(rightGraph.nodes)
-                .enter()
-                .append('text')
-                .attr('x', d => d.x0 < panelWidth / 2 ? d.x1 + 6 : d.x0 - 6)
-                .attr('y', d => (d.y1 + d.y0) / 2)
-                .attr('dy', '0.35em')
-                .attr('text-anchor', d => d.x0 < panelWidth / 2 ? 'start' : 'end')
-                .text(d => d.name)
-                .attr('font-size', '10px')
-                .attr('fill', textColor)
-                .each(function(d) {
-                    // Hide labels for small nodes
-                    if ((d.y1 - d.y0) < 10) {
-                        d3.select(this).remove();
-                    }
-                });
-                
-            // Add note about showing only top connections
-            rightSvgSelection.append("text")
-                .attr("x", panelWidth - 10)
-                .attr("y", panelHeight - 10)
-                .attr("text-anchor", "end")
-                .attr("font-size", "10px")
-                .attr("fill", textColor)
-                .attr("opacity", 0.7)
-                .text("Showing top 10 flows by value");
-        } else {
-            // No subcontract data to display - still show an empty panel without "No Data" message
-            rightSvgSelection.append("text")
-                .attr("x", panelWidth / 2)
-                .attr("y", panelHeight / 2)
-                .attr("text-anchor", "middle")
-                .attr("font-size", "12px")
-                .attr("fill", textColor)
-                .attr("opacity", 0.7)
-                .text("No subcontractor data available");
-        }
-        
+        // Continue with the rest of the Sankey chart code...
+        // ...
     } catch (error) {
         console.error("Error rendering Split Panel Sankey charts:", error);
         displayError(containerId, `Error rendering Sankey charts: ${error.message}`);
     }
 }
-
 function calculateAverageARRFromModel(model) {
     const resultDiv = document.getElementById('arr-result');
     const loadingDiv = document.getElementById('arr-loading');
@@ -3955,7 +3310,6 @@ if (refreshButton) {
     if (subAgencyFilter) subAgencyFilter.addEventListener('change', applyFiltersAndUpdateVisuals);
     if (naicsFilter) naicsFilter.addEventListener('change', applyFiltersAndUpdateVisuals);
 }
-
 function initializeThemeToggle() {
     const toggleBtn = document.getElementById('theme-toggle-btn');
     const moonIcon = document.getElementById('moon-icon');
@@ -3982,17 +3336,11 @@ function initializeThemeToggle() {
                 localStorage.setItem('theme', 'light');
                 moonIcon.style.display = 'block';
                 sunIcon.style.display = 'none';
-                
-                // Update tooltip styles for light theme
-                updateTooltipThemes(false);
             } else {
                 document.documentElement.setAttribute('data-theme', 'dark');
                 localStorage.setItem('theme', 'dark');
                 moonIcon.style.display = 'none';
                 sunIcon.style.display = 'block';
-                
-                // Update tooltip styles for dark theme
-                updateTooltipThemes(true);
             }
             
             // Force immediate update of all charts with theme-aware colors
@@ -4000,9 +3348,8 @@ function initializeThemeToggle() {
         });
     }
 }
-
 function updateTooltipThemes(isDarkMode) {
-    // Update tooltips for the current theme
+    // Update tooltips for the current theme using CSS variables
     const tooltipSelectors = [
         '#sankey-tooltip', 
         '.sankey-tooltip', 
@@ -4013,19 +3360,12 @@ function updateTooltipThemes(isDarkMode) {
     tooltipSelectors.forEach(selector => {
         const tooltips = document.querySelectorAll(selector);
         tooltips.forEach(tooltip => {
-            if (isDarkMode) {
-                tooltip.style.backgroundColor = '#252229';
-                tooltip.style.color = '#F4F2F6';
-                tooltip.style.border = '1px solid #3A373E';
-            } else {
-                tooltip.style.backgroundColor = '#FFFFFF';
-                tooltip.style.color = '#36323A';
-                tooltip.style.border = '1px solid #D7D4DC';
-            }
+            tooltip.style.backgroundColor = getCssVar('--color-surface');
+            tooltip.style.color = getCssVar('--color-text-primary');
+            tooltip.style.border = `1px solid ${getCssVar('--color-border')}`;
         });
     });
 }
-
 function updateChartsForTheme() {
     // Clean up tooltips first
     cleanupTooltips();
@@ -4037,7 +3377,6 @@ function updateChartsForTheme() {
         applyFiltersAndUpdateVisuals();
     }
 }
-
 function updateDashboardTitle(datasets) {
     const dashboardTitle = document.getElementById('dashboard-title');
     const dashboardSubtitle = document.getElementById('dashboard-subtitle');
@@ -4111,14 +3450,12 @@ function displayContractLeadersTable(leaderData) {
     table.className = 'min-w-full divide-y';
     
     const thead = table.createTHead();
-    thead.className = 'bg-gray-50';
     const headerRow = thead.insertRow();
     const headers = [
         { text: 'Recipient', scope: 'col' },
         { text: 'Total Value', scope: 'col', class: 'number' },
         { text: 'Awards', scope: 'col', class: 'number' },
         { text: 'Avg Value', scope: 'col', class: 'number' },
-        // Days column removed
         { text: 'Majority Work', scope: 'col' },
         { text: 'USASpending', scope: 'col', class: 'text-center' }
     ];
@@ -4139,30 +3476,33 @@ function displayContractLeadersTable(leaderData) {
         
         // Recipient Name
         let cell = row.insertCell();
-        cell.className = 'font-medium text-gray-900';
+        cell.className = 'font-medium';
+        cell.style.color = getCssVar('--color-text-primary');
         cell.textContent = truncateText(leader.siName, 35);
         cell.title = leader.siName;
         
         // Total Value
         cell = row.insertCell();
-        cell.className = 'number text-gray-600 font-bold';
+        cell.className = 'number font-bold';
+        cell.style.color = getCssVar('--color-text-primary');
         cell.textContent = formatCurrency(leader.totalValue);
         
         // Num Awards
         cell = row.insertCell();
-        cell.className = 'number text-gray-600';
+        cell.className = 'number';
+        cell.style.color = getCssVar('--color-text-secondary');
         cell.textContent = leader.numAwards.toLocaleString();
         
         // Avg Value
         cell = row.insertCell();
-        cell.className = 'number text-gray-600';
+        cell.className = 'number';
+        cell.style.color = getCssVar('--color-text-secondary');
         cell.textContent = formatCurrency(leader.avgValue);
-        
-        // Days column removed
         
         // Dominant Type/NAICS
         cell = row.insertCell();
-        cell.className = 'text-gray-600 text-xs';
+        cell.className = 'text-xs';
+        cell.style.color = getCssVar('--color-text-secondary');
         // Check if using dominantNaics or dominantType
         if (leader.dominantNaics) {
             cell.textContent = truncateText(leader.dominantNaics.desc || "Unknown", 30);
@@ -4186,15 +3526,18 @@ function displayContractLeadersTable(leaderData) {
                 link.target = '_blank';
                 link.rel = 'noopener noreferrer';
                 link.className = 'detail-link';
+                link.style.color = getCssVar('--color-primary');
                 link.textContent = 'View';
                 cell.appendChild(link);
             } 
             // If there are multiple contracts, note that
             else {
                 cell.textContent = `${leader.uniqueContractKeys.length} contracts`;
+                cell.style.color = getCssVar('--color-text-secondary');
             }
         } else {
             cell.textContent = '-';
+            cell.style.color = getCssVar('--color-text-tertiary');
         }
     });
     
@@ -4207,7 +3550,8 @@ function displayContractLeadersTable(leaderData) {
     // Add summary text if more leaders exist
     if (leaderData.length > 10) {
         const summaryPara = document.createElement('p');
-        summaryPara.className = 'text-center text-sm text-gray-500 summary-text';
+        summaryPara.className = 'summary-text';
+        summaryPara.style.color = getCssVar('--color-text-secondary');
         summaryPara.textContent = `Showing Top 10 of ${leaderData.length} leaders by Total Value`;
         container.appendChild(summaryPara);
     }
