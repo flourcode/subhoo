@@ -354,15 +354,6 @@ tr:hover td { background-color: var(--color-surface-variant); }
 .notes-content ul { margin-left: 16px; margin-bottom: 10px; } .notes-content ul li { margin-bottom: 5px; }
 .notes-content strong { color: var(--color-text-primary); font-weight: 600; }
 
-/* --- Chart Element Styling --- */
-#sankeyChart path { stroke: var(--color-border); stroke-opacity: 0.4; transition: stroke-opacity 0.2s ease; fill: none; }
-#sankeyChart path:hover { stroke-opacity: 0.7; }
-#sankeyChart rect { stroke: var(--color-surface-container); stroke-width: 0.5px; }
-#sankeyChart text { font-family: var(--font-body); font-size: 10px; fill: var(--color-text-secondary); pointer-events: none; }
-#choroplethMap path { stroke: var(--color-background); stroke-width: 0.5px; fill: var(--color-surface-variant); transition: fill 0.2s ease, stroke 0.2s ease, stroke-width 0.2s ease; }
-#choroplethMap path:hover { stroke: var(--color-primary); stroke-width: 1.5px; }
-#choroplethMap text, #choroplethMap .legend-text { font-family: var(--font-body); font-size: 10px; fill: var(--color-text-secondary); text-anchor: middle; }
-#choroplethMap .legend-rect { stroke: var(--color-border); stroke-width: 0.5px; }
 
 
 /* ========================================= */
