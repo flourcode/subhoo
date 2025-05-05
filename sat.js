@@ -3844,46 +3844,75 @@ window.addEventListener('resize', function() {
        }
    }, 250); // Debounce for 250ms
 });
-// Simplified Sankey Chart visualization with filter panel integration
 
 // Add Sankey visualization options to the existing filters section
 function initializeSankeyFilters() {
-  // Find the existing filters container
-  const filtersContainer = document.querySelector('.filter-container') || document.getElementById('filters');
+  // Find the existing filter container - this is where your current filters are located
+  const filtersContainer = document.querySelector('div[style*="display: flex; flex-direction: column"]');
   
   if (!filtersContainer) {
     console.error("Filter container not found, cannot add Sankey visualization options");
     return;
   }
   
-  // Create a new filter section for Sankey visualization options
-  const sankeyFilterSection = document.createElement('div');
-  sankeyFilterSection.className = 'filter-section sankey-options';
-  sankeyFilterSection.innerHTML = `
-    <h3 class="filter-heading">Sankey Visualization</h3>
-    <div class="filter-group">
-      <label for="sankey-agency-field">Agency Grouping:</label>
-      <select id="sankey-agency-field" class="input-select">
-        <option value="agencyName">Agency</option>
-        <option value="subAgencyName" selected>Sub-Agency</option>
-        <option value="officeName">Office</option>
-      </select>
-    </div>
-    <div class="filter-group">
-      <label for="sankey-contractor-field">Contractor View:</label>
-      <select id="sankey-contractor-field" class="input-select">
-        <option value="primeName" selected>Prime Contractors</option>
-        <option value="subName">Subcontractors</option>
-      </select>
-    </div>
+  // Create a heading for Sankey visualization options
+  const sankeyHeading = document.createElement('h2');
+  sankeyHeading.style.fontSize = '14px';
+  sankeyHeading.style.margin = '0';
+  sankeyHeading.textContent = 'Sankey Visualization';
+  
+  // Create the agency field selector
+  const agencyFieldSelect = document.createElement('select');
+  agencyFieldSelect.id = 'sankey-agency-field';
+  agencyFieldSelect.className = 'input-select';
+  agencyFieldSelect.style.width = '100%';
+  
+  // Add options for agency field
+  agencyFieldSelect.innerHTML = `
+    <option value="agencyName">Agency</option>
+    <option value="subAgencyName" selected>Sub-Agency</option>
+    <option value="officeName">Office</option>
   `;
   
-  // Add the new section to the filters container
-  filtersContainer.appendChild(sankeyFilterSection);
+  // Create the contractor field selector
+  const contractorFieldSelect = document.createElement('select');
+  contractorFieldSelect.id = 'sankey-contractor-field';
+  contractorFieldSelect.className = 'input-select';
+  contractorFieldSelect.style.width = '100%';
+  
+  // Add options for contractor field
+  contractorFieldSelect.innerHTML = `
+    <option value="primeName" selected>Prime Contractors</option>
+    <option value="subName">Subcontractors</option>
+  `;
+  
+  // Add the refresh button to the container for reference
+  const refreshButton = document.getElementById('refresh-button');
+  
+  // Insert Sankey controls before the refresh button and after the NAICS filter
+  if (refreshButton && refreshButton.parentNode) {
+    // Insert before the status banner
+    const statusBanner = document.getElementById('status-banner');
+    if (statusBanner) {
+      filtersContainer.insertBefore(sankeyHeading, statusBanner);
+      filtersContainer.insertBefore(agencyFieldSelect, statusBanner);
+      filtersContainer.insertBefore(contractorFieldSelect, statusBanner);
+    } else {
+      // Fallback, insert before refresh button
+      filtersContainer.insertBefore(sankeyHeading, refreshButton);
+      filtersContainer.insertBefore(agencyFieldSelect, refreshButton);
+      filtersContainer.insertBefore(contractorFieldSelect, refreshButton);
+    }
+  } else {
+    // If refresh button not found, just append to the end
+    filtersContainer.appendChild(sankeyHeading);
+    filtersContainer.appendChild(agencyFieldSelect);
+    filtersContainer.appendChild(contractorFieldSelect);
+  }
   
   // Add event listeners to update visualization when options change
-  document.getElementById('sankey-agency-field').addEventListener('change', applyFiltersAndUpdateVisuals);
-  document.getElementById('sankey-contractor-field').addEventListener('change', applyFiltersAndUpdateVisuals);
+  agencyFieldSelect.addEventListener('change', applyFiltersAndUpdateVisuals);
+  contractorFieldSelect.addEventListener('change', applyFiltersAndUpdateVisuals);
 }
 
 // Process data for the left Sankey panel based on selection
@@ -4438,6 +4467,16 @@ function drawSankeyDiagram(svgSelection, nodes, links, width, height, margin, no
 
 // Override the existing displayEnhancedSankeyChart function
 window.displayEnhancedSankeyChart = displayEnhancedSankeyChart;
+
+// Find any existing displaySankeyChart or displayEnhancedSankeyChartWithSelectors functions
+// and replace them with our new implementation
+if (typeof window.displaySankeyChart === 'function') {
+  window.displaySankeyChart = displayEnhancedSankeyChart;
+}
+
+if (typeof window.displayEnhancedSankeyChartWithSelectors === 'function') {
+  window.displayEnhancedSankeyChartWithSelectors = displayEnhancedSankeyChart;
+}
 
 // Initialize during page load if not already done
 if (document.readyState === 'loading') {
