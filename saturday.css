@@ -420,11 +420,6 @@ tr:hover td { background-color: var(--color-surface-container); }
 #sankeyChart rect { stroke: var(--color-surface); stroke-width: 0.5px; }
 #sankeyChart text { font-family: var(--font-body); font-size: 10px; fill: var(--color-text-secondary); pointer-events: none; } /* Nunito */
 
-/* Map */
-#choroplethMap path { stroke: var(--color-background); stroke-width: 0.5px; fill: var(--color-surface-variant); transition: fill 0.2s ease, stroke 0.2s ease, stroke-width 0.2s ease; }
-#choroplethMap path:hover { stroke: var(--color-primary); stroke-width: 1.5px; }
-#choroplethMap text, #choroplethMap .legend-text { font-family: var(--font-body); font-size: 10px; fill: var(--color-text-secondary); text-anchor: middle; } /* Nunito */
-#choroplethMap .legend-rect { stroke: var(--color-border); stroke-width: 0.5px; }
 
 /* ========================================= */
 /* Tooltip Styles                            */

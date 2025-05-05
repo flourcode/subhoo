@@ -2909,353 +2909,489 @@ function displayEnhancedSankeyChart(model) {
     }
 }
 function displayChoroplethMap(mapData) {
+
     const containerId = 'map-container';
+
     const container = document.getElementById(containerId);
+
     
+
     if (!container) {
+
         console.error("Map container not found.");
+
         return;
+
     }
+
+
 
     // Clean up any existing tooltips
+
     cleanupTooltips();
+
     
+
     // Clear any previous content and create a new div
+
     container.innerHTML = '';
+
     const mapDiv = document.createElement('div');
+
     mapDiv.id = 'choroplethMap';
+
     mapDiv.style.width = '100%';
+
     mapDiv.style.height = '100%';
+
     container.appendChild(mapDiv);
+
     
+
     setLoading(containerId, false);
 
+
+
     if (!mapData || Object.keys(mapData).length === 0) {
+
         displayNoData(containerId, 'No geographic data available for mapping.');
+
         return;
+
     }
+
+
 
     try {
+
         // Set up map dimensions based on the container div
+
         const width = container.clientWidth;
+
         const height = container.clientHeight || 400;
 
+
+
         // Check if dimensions are valid
+
         if (width <= 0 || height <= 0) {
+
             console.warn(`Map container has invalid dimensions: ${width}x${height}. Map rendering skipped.`);
+
             displayError(containerId, 'Map container has zero size. Cannot render map.');
+
             return;
+
         }
 
+
+
         // Check if we're in dark mode
+
         const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
-        
-        // ====================================================================
-        // COLOR THEME CONFIGURATION - EASY TO SWAP
-        // ====================================================================
-        
-        // Define color themes - add or modify themes here
-        const colorThemes = {
-            // Purple theme (from your working example)
-            'purple': {
-                light: {
-                    low: '#E9E6ED',      // Light purple for low values
-                    high: '#9993A1',     // Medium purple for high values
-                    noData: '#E0E0E0',   // Light gray for no data
-                    border: '#FFFFFF',   // White borders
-                    text: '#36323A',     // Dark purple text
-                    highlight: '#9993A1' // Highlighted state border
-                },
-                dark: {
-                    low: '#3A373E',      // Dark purple for low values
-                    high: '#A29AAA',     // Light purple for high values
-                    noData: '#2D2A31',   // Very dark gray for no data
-                    border: '#3A373E',   // Dark borders
-                    text: '#F4F2F6',     // Light purple text
-                    highlight: '#A29AAA' // Highlighted state border
-                }
-            },
-            
-            // Monochrome theme (grayscale)
-            'monochrome': {
-                light: {
-                    low: '#F0F0F0',     // Very light gray for low values
-                    high: '#333333',    // Dark gray for high values
-                    noData: '#E0E0E0',  // Light gray for no data
-                    border: '#FFFFFF',  // White borders
-                    text: '#222222',    // Almost black text
-                    highlight: '#555555' // Medium gray highlight
-                },
-                dark: {
-                    low: '#333333',     // Dark gray for low values
-                    high: '#CCCCCC',    // Light gray for high values
-                    noData: '#222222',  // Very dark gray for no data
-                    border: '#444444',  // Dark gray borders
-                    text: '#EEEEEE',    // Almost white text
-                    highlight: '#999999' // Medium gray highlight
-                }
-            },
-            
-            // Blue theme
-            'blue': {
-                light: {
-                    low: '#E3F2FD',     // Very light blue for low values
-                    high: '#1565C0',    // Medium-dark blue for high values
-                    noData: '#ECEFF1',  // Very light blue-gray for no data
-                    border: '#FFFFFF',  // White borders
-                    text: '#0D47A1',    // Dark blue text
-                    highlight: '#2196F3' // Bright blue highlight
-                },
-                dark: {
-                    low: '#0D2A4A',     // Very dark blue for low values
-                    high: '#64B5F6',    // Medium-light blue for high values
-                    noData: '#1A1A2E',  // Dark blue-black for no data
-                    border: '#1E3A5F',  // Dark blue border
-                    text: '#BBDEFB',    // Light blue text
-                    highlight: '#2196F3' // Bright blue highlight
-                }
-            },
-            
-            // Green theme
-            'green': {
-                light: {
-                    low: '#E8F5E9',     // Very light green for low values
-                    high: '#2E7D32',    // Medium-dark green for high values
-                    noData: '#F1F1F1',  // Light gray for no data
-                    border: '#FFFFFF',  // White borders
-                    text: '#1B5E20',    // Dark green text
-                    highlight: '#4CAF50' // Medium green highlight
-                },
-                dark: {
-                    low: '#1B3724',     // Very dark green for low values
-                    high: '#81C784',    // Medium-light green for high values
-                    noData: '#1E2A1E',  // Very dark green-black for no data
-                    border: '#2D4A2D',  // Dark green border
-                    text: '#C8E6C9',    // Light green text
-                    highlight: '#4CAF50' // Medium green highlight
-                }
-            }
-        };
-        
-        // SELECT THEME HERE - CHANGE THIS SINGLE VARIABLE TO SWAP THEMES
-        const activeTheme = 'monochrome'; // Options: 'purple', 'monochrome', 'blue', 'green'
-        
-        // Get the appropriate theme colors based on mode
-        const theme = isDarkMode ? 
-            colorThemes[activeTheme].dark : 
-            colorThemes[activeTheme].light;
-        
-        // Log the active theme for debugging
-        console.log(`Using ${activeTheme} theme in ${isDarkMode ? 'dark' : 'light'} mode`);
-        // ====================================================================
-        // END COLOR THEME CONFIGURATION
-        // ====================================================================
+
+        const textColor = getCssVar('--color-text-secondary');
+
+
 
         // Create SVG element inside the map div
+
         const svg = d3.select(mapDiv)
+
             .append('svg')
+
             .attr('width', width)
+
             .attr('height', height)
+
             .attr('viewBox', `0 0 ${width} ${height}`)
+
             .style('max-width', '100%')
+
             .style('height', 'auto');
 
+
+
         // Define color scale for the map
+
         const stateValues = Object.values(mapData).map(d => d.value);
+
         const maxValue = d3.max(stateValues) || 0;
 
-        // Create color scale for map using the selected theme
+
+
+        // Create color scale using CSS variables
+
         const colorScale = d3.scaleSequential()
+
             .domain([0, maxValue === 0 ? 1 : maxValue])
-            .interpolator(d3.interpolate(theme.low, theme.high));
+
+            .interpolator(isDarkMode ?
+
+                d3.interpolate(getCssVar('--color-surface-variant'), getCssVar('--chart-color-primary')) :
+
+                d3.interpolate(getCssVar('--color-surface-variant'), getCssVar('--chart-color-primary')));
+
+
 
         // Remove existing tooltips first
+
         d3.select("body").selectAll(".map-tooltip").remove();
+
         
+
         // Create tooltip - attach to body for better positioning
+
         const tooltip = d3.select("body")
+
             .append("div")
+
             .attr("class", "map-tooltip")
+
             .style("position", "absolute")
+
             .style("visibility", "hidden")
+
             .style("opacity", 0)
-            .style("background-color", isDarkMode ? "#252229" : "#FFFFFF")
-            .style("color", theme.text)
+
+            .style("background-color", getCssVar('--color-surface'))
+
+            .style("color", getCssVar('--color-text-primary'))
+
             .style("padding", "10px")
+
             .style("border-radius", "4px")
+
             .style("font-size", "12px")
+
             .style("pointer-events", "none")
-            .style("border", "1px solid " + theme.border)
+
+            .style("border", `1px solid ${getCssVar('--color-border')}`)
+
             .style("z-index", "9999");
 
+
+
         // State name mapping
+
         const fipsToStateName = {
+
             "01": "Alabama", "02": "Alaska", "04": "Arizona", "05": "Arkansas",
+
             "06": "California", "08": "Colorado", "09": "Connecticut", "10": "Delaware",
+
             "11": "District of Columbia", "12": "Florida", "13": "Georgia", "15": "Hawaii",
+
             "16": "Idaho", "17": "Illinois", "18": "Indiana", "19": "Iowa", "20": "Kansas",
+
             "21": "Kentucky", "22": "Louisiana", "23": "Maine", "24": "Maryland",
+
             "25": "Massachusetts", "26": "Michigan", "27": "Minnesota", "28": "Mississippi",
+
             "29": "Missouri", "30": "Montana", "31": "Nebraska", "32": "Nevada",
+
             "33": "New Hampshire", "34": "New Jersey", "35": "New Mexico", "36": "New York",
+
             "37": "North Carolina", "38": "North Dakota", "39": "Ohio", "40": "Oklahoma",
+
             "41": "Oregon", "42": "Pennsylvania", "44": "Rhode Island", "45": "South Carolina",
+
             "46": "South Dakota", "47": "Tennessee", "48": "Texas", "49": "Utah",
+
             "50": "Vermont", "51": "Virginia", "53": "Washington", "54": "West Virginia",
+
             "55": "Wisconsin", "56": "Wyoming", "72": "Puerto Rico"
+
         };
 
-        // Create a normalized state data map to handle FIPS code formatting differences
-        const stateDataMap = {};
-        Object.keys(mapData).forEach(code => {
-            // Normalize FIPS code format (ensure 2 digits with leading zero if needed)
-            const normalizedCode = code.padStart(2, '0');
-            stateDataMap[normalizedCode] = mapData[code];
-        });
+
 
         // Load US state boundaries GeoJSON
+
         d3.json('https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json')
+
             .then(us => {
+
                 if (!us || !us.objects || !us.objects.states) {
+
                     throw new Error("Invalid GeoJSON data");
+
                 }
 
+
+
                 // Convert TopoJSON to GeoJSON features
+
                 const states = topojson.feature(us, us.objects.states);
 
+
+
                 // Create projection
+
                 const projection = d3.geoAlbersUsa()
+
                     .fitSize([width, height], states);
 
+
+
                 // Create the path generator
+
                 const path = d3.geoPath().projection(projection);
 
+
+
                 // Draw state boundaries
+
                 svg.append('g')
+
                    .selectAll('path')
+
                    .data(states.features)
+
                    .enter()
+
                    .append('path')
+
                    .attr('d', path)
+
                    .attr('fill', d => {
+
                        // Use the state FIPS code to lookup data
+
                        const fipsCode = d.id.toString().padStart(2, '0');
-                       const stateData = stateDataMap[fipsCode];
-                       return stateData ? colorScale(stateData.value) : theme.noData;
+
+                       const stateData = mapData[fipsCode];
+
+                       return stateData ? colorScale(stateData.value) : getCssVar('--color-surface-variant');
+
                    })
-                   .attr('stroke', theme.border)
+
+                   .attr('stroke', getCssVar('--color-border'))
+
                    .attr('stroke-width', 0.5)
+
                    .style('cursor', 'pointer')
+
                    .on('mouseover', function(event, d) {
+
                        tooltip
+
                             .style("visibility", "visible")
+
                             .style("opacity", 1);
+
                             
+
                        tooltip.html(() => {
+
                            const fipsCode = d.id.toString().padStart(2, '0');
-                           const stateData = stateDataMap[fipsCode];
+
+                           const stateData = mapData[fipsCode];
+
                            const stateName = fipsToStateName[fipsCode] || "Unknown";
+
                            if (stateData) {
+
                                return `
+
                                    <strong>${stateName}</strong>
+
                                    <div>Total Value: ${formatCurrency(stateData.value)}</div>
+
                                    <div>Contracts: ${stateData.count.toLocaleString()}</div>
+
                                `;
+
                            } else {
+
                                return `<strong>${stateName}</strong><br>No data`;
+
                            }
+
                        })
+
                        .style("left", (event.pageX + 10) + "px")
+
                        .style("top", (event.pageY - 28) + "px");
 
+
+
                        // Highlight the state
+
                        d3.select(this)
-                           .attr("stroke", theme.highlight)
+
+                           .attr("stroke", getCssVar('--color-primary'))
+
                            .attr("stroke-width", 1.5)
+
                            .raise();
+
                    })
+
                    .on('mousemove', function(event) {
+
                        tooltip
+
                           .style("left", (event.pageX + 10) + "px")
+
                           .style("top", (event.pageY - 28) + "px");
+
                    })
+
                    .on('mouseout', function() {
+
                        tooltip
+
                           .style("visibility", "hidden")
+
                           .style("opacity", 0);
+
                               
+
                        d3.select(this)
-                           .attr("stroke", theme.border)
+
+                           .attr("stroke", getCssVar('--color-border'))
+
                            .attr("stroke-width", 0.5);
+
                    });
 
+
+
                 // Add legend
+
                 const legendWidth = Math.min(width * 0.4, 200);
+
                 const legendHeight = 10;
+
                 const legendX = width - legendWidth - 20;
+
                 const legendY = height - 35;
 
+
+
                 const legendGroup = svg.append("g")
+
                     .attr("transform", `translate(${legendX}, ${legendY})`);
 
+
+
                 // Create discrete color bins
+
                 const numBins = 5;
+
                 const binMaxValue = maxValue === 0 ? 1 : maxValue;
+
                 const bins = Array.from({length: numBins}, (_, i) => binMaxValue * i / (numBins - 1));
+
                 const binWidth = legendWidth / numBins;
 
+
+
                 // Add legend title
+
                 legendGroup.append('text')
+
                     .attr('x', legendWidth / 2)
+
                     .attr('y', -6)
+
                     .attr('text-anchor', 'middle')
+
                     .attr('font-size', '10px')
-                    .attr('fill', theme.text)
+
+                    .attr('fill', textColor)
+
                     .text('Contract Value');
 
+
+
                 // Create discrete color blocks
+
                 legendGroup.selectAll('rect')
+
                     .data(bins)
+
                     .enter()
+
                     .append('rect')
+
                     .attr('x', (d, i) => i * binWidth)
+
                     .attr('y', 0)
+
                     .attr('width', binWidth)
+
                     .attr('height', legendHeight)
+
                     .attr('fill', d => colorScale(d))
-                    .attr('stroke', theme.border)
+
+                    .attr('stroke', getCssVar('--color-border'))
+
                     .attr('stroke-width', 0.5);
 
+
+
                 // Add min/max labels
-                legendGroup.append('text')
-                    .attr('x', 0)
-                    .attr('y', legendHeight + 10)
-                    .attr('text-anchor', 'start')
-                    .attr('font-size', '10px')
-                    .attr('fill', theme.text)
-                    .text('Low');
 
                 legendGroup.append('text')
-                    .attr('x', legendWidth)
+
+                    .attr('x', 0)
+
                     .attr('y', legendHeight + 10)
-                    .attr('text-anchor', 'end')
+
+                    .attr('text-anchor', 'start')
+
                     .attr('font-size', '10px')
-                    .attr('fill', theme.text)
+
+                    .attr('fill', textColor)
+
+                    .text('Low');
+
+
+
+                legendGroup.append('text')
+
+                    .attr('x', legendWidth)
+
+                    .attr('y', legendHeight + 10)
+
+                    .attr('text-anchor', 'end')
+
+                    .attr('font-size', '10px')
+
+                    .attr('fill', textColor)
+
                     .text('High');
+
             })
+
             .catch(error => {
+
                 console.error("Error loading or processing GeoJSON for map:", error);
+
                 displayError(containerId, `Error rendering map: ${error.message}`);
+
                 // Clean up tooltip if it exists
+
                 d3.select("body").selectAll(".map-tooltip").remove();
+
             });
+
     } catch (error) {
+
         console.error("Error creating choropleth map:", error);
+
         displayError(containerId, "Failed to render map: " + error.message);
+
         // Clean up tooltip if it exists
+
         d3.select("body").selectAll(".map-tooltip").remove();
+
     }
+
 }
+
 function calculateAverageARRFromModel(model) {
     const resultDiv = document.getElementById('arr-result');
     const loadingDiv = document.getElementById('arr-loading');
