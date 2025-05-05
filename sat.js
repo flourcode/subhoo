@@ -2919,7 +2919,7 @@ function displayChoroplethMap(mapData) {
         };
         
         // SELECT THEME HERE - CHANGE THIS SINGLE VARIABLE TO SWAP THEMES
-        const activeTheme = 'purple'; // Options: 'purple', 'monochrome', 'blue', 'green'
+        const activeTheme = 'monochrome'; // Options: 'purple', 'monochrome', 'blue', 'green'
         
         // Get the appropriate theme colors based on mode
         const theme = isDarkMode ? 
