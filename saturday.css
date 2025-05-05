@@ -1,48 +1,48 @@
 /* ========================================= */
-/* Theme Variables (E Ink Grayscale Theme)    */
+/* CSS Variables - Light Mode (Inspired by Dark App Screenshot) */
 /* ========================================= */
 :root {
-    /* --- Core Hex Palette (E Ink Grays) --- */
-    --eink-white: #FFFFFF;
-    --eink-paper: #F4F4F4;        /* Off-white Background */
-    --eink-surface: #FAFAFA;      /* Slightly lighter surface for cards */
-    --eink-container: #EEEEEE;    /* Container / Subtle BG variant */
-    --eink-border: #DDDDDD;       /* Subtle Border / Variant */
-    --eink-outline: #CCCCCC;      /* Outline / Disabled Text */
-    --eink-mid-gray: #AAAAAA;     /* Tertiary Text */
-    --eink-secondary-text: #666666;/* Secondary Text */
-    --eink-primary-text: #333333;  /* Primary Text / Primary Action */
-    --eink-black: #1A1A1A;        /* Near Black */
+    /* --- Core Hex Palette (Derived from Screenshot Analysis) --- */
+    /* Light Mode Base */
+    --hex-lm-bg: #F5F6F7;           /* Very light gray background */
+    --hex-lm-surface: #FFFFFF;       /* White surfaces */
+    --hex-lm-container: #F0F1F3;    /* Subtle off-white container */
+    --hex-lm-border: #D8DAE0;       /* Light gray border */
+    --hex-lm-outline: #C2C5CC;      /* Mid-light gray outline */
+    /* Dark Text for Light Mode */
+    --hex-lm-text-primary: #1C1D21;  /* Dark Charcoal Text/Primary Action */
+    --hex-lm-text-secondary: #4A4B52;/* Mid-Dark Gray Text/Secondary Action */
+    --hex-lm-text-tertiary: #8A8D93; /* Mid Gray Text */
 
-    /* Status Colors (Standard Hex - Retained for Clarity) */
+    /* Status Colors (Standard Hex) */
     --status-red: #D81B60;
     --status-green: #388E3C;
     --status-blue: #1E88E5;
     --status-yellow: #FBC02D;
 
     /* --- Semantic Color Mapping (Light Mode) --- */
-    --color-background: var(--eink-paper);
-    --color-surface: var(--eink-surface);
-    --color-surface-container: var(--eink-container);
-    --color-surface-variant: var(--eink-border); /* Use border color as variant */
+    --color-background: var(--hex-lm-bg);
+    --color-surface: var(--hex-lm-surface);
+    --color-surface-container: var(--hex-lm-container);
+    --color-surface-variant: #E8EAEF; /* Slightly darker than container */
 
-    --color-text-primary: var(--eink-primary-text);
-    --color-text-secondary: var(--eink-secondary-text);
-    --color-text-tertiary: var(--eink-mid-gray);
+    --color-text-primary: var(--hex-lm-text-primary);
+    --color-text-secondary: var(--hex-lm-text-secondary);
+    --color-text-tertiary: var(--hex-lm-text-tertiary);
 
-    --color-primary: var(--eink-primary-text);   /* Dark gray primary action */
-    --color-on-primary: var(--eink-surface);     /* Light surface color on action */
-    --color-secondary: var(--eink-secondary-text);/* Slightly lighter gray secondary */
-    --color-on-secondary: var(--eink-surface);   /* Light surface color on action */
+    --color-primary: var(--hex-lm-text-primary);   /* Primary Action = Dark Text */
+    --color-on-primary: var(--hex-lm-surface);     /* Text on Action = White */
+    --color-secondary: var(--hex-lm-text-secondary);/* Secondary Action = Mid-Dark Text */
+    --color-on-secondary: var(--hex-lm-surface);   /* Text on Action = White */
 
-    --color-border: var(--eink-border);          /* Subtle border */
-    --color-outline: var(--eink-outline);        /* Subtle outline */
-    --color-focus-ring: rgba(51, 51, 51, 0.6);   /* Based on primary text */
+    --color-border: var(--hex-lm-border);
+    --color-outline: var(--hex-lm-outline);
+    --color-focus-ring: rgba(28, 29, 33, 0.5);     /* Based on text primary */
 
-    /* Chart Colors (Grayscale Progression) */
-    --chart-color-primary: var(--eink-primary-text);    /* Darkest */
-    --chart-color-secondary: var(--eink-secondary-text);
-    --chart-color-tertiary: var(--eink-mid-gray);       /* Lightest */
+    /* Chart Colors (Grayscale based on text) */
+    --chart-color-primary: var(--hex-lm-text-primary);   /* Darkest */
+    --chart-color-secondary: var(--hex-lm-text-secondary);
+    --chart-color-tertiary: var(--hex-lm-text-tertiary); /* Lightest */
 
     /* Status Colors */
     --color-error: var(--status-red);
@@ -50,31 +50,32 @@
     --color-warning: var(--status-yellow);
     --color-info: var(--status-blue);
 
-    /* --- Layout & Feel Adjustments --- */
-    --border-radius-sm: 4px;  /* Sharper corners */
-    --border-radius-md: 6px;
-    --border-radius-lg: 8px;
-    /* Minimal/No Shadows */
-    --shadow-sm: none;
-    --shadow-md: none; /* Or maybe '0 2px 5px rgba(0, 0, 0, 0.05)' for very subtle depth */
-    --shadow-lg: none; /* Or maybe '0 4px 8px rgba(0, 0, 0, 0.07)' */
-    --transition-standard: all 0.1s ease-out; /* Faster, subtle transitions */
+    /* --- Layout Values (Keep Consistent) --- */
+    --border-radius-sm: 6px;
+    --border-radius-md: 8px;
+    --border-radius-lg: 12px;
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
+    --shadow-md: 0 3px 6px rgba(0, 0, 0, 0.09);
+    --shadow-lg: 0 6px 12px rgba(0, 0, 0, 0.1);
+    --transition-standard: all 0.2s ease-in-out;
     --bento-gap: 16px;
-    --scale-interactive: scale(1.01); /* Very subtle scale */
+    --scale-interactive: scale(1.02);
 }
 
 /* ========================================= */
-/* CSS Variables - Dark Mode (E Ink Inverted) */
+/* CSS Variables - Dark Mode (Inspired by Dark App Screenshot) */
 /* ========================================= */
 [data-theme="dark"] {
-    /* --- Core Hex Palette References (Dark Mode E Ink) --- */
-    --eink-paper-dark: #333333;         /* Dark Gray BG = Light Text Color */
-    --eink-surface-dark: #404040;       /* Slightly Lighter Surface */
-    --eink-container-dark: #4d4d4d;     /* Container / Border */
-    --eink-variant-dark: #5a5a5a;       /* Variant / Outline */
-    --eink-text-dark: #CCCCCC;          /* Light Gray Text = Light Outline */
-    --eink-text-mid-dark: #BBBBBB;      /* Slightly darker text */
-    --eink-text-light-dark: #DCDCDC;    /* Lighter Text */
+    /* --- Core Hex Palette (Dark Mode - Derived from Screenshot) --- */
+    --hex-dm-bg: #1C1D21;           /* Dark Charcoal/Blue BG */
+    --hex-dm-surface: #25262B;       /* Slightly Lighter Surface */
+    --hex-dm-container: #2C2D32;     /* Container */
+    --hex-dm-border: #3A3B40;         /* Border / Variant */
+    --hex-dm-outline: #4A4B52;        /* Outline */
+    /* Light Text for Dark Mode */
+    --hex-dm-text-primary: #F0F0F0;    /* Bright Off-White Text / Primary Action */
+    --hex-dm-text-secondary: #A0A1A5;  /* Mid-Light Gray Text / Secondary Action */
+    --hex-dm-text-tertiary: #65666A;   /* Mid-Dark Gray Text */
 
     /* Status Colors (Brighter for Dark Mode) */
     --status-red-dark: #f06292;
@@ -83,28 +84,28 @@
     --status-yellow-dark: #ffd54f;
 
     /* --- Semantic Color Mapping (Dark Mode) --- */
-    --color-background: var(--eink-paper-dark);
-    --color-surface: var(--eink-surface-dark);
-    --color-surface-container: var(--eink-container-dark);
-    --color-surface-variant: var(--eink-variant-dark);
+    --color-background: var(--hex-dm-bg);
+    --color-surface: var(--hex-dm-surface);
+    --color-surface-container: var(--hex-dm-container);
+    --color-surface-variant: var(--hex-dm-border); /* Using border as variant */
 
-    --color-text-primary: var(--eink-text-dark);
-    --color-text-secondary: var(--eink-text-mid-dark);
-    --color-text-tertiary: #999999; /* Even dimmer gray */
+    --color-text-primary: var(--hex-dm-text-primary);
+    --color-text-secondary: var(--hex-dm-text-secondary);
+    --color-text-tertiary: var(--hex-dm-text-tertiary);
 
-    --color-primary: var(--eink-text-dark);      /* Light gray primary action */
-    --color-on-primary: var(--eink-paper-dark);  /* Dark bg color on action */
-    --color-secondary: var(--eink-text-mid-dark);/* Mid light gray secondary */
-    --color-on-secondary: var(--eink-paper-dark);/* Dark bg color on action */
+    --color-primary: var(--hex-dm-text-primary);     /* Primary Action = Light Text */
+    --color-on-primary: var(--hex-dm-bg);            /* Text on Action = Dark BG */
+    --color-secondary: var(--hex-dm-text-secondary);/* Secondary Action = Lighter Gray Text */
+    --color-on-secondary: var(--hex-dm-bg);          /* Text on Action = Dark BG */
 
-    --color-border: var(--eink-container-dark);
-    --color-outline: var(--eink-variant-dark);
-    --color-focus-ring: rgba(204, 204, 204, 0.6); /* Based on primary */
+    --color-border: var(--hex-dm-border);
+    --color-outline: var(--hex-dm-outline);
+    --color-focus-ring: rgba(240, 240, 240, 0.6);    /* Based on text primary */
 
-    /* Chart Colors (Grayscale Progression - Light to Dark) */
-    --chart-color-primary: var(--eink-text-dark);      /* Lightest */
-    --chart-color-secondary: var(--eink-text-mid-dark);
-    --chart-color-tertiary: var(--eink-mid-gray);      /* Using light-mode mid gray */
+    /* Chart Colors (Grayscale based on text) */
+    --chart-color-primary: var(--hex-dm-text-primary);   /* Brightest */
+    --chart-color-secondary: var(--hex-dm-text-secondary);
+    --chart-color-tertiary: var(--hex-dm-text-tertiary); /* Dimmest */
 
     /* Status Colors */
     --color-error: var(--status-red-dark);
@@ -112,12 +113,12 @@
     --color-warning: var(--status-yellow-dark);
     --color-info: var(--status-blue-dark);
 
-    /* Dark Mode Shadows (None or Minimal) */
-    --shadow-sm: none;
-    --shadow-md: none; /* Or '0 2px 5px rgba(0, 0, 0, 0.15)' */
-    --shadow-lg: none; /* Or '0 4px 8px rgba(0, 0, 0, 0.2)' */
+    /* Dark Mode Shadows */
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 3px 6px rgba(0, 0, 0, 0.35);
+    --shadow-lg: 0 6px 12px rgba(0, 0, 0, 0.4);
+    /* Inherits layout vars from :root */
 }
-
 /* ========================================= */
 /* Base Styles & Reset                       */
 /* ========================================= */
