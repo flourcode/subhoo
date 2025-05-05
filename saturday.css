@@ -212,7 +212,7 @@ a:hover {
 
 .main-content {
     flex: 1; height: 100%; overflow-y: auto; padding: var(--bento-gap);
-    background-color: transparent; /* Let app-container bg show through */
+    background-color: var(--color-surface-container);
     scrollbar-width: thin; scrollbar-color: var(--color-outline) transparent;
 }
 .main-content::-webkit-scrollbar { width: 8px; }
