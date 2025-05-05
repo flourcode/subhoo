@@ -1997,6 +1997,71 @@ function displayTavTcvChart(chartData) {
         }
     });
 }
+// Add this function to your JavaScript file
+
+/**
+ * Exports data to a CSV file and triggers a download
+ * @param {Array} data - Array of objects to convert to CSV
+ * @param {String} filename - Name of the file to download
+ */
+function exportToCSV(data, filename) {
+    // Return if no data
+    if (!data || !data.length) {
+        console.warn('No data to export');
+        return;
+    }
+
+    // Get headers from the first data object
+    const headers = Object.keys(data[0]);
+    
+    // Create CSV header row
+    let csvContent = headers.join(',') + '\n';
+    
+    // Add data rows
+    data.forEach(item => {
+        const row = headers.map(header => {
+            // Get the value for this header
+            let value = item[header] || '';
+            
+            // Format dates if needed
+            if (header.includes('date') && value instanceof Date) {
+                value = value.toISOString().split('T')[0]; // YYYY-MM-DD format
+            }
+            
+            // Handle commas and quotes in the value (CSV escape)
+            const cellValue = String(value).replace(/"/g, '""');
+            
+            // Wrap in quotes if the value contains commas, quotes, or newlines
+            return /[",\n\r]/.test(cellValue) ? `"${cellValue}"` : cellValue;
+        }).join(',');
+        
+        csvContent += row + '\n';
+    });
+    
+    // Create a Blob containing the CSV data
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    
+    // Create a download link
+    const link = document.createElement('a');
+    
+    // Create a URL for the blob
+    const url = URL.createObjectURL(blob);
+    
+    // Set link properties
+    link.setAttribute('href', url);
+    link.setAttribute('download', filename);
+    link.style.visibility = 'hidden';
+    
+    // Add link to document, click it, then remove it
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+/**
+ * Modify your displayExpiringTable function to include an export button
+ * @param {Array} expiringData - Array of expiring contract data
+ */
 function displayExpiringTable(expiringData) {
     const containerId = 'expiring-contracts-table-container';
     const container = document.getElementById(containerId);
@@ -2014,6 +2079,60 @@ function displayExpiringTable(expiringData) {
         displayNoData(containerId, 'No contracts found expiring in the next 6 months.');
         return;
     }
+
+    // Create header section with export button
+    const headerSection = document.createElement('div');
+    headerSection.style.display = 'flex';
+    headerSection.style.justifyContent = 'flex-end';
+    headerSection.style.marginBottom = '8px';
+    
+    // Create the export button
+    const exportButton = document.createElement('button');
+    exportButton.className = 'button';
+    exportButton.innerHTML = `
+        <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+        </svg>
+        Export CSV
+    `;
+    exportButton.style.display = 'flex';
+    exportButton.style.alignItems = 'center';
+    exportButton.style.gap = '6px';
+    
+    // Add click event to export button
+    exportButton.addEventListener('click', () => {
+        // Clone the data and clean it for export
+        const exportData = expiringData.map(contract => {
+            // Create a clean object for export - select only the fields you want
+            return {
+                contract_id: contract.award_id_piid || contract.contract_award_unique_key || '',
+                contractor_name: contract.recipient_name || '',
+                description: contract.transaction_description || '',
+                end_date: contract.formatted_end_date || 
+                    (contract.period_of_performance_current_end_date_parsed instanceof Date ? 
+                     contract.period_of_performance_current_end_date_parsed.toISOString().split('T')[0] : 
+                     contract.period_of_performance_current_end_date || ''),
+                value: typeof contract.current_total_value_of_award === 'number' ? 
+                       contract.current_total_value_of_award : 
+                       parseFloat(contract.current_total_value_of_award || 0),
+                naics_code: contract.naics_code || '',
+                naics_description: contract.naics_description || ''
+            };
+        });
+        
+        // Get current date for filename
+        const today = new Date();
+        const dateStr = today.toISOString().split('T')[0]; // YYYY-MM-DD format
+        
+        // Export the data
+        exportToCSV(exportData, `expiring-contracts-${dateStr}.csv`);
+    });
+    
+    // Add export button to header section
+    headerSection.appendChild(exportButton);
+    container.appendChild(headerSection);
 
     // Create Table Structure
     const tableWrapper = document.createElement('div');
