@@ -2828,6 +2828,10 @@ function displayChoroplethMap(mapData) {
             return;
         }
 
+        // Check if we're in dark mode
+        const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
+        const textColor = isDarkMode ? '#F4F2F6' : '#36323A';
+
         // Create SVG element inside the map div
         const svg = d3.select(mapDiv)
             .append('svg')
@@ -2837,60 +2841,35 @@ function displayChoroplethMap(mapData) {
             .style('max-width', '100%')
             .style('height', 'auto');
 
-        // Get state values and compute the max for scaling
+        // Define color scale for the map
         const stateValues = Object.values(mapData).map(d => d.value);
-        const maxValue = d3.max(stateValues) || 1; // Default to 1 if no data
-        console.log("Max state value:", maxValue);
+        const maxValue = d3.max(stateValues) || 0;
 
-        // Get colors directly from DOM computed styles to avoid CSS variable issues
-        // Create a throwaway element to compute styles from
-        const testEl = document.createElement('div');
-        document.body.appendChild(testEl);
-        
-        // Apply CSS classes or attributes to simulate theme
-        const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
-        if (isDarkMode) {
-            testEl.setAttribute('data-theme', 'dark');
-        }
-        
-        // Get computed style colors (fallbacks provided)
-        const getColor = (varName, fallback) => {
-            const value = getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
-            return value || fallback;
-        };
-        
-        // Get theme-specific colors
-        const lowColor = isDarkMode ? 
-            getColor('--color-surface-variant', '#3A3B40') : 
-            getColor('--color-surface-variant', '#E8EAEF');
-        const highColor = isDarkMode ? 
-            getColor('--chart-color-primary', '#F0F0F0') : 
-            getColor('--chart-color-primary', '#1C1D21');
-            
-        console.log("Color scale:", lowColor, "to", highColor);
-        
-        // Clean up test element
-        document.body.removeChild(testEl);
+        // Create color scale for map - use different colors for dark/light mode
+        // Using hardcoded colors instead of CSS variables for compatibility with D3
+        const colorScale = d3.scaleSequential()
+            .domain([0, maxValue === 0 ? 1 : maxValue])
+            .interpolator(isDarkMode ?
+                d3.interpolate('#3A373E', '#A29AAA') : // Dark mode: darker to lighter purple
+                d3.interpolate('#E9E6ED', '#9993A1')); // Light mode: light to medium purple
 
-        // Create color scale with explicit colors
-        const colorScale = d3.scaleLinear()
-            .domain([0, maxValue])
-            .range([lowColor, highColor]);
-
-        // Create tooltip
+        // Remove existing tooltips first
+        d3.select("body").selectAll(".map-tooltip").remove();
+        
+        // Create tooltip - attach to body for better positioning
         const tooltip = d3.select("body")
             .append("div")
             .attr("class", "map-tooltip")
             .style("position", "absolute")
             .style("visibility", "hidden")
             .style("opacity", 0)
-            .style("background-color", getColor('--color-surface', '#FFFFFF'))
-            .style("color", getColor('--color-text-primary', '#1C1D21'))
+            .style("background-color", isDarkMode ? "#252229" : "#FFFFFF")
+            .style("color", isDarkMode ? "#F4F2F6" : "#36323A")
             .style("padding", "10px")
             .style("border-radius", "4px")
             .style("font-size", "12px")
             .style("pointer-events", "none")
-            .style("border", `1px solid ${getColor('--color-border', '#D8DAE0')}`)
+            .style("border", "1px solid " + (isDarkMode ? "#3A373E" : "#D7D4DC"))
             .style("z-index", "9999");
 
         // State name mapping
@@ -2910,15 +2889,13 @@ function displayChoroplethMap(mapData) {
             "55": "Wisconsin", "56": "Wyoming", "72": "Puerto Rico"
         };
 
-        // Create a mapping between state FIPS codes and actual data
+        // Create a normalized state data map to handle FIPS code formatting differences
         const stateDataMap = {};
         Object.keys(mapData).forEach(code => {
-            // Normalize FIPS code format
+            // Normalize FIPS code format (ensure 2 digits with leading zero if needed)
             const normalizedCode = code.padStart(2, '0');
             stateDataMap[normalizedCode] = mapData[code];
         });
-        
-        console.log("State data map sample:", Object.keys(stateDataMap).slice(0, 5));
 
         // Load US state boundaries GeoJSON
         d3.json('https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json')
@@ -2948,48 +2925,36 @@ function displayChoroplethMap(mapData) {
                        // Use the state FIPS code to lookup data
                        const fipsCode = d.id.toString().padStart(2, '0');
                        const stateData = stateDataMap[fipsCode];
-                       
-                       // Apply color scale if data exists, otherwise use default color
-                       if (stateData && stateData.value > 0) {
-                           const color = colorScale(stateData.value);
-                           // Log a sample of colors being applied
-                           if (Math.random() < 0.1) {
-                               console.log(`State ${fipsCode} (${fipsToStateName[fipsCode]}): value=${stateData.value}, color=${color}`);
-                           }
-                           return color;
-                       } else {
-                           return getColor('--color-surface-variant', '#E8EAEF');
-                       }
+                       return stateData ? colorScale(stateData.value) : (isDarkMode ? '#2D2A31' : '#E0E0E0');
                    })
-                   .attr('stroke', getColor('--color-border', '#D8DAE0'))
+                   .attr('stroke', isDarkMode ? '#3A373E' : '#FFFFFF')
                    .attr('stroke-width', 0.5)
                    .style('cursor', 'pointer')
                    .on('mouseover', function(event, d) {
-                       const fipsCode = d.id.toString().padStart(2, '0');
-                       const stateData = stateDataMap[fipsCode];
-                       const stateName = fipsToStateName[fipsCode] || "Unknown";
-                       
-                       // Show tooltip
                        tooltip
-                           .style("visibility", "visible")
-                           .style("opacity", 1)
-                           .html(() => {
-                               if (stateData && stateData.value > 0) {
-                                   return `
-                                       <strong>${stateName}</strong>
-                                       <div>Total Value: ${formatCurrency(stateData.value)}</div>
-                                       <div>Contracts: ${stateData.count.toLocaleString()}</div>
-                                   `;
-                               } else {
-                                   return `<strong>${stateName}</strong><br>No data`;
-                               }
-                           })
-                           .style("left", (event.pageX + 10) + "px")
-                           .style("top", (event.pageY - 28) + "px");
+                            .style("visibility", "visible")
+                            .style("opacity", 1);
+                            
+                       tooltip.html(() => {
+                           const fipsCode = d.id.toString().padStart(2, '0');
+                           const stateData = stateDataMap[fipsCode];
+                           const stateName = fipsToStateName[fipsCode] || "Unknown";
+                           if (stateData) {
+                               return `
+                                   <strong>${stateName}</strong>
+                                   <div>Total Value: ${formatCurrency(stateData.value)}</div>
+                                   <div>Contracts: ${stateData.count.toLocaleString()}</div>
+                               `;
+                           } else {
+                               return `<strong>${stateName}</strong><br>No data`;
+                           }
+                       })
+                       .style("left", (event.pageX + 10) + "px")
+                       .style("top", (event.pageY - 28) + "px");
 
                        // Highlight the state
                        d3.select(this)
-                           .attr("stroke", getColor('--color-primary', '#1C1D21'))
+                           .attr("stroke", isDarkMode ? "#A29AAA" : "#9993A1")
                            .attr("stroke-width", 1.5)
                            .raise();
                    })
@@ -3004,7 +2969,7 @@ function displayChoroplethMap(mapData) {
                           .style("opacity", 0);
                               
                        d3.select(this)
-                           .attr("stroke", getColor('--color-border', '#D8DAE0'))
+                           .attr("stroke", isDarkMode ? '#3A373E' : '#FFFFFF')
                            .attr("stroke-width", 0.5);
                    });
 
@@ -3019,7 +2984,8 @@ function displayChoroplethMap(mapData) {
 
                 // Create discrete color bins
                 const numBins = 5;
-                const bins = Array.from({length: numBins}, (_, i) => maxValue * i / (numBins - 1));
+                const binMaxValue = maxValue === 0 ? 1 : maxValue;
+                const bins = Array.from({length: numBins}, (_, i) => binMaxValue * i / (numBins - 1));
                 const binWidth = legendWidth / numBins;
 
                 // Add legend title
@@ -3028,7 +2994,7 @@ function displayChoroplethMap(mapData) {
                     .attr('y', -6)
                     .attr('text-anchor', 'middle')
                     .attr('font-size', '10px')
-                    .attr('fill', getColor('--color-text-secondary', '#4A4B52'))
+                    .attr('fill', textColor)
                     .text('Contract Value');
 
                 // Create discrete color blocks
@@ -3041,7 +3007,7 @@ function displayChoroplethMap(mapData) {
                     .attr('width', binWidth)
                     .attr('height', legendHeight)
                     .attr('fill', d => colorScale(d))
-                    .attr('stroke', getColor('--color-border', '#D8DAE0'))
+                    .attr('stroke', isDarkMode ? '#3A373E' : '#D7D4DC')
                     .attr('stroke-width', 0.5);
 
                 // Add min/max labels
@@ -3050,7 +3016,7 @@ function displayChoroplethMap(mapData) {
                     .attr('y', legendHeight + 10)
                     .attr('text-anchor', 'start')
                     .attr('font-size', '10px')
-                    .attr('fill', getColor('--color-text-secondary', '#4A4B52'))
+                    .attr('fill', textColor)
                     .text('Low');
 
                 legendGroup.append('text')
@@ -3058,17 +3024,19 @@ function displayChoroplethMap(mapData) {
                     .attr('y', legendHeight + 10)
                     .attr('text-anchor', 'end')
                     .attr('font-size', '10px')
-                    .attr('fill', getColor('--color-text-secondary', '#4A4B52'))
+                    .attr('fill', textColor)
                     .text('High');
             })
             .catch(error => {
                 console.error("Error loading or processing GeoJSON for map:", error);
                 displayError(containerId, `Error rendering map: ${error.message}`);
+                // Clean up tooltip if it exists
                 d3.select("body").selectAll(".map-tooltip").remove();
             });
     } catch (error) {
         console.error("Error creating choropleth map:", error);
         displayError(containerId, "Failed to render map: " + error.message);
+        // Clean up tooltip if it exists
         d3.select("body").selectAll(".map-tooltip").remove();
     }
 }
