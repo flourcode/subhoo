@@ -1,7 +1,15 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700&family=Ubuntu:wght@500;700&display=swap');
+/* Import Poppins instead of Nunito */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Ubuntu:wght@500;700&display=swap');
+
+
 /* ========================================= */
-/* CSS Variables - Light Mode (OKLCH Green v2 Mapped) */
+/* Theme Variables (Dark UI w/ Pink/Purple Accent + New Fonts) */
 /* ========================================= */
 :root {
+    /* --- Font Families --- */
+    --font-heading: 'Ubuntu', sans-serif;
+    --font-body: 'Poppins', sans-serif; /* Changed from Nunito */
     /* --- Base OKLCH Palette (Hue 120 - from user) --- */
     --oklch-background-light: oklch(100% 0 120);
     --oklch-on-accent-light: oklch(100% 0 0);
