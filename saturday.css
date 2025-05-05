@@ -510,5 +510,36 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
     outline-offset: 2px;
     box-shadow: 0 0 0 2px var(--color-background), 0 0 0 4px var(--color-focus-ring);
 }
-/* Remove input focus override */
-/* .input-select:focus,... { ... } */
+.app-container {
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  background-color: #fff;
+  margin: 40px;
+  min-height: calc(100vh - 40px); /* Minimum height based on viewport */
+  display: flex;
+  flex-direction: column;
+}
+
+/* For dark mode support */
+[data-theme="dark"] .app-container {
+  background-color: #272727;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* Optional: Add a subtle border */
+.app-container {
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+[data-theme="dark"] .app-container {
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Media query for small screens */
+@media (max-width: 600px) {
+  .app-container {
+    margin: 10px;
+    border-radius: 8px;
+    min-height: calc(100vh - 20px);
+  }
+}
