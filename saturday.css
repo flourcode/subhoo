@@ -231,12 +231,14 @@ a:hover { color: var(--color-secondary); text-decoration: none; }
     display: grid;
     gap: var(--bento-gap);
     grid-template-columns: repeat(5, 1fr);
-    /* --- Original 3-row Layout --- */
+    /* --- User Specified 4-row Layout --- */
     grid-template-areas:
-        "sankey sankey sankey map arr"
+        "sankey sankey sankey sankey arr"
+        "sankey sankey sankey sankey map"
         "tavtcv tavtcv leaders leaders leaders"
         "expiring expiring expiring expiring expiring";
-    grid-template-rows: minmax(400px, auto) auto auto;
+    /* --- Adjust rows for 4-row layout --- */
+    grid-template-rows: minmax(200px, auto) minmax(200px, auto) auto auto; /* Example heights */
 }
 /* --- Correct Area Assignments --- */
 #bento-arr { grid-area: arr; }
@@ -245,10 +247,6 @@ a:hover { color: var(--color-secondary); text-decoration: none; }
 #bento-tavtcv { grid-area: tavtcv; }
 #bento-leaders { grid-area: leaders; }
 #bento-expiring { grid-area: expiring; }
-/* Keep Span Utilities */
-.col-span-2 { grid-column: span 2; }
-.col-span-4 { grid-column: span 4; }
-.col-span-5 { grid-column: span 5; }
 
 /* ========================================= */
 /* Card Styles (`.bento-box`)                */
