@@ -1,5 +1,7 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Ubuntu:wght@500;700&display=swap');
+
 /* ========================================= */
-/* Theme Variables (Monocle/Print Style w/ Desat Purple Accent + Ubuntu/Poppins Fonts) */
+/* Theme Variables (Monocle/Print Style FINAL - Corrected Layout) */
 /* ========================================= */
 :root {
     /* --- Font Families --- */
@@ -8,9 +10,9 @@
 
     /* --- Core Hex Palette (Monocle/Print Theme) --- */
     /* Desaturated Purples */
-    --dsp-purple-50: #F5F3F5;    /* Surface */
-    --dsp-purple-100: #EDEAEB;   /* Container */
-    --dsp-purple-200: #D8D4D7;   /* Variant / Border */
+    --dsp-purple-50: #F5F3F5;    /* App Container BG (Light) */
+    --dsp-purple-100: #EDEAEB;   /* Bento Box BG (Light) */
+    --dsp-purple-200: #D8D4D7;   /* Variant / Border (Light) */
     --dsp-purple-300: #B6B1B7;   /* Outline / Tertiary Chart / Dark Secondary Text */
     --dsp-purple-400: #9A949B;   /* Primary Accent / Chart / Dark Tertiary Text */
     --dsp-purple-500: #7A747B;   /* Secondary Accent / Tertiary Text Light / Chart */
@@ -18,12 +20,12 @@
     /* Neutrals */
     --creamy-white: #FDFBF5;     /* Dark Mode Text Primary */
     --pure-white: #FFFFFF;       /* Light Mode BG / On-Action */
-    --black-brown: #312d2a;      /* Light Mode Text Primary / Dark Surface Container/Border */
+    --black-brown: #312d2a;      /* Light Mode Text Primary / Dark Bento Box BG / Dark Border */
     --darker-charcoal: #1c1a19;  /* Dark Mode BG */
     /* Dark Surfaces */
-    --dark-surface-1: #262321;   /* Dark Mode Surface */
-    --dark-surface-2: var(--black-brown);
-    --dark-surface-3: #3f3a37;   /* Dark Mode Outline */
+    --dark-surface-1: #262321;   /* Dark Mode App Container/Side Panel BG */
+    --dark-surface-2: var(--black-brown); /* Mapped to Dark Bento Box BG */
+    --dark-surface-3: #3f3a37;   /* Dark Mode Outline / Variant */
     /* Dark Mode Accent Purples */
     --dsp-dark-accent-primary: #A59FA8;
     --dsp-dark-accent-secondary: #908A91;
@@ -36,7 +38,7 @@
 
     /* --- Semantic Color Mapping (Light Mode - Panel Style) --- */
     --color-background: var(--pure-white);             /* PAGE Background */
-    --color-surface: var(--dsp-purple-50);             /* APP CONTAINER Background */
+    --color-surface: var(--dsp-purple-50);             /* APP CONTAINER / SIDE PANEL Background */
     --color-surface-container: var(--dsp-purple-100);  /* BENTO BOX Background */
     --color-surface-variant: var(--dsp-purple-200);
 
@@ -57,7 +59,7 @@
     --chart-color-secondary: var(--dsp-purple-500);
     --chart-color-tertiary: var(--dsp-purple-300);
 
-    --color-error: var(--status-red); /* ... map other status ... */
+    --color-error: var(--status-red); /* map status */
     --color-success: var(--status-green);
     --color-warning: var(--status-yellow);
     --color-info: var(--status-blue);
@@ -75,28 +77,28 @@
 }
 
 /* ========================================= */
-/* CSS Variables - Dark Mode (Monocle Print Style w/ Desat Purple Accent) */
+/* CSS Variables - Dark Mode (Monocle Print Style - Corrected Panel BGs) */
 /* ========================================= */
 [data-theme="dark"] {
     /* --- Core Hex Palette References --- */
     /* Using vars defined in :root */
 
     /* --- Semantic Color Mapping --- */
-    --color-background: var(--darker-charcoal);        /* PAGE */
-    --color-surface: var(--dark-surface-1);            /* APP CONTAINER */
-    --color-surface-container: var(--dark-surface-2);  /* BENTO BOX */
-    --color-surface-variant: var(--dark-surface-3);
+    --color-background: var(--darker-charcoal);        /* PAGE Background (#1c1a19) */
+    --color-surface: var(--dark-surface-1);            /* APP CONTAINER / SIDE PANEL Background (#262321) */
+    --color-surface-container: var(--dark-surface-2);  /* BENTO BOX Background (#312d2a) */
+    --color-surface-variant: var(--dark-surface-3);    /* #3f3a37 */
 
     --color-text-primary: var(--creamy-white);
-    --color-text-secondary: var(--dsp-purple-300);
-    --color-text-tertiary: var(--dsp-purple-400);
+    --color-text-secondary: var(--dsp-purple-300);     /* Using light mode outline color */
+    --color-text-tertiary: var(--dsp-purple-400);      /* Using light mode primary color */
 
     --color-primary: var(--dsp-dark-accent-primary);
     --color-on-primary: var(--darker-charcoal);
     --color-secondary: var(--dsp-dark-accent-secondary);
     --color-on-secondary: var(--darker-charcoal);
 
-    --color-border: var(--dark-surface-2);
+    --color-border: var(--dark-surface-2);             /* Bento Box BG color as border */
     --color-outline: var(--dark-surface-3);
     --color-focus-ring: rgba(165, 159, 168, 0.6);
 
@@ -104,7 +106,7 @@
     --chart-color-secondary: var(--dsp-dark-accent-secondary);
     --chart-color-tertiary: var(--dsp-dark-chart-tertiary);
 
-    --color-error: var(--status-red-dark); /* ... map other status ... */
+    --color-error: var(--status-red-dark); /* map status */
     --color-success: var(--status-green-dark);
     --color-warning: var(--status-yellow-dark);
     --color-info: var(--status-blue-dark);
@@ -124,8 +126,8 @@
 html { height: 100%; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; scroll-behavior: smooth; }
 
 body {
-    font-family: 'Inter', -apple-system, sans-serif;
-    background-color: var(--color-background); /* Page background */
+    font-family: var(--font-body), sans-serif; /* Poppins */
+    background-color: var(--color-background); /* PAGE background */
     color: var(--color-text-primary);
     line-height: 1.5; font-size: 14px;
     margin: 0; padding: 0; height: 100%; overflow: hidden;
@@ -143,11 +145,11 @@ h1, h2, h3, h4, h5, h6 {
 /* App Container Styles (Panel Look)         */
 /* ========================================= */
 .app-container {
-  background-color: var(--color-surface);var(--color-surface-container); /* Panel background */
+  background-color: var(--color-surface); /* Panel background */
   border: 1px solid var(--color-border);
   border-radius: var(--border-radius-md);  /* 8px */
-  box-shadow: var(--shadow-lg);            /* Use large theme shadow */
-  margin: 32px; /* Adjust margin as desired */
+  box-shadow: var(--shadow-lg);
+  margin: 32px;
   height: calc(100vh - 64px);
   max-height: calc(100vh - 64px);
   overflow: hidden;
@@ -168,16 +170,10 @@ h1, h2, h3, h4, h5, h6 {
 /* ========================================= */
 /* Base Links & Transitions                  */
 /* ========================================= */
-a {
-    color: var(--color-primary); font-weight: 600;
-    text-decoration: none; transition: color 0.2s ease;
-}
-a:hover {
-    color: var(--color-secondary);
-    text-decoration: none;
-}
+a { color: var(--color-primary); font-weight: 600; text-decoration: none; transition: color 0.2s ease; }
+a:hover { color: var(--color-secondary); text-decoration: none; }
 
-/* Apply theme transitions broadly */
+/* Apply theme transitions */
 .bento-box, .date-container, .side-panel, th, td, button, input, select, label,
 .card-icon-circle, #status-banner, .tooltip, .sidebar-info, .sidebar-footer {
     transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease, opacity 0.2s ease;
@@ -186,33 +182,28 @@ a:hover {
 /* ========================================= */
 /* Layout Styles                             */
 /* ========================================= */
-.dashboard-layout { display: flex; height: 100%; width: 100%; overflow: hidden; } /* Fill app-container */
+.dashboard-layout { display: flex; height: 100%; width: 100%; overflow: hidden; }
 
 .side-panel {
-    width: 240px; height: 100%; /* Fill height */
-    background-color: var(--color-surface-container); /* Use container color (Bento Box Color) */
+    width: 240px; height: 100%;
+    /* --- UPDATED: Match App Container --- */
+    background-color: var(--color-surface);
     border-right: 1px solid var(--color-border); padding: 16px; overflow-y: auto;
     flex-shrink: 0; display: flex; flex-direction: column;
-    scrollbar-width: thin; scrollbar-color: var(--color-outline) var(--color-surface-variant);
+    scrollbar-width: thin; scrollbar-color: var(--color-outline) var(--color-surface-container); /* Use bento bg for track */
 }
 .side-panel::-webkit-scrollbar { width: 6px; }
-.side-panel::-webkit-scrollbar-track { background: var(--color-surface-variant); border-radius: 3px;}
-.side-panel::-webkit-scrollbar-thumb { background-color: var(--color-outline); border-radius: 3px; border: 1px solid var(--color-surface-variant); }
+.side-panel::-webkit-scrollbar-track { background: var(--color-surface-container); border-radius: 3px;}
+.side-panel::-webkit-scrollbar-thumb { background-color: var(--color-outline); border-radius: 3px; border: 1px solid var(--color-surface-container); }
 
 /* Sidebar Info/Footer - Use Classes */
-.sidebar-info {
-    font-family: var(--font-body); margin: 10px 0; font-size: 12px; line-height: 1.4; color: var(--color-text-secondary);
-    background-color: var(--color-surface-variant); padding: 12px;
-    border-radius: var(--border-radius-md); border: 1px solid var(--color-border);
-}
-.sidebar-footer {
-    font-family: var(--font-body); margin-top: auto; padding-top: 12px; border-top: 1px solid var(--color-border);
-    font-size: 11px; color: var(--color-text-tertiary); text-align: center;
-}
+.sidebar-info { font-family: var(--font-body); margin: 10px 0; font-size: 12px; line-height: 1.4; color: var(--color-text-secondary); background-color: var(--color-surface-container); padding: 12px; border-radius: var(--border-radius-md); border: 1px solid var(--color-border); }
+.sidebar-footer { font-family: var(--font-body); margin-top: auto; padding-top: 12px; border-top: 1px solid var(--color-border); font-size: 11px; color: var(--color-text-tertiary); text-align: center; }
 
 .main-content {
     flex: 1; height: 100%; overflow-y: auto; padding: var(--bento-gap);
-    background-color: var(--color-surface-container);
+    /* --- UPDATED: Transparent BG --- */
+    background-color: transparent; /* Let app-container bg show through */
     scrollbar-width: thin; scrollbar-color: var(--color-outline) transparent;
 }
 .main-content::-webkit-scrollbar { width: 8px; }
@@ -222,6 +213,7 @@ a:hover {
 /* ========================================= */
 /* Header Styles                             */
 /* ========================================= */
+/* ... Keep Header Styles ... */
 .dashboard-header { margin-bottom: var(--bento-gap); padding-bottom: var(--bento-gap); border-bottom: 1px solid var(--color-border); }
 .header-content { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
 .title-area h1 { font-family: var(--font-heading); font-size: 24px; font-weight: 700; color: var(--color-text-primary); margin: 0; }
@@ -231,102 +223,102 @@ a:hover {
 .date-separator { color: var(--color-text-tertiary); opacity: 0.7; }
 #date-text, #time-text { font-weight: 500; color: var(--color-text-primary); }
 
+
 /* ========================================= */
-/* Bento Grid Layout (Reverted & Corrected)  */
+/* Bento Grid Layout (CORRECTED)             */
 /* ========================================= */
-.bento-grid { display: grid; gap: var(--bento-gap); grid-template-columns: repeat(5, 1fr); grid-template-areas: "sankey sankey sankey map arr" "tavtcv tavtcv leaders leaders leaders" "expiring expiring expiring expiring expiring"; grid-template-rows: minmax(400px, auto) auto auto; }
-#bento-arr { grid-area: arr; } #bento-sankey { grid-area: sankey; } #bento-map { grid-area: map; } #bento-tavtcv { grid-area: tavtcv; } #bento-leaders { grid-area: leaders; } #bento-expiring { grid-area: expiring; }
-.col-span-2 { grid-column: span 2; } .col-span-4 { grid-column: span 4; } .col-span-5 { grid-column: span 5; }
+.bento-grid {
+    display: grid;
+    gap: var(--bento-gap);
+    grid-template-columns: repeat(5, 1fr);
+    /* --- Original 3-row Layout --- */
+    grid-template-areas:
+        "sankey sankey sankey map arr"
+        "tavtcv tavtcv leaders leaders leaders"
+        "expiring expiring expiring expiring expiring";
+    grid-template-rows: minmax(400px, auto) auto auto;
+}
+/* --- Correct Area Assignments --- */
+#bento-arr { grid-area: arr; }
+#bento-sankey { grid-area: sankey; }
+#bento-map { grid-area: map; }
+#bento-tavtcv { grid-area: tavtcv; }
+#bento-leaders { grid-area: leaders; }
+#bento-expiring { grid-area: expiring; }
+/* Keep Span Utilities */
+.col-span-2 { grid-column: span 2; }
+.col-span-4 { grid-column: span 4; }
+.col-span-5 { grid-column: span 5; }
 
 /* ========================================= */
 /* Card Styles (`.bento-box`)                */
 /* ========================================= */
 .bento-box {
-    background-color: var(--color-surface); /* Bento Box BG */
-    border-radius: var(--border-radius-lg);
+    /* --- UPDATED: Use Container Color --- */
+    background-color: var(--color-surface-container); /* Bento Box BG */
+    border-radius: var(--border-radius-lg); /* Keep larger radius for boxes */
     box-shadow: var(--shadow-sm); padding: 16px; border: 1px solid var(--color-border);
     display: flex; flex-direction: column; height: 100%; position: relative; overflow: hidden;
     transition: var(--transition-standard);
 }
 .bento-box:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); border-color: var(--color-outline); }
 
+/* ... Keep .card-header, .card-icon-circle, .card-content etc ... */
 .card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; border-bottom: 1px solid var(--color-border); padding-bottom: 10px; flex-shrink: 0; }
 .card-header h2 { font-family: var(--font-heading); font-size: 16px; font-weight: 700; color: var(--color-text-primary); flex-grow: 1; margin: 0; }
-.card-icon-circle { display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background-color: var(--color-surface-variant); color: var(--color-primary); flex-shrink: 0; } /* Use variant for icon bg */
+.card-icon-circle { display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background-color: var(--color-surface-variant); color: var(--color-primary); flex-shrink: 0; }
 .card-icon-circle svg { width: 16px; height: 16px; }
-
 .card-content, .chart-container, .table-container, .arr-display-grid, .notes-content { flex-grow: 1; display: flex; flex-direction: column; position: relative; min-height: 0; }
+
 
 /* ========================================= */
 /* Form Element Styles                       */
 /* ========================================= */
-.input-select, .input-date, input[type="search"], input[type="text"] {
-    font-family: var(--font-body); width: 100%; padding: 8px 12px; border: 1px solid var(--color-border);
-    border-radius: var(--border-radius-md); font-size: 13px; color: var(--color-text-primary);
-    background-color: var(--color-surface); /* Match App Container BG */
-    transition: var(--transition-standard);
-}
-.input-select:focus, .input-date:focus, input[type="search"]:focus, input[type="text"]:focus {
-    outline: 2px solid transparent; outline-offset: 2px; border-color: var(--color-primary);
-    box-shadow: 0 0 0 2px var(--color-focus-ring); background-color: var(--color-surface);
-}
+/* ... Keep Form Styles, ensure fonts ... */
+.input-select, .input-date, input[type="search"], input[type="text"] { font-family: var(--font-body); width: 100%; padding: 8px 12px; border: 1px solid var(--color-border); border-radius: var(--border-radius-md); font-size: 13px; color: var(--color-text-primary); background-color: var(--color-surface); transition: var(--transition-standard); }
+.input-select:focus, .input-date:focus, input[type="search"]:focus, input[type="text"]:focus { outline: 2px solid transparent; outline-offset: 2px; border-color: var(--color-primary); box-shadow: 0 0 0 2px var(--color-focus-ring); background-color: var(--color-surface); }
 .input-select option { background-color: var(--color-background); color: var(--color-text-primary); }
 ::placeholder { color: var(--color-text-tertiary); opacity: 0.8; font-family: var(--font-body); }
+
 
 /* ========================================= */
 /* Button Styles                             */
 /* ========================================= */
-button, .button, .primary-button {
-    font-family: var(--font-body); display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-    padding: 8px 14px; border-radius: var(--border-radius-md); font-size: 13px; font-weight: 600;
-    cursor: pointer; border: 1px solid var(--color-border); text-align: center;
-    vertical-align: middle; white-space: nowrap; transition: var(--transition-standard);
-}
+/* ... Keep Button Styles, ensure fonts ... */
+button, .button, .primary-button { font-family: var(--font-body); display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 14px; border-radius: var(--border-radius-md); font-size: 13px; font-weight: 600; cursor: pointer; border: 1px solid var(--color-border); text-align: center; vertical-align: middle; white-space: nowrap; transition: var(--transition-standard); }
 button svg, .button svg, .primary-button svg { width: 14px; height: 14px; }
-
 /* Standard Button */
-button, .button {
-    background-color: var(--color-surface-variant); /* Use variant for subtle button */
-    color: var(--color-text-secondary); border-color: var(--color-outline);
-}
-button:hover:not(:disabled), .button:hover:not(:disabled) {
-    background-color: color-mix(in srgb, var(--color-outline) 80%, var(--color-surface)); /* Mix outline */
-    border-color: var(--color-primary); transform: var(--scale-interactive); color: var(--color-text-primary);
-}
-
+button, .button { background-color: var(--color-surface-variant); color: var(--color-text-secondary); border-color: var(--color-outline); }
+button:hover:not(:disabled), .button:hover:not(:disabled) { background-color: color-mix(in srgb, var(--color-outline) 80%, var(--color-surface)); border-color: var(--color-primary); transform: var(--scale-interactive); color: var(--color-text-primary); }
 /* Primary Button */
 .primary-button { background-color: var(--color-primary); color: var(--color-on-primary); border-color: var(--color-primary); }
-.primary-button:hover:not(:disabled) {
-    background-color: color-mix(in srgb, var(--color-primary) 85%, var(--color-background));
-    border-color: color-mix(in srgb, var(--color-primary) 85%, var(--color-background));
-    transform: var(--scale-interactive);
-}
-
+.primary-button:hover:not(:disabled) { background-color: color-mix(in srgb, var(--color-primary) 85%, var(--color-background)); border-color: color-mix(in srgb, var(--color-primary) 85%, var(--color-background)); transform: var(--scale-interactive); }
 /* Disabled State */
 button:disabled, .button:disabled, .primary-button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
-
 /* Theme Toggle Button */
 #theme-toggle-btn { background: none; border: none; cursor: pointer; padding: 4px; margin-left: auto; }
 .theme-icon { color: var(--color-text-secondary); }
 #theme-toggle-btn:hover .theme-icon { color: var(--color-primary); }
 
+
 /* ========================================= */
 /* Sidebar Specific Controls                 */
 /* ========================================= */
-/* ... Keep styles, ensure fonts/colors are correct ... */
+/* ... Keep Sidebar Controls, ensure fonts ... */
 .side-panel > div:has(#dataset-select) { display: flex; flex-direction: column; gap: 10px; }
 .side-panel h2 { font-family: var(--font-heading); font-size: 11px; font-weight: 700; color: var(--color-text-secondary); margin: 12px 0 4px 0; text-transform: uppercase; letter-spacing: 0.07em; }
-#status-banner { font-family: var(--font-body); padding: 8px 10px; border-radius: var(--border-radius-sm); font-size: 12px; color: var(--color-text-secondary); background-color: var(--color-surface-variant); border: 1px solid transparent; text-align: center; margin-top: 8px; } /* Use variant bg */
+#status-banner { font-family: var(--font-body); padding: 8px 10px; border-radius: var(--border-radius-sm); font-size: 12px; color: var(--color-text-secondary); background-color: var(--color-surface-variant); border: 1px solid transparent; text-align: center; margin-top: 8px; }
 #status-banner.error { background-color: oklch(from var(--color-error) l c h / 10%); color: var(--color-error); border-color: oklch(from var(--color-error) l c h / 30%); }
 #status-banner.success { background-color: oklch(from var(--color-success) l c h / 10%); color: var(--color-success); border-color: oklch(from var(--color-success) l c h / 30%); }
 #status-banner.info { background-color: oklch(from var(--color-info) l c h / 15%); color: var(--color-info); border-color: oklch(from var(--color-info) l c h / 30%); }
 .filter-container, .filter-row, .filter-item { /* Keep structure */ }
 .filter-item label { font-family: var(--font-body); font-size: 13px; font-weight: 600; color: var(--color-text-secondary); }
 
+
 /* ========================================= */
 /* Table Styles                              */
 /* ========================================= */
-/* ... Keep styles, ensure fonts/colors are correct ... */
+/* ... Keep Table Styles, ensure fonts ... */
 .table-container { overflow: hidden; margin-top: 12px; flex-grow: 1; display: flex; flex-direction: column; }
 .table-wrapper { overflow: auto; flex-grow: 1; }
 table { width: 100%; border-collapse: collapse; font-family: var(--font-body); }
@@ -337,12 +329,11 @@ td.number { text-align: right; font-variant-numeric: tabular-nums; font-weight: 
 td.font-medium { font-weight: 500; } td.font-bold { font-weight: 700; }
 td.text-center { text-align: center; }
 td.text-red-600 { color: var(--color-error); }
-tr:hover td { background-color: var(--color-surface-variant); } /* Use variant for hover */
+tr:hover td { background-color: var(--color-surface-variant); }
 .summary-text { font-family: var(--font-body); font-size: 11px; color: var(--color-text-tertiary); margin-top: 8px; padding: 8px 0; border-top: 1px solid var(--color-border); flex-shrink: 0; }
-/* Wrapping columns */
 #expiring-contracts-table-container td:nth-child(3), #contract-leaders-table-container td:nth-child(6) { white-space: normal; word-wrap: break-word; max-width: 200px; }
-/* Mobile Sticky styles */
 @media (max-width: 768px) { /* Keep sticky logic */ }
+
 
 /* ========================================= */
 /* Chart & Visualization Containers          */
@@ -354,7 +345,7 @@ tr:hover td { background-color: var(--color-surface-variant); } /* Use variant f
 /* ========================================= */
 /* Specific Component Styles                 */
 /* ========================================= */
-/* ... Keep styles, ensure fonts/colors are correct ... */
+/* ... Keep styles, ensure fonts/colors ... */
 .arr-display-grid { justify-content: center; align-items: center; padding: 16px 0; text-align: center; }
 .arr-grid-value { font-family: var(--font-heading); font-size: 2.4rem; color: var(--color-primary); margin-bottom: 8px; font-weight: 700;}
 .arr-description { font-family: var(--font-body); font-size: 13px; color: var(--color-text-secondary); max-width: 90%; margin: 0 auto; }
@@ -363,23 +354,35 @@ tr:hover td { background-color: var(--color-surface-variant); } /* Use variant f
 .notes-content ul { margin-left: 16px; margin-bottom: 10px; } .notes-content ul li { margin-bottom: 5px; }
 .notes-content strong { color: var(--color-text-primary); font-weight: 600; }
 
+/* --- Chart Element Styling --- */
+#sankeyChart path { stroke: var(--color-border); stroke-opacity: 0.4; transition: stroke-opacity 0.2s ease; fill: none; }
+#sankeyChart path:hover { stroke-opacity: 0.7; }
+#sankeyChart rect { stroke: var(--color-surface-container); stroke-width: 0.5px; }
+#sankeyChart text { font-family: var(--font-body); font-size: 10px; fill: var(--color-text-secondary); pointer-events: none; }
+#choroplethMap path { stroke: var(--color-background); stroke-width: 0.5px; fill: var(--color-surface-variant); transition: fill 0.2s ease, stroke 0.2s ease, stroke-width 0.2s ease; }
+#choroplethMap path:hover { stroke: var(--color-primary); stroke-width: 1.5px; }
+#choroplethMap text, #choroplethMap .legend-text { font-family: var(--font-body); font-size: 10px; fill: var(--color-text-secondary); text-anchor: middle; }
+#choroplethMap .legend-rect { stroke: var(--color-border); stroke-width: 0.5px; }
+
 
 /* ========================================= */
 /* Tooltip Styles                            */
 /* ========================================= */
-/* ... Keep styles, ensure vars/fonts are correct ... */
+/* ... Keep styles, ensure vars/fonts ... */
 .tooltip, .sankey-tooltip, .map-tooltip, #tav-tcv-tooltip { font-family: var(--font-body); /* ... rest of tooltip base ... */ }
 .tooltip strong, .sankey-tooltip strong, .map-tooltip strong, #tav-tcv-tooltip strong { font-family: var(--font-heading); /* ... rest of strong ... */ }
 /* ... Keep visible states ... */
 .tooltip-visible { /* Keep */ }
 
+
 /* ========================================= */
 /* Loading, Error, No Data States            */
 /* ========================================= */
-/* ... Keep styles, ensure vars/fonts are correct ... */
+/* ... Keep styles, ensure vars/fonts ... */
 .loading-placeholder, .error-placeholder, .no-data-placeholder { font-family: var(--font-body); /* ... rest ... */ }
 .spinner { /* Keep */ } @keyframes spin { /* Keep */ } @keyframes pulse { /* Keep */ }
 .is-loading .loading-placeholder, .has-error .error-placeholder, .no-data .no-data-placeholder { display: flex; }
+
 
 /* ========================================= */
 /* Utility Classes                           */
@@ -387,14 +390,85 @@ tr:hover td { background-color: var(--color-surface-variant); } /* Use variant f
 .detail-link { font-family: var(--font-body); color: var(--color-primary); text-decoration: none; font-weight: 600; }
 .detail-link:hover { color: var(--color-secondary); text-decoration: underline; }
 
+
 /* ========================================= */
-/* Responsive Adjustments                    */
+/* Responsive Adjustments (CORRECTED GRID)   */
 /* ========================================= */
-/* ... Keep responsive structure ... */
 @media (max-width: 1200px) {}
-@media (max-width: 992px) { /* Tablet */ }
-@media (max-width: 768px) { /* Mobile Landscape / Small Tablet */ }
-@media (max-width: 480px) { /* Small Mobile */ }
+@media (max-width: 992px) { /* Tablet */
+     .side-panel { width: 200px; }
+     .bento-grid {
+         /* Revert to original responsive layout */
+         grid-template-columns: repeat(2, 1fr);
+         grid-template-areas:
+            "arr sankey" /* Original Order */
+            "map tavtcv"
+            "leaders leaders"
+            "expiring expiring";
+         grid-auto-rows: minmax(300px, auto);
+     }
+     /* Reset spans for 2-col - Ensure correct assignments */
+     #bento-arr, #bento-map, #bento-tavtcv { grid-column: span 1 !important; grid-area: auto !important; } /* Reset area too */
+     #bento-sankey, #bento-leaders, #bento-expiring { grid-column: span 2 !important; grid-area: auto !important; } /* Reset area too */
+     /* Re-apply area assignments for this breakpoint */
+     #bento-arr { grid-area: arr; } #bento-sankey { grid-area: sankey; } #bento-map { grid-area: map; }
+     #bento-tavtcv { grid-area: tavtcv; } #bento-leaders { grid-area: leaders; } #bento-expiring { grid-area: expiring; }
+
+     .arr-grid-value { font-size: 2rem; }
+     .card-header h2 { font-size: 14px; }
+     .main-content { padding: 12px; }
+     body { font-size: 13px; }
+}
+
+@media (max-width: 768px) { /* Mobile Landscape / Small Tablet */
+    .dashboard-layout { flex-direction: column; height: auto; overflow: auto; }
+    .side-panel { width: 100%; height: auto; border-right: none; border-bottom: 1px solid var(--color-border); overflow-y: visible; }
+    .main-content { height: auto; overflow-y: visible; padding: 12px; }
+    body { overflow: auto; padding: 0; font-size: 13px; }
+
+    .bento-grid {
+        grid-template-columns: 1fr; /* Single column */
+        grid-template-areas: /* Correct order */
+            "arr"
+            "map"
+            "sankey"
+            "tavtcv"
+            "leaders"
+            "expiring";
+         grid-auto-rows: auto; gap: 12px;
+    }
+    /* Reset all spans and areas */
+    .bento-box { grid-column: span 1 !important; grid-area: auto !important; }
+    /* Re-apply areas for this breakpoint */
+    #bento-arr { grid-area: arr; } #bento-map { grid-area: map; } #bento-sankey { grid-area: sankey; }
+    #bento-tavtcv { grid-area: tavtcv; } #bento-leaders { grid-area: leaders; } #bento-expiring { grid-area: expiring; }
+
+    .header-content { flex-direction: column; align-items: flex-start; gap: 12px; }
+    .header-controls { width: 100%; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+    .title-area h1 { font-size: 20px; } .title-area p { font-size: 12px; }
+    /* Keep sticky table styles */
+    .chart-container { min-height: 250px; }
+    #sankey-chart-container, #map-container { height: 300px; }
+    #expiring-contracts-table-container .table-wrapper { max-height: 200px; }
+}
+
+@media (max-width: 480px) { /* Small Mobile */
+    /* Keep font/padding adjustments */
+    body { font-size: 12px; }
+    .title-area h1 { font-size: 18px; } .title-area p { font-size: 11px; }
+    .arr-grid-value { font-size: 1.8rem; }
+    .card-header h2 { font-size: 13px; }
+    .side-panel, .main-content { padding: 10px; }
+    .bento-gap { --bento-gap: 10px; }
+    button, .button, .primary-button { padding: 6px 10px; font-size: 12px; }
+    .input-select, .input-date, input[type="search"], input[type="text"] { padding: 6px 10px; font-size: 12px; }
+    th, td { padding: 6px 10px; font-size: 11px; }
+    .sidebar-info { font-size: 11px; }
+    .sidebar-footer { font-size: 10px; }
+    .chart-container { min-height: 220px; }
+    #sankey-chart-container, #map-container { height: 250px; }
+}
+
 
 /* ========================================= */
 /* Final Polish & Enhancements              */
