@@ -2313,9 +2313,6 @@ function getCssVar(varName) {
     return '#cccccc';
   }
 }
-function displayEnhancedSankeyChart(model) {
-    return displayEnhancedSankeyChartWithSelectors(model);
-}
 function displayChoroplethMap(mapData) {
     const containerId = 'map-container';
     const container = document.getElementById(containerId);
@@ -3847,771 +3844,444 @@ window.addEventListener('resize', function() {
        }
    }, 250); // Debounce for 250ms
 });
-// Enhanced version of your displayEnhancedSankeyChart function
-// This should replace or modify your existing function
 
-function displayEnhancedSankeyChartWithSelectors(model) {
-    console.log("Rendering Split Panel Sankey chart with model data and selectors");
-    
-    const containerId = 'sankey-chart-container';
-    const container = document.getElementById(containerId);
-    
-    if (!container) {
-        console.error("Sankey chart container not found.");
-        return;
-    }
-
-    // Get current selector values or use defaults
-    let leftSankeyField = 'subAgencyName';
-    let rightSankeyField = 'subName';
-    
-    const leftSelector = document.getElementById('left-sankey-selector');
-    const rightSelector = document.getElementById('right-sankey-selector');
-    
-    if (leftSelector) {
-        leftSankeyField = leftSelector.value;
-    }
-    
-    if (rightSelector) {
-        rightSankeyField = rightSelector.value;
-    }
-    
-    // Get the selectors container
-    let selectorsContainer = document.getElementById('sankey-selectors');
-    let selectorsExisted = !!selectorsContainer;
-    
-    // If container doesn't exist yet, create it
-    if (!selectorsContainer) {
-        selectorsContainer = document.createElement('div');
-        selectorsContainer.id = 'sankey-selectors';
-        selectorsContainer.style.display = 'flex';
-        selectorsContainer.style.justifyContent = 'space-between';
-        selectorsContainer.style.alignItems = 'center';
-        selectorsContainer.style.marginBottom = '10px';
-        selectorsContainer.style.padding = '8px';
-        selectorsContainer.style.borderRadius = 'var(--border-radius-sm)';
-        selectorsContainer.style.backgroundColor = 'var(--color-surface-variant)';
-    }
-    
-    // Clear any previous content in the container
-    container.innerHTML = '';
-    
-    // Add the selectors container back to the beginning
-    container.appendChild(selectorsContainer);
-    
-    // If selectors didn't exist, create them
-    if (!selectorsExisted) {
-        // Create left panel selector
-        const leftSelectorContainer = document.createElement('div');
-        leftSelectorContainer.style.flex = '1';
-        leftSelectorContainer.style.marginRight = '10px';
-        
-        const leftLabel = document.createElement('label');
-        leftLabel.textContent = 'Agency Nodes:';
-        leftLabel.style.fontSize = '11px';
-        leftLabel.style.fontWeight = '600';
-        leftLabel.style.marginRight = '5px';
-        leftLabel.style.color = 'var(--color-text-secondary)';
-        leftLabel.style.display = 'block';
-        
-        const leftSelect = document.createElement('select');
-        leftSelect.id = 'left-sankey-selector';
-        leftSelect.className = 'input-select';
-        leftSelect.style.width = '100%';
-        leftSelect.style.fontSize = '12px';
-        leftSelect.style.padding = '4px 8px';
-        
-        // Add options for left selector
-        const leftOptions = [
-            { value: 'agencyName', label: 'Agency' },
-            { value: 'subAgencyName', label: 'Sub-Agency' },
-            { value: 'officeName', label: 'Office' }
-        ];
-        
-        leftOptions.forEach(option => {
-            const optionEl = document.createElement('option');
-            optionEl.value = option.value;
-            optionEl.textContent = option.label;
-            if (option.value === leftSankeyField) {
-                optionEl.selected = true;
-            }
-            leftSelect.appendChild(optionEl);
-        });
-        
-        // Create right panel selector
-        const rightSelectorContainer = document.createElement('div');
-        rightSelectorContainer.style.flex = '1';
-        rightSelectorContainer.style.marginLeft = '10px';
-        
-        const rightLabel = document.createElement('label');
-        rightLabel.textContent = 'Contractor Nodes:';
-        rightLabel.style.fontSize = '11px';
-        rightLabel.style.fontWeight = '600';
-        rightLabel.style.marginRight = '5px';
-        rightLabel.style.color = 'var(--color-text-secondary)';
-        rightLabel.style.display = 'block';
-        
-        const rightSelect = document.createElement('select');
-        rightSelect.id = 'right-sankey-selector';
-        rightSelect.className = 'input-select';
-        rightSelect.style.width = '100%';
-        rightSelect.style.fontSize = '12px';
-        rightSelect.style.padding = '4px 8px';
-        
-        // Add options for right selector
-        const rightOptions = [
-            { value: 'primeName', label: 'Prime Contractor' },
-            { value: 'subName', label: 'Subcontractor' }
-        ];
-        
-        rightOptions.forEach(option => {
-            const optionEl = document.createElement('option');
-            optionEl.value = option.value;
-            optionEl.textContent = option.label;
-            if (option.value === rightSankeyField) {
-                optionEl.selected = true;
-            }
-            rightSelect.appendChild(optionEl);
-        });
-        
-        // Add event listeners
-        leftSelect.addEventListener('change', function() {
-            // Redraw the Sankey with the new selection
-            applyFiltersAndUpdateVisuals();
-        });
-        
-        rightSelect.addEventListener('change', function() {
-            // Redraw the Sankey with the new selection
-            applyFiltersAndUpdateVisuals();
-        });
-        
-        // Assemble selectors
-        leftSelectorContainer.appendChild(leftLabel);
-        leftSelectorContainer.appendChild(leftSelect);
-        
-        rightSelectorContainer.appendChild(rightLabel);
-        rightSelectorContainer.appendChild(rightSelect);
-        
-        selectorsContainer.appendChild(leftSelectorContainer);
-        selectorsContainer.appendChild(rightSelectorContainer);
-    }
-    
-    // Set up container layout for split panels
-    const panelsContainer = document.createElement('div');
-    panelsContainer.style.display = 'flex';
-    panelsContainer.style.flexDirection = 'row';
-    panelsContainer.style.gap = '20px';
-    panelsContainer.style.height = 'calc(100% - 40px)'; // Adjust for selectors height
-    container.appendChild(panelsContainer);
-    
-    // Create container for each panel
-    const leftPanelContainer = document.createElement('div');
-    leftPanelContainer.id = 'agency-prime-panel';
-    leftPanelContainer.style.flex = '1';
-    
-    const rightPanelContainer = document.createElement('div');
-    rightPanelContainer.id = 'prime-sub-panel';
-    rightPanelContainer.style.flex = '1';
-    
-    panelsContainer.appendChild(leftPanelContainer);
-    panelsContainer.appendChild(rightPanelContainer);
-    
-    // Create SVGs for each panel
-    const leftSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    leftSvg.id = 'agency-prime-sankey';
-    leftSvg.setAttribute('width', '100%');
-    leftSvg.setAttribute('height', '100%');
-    leftPanelContainer.appendChild(leftSvg);
-    
-    const rightSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    rightSvg.id = 'prime-sub-sankey';
-    rightSvg.setAttribute('width', '100%');
-    rightSvg.setAttribute('height', '100%');
-    rightPanelContainer.appendChild(rightSvg);
-    
-    setLoading(containerId, false);
-    
-    // Check if we have valid model data
-    if (!model || 
-        (!model.relationships.agencyToPrime.length && !model.relationships.primeToSub.length)) {
-        displayNoData(containerId, 'No data available for Sankey diagram.');
-        return;
-    }
-    
-    try {
-        // Check if we need to remove old tooltips
-        const oldTooltip = document.getElementById('sankey-tooltip-split');
-        if (oldTooltip) {
-            document.body.removeChild(oldTooltip);
-        }
-        
-        // Create a simple tooltip div (standalone)
-        const tooltip = document.createElement('div');
-        tooltip.id = 'sankey-tooltip-split';
-        tooltip.style.position = 'absolute';
-        tooltip.style.padding = '10px';
-        tooltip.style.backgroundColor = getCssVar('--color-surface');
-        tooltip.style.color = getCssVar('--color-text-primary');
-        tooltip.style.border = `1px solid ${getCssVar('--color-border')}`;
-        tooltip.style.borderRadius = '4px';
-        tooltip.style.pointerEvents = 'none';
-        tooltip.style.zIndex = '99999'; // Very high z-index
-        tooltip.style.display = 'none';
-        tooltip.style.fontSize = '12px';
-        tooltip.style.boxShadow = '0 2px 4px rgba(0,0,0,0.2)';
-        document.body.appendChild(tooltip);
-        
-        // Add panel titles
-        const textColor = getCssVar('--color-text-primary');
-        
-        leftPanelContainer.insertAdjacentHTML('afterbegin', 
-            `<div style="text-align: center; margin-bottom: 10px; font-weight: bold; color: ${textColor};">
-                Agency to Prime Contractors
-            </div>`
-        );
-        
-        rightPanelContainer.insertAdjacentHTML('afterbegin', 
-            `<div style="text-align: center; margin-bottom: 10px; font-weight: bold; color: ${textColor};">
-                Prime to Subcontractors
-            </div>`
-        );
-        
-        // Set dimensions for each panel
-        const panelWidth = leftPanelContainer.clientWidth || 300;
-        const panelHeight = leftPanelContainer.clientHeight || 400;
-        const margin = {top: 20, right: 20, bottom: 20, left: 20};
-        
-        // Choose colors based on theme
-        const nodeColors = {
-            agency: getCssVar('--chart-color-tertiary'),
-            subagency: getCssVar('--chart-color-tertiary'),
-            office: getCssVar('--chart-color-tertiary'),
-            prime: getCssVar('--chart-color-primary'),
-            sub: getCssVar('--chart-color-secondary')
-        };
-        const linkColor = getCssVar('--color-border');
-        const nodeStrokeColor = getCssVar('--color-surface');
-        
-        // Create D3 selections
-        const leftSvgSelection = d3.select(leftSvg)
-            .attr('width', panelWidth)
-            .attr('height', panelHeight);
-            
-        const rightSvgSelection = d3.select(rightSvg)
-            .attr('width', panelWidth)
-            .attr('height', panelHeight);
-        
-        // --- CUSTOM PROCESSING BASED ON SELECTOR VALUES ---
-        
-        // Process left side (Agency to Prime) based on selected field
-        const leftSankeyData = processSankeyDataForLeftPanel(model, leftSankeyField);
-        
-        // Process right side (Prime to Sub) based on selected field
-        const rightSankeyData = processSankeyDataForRightPanel(model, rightSankeyField);
-        
-        // Now draw the left Sankey diagram
-        drawSankeyDiagram(
-            leftSvgSelection,
-            leftSankeyData.nodes,
-            leftSankeyData.links,
-            panelWidth,
-            panelHeight,
-            margin,
-            nodeColors,
-            nodeStrokeColor,
-            tooltip,
-            'left'
-        );
-        
-        // Draw the right Sankey diagram if data is available
-        if (rightSankeyData.nodes.length > 0 && rightSankeyData.links.length > 0) {
-            drawSankeyDiagram(
-                rightSvgSelection,
-                rightSankeyData.nodes,
-                rightSankeyData.links,
-                panelWidth,
-                panelHeight,
-                margin,
-                nodeColors,
-                nodeStrokeColor,
-                tooltip,
-                'right'
-            );
-        } else {
-            // No subcontract data to display - still show an empty panel with message
-            rightSvgSelection.append("text")
-                .attr("x", panelWidth / 2)
-                .attr("y", panelHeight / 2)
-                .attr("text-anchor", "middle")
-                .attr("font-size", "12px")
-                .attr("fill", getCssVar('--color-text-secondary'))
-                .attr("opacity", 0.7)
-                .text("No subcontractor data available");
-        }
-        
-    } catch (error) {
-        console.error("Error rendering Split Panel Sankey charts:", error);
-        displayError(containerId, `Error rendering Sankey charts: ${error.message}`);
-    }
+// Add Sankey visualization options to the existing filters section
+function initializeSankeyFilters() {
+  // Find the existing filters container
+  const filtersContainer = document.querySelector('.filter-container') || document.getElementById('filters');
+  
+  if (!filtersContainer) {
+    console.error("Filter container not found, cannot add Sankey visualization options");
+    return;
+  }
+  
+  // Create a new filter section for Sankey visualization options
+  const sankeyFilterSection = document.createElement('div');
+  sankeyFilterSection.className = 'filter-section sankey-options';
+  sankeyFilterSection.innerHTML = `
+    <h3 class="filter-heading">Sankey Visualization</h3>
+    <div class="filter-group">
+      <label for="sankey-agency-field">Agency Grouping:</label>
+      <select id="sankey-agency-field" class="input-select">
+        <option value="agencyName">Agency</option>
+        <option value="subAgencyName" selected>Sub-Agency</option>
+        <option value="officeName">Office</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label for="sankey-contractor-field">Contractor View:</label>
+      <select id="sankey-contractor-field" class="input-select">
+        <option value="primeName" selected>Prime Contractors</option>
+        <option value="subName">Subcontractors</option>
+      </select>
+    </div>
+  `;
+  
+  // Add the new section to the filters container
+  filtersContainer.appendChild(sankeyFilterSection);
+  
+  // Add event listeners to update visualization when options change
+  document.getElementById('sankey-agency-field').addEventListener('change', applyFiltersAndUpdateVisuals);
+  document.getElementById('sankey-contractor-field').addEventListener('change', applyFiltersAndUpdateVisuals);
 }
 
-// Process data for the left Sankey panel based on selection
-function processSankeyDataForLeftPanel(model, selectedField) {
-    // Filter to top relationships by value
-    const topAgencyToPrime = model.relationships.agencyToPrime
-        .sort((a, b) => b.value - a.value)
-        .slice(0, 10);
-        
-    const nodes = [];
-    const links = [];
-    const nodeMap = {};
-    
-    // Field types to entity types mapping
-    const fieldToEntityType = {
-        'agencyName': 'agency',
-        'subAgencyName': 'subagency',
-        'officeName': 'office',
-        'primeName': 'prime'
-    };
-    
-    // Get appropriate field name from the entity based on selection
-    const getEntityName = (entityId, type) => {
-        if (type === 'prime') {
-            return model.primes[entityId]?.name || 'Unknown';
-        }
-        
-        // For agency entities, determine based on selected field
-        switch (selectedField) {
-            case 'agencyName':
-                return model.agencies[entityId]?.name || 'Unknown Agency';
-            case 'subAgencyName':
-                return model.subAgencies[entityId]?.name || 'Unknown Sub-Agency';
-            case 'officeName':
-                return model.offices[entityId]?.name || 'Unknown Office';
-            default:
-                return 'Unknown';
-        }
-    };
-    
-    // Get appropriate source entity ID based on selection
-    const getSourceEntityId = (linkData) => {
-        const contract = model.contracts[linkData.contractId];
-        if (!contract) return null;
-        
-        switch (selectedField) {
-            case 'agencyName':
-                return contract.agencyId;
-            case 'subAgencyName':
-                return contract.subAgencyId;
-            case 'officeName':
-                return contract.officeId;
-            default:
-                return contract.subAgencyId; // Default to sub-agency
-        }
-    };
-    
-    // Process each relationship
-    topAgencyToPrime.forEach(link => {
-        const sourceId = getSourceEntityId(link);
-        const targetId = link.target; // Prime ID
-        
-        if (!sourceId || !targetId) return;
-        
-        // Get entity name based on type and add node if not already added
-        const sourceName = getEntityName(sourceId, fieldToEntityType[selectedField]);
-        const targetName = getEntityName(targetId, 'prime');
-        
-        // Add source node if not yet added
-        if (!nodeMap[sourceId]) {
-            const nodeIndex = nodes.length;
-            nodes.push({
-                name: truncateText(sourceName, 30),
-                id: sourceId,
-                type: fieldToEntityType[selectedField],
-                index: nodeIndex
-            });
-            nodeMap[sourceId] = nodeIndex;
-        }
-        
-        // Add target node if not yet added
-        if (!nodeMap[targetId]) {
-            const nodeIndex = nodes.length;
-            nodes.push({
-                name: truncateText(targetName, 30),
-                id: targetId,
-                type: 'prime',
-                index: nodeIndex
-            });
-            nodeMap[targetId] = nodeIndex;
-        }
-        
-        // Add link
-        links.push({
-            source: nodeMap[sourceId],
-            target: nodeMap[targetId],
-            value: link.value
-        });
-    });
-    
-    return { nodes, links };
+// Helper mapping for panel titles
+const agencyTitleMap = {
+  'agencyName': 'Agency',
+  'subAgencyName': 'Sub-Agency',
+  'officeName': 'Office'
+};
+
+// Create tooltip for Sankey diagram
+function createSankeyTooltip() {
+  // Remove any existing tooltip
+  const oldTooltip = document.getElementById('sankey-tooltip');
+  if (oldTooltip) {
+    document.body.removeChild(oldTooltip);
+  }
+  
+  // Create new tooltip
+  const tooltip = document.createElement('div');
+  tooltip.id = 'sankey-tooltip';
+  tooltip.style.position = 'absolute';
+  tooltip.style.padding = '10px';
+  tooltip.style.backgroundColor = getCssVar('--color-surface');
+  tooltip.style.color = getCssVar('--color-text-primary');
+  tooltip.style.border = `1px solid ${getCssVar('--color-border')}`;
+  tooltip.style.borderRadius = '4px';
+  tooltip.style.pointerEvents = 'none';
+  tooltip.style.zIndex = '99999';
+  tooltip.style.display = 'none';
+  tooltip.style.fontSize = '12px';
+  tooltip.style.boxShadow = '0 2px 4px rgba(0,0,0,0.2)';
+  document.body.appendChild(tooltip);
+  
+  return tooltip;
 }
 
-    // Draw nodes
-    svgSelection.append('g')
-        .selectAll('rect')
-        .data(graph.nodes)
-        .enter()
-        .append('rect')
-        .attr('x', d => d.x0)
-        .attr('y', d => d.y0)
-        .attr('height', d => Math.max(1, d.y1 - d.y0))
-        .attr('width', d => Math.max(1, d.x1 - d.x0))
-        .attr('fill', d => nodeColors[d.type] || '#999')
-        .attr('stroke', nodeStrokeColor)
-        .attr('stroke-width', 1)
-        .attr('cursor', 'pointer')
-        .attr('data-id', d => d.id)
-        .attr('data-type', d => d.type)
-        .on('mouseover', function(event, d) {
-            // Show tooltip
-            const html = `
-                <div style="font-weight: bold; margin-bottom: 5px;">${d.name}</div>
-                <div>Type: ${d.type.charAt(0).toUpperCase() + d.type.slice(1)}</div>
-                <div>Total Value: ${formatCurrency(d.value)}</div>
-            `;
-            tooltip.innerHTML = html;
-            tooltip.style.display = 'block';
-            tooltip.style.left = (event.pageX + 10) + 'px';
-            tooltip.style.top = (event.pageY - 28) + 'px';
-            
-            // Highlight node
-            d3.select(this)
-                .attr('stroke', getCssVar('--chart-color-primary'))
-                .attr('stroke-width', 2);
-                
-            // Cross-panel highlighting
-            if (panelSide === 'left' && d.type === 'prime') {
-                d3.select('#prime-sub-sankey')
-                    .selectAll('rect')
-                    .filter(node => node.type === 'prime' && node.id === d.id)
-                    .attr('stroke', getCssVar('--chart-color-primary'))
-                    .attr('stroke-width', 2);
-            } else if (panelSide === 'right' && d.type === 'prime') {
-                d3.select('#agency-prime-sankey')
-                    .selectAll('rect')
-                    .filter(node => node.type === 'prime' && node.id === d.id)
-                    .attr('stroke', getCssVar('--chart-color-primary'))
-                    .attr('stroke-width', 2);
-            }
-        })
-        .on('mousemove', function(event) {
-            tooltip.style.left = (event.pageX + 10) + 'px';
-            tooltip.style.top = (event.pageY - 28) + 'px';
-        })
-        .on('mouseout', function() {
-            tooltip.style.display = 'none';
-            d3.select(this)
-                .attr('stroke', nodeStrokeColor)
-                .attr('stroke-width', 1);
-                
-            // Remove cross-panel highlighting
-            if (panelSide === 'left') {
-                d3.select('#prime-sub-sankey')
-                    .selectAll('rect')
-                    .attr('stroke', nodeStrokeColor)
-                    .attr('stroke-width', 1);
-            } else {
-                d3.select('#agency-prime-sankey')
-                    .selectAll('rect')
-                    .attr('stroke', nodeStrokeColor)
-                    .attr('stroke-width', 1);
-            }
-        });
+// Get colors for Sankey nodes based on current theme
+function getSankeyNodeColors() {
+  return {
+    agency: getCssVar('--chart-color-tertiary'),
+    subagency: getCssVar('--chart-color-tertiary'),
+    office: getCssVar('--chart-color-tertiary'),
+    prime: getCssVar('--chart-color-primary'),
+    sub: getCssVar('--chart-color-secondary')
+  };
+}
+
+// Enhanced version of the Sankey chart display function
+function displayEnhancedSankeyChart(model) {
+  console.log("Rendering enhanced Sankey chart with model data");
+  
+  const containerId = 'sankey-chart-container';
+  const container = document.getElementById(containerId);
+  
+  if (!container) {
+    console.error("Sankey chart container not found.");
+    return;
+  }
+
+  // Get selected visualization options from the filter panel
+  const agencyField = document.getElementById('sankey-agency-field')?.value || 'subAgencyName';
+  const contractorField = document.getElementById('sankey-contractor-field')?.value || 'primeName';
+  
+  // Clear previous content
+  container.innerHTML = '';
+  
+  // Set up container layout for split panels
+  const panelsContainer = document.createElement('div');
+  panelsContainer.style.display = 'flex';
+  panelsContainer.style.flexDirection = 'row';
+  panelsContainer.style.gap = '20px';
+  panelsContainer.style.height = 'calc(100% - 40px)';
+  container.appendChild(panelsContainer);
+  
+  // Create container for each panel
+  const leftPanelContainer = document.createElement('div');
+  leftPanelContainer.id = 'agency-prime-panel';
+  leftPanelContainer.style.flex = '1';
+  
+  const rightPanelContainer = document.createElement('div');
+  rightPanelContainer.id = 'prime-sub-panel';
+  rightPanelContainer.style.flex = '1';
+  
+  panelsContainer.appendChild(leftPanelContainer);
+  panelsContainer.appendChild(rightPanelContainer);
+  
+  // Add panel titles with selected field information
+  const leftTitle = document.createElement('div');
+  leftTitle.style.textAlign = 'center';
+  leftTitle.style.marginBottom = '10px';
+  leftTitle.style.fontWeight = 'bold';
+  leftTitle.style.color = getCssVar('--color-text-primary');
+  leftTitle.textContent = `${agencyTitleMap[agencyField] || 'Agency'} to Prime Contractors`;
+  leftPanelContainer.appendChild(leftTitle);
+  
+  const rightTitle = document.createElement('div');
+  rightTitle.style.textAlign = 'center';
+  rightTitle.style.marginBottom = '10px';
+  rightTitle.style.fontWeight = 'bold';
+  rightTitle.style.color = getCssVar('--color-text-primary');
+  rightTitle.textContent = `Prime to ${contractorField === 'subName' ? 'Subcontractors' : 'Projects'}`;
+  rightPanelContainer.appendChild(rightTitle);
+  
+  // Create SVGs for each panel
+  const leftSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  leftSvg.id = 'agency-prime-sankey';
+  leftSvg.setAttribute('width', '100%');
+  leftSvg.setAttribute('height', '100%');
+  leftPanelContainer.appendChild(leftSvg);
+  
+  const rightSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  rightSvg.id = 'prime-sub-sankey';
+  rightSvg.setAttribute('width', '100%');
+  rightSvg.setAttribute('height', '100%');
+  rightPanelContainer.appendChild(rightSvg);
+  
+  setLoading(containerId, false);
+  
+  if (!model || 
+     (!model.relationships.agencyToPrime.length && !model.relationships.primeToSub.length)) {
+    displayNoData(containerId, 'No data available for Sankey diagram.');
+    return;
+  }
+  
+  try {
+    // Create tooltip
+    const tooltip = createSankeyTooltip();
     
-    // Add node labels
-    svgSelection.append('g')
-        .selectAll('text')
-        .data(graph.nodes)
-        .enter()
-        .append('text')
-        .attr('x', d => d.x0 < width / 2 ? d.x1 + 6 : d.x0 - 6)
-        .attr('y', d => (d.y1 + d.y0) / 2)
-        .attr('dy', '0.35em')
-        .attr('text-anchor', d => d.x0 < width / 2 ? 'start' : 'end')
-        .text(d => d.name)
-        .attr('font-size', '11px')
-        .attr('fill', getCssVar('--color-text-primary'))
-        .each(function(d) {
-            // Hide labels for small nodes
-            if ((d.y1 - d.y0) < 5) {
-                d3.select(this).remove();
-            }
-        });
+    // Set dimensions for each panel
+    const panelWidth = leftPanelContainer.clientWidth || 300;
+    const panelHeight = leftPanelContainer.clientHeight || 400;
+    const margin = {top: 20, right: 20, bottom: 20, left: 20};
+    
+    // Get colors based on theme
+    const nodeColors = getSankeyNodeColors();
+    const nodeStrokeColor = getCssVar('--color-surface');
+    
+    // Create D3 selections
+    const leftSvgSelection = d3.select(leftSvg)
+      .attr('width', panelWidth)
+      .attr('height', panelHeight);
         
-    // Add note about showing only top connections
-    svgSelection.append("text")
-        .attr("x", width - 10)
-        .attr("y", height - 10)
-        .attr("text-anchor", "end")
-        .attr("font-size", "10px")
+    const rightSvgSelection = d3.select(rightSvg)
+      .attr('width', panelWidth)
+      .attr('height', panelHeight);
+    
+    // Process data for both panels based on selected fields
+    const leftSankeyData = processSankeyDataForLeftPanel(model, agencyField);
+    const rightSankeyData = processSankeyDataForRightPanel(model, contractorField);
+    
+    // Draw the Sankey diagrams
+    drawSankeyDiagram(
+      leftSvgSelection,
+      leftSankeyData.nodes,
+      leftSankeyData.links,
+      panelWidth,
+      panelHeight,
+      margin,
+      nodeColors,
+      nodeStrokeColor,
+      tooltip,
+      'left'
+    );
+    
+    if (rightSankeyData.nodes.length > 0 && rightSankeyData.links.length > 0) {
+      drawSankeyDiagram(
+        rightSvgSelection,
+        rightSankeyData.nodes,
+        rightSankeyData.links,
+        panelWidth,
+        panelHeight,
+        margin,
+        nodeColors,
+        nodeStrokeColor,
+        tooltip,
+        'right'
+      );
+    } else {
+      // No data for right panel
+      rightSvgSelection.append("text")
+        .attr("x", panelWidth / 2)
+        .attr("y", panelHeight / 2)
+        .attr("text-anchor", "middle")
+        .attr("font-size", "12px")
         .attr("fill", getCssVar('--color-text-secondary'))
         .attr("opacity", 0.7)
-        .text("Showing top 10 flows by value");
-
-
-// Process data for the right Sankey panel based on selection
-function processSankeyDataForRightPanel(model, selectedField) {
-    // Filter to top relationships by value
-    const topPrimeToSub = model.relationships.primeToSub
-        .sort((a, b) => b.value - a.value)
-        .slice(0, 10);
-        
-    const nodes = [];
-    const links = [];
-    const nodeMap = {};
-    
-    // If no subcontract data, return empty arrays
-    if (topPrimeToSub.length === 0) {
-        return { nodes, links };
+        .text(`No ${contractorField === 'subName' ? 'subcontractor' : 'project'} data available`);
     }
-    
-    // Field types to entity types mapping
-    const fieldToEntityType = {
-        'primeName': 'prime',
-        'subName': 'sub'
-    };
-    
-    // Get entity name based on type
-    const getEntityName = (entityId, type) => {
-        if (type === 'prime') {
-            return model.primes[entityId]?.name || 'Unknown Prime';
-        } else if (type === 'sub') {
-            return model.subs[entityId]?.name || 'Unknown Sub';
-        }
-        return 'Unknown';
-    };
-    
-    // Process each relationship
-    topPrimeToSub.forEach(link => {
-        const sourceId = link.source; // Prime ID
-        const targetId = link.target; // Sub ID
-        
-        // Get entity names
-        const sourceName = getEntityName(sourceId, 'prime');
-        const targetName = getEntityName(targetId, 'sub');
-        
-        // Add source node if not yet added
-        if (!nodeMap[sourceId]) {
-            const nodeIndex = nodes.length;
-            nodes.push({
-                name: truncateText(sourceName, 30),
-                id: sourceId,
-                type: 'prime',
-                index: nodeIndex
-            });
-            nodeMap[sourceId] = nodeIndex;
-        }
-        
-        // Add target node if not yet added
-        if (!nodeMap[targetId]) {
-            const nodeIndex = nodes.length;
-            nodes.push({
-                name: truncateText(targetName, 30),
-                id: targetId,
-                type: 'sub',
-                index: nodeIndex
-            });
-            nodeMap[targetId] = nodeIndex;
-        }
-        
-        // Add link
-        links.push({
-            source: nodeMap[sourceId],
-            target: nodeMap[targetId],
-            value: link.value
-        });
-    });
-    
-    return { nodes, links };
+  } catch (error) {
+    console.error("Error rendering Sankey charts:", error);
+    displayError(containerId, `Error rendering Sankey charts: ${error.message}`);
+  }
 }
 
 // Draw a Sankey diagram with the provided data
 function drawSankeyDiagram(svgSelection, nodes, links, width, height, margin, nodeColors, nodeStrokeColor, tooltip, panelSide) {
-    // Create Sankey generator
-    const sankey = d3.sankey()
-        .nodeWidth(15)
-        .nodePadding(10)
-        .extent([[margin.left, margin.top], [width - margin.right, height - margin.bottom]]);
+  // Create Sankey generator
+  const sankey = d3.sankey()
+    .nodeWidth(15)
+    .nodePadding(10)
+    .extent([[margin.left, margin.top], [width - margin.right, height - margin.bottom]]);
+  
+  // Apply Sankey to data
+  const graph = sankey({
+    nodes: nodes.map(d => Object.assign({}, d)),
+    links: links.map(d => Object.assign({}, d))
+  });
+  
+  // Draw links with gradients
+  const defs = svgSelection.append('defs');
+  
+  graph.links.forEach((link, i) => {
+    const gradientId = `${panelSide}-link-gradient-${i}`;
+    const sourceColor = nodeColors[link.source.type] || '#999';
+    const targetColor = nodeColors[link.target.type] || '#999';
     
-    // Apply Sankey to data
-    const graph = sankey({
-        nodes: nodes.map(d => Object.assign({}, d)),
-        links: links.map(d => Object.assign({}, d))
+    const gradient = defs.append('linearGradient')
+      .attr('id', gradientId)
+      .attr('gradientUnits', 'userSpaceOnUse')
+      .attr('x1', link.source.x1)
+      .attr('y1', link.source.y0 + (link.source.y1 - link.source.y0) / 2)
+      .attr('x2', link.target.x0)
+      .attr('y2', link.target.y0 + (link.target.y1 - link.target.y0) / 2);
+        
+    gradient.append('stop')
+      .attr('offset', '0%')
+      .attr('stop-color', sourceColor)
+      .attr('stop-opacity', 0.8);
+        
+    gradient.append('stop')
+      .attr('offset', '100%')
+      .attr('stop-color', targetColor)
+      .attr('stop-opacity', 0.8);
+        
+    link.gradientId = gradientId;
+  });
+  
+  // Draw links
+  svgSelection.append('g')
+    .selectAll('path')
+    .data(graph.links)
+    .enter()
+    .append('path')
+    .attr('d', d3.sankeyLinkHorizontal())
+    .attr('stroke', (d) => `url(#${d.gradientId})`)
+    .attr('stroke-width', d => Math.max(1, d.width))
+    .attr('stroke-opacity', 0.5)
+    .attr('fill', 'none')
+    .attr('cursor', 'pointer')
+    .on('mouseover', function(event, d) {
+      // Show tooltip
+      const html = `
+        <div style="font-weight: bold; margin-bottom: 5px;">${d.source.name} → ${d.target.name}</div>
+        <div>Value: ${formatCurrency(d.value)}</div>
+      `;
+      tooltip.innerHTML = html;
+      tooltip.style.display = 'block';
+      tooltip.style.left = (event.pageX + 10) + 'px';
+      tooltip.style.top = (event.pageY - 28) + 'px';
+      
+      // Highlight link
+      d3.select(this).attr('stroke-opacity', 0.8);
+    })
+    .on('mousemove', function(event) {
+      tooltip.style.left = (event.pageX + 10) + 'px';
+      tooltip.style.top = (event.pageY - 28) + 'px';
+    })
+    .on('mouseout', function() {
+      tooltip.style.display = 'none';
+      d3.select(this).attr('stroke-opacity', 0.5);
     });
     
-    // Draw links with gradients
-    const defs = svgSelection.append('defs');
-    
-    graph.links.forEach((link, i) => {
-        const gradientId = `${panelSide}-link-gradient-${i}`;
-        const sourceColor = nodeColors[link.source.type] || '#999';
-        const targetColor = nodeColors[link.target.type] || '#999';
-        
-        const gradient = defs.append('linearGradient')
-            .attr('id', gradientId)
-            .attr('gradientUnits', 'userSpaceOnUse')
-            .attr('x1', link.source.x1)
-            .attr('y1', link.source.y0 + (link.source.y1 - link.source.y0) / 2)
-            .attr('x2', link.target.x0)
-            .attr('y2', link.target.y0 + (link.target.y1 - link.target.y0) / 2);
-            
-        gradient.append('stop')
-            .attr('offset', '0%')
-            .attr('stop-color', sourceColor)
-            .attr('stop-opacity', 0.8);
-            
-        gradient.append('stop')
-            .attr('offset', '100%')
-            .attr('stop-color', targetColor)
-            .attr('stop-opacity', 0.8);
-            
-        link.gradientId = gradientId;
-    });
-    
-    // Draw links
-    svgSelection.append('g')
-        .selectAll('path')
-        .data(graph.links)
-        .enter()
-        .append('path')
-        .attr('d', d3.sankeyLinkHorizontal())
-        .attr('stroke', (d) => `url(#${d.gradientId})`)
-        .attr('stroke-width', d => Math.max(1, d.width))
-        .attr('stroke-opacity', 0.5)
-        .attr('fill', 'none')
-        .attr('cursor', 'pointer')
-        .on('mouseover', function(event, d) {
-            // Show tooltip
-            const html = `
-                <div style="font-weight: bold; margin-bottom: 5px;">${d.source.name} → ${d.target.name}</div>
-                <div>Value: ${formatCurrency(d.value)}</div>
-            `;
-            tooltip.innerHTML = html;
-            tooltip.style.display = 'block';
-            tooltip.style.left = (event.pageX + 10) + 'px';
-            tooltip.style.top = (event.pageY - 28) + 'px';
-            
-            // Highlight link
-            d3.select(this).attr('stroke-opacity', 0.8);
-        })
-        .on('mousemove', function(event) {
-            tooltip.style.left = (event.pageX + 10) + 'px';
-            tooltip.style.top = (event.pageY - 28) + 'px';
-        })
-        .on('mouseout', function() {
-            tooltip.style.display = 'none';
-            d3.select(this).attr('stroke-opacity', 0.5);
-        });
-        
-    // Draw nodes
-    svgSelection.append('g')
-        .selectAll('rect')
-        .data(graph.nodes)
-        .enter()
-        .append('rect')
-        .attr('x', d => d.x0)
-        .attr('y', d => d.y0)
-        .attr('height', d => Math.max(1, d.y1 - d.y0))
-        .attr('width', d => Math.max(1, d.x1 - d.x0))
-        .attr('fill', d => nodeColors[d.type] || '#999')
+  // Draw nodes
+  svgSelection.append('g')
+    .selectAll('rect')
+    .data(graph.nodes)
+    .enter()
+    .append('rect')
+    .attr('x', d => d.x0)
+    .attr('y', d => d.y0)
+    .attr('height', d => Math.max(1, d.y1 - d.y0))
+    .attr('width', d => Math.max(1, d.x1 - d.x0))
+    .attr('fill', d => nodeColors[d.type] || '#999')
+    .attr('stroke', nodeStrokeColor)
+    .attr('stroke-width', 1)
+    .attr('cursor', 'pointer')
+    .attr('data-id', d => d.id)
+    .attr('data-type', d => d.type)
+    .on('mouseover', function(event, d) {
+      // Show tooltip
+      const html = `
+        <div style="font-weight: bold; margin-bottom: 5px;">${d.name}</div>
+        <div>Type: ${d.type.charAt(0).toUpperCase() + d.type.slice(1)}</div>
+        <div>Total Value: ${formatCurrency(d.value)}</div>
+      `;
+      tooltip.innerHTML = html;
+      tooltip.style.display = 'block';
+      tooltip.style.left = (event.pageX + 10) + 'px';
+      tooltip.style.top = (event.pageY - 28) + 'px';
+      
+      // Highlight node
+      d3.select(this)
+        .attr('stroke', getCssVar('--chart-color-primary'))
+        .attr('stroke-width', 2);
+          
+      // Cross-panel highlighting for prime nodes
+      if (panelSide === 'left' && d.type === 'prime') {
+        d3.select('#prime-sub-sankey')
+          .selectAll('rect')
+          .filter(node => node.type === 'prime' && node.id === d.id)
+          .attr('stroke', getCssVar('--chart-color-primary'))
+          .attr('stroke-width', 2);
+      } else if (panelSide === 'right' && d.type === 'prime') {
+        d3.select('#agency-prime-sankey')
+          .selectAll('rect')
+          .filter(node => node.type === 'prime' && node.id === d.id)
+          .attr('stroke', getCssVar('--chart-color-primary'))
+          .attr('stroke-width', 2);
+      }
+    })
+    .on('mousemove', function(event) {
+      tooltip.style.left = (event.pageX + 10) + 'px';
+      tooltip.style.top = (event.pageY - 28) + 'px';
+    })
+    .on('mouseout', function() {
+      tooltip.style.display = 'none';
+      d3.select(this)
         .attr('stroke', nodeStrokeColor)
-        .attr('stroke-width', 1)
-        .attr('cursor', 'pointer')
-        .attr('data-id', d => d.id)
-        .attr('data-type', d => d.type)
-        .on('mouseover', function(event, d) {
-            // Show tooltip
-            const html = `
-                <div style="font-weight: bold; margin-bottom: 5px;">${d.name}</div>
-                <div>Type: ${d.type.charAt(0).toUpperCase() + d.type.slice(1)}</div>
-                <div>Total Value: ${formatCurrency(d.value)}</div>
-            `;
-            tooltip.innerHTML = html;
-            tooltip.style.display = 'block';
-            tooltip.style.left = (event.pageX + 10) + 'px';
-            tooltip.style.top = (event.pageY - 28) + 'px';
-            
-            // Highlight node
-            d3.select(this)
-                .attr('stroke', getCssVar('--chart-color-primary'))
-                .attr('stroke-width', 2);
-                
-            // Cross-panel highlighting
-            if (panelSide === 'left' && d.type === 'prime') {
-                d3.select('#prime-sub-sankey')
-                    .selectAll('rect')
-                    .filter(node => node.type === 'prime' && node.id === d.id)
-                    .attr('stroke', getCssVar('--chart-color-primary'))
-                    .attr('stroke-width', 2);
-            } else if (panelSide === 'right' && d.type === 'prime') {
-                d3.select('#agency-prime-sankey')
-                    .selectAll('rect')
-                    .filter(node => node.type === 'prime' && node.id === d.id)
-                    .attr('stroke', getCssVar('--chart-color-primary'))
-                    .attr('stroke-width', 2);
-            }
-        })
-        .on('mousemove', function(event) {
-            tooltip.style.left = (event.pageX + 10) + 'px';
-            tooltip.style.top = (event.pageY - 28) + 'px';
-        })
-        .on('mouseout', function() {
-            tooltip.style.display = 'none';
-            d3.select(this)
-                .attr('stroke', nodeStrokeColor)
-                .attr('stroke-width', 1);
-                
-            // Remove cross-panel highlighting
-            if (panelSide === 'left') {
-                d3.select('#prime-sub-sankey')
-                    .selectAll('rect')
-                    .attr('stroke', nodeStrokeColor)
-                    .attr('stroke-width', 1);
-            } else {
-                d3.select('#agency-prime-sankey')
-                    .selectAll('rect')
-                    .attr('stroke', nodeStrokeColor)
-                    .attr('stroke-width', 1);
-            }
-        });
+        .attr('stroke-width', 1);
+          
+      // Remove cross-panel highlighting
+      if (panelSide === 'left') {
+        d3.select('#prime-sub-sankey')
+          .selectAll('rect')
+          .attr('stroke', nodeStrokeColor)
+          .attr('stroke-width', 1);
+      } else {
+        d3.select('#agency-prime-sankey')
+          .selectAll('rect')
+          .attr('stroke', nodeStrokeColor)
+          .attr('stroke-width', 1);
+      }
+    });
+  
+  // Add node labels
+  svgSelection.append('g')
+    .selectAll('text')
+    .data(graph.nodes)
+    .enter()
+    .append('text')
+    .attr('x', d => d.x0 < width / 2 ? d.x1 + 6 : d.x0 - 6)
+    .attr('y', d => (d.y1 + d.y0) / 2)
+    .attr('dy', '0.35em')
+    .attr('text-anchor', d => d.x0 < width / 2 ? 'start' : 'end')
+    .text(d => d.name)
+    .attr('font-size', '11px')
+    .attr('fill', getCssVar('--color-text-primary'))
+    .each(function(d) {
+      // Hide labels for small nodes
+      if ((d.y1 - d.y0) < 5) {
+        d3.select(this).remove();
+      }
+    });
+      
+  // Add note about showing only top connections
+  svgSelection.append("text")
+    .attr("x", width - 10)
+    .attr("y", height - 10)
+    .attr("text-anchor", "end")
+    .attr("font-size", "10px")
+    .attr("fill", getCssVar('--color-text-secondary'))
+    .attr("opacity", 0.7)
+    .text("Showing top 10 flows by value");
+}
+
+// Override the existing displayEnhancedSankeyChart function
+window.displayEnhancedSankeyChart = displayEnhancedSankeyChart;
+
+// Initialize during page load if not already done
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initializeSankeyFilters);
+} else {
+  // Document already loaded, run the initialization
+  initializeSankeyFilters();
+}
+
+// Make sure the appropriate function gets called during visualization updates
+const originalApplyFilters = window.applyFiltersAndUpdateVisuals;
+if (typeof originalApplyFilters === 'function') {
+  window.applyFiltersAndUpdateVisuals = function() {
+    // Call the original function first
+    originalApplyFilters.apply(this, arguments);
     
-    // Add node labels
-    svgSelection.append('g')
-        .selectAll('text')
-        .data(graph.nodes)
-        .enter()
-        .append('text')
-        .attr('x', d => d.x0 < width / 2 ? d.x1 + 6 : d.x0 - 6)
-        .attr('y', d => (d.y1 + d.y0) / 2)
-        .attr('dy', '0.35em')
-        .attr('text-anchor', d => d.x0 < width / 2 ? 'start' : 'end')
-        .text(d => d.name)
-        .attr('font-size', '11px')
-        .attr('fill', getCssVar('--color-text-primary'))
-        .each(function(d) {
-            // Hide labels for small nodes
-            if ((d.y1 - d.y0) < 5) {
-                d3.select(this).remove();
-            }
-        });
-        
-    // Add note about showing only top connections
-    svgSelection.append("text")
-        .attr("x", width - 10)
-        .attr("y", height - 10)
-        .attr("text-anchor", "end")
-        .attr("font-size", "10px")
-        .attr("fill", getCssVar('--color-text-secondary'))
-        .attr("opacity", 0.7)
-        .text("Showing top 10 flows by value");
+    // Make sure our enhanced Sankey display function gets called
+    if (typeof displaySankeyChart === 'function' && 
+        typeof displayEnhancedSankeyChart === 'function' &&
+        displaySankeyChart !== displayEnhancedSankeyChart) {
+      // Replace the old function with our enhanced version
+      window.displaySankeyChart = displayEnhancedSankeyChart;
+    }
+  };
 }
