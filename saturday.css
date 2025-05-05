@@ -1,145 +1,133 @@
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700&family=Ubuntu:wght@500;700&display=swap');
-
 /* ========================================= */
-/* Theme Variables (Dark UI w/ Pink/Purple Accent) */
+/* CSS Variables - Light Mode (OKLCH Green v2 Mapped) */
 /* ========================================= */
 :root {
-    /* --- Font Families --- */
-    --font-heading: 'Ubuntu', sans-serif;
-    --font-body: 'Nunito', sans-serif;
+    /* --- Base OKLCH Palette (Hue 120 - from user) --- */
+    --oklch-background-light: oklch(100% 0 120);
+    --oklch-on-accent-light: oklch(100% 0 0);
+    --oklch-accent-light: oklch(60.595702729524916% 0.16718750000000002 120);
+    --oklch-accent-b-light: oklch(60.595702729524916% 0.16718750000000002 120 / 16%);
+    --oklch-gradient-start-light: oklch(60.595702729524916% 0.16718750000000002 120 / 8%);
+    --oklch-gradient-end-light: oklch(60.595702729524916% 0.16718750000000002 120 / 0%);
+    --oklch-text-primary-light: oklch(0% 0 0);
+    --oklch-text-secondary-light: oklch(57.32421837587612% 0.05 120);  /* C=0.05 */
+    --oklch-text-tertiary-light: oklch(73.92578076752679% 0.05 120);   /* C=0.05 */
+    --oklch-border-1-light: oklch(70.50781203983402% 0.1 120 / 8%);   /* C=0.1 */
+    --oklch-border-2-light: oklch(70.50781203983402% 0.1 120 / 16%);  /* C=0.1 */
+    --oklch-border-3-light: oklch(70.50781203983402% 0.1 120 / 32%);  /* C=0.1 */
+    --oklch-surface-1-light: oklch(70.50781203983402% 0.1 120 / 4%);   /* C=0.1 */
+    --oklch-surface-2-light: oklch(70.50781203983402% 0.1 120 / 8%);   /* C=0.1 */
+    --oklch-surface-3-light: oklch(70.50781203983402% 0.1 120 / 16%);  /* C=0.1 */
 
-    /* --- Core Hex Palette (Inspired by Screenshot) --- */
-    /* Light Mode Base */
-    --hex-lm-bg: #F8F8FA;           /* Light Gray BG */
-    --hex-lm-surface: #FFFFFF;       /* White Surface */
-    --hex-lm-container: #F0F0F5;    /* Subtle Off-White/Cool Tint Container */
-    --hex-lm-border: #D8D9E0;       /* Light Gray Border */
-    --hex-lm-outline: #C2C5CC;      /* Mid-light gray Outline */
-    /* Dark Text for Light Mode */
-    --hex-lm-text-primary: #1D1C24;  /* Dark Charcoal Text */
-    --hex-lm-text-secondary: #403F50;/* Mid-Dark Gray Text / Secondary Accent */
-    --hex-lm-text-tertiary: #8A8D93; /* Mid Gray Text */
-    /* Accent (Muted Pink/Purple) */
-    --hex-accent-primary-light: #8E5A73; /* Slightly darker accent for light bg */
-    --hex-accent-secondary-light: #A06A84; /* Original accent as secondary */
-    --hex-accent-tertiary-light: #B8B9C8;  /* Light Gray from dark mode text */
+    /* --- Semantic Color Mapping (Light Mode - Mapped from Visuals) --- */
+    --color-background: var(--oklch-background-light);         /* Page background (White) */
+    --color-surface: var(--oklch-surface-1-light);             /* Card background (Light Green Tint) */
+    --color-surface-container: var(--oklch-surface-2-light);   /* Nested surface / Secondary Button BG */
+    --color-surface-variant: var(--oklch-surface-3-light);     /* Subtle variant BG / Tertiary Button BG */
 
-    /* Neutrals */
-    --hex-white: #FFFFFF;
-    --hex-black: #000000; /* Use sparingly */
+    /* Text Colors */
+    --color-text-primary: var(--oklch-text-primary-light);     /* Black */
+    --color-text-secondary: var(--oklch-text-secondary-light); /* Mid Green/Gray */
+    --color-text-tertiary: var(--oklch-text-tertiary-light);   /* Light Green/Gray */
+
+    /* Action Colors */
+    --color-primary: var(--oklch-accent-light);                /* Accent Green Button BG */
+    --color-on-primary: var(--oklch-on-accent-light);          /* White Button Text */
+    /* Secondary action uses surface color background + primary text */
+    --color-secondary: var(--color-surface-container);         /* Secondary Button BG */
+    --color-on-secondary: var(--color-text-primary);           /* Secondary Button Text (Black) */
+
+    /* Border & Outline */
+    --color-border: var(--oklch-border-1-light);
+    --color-outline: var(--oklch-border-2-light);
+    /* Focus ring based on primary */
+    --color-focus-ring: oklch(60.59% 0.167 120 / 50%);
+
+    /* Chart Colors (Derived from Accent + Text Colors) */
+    --chart-color-primary: var(--oklch-accent-light);           /* Accent Green */
+    --chart-color-secondary: oklch(70% 0.167 120);               /* Lighter Green */
+    --chart-color-tertiary: var(--oklch-text-secondary-light);  /* Use Mid Green/Gray text color as muted chart tone */
 
     /* Status Colors (Standard Hex) */
-    --status-red: #D81B60;
-    --status-green: #388E3C;
-    --status-blue: #1E88E5;
-    --status-yellow: #FBC02D;
+    --color-error: #e03131;
+    --color-success: #2f9e44; /* Standard Green */
+    --color-warning: #f08c00;
+    --color-info: #1971c2;
 
-    /* --- Semantic Color Mapping (Light Mode) --- */
-    --color-background: var(--hex-lm-bg);
-    --color-surface: var(--hex-lm-surface);
-    --color-surface-container: var(--hex-lm-container);
-    --color-surface-variant: #EAEBF0; /* Slightly darker than container */
-
-    --color-text-primary: var(--hex-lm-text-primary);
-    --color-text-secondary: var(--hex-lm-text-secondary);
-    --color-text-tertiary: var(--hex-lm-text-tertiary);
-
-    --color-primary: var(--hex-accent-primary-light);
-    --color-on-primary: var(--hex-white);
-    --color-secondary: var(--hex-lm-text-secondary); /* Use text color for secondary action button */
-    --color-on-secondary: var(--hex-white);          /* White text on dark gray */
-
-    --color-border: var(--hex-lm-border);
-    --color-outline: var(--hex-lm-outline);
-    --color-focus-ring: rgba(142, 90, 115, 0.5);   /* Based on primary accent */
-
-    /* Chart Colors */
-    --chart-color-primary: var(--hex-accent-primary-light);
-    --chart-color-secondary: var(--hex-accent-secondary-light);
-    --chart-color-tertiary: var(--hex-accent-tertiary-light);
-
-    /* Status Colors */
-    --color-error: var(--status-red);
-    --color-success: var(--status-green);
-    --color-warning: var(--status-yellow);
-    --color-info: var(--status-blue);
-
-    /* --- Layout & Feel Adjustments --- */
+    /* --- Original Layout Values (Keep) --- */
     --border-radius-sm: 6px;
     --border-radius-md: 8px;
     --border-radius-lg: 12px;
-    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
-    --shadow-md: 0 3px 6px rgba(0, 0, 0, 0.09);
-    --shadow-lg: 0 6px 12px rgba(0, 0, 0, 0.1);
-    --transition-standard: all 0.2s ease-in-out;
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.08);
+    --shadow-lg: 0 4px 6px rgba(0, 0, 0, 0.12);
+    --transition-standard: all 0.2s ease;
     --bento-gap: 16px;
     --scale-interactive: scale(1.02);
 }
 
 /* ========================================= */
-/* CSS Variables - Dark Mode (Inspired by Screenshot) */
+/* CSS Variables - Dark Mode (OKLCH Green v2 Mapped) */
 /* ========================================= */
 [data-theme="dark"] {
-    /* --- Core Hex Palette (Dark Mode - Inspired by Screenshot) --- */
-    --hex-dm-bg: #272727;           /* Dark Charcoal/Blue BG */
-    --hex-dm-surface: #252430;       /* Slightly Lighter Surface */
-    --hex-dm-container: #2C2C3D;     /* Container */
-    --hex-dm-border: #3A3B4A;         /* Border / Variant */
-    --hex-dm-outline: #4A4B5A;        /* Outline */
-    /* Light Text for Dark Mode */
-    --hex-dm-text-primary: #F5F5FA;    /* Bright Off-White Text */
-    --hex-dm-text-secondary: #B8B9C8;  /* Light Gray Text */
-    --hex-dm-text-tertiary: #8A8D93;   /* Mid Gray Text */
-    /* Accent */
-    --hex-dm-accent: #A06A84;          /* Muted Pink/Purple from analysis */
-    --hex-dm-on-accent: #FFFFFF;       /* White text on accent */
-    /* Secondary Accent Color (e.g., for outline button) */
-    --hex-dm-secondary-accent: var(--hex-dm-text-secondary); /* Use light gray text */
+    /* --- Base OKLCH Palette (Hue 120 - from user) --- */
+    --oklch-background-dark: oklch(24% 0.005 120);
+    --oklch-on-accent-dark: oklch(100% 0 0);
+    --oklch-accent-dark: oklch(60.595702729524916% 0.16718750000000002 120);
+    --oklch-accent-b-dark: oklch(60.595702729524916% 0.16718750000000002 120 / 24%);
+    --oklch-gradient-start-dark: oklch(60.595702729524916% 0.16718750000000002 120 / 12%);
+    --oklch-gradient-end-dark: oklch(60.595702729524916% 0.16718750000000002 120 / 0%);
+    --oklch-text-primary-dark: oklch(100% 0 0);
+    --oklch-text-secondary-dark: oklch(82.26171875000003% 0.05 120); /* C=0.05 */
+    --oklch-text-tertiary-dark: oklch(67.86328124999999% 0.05 120);  /* C=0.05 */
+    --oklch-border-1-dark: oklch(70.68359374999999% 0.1 120 / 8%);   /* C=0.1 */
+    --oklch-border-2-dark: oklch(70.68359374999999% 0.1 120 / 16%);  /* C=0.1 */
+    --oklch-border-3-dark: oklch(70.68359374999999% 0.1 120 / 32%);  /* C=0.1 */
+    --oklch-surface-1-dark: oklch(70.68359374999999% 0.1 120 / 4%);   /* C=0.1 */
+    --oklch-surface-2-dark: oklch(70.68359374999999% 0.1 120 / 8%);   /* C=0.1 */
+    --oklch-surface-3-dark: oklch(70.68359374999999% 0.1 120 / 16%);  /* C=0.1 */
 
-    /* Status Colors (Brighter for Dark Mode) */
-    --status-red-dark: #f06292;
-    --status-green-dark: #81c784;
-    --status-blue-dark: #64b5f6;
-    --status-yellow-dark: #ffd54f;
+    /* --- Semantic Color Mapping (Dark Mode - Mapped from Visuals) --- */
+    --color-background: var(--oklch-background-dark);         /* Dark Page background */
+    --color-surface: var(--oklch-surface-1-dark);             /* Card background (Light Green Tint Overlay) */
+    --color-surface-container: var(--oklch-surface-2-dark);   /* Nested surface / Secondary Button BG */
+    --color-surface-variant: var(--oklch-surface-3-dark);     /* Subtle variant BG / Tertiary Button BG */
 
-    /* --- Semantic Color Mapping (Dark Mode) --- */
-    --color-background: var(--hex-dm-bg);
-    --color-surface: var(--hex-dm-surface);
-    --color-surface-container: var(--hex-dm-container);
-    --color-surface-variant: var(--hex-dm-border); /* Using border as variant */
+    /* Text Colors */
+    --color-text-primary: var(--oklch-text-primary-dark);     /* White */
+    --color-text-secondary: var(--oklch-text-secondary-dark); /* Very Light Green/Gray */
+    --color-text-tertiary: var(--oklch-text-tertiary-dark);   /* Lighter Green/Gray */
 
-    --color-text-primary: var(--hex-dm-text-primary);
-    --color-text-secondary: var(--hex-dm-text-secondary);
-    --color-text-tertiary: var(--hex-dm-text-tertiary);
+    /* Action Colors */
+    --color-primary: var(--oklch-accent-dark);                /* Accent Green Button BG */
+    --color-on-primary: var(--oklch-on-accent-dark);          /* White Button Text */
+    /* Secondary action uses surface color background + primary text */
+    --color-secondary: var(--color-surface-container);        /* Secondary Button BG */
+    --color-on-secondary: var(--color-text-primary);          /* Secondary Button Text (White) */
 
-    --color-primary: var(--hex-dm-accent);
-    --color-on-primary: var(--hex-dm-on-accent);
-    --color-secondary: var(--hex-dm-container); /* Use container bg for secondary button */
-    --color-on-secondary: var(--hex-dm-secondary-accent); /* Light gray text */
-
-    --color-border: var(--hex-dm-border);
-    --color-outline: var(--hex-dm-outline);
-    --color-focus-ring: rgba(160, 106, 132, 0.6);    /* Based on dm-accent */
+    /* Border & Outline */
+    --color-border: var(--oklch-border-1-dark);
+    --color-outline: var(--oklch-border-2-dark);
+    /* Dark mode focus ring */
+    --color-focus-ring: oklch(60.59% 0.167 120 / 60%);
 
     /* Chart Colors */
-    --chart-color-primary: var(--hex-dm-accent);        /* Primary Accent */
-    --chart-color-secondary: var(--hex-dm-text-secondary);/* Light Gray */
-    --chart-color-tertiary: var(--hex-dm-text-tertiary); /* Mid Gray */
+    --chart-color-primary: var(--oklch-accent-dark);          /* Accent Green */
+    --chart-color-secondary: oklch(70% 0.167 120);             /* Lighter Green */
+    --chart-color-tertiary: var(--oklch-text-secondary-dark); /* Use Very Light Green/Gray as muted chart tone */
 
-    /* Status Colors */
-    --color-error: var(--status-red-dark);
-    --color-success: var(--status-green-dark);
-    --color-warning: var(--status-yellow-dark);
-    --color-info: var(--status-blue-dark);
+    /* Status Colors (Lighter Hex for Dark Mode) */
+    --color-error: #f87171;
+    --color-success: #4ade80; /* Standard brighter green */
+    --color-warning: #fbbf24;
+    --color-info: #60a5fa;
 
     /* Dark Mode Shadows */
-    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
-    --shadow-md: 0 3px 6px rgba(0, 0, 0, 0.35);
-    --shadow-lg: 0 6px 12px rgba(0, 0, 0, 0.4);
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
+    --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.25);
+    --shadow-lg: 0 4px 6px rgba(0, 0, 0, 0.3);
     /* Inherits layout vars from :root */
 }
-
-
 /* ========================================= */
 /* Base Styles & Reset                       */
 /* ========================================= */
