@@ -81,7 +81,7 @@
 /* ========================================= */
 [data-theme="dark"] {
     /* --- Core Hex Palette (Dark Mode - Inspired by Screenshot) --- */
-    --hex-dm-bg: #1D1C24;           /* Dark Charcoal/Blue BG */
+    --hex-dm-bg: #272727;           /* Dark Charcoal/Blue BG */
     --hex-dm-surface: #252430;       /* Slightly Lighter Surface */
     --hex-dm-container: #2C2C3D;     /* Container */
     --hex-dm-border: #3A3B4A;         /* Border / Variant */
@@ -257,7 +257,7 @@ a:hover {
 /* Card Styles (`.bento-box`)                */
 /* ========================================= */
 .bento-box {
-    background-color: var(--color-background); border-radius: var(--border-radius-lg);
+    background-color: var(--hex-dm-bg); border-radius: var(--border-radius-lg);
     box-shadow: var(--shadow-sm); padding: 16px; border: 1px solid var(--color-border);
     display: flex; flex-direction: column; height: 100%; position: relative; overflow: hidden;
     transition: var(--transition-standard);
