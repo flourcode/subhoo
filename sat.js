@@ -2828,10 +2828,6 @@ function displayChoroplethMap(mapData) {
             return;
         }
 
-        // Check if we're in dark mode
-        const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
-        const textColor = getCssVar('--color-text-secondary');
-
         // Create SVG element inside the map div
         const svg = d3.select(mapDiv)
             .append('svg')
@@ -2841,53 +2837,60 @@ function displayChoroplethMap(mapData) {
             .style('max-width', '100%')
             .style('height', 'auto');
 
-        // Define color scale for the map
+        // Get state values and compute the max for scaling
         const stateValues = Object.values(mapData).map(d => d.value);
-        const maxValue = d3.max(stateValues) || 0;
-        
-        // DEBUG: Let's verify the values we're using for coloring
-        console.log('State values range:', d3.min(stateValues), 'to', maxValue);
-        
-        // Get color values directly rather than using CSS vars for the interpolation
-        const baseColor = isDarkMode ? 
-            d3.rgb(getCssVar('--color-surface-variant')).toString() : 
-            d3.rgb(getCssVar('--color-surface-variant')).toString();
-            
-        const highlightColor = isDarkMode ?
-            d3.rgb(getCssVar('--chart-color-primary')).toString() :
-            d3.rgb(getCssVar('--chart-color-primary')).toString();
-        
-        console.log('Color scale range:', baseColor, 'to', highlightColor);
+        const maxValue = d3.max(stateValues) || 1; // Default to 1 if no data
+        console.log("Max state value:", maxValue);
 
-        // Create explicit color scale using the extracted RGB values
-        const colorScale = d3.scaleSequential()
-            .domain([0, maxValue === 0 ? 1 : maxValue])
-            .interpolator(d3.interpolate(baseColor, highlightColor));
-
-        // Test the color scale with a few values
-        if (maxValue > 0) {
-            console.log('Color at 0:', colorScale(0));
-            console.log('Color at max/2:', colorScale(maxValue/2));
-            console.log('Color at max:', colorScale(maxValue));
+        // Get colors directly from DOM computed styles to avoid CSS variable issues
+        // Create a throwaway element to compute styles from
+        const testEl = document.createElement('div');
+        document.body.appendChild(testEl);
+        
+        // Apply CSS classes or attributes to simulate theme
+        const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
+        if (isDarkMode) {
+            testEl.setAttribute('data-theme', 'dark');
         }
-
-        // Remove existing tooltips first
-        d3.select("body").selectAll(".map-tooltip").remove();
         
-        // Create tooltip - attach to body for better positioning
+        // Get computed style colors (fallbacks provided)
+        const getColor = (varName, fallback) => {
+            const value = getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+            return value || fallback;
+        };
+        
+        // Get theme-specific colors
+        const lowColor = isDarkMode ? 
+            getColor('--color-surface-variant', '#3A3B40') : 
+            getColor('--color-surface-variant', '#E8EAEF');
+        const highColor = isDarkMode ? 
+            getColor('--chart-color-primary', '#F0F0F0') : 
+            getColor('--chart-color-primary', '#1C1D21');
+            
+        console.log("Color scale:", lowColor, "to", highColor);
+        
+        // Clean up test element
+        document.body.removeChild(testEl);
+
+        // Create color scale with explicit colors
+        const colorScale = d3.scaleLinear()
+            .domain([0, maxValue])
+            .range([lowColor, highColor]);
+
+        // Create tooltip
         const tooltip = d3.select("body")
             .append("div")
             .attr("class", "map-tooltip")
             .style("position", "absolute")
             .style("visibility", "hidden")
             .style("opacity", 0)
-            .style("background-color", getCssVar('--color-surface'))
-            .style("color", getCssVar('--color-text-primary'))
+            .style("background-color", getColor('--color-surface', '#FFFFFF'))
+            .style("color", getColor('--color-text-primary', '#1C1D21'))
             .style("padding", "10px")
             .style("border-radius", "4px")
             .style("font-size", "12px")
             .style("pointer-events", "none")
-            .style("border", `1px solid ${getCssVar('--color-border')}`)
+            .style("border", `1px solid ${getColor('--color-border', '#D8DAE0')}`)
             .style("z-index", "9999");
 
         // State name mapping
@@ -2907,6 +2910,16 @@ function displayChoroplethMap(mapData) {
             "55": "Wisconsin", "56": "Wyoming", "72": "Puerto Rico"
         };
 
+        // Create a mapping between state FIPS codes and actual data
+        const stateDataMap = {};
+        Object.keys(mapData).forEach(code => {
+            // Normalize FIPS code format
+            const normalizedCode = code.padStart(2, '0');
+            stateDataMap[normalizedCode] = mapData[code];
+        });
+        
+        console.log("State data map sample:", Object.keys(stateDataMap).slice(0, 5));
+
         // Load US state boundaries GeoJSON
         d3.json('https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json')
             .then(us => {
@@ -2916,14 +2929,6 @@ function displayChoroplethMap(mapData) {
 
                 // Convert TopoJSON to GeoJSON features
                 const states = topojson.feature(us, us.objects.states);
-                
-                // DEBUG: Create a mapping of IDs to verify correct state matching
-                const stateIdMap = {};
-                states.features.forEach(feature => {
-                    stateIdMap[feature.id] = feature.id.toString().padStart(2, '0');
-                });
-                console.log('Available state IDs in GeoJSON:', stateIdMap);
-                console.log('Sample of our data state codes:', Object.keys(mapData).slice(0, 5));
 
                 // Create projection
                 const projection = d3.geoAlbersUsa()
@@ -2942,43 +2947,49 @@ function displayChoroplethMap(mapData) {
                    .attr('fill', d => {
                        // Use the state FIPS code to lookup data
                        const fipsCode = d.id.toString().padStart(2, '0');
-                       const stateData = mapData[fipsCode];
+                       const stateData = stateDataMap[fipsCode];
                        
-                       // DEBUG: Show what color is being assigned
-                       if (stateData) {
-                           console.log(`State ${fipsCode}: value=${stateData.value}, color=${colorScale(stateData.value)}`);
+                       // Apply color scale if data exists, otherwise use default color
+                       if (stateData && stateData.value > 0) {
+                           const color = colorScale(stateData.value);
+                           // Log a sample of colors being applied
+                           if (Math.random() < 0.1) {
+                               console.log(`State ${fipsCode} (${fipsToStateName[fipsCode]}): value=${stateData.value}, color=${color}`);
+                           }
+                           return color;
+                       } else {
+                           return getColor('--color-surface-variant', '#E8EAEF');
                        }
-                       
-                       return stateData ? colorScale(stateData.value) : getCssVar('--color-surface-variant');
                    })
-                   .attr('stroke', getCssVar('--color-border'))
+                   .attr('stroke', getColor('--color-border', '#D8DAE0'))
                    .attr('stroke-width', 0.5)
                    .style('cursor', 'pointer')
                    .on('mouseover', function(event, d) {
+                       const fipsCode = d.id.toString().padStart(2, '0');
+                       const stateData = stateDataMap[fipsCode];
+                       const stateName = fipsToStateName[fipsCode] || "Unknown";
+                       
+                       // Show tooltip
                        tooltip
-                            .style("visibility", "visible")
-                            .style("opacity", 1);
-                            
-                       tooltip.html(() => {
-                           const fipsCode = d.id.toString().padStart(2, '0');
-                           const stateData = mapData[fipsCode];
-                           const stateName = fipsToStateName[fipsCode] || "Unknown";
-                           if (stateData) {
-                               return `
-                                   <strong>${stateName}</strong>
-                                   <div>Total Value: ${formatCurrency(stateData.value)}</div>
-                                   <div>Contracts: ${stateData.count.toLocaleString()}</div>
-                               `;
-                           } else {
-                               return `<strong>${stateName}</strong><br>No data`;
-                           }
-                       })
-                       .style("left", (event.pageX + 10) + "px")
-                       .style("top", (event.pageY - 28) + "px");
+                           .style("visibility", "visible")
+                           .style("opacity", 1)
+                           .html(() => {
+                               if (stateData && stateData.value > 0) {
+                                   return `
+                                       <strong>${stateName}</strong>
+                                       <div>Total Value: ${formatCurrency(stateData.value)}</div>
+                                       <div>Contracts: ${stateData.count.toLocaleString()}</div>
+                                   `;
+                               } else {
+                                   return `<strong>${stateName}</strong><br>No data`;
+                               }
+                           })
+                           .style("left", (event.pageX + 10) + "px")
+                           .style("top", (event.pageY - 28) + "px");
 
                        // Highlight the state
                        d3.select(this)
-                           .attr("stroke", getCssVar('--color-primary'))
+                           .attr("stroke", getColor('--color-primary', '#1C1D21'))
                            .attr("stroke-width", 1.5)
                            .raise();
                    })
@@ -2993,7 +3004,7 @@ function displayChoroplethMap(mapData) {
                           .style("opacity", 0);
                               
                        d3.select(this)
-                           .attr("stroke", getCssVar('--color-border'))
+                           .attr("stroke", getColor('--color-border', '#D8DAE0'))
                            .attr("stroke-width", 0.5);
                    });
 
@@ -3008,8 +3019,7 @@ function displayChoroplethMap(mapData) {
 
                 // Create discrete color bins
                 const numBins = 5;
-                const binMaxValue = maxValue === 0 ? 1 : maxValue;
-                const bins = Array.from({length: numBins}, (_, i) => binMaxValue * i / (numBins - 1));
+                const bins = Array.from({length: numBins}, (_, i) => maxValue * i / (numBins - 1));
                 const binWidth = legendWidth / numBins;
 
                 // Add legend title
@@ -3018,7 +3028,7 @@ function displayChoroplethMap(mapData) {
                     .attr('y', -6)
                     .attr('text-anchor', 'middle')
                     .attr('font-size', '10px')
-                    .attr('fill', textColor)
+                    .attr('fill', getColor('--color-text-secondary', '#4A4B52'))
                     .text('Contract Value');
 
                 // Create discrete color blocks
@@ -3031,7 +3041,7 @@ function displayChoroplethMap(mapData) {
                     .attr('width', binWidth)
                     .attr('height', legendHeight)
                     .attr('fill', d => colorScale(d))
-                    .attr('stroke', getCssVar('--color-border'))
+                    .attr('stroke', getColor('--color-border', '#D8DAE0'))
                     .attr('stroke-width', 0.5);
 
                 // Add min/max labels
@@ -3040,7 +3050,7 @@ function displayChoroplethMap(mapData) {
                     .attr('y', legendHeight + 10)
                     .attr('text-anchor', 'start')
                     .attr('font-size', '10px')
-                    .attr('fill', textColor)
+                    .attr('fill', getColor('--color-text-secondary', '#4A4B52'))
                     .text('Low');
 
                 legendGroup.append('text')
@@ -3048,19 +3058,17 @@ function displayChoroplethMap(mapData) {
                     .attr('y', legendHeight + 10)
                     .attr('text-anchor', 'end')
                     .attr('font-size', '10px')
-                    .attr('fill', textColor)
+                    .attr('fill', getColor('--color-text-secondary', '#4A4B52'))
                     .text('High');
             })
             .catch(error => {
                 console.error("Error loading or processing GeoJSON for map:", error);
                 displayError(containerId, `Error rendering map: ${error.message}`);
-                // Clean up tooltip if it exists
                 d3.select("body").selectAll(".map-tooltip").remove();
             });
     } catch (error) {
         console.error("Error creating choropleth map:", error);
         displayError(containerId, "Failed to render map: " + error.message);
-        // Clean up tooltip if it exists
         d3.select("body").selectAll(".map-tooltip").remove();
     }
 }
