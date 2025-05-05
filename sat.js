@@ -280,8 +280,48 @@ function updateStatusBanner(message, type = 'info') {
     // Reset classes
     banner.className = '';
     
-    // Just use the class-based approach that was working before
+    // Add the type class
     banner.classList.add(type);
+
+    // Check if this is a loading message we want to auto-fade
+    const isLoadingMessage = (
+        message.includes('Loading') || 
+        message.includes('loaded') ||
+        message.includes('data...') ||
+        message.includes('Ready to load') ||
+        (message.includes('Successfully') && message.includes('loaded'))
+    );
+    
+    // Clear any existing timeout to prevent multiple fade animations
+    if (banner._fadeTimeout) {
+        clearTimeout(banner._fadeTimeout);
+        banner._hideTimeout && clearTimeout(banner._hideTimeout);
+    }
+    
+    // Show the banner
+    banner.style.display = '';
+    banner.style.opacity = '1';
+    banner.style.transition = '';  // Reset transition
+    
+    // If it's a loading success message, fade it out after a delay
+    if (isLoadingMessage && (type === 'success' || type === 'info')) {
+        // Store the timeouts on the element itself for later clearing if needed
+        banner._fadeTimeout = setTimeout(() => {
+            // Start fade out animation
+            banner.style.transition = 'opacity 1s ease-out';
+            banner.style.opacity = '0';
+            
+            // After the fade completes, hide the element 
+            banner._hideTimeout = setTimeout(() => {
+                banner.style.display = 'none';
+                // Reset the transition so it doesn't affect other status changes
+                banner.style.transition = '';
+                // Clear timeout references
+                banner._fadeTimeout = null;
+                banner._hideTimeout = null;
+            }, 1000);
+        }, 1500);  // Show for 1.5 seconds before beginning fade
+    }
 
     // Enable/disable refresh button based on loading state
     const refreshButton = document.getElementById('refresh-button');
