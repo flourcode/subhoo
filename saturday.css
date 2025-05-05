@@ -1,69 +1,65 @@
 /* ========================================= */
-/* CSS Variables - Light Mode (Print/Monocle Style w/ Muted Purple Accent) */
+/* CSS Variables - Light Mode (Monocle Print Style w/ Custom Box BG) */
 /* ========================================= */
 :root {
     /* --- Core Palette - Desaturated Purples & Warm Neutrals --- */
-    /* Based on original purples but desaturated */
-    --dsp-purple-50: #F5F3F5;    /* Desaturated Lightest */
-    --dsp-purple-100: #EDEAEB;
-    --dsp-purple-200: #D8D4D7;   /* Used for Border */
-    --dsp-purple-300: #B6B1B7;   /* Mid Gray-Purple (Outline/Tertiary Chart/Dark Secondary Text) */
-    --dsp-purple-400: #9A949B;   /* Muted Purple (Primary Action/Chart/Dark Tertiary Text) */
-    --dsp-purple-500: #7A747B;   /* Darker Muted Purple (Secondary Action/Tertiary Text Light) */
-    --dsp-purple-600: #625C61;   /* Darkest Muted Purple (Secondary Text Light) */
+    /* Base Purples (Desaturated) */
+    --dsp-purple-100: #EDEAEB; /* Used for Container */
+    --dsp-purple-200: #D8D4D7; /* Used for Variant/Border */
+    --dsp-purple-300: #B6B1B7; /* Used for Outline/Tertiary Chart */
+    --dsp-purple-400: #9A949B; /* Used for Primary Action/Chart/Dark Tertiary Text */
+    --dsp-purple-500: #7A747B; /* Used for Secondary Action/Tertiary Text Light/Chart */
+    --dsp-purple-600: #625C61; /* Used for Secondary Text Light */
+    /* Note: dsp-purple-50 is removed as surface is now white */
 
     /* Neutrals */
     --creamy-white: #FDFBF5;     /* Off-white for BG/Light Text */
     --black-brown: #312d2a;      /* Dark brown/black for Text / Dark Surface Container/Border */
     --darker-charcoal: #1c1a19;  /* Very dark brown/black (Dark BG) */
+    --pure-white: #FFFFFF;       /* Pure White for new surface */
 
-    /* Dark Mode Surfaces */
-    --dark-surface-1: #262321;
-    --dark-surface-2: var(--black-brown);
-    --dark-surface-3: #3f3a37; /* Dark Outline */
+    /* Dark Mode Surfaces (Defined here for reference if needed) */
+    --dark-surface-1: #322f2d; /* User requested dark surface */
+    --dark-surface-2: #3f3a37; /* Slightly lighter */
+    --dark-surface-3: #4a4642; /* Lighter still */
 
     /* Dark Mode Accent Purples (Brighter Desaturated) */
-    --dsp-dark-accent-primary: #A59FA8;  /* Brighter dsp-400 */
-    --dsp-dark-accent-secondary: #908A91;/* Brighter dsp-500 */
-    --dsp-dark-chart-tertiary: #767077; /* Brighter dsp-600 */
+    --dsp-dark-accent-primary: #A59FA8;
+    --dsp-dark-accent-secondary: #908A91;
+    --dsp-dark-chart-tertiary: #767077;
 
     /* Status Colors (Slightly Desaturated Option) */
-    --status-red: #e06c75;      /* Softer Red */
-    --status-green: #98c379;    /* Softer Green */
-    --status-blue: #61afef;     /* Softer Blue */
-    --status-yellow: #d19a66;   /* Soft orange/yellow */
-
+    --status-red: #e06c75; --status-green: #98c379; --status-blue: #61afef; --status-yellow: #d19a66;
     /* Dark Mode Status Colors (Brighter Desaturated) */
-    --status-red-dark: #e5737d;
-    --status-green-dark: #a5d6a7;
-    --status-blue-dark: #79b6f2;
-    --status-yellow-dark: #e5c07b;
+    --status-red-dark: #e5737d; --status-green-dark: #a5d6a7; --status-blue-dark: #79b6f2; --status-yellow-dark: #e5c07b;
 
 
-    /* --- Semantic Color Mapping --- */
-    --color-background: var(--creamy-white);
-    --color-surface: var(--dsp-purple-50);             /* Use desaturated purple for surfaces */
-    --color-surface-container: var(--dsp-purple-100);
-    --color-surface-variant: var(--dsp-purple-200);
+    /* --- Semantic Color Mapping (Light Mode) --- */
+    --color-background: var(--creamy-white);           /* Creamy Background */
+    /* --- UPDATED SURFACE --- */
+    --color-surface: var(--pure-white);                /* User request: White surface/bento box */
+    /* --- Adjusted Related Surfaces/Borders --- */
+    --color-surface-container: #F5F5F5;                /* Subtle off-white container */
+    --color-surface-variant: #EEEEEE;                  /* Light gray variant */
+    --color-border: #EEEEEE;                           /* Use variant for border */
+    --color-outline: #DDDDDD;                          /* Slightly darker gray outline */
 
     /* Text Colors */
     --color-text-primary: var(--black-brown);
-    --color-text-secondary: var(--dsp-purple-600);
+    --color-text-secondary: var(--dsp-purple-600);     /* Keep desat purple text */
     --color-text-tertiary: var(--dsp-purple-500);
 
     /* Action Colors */
-    --color-primary: var(--dsp-purple-400);            /* Muted purple action */
-    --color-on-primary: var(--creamy-white);           /* Creamy text on action */
-    --color-secondary: var(--dsp-purple-500);          /* Darker muted purple secondary action */
-    --color-on-secondary: var(--creamy-white);         /* Creamy text on action */
+    --color-primary: var(--dsp-purple-400);            /* Keep desat purple action */
+    --color-on-primary: var(--creamy-white);
+    --color-secondary: var(--dsp-purple-500);
+    --color-on-secondary: var(--creamy-white);
 
-    /* Border & Outline */
-    --color-border: var(--dsp-purple-200);             /* Lighter desat purple border */
-    --color-outline: var(--dsp-purple-300);            /* Mid desat purple outline */
+    /* Focus Ring */
     --color-focus-ring: rgba(154, 148, 155, 0.5);      /* Based on dsp-purple-400 */
 
     /* Chart Colors */
-    --chart-color-primary: var(--dsp-purple-400);
+    --chart-color-primary: var(--dsp-purple-400);      /* Keep desat purple chart colors */
     --chart-color-secondary: var(--dsp-purple-500);
     --chart-color-tertiary: var(--dsp-purple-300);
 
@@ -74,19 +70,19 @@
     --color-info: var(--status-blue);
 
     /* --- Layout Values (Keep Consistent) --- */
-    --border-radius-sm: 8px; /* Or use tighter 6px */
-    --border-radius-md: 12px;/* Or use tighter 8px */
-    --border-radius-lg: 16px;/* Or use tighter 12px */
+    --border-radius-sm: 8px;
+    --border-radius-md: 12px;
+    --border-radius-lg: 16px;
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
     --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.08);
     --shadow-lg: 0 4px 6px rgba(0, 0, 0, 0.12);
-    --transition-standard: all 0.2s ease; /* Or use faster 0.1s ease-out */
-    --bento-gap: 16px; /* Use tighter gap */
+    --transition-standard: all 0.2s ease;
+    --bento-gap: 16px;
     --scale-interactive: scale(1.02);
 }
 
 /* ========================================= */
-/* CSS Variables - Dark Mode (Print/Monocle Style w/ Muted Purple Accent) */
+/* CSS Variables - Dark Mode (Monocle Print Style w/ Custom Box BG) */
 /* ========================================= */
 [data-theme="dark"] {
     /* --- Core Hex Palette References --- */
@@ -94,9 +90,13 @@
 
     /* --- Semantic Color Mapping --- */
     --color-background: var(--darker-charcoal);        /* #1c1a19 */
-    --color-surface: var(--dark-surface-1);            /* #262321 */
-    --color-surface-container: var(--dark-surface-2);  /* #312d2a */
-    --color-surface-variant: var(--dark-surface-3);    /* #3f3a37 */
+    /* --- UPDATED SURFACE --- */
+    --color-surface: #322f2d;                         /* User request: Dark warm gray surface */
+    /* --- Adjusted Related Surfaces/Borders --- */
+    --color-surface-container: #3f3a37;                /* Use original dark surface 3 */
+    --color-surface-variant: #4a4642;                  /* Derived slightly lighter warm gray */
+    --color-border: var(--color-surface-container);    /* Use container for border */
+    --color-outline: var(--color-surface-variant);     /* Use variant for outline */
 
     /* Text Colors */
     --color-text-primary: var(--creamy-white);         /* #FDFBF5 */
@@ -109,9 +109,7 @@
     --color-secondary: var(--dsp-dark-accent-secondary);/* Brighter darker muted purple */
     --color-on-secondary: var(--darker-charcoal);       /* Dark text on action */
 
-    /* Border & Outline */
-    --color-border: var(--dark-surface-2);             /* Use surface container for border */
-    --color-outline: var(--dark-surface-3);            /* Use surface variant for outline */
+    /* Focus Ring */
     --color-focus-ring: rgba(165, 159, 168, 0.6);      /* Based on dsp-dark-accent-primary */
 
     /* Chart Colors */
@@ -248,13 +246,23 @@ a:hover {
 /* Card Styles (`.bento-box`)                */
 /* ========================================= */
 .bento-box {
-    background-color: #322f2d; border-radius: var(--border-radius-lg);
-    box-shadow: var(--shadow-sm); padding: 16px; border: 1px solid var(--color-border);
-    display: flex; flex-direction: column; height: 100%; position: relative; overflow: hidden;
+    background-color: var(--color-surface); /* USE VARIABLE HERE */
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-sm); /* Default shadow */
+    padding: 16px;
+    border: 1px solid var(--color-border);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
     transition: var(--transition-standard);
 }
-.bento-box:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); border-color: var(--color-outline); }
-
+.bento-box:hover {
+    box-shadow: var(--shadow-md); /* Use theme variable */
+    transform: translateY(-1px); /* Keep subtle lift */
+    border-color: var(--color-outline); /* Use theme variable */
+}
 .card-header {
     display: flex; align-items: center; gap: 10px; margin-bottom: 12px;
     border-bottom: 1px solid var(--color-border); padding-bottom: 10px; flex-shrink: 0;
