@@ -4357,7 +4357,7 @@ function processSankeyDataForLeftPanel(model, selectedField) {
         .attr("fill", getCssVar('--color-text-secondary'))
         .attr("opacity", 0.7)
         .text("Showing top 10 flows by value");
-}
+
 
 // Process data for the right Sankey panel based on selection
 function processSankeyDataForRightPanel(model, selectedField) {
