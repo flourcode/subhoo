@@ -3844,6 +3844,7 @@ window.addEventListener('resize', function() {
        }
    }, 250); // Debounce for 250ms
 });
+// Simplified Sankey Chart visualization with filter panel integration
 
 // Add Sankey visualization options to the existing filters section
 function initializeSankeyFilters() {
@@ -3883,6 +3884,183 @@ function initializeSankeyFilters() {
   // Add event listeners to update visualization when options change
   document.getElementById('sankey-agency-field').addEventListener('change', applyFiltersAndUpdateVisuals);
   document.getElementById('sankey-contractor-field').addEventListener('change', applyFiltersAndUpdateVisuals);
+}
+
+// Process data for the left Sankey panel based on selection
+function processSankeyDataForLeftPanel(model, selectedField) {
+  // Filter to top relationships by value
+  const topAgencyToPrime = model.relationships.agencyToPrime
+    .sort((a, b) => b.value - a.value)
+    .slice(0, 10);
+      
+  const nodes = [];
+  const links = [];
+  const nodeMap = {};
+  
+  // Field types to entity types mapping
+  const fieldToEntityType = {
+    'agencyName': 'agency',
+    'subAgencyName': 'subagency',
+    'officeName': 'office',
+    'primeName': 'prime'
+  };
+  
+  // Get appropriate field name from the entity based on selection
+  const getEntityName = (entityId, type) => {
+    if (type === 'prime') {
+      return model.primes[entityId]?.name || 'Unknown';
+    }
+    
+    // For agency entities, determine based on selected field
+    switch (selectedField) {
+      case 'agencyName':
+        return model.agencies[entityId]?.name || 'Unknown Agency';
+      case 'subAgencyName':
+        return model.subAgencies[entityId]?.name || 'Unknown Sub-Agency';
+      case 'officeName':
+        return model.offices[entityId]?.name || 'Unknown Office';
+      default:
+        return 'Unknown';
+    }
+  };
+  
+  // Get appropriate source entity ID based on selection
+  const getSourceEntityId = (linkData) => {
+    const contract = model.contracts[linkData.contractId];
+    if (!contract) return null;
+    
+    switch (selectedField) {
+      case 'agencyName':
+        return contract.agencyId;
+      case 'subAgencyName':
+        return contract.subAgencyId;
+      case 'officeName':
+        return contract.officeId;
+      default:
+        return contract.subAgencyId; // Default to sub-agency
+    }
+  };
+  
+  // Process each relationship
+  topAgencyToPrime.forEach(link => {
+    const sourceId = getSourceEntityId(link);
+    const targetId = link.target; // Prime ID
+    
+    if (!sourceId || !targetId) return;
+    
+    // Get entity name based on type and add node if not already added
+    const sourceName = getEntityName(sourceId, fieldToEntityType[selectedField]);
+    const targetName = getEntityName(targetId, 'prime');
+    
+    // Add source node if not yet added
+    if (!nodeMap[sourceId]) {
+      const nodeIndex = nodes.length;
+      nodes.push({
+        name: truncateText(sourceName, 30),
+        id: sourceId,
+        type: fieldToEntityType[selectedField],
+        index: nodeIndex
+      });
+      nodeMap[sourceId] = nodeIndex;
+    }
+    
+    // Add target node if not yet added
+    if (!nodeMap[targetId]) {
+      const nodeIndex = nodes.length;
+      nodes.push({
+        name: truncateText(targetName, 30),
+        id: targetId,
+        type: 'prime',
+        index: nodeIndex
+      });
+      nodeMap[targetId] = nodeIndex;
+    }
+    
+    // Add link
+    links.push({
+      source: nodeMap[sourceId],
+      target: nodeMap[targetId],
+      value: link.value
+    });
+  });
+  
+  return { nodes, links };
+}
+
+// Process data for the right Sankey panel based on selection
+function processSankeyDataForRightPanel(model, selectedField) {
+  // Filter to top relationships by value
+  const topPrimeToSub = model.relationships.primeToSub
+    .sort((a, b) => b.value - a.value)
+    .slice(0, 10);
+      
+  const nodes = [];
+  const links = [];
+  const nodeMap = {};
+  
+  // If no subcontract data, return empty arrays
+  if (topPrimeToSub.length === 0) {
+    return { nodes, links };
+  }
+  
+  // Field types to entity types mapping
+  const fieldToEntityType = {
+    'primeName': 'prime',
+    'subName': 'sub'
+  };
+  
+  // Get entity name based on type
+  const getEntityName = (entityId, type) => {
+    if (type === 'prime') {
+      return model.primes[entityId]?.name || 'Unknown Prime';
+    } else if (type === 'sub') {
+      return model.subs[entityId]?.name || 'Unknown Sub';
+    }
+    return 'Unknown';
+  };
+  
+  // Process each relationship
+  topPrimeToSub.forEach(link => {
+    const sourceId = link.source; // Prime ID
+    const targetId = link.target; // Sub ID
+    
+    // Get entity names
+    const sourceName = getEntityName(sourceId, 'prime');
+    const targetName = getEntityName(targetId, 'sub');
+    
+    // Add source node if not yet added
+    if (!nodeMap[sourceId]) {
+      const nodeIndex = nodes.length;
+      nodes.push({
+        name: truncateText(sourceName, 30),
+        id: sourceId,
+        type: 'prime',
+        index: nodeIndex
+      });
+      nodeMap[sourceId] = nodeIndex;
+    }
+    
+    // Add target node if not yet added
+    if (!nodeMap[targetId]) {
+      const nodeIndex = nodes.length;
+      nodes.push({
+        name: truncateText(targetName, 30),
+        id: targetId,
+        type: 'sub',
+        index: nodeIndex
+      });
+      nodeMap[targetId] = nodeIndex;
+    }
+    
+    // Add link
+    links.push({
+      source: nodeMap[sourceId],
+      target: nodeMap[targetId],
+      value: link.value
+    });
+  });
+  
+  return { nodes, links };
 }
 
 // Helper mapping for panel titles
