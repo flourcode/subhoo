@@ -218,7 +218,7 @@ a:hover {
     height: 100vh;
     overflow-y: auto; /* Allow main area to scroll */
     padding: var(--bento-gap); /* Use gap variable */
-    background-color: var(--color-background); /* Use MAIN background */
+    background-color: var(--color-surface); /* Use MAIN background */
     scrollbar-width: thin; /* Style scrollbar (Firefox) */
     scrollbar-color: var(--color-outline) var(--color-surface-container); /* Style scrollbar */
 }
