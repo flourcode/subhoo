@@ -121,75 +121,118 @@
 /* ========================================= */
 /* Base Styles & Reset                       */
 /* ========================================= */
-* { margin: 0; padding: 0; box-sizing: border-box; }
-html { height: 100%; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; scroll-behavior: smooth; }
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    height: 100%;
+    -webkit-font-smoothing: antialiased; /* App-like font smoothing */
+    -moz-osx-font-smoothing: grayscale;
+    scroll-behavior: smooth; /* Add smooth scroll */
+}
+
 body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; /* Keep sans-serif for screen */
-    background-color: var(--color-background); color: var(--color-text-primary);
-    line-height: 1.6; /* Slightly more open line spacing */ font-size: 14px;
-    margin: 0; padding: 0; height: 100%; overflow: hidden;
-    transition: background-color 0.1s ease, color 0.1s ease; /* Faster transition */
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+    background-color: var(--color-background);
+    color: var(--color-text-primary);
+    line-height: 1.5;
+    font-size: 14px;
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow: hidden; /* Prevent body scroll */
+    transition: background-color 0.2s ease, color 0.2s ease; /* Slightly faster transition */
 }
 
 /* ========================================= */
 /* Base Links & Transitions                  */
 /* ========================================= */
 a {
-    color: var(--color-text-primary); /* Use primary text color for links */
-    text-decoration: underline; /* Underline is common in text-based interfaces */
-    font-weight: inherit; /* Inherit weight */
-    transition: color 0.1s ease;
+    color: var(--color-primary); /* Use primary accent (gray in this theme) */
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s ease;
 }
 a:hover {
-    color: var(--color-secondary); /* Subtle color change on hover */
-    text-decoration: underline; /* Keep underline */
+    color: var(--color-secondary);
+    text-decoration: underline;
 }
 
-/* Minimal transitions */
+/* Apply theme transitions broadly */
 .bento-box, .date-container, .side-panel, th, td, button, input, select, label,
 .card-icon-circle, #status-banner, .tooltip, .sidebar-info, .sidebar-footer {
-    transition: background-color 0.1s ease, color 0.1s ease, border-color 0.1s ease;
-    /* No shadow/transform transitions by default */
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease, opacity 0.2s ease;
 }
 
 /* ========================================= */
 /* Layout Styles                             */
 /* ========================================= */
-.dashboard-layout { display: flex; height: 100vh; overflow: hidden; }
-.side-panel {
-    width: 230px; /* Slightly narrower */ height: 100vh;
-    background-color: var(--color-surface); border-right: 1px solid var(--color-border);
-    padding: 16px; overflow-y: auto; flex-shrink: 0; display: flex; flex-direction: column;
-    scrollbar-width: thin; scrollbar-color: var(--color-outline) var(--color-surface-container);
+.dashboard-layout {
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
 }
-.side-panel::-webkit-scrollbar { width: 6px; }
-.side-panel::-webkit-scrollbar-track { background: transparent; } /* Less prominent track */
-.side-panel::-webkit-scrollbar-thumb { background-color: var(--color-outline); border-radius: 3px; }
 
-.sidebar-info { /* Uses class now */
-    margin: 10px 0; font-size: 12px; line-height: 1.4; color: var(--color-text-secondary);
-    background-color: var(--color-surface-container); padding: 10px; /* Reduced padding */
-    border-radius: var(--border-radius-md); border: 1px solid var(--color-border);
+.side-panel {
+    width: 240px; /* Consistent width */
+    height: 100vh;
+    background-color: var(--color-surface); /* Use surface color */
+    border-right: 1px solid var(--color-border);
+    padding: 16px; /* Consistent padding */
+    overflow-y: auto; /* Enable scroll ONLY if needed */
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    scrollbar-width: thin; /* Style scrollbar (Firefox) */
+    scrollbar-color: var(--color-outline) var(--color-surface-container); /* Style scrollbar */
 }
-.sidebar-footer { /* Uses class now */
-     margin-top: auto; padding-top: 10px; border-top: 1px solid var(--color-border);
+/* Style scrollbar for Webkit browsers */
+.side-panel::-webkit-scrollbar { width: 6px; }
+.side-panel::-webkit-scrollbar-track { background: var(--color-surface-container); border-radius: 3px;}
+.side-panel::-webkit-scrollbar-thumb { background-color: var(--color-outline); border-radius: 3px; border: 1px solid var(--color-surface-container); }
+
+
+/* --- Sidebar Info/Footer - Use Classes! --- */
+/* Suggestion: Replace inline styles in HTML with these classes */
+.sidebar-info {
+    margin: 10px 0; font-size: 12px; line-height: 1.4;
+    color: var(--color-text-secondary); background-color: var(--color-surface-container);
+    padding: 12px; border-radius: var(--border-radius-md); border: 1px solid var(--color-border);
+}
+.sidebar-footer {
+     margin-top: auto; padding-top: 12px; border-top: 1px solid var(--color-border);
      font-size: 11px; color: var(--color-text-tertiary); text-align: center;
 }
+/* Fallback for existing inline styles (REMOVE once HTML is updated with classes) */
+.side-panel > div[style*="font-size: 12px"] { font-size: 12px !important; }
+.side-panel > div[style*="font-size: 10px"] { font-size: 11px !important; }
+/* --- End Sidebar Specific --- */
+
 
 .main-content {
-    flex: 1; height: 100vh; overflow-y: auto; padding: var(--bento-gap);
-    background-color: var(--color-background); /* Main e-ink paper */
-    scrollbar-width: thin; scrollbar-color: var(--color-outline) transparent;
+    flex: 1;
+    height: 100vh;
+    overflow-y: auto; /* Allow main area to scroll */
+    padding: var(--bento-gap); /* Use gap variable */
+    background-color: var(--color-background); /* Use MAIN background */
+    scrollbar-width: thin; /* Style scrollbar (Firefox) */
+    scrollbar-color: var(--color-outline) var(--color-surface-container); /* Style scrollbar */
 }
+/* Style scrollbar for Webkit browsers */
 .main-content::-webkit-scrollbar { width: 8px; }
-.main-content::-webkit-scrollbar-track { background: transparent; }
-.main-content::-webkit-scrollbar-thumb { background-color: var(--color-outline); border-radius: 4px; }
+.main-content::-webkit-scrollbar-track { background: var(--color-surface-container); border-radius: 4px; }
+.main-content::-webkit-scrollbar-thumb { background-color: var(--color-outline); border-radius: 4px; border: 2px solid var(--color-surface-container); }
+
 
 /* ========================================= */
 /* Header Styles                             */
 /* ========================================= */
 .dashboard-header {
-    margin-bottom: var(--bento-gap); padding-bottom: var(--bento-gap);
+    margin-bottom: var(--bento-gap);
+    padding-bottom: var(--bento-gap);
     border-bottom: 1px solid var(--color-border);
 }
 .header-content { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
@@ -198,9 +241,8 @@ a:hover {
 .header-controls { display: flex; align-items: center; gap: 16px; }
 .date-container {
     display: flex; align-items: center; gap: 8px; padding: 6px 12px;
-    background-color: transparent; /* Blend with header */ border-radius: var(--border-radius-md);
-    border: 1px solid transparent; /* No border */ font-size: 13px; color: var(--color-text-secondary);
-    box-shadow: none; /* No shadow */
+    background-color: var(--color-surface-container); border-radius: var(--border-radius-md);
+    border: 1px solid var(--color-border); font-size: 13px; color: var(--color-text-secondary);
 }
 .date-separator { color: var(--color-text-tertiary); opacity: 0.7; }
 #date-text, #time-text { font-weight: 500; color: var(--color-text-primary); }
@@ -209,31 +251,47 @@ a:hover {
 /* Bento Grid Layout (Reverted & Corrected)  */
 /* ========================================= */
 .bento-grid {
-    display: grid; gap: var(--bento-gap); grid-template-columns: repeat(5, 1fr);
-    grid-template-areas: "sankey sankey sankey map arr" "tavtcv tavtcv leaders leaders leaders" "expiring expiring expiring expiring expiring";
-    grid-template-rows: minmax(400px, auto) auto auto;
+    display: grid;
+    gap: var(--bento-gap);
+    grid-template-columns: repeat(5, 1fr);
+    /* --- Original 3-row Layout --- */
+    grid-template-areas:
+        "sankey sankey sankey map arr"
+        "tavtcv tavtcv leaders leaders leaders"
+        "expiring expiring expiring expiring expiring";
+    grid-template-rows: minmax(400px, auto) auto auto; /* Adjusted min */
 }
-#bento-arr { grid-area: arr; } #bento-sankey { grid-area: sankey; } #bento-map { grid-area: map; }
-#bento-tavtcv { grid-area: tavtcv; } #bento-leaders { grid-area: leaders; } #bento-expiring { grid-area: expiring; }
-.col-span-2 { grid-column: span 2; } .col-span-4 { grid-column: span 4; } .col-span-5 { grid-column: span 5; }
+/* --- Correct Area Assignments --- */
+#bento-arr { grid-area: arr; }
+#bento-sankey { grid-area: sankey; }
+#bento-map { grid-area: map; }
+#bento-tavtcv { grid-area: tavtcv; }
+#bento-leaders { grid-area: leaders; }
+#bento-expiring { grid-area: expiring; }
+/* Column Span Utilities (Keep) */
+.col-span-2 { grid-column: span 2; }
+.col-span-4 { grid-column: span 4; }
+.col-span-5 { grid-column: span 5; }
 
 /* ========================================= */
 /* Card Styles (`.bento-box`)                */
 /* ========================================= */
 .bento-box {
-    background-color: var(--color-surface); /* E-ink Surface */
-    border-radius: var(--border-radius-md); /* Slightly rounded */
-    box-shadow: var(--shadow-sm); /* None or very subtle */
+    background-color: var(--color-surface); /* White / Dark Gray */
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-sm); /* Use lighter shadow by default */
     padding: 16px;
-    border: 1px solid var(--color-border); /* Subtle border */
+    border: 1px solid var(--color-border);
     display: flex; flex-direction: column; height: 100%;
     position: relative; overflow: hidden;
-    transition: none; /* Remove hover transitions */
+    transition: var(--transition-standard);
 }
+/* No theme override needed if vars are mapped correctly */
+
 .bento-box:hover {
-    box-shadow: var(--shadow-sm); /* No change on hover */
-    transform: none;
-    border-color: var(--color-border); /* No change on hover */
+    box-shadow: var(--shadow-md); /* Increase shadow on hover */
+    transform: translateY(-1px); /* More subtle hover */
+    border-color: var(--color-outline);
 }
 
 .card-header {
@@ -246,7 +304,6 @@ a:hover {
     display: flex; align-items: center; justify-content: center;
     width: 28px; height: 28px; border-radius: 50%;
     background-color: var(--color-surface-container); color: var(--color-primary); flex-shrink: 0;
-    border: 1px solid var(--color-border); /* Add subtle border to icon */
 }
 .card-icon-circle svg { width: 16px; height: 16px; }
 
@@ -258,93 +315,100 @@ a:hover {
 /* Form Element Styles                       */
 /* ========================================= */
 .input-select, .input-date, input[type="search"], input[type="text"] {
-    width: 100%; padding: 8px 12px; border: 1px solid var(--color-outline); /* Use outline color for border */
-    border-radius: var(--border-radius-sm); /* Sharper corners */ font-size: 13px;
+    width: 100%; padding: 8px 12px; border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-md); font-size: 13px;
     color: var(--color-text-primary); background-color: var(--color-surface);
-    box-shadow: none; /* No inset shadow */
-    transition: none; /* No transition */
+    transition: var(--transition-standard);
 }
 .input-select:focus, .input-date:focus, input[type="search"]:focus, input[type="text"]:focus {
-    outline: 2px solid var(--color-outline); /* Simple outline focus */
-    outline-offset: 1px;
-    border-color: var(--color-outline); /* Keep border same */
-    box-shadow: none; /* No focus ring shadow */
+    outline: 2px solid transparent; outline-offset: 2px;
+    border-color: var(--color-primary); box-shadow: 0 0 0 2px var(--color-focus-ring);
     background-color: var(--color-surface);
 }
 .input-select option { background-color: var(--color-background); color: var(--color-text-primary); }
-::placeholder { color: var(--color-text-tertiary); opacity: 0.9; }
+::placeholder { color: var(--color-text-tertiary); opacity: 0.8; }
 
 /* ========================================= */
 /* Button Styles                             */
 /* ========================================= */
 button, .button, .primary-button {
     display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-    padding: 8px 14px; border-radius: var(--border-radius-sm); /* Sharper */
+    padding: 8px 14px; border-radius: var(--border-radius-md);
     font-size: 13px; font-weight: 500; cursor: pointer;
-    border: 1px solid var(--color-outline); /* Use outline for button border */
-    text-align: center; vertical-align: middle; white-space: nowrap;
-    box-shadow: none; /* No shadow */
-    transition: none; /* No transition */
+    border: 1px solid var(--color-border); text-align: center;
+    vertical-align: middle; white-space: nowrap;
+    transition: var(--transition-standard); /* Ensure transition */
 }
 button svg, .button svg, .primary-button svg { width: 14px; height: 14px; }
 
 /* Standard Button */
 button, .button {
-    background-color: var(--color-surface-container); /* Use container bg */
-    color: var(--color-text-primary);
+    background-color: var(--color-surface); color: var(--color-text-primary);
     border-color: var(--color-outline);
 }
 button:hover:not(:disabled), .button:hover:not(:disabled) {
-    background-color: var(--color-surface-variant); /* Subtle hover */
-    border-color: var(--color-outline);
-    transform: none;
+    background-color: var(--color-surface-container); border-color: var(--color-primary);
+    transform: var(--scale-interactive);
 }
 
 /* Primary Button */
 .primary-button {
     background-color: var(--color-primary); color: var(--color-on-primary);
     border-color: var(--color-primary);
-    font-weight: 600; /* Make primary slightly bolder */
 }
 .primary-button:hover:not(:disabled) {
-    /* Very subtle brightness change or just keep same */
-    background-color: color-mix(in srgb, var(--color-primary) 90%, var(--color-background));
-    border-color: color-mix(in srgb, var(--color-primary) 90%, var(--color-background));
-    transform: none;
+    /* Mix with background for subtle hover */
+    background-color: color-mix(in srgb, var(--color-primary) 85%, var(--color-background));
+    border-color: color-mix(in srgb, var(--color-primary) 85%, var(--color-background));
+    transform: var(--scale-interactive);
 }
 
 /* Disabled State */
-button:disabled, .button:disabled, .primary-button:disabled { opacity: 0.6; cursor: not-allowed; }
+button:disabled, .button:disabled, .primary-button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
 
 /* Theme Toggle Button */
 #theme-toggle-btn { background: none; border: none; cursor: pointer; padding: 4px; margin-left: auto; }
 .theme-icon { color: var(--color-text-secondary); }
-#theme-toggle-btn:hover .theme-icon { color: var(--color-primary); } /* Keep hover color */
+#theme-toggle-btn:hover .theme-icon { color: var(--color-primary); }
 
 /* ========================================= */
 /* Sidebar Specific Controls                 */
 /* ========================================= */
 .side-panel > div:has(#dataset-select) { display: flex; flex-direction: column; gap: 10px; }
-.side-panel h2 { font-size: 11px; font-weight: 600; color: var(--color-text-secondary); margin: 12px 0 4px 0; text-transform: uppercase; letter-spacing: 0.07em; }
+.side-panel h2 {
+    font-size: 11px; /* Smaller heading */
+    font-weight: 600; color: var(--color-text-secondary);
+    margin: 12px 0 4px 0; /* Adjusted spacing */
+    text-transform: uppercase; letter-spacing: 0.07em; /* Increased spacing */
+}
 #status-banner {
     padding: 8px 10px; border-radius: var(--border-radius-sm); font-size: 12px;
     color: var(--color-text-secondary); background-color: var(--color-surface-container);
-    border: 1px solid var(--color-border); /* Keep subtle border */
-    text-align: center; margin-top: 8px; box-shadow: none;
+    border: 1px solid transparent; /* Make border transparent by default */
+    text-align: center; margin-top: 8px;
 }
-/* Status banner colors - Keep standard colors for accessibility */
-#status-banner.error { background-color: transparent; color: var(--color-error); border-color: var(--color-error); }
-#status-banner.success { background-color: transparent; color: var(--color-success); border-color: var(--color-success); }
-#status-banner.info { background-color: transparent; color: var(--color-info); border-color: var(--color-info); }
+/* Status banner colors using relative color syntax */
+#status-banner.error { background-color: oklch(from var(--color-error) l c h / 10%); color: var(--color-error); border-color: oklch(from var(--color-error) l c h / 30%); }
+#status-banner.success { background-color: oklch(from var(--color-success) l c h / 10%); color: var(--color-success); border-color: oklch(from var(--color-success) l c h / 30%); }
+#status-banner.info { background-color: oklch(from var(--color-info) l c h / 15%); color: var(--color-info); border-color: oklch(from var(--color-info) l c h / 30%); }
+/* Fallback using semi-transparent rgba if needed */
+/* @supports not (background-color: oklch(from red l c h / 10%)) { ... } */
 
-/* Filter elements */
-.filter-container, .filter-row, .filter-item, .filter-item label { /* Keep structure */ }
+/* Filter elements - kept original, assuming vars work */
+.filter-container { display: flex; flex-direction: column; gap: 16px; }
+.filter-row { display: flex; gap: 16px; }
+.filter-item { display: flex; flex-direction: column; gap: 6px; flex: 1; }
+.filter-item label { font-size: 13px; font-weight: 500; color: var(--color-text-secondary); }
 
 /* ========================================= */
 /* Table Styles                              */
 /* ========================================= */
 .table-container { overflow: hidden; margin-top: 12px; flex-grow: 1; display: flex; flex-direction: column; }
-.table-wrapper { overflow: auto; flex-grow: 1; }
+.table-wrapper { overflow: auto; flex-grow: 1; } /* Let wrapper handle scroll & fill space */
+/* Remove fixed max-heights, let flexbox handle sizing */
+/* #contract-leaders-table-container .table-wrapper { max-height: 450px; } */
+/* #expiring-contracts-table-container .table-wrapper { max-height: 300px; } */
+
 table { width: 100%; border-collapse: collapse; }
 th, td {
     padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--color-border);
@@ -353,27 +417,34 @@ th, td {
 th {
     font-weight: 600; color: var(--color-text-secondary);
     text-transform: uppercase; letter-spacing: 0.05em;
-    background-color: var(--color-surface-container); /* Use container bg */
-    position: sticky; top: 0; z-index: 1; border-bottom-width: 2px; /* Stronger header border */
+    background-color: var(--color-surface-variant);
+    position: sticky; top: 0; z-index: 1;
 }
 td { color: var(--color-text-primary); }
 td.number { text-align: right; font-variant-numeric: tabular-nums; font-weight: 500; }
-td.font-medium { font-weight: 500; } td.font-bold { font-weight: 600; } /* Reduce bold */
+td.font-medium { font-weight: 500; }
+td.font-bold { font-weight: 700; }
 td.text-center { text-align: center; }
 td.text-red-600 { color: var(--color-error); }
 
-tr:hover td { background-color: transparent; } /* No hover effect */
-.summary-text { /* Keep styles */ }
-/* Wrapping columns */
+/* Refined Hover */
+tr:hover td { background-color: var(--color-surface-container); }
+.summary-text {
+    text-align: center; font-size: 11px; /* Smaller */ color: var(--color-text-tertiary);
+    margin-top: 8px; padding: 8px 0; border-top: 1px solid var(--color-border); flex-shrink: 0; /* Prevent shrinking */
+}
+/* Keep Wrapping styles */
 #expiring-contracts-table-container td:nth-child(3),
-#contract-leaders-table-container td:nth-child(6) { white-space: normal; word-wrap: break-word; max-width: 200px; }
-/* Mobile Sticky styles */
-@media (max-width: 768px) { /* Keep sticky logic, update colors */
+#contract-leaders-table-container td:nth-child(6) {
+    white-space: normal; word-wrap: break-word; max-width: 200px;
+}
+/* Keep Mobile Sticky styles */
+@media (max-width: 768px) {
     .table-wrapper { overflow-x: auto; }
     th:first-child, td:first-child { position: sticky; left: 0; z-index: 2; }
-    th:first-child { background-color: var(--color-surface-container); } /* Match header */
-    td:first-child { background-color: var(--color-surface); } /* Match row */
-    tr:hover td:first-child { background-color: var(--color-surface); } /* No hover */
+    th:first-child { background-color: var(--color-surface-variant); }
+    td:first-child { background-color: var(--color-surface); }
+    tr:hover td:first-child { background-color: var(--color-surface-container); }
 }
 
 /* ========================================= */
@@ -382,42 +453,57 @@ tr:hover td { background-color: transparent; } /* No hover effect */
 .chart-container { min-height: 200px; flex-grow: 1; position: relative; }
 #sankeyChart, #choroplethMap svg, #tavTcvChart { display: block; width: 100%; height: 100%; max-height: none; }
 
+/* Remove obsolete TAV/TCV label container rule */
+/* .chart-y-labels-container { ... } */
+
+
 /* ========================================= */
 /* Specific Component Styles                 */
 /* ========================================= */
 /* ARR Display */
-.arr-display-grid { /* Keep styles */ }
+.arr-display-grid { justify-content: center; align-items: center; padding: 16px 0; text-align: center; }
 .arr-grid-value { font-size: 2.2rem; color: var(--color-primary); margin-bottom: 8px; font-weight: 600;}
-.arr-description { font-size: 13px; color: var(--color-text-secondary); max-width: 90%; margin: 0 auto; }
-/* Notes Section */
-.notes-content { /* Keep styles */ }
+.arr-description { font-size: 13px; color: var(--color-text-secondary); max-width: 90%; margin: 0 auto; } /* Constrain width */
+/* Notes Section (Keep if used) */
+.notes-content { color: var(--color-text-secondary); font-size: 13px; overflow-y: auto; padding: 0 4px; }
+.notes-content p { margin-bottom: 10px; }
+.notes-content p:last-child { margin-bottom: 0; }
+.notes-content ul { margin-left: 16px; margin-bottom: 10px; }
+.notes-content ul li { margin-bottom: 5px; }
+.notes-content strong { color: var(--color-text-primary); font-weight: 600; }
 
-/* --- Chart Element Styling --- */
+/* --- Chart Element Styling (Ensure consistency) --- */
 /* Sankey */
-#sankeyChart path { stroke: var(--color-outline); stroke-opacity: 0.5; fill: none; transition: none; } /* Use outline color, more opaque */
-#sankeyChart path:hover { stroke-opacity: 0.8; }
-#sankeyChart rect { stroke: var(--color-surface); stroke-width: 0.5px; } /* Keep stroke */
-#sankeyChart rect { fill: var(--chart-color-primary); } /* All nodes same color */
+#sankeyChart path { stroke: var(--color-border); stroke-opacity: 0.4; transition: stroke-opacity 0.2s ease; fill: none; }
+#sankeyChart path:hover { stroke-opacity: 0.7; }
+#sankeyChart rect { stroke: var(--color-surface); stroke-width: 0.5px; }
+/* Ensure JS applies correct fills using chart vars */
 #sankeyChart text { font-size: 10px; fill: var(--color-text-secondary); pointer-events: none; }
 
 /* Map */
-#choroplethMap path { stroke: var(--color-background); stroke-width: 0.5px; fill: var(--color-surface-variant); transition: none; }
-#choroplethMap path:hover { stroke: var(--color-primary); stroke-width: 1px; } /* Simple stroke hover */
+#choroplethMap path { stroke: var(--color-background); stroke-width: 0.5px; fill: var(--color-surface-variant); transition: fill 0.2s ease, stroke 0.2s ease, stroke-width 0.2s ease; }
+#choroplethMap path:hover { stroke: var(--color-primary); stroke-width: 1.5px; }
 #choroplethMap text, #choroplethMap .legend-text { font-size: 10px; fill: var(--color-text-secondary); text-anchor: middle; }
 #choroplethMap .legend-rect { stroke: var(--color-border); stroke-width: 0.5px; }
+
 
 /* ========================================= */
 /* Tooltip Styles                            */
 /* ========================================= */
 .tooltip, .sankey-tooltip, .map-tooltip, #tav-tcv-tooltip {
-    position: absolute !important; background-color: var(--color-surface) !important;
-    color: var(--color-text-primary) !important; padding: 8px 12px !important;
-    border-radius: var(--border-radius-sm) !important; font-size: 12px !important;
-    line-height: 1.4 !important; pointer-events: none !important;
-    border: 1px solid var(--color-border) !important; z-index: 9999 !important;
-    box-shadow: none !important; /* No shadow */ max-width: 250px;
-    opacity: 0; transform: none !important; /* No transform */
-    transition: opacity 0.1s ease, visibility 0s linear 0.1s; /* Faster fade */
+    position: absolute !important;
+    background-color: var(--color-surface) !important;
+    color: var(--color-text-primary) !important;
+    padding: 8px 12px !important;
+    border-radius: var(--border-radius-sm) !important;
+    font-size: 12px !important; line-height: 1.4 !important;
+    pointer-events: none !important;
+    border: 1px solid var(--color-border) !important;
+    z-index: 9999 !important;
+    box-shadow: var(--shadow-lg) !important;
+    max-width: 250px;
+    opacity: 0; transform: translateY(5px);
+    transition: opacity 0.2s ease, transform 0.2s ease, visibility 0s linear 0.2s;
     visibility: hidden; display: none;
 }
 .tooltip.visible, .sankey-tooltip.visible, .map-tooltip.visible, #tav-tcv-tooltip.visible,
@@ -426,11 +512,15 @@ tr:hover td { background-color: transparent; } /* No hover effect */
 .tooltip[style*="display: block"], .sankey-tooltip[style*="display: block"],
 .map-tooltip[style*="display: block"], #tav-tcv-tooltip[style*="display: block"] {
     opacity: 1 !important; visibility: visible !important; display: block !important;
-    transform: none !important;
-    transition: opacity 0.1s ease, visibility 0s linear 0s !important;
+    transform: translateY(0) !important;
+    transition: opacity 0.2s ease, transform 0.2s ease, visibility 0s linear 0s !important;
 }
-.tooltip strong, .sankey-tooltip strong, .map-tooltip strong, #tav-tcv-tooltip strong { /* Keep styles */ }
-.tooltip-visible { /* Keep styles */ }
+.tooltip strong, .sankey-tooltip strong, .map-tooltip strong, #tav-tcv-tooltip strong {
+    color: var(--color-text-primary); font-weight: 600; display: block; margin-bottom: 4px;
+}
+/* .tooltip-visible class kept for potential JS use */
+.tooltip-visible { opacity: 1 !important; visibility: visible !important; display: block !important; transform: translateY(0) !important; }
+
 
 /* ========================================= */
 /* Loading, Error, No Data States            */
@@ -439,63 +529,188 @@ tr:hover td { background-color: transparent; } /* No hover effect */
     display: none; flex-direction: column; align-items: center; justify-content: center;
     gap: 10px; padding: 20px; text-align: center;
     color: var(--color-text-tertiary); font-size: 13px;
-    position: absolute; inset: 0;
-    background-color: var(--color-surface); /* Use surface color, no transparency */
-    border-radius: var(--border-radius-lg);
-    z-index: 10; backdrop-filter: none; /* No blur */
+    position: absolute; inset: 0; /* simpler positioning */
+    /* Use surface color with slight opacity */
+    background-color: color-mix(in srgb, var(--color-surface) 90%, transparent);
+    border-radius: var(--border-radius-lg); /* Match card */
+    z-index: 10; backdrop-filter: blur(2px); /* Optional: blur background */
 }
 .error-placeholder { color: var(--color-error); }
-.spinner { /* Keep styles */ border-top-color: var(--color-primary); animation: spin 1s linear infinite; } /* Remove pulse */
+.spinner { /* Keep styles */ width: 24px; height: 24px; border-radius: 50%; border: 3px solid var(--color-surface-variant); border-top-color: var(--color-primary); }
 @keyframes spin { to { transform: rotate(360deg); } }
+.spinner { animation: spin 1s linear infinite, pulse 1.5s ease-in-out infinite alternate; }
+@keyframes pulse { 0% { opacity: 0.6; } 100% { opacity: 1; } }
 .is-loading .loading-placeholder, .has-error .error-placeholder, .no-data .no-data-placeholder { display: flex; }
 
 
 /* ========================================= */
 /* Utility Classes                           */
 /* ========================================= */
-.detail-link { color: var(--color-text-primary); text-decoration: underline; font-weight: inherit; } /* Use text color, underline */
-.detail-link:hover { color: var(--color-secondary); }
+.detail-link { color: var(--color-primary); text-decoration: none; font-weight: 500; }
+.detail-link:hover { color: var(--color-secondary); text-decoration: underline; }
+
 
 /* ========================================= */
 /* Responsive Adjustments                    */
 /* ========================================= */
-/* Keep responsive structure, ensure base styles work */
-@media (max-width: 1200px) {}
+@media (max-width: 1200px) {} /* Keep */
+
 @media (max-width: 992px) { /* Tablet */
-     .side-panel { width: 200px; }
+     .side-panel { width: 200px; } /* Further reduce sidebar */
      .bento-grid {
-         grid-template-columns: repeat(3, 1fr);
-         grid-template-areas: "sankey sankey map" "sankey sankey arr" "tavtcv leaders leaders" "expiring expiring expiring";
+         /* Revert to original responsive layout */
+         grid-template-columns: repeat(2, 1fr);
+         grid-template-areas:
+            "arr sankey"
+            "map tavtcv"
+            "leaders leaders"
+            "expiring expiring";
          grid-auto-rows: minmax(300px, auto);
      }
-     /* Keep span adjustments */
-     /* Keep font size adjustments */
+     /* Reset spans for 2-col */
+     .col-span-3, .col-span-4, .col-span-5 { grid-column: span 2; }
+     .col-span-2 { grid-column: span 2; } /* Stays same or specific overrides needed */
+     #bento-arr, #bento-map, #bento-tavtcv { grid-column: span 1; } /* Ensure single span */
+     #bento-sankey, #bento-leaders, #bento-expiring { grid-column: span 2; } /* Ensure full span */
+
+     .arr-grid-value { font-size: 2rem; }
+     .card-header h2 { font-size: 14px; }
+     .main-content { padding: 12px; } /* Reduce padding */
+     body { font-size: 13px; } /* Slightly smaller base */
 }
+
 @media (max-width: 768px) { /* Mobile Landscape / Small Tablet */
-    /* Keep layout changes */
+    .dashboard-layout { flex-direction: column; height: auto; overflow: auto; }
+    .side-panel { width: 100%; height: auto; border-right: none; border-bottom: 1px solid var(--color-border); overflow-y: visible; }
+    .main-content { height: auto; overflow-y: visible; padding: 12px; }
+    body { overflow: auto; padding: 0; font-size: 13px; }
+
     .bento-grid {
-        grid-template-columns: 1fr;
-        grid-template-areas: "arr" "map" "sankey" "tavtcv" "leaders" "expiring";
-         grid-auto-rows: auto; gap: 12px;
+        grid-template-columns: 1fr; /* Single column */
+        grid-template-areas: /* Explicitly define single column areas */
+            "arr"       /* Define order */
+            "map"       /* Define order */
+            "sankey"
+            "tavtcv"
+            "leaders"
+            "expiring";
+         grid-auto-rows: auto; /* Let content define height */
+         gap: 12px; /* Reduce gap */
     }
-    /* Keep span reset */
-    /* Keep header stacking */
-    /* Keep table sticky styles */
-    /* Keep chart height adjustments */
+    /* Reset all spans to 1 */
+    .col-span-2, .col-span-3, .col-span-4, .col-span-5 { grid-column: span 1 !important; }
+    /* Force order */
+    #bento-arr { grid-area: arr; } #bento-map { grid-area: map; } #bento-sankey { grid-area: sankey; }
+    #bento-tavtcv { grid-area: tavtcv; } #bento-leaders { grid-area: leaders; } #bento-expiring { grid-area: expiring; }
+
+
+    .header-content { flex-direction: column; align-items: flex-start; gap: 12px; }
+    .header-controls { width: 100%; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+    .title-area h1 { font-size: 20px; } .title-area p { font-size: 12px; }
+    /* Keep sticky table styles */
+    /* Adjust chart heights */
+    .chart-container { min-height: 250px; } /* Reduce min height */
+    #sankey-chart-container, #map-container { height: 300px; } /* Set explicit shorter height */
+    #expiring-contracts-table-container .table-wrapper { max-height: 200px; }
 }
+
 @media (max-width: 480px) { /* Small Mobile */
-    /* Keep font/padding adjustments */
+    body { font-size: 12px; } /* Smaller base */
+    .title-area h1 { font-size: 18px; } .title-area p { font-size: 11px; }
+    .arr-grid-value { font-size: 1.8rem; }
+    .card-header h2 { font-size: 13px; }
+    .side-panel, .main-content { padding: 10px; }
+    .bento-gap { --bento-gap: 10px; }
+    button, .button, .primary-button { padding: 6px 10px; font-size: 12px; }
+    .input-select, .input-date, input[type="search"], input[type="text"] { padding: 6px 10px; font-size: 12px; }
+    th, td { padding: 6px 10px; font-size: 11px; }
+    .sidebar-info { font-size: 11px; }
+    .sidebar-footer { font-size: 10px; }
+    .chart-container { min-height: 220px; }
+    #sankey-chart-container, #map-container { height: 250px; }
 }
+
+
+/* ========================================= */
+/* Remove Conflicting/Redundant Rules        */
+/* ========================================= */
+/* The .app-container, .dashboard-grid, and .dashboard-card rules were removed */
+/* as they defined a different layout structure conflicting with the */
+/* .dashboard-layout and .bento-grid structure primarily used. */
 
 
 /* ========================================= */
 /* Final Polish & Enhancements              */
 /* ========================================= */
-/* Simple outline focus state */
+/* Ensure focus states are clear */
 button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible {
-    outline: 2px solid var(--color-outline);
+    outline: 2px solid var(--color-primary);
     outline-offset: 2px;
-    box-shadow: none; /* Remove shadow focus ring */
+    box-shadow: 0 0 0 2px var(--color-focus-ring); /* Use focus ring */
 }
-/* Remove input focus override */
-/* .input-select:focus, .input-date:focus, input[type="search"]:focus, input[type="text"]:focus { ... } */
+/* Override specific input focus if needed */
+.input-select:focus, .input-date:focus, input[type="search"]:focus, input[type="text"]:focus {
+     box-shadow: 0 0 0 2px var(--color-focus-ring); /* Ensure input focus uses ring */
+     /* Keep primary border */
+}
+
+/* Table row hover animation retained via transition property */
+/* Tooltip animation retained via transition property */
+/* Spinner animation retained via keyframes */
+/* saturday.css */
+
+/* ========================================= */
+/* App Container Styles (Panel Look)         */
+/* ========================================= */
+.app-container {
+  /* --- Use Theme Variables --- */
+  background-color: var(--color-surface); /* Use surface color for the panel */
+  border: 1px solid var(--color-border);   /* Use theme border color */
+  border-radius: var(--border-radius-lg);/* Use large theme radius */
+  box-shadow: var(--shadow-lg);            /* Use large theme shadow for elevation */
+  /* --- Layout & Positioning --- */
+  margin: 32px; /* Adjust margin for desired float */
+  min-height: calc(100vh - 64px); /* Adjust height based on margin */
+  overflow: hidden; /* Keep contents rounded */
+  display: flex; /* Keep flex for internal layout */
+  flex-direction: column; /* Keep flex direction */
+  transition: var(--transition-standard); /* Add transition */
+}
+
+/* Dark mode variables are handled by the main [data-theme="dark"] block,
+   so no specific background/border/shadow overrides needed here anymore unless
+   you want a DIFFERENT surface/border/shadow specifically for the container
+   in dark mode. */
+/* Example: If you wanted a different dark surface for the container: */
+/* [data-theme="dark"] .app-container { */
+/* background-color: var(--color-surface-container); */
+/* border-color: var(--color-outline); */
+/* } */
+
+
+/* --- Responsive Adjustments for App Container --- */
+@media (max-width: 768px) { /* Adjusted breakpoint */
+  .app-container {
+    margin: 16px; /* Reduced margin */
+    min-height: calc(100vh - 32px);
+    border-radius: var(--border-radius-md); /* Slightly smaller radius */
+  }
+}
+
+@media (max-width: 480px) {
+  .app-container {
+    margin: 8px; /* Further reduced margin */
+    min-height: calc(100vh - 16px);
+    border-radius: var(--border-radius-sm); /* Smallest radius */
+    box-shadow: var(--shadow-md); /* Reduce shadow */
+  }
+}
+
+/* --- Remove Conflicting/Redundant Rules --- */
+/* Delete the following rules if they still exist elsewhere in your file, */
+/* as the .app-container now handles the outer frame. */
+/* .dashboard-grid { ... } */
+/* .dashboard-card { ... } */
+/* [data-theme="dark"] .dashboard-card { ... } */
+/* @media (max-width: 600px) .dashboard-grid { ... } */
+/* @media (max-width: 600px) .dashboard-card { ... } */
