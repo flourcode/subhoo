@@ -2844,13 +2844,32 @@ function displayChoroplethMap(mapData) {
         // Define color scale for the map
         const stateValues = Object.values(mapData).map(d => d.value);
         const maxValue = d3.max(stateValues) || 0;
+        
+        // DEBUG: Let's verify the values we're using for coloring
+        console.log('State values range:', d3.min(stateValues), 'to', maxValue);
+        
+        // Get color values directly rather than using CSS vars for the interpolation
+        const baseColor = isDarkMode ? 
+            d3.rgb(getCssVar('--color-surface-variant')).toString() : 
+            d3.rgb(getCssVar('--color-surface-variant')).toString();
+            
+        const highlightColor = isDarkMode ?
+            d3.rgb(getCssVar('--chart-color-primary')).toString() :
+            d3.rgb(getCssVar('--chart-color-primary')).toString();
+        
+        console.log('Color scale range:', baseColor, 'to', highlightColor);
 
-        // Create color scale using CSS variables
+        // Create explicit color scale using the extracted RGB values
         const colorScale = d3.scaleSequential()
             .domain([0, maxValue === 0 ? 1 : maxValue])
-            .interpolator(isDarkMode ?
-                d3.interpolate(getCssVar('--color-surface-variant'), getCssVar('--chart-color-primary')) :
-                d3.interpolate(getCssVar('--color-surface-variant'), getCssVar('--chart-color-primary')));
+            .interpolator(d3.interpolate(baseColor, highlightColor));
+
+        // Test the color scale with a few values
+        if (maxValue > 0) {
+            console.log('Color at 0:', colorScale(0));
+            console.log('Color at max/2:', colorScale(maxValue/2));
+            console.log('Color at max:', colorScale(maxValue));
+        }
 
         // Remove existing tooltips first
         d3.select("body").selectAll(".map-tooltip").remove();
@@ -2897,6 +2916,14 @@ function displayChoroplethMap(mapData) {
 
                 // Convert TopoJSON to GeoJSON features
                 const states = topojson.feature(us, us.objects.states);
+                
+                // DEBUG: Create a mapping of IDs to verify correct state matching
+                const stateIdMap = {};
+                states.features.forEach(feature => {
+                    stateIdMap[feature.id] = feature.id.toString().padStart(2, '0');
+                });
+                console.log('Available state IDs in GeoJSON:', stateIdMap);
+                console.log('Sample of our data state codes:', Object.keys(mapData).slice(0, 5));
 
                 // Create projection
                 const projection = d3.geoAlbersUsa()
@@ -2916,6 +2943,12 @@ function displayChoroplethMap(mapData) {
                        // Use the state FIPS code to lookup data
                        const fipsCode = d.id.toString().padStart(2, '0');
                        const stateData = mapData[fipsCode];
+                       
+                       // DEBUG: Show what color is being assigned
+                       if (stateData) {
+                           console.log(`State ${fipsCode}: value=${stateData.value}, color=${colorScale(stateData.value)}`);
+                       }
+                       
                        return stateData ? colorScale(stateData.value) : getCssVar('--color-surface-variant');
                    })
                    .attr('stroke', getCssVar('--color-border'))
