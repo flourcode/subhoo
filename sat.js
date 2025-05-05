@@ -2830,7 +2830,107 @@ function displayChoroplethMap(mapData) {
 
         // Check if we're in dark mode
         const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
-        const textColor = isDarkMode ? '#F4F2F6' : '#36323A';
+        
+        // ====================================================================
+        // COLOR THEME CONFIGURATION - EASY TO SWAP
+        // ====================================================================
+        
+        // Define color themes - add or modify themes here
+        const colorThemes = {
+            // Purple theme (from your working example)
+            'purple': {
+                light: {
+                    low: '#E9E6ED',      // Light purple for low values
+                    high: '#9993A1',     // Medium purple for high values
+                    noData: '#E0E0E0',   // Light gray for no data
+                    border: '#FFFFFF',   // White borders
+                    text: '#36323A',     // Dark purple text
+                    highlight: '#9993A1' // Highlighted state border
+                },
+                dark: {
+                    low: '#3A373E',      // Dark purple for low values
+                    high: '#A29AAA',     // Light purple for high values
+                    noData: '#2D2A31',   // Very dark gray for no data
+                    border: '#3A373E',   // Dark borders
+                    text: '#F4F2F6',     // Light purple text
+                    highlight: '#A29AAA' // Highlighted state border
+                }
+            },
+            
+            // Monochrome theme (grayscale)
+            'monochrome': {
+                light: {
+                    low: '#F0F0F0',     // Very light gray for low values
+                    high: '#333333',    // Dark gray for high values
+                    noData: '#E0E0E0',  // Light gray for no data
+                    border: '#FFFFFF',  // White borders
+                    text: '#222222',    // Almost black text
+                    highlight: '#555555' // Medium gray highlight
+                },
+                dark: {
+                    low: '#333333',     // Dark gray for low values
+                    high: '#CCCCCC',    // Light gray for high values
+                    noData: '#222222',  // Very dark gray for no data
+                    border: '#444444',  // Dark gray borders
+                    text: '#EEEEEE',    // Almost white text
+                    highlight: '#999999' // Medium gray highlight
+                }
+            },
+            
+            // Blue theme
+            'blue': {
+                light: {
+                    low: '#E3F2FD',     // Very light blue for low values
+                    high: '#1565C0',    // Medium-dark blue for high values
+                    noData: '#ECEFF1',  // Very light blue-gray for no data
+                    border: '#FFFFFF',  // White borders
+                    text: '#0D47A1',    // Dark blue text
+                    highlight: '#2196F3' // Bright blue highlight
+                },
+                dark: {
+                    low: '#0D2A4A',     // Very dark blue for low values
+                    high: '#64B5F6',    // Medium-light blue for high values
+                    noData: '#1A1A2E',  // Dark blue-black for no data
+                    border: '#1E3A5F',  // Dark blue border
+                    text: '#BBDEFB',    // Light blue text
+                    highlight: '#2196F3' // Bright blue highlight
+                }
+            },
+            
+            // Green theme
+            'green': {
+                light: {
+                    low: '#E8F5E9',     // Very light green for low values
+                    high: '#2E7D32',    // Medium-dark green for high values
+                    noData: '#F1F1F1',  // Light gray for no data
+                    border: '#FFFFFF',  // White borders
+                    text: '#1B5E20',    // Dark green text
+                    highlight: '#4CAF50' // Medium green highlight
+                },
+                dark: {
+                    low: '#1B3724',     // Very dark green for low values
+                    high: '#81C784',    // Medium-light green for high values
+                    noData: '#1E2A1E',  // Very dark green-black for no data
+                    border: '#2D4A2D',  // Dark green border
+                    text: '#C8E6C9',    // Light green text
+                    highlight: '#4CAF50' // Medium green highlight
+                }
+            }
+        };
+        
+        // SELECT THEME HERE - CHANGE THIS SINGLE VARIABLE TO SWAP THEMES
+        const activeTheme = 'purple'; // Options: 'purple', 'monochrome', 'blue', 'green'
+        
+        // Get the appropriate theme colors based on mode
+        const theme = isDarkMode ? 
+            colorThemes[activeTheme].dark : 
+            colorThemes[activeTheme].light;
+        
+        // Log the active theme for debugging
+        console.log(`Using ${activeTheme} theme in ${isDarkMode ? 'dark' : 'light'} mode`);
+        // ====================================================================
+        // END COLOR THEME CONFIGURATION
+        // ====================================================================
 
         // Create SVG element inside the map div
         const svg = d3.select(mapDiv)
@@ -2845,13 +2945,10 @@ function displayChoroplethMap(mapData) {
         const stateValues = Object.values(mapData).map(d => d.value);
         const maxValue = d3.max(stateValues) || 0;
 
-        // Create color scale for map - use different colors for dark/light mode
-        // Using hardcoded colors instead of CSS variables for compatibility with D3
+        // Create color scale for map using the selected theme
         const colorScale = d3.scaleSequential()
             .domain([0, maxValue === 0 ? 1 : maxValue])
-            .interpolator(isDarkMode ?
-                d3.interpolate('#3A373E', '#A29AAA') : // Dark mode: darker to lighter purple
-                d3.interpolate('#E9E6ED', '#9993A1')); // Light mode: light to medium purple
+            .interpolator(d3.interpolate(theme.low, theme.high));
 
         // Remove existing tooltips first
         d3.select("body").selectAll(".map-tooltip").remove();
@@ -2864,12 +2961,12 @@ function displayChoroplethMap(mapData) {
             .style("visibility", "hidden")
             .style("opacity", 0)
             .style("background-color", isDarkMode ? "#252229" : "#FFFFFF")
-            .style("color", isDarkMode ? "#F4F2F6" : "#36323A")
+            .style("color", theme.text)
             .style("padding", "10px")
             .style("border-radius", "4px")
             .style("font-size", "12px")
             .style("pointer-events", "none")
-            .style("border", "1px solid " + (isDarkMode ? "#3A373E" : "#D7D4DC"))
+            .style("border", "1px solid " + theme.border)
             .style("z-index", "9999");
 
         // State name mapping
@@ -2925,9 +3022,9 @@ function displayChoroplethMap(mapData) {
                        // Use the state FIPS code to lookup data
                        const fipsCode = d.id.toString().padStart(2, '0');
                        const stateData = stateDataMap[fipsCode];
-                       return stateData ? colorScale(stateData.value) : (isDarkMode ? '#2D2A31' : '#E0E0E0');
+                       return stateData ? colorScale(stateData.value) : theme.noData;
                    })
-                   .attr('stroke', isDarkMode ? '#3A373E' : '#FFFFFF')
+                   .attr('stroke', theme.border)
                    .attr('stroke-width', 0.5)
                    .style('cursor', 'pointer')
                    .on('mouseover', function(event, d) {
@@ -2954,7 +3051,7 @@ function displayChoroplethMap(mapData) {
 
                        // Highlight the state
                        d3.select(this)
-                           .attr("stroke", isDarkMode ? "#A29AAA" : "#9993A1")
+                           .attr("stroke", theme.highlight)
                            .attr("stroke-width", 1.5)
                            .raise();
                    })
@@ -2969,7 +3066,7 @@ function displayChoroplethMap(mapData) {
                           .style("opacity", 0);
                               
                        d3.select(this)
-                           .attr("stroke", isDarkMode ? '#3A373E' : '#FFFFFF')
+                           .attr("stroke", theme.border)
                            .attr("stroke-width", 0.5);
                    });
 
@@ -2994,7 +3091,7 @@ function displayChoroplethMap(mapData) {
                     .attr('y', -6)
                     .attr('text-anchor', 'middle')
                     .attr('font-size', '10px')
-                    .attr('fill', textColor)
+                    .attr('fill', theme.text)
                     .text('Contract Value');
 
                 // Create discrete color blocks
@@ -3007,7 +3104,7 @@ function displayChoroplethMap(mapData) {
                     .attr('width', binWidth)
                     .attr('height', legendHeight)
                     .attr('fill', d => colorScale(d))
-                    .attr('stroke', isDarkMode ? '#3A373E' : '#D7D4DC')
+                    .attr('stroke', theme.border)
                     .attr('stroke-width', 0.5);
 
                 // Add min/max labels
@@ -3016,7 +3113,7 @@ function displayChoroplethMap(mapData) {
                     .attr('y', legendHeight + 10)
                     .attr('text-anchor', 'start')
                     .attr('font-size', '10px')
-                    .attr('fill', textColor)
+                    .attr('fill', theme.text)
                     .text('Low');
 
                 legendGroup.append('text')
@@ -3024,7 +3121,7 @@ function displayChoroplethMap(mapData) {
                     .attr('y', legendHeight + 10)
                     .attr('text-anchor', 'end')
                     .attr('font-size', '10px')
-                    .attr('fill', textColor)
+                    .attr('fill', theme.text)
                     .text('High');
             })
             .catch(error => {
