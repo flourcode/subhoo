@@ -1,20 +1,20 @@
 /* ========================================= */
-/* CSS Variables - Light Mode (Muted Purples - App Feel Tweaks) */
+/* CSS Variables - Light Mode (Muted Purples - Panel Style) */
 /* ========================================= */
 :root {
     /* --- Core Color Palette (Original Muted Purples) --- */
-    --light-purple-50: #F4F2F6;    /* Lightest - Now Background */
-    --light-purple-100: #E9E6ED;   /* Light - Surface Container */
-    --light-purple-200: #D7D4DC;   /* Light Mid - Surface Variant / Border */
-    --light-purple-300: #B5B0BD;   /* Mid - Outline / Tertiary Chart */
-    --light-purple-400: #9993A1;   /* Mid Dark - Primary Accent / Chart */
-    --light-purple-500: #797484;   /* Dark - Secondary Accent / Tertiary Text / Chart */
-    --light-purple-600: #615C66;   /* Darkest - Secondary Text */
+    --light-purple-50: #F4F2F6;    /* App Container BG */
+    --light-purple-100: #E9E6ED;   /* Bento Box BG / Surface Container */
+    --light-purple-200: #D7D4DC;   /* Surface Variant / Border */
+    --light-purple-300: #B5B0BD;   /* Outline / Tertiary Chart */
+    --light-purple-400: #9993A1;   /* Primary Accent / Chart */
+    --light-purple-500: #797484;   /* Secondary Accent / Tertiary Text / Chart */
+    --light-purple-600: #615C66;   /* Secondary Text */
 
     /* Neutral Colors */
-    --white: #FFFFFF;             /* Now Surface */
+    --white: #FFFFFF;             /* Page BG / On-Action Text */
     --light-text: #36323A;        /* Dark Purple-Gray Text (Primary) */
-    --dark-text: #252327;         /* Darkest Text (Not directly mapped below) */
+    --dark-text: #252327;         /* Darkest Text */
 
     /* Status Colors (Original) */
     --status-red: #ef4444;
@@ -22,10 +22,10 @@
     --status-blue: #3e95cd;
     --status-yellow: #FBC02D; /* Added standard warning */
 
-    /* --- Semantic Color Mapping (Light Mode - App Feel) --- */
-    --color-background: var(--light-purple-50);       /* Use lightest purple for BG */
-    --color-surface: var(--white);                   /* Use white for surfaces/cards */
-    --color-surface-container: var(--light-purple-100);
+    /* --- Semantic Color Mapping (Light Mode - Panel Style) --- */
+    --color-background: var(--white);                   /* PAGE Background */
+    --color-surface: var(--light-purple-50);           /* APP CONTAINER Background */
+    --color-surface-container: var(--light-purple-100);/* BENTO BOX Background */
     --color-surface-variant: var(--light-purple-200);
 
     /* Text Colors */
@@ -57,47 +57,47 @@
 
     /* --- Layout & Feel Adjustments --- */
     --border-radius-sm: 6px;
-    --border-radius-md: 8px;
-    --border-radius-lg: 12px;
+    --border-radius-md: 8px;  /* Used for app-container */
+    --border-radius-lg: 12px; /* Used for bento-box */
     --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
     --shadow-md: 0 3px 6px rgba(0, 0, 0, 0.09);
-    --shadow-lg: 0 6px 12px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.1); /* Outer shadow */
     --transition-standard: all 0.2s ease-in-out;
     --bento-gap: 16px;
     --scale-interactive: scale(1.02);
 }
 
 /* ========================================= */
-/* CSS Variables - Dark Mode (Original Muted Purples) */
+/* CSS Variables - Dark Mode (Original Muted Purples - Panel Style) */
 /* ========================================= */
 [data-theme="dark"] {
     /* Using hex codes provided by user in original dark theme block */
     /* --- Semantic Color Mapping --- */
-    --color-background: #1E1A22;
-    --color-surface: #252229;                 /* Main surface/card bg */
-    --color-surface-container: #2D2A31;
-    --color-surface-variant: #3A373E;         /* Border / Outline */
+    --color-background: #1E1A22;                   /* PAGE Background */
+    --color-surface: #252229;                     /* APP CONTAINER Background */
+    --color-surface-container: #2D2A31;           /* BENTO BOX Background */
+    --color-surface-variant: #3A373E;             /* Border / Outline */
 
     /* Text Colors */
-    --color-text-primary: #F4F2F6;           /* Lightest Purple/Gray Text */
+    --color-text-primary: #F4F2F6;
     --color-text-secondary: #D7D4DC;
     --color-text-tertiary: #B5B0BD;
 
     /* Action Colors - Brighter */
     --color-primary: #A29AAA;
-    --color-on-primary: #1E1A22;             /* Dark text on light purple */
+    --color-on-primary: #1E1A22;                 /* Dark text on light purple */
     --color-secondary: #8C85A0;
-    --color-on-secondary: #1E1A22;            /* Dark text on light purple */
+    --color-on-secondary: #1E1A22;                /* Dark text on light purple */
 
     /* Border & Outline */
-    --color-border: var(--color-surface-variant); /* Use variant for border */
-    --color-outline: #4a464e;                /* Slightly lighter than border */
-    --color-focus-ring: rgba(162, 154, 170, 0.6); /* Based on primary */
+    --color-border: var(--color-surface-variant);   /* Use variant for border */
+    --color-outline: #4a464e;                    /* Slightly lighter */
+    --color-focus-ring: rgba(162, 154, 170, 0.6);   /* Based on primary */
 
     /* Chart Colors - Brighter */
     --chart-color-primary: #A29AAA;
     --chart-color-secondary: #8C85A0;
-    --chart-color-tertiary: #797484;        /* Darker accent from light mode */
+    --chart-color-tertiary: #797484;              /* Darker accent from light mode */
 
     /* Status Colors (Brighter for Dark Mode) */
     --color-error: #f06292;
@@ -108,7 +108,7 @@
     /* Dark Mode Shadows */
     --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
     --shadow-md: 0 3px 6px rgba(0, 0, 0, 0.35);
-    --shadow-lg: 0 6px 12px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.4);
     /* Inherits layout vars from :root */
 }
 /* ========================================= */
@@ -126,7 +126,21 @@ body {
     margin: 0; padding: 0; height: 100%; overflow: hidden;
     transition: background-color 0.2s ease, color 0.2s ease;
 }
-
+.app-container {
+  /* --- Use Theme Variables --- */
+  background-color: var(--color-surface); /* Panel background */
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-md);  /* 8px */
+  box-shadow: var(--shadow-lg);            /* Use large theme shadow */
+  /* --- Layout & Positioning --- */
+  margin: 32px; /* Adjust margin as desired */
+  height: calc(100vh - 64px);
+  max-height: calc(100vh - 64px);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  transition: var(--
 /* Apply heading font */
 h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-heading), sans-serif; /* Use Ubuntu */
@@ -186,7 +200,7 @@ a:hover {
 .main-content {
     flex: 1; height: 100vh; overflow-y: auto; padding: var(--bento-gap);
     background-color: var(--color-surface); /* Main page background */
-    scrollbar-width: thin; scrollbar-color: var(--color-outline) transparent; /* Make track transparent */
+    scrollbar-width: thick; scrollbar-color: var(--color-outline) transparent; /* Make track transparent */
 }
 .main-content::-webkit-scrollbar { width: 8px; }
 .main-content::-webkit-scrollbar-track { background: transparent; }
@@ -228,7 +242,7 @@ a:hover {
 /* Card Styles (`.bento-box`)                */
 /* ========================================= */
 .bento-box {
-    background-color: var(--color-surface); /* USE VARIABLE HERE */
+    background-color: var(--color-surface-container); /* USE VARIABLE HERE */
     border-radius: var(--border-radius-lg);
     box-shadow: var(--shadow-sm); /* Default shadow */
     padding: 16px;
@@ -470,57 +484,17 @@ tr:hover td { background-color: var(--color-surface-container); }
      /* Keep span adjustments */
      /* Keep font size adjustments */
 }
-@media (max-width: 768px) { /* Mobile Landscape / Small Tablet */
-    /* Keep layout changes */
-    /* Keep grid changes */
-    /* Keep span reset */
-    /* Keep header stacking */
-    /* Keep table sticky styles */
-    /* Keep chart height adjustments */
-}
-@media (max-width: 480px) { /* Small Mobile */
-    /* Keep font/padding adjustments */
-}
 
-/* ========================================= */
-/* Final Polish & Enhancements              */
-/* ========================================= */
 /* Updated focus states */
 button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible {
     outline: 2px solid transparent;
     outline-offset: 2px;
     box-shadow: 0 0 0 2px var(--color-background), 0 0 0 4px var(--color-focus-ring);
 }
-.app-container {
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-  background-color: #fff;
-  margin: 40px;
-  min-height: calc(100vh - 40px); /* Minimum height based on viewport */
-  display: flex;
-  flex-direction: column;
+/* --- Responsive Adjustments for App Container --- */
+@media (max-width: 768px) {
+  .app-container { margin: 16px; height: calc(100vh - 32px); max-height: calc(100vh - 32px); }
 }
-
-/* For dark mode support */
-[data-theme="dark"] .app-container {
-  background-color: #272727;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-}
-
-/* Optional: Add a subtle border */
-.app-container {
-  border: 1px solid rgba(0, 0, 0, 0.1);
-}
-[data-theme="dark"] .app-container {
-  border: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-/* Media query for small screens */
-@media (max-width: 600px) {
-  .app-container {
-    margin: 10px;
-    border-radius: 8px;
-    min-height: calc(100vh - 20px);
-  }
+@media (max-width: 480px) {
+  .app-container { margin: 8px; height: calc(100vh - 16px); max-height: calc(100vh - 16px); border-radius: var(--border-radius-sm); box-shadow: var(--shadow-md); }
 }
