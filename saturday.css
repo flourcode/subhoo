@@ -140,8 +140,10 @@ body {
   display: flex;
   flex-direction: column;
   position: relative;
-  transition: var(--
+  transition: var(--transition-standard);
+}
 /* Apply heading font */
+
 h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-heading), sans-serif; /* Use Ubuntu */
     color: var(--color-text-primary);
@@ -485,7 +487,6 @@ tr:hover td { background-color: var(--color-surface-container); }
      /* Keep font size adjustments */
 }
 
-/* Updated focus states */
 button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible {
     outline: 2px solid transparent;
     outline-offset: 2px;
