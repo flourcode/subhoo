@@ -1,154 +1,133 @@
 /* ========================================= */
-/* CSS Variables - Light Mode (Chart-Focused Neutral) */
+/* CSS Variables - Light Mode (Monocle Print Style w/ Green Accent) */
 /* ========================================= */
 :root {
     /* --- Core Hex Palette --- */
-    /* Neutral Grays */
-    --hex-white: #FFFFFF;
-    --hex-gray-50: #F9FAFB;     /* Subtle Background */
-    --hex-gray-100: #F3F4F6;    /* Surface Container */
-    --hex-gray-200: #E5E7EB;    /* Surface Variant */
-    --hex-gray-300: #D1D5DB;    /* Border */
-    --hex-gray-400: #9CA3AF;    /* Outline / Muted Chart Gray */
-    --hex-gray-500: #6B7280;    /* Tertiary Text / Secondary Action BG */
-    --hex-gray-700: #374151;    /* Secondary Text */
-    --hex-gray-900: #111827;    /* Primary Text (Near Black) */
-    /* UI Accent (Muted Blue) */
-    --hex-accent-blue-500: #60A5FA; /* Using a standard, accessible blue */
-    --hex-accent-blue-600: #3B82F6; /* Darker for hover/secondary */
+    /* New Green Accents (User Provided - Light to Dark) */
+    --hex-accent-green-300: #a0b35a; /* Lightest Provided */
+    --hex-accent-green-500: #7e8c48; /* Mid */
+    --hex-accent-green-600: #5d6737; /* Mid-Dark */
+    --hex-accent-green-700: #3f4527; /* Dark */
+    --hex-accent-green-900: #222517; /* Darkest */
 
-    /* --- CHART PALETTES --- */
-    /* Categorical (Example: ColorBrewer Set2 - Accessible) */
-    --chart-cat-1: #66c2a5; /* Teal */
-    --chart-cat-2: #fc8d62; /* Orange */
-    --chart-cat-3: #8da0cb; /* Blue */
-    --chart-cat-4: #e78ac3; /* Pink */
-    --chart-cat-5: #a6d854; /* Green */
-    --chart-cat-6: #ffd92f; /* Yellow */
-    --chart-cat-7: #e5c494; /* Brown */
-    --chart-cat-8: #b3b3b3; /* Gray */
-    /* Sequential (Example: ColorBrewer Blues) */
-    --chart-seq-blue-1: #eff3ff;
-    --chart-seq-blue-2: #bdd7e7;
-    --chart-seq-blue-3: #6baed6;
-    --chart-seq-blue-4: #3182bd;
-    --chart-seq-blue-5: #08519c;
+    /* Neutrals (From Original Monocle Theme) */
+    --creamy-white: #FDFBF5;     /* Off-white for BG/Light Text */
+    --black-brown: #312d2a;      /* Dark brown/black for Text */
+    --darker-charcoal: #1c1a19;  /* Very dark brown/black */
+    /* Base surfaces/borders from desaturated purples (can be adjusted if needed) */
+    --base-surface-50: #F5F3F5;
+    --base-surface-100: #EDEAEB;
+    --base-surface-200: #D8D4D7; /* Used for Border */
+    --base-surface-300: #B6B1B7; /* Used for Outline */
+    --base-surface-500: #7A747B; /* Used for Tertiary Text */
+    --base-surface-600: #625C61; /* Used for Secondary Text */
 
-    /* Status Colors (Standard Hex) */
-    --status-red: #D81B60; --status-green: #388E3C; --status-blue: #1E88E5; --status-yellow: #FBC02D;
+    /* Status Colors (Desaturated Option) */
+    --status-red: #e06c75;      /* Softer Red */
+    --status-green: var(--hex-accent-green-500); /* Using theme green */
+    --status-blue: #61afef;     /* Softer Blue */
+    --status-yellow: #d19a66;   /* Soft orange/yellow */
 
     /* --- Semantic Color Mapping --- */
-    --color-background: var(--hex-gray-50);
-    --color-surface: var(--hex-white);
-    --color-surface-container: var(--hex-gray-100);
-    --color-surface-variant: var(--hex-gray-200);
+    --color-background: var(--creamy-white);
+    --color-surface: var(--base-surface-50);
+    --color-surface-container: var(--base-surface-100);
+    --color-surface-variant: var(--base-surface-200);
 
-    --color-text-primary: var(--hex-gray-900);
-    --color-text-secondary: var(--hex-gray-700);
-    --color-text-tertiary: var(--hex-gray-500);
+    /* Text Colors */
+    --color-text-primary: var(--black-brown);
+    --color-text-secondary: var(--base-surface-600); /* Using muted purple-gray */
+    --color-text-tertiary: var(--base-surface-500);  /* Using muted purple-gray */
 
-    --color-primary: var(--hex-accent-blue-500); /* Muted Blue accent for UI */
-    --color-on-primary: var(--hex-white);
-    --color-secondary: var(--hex-gray-500);     /* Use gray for secondary action */
-    --color-on-secondary: var(--hex-white);     /* White text on mid-gray */
+    /* Action Colors (Using New Greens) */
+    --color-primary: var(--hex-accent-green-600);      /* Mid-Dark green action */
+    --color-on-primary: var(--creamy-white);           /* Creamy text on action */
+    --color-secondary: var(--hex-accent-green-500);    /* Mid green secondary action */
+    --color-on-secondary: var(--creamy-white);         /* Creamy text on action */
 
-    --color-border: var(--hex-gray-300);
-    --color-outline: var(--hex-gray-400);
-    --color-focus-ring: rgba(96, 165, 250, 0.5); /* Based on blue primary */
+    /* Border & Outline */
+    --color-border: var(--base-surface-200);           /* Light desat purple border */
+    --color-outline: var(--base-surface-300);          /* Mid desat purple outline */
+    --color-focus-ring: rgba(93, 103, 55, 0.5);        /* Based on green primary */
 
-    /* Default Chart Colors (Use first few categorical) */
-    --chart-color-primary: var(--chart-cat-1);
-    --chart-color-secondary: var(--chart-cat-2);
-    --chart-color-tertiary: var(--chart-cat-3);
+    /* Chart Colors (Using New Greens) */
+    --chart-color-primary: var(--hex-accent-green-500); /* Mid Green */
+    --chart-color-secondary: var(--hex-accent-green-700); /* Dark Green */
+    --chart-color-tertiary: var(--hex-accent-green-300); /* Light Green */
 
-    --color-error: var(--status-red); /* ... map other status colors ... */
+    /* Status Colors */
+    --color-error: var(--status-red);
     --color-success: var(--status-green);
     --color-warning: var(--status-yellow);
     --color-info: var(--status-blue);
 
-    /* --- Layout Values (Keep consistent) --- */
-    --border-radius-sm: 6px;
-    --border-radius-md: 8px;
-    --border-radius-lg: 12px;
-    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
-    --shadow-md: 0 3px 6px rgba(0, 0, 0, 0.09);
-    --shadow-lg: 0 6px 12px rgba(0, 0, 0, 0.1);
-    --transition-standard: all 0.2s ease-in-out;
-    --bento-gap: 16px;
+    /* --- Original Layout Values (Keep) --- */
+    --border-radius-sm: 8px; /* Or use tighter 6px */
+    --border-radius-md: 12px;/* Or use tighter 8px */
+    --border-radius-lg: 16px;/* Or use tighter 12px */
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.08);
+    --shadow-lg: 0 4px 6px rgba(0, 0, 0, 0.12);
+    --transition-standard: all 0.2s ease;
+    --bento-gap: 16px; /* Keep tighter gap */
     --scale-interactive: scale(1.02);
 }
 
 /* ========================================= */
-/* CSS Variables - Dark Mode (Chart-Focused Neutral) */
+/* CSS Variables - Dark Mode (Monocle Print Style w/ Green Accent) */
 /* ========================================= */
 [data-theme="dark"] {
     /* --- Core Hex Palette References --- */
-    /* Light Grays for Text */
-    --hex-gray-white-dark: #F3F4F6; /* Slightly off-white */
-    --hex-gray-100-dark: #D1D5DB;
-    --hex-gray-300-dark: #9CA3AF;
-    /* Dark Grays for Surfaces */
-    --hex-gray-600-dark: #4B5563;
-    --hex-gray-700-dark: #374151;
-    --hex-gray-800-dark: #1F2937;
-    --hex-gray-900-dark: #111827; /* Background */
-    /* Brighter UI accent */
-    --hex-accent-blue-400-dark: #93C5FD; /* Lighter blue */
-    --hex-accent-blue-500-dark: var(--hex-accent-blue-500); /* Keep mid blue */
+    /* Using vars defined in :root */
+    /* Dark Surfaces (From Original Monocle Theme) */
+    --dark-surface-1: #262321;
+    --dark-surface-2: #312d2a; /* Black-Brown / Border */
+    --dark-surface-3: #3f3a37; /* Outline */
 
-    /* --- CHART PALETTES (Dark Mode) --- */
-    /* Categorical (Example: ColorBrewer Dark2 - Good on dark) */
-    --chart-cat-1: #1b9e77; /* Dark Teal */
-    --chart-cat-2: #d95f02; /* Dark Orange */
-    --chart-cat-3: #7570b3; /* Dark Purple */
-    --chart-cat-4: #e7298a; /* Dark Pink */
-    --chart-cat-5: #66a61e; /* Dark Green */
-    --chart-cat-6: #e6ab02; /* Dark Yellow */
-    --chart-cat-7: #a6761d; /* Dark Brown */
-    --chart-cat-8: #666666; /* Dark Gray */
-    /* Sequential (Example: Reversed Blues or different hue like Purples) */
-    --chart-seq-blue-1: #084594; /* Darkest */
-    --chart-seq-blue-2: #2171b5;
-    --chart-seq-blue-3: #4292c6;
-    --chart-seq-blue-4: #6baed6;
-    --chart-seq-blue-5: #9ecae1; /* Lightest */
-
-    /* Status Colors (Brighter) */
-    --status-red-dark: #f472b6; --status-green-dark: #4ade80; --status-blue-dark: #60a5fa; --status-yellow-dark: #facc15;
+    /* Status Colors (Brighter Desaturated) */
+    --status-red-dark: #e5737d;
+    --status-green-dark: var(--hex-accent-green-300); /* Use light accent green */
+    --status-blue-dark: #79b6f2;
+    --status-yellow-dark: #e5c07b;
 
     /* --- Semantic Color Mapping --- */
-    --color-background: var(--hex-gray-900-dark);
-    --color-surface: var(--hex-gray-800-dark);
-    --color-surface-container: var(--hex-gray-700-dark);
-    --color-surface-variant: var(--hex-gray-600-dark);
+    --color-background: var(--darker-charcoal);        /* #1c1a19 */
+    --color-surface: var(--dark-surface-1);
+    --color-surface-container: var(--dark-surface-2);
+    --color-surface-variant: var(--dark-surface-3);
 
-    --color-text-primary: var(--hex-gray-white-dark);
-    --color-text-secondary: var(--hex-gray-100-dark);
-    --color-text-tertiary: var(--hex-gray-300-dark);
+    /* Text Colors */
+    --color-text-primary: var(--creamy-white);         /* #FDFBF5 */
+    --color-text-secondary: var(--base-surface-300);   /* Light Muted Purple/Gray */
+    --color-text-tertiary: var(--base-surface-500);    /* Mid Muted Purple/Gray */
 
-    --color-primary: var(--hex-accent-blue-400-dark); /* Lighter blue accent */
-    --color-on-primary: var(--hex-gray-900-dark);     /* Dark text on light blue */
-    --color-secondary: var(--hex-gray-600-dark);
-    --color-on-secondary: var(--hex-gray-white-dark);
+    /* Action Colors (Using New Greens) */
+    --color-primary: var(--hex-accent-green-300);      /* Light Green Accent */
+    --color-on-primary: var(--darker-charcoal);        /* Dark text on light green */
+    --color-secondary: var(--hex-accent-green-500);    /* Mid Green Secondary */
+    --color-on-secondary: var(--darker-charcoal);      /* Dark text on mid green */
 
-    --color-border: var(--hex-gray-700-dark);
-    --color-outline: var(--hex-gray-600-dark);
-    --color-focus-ring: rgba(147, 197, 253, 0.5); /* Based on dark primary */
+    /* Border & Outline */
+    --color-border: var(--dark-surface-2);
+    --color-outline: var(--dark-surface-3);
+    --color-focus-ring: rgba(160, 179, 90, 0.6);       /* Based on green primary */
 
-    /* Default Chart Colors (Use first few dark categorical) */
-    --chart-color-primary: var(--chart-cat-1);
-    --chart-color-secondary: var(--chart-cat-2);
-    --chart-color-tertiary: var(--chart-cat-3);
+    /* Chart Colors (Using New Greens) */
+    --chart-color-primary: var(--hex-accent-green-300);  /* Light Green */
+    --chart-color-secondary: var(--hex-accent-green-500);/* Mid Green */
+    --chart-color-tertiary: var(--hex-accent-green-600); /* Mid-Dark Green */
 
-    --color-error: var(--status-red-dark); /* ... map other status colors ... */
+    /* Status Colors */
+    --color-error: var(--status-red-dark);
     --color-success: var(--status-green-dark);
     --color-warning: var(--status-yellow-dark);
     --color-info: var(--status-blue-dark);
 
-    /* --- Layout Values (Keep Existing Dark) --- */
-    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
-    --shadow-md: 0 3px 6px rgba(0, 0, 0, 0.35);
-    --shadow-lg: 0 6px 12px rgba(0, 0, 0, 0.4);
+    /* Dark Mode Shadows */
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
+    --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.25);
+    --shadow-lg: 0 4px 6px rgba(0, 0, 0, 0.3);
+    /* Inherits border-radius, transition, bento-gap */
 }
 /* ========================================= */
 /* Base Styles & Reset                       */
