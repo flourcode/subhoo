@@ -254,9 +254,9 @@ a:hover {
     .bento-grid {
         grid-template-columns: repeat(5, 1fr);
         grid-template-areas:
-            "sankey sankey sankey map arr"
+            "sankey sankey sankey sankey map"
             "tavtcv tavtcv leaders leaders leaders"
-            "expiring expiring expiring expiring expiring";
+            "expiring expiring expiring arr arr";
         grid-template-rows: minmax(350px, auto) auto auto; /* Adjusted min */
     }
 }
