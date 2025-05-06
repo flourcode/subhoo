@@ -4,13 +4,10 @@
 /* Theme Variables (Monocle/Print Style FINAL - Corrected Layout) */
 /* ========================================= */
 :root {
-    /* --- Font Families --- */
-    --font-heading: 'Ubuntu', sans-serif;
-    --font-body: 'Poppins', sans-serif;
 
     /* --- Core Hex Palette (Monocle/Print Theme) --- */
     /* Desaturated Purples */
-    --dsp-purple-50: #F5F3F5;    /* App Container BG (Light) */
+    --dsp-purple-50: #fdfdfd;    /* App Container BG (Light) */
     --dsp-purple-100: #EDEAEB;   /* Bento Box BG (Light) */
     --dsp-purple-200: #D8D4D7;   /* Variant / Border (Light) */
     --dsp-purple-300: #B6B1B7;   /* Outline / Tertiary Chart / Dark Secondary Text */
@@ -126,12 +123,16 @@
 html { height: 100%; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; scroll-behavior: smooth; }
 
 body {
-    font-family: var(--font-body), sans-serif; /* Poppins */
-    background-color: var(--color-background); /* PAGE background */
+    font-family: 'Inter', -apple-system, sans-serif;
+    background-color: var(--color-background);
     color: var(--color-text-primary);
-    line-height: 1.5; font-size: 14px;
-    margin: 0; padding: 0; height: 100%; overflow: hidden;
-    transition: background-color 0.2s ease, color 0.2s ease;
+    line-height: 1.5;
+    font-size: 14px; /* Base size */
+    margin: 0; /* Ensure no default margin */
+    padding: 0; /* Ensure no default padding */
+    height: 100%;
+    overflow: hidden; /* Prevent body scroll when layout manages scrolling */
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* Apply heading font */
@@ -148,8 +149,8 @@ h1, h2, h3, h4, h5, h6 {
   background-color: var(--color-surface); /* Panel background */
   border: 1px solid var(--color-border);
   border-radius: var(--border-radius-md);  /* 8px */
-  box-shadow: var(--shadow-lg);
-  margin: 32px;
+  box-shadow: var(--shadow-sm);
+  margin: 20px;
   height: calc(100vh - 64px);
   max-height: calc(100vh - 64px);
   overflow: hidden;
@@ -163,7 +164,7 @@ h1, h2, h3, h4, h5, h6 {
   .app-container { margin: 16px; height: calc(100vh - 32px); max-height: calc(100vh - 32px); }
 }
 @media (max-width: 480px) {
-  .app-container { margin: 8px; height: calc(100vh - 16px); max-height: calc(100vh - 16px); border-radius: var(--border-radius-sm); box-shadow: var(--shadow-md); }
+  .app-container { margin: 8px; height: calc(100vh - 16px); max-height: calc(100vh - 16px); border-radius: var(--border-radius-sm); box-shadow: var(--shadow-sm); }
 }
 
 
@@ -251,16 +252,31 @@ a:hover { color: var(--color-secondary); text-decoration: none; }
 /* ========================================= */
 /* Card Styles (`.bento-box`)                */
 /* ========================================= */
+/* Styles for bento boxes, using hardcoded backgrounds */
 .bento-box {
-    /* --- UPDATED: Use Container Color --- */
-    background-color: var(--color-surface-container); /* Bento Box BG */
-    border-radius: var(--border-radius-lg); /* Keep larger radius for boxes */
-    box-shadow: var(--shadow-sm); padding: 16px; border: 1px solid var(--color-border);
-    display: flex; flex-direction: column; height: 100%; position: relative; overflow: hidden;
+    /* --- HARDCODED Light Mode Background --- */
+    background-color: #ffffff;
+    /* --- Keep other styles using variables --- */
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-sm); /* Uses light mode shadow variable */
+    padding: 16px;
+    border: 1px solid var(--color-border); /* Uses light mode border variable */
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
     transition: var(--transition-standard);
 }
-.bento-box:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); border-color: var(--color-outline); }
 
+/* Separate rule for DARK MODE bento box background */
+[data-theme="dark"] .bento-box {
+    /* --- HARDCODED Dark Mode Background --- */
+    background-color: #242424;
+    /* Border and shadow will use the dark mode variables defined elsewhere */
+    border-color: var(--color-border); /* Ensures dark mode border color is applied */
+    box-shadow: var(--shadow-sm);     /* Ensures dark mode shadow is applied */
+}
 /* ... Keep .card-header, .card-icon-circle, .card-content etc ... */
 .card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; border-bottom: 1px solid var(--color-border); padding-bottom: 10px; flex-shrink: 0; }
 .card-header h2 { font-family: var(--font-heading); font-size: 16px; font-weight: 700; color: var(--color-text-primary); flex-grow: 1; margin: 0; }
