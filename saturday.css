@@ -1,13 +1,16 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Ubuntu:wght@500;700&display=swap');
 
 /* ========================================= */
-/* Theme Variables (Monocle/Print Style FINAL - Corrected Layout) */
+/* Theme Variables (Monocle/Print Style FINAL - Corrected Layout & Fonts) */
 /* ========================================= */
 :root {
+    /* --- Font Families --- */
+    --font-heading: 'Ubuntu', sans-serif;
+    --font-body: 'Poppins', sans-serif;
 
     /* --- Core Hex Palette (Monocle/Print Theme) --- */
     /* Desaturated Purples */
-    --dsp-purple-50: #fdfdfd;    /* App Container BG (Light) */
+    --dsp-purple-50: #F5F3F5;    /* App Container BG (Light) */
     --dsp-purple-100: #EDEAEB;   /* Bento Box BG (Light) */
     --dsp-purple-200: #D8D4D7;   /* Variant / Border (Light) */
     --dsp-purple-300: #B6B1B7;   /* Outline / Tertiary Chart / Dark Secondary Text */
@@ -21,7 +24,7 @@
     --darker-charcoal: #1c1a19;  /* Dark Mode BG */
     /* Dark Surfaces */
     --dark-surface-1: #262321;   /* Dark Mode App Container/Side Panel BG */
-    --dark-surface-2: var(--black-brown); /* Mapped to Dark Bento Box BG */
+    --dark-surface-2: var(--black-brown); /* Dark Mode Bento Box BG / Border */
     --dark-surface-3: #3f3a37;   /* Dark Mode Outline / Variant */
     /* Dark Mode Accent Purples */
     --dsp-dark-accent-primary: #A59FA8;
@@ -63,8 +66,8 @@
 
     /* --- Layout & Feel Adjustments --- */
     --border-radius-sm: 6px;
-    --border-radius-md: 8px;
-    --border-radius-lg: 12px;
+    --border-radius-md: 8px;  /* App container */
+    --border-radius-lg: 12px; /* Bento boxes */
     --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
     --shadow-md: 0 3px 6px rgba(0, 0, 0, 0.09);
     --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.1); /* App container shadow */
@@ -87,8 +90,8 @@
     --color-surface-variant: var(--dark-surface-3);    /* #3f3a37 */
 
     --color-text-primary: var(--creamy-white);
-    --color-text-secondary: var(--dsp-purple-300);     /* Using light mode outline color */
-    --color-text-tertiary: var(--dsp-purple-400);      /* Using light mode primary color */
+    --color-text-secondary: var(--dsp-purple-300);
+    --color-text-tertiary: var(--dsp-purple-400);
 
     --color-primary: var(--dsp-dark-accent-primary);
     --color-on-primary: var(--darker-charcoal);
@@ -123,16 +126,12 @@
 html { height: 100%; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; scroll-behavior: smooth; }
 
 body {
-    font-family: 'Inter', -apple-system, sans-serif;
-    background-color: var(--color-background);
+    font-family: var(--font-body), sans-serif; /* Poppins */
+    background-color: var(--color-background); /* PAGE background */
     color: var(--color-text-primary);
-    line-height: 1.5;
-    font-size: 14px; /* Base size */
-    margin: 0; /* Ensure no default margin */
-    padding: 0; /* Ensure no default padding */
-    height: 100%;
-    overflow: hidden; /* Prevent body scroll when layout manages scrolling */
-    transition: background-color 0.3s ease, color 0.3s ease;
+    line-height: 1.5; font-size: 14px;
+    margin: 0; padding: 0; height: 100%; overflow: hidden;
+    transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 /* Apply heading font */
@@ -149,8 +148,8 @@ h1, h2, h3, h4, h5, h6 {
   background-color: var(--color-surface); /* Panel background */
   border: 1px solid var(--color-border);
   border-radius: var(--border-radius-md);  /* 8px */
-  box-shadow: var(--shadow-sm);
-  margin: 20px;
+  box-shadow: var(--shadow-lg);
+  margin: 32px;
   height: calc(100vh - 64px);
   max-height: calc(100vh - 64px);
   overflow: hidden;
@@ -164,7 +163,7 @@ h1, h2, h3, h4, h5, h6 {
   .app-container { margin: 16px; height: calc(100vh - 32px); max-height: calc(100vh - 32px); }
 }
 @media (max-width: 480px) {
-  .app-container { margin: 8px; height: calc(100vh - 16px); max-height: calc(100vh - 16px); border-radius: var(--border-radius-sm); box-shadow: var(--shadow-sm); }
+  .app-container { margin: 8px; height: calc(100vh - 16px); max-height: calc(100vh - 16px); border-radius: var(--border-radius-sm); box-shadow: var(--shadow-md); }
 }
 
 
@@ -174,7 +173,7 @@ h1, h2, h3, h4, h5, h6 {
 a { color: var(--color-primary); font-weight: 600; text-decoration: none; transition: color 0.2s ease; }
 a:hover { color: var(--color-secondary); text-decoration: none; }
 
-/* Apply theme transitions */
+/* Apply theme transitions broadly */
 .bento-box, .date-container, .side-panel, th, td, button, input, select, label,
 .card-icon-circle, #status-banner, .tooltip, .sidebar-info, .sidebar-footer {
     transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease, opacity 0.2s ease;
@@ -183,12 +182,11 @@ a:hover { color: var(--color-secondary); text-decoration: none; }
 /* ========================================= */
 /* Layout Styles                             */
 /* ========================================= */
-.dashboard-layout { display: flex; height: 100%; width: 100%; overflow: hidden; }
+.dashboard-layout { display: flex; height: 100%; width: 100%; overflow: hidden; } /* Fill app-container */
 
 .side-panel {
     width: 240px; height: 100%;
-    /* --- UPDATED: Match App Container --- */
-    background-color: var(--color-surface);
+    background-color: var(--color-surface); /* UPDATED: Match App Container BG */
     border-right: 1px solid var(--color-border); padding: 16px; overflow-y: auto;
     flex-shrink: 0; display: flex; flex-direction: column;
     scrollbar-width: thin; scrollbar-color: var(--color-outline) var(--color-surface-container); /* Use bento bg for track */
@@ -198,13 +196,12 @@ a:hover { color: var(--color-secondary); text-decoration: none; }
 .side-panel::-webkit-scrollbar-thumb { background-color: var(--color-outline); border-radius: 3px; border: 1px solid var(--color-surface-container); }
 
 /* Sidebar Info/Footer - Use Classes */
-.sidebar-info { font-family: var(--font-body); margin: 10px 0; font-size: 12px; line-height: 1.4; color: var(--color-text-secondary); background-color: var(--color-surface-container); padding: 12px; border-radius: var(--border-radius-md); border: 1px solid var(--color-border); }
+.sidebar-info { font-family: var(--font-body); margin: 10px 0; font-size: 12px; line-height: 1.4; color: var(--color-text-secondary); background-color: var(--color-surface-variant); padding: 12px; border-radius: var(--border-radius-md); border: 1px solid var(--color-border); }
 .sidebar-footer { font-family: var(--font-body); margin-top: auto; padding-top: 12px; border-top: 1px solid var(--color-border); font-size: 11px; color: var(--color-text-tertiary); text-align: center; }
 
 .main-content {
     flex: 1; height: 100%; overflow-y: auto; padding: var(--bento-gap);
-    /* --- UPDATED: Transparent BG --- */
-    background-color: transparent; /* Let app-container bg show through */
+    background-color: transparent; /* UPDATED: Let app-container bg show through */
     scrollbar-width: thin; scrollbar-color: var(--color-outline) transparent;
 }
 .main-content::-webkit-scrollbar { width: 8px; }
@@ -214,7 +211,7 @@ a:hover { color: var(--color-secondary); text-decoration: none; }
 /* ========================================= */
 /* Header Styles                             */
 /* ========================================= */
-/* ... Keep Header Styles ... */
+/* ... Keep Header Styles, ensure fonts/vars ... */
 .dashboard-header { margin-bottom: var(--bento-gap); padding-bottom: var(--bento-gap); border-bottom: 1px solid var(--color-border); }
 .header-content { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
 .title-area h1 { font-family: var(--font-heading); font-size: 24px; font-weight: 700; color: var(--color-text-primary); margin: 0; }
@@ -226,20 +223,18 @@ a:hover { color: var(--color-secondary); text-decoration: none; }
 
 
 /* ========================================= */
-/* Bento Grid Layout (CORRECTED)             */
+/* Bento Grid Layout (CORRECTED 3-Row)       */
 /* ========================================= */
 .bento-grid {
     display: grid;
     gap: var(--bento-gap);
     grid-template-columns: repeat(5, 1fr);
-    /* --- User Specified 4-row Layout --- */
+    /* --- Original 3-row Layout --- */
     grid-template-areas:
-        "sankey sankey sankey sankey arr"
-        "sankey sankey sankey sankey map"
+        "sankey sankey sankey map arr"
         "tavtcv tavtcv leaders leaders leaders"
         "expiring expiring expiring expiring expiring";
-    /* --- Adjust rows for 4-row layout --- */
-    grid-template-rows: minmax(200px, auto) minmax(200px, auto) auto auto; /* Example heights */
+    grid-template-rows: minmax(400px, auto) auto auto; /* Adjusted min */
 }
 /* --- Correct Area Assignments --- */
 #bento-arr { grid-area: arr; }
@@ -248,35 +243,23 @@ a:hover { color: var(--color-secondary); text-decoration: none; }
 #bento-tavtcv { grid-area: tavtcv; }
 #bento-leaders { grid-area: leaders; }
 #bento-expiring { grid-area: expiring; }
+/* Keep Span Utilities */
+.col-span-2 { grid-column: span 2; }
+.col-span-4 { grid-column: span 4; }
+.col-span-5 { grid-column: span 5; }
 
 /* ========================================= */
 /* Card Styles (`.bento-box`)                */
 /* ========================================= */
-/* Styles for bento boxes, using hardcoded backgrounds */
 .bento-box {
-    /* --- HARDCODED Light Mode Background --- */
-    background-color: #ffffff;
-    /* --- Keep other styles using variables --- */
+    background-color: var(--color-surface-container); /* UPDATED: Bento Box BG */
     border-radius: var(--border-radius-lg);
-    box-shadow: var(--shadow-sm); /* Uses light mode shadow variable */
-    padding: 16px;
-    border: 1px solid var(--color-border); /* Uses light mode border variable */
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    position: relative;
-    overflow: hidden;
+    box-shadow: var(--shadow-sm); padding: 16px; border: 1px solid var(--color-border);
+    display: flex; flex-direction: column; height: 100%; position: relative; overflow: hidden;
     transition: var(--transition-standard);
 }
+.bento-box:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); border-color: var(--color-outline); }
 
-/* Separate rule for DARK MODE bento box background */
-[data-theme="dark"] .bento-box {
-    /* --- HARDCODED Dark Mode Background --- */
-    background-color: #242424;
-    /* Border and shadow will use the dark mode variables defined elsewhere */
-    border-color: var(--color-border); /* Ensures dark mode border color is applied */
-    box-shadow: var(--shadow-sm);     /* Ensures dark mode shadow is applied */
-}
 /* ... Keep .card-header, .card-icon-circle, .card-content etc ... */
 .card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; border-bottom: 1px solid var(--color-border); padding-bottom: 10px; flex-shrink: 0; }
 .card-header h2 { font-family: var(--font-heading); font-size: 16px; font-weight: 700; color: var(--color-text-primary); flex-grow: 1; margin: 0; }
@@ -284,21 +267,19 @@ a:hover { color: var(--color-secondary); text-decoration: none; }
 .card-icon-circle svg { width: 16px; height: 16px; }
 .card-content, .chart-container, .table-container, .arr-display-grid, .notes-content { flex-grow: 1; display: flex; flex-direction: column; position: relative; min-height: 0; }
 
-
 /* ========================================= */
 /* Form Element Styles                       */
 /* ========================================= */
-/* ... Keep Form Styles, ensure fonts ... */
+/* ... Keep Form Styles, ensure fonts/vars ... */
 .input-select, .input-date, input[type="search"], input[type="text"] { font-family: var(--font-body); width: 100%; padding: 8px 12px; border: 1px solid var(--color-border); border-radius: var(--border-radius-md); font-size: 13px; color: var(--color-text-primary); background-color: var(--color-surface); transition: var(--transition-standard); }
 .input-select:focus, .input-date:focus, input[type="search"]:focus, input[type="text"]:focus { outline: 2px solid transparent; outline-offset: 2px; border-color: var(--color-primary); box-shadow: 0 0 0 2px var(--color-focus-ring); background-color: var(--color-surface); }
 .input-select option { background-color: var(--color-background); color: var(--color-text-primary); }
 ::placeholder { color: var(--color-text-tertiary); opacity: 0.8; font-family: var(--font-body); }
 
-
 /* ========================================= */
 /* Button Styles                             */
 /* ========================================= */
-/* ... Keep Button Styles, ensure fonts ... */
+/* ... Keep Button Styles, ensure fonts/vars ... */
 button, .button, .primary-button { font-family: var(--font-body); display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 14px; border-radius: var(--border-radius-md); font-size: 13px; font-weight: 600; cursor: pointer; border: 1px solid var(--color-border); text-align: center; vertical-align: middle; white-space: nowrap; transition: var(--transition-standard); }
 button svg, .button svg, .primary-button svg { width: 14px; height: 14px; }
 /* Standard Button */
@@ -314,11 +295,10 @@ button:disabled, .button:disabled, .primary-button:disabled { opacity: 0.5; curs
 .theme-icon { color: var(--color-text-secondary); }
 #theme-toggle-btn:hover .theme-icon { color: var(--color-primary); }
 
-
 /* ========================================= */
 /* Sidebar Specific Controls                 */
 /* ========================================= */
-/* ... Keep Sidebar Controls, ensure fonts ... */
+/* ... Keep Sidebar Controls, ensure fonts/vars ... */
 .side-panel > div:has(#dataset-select) { display: flex; flex-direction: column; gap: 10px; }
 .side-panel h2 { font-family: var(--font-heading); font-size: 11px; font-weight: 700; color: var(--color-text-secondary); margin: 12px 0 4px 0; text-transform: uppercase; letter-spacing: 0.07em; }
 #status-banner { font-family: var(--font-body); padding: 8px 10px; border-radius: var(--border-radius-sm); font-size: 12px; color: var(--color-text-secondary); background-color: var(--color-surface-variant); border: 1px solid transparent; text-align: center; margin-top: 8px; }
@@ -328,11 +308,10 @@ button:disabled, .button:disabled, .primary-button:disabled { opacity: 0.5; curs
 .filter-container, .filter-row, .filter-item { /* Keep structure */ }
 .filter-item label { font-family: var(--font-body); font-size: 13px; font-weight: 600; color: var(--color-text-secondary); }
 
-
 /* ========================================= */
 /* Table Styles                              */
 /* ========================================= */
-/* ... Keep Table Styles, ensure fonts ... */
+/* ... Keep Table Styles, ensure fonts/vars ... */
 .table-container { overflow: hidden; margin-top: 12px; flex-grow: 1; display: flex; flex-direction: column; }
 .table-wrapper { overflow: auto; flex-grow: 1; }
 table { width: 100%; border-collapse: collapse; font-family: var(--font-body); }
@@ -348,7 +327,6 @@ tr:hover td { background-color: var(--color-surface-variant); }
 #expiring-contracts-table-container td:nth-child(3), #contract-leaders-table-container td:nth-child(6) { white-space: normal; word-wrap: break-word; max-width: 200px; }
 @media (max-width: 768px) { /* Keep sticky logic */ }
 
-
 /* ========================================= */
 /* Chart & Visualization Containers          */
 /* ========================================= */
@@ -359,7 +337,7 @@ tr:hover td { background-color: var(--color-surface-variant); }
 /* ========================================= */
 /* Specific Component Styles                 */
 /* ========================================= */
-/* ... Keep styles, ensure fonts/colors ... */
+/* ... Keep styles, ensure fonts/vars ... */
 .arr-display-grid { justify-content: center; align-items: center; padding: 16px 0; text-align: center; }
 .arr-grid-value { font-family: var(--font-heading); font-size: 2.4rem; color: var(--color-primary); margin-bottom: 8px; font-weight: 700;}
 .arr-description { font-family: var(--font-body); font-size: 13px; color: var(--color-text-secondary); max-width: 90%; margin: 0 auto; }
@@ -368,17 +346,24 @@ tr:hover td { background-color: var(--color-surface-variant); }
 .notes-content ul { margin-left: 16px; margin-bottom: 10px; } .notes-content ul li { margin-bottom: 5px; }
 .notes-content strong { color: var(--color-text-primary); font-weight: 600; }
 
-
+/* --- Chart Element Styling --- */
+#sankeyChart path { stroke: var(--color-border); stroke-opacity: 0.4; transition: stroke-opacity 0.2s ease; fill: none; }
+#sankeyChart path:hover { stroke-opacity: 0.7; }
+#sankeyChart rect { stroke: var(--color-surface-container); stroke-width: 0.5px; }
+#sankeyChart text { font-family: var(--font-body); font-size: 10px; fill: var(--color-text-secondary); pointer-events: none; }
+#choroplethMap path { stroke: var(--color-background); stroke-width: 0.5px; fill: var(--color-surface-variant); transition: fill 0.2s ease, stroke 0.2s ease, stroke-width 0.2s ease; }
+#choroplethMap path:hover { stroke: var(--color-primary); stroke-width: 1.5px; }
+#choroplethMap text, #choroplethMap .legend-text { font-family: var(--font-body); font-size: 10px; fill: var(--color-text-secondary); text-anchor: middle; }
+#choroplethMap .legend-rect { stroke: var(--color-border); stroke-width: 0.5px; }
 
 /* ========================================= */
 /* Tooltip Styles                            */
 /* ========================================= */
 /* ... Keep styles, ensure vars/fonts ... */
-.tooltip, .sankey-tooltip, .map-tooltip, #tav-tcv-tooltip { font-family: var(--font-body); /* ... rest of tooltip base ... */ }
-.tooltip strong, .sankey-tooltip strong, .map-tooltip strong, #tav-tcv-tooltip strong { font-family: var(--font-heading); /* ... rest of strong ... */ }
+.tooltip, .sankey-tooltip, .map-tooltip, #tav-tcv-tooltip { font-family: var(--font-body); /* ... rest ... */ }
+.tooltip strong, .sankey-tooltip strong, .map-tooltip strong, #tav-tcv-tooltip strong { font-family: var(--font-heading); /* ... rest ... */ }
 /* ... Keep visible states ... */
 .tooltip-visible { /* Keep */ }
-
 
 /* ========================================= */
 /* Loading, Error, No Data States            */
@@ -388,13 +373,11 @@ tr:hover td { background-color: var(--color-surface-variant); }
 .spinner { /* Keep */ } @keyframes spin { /* Keep */ } @keyframes pulse { /* Keep */ }
 .is-loading .loading-placeholder, .has-error .error-placeholder, .no-data .no-data-placeholder { display: flex; }
 
-
 /* ========================================= */
 /* Utility Classes                           */
 /* ========================================= */
 .detail-link { font-family: var(--font-body); color: var(--color-primary); text-decoration: none; font-weight: 600; }
 .detail-link:hover { color: var(--color-secondary); text-decoration: underline; }
-
 
 /* ========================================= */
 /* Responsive Adjustments (CORRECTED GRID)   */
@@ -403,7 +386,7 @@ tr:hover td { background-color: var(--color-surface-variant); }
 @media (max-width: 992px) { /* Tablet */
      .side-panel { width: 200px; }
      .bento-grid {
-         /* Revert to original responsive layout */
+         /* Use original responsive layout */
          grid-template-columns: repeat(2, 1fr);
          grid-template-areas:
             "arr sankey" /* Original Order */
@@ -412,12 +395,13 @@ tr:hover td { background-color: var(--color-surface-variant); }
             "expiring expiring";
          grid-auto-rows: minmax(300px, auto);
      }
-     /* Reset spans for 2-col - Ensure correct assignments */
-     #bento-arr, #bento-map, #bento-tavtcv { grid-column: span 1 !important; grid-area: auto !important; } /* Reset area too */
-     #bento-sankey, #bento-leaders, #bento-expiring { grid-column: span 2 !important; grid-area: auto !important; } /* Reset area too */
-     /* Re-apply area assignments for this breakpoint */
-     #bento-arr { grid-area: arr; } #bento-sankey { grid-area: sankey; } #bento-map { grid-area: map; }
-     #bento-tavtcv { grid-area: tavtcv; } #bento-leaders { grid-area: leaders; } #bento-expiring { grid-area: expiring; }
+     /* Ensure correct area assignments */
+     .bento-box { grid-column: auto; grid-area: auto; } /* Reset first */
+     #bento-arr { grid-area: arr; } #bento-sankey { grid-area: sankey; }
+     #bento-map { grid-area: map; } #bento-tavtcv { grid-area: tavtcv; }
+     #bento-leaders { grid-area: leaders; } #bento-expiring { grid-area: expiring; }
+     /* Apply specific spans needed */
+      #bento-sankey, #bento-leaders, #bento-expiring { grid-column: span 2; }
 
      .arr-grid-value { font-size: 2rem; }
      .card-header h2 { font-size: 14px; }
@@ -426,25 +410,21 @@ tr:hover td { background-color: var(--color-surface-variant); }
 }
 
 @media (max-width: 768px) { /* Mobile Landscape / Small Tablet */
+    /* Keep layout changes */
     .dashboard-layout { flex-direction: column; height: auto; overflow: auto; }
     .side-panel { width: 100%; height: auto; border-right: none; border-bottom: 1px solid var(--color-border); overflow-y: visible; }
-    .main-content { height: auto; overflow-y: visible; padding: 12px; }
+    .main-content { height: auto; overflow-y: visible; padding: 12px; background-color: transparent; } /* Ensure transparent */
     body { overflow: auto; padding: 0; font-size: 13px; }
 
     .bento-grid {
         grid-template-columns: 1fr; /* Single column */
-        grid-template-areas: /* Correct order */
-            "arr"
-            "map"
-            "sankey"
-            "tavtcv"
-            "leaders"
-            "expiring";
+        grid-template-areas: /* Vertical Stack Order */
+            "arr" "map" "sankey" "tavtcv" "leaders" "expiring";
          grid-auto-rows: auto; gap: 12px;
     }
-    /* Reset all spans and areas */
+    /* Reset all spans and areas explicitly */
     .bento-box { grid-column: span 1 !important; grid-area: auto !important; }
-    /* Re-apply areas for this breakpoint */
+    /* Re-apply areas for single column */
     #bento-arr { grid-area: arr; } #bento-map { grid-area: map; } #bento-sankey { grid-area: sankey; }
     #bento-tavtcv { grid-area: tavtcv; } #bento-leaders { grid-area: leaders; } #bento-expiring { grid-area: expiring; }
 
@@ -453,7 +433,7 @@ tr:hover td { background-color: var(--color-surface-variant); }
     .title-area h1 { font-size: 20px; } .title-area p { font-size: 12px; }
     /* Keep sticky table styles */
     .chart-container { min-height: 250px; }
-    #sankey-chart-container, #map-container { height: 300px; }
+    #sankey-chart-container { height: 350px; } #map-container { height: 300px; }
     #expiring-contracts-table-container .table-wrapper { max-height: 200px; }
 }
 
@@ -471,7 +451,7 @@ tr:hover td { background-color: var(--color-surface-variant); }
     .sidebar-info { font-size: 11px; }
     .sidebar-footer { font-size: 10px; }
     .chart-container { min-height: 220px; }
-    #sankey-chart-container, #map-container { height: 250px; }
+    #sankey-chart-container { height: 300px; } #map-container { height: 250px; }
 }
 
 
