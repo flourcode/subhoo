@@ -4027,7 +4027,7 @@ function displayForceDirectedRadial(model) {
                 return getCssVar('--chart-color-tertiary');
             })
             .attr("stroke-width", d => Math.max(0.5, Math.min(2, Math.sqrt(d.value) / 12000)))
-            .attr("stroke-opacity", 0.9)
+            .attr("stroke-opacity", 1)
             .attr("stroke-dasharray", d => d.isDashed ? "3,3" : null); // Add dashed lines for prime-sub links
             
         // Create node groups
@@ -4094,7 +4094,7 @@ function displayForceDirectedRadial(model) {
                 
             // Highlight connected links
             link.attr("stroke-opacity", l => 
-                (l.source.id === d.id || l.target.id === d.id) ? 1 : 0.2);
+                (l.source.id === d.id || l.target.id === d.id) ? 1 : 0.8);
                 
             // Highlight related nodes too
             if (d.type === 'prime') {
@@ -4127,7 +4127,7 @@ function displayForceDirectedRadial(model) {
                 .attr("font-weight", "normal");
                 
             // Reset link opacity
-            link.attr("stroke-opacity", 0.9);
+            link.attr("stroke-opacity", 1);
         });
             
         // Add tooltips with value information
