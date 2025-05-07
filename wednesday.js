@@ -3964,7 +3964,6 @@ window.addEventListener('resize', function() {
        }
    }, 250); // Debounce for 250ms
 });
-// Main visualization function
 function displayForceDirectedRadial(model) {
     const containerId = 'circular-dendrogram-container';
     const container = document.getElementById(containerId);
@@ -4092,36 +4091,56 @@ function displayForceDirectedRadial(model) {
             });
         }
         
+        // Define boundary constraint function to keep nodes inside visible area
+        function constrainToBoundary() {
+            const radius = Math.min(width, height) / 2 - 40;
+            
+            nodes.forEach(d => {
+                if (d.type === 'root') return;
+                
+                // Calculate distance from center
+                const distanceFromCenter = Math.sqrt(d.x * d.x + d.y * d.y);
+                
+                // If node is outside boundary, scale it back
+                if (distanceFromCenter > radius) {
+                    const scale = radius / distanceFromCenter;
+                    d.x = d.x * scale;
+                    d.y = d.y * scale;
+                }
+                
+                // Fix NaN values
+                if (isNaN(d.x)) d.x = 0;
+                if (isNaN(d.y)) d.y = 0;
+            });
+        }
+        
         // Set up custom forces for better clustering
         const simulation = d3.forceSimulation()
             // Standard link force - looser connections for better flexibility
-.force("link", d3.forceLink().id(d => d.id)
-    .distance(d => {
-        // ... other distances ...
-        if (d.source.type === 'prime' && d.target.type === 'sub') return 45; // SLIGHTLY INCREASED LINK DISTANCE
-        return 60;
-    })
-    .strength(d => {
-        if (d.source.type === 'prime' && d.target.type === 'sub') return 0.6; // SLIGHTLY STRONGER LINK
-        return 0.2;
-    }))
-.force("charge", d3.forceManyBody()
-    .strength(d => {
-        return d.type === 'agency' ? -300 :
-               d.type === 'subagency' ? -250 :
-               d.type === 'prime' ? -100 :
-               /* d.type === 'sub' ? */ -35; // SLIGHTLY MORE REPULSION FOR SUBS
-    }))
-.force("collide", d3.forceCollide(d => {
-    if (d.type === 'root') return 0;
-    const nodeRadius = calculateNodeSize(d.type, d.value);
-    // CRITICAL ADJUSTMENT FOR SUB TEXT PADDING:
-    const textPadding = d.type === 'sub' ?
-                        Math.min((d.name || "").length * 2.2, 30) : // Added padding for subs, adjust 2.2 and 30
-                        (d.type !== 'root' ? Math.min((d.name || "").length * 2.5, 50) : 0);
-    return nodeRadius + textPadding;
-}).strength(0.75)) // Slightly increased collision strength
-// Radial positioning by type
+            .force("link", d3.forceLink().id(d => d.id)
+                .distance(d => {
+                    if (d.source.type === 'prime' && d.target.type === 'sub') return 45;
+                    return 60;
+                })
+                .strength(d => {
+                    if (d.source.type === 'prime' && d.target.type === 'sub') return 0.6;
+                    return 0.2;
+                }))
+            .force("charge", d3.forceManyBody()
+                .strength(d => {
+                    return d.type === 'agency' ? -300 :
+                           d.type === 'subagency' ? -250 :
+                           d.type === 'prime' ? -100 : -35;
+                }))
+            .force("collide", d3.forceCollide(d => {
+                if (d.type === 'root') return 0;
+                const nodeRadius = calculateNodeSize(d.type, d.value);
+                const textPadding = d.type === 'sub' ?
+                                    Math.min((d.name || "").length * 2.2, 30) :
+                                    (d.type !== 'root' ? Math.min((d.name || "").length * 2.5, 50) : 0);
+                return nodeRadius + textPadding;
+            }).strength(0.75))
+            // Radial positioning by type
             .force("radial", d3.forceRadial(d => {
                 if (d.type === 'agency') return 80;
                 if (d.type === 'subagency') return 140;
@@ -4148,7 +4167,7 @@ function displayForceDirectedRadial(model) {
             })
             .attr("stroke-width", d => Math.max(0.5, Math.min(2, Math.sqrt(d.value) / 12000)))
             .attr("stroke-opacity", 1)
-            .attr("stroke-dasharray", d => d.isDashed ? "3,3" : null); // Add dashed lines for prime-sub links
+            .attr("stroke-dasharray", d => d.isDashed ? "3,3" : null);
             
         // Create node groups
         const node = g.append("g")
@@ -4305,42 +4324,29 @@ function displayForceDirectedRadial(model) {
                 .text(`Filtered by: ${subAgencyFilter}`);
         }
             
-        // Add simple zoom behavior
+        // Add simple zoom behavior with constraints
         const zoom = d3.zoom()
-            .scaleExtent([0.5, 2])
+            .scaleExtent([0.5, 2]) // Limit zoom range
+            .translateExtent([[-width, -height], [width*2, height*2]]) // Limit pan range
             .on("zoom", (event) => {
                 g.attr("transform", event.transform);
             });
 
         svg.call(zoom);
             
-        // Set up simulation tick
+        // Set up simulation tick with constraint
         simulation
             .nodes(nodes)
-            .on("tick", ticked);
+            .on("tick", ticked)
+            .on("end", constrainToBoundary);
             
         simulation.force("link")
             .links(links);
             
         // Functions for simulation
         function ticked() {
-            // Boundary enforcement
-            const radius = Math.min(width, height) / 2 - 40;
-            nodes.forEach(d => {
-                if (d.type === 'root') return;
-                
-                // Constrain to visible area
-                const distanceFromCenter = Math.sqrt(d.x * d.x + d.y * d.y);
-                if (distanceFromCenter > radius) {
-                    const scale = radius / distanceFromCenter;
-                    d.x = d.x * scale;
-                    d.y = d.y * scale;
-                }
-                
-                // Fix NaN values
-                if (isNaN(d.x)) d.x = 0;
-                if (isNaN(d.y)) d.y = 0;
-            });
+            // Apply boundary constraints on every tick
+            constrainToBoundary();
             
             // Update link positions
             link
@@ -4361,7 +4367,7 @@ function displayForceDirectedRadial(model) {
                 .attr("text-anchor", d => d.x < 0 ? "end" : "start");
         }
         
-        // Simple drag functions
+        // Modified drag functions to maintain boundary constraints
         function dragstarted(event, d) {
             if (!event.active) simulation.alphaTarget(0.1).restart();
             d.fx = d.x;
@@ -4369,7 +4375,7 @@ function displayForceDirectedRadial(model) {
         }
         
         function dragged(event, d) {
-            // Constrain dragging to visible area
+            // Constrain to visible area during drag
             const radius = Math.min(width, height) / 2 - 40;
             const distanceFromCenter = Math.sqrt(event.x * event.x + event.y * event.y);
             
@@ -4385,8 +4391,8 @@ function displayForceDirectedRadial(model) {
         
         function dragended(event, d) {
             if (!event.active) simulation.alphaTarget(0);
-            d.fx = null;
-            d.fy = null;
+            // Keep the node fixed at its final position rather than releasing it
+            // This helps prevent the diagram from floating away
         }
         
     } catch (error) {
@@ -4394,7 +4400,6 @@ function displayForceDirectedRadial(model) {
         displayError(containerId, `Failed to render visualization: ${error.message}`);
     }
 }
-
 // Custom force function for clustering subcontractors with their parent primes
 function isolatedNodesClusterForce(nodes, primeToSubsMap) {
     let strength = 0.65; // INCREASED CLUSTERING STRENGTH
