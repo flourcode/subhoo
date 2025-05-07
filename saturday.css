@@ -234,33 +234,22 @@ a:hover {
 /* Bento Grid Layout (Reverted to Original 3-Row) */
 /* ========================================= */
 .bento-grid {
-    display: grid; gap: var(--bento-gap); grid-template-columns: repeat(4, 1fr); /* Adjusted to 4 for new inspo */
-    /* Example layout inspired by screenshots (adjust areas based on actual content) */
+    display: grid;
+    gap: var(--bento-gap);
+    grid-template-columns: repeat(5, 1fr);
+    /* Add dendrogram to layout */
     grid-template-areas:
-        "hero hero kpi1 kpi2"
-        "hero hero kpi3 kpi4"
-        "list list table table";
-    grid-auto-rows: minmax(180px, auto); /* More flexible row height */
+        "sankey sankey sankey map arr"
+        "tavtcv tavtcv dendrogram dendrogram leaders"
+        "expiring expiring expiring expiring expiring";
+    grid-template-rows: minmax(400px, auto) auto auto;
 }
-/* You will need to assign these areas to your #bento- divs */
-/* e.g. #bento-sankey { grid-area: hero; } */
-/* #bento-arr { grid-area: kpi1; } etc. */
-/* For now, using original assignments with a fallback to 3 columns */
+
+/* Add area assignment for dendrogram */
+#bento-dendrogram { grid-area: dendrogram; }
 #bento-arr { grid-area: arr; } #bento-sankey { grid-area: sankey; } #bento-map { grid-area: map; }
 #bento-tavtcv { grid-area: tavtcv; } #bento-leaders { grid-area: leaders; } #bento-expiring { grid-area: expiring; }
 
-/* Fallback/Original if not using new areas, otherwise remove this */
-@media (min-width: 0px) { /* Default to ensure these apply if not overridden by new areas */
-    .bento-grid {
-        grid-template-columns: repeat(5, 1fr);
-        grid-template-areas:
-            "sankey sankey sankey sankey map"
-            "tavtcv tavtcv leaders leaders leaders"
-            "expiring expiring expiring arr arr";
-        grid-template-rows: minmax(350px, auto) auto auto; /* Adjusted min */
-    }
-}
-.col-span-2 { grid-column: span 2; } .col-span-4 { grid-column: span 4; } .col-span-5 { grid-column: span 5; }
 
 /* ========================================= */
 /* Card Styles (`.bento-box`)                */

@@ -1357,7 +1357,6 @@ function applyFiltersAndUpdateVisuals() {
         updateVisualsFromRawData(subAgencyFilter, naicsFilter, searchTerm);
     }
 }
-
 function updateVisualsFromUnifiedModel(subAgencyFilter, naicsFilter, searchTerm) {
     // Apply filters to get filtered data
     const filteredModel = filterUnifiedModel(subAgencyFilter, naicsFilter, searchTerm);
@@ -1385,10 +1384,12 @@ function updateVisualsFromUnifiedModel(subAgencyFilter, naicsFilter, searchTerm)
     const mapData = processMapDataFromModel(filteredModel);
     displayChoroplethMap(mapData);
     
+    // New: Circular Dendrogram
+    displayCircularDendrogram(filteredModel);
+    
     // Calculate ARR
     calculateAverageARRFromModel(filteredModel);
 }
-
 function filterUnifiedModel(subAgencyFilter, naicsFilter, searchTerm) {
     // Create a deep copy of the model structure but with empty collections
     const filtered = {
@@ -3844,7 +3845,277 @@ window.addEventListener('resize', function() {
        }
    }, 250); // Debounce for 250ms
 });
+function displayCircularDendrogram(model) {
+    const containerId = 'circular-dendrogram-container';
+    const container = document.getElementById(containerId);
+    
+    if (!container) {
+        console.error("Circular dendrogram container not found.");
+        return;
+    }
 
+    // Clear any previous content
+    container.innerHTML = '';
+    
+    setLoading(containerId, false);
+    
+    // Check if we have valid model data
+    if (!model || !Object.keys(model.agencies).length) {
+        displayNoData(containerId, 'No data available for hierarchical visualization.');
+        return;
+    }
+    
+    try {
+        // Create SVG container
+        const width = container.clientWidth;
+        const height = Math.max(500, container.clientHeight);
+        const margin = 40;
+        const radius = Math.min(width, height) / 2 - margin;
+        
+        const svg = d3.select(container)
+            .append("svg")
+            .attr("width", width)
+            .attr("height", height)
+            .append("g")
+            .attr("transform", `translate(${width / 2}, ${height / 2})`);
+            
+        // Create hierarchical data
+        const hierarchyData = createHierarchyData(model);
+        
+        // Create cluster layout
+        const cluster = d3.cluster()
+            .size([360, radius]);
+            
+        // Create hierarchy and prepare layout
+        const root = d3.hierarchy(hierarchyData)
+            .sort((a, b) => (b.data.value || 0) - (a.data.value || 0));
+        
+        // Apply layout
+        cluster(root);
+        
+        // Function to project nodes in a circular manner
+        function project(x, y) {
+            const angle = (x - 90) / 180 * Math.PI;
+            return [y * Math.cos(angle), y * Math.sin(angle)];
+        }
+        
+        // Draw links between nodes
+        svg.selectAll(".link")
+            .data(root.links())
+            .enter()
+            .append("path")
+            .attr("class", "link")
+            .attr("d", d => {
+                const source = project(d.source.x, d.source.y);
+                const target = project(d.target.x, d.target.y);
+                return `M${source[0]},${source[1]}L${target[0]},${target[1]}`;
+            })
+            .attr("fill", "none")
+            .attr("stroke", d => {
+                // Determine node type based on depth
+                if (d.source.depth === 0) return getCssVar('--chart-color-primary');
+                if (d.source.depth === 1) return getCssVar('--chart-color-secondary');
+                return getCssVar('--chart-color-tertiary');
+            })
+            .attr("stroke-width", d => {
+                const value = d.target.data.value || 0;
+                return Math.max(0.5, Math.min(3, Math.log10(value) / 8));
+            })
+            .attr("stroke-opacity", 0.4);
+            
+        // Draw nodes
+        const nodes = svg.selectAll(".node")
+            .data(root.descendants())
+            .enter()
+            .append("g")
+            .attr("class", "node")
+            .attr("transform", d => {
+                const [x, y] = project(d.x, d.y);
+                return `translate(${x},${y})`;
+            });
+            
+        // Node circles
+        nodes.append("circle")
+            .attr("r", d => {
+                if (d.depth === 0) return 5; // Root
+                const value = d.data.value || 0;
+                return Math.max(2, Math.min(8, Math.log10(value) / 2));
+            })
+            .attr("fill", d => {
+                if (d.depth === 0) return getCssVar('--color-surface');
+                if (d.depth === 1) return getCssVar('--chart-color-primary');
+                if (d.depth === 2) return getCssVar('--chart-color-secondary');
+                return getCssVar('--chart-color-tertiary');
+            })
+            .attr("stroke", getCssVar('--color-surface'))
+            .attr("stroke-width", 1);
+            
+        // Labels
+        nodes.append("text")
+            .attr("dy", ".31em")
+            .attr("text-anchor", d => d.x < 180 ? "start" : "end")
+            .attr("transform", d => d.x < 180 ? "translate(8)" : "rotate(180)translate(-8)")
+            .attr("font-size", d => {
+                if (d.depth === 0) return "14px";
+                if (d.depth === 1) return "12px";
+                return "10px";
+            })
+            .attr("fill", getCssVar('--color-text-primary'))
+            .text(d => {
+                if (d.depth === 0) return ""; // Hide root label
+                if (d.depth === 1 && d.data.name.length > 25) {
+                    return d.data.name.substring(0, 22) + "...";
+                }
+                if (d.depth > 1 && d.data.name.length > 20) {
+                    return d.data.name.substring(0, 17) + "...";
+                }
+                return d.data.name;
+            })
+            .attr("opacity", d => {
+                // Hide labels for nodes that are too small or overcrowded
+                if (d.depth > 2 && d.parent.children.length > 10) return 0.5;
+                return 1;
+            });
+            
+        // Add tooltips
+        nodes.append("title")
+            .text(d => d.data.name + (d.data.value ? `: ${formatCurrency(d.data.value)}` : ""));
+        
+        // Add legend
+        const legendData = [
+            { label: "Agency", color: getCssVar('--chart-color-primary') },
+            { label: "Prime Contractor", color: getCssVar('--chart-color-secondary') },
+            { label: "Subcontractor", color: getCssVar('--chart-color-tertiary') }
+        ];
+        
+        const legend = svg.append("g")
+            .attr("transform", `translate(${-width/2 + 20}, ${-height/2 + 30})`);
+            
+        legendData.forEach((item, i) => {
+            const g = legend.append("g")
+                .attr("transform", `translate(0, ${i * 20})`);
+                
+            g.append("rect")
+                .attr("width", 14)
+                .attr("height", 14)
+                .attr("fill", item.color);
+                
+            g.append("text")
+                .attr("x", 20)
+                .attr("y", 12)
+                .attr("font-size", "12px")
+                .attr("fill", getCssVar('--color-text-secondary'))
+                .text(item.label);
+        });
+        
+    } catch (error) {
+        console.error("Error creating circular dendrogram:", error);
+        displayError(containerId, `Failed to render circular dendrogram: ${error.message}`);
+    }
+}
+
+// Helper function to create hierarchical data from unified model
+function createHierarchyData(model) {
+    // Create root node
+    const root = {
+        name: "All Contracts",
+        children: []
+    };
+    
+    // Add top agencies (by value)
+    const agencies = Object.values(model.agencies)
+        .sort((a, b) => b.value - a.value)
+        .slice(0, 6); // Limit to top 6 agencies
+        
+    agencies.forEach(agency => {
+        const agencyNode = {
+            name: agency.name,
+            value: agency.value,
+            children: []
+        };
+        
+        // Find top primes for this agency
+        const primesForAgency = {};
+        
+        // Get agency to prime relationships
+        model.relationships.agencyToPrime.forEach(rel => {
+            if (rel.source === agency.id) {
+                const primeId = rel.target;
+                if (!primesForAgency[primeId]) {
+                    primesForAgency[primeId] = 0;
+                }
+                primesForAgency[primeId] += rel.value;
+            }
+        });
+        
+        // Sort primes by value and take top 8
+        const topPrimes = Object.entries(primesForAgency)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 8)
+            .map(([primeId, value]) => ({
+                id: primeId,
+                value: value
+            }));
+            
+        // Add prime contractor nodes
+        topPrimes.forEach(prime => {
+            const primeData = model.primes[prime.id];
+            if (!primeData) return;
+            
+            const primeNode = {
+                name: primeData.name,
+                value: prime.value,
+                children: []
+            };
+            
+            // Find subs for this prime
+            const subsForPrime = {};
+            
+            // Get prime to sub relationships
+            model.relationships.primeToSub.forEach(rel => {
+                if (rel.source === prime.id) {
+                    const subId = rel.target;
+                    if (!subsForPrime[subId]) {
+                        subsForPrime[subId] = 0;
+                    }
+                    subsForPrime[subId] += rel.value;
+                }
+            });
+            
+            // Sort subs by value and take top 5
+            const topSubs = Object.entries(subsForPrime)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 5)
+                .map(([subId, value]) => ({
+                    id: subId,
+                    value: value
+                }));
+                
+            // Add sub nodes
+            topSubs.forEach(sub => {
+                const subData = model.subs[sub.id];
+                if (!subData) return;
+                
+                primeNode.children.push({
+                    name: subData.name,
+                    value: sub.value
+                });
+            });
+            
+            // Only add prime if it has subs or significant value
+            if (primeNode.children.length > 0 || prime.value > 1000000) {
+                agencyNode.children.push(primeNode);
+            }
+        });
+        
+        // Only add agency if it has prime contractors
+        if (agencyNode.children.length > 0) {
+            root.children.push(agencyNode);
+        }
+    });
+    
+    return root;
+}
 // Add Sankey visualization options to the existing filters section
 function initializeSankeyFilters() {
   // Find the existing filter container - this is where your current filters are located
