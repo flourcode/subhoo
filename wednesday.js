@@ -6503,7 +6503,7 @@ function displayShareOfWalletChart(model, containerId = 'share-of-wallet-contain
         .style('font-size', '11px')
         .style('fill', getCssVar('--color-text-secondary'))
         .text(d => {
-            const label = truncateText(d.name, 15);
+            const label = truncateText(d.name, 35);
             return `${label} (${d.percentage.toFixed(1)}%)`;
         });
     
