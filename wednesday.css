@@ -235,21 +235,19 @@ a:hover { color: var(--color-secondary); text-decoration: none; }
 .bento-grid {
     display: grid;
     gap: var(--bento-gap);
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     /* Updated layout with Share of Wallet */
     grid-template-areas:
-        "sankey sankey sankey naics-donut naics-donut"
-		"dendrogram dendrogram dendrogram tavtcv tavtcv "
-	    "share-wallet share-wallet map map arr"
-		"leaders leaders leaders leaders leaders"
-        "expiring expiring expiring expiring expiring";
+        "sankey sankey sankey naics-donut"
+		"dendrogram dendrogram tavtcv tavtcv "
+	    "share-wallet share-wallet map arr"
+		"leaders leaders leaders leaders"
+        "expiring expiring expiring expiring";
     grid-template-rows: minmax(500px, auto) auto auto auto;
 }
 
 /* Add area assignment for Share of Wallet */
 #bento-share-of-wallet { grid-area: share-wallet; }
-
-/* Existing area assignments */
 #bento-dendrogram { grid-area: dendrogram; }
 #bento-naics-distribution { grid-area: naics-donut; }
 #bento-arr { grid-area: arr; } 
