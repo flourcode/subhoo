@@ -1356,10 +1356,28 @@ function applyFiltersAndUpdateVisuals() {
     // Check if we're using unified model or direct raw data
     if (unifiedModel) {
         updateVisualsFromUnifiedModel(subAgencyFilter, naicsFilter, searchTerm);
+		displayShareOfWalletChart(unifiedModel);
+        displayContractValueTiers(unifiedModel);
     } else {
         // Fall back to using direct raw data for backward compatibility
         updateVisualsFromRawData(subAgencyFilter, naicsFilter, searchTerm);
     }
+}
+function initializeEnhancedFeatures() {
+    console.log("Initializing enhanced UI features...");
+    
+    // Initialize preset views to replace complex filtering
+    initializePresetViews();
+    
+    // Add export buttons to existing tables (these will be added when the tables are rendered)
+    
+    // Allow clicks on items to show profiles
+    // This is handled in the displayContractLeadersTable function we've already updated
+    
+    // Create initial bento boxes for new visualizations if needed
+    // (These will be created on-demand when the charts are rendered)
+    
+    console.log("Enhanced UI features initialized");
 }
 function updateVisualsFromUnifiedModel(subAgencyFilter, naicsFilter, searchTerm) {
     // Apply filters to get filtered data
@@ -3648,6 +3666,8 @@ function updateDashboardTitle(datasets) {
         dashboardSubtitle.textContent = `Analyzing ${datasets.type} data from USAspending.gov`;
     }
 }
+// Modify displayContractLeadersTable to include an export button
+// This is a full replacement, not just the addition
 function displayContractLeadersTable(leaderData) {
     const containerId = 'contract-leaders-table-container';
     const container = document.getElementById(containerId);
@@ -3664,6 +3684,52 @@ function displayContractLeadersTable(leaderData) {
         displayNoData(containerId, 'No contract leader data found.');
         return;
     }
+    
+    // Create header section with export button
+    const headerSection = document.createElement('div');
+    headerSection.style.display = 'flex';
+    headerSection.style.justifyContent = 'flex-end';
+    headerSection.style.marginBottom = '8px';
+    
+    // Create the export button
+    const exportButton = document.createElement('button');
+    exportButton.className = 'button';
+    exportButton.innerHTML = `
+        <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+        </svg>
+        Export CSV
+    `;
+    exportButton.style.display = 'flex';
+    exportButton.style.alignItems = 'center';
+    exportButton.style.gap = '6px';
+    
+    // Add click event to export button
+    exportButton.addEventListener('click', () => {
+        // Prepare data for export
+        const exportData = leaderData.map(leader => ({
+            contractor_name: leader.siName,
+            total_value: leader.totalValue,
+            num_awards: leader.numAwards,
+            avg_value: leader.avgValue,
+            avg_duration_days: leader.avgDurationDays,
+            dominant_naics_code: leader.dominantNaics ? leader.dominantNaics.code : '',
+            dominant_naics_desc: leader.dominantNaics ? leader.dominantNaics.desc : '',
+        }));
+        
+        // Get current date for filename
+        const today = new Date();
+        const dateStr = today.toISOString().split('T')[0]; // YYYY-MM-DD format
+        
+        // Export the data
+        exportToCSV(exportData, `top-contractors-${dateStr}.csv`);
+    });
+    
+    // Add export button to header section
+    headerSection.appendChild(exportButton);
+    container.appendChild(headerSection);
     
     // Create a table wrapper div
     const tableWrapper = document.createElement('div');
@@ -3703,12 +3769,27 @@ function displayContractLeadersTable(leaderData) {
     displayData.forEach(leader => {
         const row = tbody.insertRow();
         
-        // Recipient Name
+        // Recipient Name (now clickable)
         let cell = row.insertCell();
         cell.className = 'font-medium';
         cell.style.color = getCssVar('--color-text-primary');
-        cell.textContent = truncateText(leader.siName, 35);
-        cell.title = leader.siName;
+        
+        // Create clickable name for contractor profile
+        const nameLink = document.createElement('a');
+        nameLink.href = '#';
+        nameLink.style.color = getCssVar('--color-primary');
+        nameLink.style.textDecoration = 'none';
+        nameLink.style.fontWeight = '600';
+        nameLink.textContent = truncateText(leader.siName, 35);
+        nameLink.title = `View profile for ${leader.siName}`;
+        
+        // Add click event to show contractor profile
+        nameLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            showContractorProfile(leader.siName);
+        });
+        
+        cell.appendChild(nameLink);
         
         // Total Value
         cell = row.insertCell();
@@ -3801,7 +3882,8 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Setup all event listeners
     setupEventListeners();
-    
+    // Initialize our new enhanced features
+    initializeEnhancedFeatures();
     // Auto-load a dataset (SOCOM combined if possible)
     const socomPrimes = DATASETS.find(d => d.id === 'socom_primes');
     const socomSubs = DATASETS.find(d => d.id === 'socom');
@@ -5460,4 +5542,1580 @@ function getThemeOrdinalChartColors(count = 6) {
         colors.push(baseColors[i % baseColors.length]);
     }
     return d3.scaleOrdinal(colors);
+}
+// Implement preset views instead of complex filtering
+function initializePresetViews() {
+  // Find the existing filter container
+  const filtersContainer = document.querySelector('.side-panel > div:has(#dataset-select)');
+  
+  if (!filtersContainer) {
+    console.error("Filter container not found, cannot add preset views");
+    return;
+  }
+  
+  // Create preset views dropdown
+  const presetViewsDropdown = document.createElement('select');
+  presetViewsDropdown.id = 'preset-view-selector';
+  presetViewsDropdown.className = 'input-select';
+  presetViewsDropdown.style.width = '100%';
+  
+  // Add preset options
+  presetViewsDropdown.innerHTML = `
+    <option value="" disabled selected>Select a View</option>
+    <option value="all">All Data (No Filter)</option>
+    <option value="top-contractors">Top 10 Contractors</option>
+    <option value="expiring-soon">Contracts Expiring Soon</option>
+    <option value="high-value">High-Value Contracts (>$1M)</option>
+    <option value="small-business">Small Business Set-Asides</option>
+    <option value="advanced">Advanced Filtering</option>
+  `;
+  
+  // Create a heading for preset views
+  const presetHeading = document.createElement('h2');
+  presetHeading.style.fontSize = '14px';
+  presetHeading.style.margin = '12px 0 4px 0';
+  presetHeading.textContent = 'Quick Views';
+  
+  // Add a container for showing current filter status
+  const currentViewStatus = document.createElement('div');
+  currentViewStatus.id = 'current-view-status';
+  currentViewStatus.style.fontSize = '12px';
+  currentViewStatus.style.color = 'var(--color-text-secondary)';
+  currentViewStatus.style.marginTop = '4px';
+  currentViewStatus.textContent = 'No filters applied';
+  
+  // Find the existing search input and filters
+  const searchInput = document.getElementById('search-input');
+  const subAgencyFilter = document.getElementById('sub-agency-filter');
+  const naicsFilter = document.getElementById('naics-filter');
+  const filtersHeading = document.querySelector('h2:contains("Search & Filters")');
+  
+  // Create a container for the advanced filters
+  const advancedFiltersContainer = document.createElement('div');
+  advancedFiltersContainer.id = 'advanced-filters-container';
+  advancedFiltersContainer.style.display = 'none'; // Hidden by default
+  
+  // Move the existing filters to the advanced container
+  if (searchInput && searchInput.parentNode) {
+    if (filtersHeading) advancedFiltersContainer.appendChild(filtersHeading.cloneNode(true));
+    advancedFiltersContainer.appendChild(searchInput.cloneNode(true));
+    if (subAgencyFilter) advancedFiltersContainer.appendChild(subAgencyFilter.cloneNode(true));
+    if (naicsFilter) advancedFiltersContainer.appendChild(naicsFilter.cloneNode(true));
+    
+    // Remove the original elements (if this approach doesn't work, use the commented code to hide them instead)
+    if (filtersHeading) filtersHeading.remove();
+    searchInput.remove();
+    if (subAgencyFilter) subAgencyFilter.remove();
+    if (naicsFilter) naicsFilter.remove();
+    
+    // Alternative: Hide instead of remove
+    // if (filtersHeading) filtersHeading.style.display = 'none';
+    // searchInput.style.display = 'none';
+    // if (subAgencyFilter) subAgencyFilter.style.display = 'none';
+    // if (naicsFilter) naicsFilter.style.display = 'none';
+  }
+  
+  // Add the preset view dropdown and advanced filters
+  const statusBanner = document.getElementById('status-banner');
+  if (statusBanner && statusBanner.parentNode) {
+    statusBanner.parentNode.insertBefore(presetHeading, statusBanner);
+    statusBanner.parentNode.insertBefore(presetViewsDropdown, statusBanner);
+    statusBanner.parentNode.insertBefore(currentViewStatus, statusBanner);
+    statusBanner.parentNode.insertBefore(advancedFiltersContainer, statusBanner);
+  }
+  
+  // Add event listener to handle preset view selection
+  presetViewsDropdown.addEventListener('change', function() {
+    const selectedView = this.value;
+    
+    // Handle showing/hiding advanced filters
+    if (selectedView === 'advanced') {
+      advancedFiltersContainer.style.display = 'block';
+      currentViewStatus.textContent = 'Using advanced filtering';
+      return;
+    } else {
+      advancedFiltersContainer.style.display = 'none';
+    }
+    
+    // Reset current filters
+    document.getElementById('search-input').value = '';
+    document.getElementById('sub-agency-filter').value = '';
+    document.getElementById('naics-filter').value = '';
+    
+    // Apply preset filter based on selection
+    applyPresetView(selectedView);
+  });
+}
+
+// Function to apply preset view filters
+function applyPresetView(viewType) {
+  const currentViewStatus = document.getElementById('current-view-status');
+  
+  switch(viewType) {
+    case 'all':
+      currentViewStatus.textContent = 'Viewing all data (no filters)';
+      break;
+    
+    case 'top-contractors':
+      currentViewStatus.textContent = 'Viewing top 10 contractors by value';
+      // This view is already the default for most visualizations
+      // Just highlight the relevant sections
+      highlightBentoBox('bento-leaders', true);
+      scrollToBentoBox('bento-leaders');
+      break;
+    
+    case 'expiring-soon':
+      currentViewStatus.textContent = 'Viewing contracts expiring in next 6 months';
+      // Highlight the expiring contracts section
+      highlightBentoBox('bento-expiring', true);
+      scrollToBentoBox('bento-expiring');
+      break;
+    
+    case 'high-value':
+      currentViewStatus.textContent = 'Viewing high-value contracts (>$1M)';
+      // To be implemented with high-value contract filtering
+      // We would need to add a value filter to the unified model
+      highlightBentoBox('bento-tavtcv', true);
+      scrollToBentoBox('bento-tavtcv');
+      break;
+    
+    case 'small-business':
+      currentViewStatus.textContent = 'Viewing small business set-asides';
+      // This would require additional data in the model
+      break;
+      
+    default:
+      currentViewStatus.textContent = 'No filters applied';
+      break;
+  }
+  
+  // Apply the filters and update visualizations
+  applyFiltersAndUpdateVisuals();
+}
+
+// Helper function to highlight a bento box
+function highlightBentoBox(bentoId, shouldHighlight) {
+  const bentoBox = document.getElementById(bentoId);
+  if (!bentoBox) return;
+  
+  if (shouldHighlight) {
+    // Store the original border for later restoration
+    bentoBox.dataset.originalBorder = bentoBox.style.border;
+    bentoBox.style.border = `2px solid ${getCssVar('--color-primary')}`;
+    bentoBox.style.boxShadow = `0 0 8px ${getCssVar('--color-primary')}`;
+    bentoBox.style.zIndex = '10';
+    
+    // Add a highlight class
+    bentoBox.classList.add('highlighted-bento');
+    
+    // Set a timeout to remove the highlight
+    setTimeout(() => {
+      const highlightedBoxes = document.querySelectorAll('.highlighted-bento');
+      highlightedBoxes.forEach(box => {
+        box.style.border = box.dataset.originalBorder || '';
+        box.style.boxShadow = '';
+        box.style.zIndex = '';
+        box.classList.remove('highlighted-bento');
+      });
+    }, 5000); // 5 seconds highlight
+  } else {
+    bentoBox.style.border = bentoBox.dataset.originalBorder || '';
+    bentoBox.style.boxShadow = '';
+    bentoBox.style.zIndex = '';
+    bentoBox.classList.remove('highlighted-bento');
+  }
+}
+
+// Helper function to scroll to a bento box
+function scrollToBentoBox(bentoId) {
+  const bentoBox = document.getElementById(bentoId);
+  if (!bentoBox) return;
+  
+  bentoBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+// Global variable to store current contractor profile data
+let currentContractorProfileData = null;
+
+// Function to show contractor profile/tear sheet
+function showContractorProfile(contractorName) {
+    console.log(`Showing profile for ${contractorName}`);
+    
+    // If there's no unified model, we can't show a profile
+    if (!unifiedModel) {
+        console.error("No unified model available for contractor profile");
+        return;
+    }
+    
+    // Find the contractor in the model
+    let primeId = null;
+    let primeData = null;
+    
+    // Search for the contractor by name
+    Object.entries(unifiedModel.primes).forEach(([id, prime]) => {
+        if (prime.name === contractorName) {
+            primeId = id;
+            primeData = prime;
+        }
+    });
+    
+    if (!primeId || !primeData) {
+        console.error(`Could not find contractor with name: ${contractorName}`);
+        return;
+    }
+    
+    // Get contractor profile data
+    const profileData = getContractorProfile(primeId, unifiedModel);
+    currentContractorProfileData = profileData;
+    
+    // Create or update the profile modal
+    createContractorProfileModal(profileData);
+}
+
+// Function to get contractor profile data
+function getContractorProfile(primeId, model) {
+    const prime = model.primes[primeId];
+    if (!prime) return null;
+    
+    // Basic information
+    const profile = {
+        id: primeId,
+        name: prime.name,
+        totalValue: prime.value || 0,
+        contractCount: prime.contracts ? prime.contracts.size : 0,
+        subContractorCount: prime.subcontractors ? prime.subcontractors.size : 0,
+        contracts: [],
+        topSubcontractors: [],
+        topNaicsCodes: []
+    };
+    
+    // Get contracts for this prime
+    if (prime.contracts) {
+        const contractsArray = [];
+        prime.contracts.forEach(contractId => {
+            const contract = model.contracts[contractId];
+            if (contract) {
+                contractsArray.push({
+                    id: contract.id,
+                    value: contract.value,
+                    description: contract.description || "No description",
+                    naicsCode: contract.naicsCode,
+                    naicsDesc: contract.naicsDesc,
+                    startDate: contract.startDate,
+                    endDate: contract.endDate,
+                    durationDays: contract.startDate && contract.endDate ? 
+                        calculateDurationDays(contract.startDate, contract.endDate) : 0,
+                    agency: model.agencies[contract.agencyId]?.name || "Unknown Agency",
+                    subAgency: model.subAgencies[contract.subAgencyId]?.name || "Unknown Sub-Agency"
+                });
+            }
+        });
+        
+        // Sort contracts by value (descending)
+        profile.contracts = contractsArray.sort((a, b) => b.value - a.value);
+    }
+    
+    // Get top subcontractors used by this prime
+    if (prime.subcontractors) {
+        const subValues = {};
+        
+        // Find relationships for this prime
+        model.relationships.primeToSub.forEach(rel => {
+            if (rel.source === primeId) {
+                const subId = rel.target;
+                const sub = model.subs[subId];
+                if (sub) {
+                    if (!subValues[subId]) {
+                        subValues[subId] = {
+                            id: subId,
+                            name: sub.name,
+                            value: 0,
+                            contractCount: 0
+                        };
+                    }
+                    subValues[subId].value += rel.value;
+                    subValues[subId].contractCount++;
+                }
+            }
+        });
+        
+        // Convert to array and sort by value
+        profile.topSubcontractors = Object.values(subValues)
+            .sort((a, b) => b.value - a.value)
+            .slice(0, 10); // Top 10 subs
+    }
+    
+    // Analyze NAICS codes for this prime
+    const naicsCounts = {};
+    const naicsValues = {};
+    
+    profile.contracts.forEach(contract => {
+        if (contract.naicsCode) {
+            if (!naicsCounts[contract.naicsCode]) {
+                naicsCounts[contract.naicsCode] = 0;
+                naicsValues[contract.naicsCode] = 0;
+            }
+            naicsCounts[contract.naicsCode]++;
+            naicsValues[contract.naicsCode] += contract.value;
+        }
+    });
+    
+    // Convert to array and sort by value
+    const naicsArray = Object.keys(naicsCounts).map(code => ({
+        code: code,
+        description: profile.contracts.find(c => c.naicsCode === code)?.naicsDesc || "Unknown",
+        count: naicsCounts[code],
+        value: naicsValues[code]
+    }));
+    
+    profile.topNaicsCodes = naicsArray.sort((a, b) => b.value - a.value).slice(0, 5); // Top 5 NAICS
+    
+    // Calculate average contract duration
+    let totalDuration = 0;
+    let contractsWithDuration = 0;
+    
+    profile.contracts.forEach(contract => {
+        if (contract.durationDays > 0) {
+            totalDuration += contract.durationDays;
+            contractsWithDuration++;
+        }
+    });
+    
+    profile.avgDurationDays = contractsWithDuration > 0 ? 
+        Math.round(totalDuration / contractsWithDuration) : 0;
+        
+    // Calculate average contract value
+    profile.avgContractValue = profile.contractCount > 0 ? 
+        profile.totalValue / profile.contractCount : 0;
+    
+    return profile;
+}
+
+// Function to create or update the contractor profile modal
+function createContractorProfileModal(profileData) {
+    // Remove existing modal if present
+    const existingModal = document.getElementById('contractor-profile-modal');
+    if (existingModal) {
+        document.body.removeChild(existingModal);
+    }
+    
+    if (!profileData) {
+        console.error("No profile data provided for modal");
+        return;
+    }
+    
+    // Create modal container
+    const modal = document.createElement('div');
+    modal.id = 'contractor-profile-modal';
+    modal.style.position = 'fixed';
+    modal.style.top = '50%';
+    modal.style.left = '50%';
+    modal.style.transform = 'translate(-50%, -50%)';
+    modal.style.zIndex = '1000';
+    modal.style.backgroundColor = getCssVar('--color-surface');
+    modal.style.borderRadius = getCssVar('--border-radius-lg');
+    modal.style.boxShadow = getCssVar('--shadow-lg');
+    modal.style.width = '90%';
+    modal.style.maxWidth = '900px';
+    modal.style.maxHeight = '85vh';
+    modal.style.overflow = 'auto';
+    modal.style.padding = '20px';
+    modal.style.border = `1px solid ${getCssVar('--color-border')}`;
+    
+    // Create modal backdrop
+    const backdrop = document.createElement('div');
+    backdrop.style.position = 'fixed';
+    backdrop.style.top = '0';
+    backdrop.style.left = '0';
+    backdrop.style.width = '100%';
+    backdrop.style.height = '100%';
+    backdrop.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+    backdrop.style.zIndex = '999';
+    
+    // Add close button
+    const closeButton = document.createElement('button');
+    closeButton.innerHTML = `
+        <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+    `;
+    closeButton.style.position = 'absolute';
+    closeButton.style.top = '10px';
+    closeButton.style.right = '10px';
+    closeButton.style.background = 'none';
+    closeButton.style.border = 'none';
+    closeButton.style.cursor = 'pointer';
+    closeButton.style.color = getCssVar('--color-text-secondary');
+    
+    closeButton.addEventListener('click', () => {
+        document.body.removeChild(backdrop);
+        document.body.removeChild(modal);
+    });
+    
+    backdrop.addEventListener('click', () => {
+        document.body.removeChild(backdrop);
+        document.body.removeChild(modal);
+    });
+    
+    modal.appendChild(closeButton);
+    
+    // Create modal content
+    const content = document.createElement('div');
+    content.style.display = 'flex';
+    content.style.flexDirection = 'column';
+    content.style.gap = '20px';
+    
+    // Header section with contractor name and key stats
+    const header = document.createElement('div');
+    header.style.display = 'flex';
+    header.style.flexDirection = 'column';
+    header.style.gap = '10px';
+    header.style.borderBottom = `1px solid ${getCssVar('--color-border')}`;
+    header.style.paddingBottom = '15px';
+    
+    const title = document.createElement('h2');
+    title.textContent = profileData.name;
+    title.style.margin = '0';
+    title.style.fontSize = '24px';
+    title.style.fontWeight = 'bold';
+    
+    const statsContainer = document.createElement('div');
+    statsContainer.style.display = 'flex';
+    statsContainer.style.flexWrap = 'wrap';
+    statsContainer.style.gap = '20px';
+    
+    // Define key stats
+    const stats = [
+        { label: 'Total Value', value: formatCurrency(profileData.totalValue) },
+        { label: 'Number of Contracts', value: profileData.contractCount.toLocaleString() },
+        { label: 'Avg. Contract Value', value: formatCurrency(profileData.avgContractValue) },
+        { label: 'Avg. Duration', value: `${profileData.avgDurationDays} days` },
+        { label: 'Subcontractors Used', value: profileData.subContractorCount.toLocaleString() }
+    ];
+    
+    // Add key stats
+    stats.forEach(stat => {
+        const statBox = document.createElement('div');
+        statBox.style.display = 'flex';
+        statBox.style.flexDirection = 'column';
+        statBox.style.gap = '5px';
+        statBox.style.backgroundColor = getCssVar('--color-surface-container');
+        statBox.style.padding = '10px 15px';
+        statBox.style.borderRadius = getCssVar('--border-radius-sm');
+        
+        const statValue = document.createElement('div');
+        statValue.textContent = stat.value;
+        statValue.style.fontWeight = 'bold';
+        statValue.style.fontSize = '16px';
+        
+        const statLabel = document.createElement('div');
+        statLabel.textContent = stat.label;
+        statLabel.style.fontSize = '12px';
+        statLabel.style.color = getCssVar('--color-text-secondary');
+        
+        statBox.appendChild(statValue);
+        statBox.appendChild(statLabel);
+        statsContainer.appendChild(statBox);
+    });
+    
+    header.appendChild(title);
+    header.appendChild(statsContainer);
+    
+    // Tabs for different sections
+    const tabsContainer = document.createElement('div');
+    tabsContainer.style.display = 'flex';
+    tabsContainer.style.borderBottom = `1px solid ${getCssVar('--color-border')}`;
+    
+    const tabs = [
+        { id: 'contracts-tab', text: 'Contracts' },
+        { id: 'subs-tab', text: 'Subcontractors' },
+        { id: 'naics-tab', text: 'NAICS Analysis' }
+    ];
+    
+    tabs.forEach((tab, index) => {
+        const tabButton = document.createElement('button');
+        tabButton.id = tab.id;
+        tabButton.textContent = tab.text;
+        tabButton.style.padding = '10px 15px';
+        tabButton.style.background = 'none';
+        tabButton.style.border = 'none';
+        tabButton.style.borderBottom = index === 0 ? 
+            `2px solid ${getCssVar('--color-primary')}` : 
+            '2px solid transparent';
+        tabButton.style.color = index === 0 ? 
+            getCssVar('--color-text-primary') : 
+            getCssVar('--color-text-secondary');
+        tabButton.style.fontWeight = index === 0 ? 'bold' : 'normal';
+        tabButton.style.cursor = 'pointer';
+        
+        tabButton.addEventListener('click', () => {
+            // Deactivate all tabs
+            document.querySelectorAll(`#contractor-profile-modal button[id$="-tab"]`).forEach(btn => {
+                btn.style.borderBottom = '2px solid transparent';
+                btn.style.color = getCssVar('--color-text-secondary');
+                btn.style.fontWeight = 'normal';
+            });
+            
+            // Activate selected tab
+            tabButton.style.borderBottom = `2px solid ${getCssVar('--color-primary')}`;
+            tabButton.style.color = getCssVar('--color-text-primary');
+            tabButton.style.fontWeight = 'bold';
+            
+            // Hide all content sections
+            document.querySelectorAll(`#contractor-profile-modal div[id$="-content"]`).forEach(section => {
+                section.style.display = 'none';
+            });
+            
+            // Show selected content
+            const contentId = tab.id.replace('-tab', '-content');
+            document.getElementById(contentId).style.display = 'block';
+        });
+        
+        tabsContainer.appendChild(tabButton);
+    });
+    
+// Tab content sections
+    const tabContentsContainer = document.createElement('div');
+    tabContentsContainer.style.marginTop = '15px';
+    
+    // Contracts tab content
+    const contractsContent = document.createElement('div');
+    contractsContent.id = 'contracts-tab-content';
+    contractsContent.style.display = 'block'; // Show by default
+    
+    // Add export button for contracts
+    const contractsExportBtn = document.createElement('button');
+    contractsExportBtn.className = 'button';
+    contractsExportBtn.style.marginBottom = '10px';
+    contractsExportBtn.innerHTML = `
+        <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+        </svg>
+        Export Contracts
+    `;
+    
+    contractsExportBtn.addEventListener('click', () => {
+        if (!profileData.contracts.length) return;
+        
+        const exportData = profileData.contracts.map(contract => ({
+            contract_id: contract.id,
+            value: contract.value,
+            description: contract.description,
+            agency: contract.agency,
+            sub_agency: contract.subAgency,
+            naics_code: contract.naicsCode,
+            naics_description: contract.naicsDesc,
+            start_date: contract.startDate instanceof Date ? 
+                contract.startDate.toISOString().split('T')[0] : contract.startDate,
+            end_date: contract.endDate instanceof Date ? 
+                contract.endDate.toISOString().split('T')[0] : contract.endDate,
+            duration_days: contract.durationDays
+        }));
+        
+        exportToCSV(exportData, `${profileData.name.replace(/[^a-z0-9]/gi, '-')}-contracts.csv`);
+    });
+    
+    contractsContent.appendChild(contractsExportBtn);
+    
+    // Create contracts table
+    if (profileData.contracts.length > 0) {
+        const contractsTable = document.createElement('table');
+        contractsTable.style.width = '100%';
+        contractsTable.style.borderCollapse = 'collapse';
+        
+        // Table header
+        const thead = contractsTable.createTHead();
+        const headerRow = thead.insertRow();
+        
+        ['Description', 'Agency', 'Value', 'NAICS', 'End Date', 'Duration'].forEach(header => {
+            const th = document.createElement('th');
+            th.textContent = header;
+            th.style.textAlign = header === 'Value' ? 'right' : 'left';
+            th.style.padding = '8px';
+            th.style.borderBottom = `1px solid ${getCssVar('--color-border')}`;
+            headerRow.appendChild(th);
+        });
+        
+        // Table body
+        const tbody = contractsTable.createTBody();
+        
+        profileData.contracts.slice(0, 10).forEach(contract => {
+            const row = tbody.insertRow();
+            
+            // Description
+            let cell = row.insertCell();
+            cell.textContent = truncateText(contract.description, 40);
+            cell.title = contract.description;
+            cell.style.padding = '8px';
+            
+            // Agency
+            cell = row.insertCell();
+            cell.textContent = truncateText(contract.subAgency, 30);
+            cell.title = contract.subAgency;
+            cell.style.padding = '8px';
+            
+            // Value
+            cell = row.insertCell();
+            cell.textContent = formatCurrency(contract.value);
+            cell.style.textAlign = 'right';
+            cell.style.padding = '8px';
+            
+            // NAICS
+            cell = row.insertCell();
+            cell.textContent = contract.naicsCode || '-';
+            cell.title = contract.naicsDesc || '';
+            cell.style.padding = '8px';
+            
+            // End Date
+            cell = row.insertCell();
+            cell.textContent = contract.endDate instanceof Date ? 
+                contract.endDate.toLocaleDateString() : 
+                (contract.endDate ? new Date(contract.endDate).toLocaleDateString() : '-');
+            cell.style.padding = '8px';
+            
+            // Duration
+            cell = row.insertCell();
+            cell.textContent = contract.durationDays ? `${contract.durationDays} days` : '-';
+            cell.style.padding = '8px';
+        });
+        
+        contractsContent.appendChild(contractsTable);
+        
+        // Add note if there are more contracts
+        if (profileData.contracts.length > 10) {
+            const note = document.createElement('p');
+            note.textContent = `Showing top 10 of ${profileData.contracts.length} contracts by value.`;
+            note.style.fontSize = '12px';
+            note.style.color = getCssVar('--color-text-secondary');
+            note.style.marginTop = '10px';
+            contractsContent.appendChild(note);
+        }
+    } else {
+        const noData = document.createElement('p');
+        noData.textContent = 'No contract data available.';
+        noData.style.color = getCssVar('--color-text-secondary');
+        contractsContent.appendChild(noData);
+    }
+    
+    // Subcontractors tab content
+    const subsContent = document.createElement('div');
+    subsContent.id = 'subs-tab-content';
+    subsContent.style.display = 'none'; // Hidden by default
+    
+    // Add export button for subcontractors
+    const subsExportBtn = document.createElement('button');
+    subsExportBtn.className = 'button';
+    subsExportBtn.style.marginBottom = '10px';
+    subsExportBtn.innerHTML = `
+        <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+        </svg>
+        Export Subcontractors
+    `;
+    
+    subsExportBtn.addEventListener('click', () => {
+        if (!profileData.topSubcontractors.length) return;
+        
+        const exportData = profileData.topSubcontractors.map(sub => ({
+            subcontractor_name: sub.name,
+            total_value: sub.value,
+            contract_count: sub.contractCount
+        }));
+        
+        exportToCSV(exportData, `${profileData.name.replace(/[^a-z0-9]/gi, '-')}-subcontractors.csv`);
+    });
+    
+    subsContent.appendChild(subsExportBtn);
+    
+    // Create top subcontractors section
+    subsContent.appendChild(document.createElement('h3')).textContent = 'Top Subcontractors Used';
+    
+    if (profileData.topSubcontractors.length > 0) {
+        const subsTable = document.createElement('table');
+        subsTable.style.width = '100%';
+        subsTable.style.borderCollapse = 'collapse';
+        
+        // Table header
+        const thead = subsTable.createTHead();
+        const headerRow = thead.insertRow();
+        
+        ['Subcontractor', 'Total Value', 'Contract Count'].forEach(header => {
+            const th = document.createElement('th');
+            th.textContent = header;
+            th.style.textAlign = header === 'Total Value' ? 'right' : 'left';
+            th.style.padding = '8px';
+            th.style.borderBottom = `1px solid ${getCssVar('--color-border')}`;
+            headerRow.appendChild(th);
+        });
+        
+        // Table body
+        const tbody = subsTable.createTBody();
+        
+        profileData.topSubcontractors.forEach(sub => {
+            const row = tbody.insertRow();
+            
+            // Subcontractor name (clickable)
+            let cell = row.insertCell();
+            
+            // Create clickable name for subcontractor profile
+            const nameLink = document.createElement('a');
+            nameLink.href = '#';
+            nameLink.style.color = getCssVar('--color-primary');
+            nameLink.style.textDecoration = 'none';
+            nameLink.style.fontWeight = '500';
+            nameLink.textContent = sub.name;
+            nameLink.title = `View profile for ${sub.name}`;
+            
+            // This would need to be implemented separately for subs
+            // nameLink.addEventListener('click', (e) => {
+            //     e.preventDefault();
+            //     showSubcontractorProfile(sub.id);
+            // });
+            
+            cell.appendChild(nameLink);
+            cell.style.padding = '8px';
+            
+            // Total Value
+            cell = row.insertCell();
+            cell.textContent = formatCurrency(sub.value);
+            cell.style.textAlign = 'right';
+            cell.style.padding = '8px';
+            
+            // Contract Count
+            cell = row.insertCell();
+            cell.textContent = sub.contractCount.toLocaleString();
+            cell.style.padding = '8px';
+        });
+        
+        subsContent.appendChild(subsTable);
+    } else {
+        const noData = document.createElement('p');
+        noData.textContent = 'No subcontractor data available.';
+        noData.style.color = getCssVar('--color-text-secondary');
+        subsContent.appendChild(noData);
+    }
+    
+    // NAICS tab content
+    const naicsContent = document.createElement('div');
+    naicsContent.id = 'naics-tab-content';
+    naicsContent.style.display = 'none'; // Hidden by default
+    
+    // Create NAICS analysis
+    naicsContent.appendChild(document.createElement('h3')).textContent = 'NAICS Code Analysis';
+    
+    if (profileData.topNaicsCodes.length > 0) {
+        // Create chart container
+        const chartContainer = document.createElement('div');
+        chartContainer.style.height = '250px';
+        chartContainer.style.marginBottom = '20px';
+        
+        // Create NAICS table
+        const naicsTable = document.createElement('table');
+        naicsTable.style.width = '100%';
+        naicsTable.style.borderCollapse = 'collapse';
+        
+        // Table header
+        const thead = naicsTable.createTHead();
+        const headerRow = thead.insertRow();
+        
+        ['NAICS Code', 'Description', 'Contract Count', 'Total Value', 'Percentage'].forEach(header => {
+            const th = document.createElement('th');
+            th.textContent = header;
+            th.style.textAlign = ['Total Value', 'Percentage'].includes(header) ? 'right' : 'left';
+            th.style.padding = '8px';
+            th.style.borderBottom = `1px solid ${getCssVar('--color-border')}`;
+            headerRow.appendChild(th);
+        });
+        
+        // Calculate total NAICS value for percentage
+        const totalNaicsValue = profileData.topNaicsCodes.reduce((sum, naics) => sum + naics.value, 0);
+        
+        // Table body
+        const tbody = naicsTable.createTBody();
+        
+        profileData.topNaicsCodes.forEach(naics => {
+            const row = tbody.insertRow();
+            
+            // NAICS Code
+            let cell = row.insertCell();
+            cell.textContent = naics.code;
+            cell.style.padding = '8px';
+            
+            // Description
+            cell = row.insertCell();
+            cell.textContent = truncateText(naics.description, 40);
+            cell.title = naics.description;
+            cell.style.padding = '8px';
+            
+            // Contract Count
+            cell = row.insertCell();
+            cell.textContent = naics.count.toLocaleString();
+            cell.style.padding = '8px';
+            
+            // Total Value
+            cell = row.insertCell();
+            cell.textContent = formatCurrency(naics.value);
+            cell.style.textAlign = 'right';
+            cell.style.padding = '8px';
+            
+            // Percentage
+            cell = row.insertCell();
+            const percentage = totalNaicsValue > 0 ? (naics.value / totalNaicsValue) * 100 : 0;
+            cell.textContent = `${percentage.toFixed(1)}%`;
+            cell.style.textAlign = 'right';
+            cell.style.padding = '8px';
+        });
+        
+        // Add export button for NAICS
+        const naicsExportBtn = document.createElement('button');
+        naicsExportBtn.className = 'button';
+        naicsExportBtn.style.marginBottom = '10px';
+        naicsExportBtn.innerHTML = `
+            <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            Export NAICS Data
+        `;
+        
+        naicsExportBtn.addEventListener('click', () => {
+            if (!profileData.topNaicsCodes.length) return;
+            
+            const exportData = profileData.topNaicsCodes.map(naics => ({
+                naics_code: naics.code,
+                description: naics.description,
+                contract_count: naics.count,
+                total_value: naics.value,
+                percentage: totalNaicsValue > 0 ? (naics.value / totalNaicsValue) * 100 : 0
+            }));
+            
+            exportToCSV(exportData, `${profileData.name.replace(/[^a-z0-9]/gi, '-')}-naics.csv`);
+        });
+        
+        naicsContent.insertBefore(naicsExportBtn, naicsContent.firstChild);
+        
+        // NAICS chart using D3.js - can be implemented if needed
+        
+        naicsContent.appendChild(naicsTable);
+    } else {
+        const noData = document.createElement('p');
+        noData.textContent = 'No NAICS code data available.';
+        noData.style.color = getCssVar('--color-text-secondary');
+        naicsContent.appendChild(noData);
+    }
+    
+    // Add tab contents to container
+    tabContentsContainer.appendChild(contractsContent);
+    tabContentsContainer.appendChild(subsContent);
+    tabContentsContainer.appendChild(naicsContent);
+    
+    // Add all sections to modal content
+    content.appendChild(header);
+    content.appendChild(tabsContainer);
+    content.appendChild(tabContentsContainer);
+    
+    // Add content to modal
+    modal.appendChild(content);
+    
+    // Add modal and backdrop to body
+    document.body.appendChild(backdrop);
+    document.body.appendChild(modal);
+}
+// Process data for Share of Wallet visualization 
+function processShareOfWalletData(model, topN = 7) {
+    if (!model || !model.primes) {
+        return [];
+    }
+    
+    // Get total value by prime
+    const primeValues = {};
+    let grandTotal = 0;
+    
+    // Aggregate from contracts
+    Object.values(model.contracts).forEach(contract => {
+        if (contract.primeId && contract.value > 0) {
+            const prime = model.primes[contract.primeId];
+            if (prime) {
+                const primeName = prime.name;
+                if (!primeValues[primeName]) {
+                    primeValues[primeName] = 0;
+                }
+                primeValues[primeName] += contract.value;
+                grandTotal += contract.value;
+            }
+        }
+    });
+    
+    // Convert to array and sort
+    const sortedPrimes = Object.entries(primeValues)
+        .map(([name, value]) => ({
+            name: name,
+            value: value,
+            percentage: grandTotal > 0 ? (value / grandTotal) * 100 : 0
+        }))
+        .sort((a, b) => b.value - a.value);
+    
+    // Take top N primes and roll up the rest as "Other"
+    const result = sortedPrimes.slice(0, topN);
+    
+    // Add "Other" category if needed
+    if (sortedPrimes.length > topN) {
+        const otherValue = sortedPrimes.slice(topN).reduce((sum, prime) => sum + prime.value, 0);
+        const otherPercentage = grandTotal > 0 ? (otherValue / grandTotal) * 100 : 0;
+        
+        if (otherValue > 0) {
+            result.push({
+                name: "Other",
+                value: otherValue,
+                percentage: otherPercentage,
+                count: sortedPrimes.length - topN
+            });
+        }
+    }
+    
+    return result;
+}
+
+// Function to display Share of Wallet visualization
+function displayShareOfWalletChart(model, containerId = 'share-of-wallet-container') {
+    // Make sure we have a container to render into
+    let container = document.getElementById(containerId);
+    
+    // If not found, create a new bento box
+    if (!container) {
+        // Create a new bento box for Share of Wallet
+        const bentoBox = document.createElement('div');
+        bentoBox.id = 'bento-share-of-wallet';
+        bentoBox.className = 'bento-box';
+        
+        // Create card header
+        const cardHeader = document.createElement('div');
+        cardHeader.className = 'card-header';
+        
+        // Create icon circle
+        const iconCircle = document.createElement('div');
+        iconCircle.className = 'card-icon-circle';
+        iconCircle.innerHTML = `
+            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 22V2M17 6l-5-4-5 4M17 18l-5 4-5-4"></path>
+            </svg>
+        `;
+        
+        // Create title
+        const title = document.createElement('h2');
+        title.textContent = 'Market Share';
+        
+        // Assemble header
+        cardHeader.appendChild(iconCircle);
+        cardHeader.appendChild(title);
+        
+        // Create chart container
+        container = document.createElement('div');
+        container.id = containerId;
+        container.className = 'chart-container';
+        
+        // Assemble bento box
+        bentoBox.appendChild(cardHeader);
+        bentoBox.appendChild(container);
+        
+        // Find the bento grid to add this to
+        const bentoGrid = document.querySelector('.bento-grid');
+        if (bentoGrid) {
+            // Decide where to insert the new bento box
+            // For example, right after the ARR bento box
+            const bentoArr = document.getElementById('bento-arr');
+            if (bentoArr && bentoArr.nextSibling) {
+                bentoGrid.insertBefore(bentoBox, bentoArr.nextSibling);
+            } else {
+                bentoGrid.appendChild(bentoBox);
+            }
+        } else {
+            console.error('Could not find bento grid to add Share of Wallet chart');
+            return;
+        }
+    }
+    
+    // Clear previous content
+    container.innerHTML = '';
+    
+    setLoading(containerId, true, 'Processing market share data...');
+    
+    // Get the data
+    const shareData = processShareOfWalletData(model);
+    
+    if (!shareData || shareData.length === 0) {
+        displayNoData(containerId, 'No market share data available.');
+        return;
+    }
+    
+    setLoading(containerId, false);
+    
+    // Get dimensions from the container element
+    const rect = container.getBoundingClientRect();
+    const width = rect.width;
+    const height = rect.height;
+    
+    if (width <= 10 || height <= 10) {
+        console.warn(`Container #${containerId} has minimal/no dimensions. W: ${width}, H: ${height}. Chart not drawn.`);
+        displayNoData(containerId, 'Chart area too small.');
+        return;
+    }
+    
+    // Create container for the donut chart
+    const chartDiv = document.createElement('div');
+    chartDiv.style.width = '100%';
+    chartDiv.style.height = '100%';
+    chartDiv.style.position = 'relative';
+    container.appendChild(chartDiv);
+    
+    // Create a new SVG element
+    const svg = d3.select(chartDiv)
+        .append('svg')
+        .attr('width', '100%')
+        .attr('height', '100%')
+        .attr('viewBox', `0 0 ${width} ${height}`)
+        .append('g')
+        .attr('transform', `translate(${width / 2}, ${height / 2})`);
+    
+    // Prepare colors
+    const color = d3.scaleOrdinal()
+        .domain(shareData.map(d => d.name))
+        .range(shareData.map((_, i) => {
+            if (i === shareData.length - 1 && shareData[i].name === 'Other') {
+                // Use a more muted color for "Other"
+                return getCssVar('--chart-color-tertiary');
+            }
+            // For the main segments, use primary colors
+            const baseColors = [
+                getCssVar('--chart-color-primary'),
+                getCssVar('--chart-color-secondary'),
+                d3.color(getCssVar('--chart-color-primary')).darker(0.5).toString(),
+                d3.color(getCssVar('--chart-color-secondary')).darker(0.5).toString(),
+                d3.color(getCssVar('--chart-color-primary')).brighter(0.5).toString(),
+                d3.color(getCssVar('--chart-color-secondary')).brighter(0.5).toString(),
+                d3.color(getCssVar('--chart-color-tertiary')).brighter(0.5).toString(),
+            ];
+            return baseColors[i % baseColors.length];
+        }));
+    
+    // Create pie layout
+    const pie = d3.pie()
+        .value(d => d.value)
+        .sort(null);
+    
+    // Calculate radius
+    const radius = Math.min(width, height) / 2 * 0.8;
+    
+    // Create arc generator
+    const arc = d3.arc()
+        .innerRadius(radius * 0.5) // Donut hole size
+        .outerRadius(radius);
+    
+    // Create the arcs
+    const arcs = svg.selectAll('path')
+        .data(pie(shareData))
+        .enter()
+        .append('path')
+        .attr('d', arc)
+        .attr('fill', (d, i) => color(d.data.name))
+        .attr('stroke', getCssVar('--color-surface'))
+        .attr('stroke-width', '1px');
+    
+    // Add percentage labels
+    const labelArc = d3.arc()
+        .innerRadius(radius * 0.8)
+        .outerRadius(radius * 0.8);
+    
+    svg.selectAll('text.percentage')
+        .data(pie(shareData))
+        .enter()
+        .append('text')
+        .attr('class', 'percentage')
+        .attr('transform', d => `translate(${labelArc.centroid(d)})`)
+        .attr('dy', '0.35em')
+        .attr('text-anchor', 'middle')
+        .style('font-size', '11px')
+        .style('fill', getCssVar('--color-text-primary'))
+        .style('font-weight', '600')
+        .text(d => {
+            const percentage = d.data.percentage;
+            return percentage >= 5 ? `${Math.round(percentage)}%` : '';
+        });
+    
+    // Add center text
+    svg.append('text')
+        .attr('text-anchor', 'middle')
+        .attr('dy', '-0.5em')
+        .style('font-size', '12px')
+        .style('fill', getCssVar('--color-text-secondary'))
+        .text('Market');
+    
+    svg.append('text')
+        .attr('text-anchor', 'middle')
+        .attr('dy', '0.5em')
+        .style('font-size', '12px')
+        .style('fill', getCssVar('--color-text-secondary'))
+        .text('Share');
+    
+    // Add legend
+    const legendGroup = svg.append('g')
+        .attr('transform', `translate(${-width / 2 + 15}, ${-height / 2 + 15})`);
+    
+    const legendItems = legendGroup.selectAll('g')
+        .data(shareData)
+        .enter()
+        .append('g')
+        .attr('transform', (d, i) => `translate(0, ${i * 20})`);
+    
+    // Add color squares
+    legendItems.append('rect')
+        .attr('width', 12)
+        .attr('height', 12)
+        .attr('fill', (d, i) => color(d.name));
+    
+    // Add legend text
+    legendItems.append('text')
+        .attr('x', 18)
+        .attr('y', 9)
+        .attr('dy', '0.1em')
+        .style('font-size', '11px')
+        .style('fill', getCssVar('--color-text-secondary'))
+        .text(d => {
+            const label = truncateText(d.name, 15);
+            return `${label} (${d.percentage.toFixed(1)}%)`;
+        });
+    
+    // Add tooltips
+    arcs.append('title')
+        .text(d => {
+            const name = d.data.name;
+            const value = formatCurrency(d.data.value);
+            const percentage = d.data.percentage.toFixed(1);
+            return `${name}\nValue: ${value}\nShare: ${percentage}%`;
+        });
+}
+// Process data for Contract Value Tiers
+function processContractValueTiers(model) {
+    if (!model || !model.contracts) {
+        return [];
+    }
+    
+    // Define value bands
+    const bands = [
+        { name: '< $100K', min: 0, max: 99999 },
+        { name: '$100K - $500K', min: 100000, max: 499999 },
+        { name: '$500K - $1M', min: 500000, max: 999999 },
+        { name: '$1M - $5M', min: 1000000, max: 4999999 },
+        { name: '$5M - $10M', min: 5000000, max: 9999999 },
+        { name: '$10M - $50M', min: 10000000, max: 49999999 },
+        { name: '$50M+', min: 50000000, max: Number.MAX_SAFE_INTEGER }
+    ];
+    
+    // Initialize counts and sums
+    const result = bands.map(band => ({
+        name: band.name,
+        min: band.min,
+        max: band.max,
+        count: 0,
+        totalValue: 0
+    }));
+    
+    // Count contracts in each band
+    Object.values(model.contracts).forEach(contract => {
+        const value = contract.value;
+        if (value > 0) {
+            const band = result.find(b => value >= b.min && value <= b.max);
+            if (band) {
+                band.count++;
+                band.totalValue += value;
+            }
+        }
+    });
+    
+    // Calculate percentages and average values
+    const totalContracts = result.reduce((sum, band) => sum + band.count, 0);
+    const totalValue = result.reduce((sum, band) => sum + band.totalValue, 0);
+    
+    result.forEach(band => {
+        band.percentage = totalContracts > 0 ? (band.count / totalContracts) * 100 : 0;
+        band.valuePercentage = totalValue > 0 ? (band.totalValue / totalValue) * 100 : 0;
+        band.averageValue = band.count > 0 ? band.totalValue / band.count : 0;
+    });
+    
+    return result;
+}
+
+// Function to display Contract Value Tiers
+function displayContractValueTiers(model, containerId = 'contract-value-tiers-container') {
+    // Make sure we have a container to render into
+    let container = document.getElementById(containerId);
+    
+    // If not found, create a new bento box
+    if (!container) {
+        // Create a new bento box for Value Tiers
+        const bentoBox = document.createElement('div');
+        bentoBox.id = 'bento-value-tiers';
+        bentoBox.className = 'bento-box';
+        
+        // Create card header
+        const cardHeader = document.createElement('div');
+        cardHeader.className = 'card-header';
+        
+        // Create icon circle
+        const iconCircle = document.createElement('div');
+        iconCircle.className = 'card-icon-circle';
+        iconCircle.innerHTML = `
+            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect>
+                <line x1="3" y1="9" x2="21" y2="9"></line>
+                <line x1="3" y1="15" x2="21" y2="15"></line>
+                <line x1="9" y1="3" x2="9" y2="21"></line>
+                <line x1="15" y1="3" x2="15" y2="21"></line>
+            </svg>
+        `;
+        
+        // Create title
+        const title = document.createElement('h2');
+        title.textContent = 'Contract Value Tiers';
+        
+        // Assemble header
+        cardHeader.appendChild(iconCircle);
+        cardHeader.appendChild(title);
+        
+        // Create chart container
+        container = document.createElement('div');
+        container.id = containerId;
+        container.className = 'chart-container';
+        
+        // Assemble bento box
+        bentoBox.appendChild(cardHeader);
+        bentoBox.appendChild(container);
+        
+// Find the bento grid
+        const bentoGrid = document.querySelector('.bento-grid');
+        if (bentoGrid) {
+            // Decide where to insert the new bento box
+            // For example, after the NAICS distribution box
+            const bentoNaics = document.getElementById('bento-naics-distribution');
+            if (bentoNaics && bentoNaics.nextSibling) {
+                bentoGrid.insertBefore(bentoBox, bentoNaics.nextSibling);
+            } else {
+                bentoGrid.appendChild(bentoBox);
+            }
+        } else {
+            console.error('Could not find bento grid to add Contract Value Tiers chart');
+            return;
+        }
+    }
+    
+    // Clear previous content
+    container.innerHTML = '';
+    
+    setLoading(containerId, true, 'Processing contract value tiers...');
+    
+    // Get the data
+    const tierData = processContractValueTiers(model);
+    
+    if (!tierData || tierData.length === 0) {
+        displayNoData(containerId, 'No contract value tier data available.');
+        return;
+    }
+    
+    setLoading(containerId, false);
+    
+    // Get dimensions from the container element
+    const rect = container.getBoundingClientRect();
+    const width = rect.width;
+    const height = rect.height;
+    
+    if (width <= 10 || height <= 10) {
+        console.warn(`Container #${containerId} has minimal/no dimensions. W: ${width}, H: ${height}. Chart not drawn.`);
+        displayNoData(containerId, 'Chart area too small.');
+        return;
+    }
+    
+    // Calculate margins
+    const margin = {
+        top: 20,
+        right: 50,
+        bottom: 60,
+        left: 60
+    };
+    
+    // Calculate usable dimensions
+    const chartWidth = width - margin.left - margin.right;
+    const chartHeight = height - margin.top - margin.bottom;
+    
+    // Create container for the chart
+    const chartDiv = document.createElement('div');
+    chartDiv.style.width = '100%';
+    chartDiv.style.height = '100%';
+    chartDiv.style.position = 'relative';
+    container.appendChild(chartDiv);
+    
+    // Create a new SVG element
+    const svg = d3.select(chartDiv)
+        .append('svg')
+        .attr('width', '100%')
+        .attr('height', '100%')
+        .attr('viewBox', `0 0 ${width} ${height}`)
+        .append('g')
+        .attr('transform', `translate(${margin.left}, ${margin.top})`);
+    
+    // Create scales
+    const x = d3.scaleBand()
+        .domain(tierData.map(d => d.name))
+        .range([0, chartWidth])
+        .padding(0.3);
+    
+    const y = d3.scaleLinear()
+        .domain([0, d3.max(tierData, d => d.count) * 1.1]) // 10% padding on top
+        .range([chartHeight, 0]);
+    
+    const y2 = d3.scaleLinear()
+        .domain([0, 100]) // Percentage scale for the line
+        .range([chartHeight, 0]);
+    
+    // Create color scale
+    const color = d3.scaleOrdinal()
+        .domain(['count', 'valuePercentage'])
+        .range([getCssVar('--chart-color-primary'), getCssVar('--chart-color-secondary')]);
+    
+    // Create axes
+    const xAxis = svg.append('g')
+        .attr('transform', `translate(0, ${chartHeight})`)
+        .call(d3.axisBottom(x))
+        .selectAll('text')
+        .attr('transform', 'rotate(-45)')
+        .style('text-anchor', 'end')
+        .attr('dx', '-.8em')
+        .attr('dy', '.15em')
+        .style('font-size', '11px')
+        .style('fill', getCssVar('--color-text-secondary'));
+    
+    svg.append('g')
+        .call(d3.axisLeft(y)
+            .ticks(5)
+            .tickFormat(d => d.toLocaleString()))
+        .selectAll('text')
+        .style('font-size', '11px')
+        .style('fill', getCssVar('--color-text-secondary'));
+    
+    svg.append('g')
+        .attr('transform', `translate(${chartWidth}, 0)`)
+        .call(d3.axisRight(y2)
+            .ticks(5)
+            .tickFormat(d => `${d}%`))
+        .selectAll('text')
+        .style('font-size', '11px')
+        .style('fill', getCssVar('--color-text-secondary'));
+    
+    // Add bars for contract count
+    svg.selectAll('.bar')
+        .data(tierData)
+        .enter()
+        .append('rect')
+        .attr('class', 'bar')
+        .attr('x', d => x(d.name))
+        .attr('width', x.bandwidth())
+        .attr('y', d => y(d.count))
+        .attr('height', d => chartHeight - y(d.count))
+        .attr('fill', color('count'))
+        .attr('stroke', d3.color(color('count')).darker(0.2).toString())
+        .attr('stroke-width', 1)
+        .on('mouseover', function(event, d) {
+            // Highlight bar on hover
+            d3.select(this)
+                .attr('fill', d3.color(color('count')).brighter(0.2).toString());
+            
+            // Show tooltip
+            tooltip
+                .style('opacity', 1)
+                .html(`
+                    <div style="font-weight: bold;">${d.name}</div>
+                    <div>Contracts: ${d.count.toLocaleString()}</div>
+                    <div>Total Value: ${formatCurrency(d.totalValue)}</div>
+                    <div>Avg Value: ${formatCurrency(d.averageValue)}</div>
+                    <div>% of Contracts: ${d.percentage.toFixed(1)}%</div>
+                    <div>% of Value: ${d.valuePercentage.toFixed(1)}%</div>
+                `)
+                .style('left', `${event.pageX + 10}px`)
+                .style('top', `${event.pageY - 28}px`);
+        })
+        .on('mousemove', function(event) {
+            tooltip
+                .style('left', `${event.pageX + 10}px`)
+                .style('top', `${event.pageY - 28}px`);
+        })
+        .on('mouseout', function() {
+            // Reset bar color
+            d3.select(this)
+                .attr('fill', color('count'));
+            
+            // Hide tooltip
+            tooltip
+                .style('opacity', 0);
+        });
+    
+    // Create line for cumulative value percentage
+    const line = d3.line()
+        .x((d, i) => x(d.name) + x.bandwidth() / 2)
+        .y(d => y2(cumulativePercentage(tierData, i)));
+    
+    // Function to calculate cumulative percentage up to index i
+    function cumulativePercentage(data, i) {
+        let sum = 0;
+        for (let j = 0; j <= i; j++) {
+            sum += data[j].valuePercentage;
+        }
+        return sum;
+    }
+    
+    // Add the value percentage line
+    svg.append('path')
+        .datum(tierData)
+        .attr('fill', 'none')
+        .attr('stroke', color('valuePercentage'))
+        .attr('stroke-width', 2)
+        .attr('d', line);
+    
+    // Add dots to the line
+    svg.selectAll('.dot')
+        .data(tierData)
+        .enter()
+        .append('circle')
+        .attr('class', 'dot')
+        .attr('cx', (d, i) => x(d.name) + x.bandwidth() / 2)
+        .attr('cy', (d, i) => y2(cumulativePercentage(tierData, i)))
+        .attr('r', 4)
+        .attr('fill', color('valuePercentage'))
+        .attr('stroke', getCssVar('--color-surface'))
+        .attr('stroke-width', 2);
+    
+    // Add axis labels
+    svg.append('text')
+        .attr('transform', 'rotate(-90)')
+        .attr('y', -margin.left + 15)
+        .attr('x', -chartHeight / 2)
+        .attr('dy', '1em')
+        .style('text-anchor', 'middle')
+        .style('font-size', '12px')
+        .style('fill', getCssVar('--color-text-secondary'))
+        .text('Number of Contracts');
+    
+    svg.append('text')
+        .attr('transform', 'rotate(-90)')
+        .attr('y', chartWidth + margin.right - 15)
+        .attr('x', -chartHeight / 2)
+        .attr('dy', '1em')
+        .style('text-anchor', 'middle')
+        .style('font-size', '12px')
+        .style('fill', getCssVar('--color-text-secondary'))
+        .text('Cumulative % of Value');
+    
+    svg.append('text')
+        .attr('transform', `translate(${chartWidth / 2}, ${chartHeight + margin.bottom - 10})`)
+        .style('text-anchor', 'middle')
+        .style('font-size', '12px')
+        .style('fill', getCssVar('--color-text-secondary'))
+        .text('Contract Value Range');
+    
+    // Create legend
+    const legend = svg.append('g')
+        .attr('transform', `translate(${chartWidth - 180}, 0)`);
+    
+    // Bar legend
+    legend.append('rect')
+        .attr('x', 0)
+        .attr('y', 0)
+        .attr('width', 12)
+        .attr('height', 12)
+        .attr('fill', color('count'));
+    
+    legend.append('text')
+        .attr('x', 18)
+        .attr('y', 6)
+        .attr('dy', '0.35em')
+        .style('font-size', '11px')
+        .style('fill', getCssVar('--color-text-secondary'))
+        .text('Contract Count');
+    
+    // Line legend
+    legend.append('line')
+        .attr('x1', 0)
+        .attr('y1', 20)
+        .attr('x2', 12)
+        .attr('y2', 20)
+        .attr('stroke', color('valuePercentage'))
+        .attr('stroke-width', 2);
+    
+    legend.append('circle')
+        .attr('cx', 6)
+        .attr('cy', 20)
+        .attr('r', 3)
+        .attr('fill', color('valuePercentage'));
+    
+    legend.append('text')
+        .attr('x', 18)
+        .attr('y', 20)
+        .attr('dy', '0.35em')
+        .style('font-size', '11px')
+        .style('fill', getCssVar('--color-text-secondary'))
+        .text('Cumulative Value %');
+    
+    // Create tooltip
+    const tooltip = d3.select('body')
+        .append('div')
+        .attr('class', 'tooltip')
+        .style('position', 'absolute')
+        .style('background-color', getCssVar('--color-surface'))
+        .style('color', getCssVar('--color-text-primary'))
+        .style('padding', '10px')
+        .style('border-radius', getCssVar('--border-radius-sm'))
+        .style('border', `1px solid ${getCssVar('--color-border')}`)
+        .style('pointer-events', 'none')
+        .style('opacity', 0)
+        .style('z-index', 1000)
+        .style('font-size', '12px')
+        .style('box-shadow', getCssVar('--shadow-md'));
+    
+    // Add export button
+    const exportBtn = document.createElement('button');
+    exportBtn.className = 'button';
+    exportBtn.style.position = 'absolute';
+    exportBtn.style.top = '10px';
+    exportBtn.style.right = '10px';
+    exportBtn.style.zIndex = '5';
+    exportBtn.innerHTML = `
+        <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+        </svg>
+        Export
+    `;
+    
+    exportBtn.addEventListener('click', () => {
+        if (!tierData.length) return;
+        
+        const exportData = tierData.map(tier => ({
+            value_range: tier.name,
+            min_value: tier.min,
+            max_value: tier.max,
+            contract_count: tier.count,
+            total_value: tier.totalValue,
+            average_value: tier.averageValue,
+            percentage_of_contracts: tier.percentage,
+            percentage_of_value: tier.valuePercentage
+        }));
+        
+        exportToCSV(exportData, `contract-value-tiers.csv`);
+    });
+    
+    chartDiv.appendChild(exportBtn);
 }

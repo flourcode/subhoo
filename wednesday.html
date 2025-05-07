@@ -271,6 +271,27 @@
 </div>
         </main>
     </div>
+	<!-- Profile Modal Container (will be dynamically populated) -->
+<div id="contractor-profile-modal-container"></div>
+
+<!-- Tooltip Containers -->
+<div id="share-of-wallet-tooltip" class="tooltip" style="display: none;"></div>
+<div id="contract-value-tooltip" class="tooltip" style="display: none;"></div>
+
+<!-- Template for Preset View Filters (will replace existing filters) -->
+<template id="preset-filters-template">
+  <h2 style="font-size: 14px; margin: 12px 0 4px 0;">Quick Views</h2>
+  <select id="preset-view-selector" class="input-select" style="width: 100%;">
+    <option value="" disabled selected>Select a View</option>
+    <option value="all">All Data (No Filter)</option>
+    <option value="top-contractors">Top 10 Contractors</option>
+    <option value="expiring-soon">Contracts Expiring Soon</option>
+    <option value="high-value">High-Value Contracts (>$1M)</option>
+    <option value="small-business">Small Business Set-Asides</option>
+    <option value="advanced">Advanced Filtering</option>
+  </select>
+  <div id="current-view-status" style="font-size: 12px; color: var(--color-text-secondary); margin-top: 4px;">No filters applied</div>
+</template>
 
     <script src="wednesday.js" defer></script>
 		</div>
