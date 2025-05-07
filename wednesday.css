@@ -240,7 +240,7 @@ a:hover { color: var(--color-secondary); text-decoration: none; }
     grid-template-areas:
         "sankey sankey sankey naics-donut naics-donut"
 		"dendrogram dendrogram dendrogram tavtcv tavtcv "
-	    "map map  share-wallet share-wallet arr"
+	    "share-wallet share-wallet map map arr"
 		"leaders leaders leaders leaders leaders"
         "expiring expiring expiring expiring expiring";
     grid-template-rows: minmax(500px, auto) auto auto auto;
