@@ -5740,3 +5740,290 @@ function createLegendItem(selection, colorScale, config) {
             return `${label} (${d[config.percentageField].toFixed(1)}%)`;
         });
 }
+/**
+ * Color scale generator for donut charts
+ * @param {Array} data - Chart data 
+ * @param {Object} config - Chart configuration
+ * @return {Function} Color scale function
+ */
+function getDonutColorScale(data, config) {
+    const colorField = config.colorField || 'name';
+    
+    // Create domain from data
+    const domain = data.map(d => d[colorField]);
+    
+    // Get base colors from CSS
+    const primary = getCssVar('--chart-color-primary');
+    const secondary = getCssVar('--chart-color-secondary');
+    const tertiary = getCssVar('--chart-color-tertiary');
+    
+    // Create color variations
+    const colors = [
+        primary,
+        secondary,
+        tertiary,
+        d3.color(primary).darker(0.3).toString(),
+        d3.color(secondary).darker(0.3).toString(), 
+        d3.color(tertiary).brighter(0.3).toString(),
+        d3.color(primary).brighter(0.5).toString(),
+        d3.color(secondary).brighter(0.5).toString()
+    ];
+    
+    // Make sure we have enough colors
+    while (colors.length < domain.length) {
+        colors.push(d3.color(colors[colors.length % 3]).brighter(0.2 * Math.floor(colors.length / 3)).toString());
+    }
+    
+    // Create the scale
+    const colorScale = d3.scaleOrdinal()
+        .domain(domain)
+        .range(colors.slice(0, domain.length));
+    
+    // Return function that handles special cases
+    return function(value) {
+        // Special handling for "Other" category
+        const item = data.find(d => d[colorField] === value);
+        if (item && item.isOther) {
+            return getCssVar('--color-text-tertiary');
+        }
+        return colorScale(value);
+    };
+}
+
+/**
+ * Process data for NAICS distribution visualization
+ */
+function processNaicsDistributionData(model) {
+    if (!model || !model.contracts) {
+        return [];
+    }
+
+    const naicsAggregates = {};
+    
+    // Aggregate from prime contracts
+    Object.values(model.contracts).forEach(contract => {
+        if (contract.naicsCode && contract.value > 0) {
+            const code = contract.naicsCode;
+            const desc = contract.naicsDesc || "N/A";
+            
+            if (!naicsAggregates[code]) {
+                naicsAggregates[code] = { 
+                    code: code, 
+                    desc: desc, 
+                    name: code, // For color mapping
+                    value: 0 
+                };
+            }
+            naicsAggregates[code].value += contract.value;
+        }
+    });
+    
+    // Convert to array and sort
+    const sortedNaicsData = Object.values(naicsAggregates)
+        .sort((a, b) => b.value - a.value);
+    
+    // Calculate percentages
+    const totalValue = sortedNaicsData.reduce((sum, item) => sum + item.value, 0);
+    sortedNaicsData.forEach(item => {
+        item.percentage = totalValue > 0 ? (item.value / totalValue) * 100 : 0;
+    });
+    
+    return sortedNaicsData;
+}
+
+/**
+ * Process data for Share of Wallet chart
+ */
+function processShareOfWalletData(model) {
+    if (!model || !model.primes) {
+        return [];
+    }
+    
+    // Aggregate by prime
+    const primeValues = {};
+    let totalValue = 0;
+    
+    // Process from contracts
+    Object.values(model.contracts || {}).forEach(contract => {
+        if (!contract.primeId || !contract.value || contract.value <= 0) return;
+        
+        const prime = model.primes[contract.primeId];
+        if (!prime || !prime.name) return;
+        
+        const primeName = prime.name;
+        if (!primeValues[primeName]) {
+            primeValues[primeName] = 0;
+        }
+        
+        primeValues[primeName] += contract.value;
+        totalValue += contract.value;
+    });
+    
+    // Convert to array and sort
+    const sortedPrimes = Object.entries(primeValues)
+        .map(([name, value]) => ({
+            name: name,
+            value: value,
+            percentage: 0 // Calculate after
+        }))
+        .sort((a, b) => b.value - a.value);
+    
+    // Take top 7 primes
+    const result = sortedPrimes.slice(0, 7);
+    
+    // Add "Other" category if needed
+    if (sortedPrimes.length > 7) {
+        const otherValue = sortedPrimes.slice(7)
+            .reduce((sum, item) => sum + item.value, 0);
+        
+        if (otherValue > 0) {
+            result.push({
+                name: "Other",
+                value: otherValue,
+                isOther: true,
+                count: sortedPrimes.length - 7
+            });
+        }
+    }
+    
+    // Calculate percentages
+    result.forEach(item => {
+        item.percentage = totalValue > 0 ? (item.value / totalValue) * 100 : 0;
+    });
+    
+    return result;
+}
+
+/**
+ * Display NAICS Donut Chart
+ */
+function displayNaicsDonutChart(naicsData, containerId, topN = 5) {
+    if (!naicsData || naicsData.length === 0) {
+        displayNoData(containerId, 'No NAICS data available.');
+        return;
+    }
+    
+    try {
+        displayEnhancedDonutChart(naicsData, containerId, {
+            title: "Top NAICS",
+            centerValueField: "code",
+            labelField: "code",
+            descField: "desc",
+            topN: topN,
+            legendPosition: "none",
+            showExternalLabels: true,
+            minPercentageForLabel: 4
+        });
+        
+        console.log("NAICS donut chart displayed successfully");
+    } catch (error) {
+        console.error("Error displaying NAICS chart:", error);
+        displayError(containerId, `Failed to display chart: ${error.message}`);
+    }
+}
+
+/**
+ * Create and display Share of Wallet chart
+ */
+function displayShareOfWalletChart(model) {
+    // Ensure container exists
+    const containerId = 'share-of-wallet-container';
+    const bentoId = 'bento-share-of-wallet';
+    
+    let container = document.getElementById(containerId);
+    
+    // Create container if it doesn't exist
+    if (!container) {
+        console.log("Creating Share of Wallet container");
+        
+        // Find bento grid
+        const bentoGrid = document.querySelector('.bento-grid');
+        if (!bentoGrid) {
+            console.error("Could not find bento grid for Share of Wallet container");
+            return;
+        }
+        
+        // Check if bento box already exists
+        let bentoBox = document.getElementById(bentoId);
+        if (!bentoBox) {
+            bentoBox = document.createElement('div');
+            bentoBox.id = bentoId;
+            bentoBox.className = 'bento-box';
+            bentoBox.style.gridColumn = 'span 1';
+            bentoBox.style.gridRow = 'span 1';
+            bentoBox.style.minHeight = '240px';
+            
+            // Create header
+            const header = document.createElement('div');
+            header.className = 'bento-header';
+            header.innerHTML = '<h3>Market Share</h3>';
+            bentoBox.appendChild(header);
+            
+            // Add to grid
+            bentoGrid.appendChild(bentoBox);
+        }
+        
+        // Create chart container
+        container = document.createElement('div');
+        container.id = containerId;
+        container.style.width = '100%';
+        container.style.height = 'calc(100% - 40px)';
+        bentoBox.appendChild(container);
+    }
+    
+    // Set loading state
+    setLoading(containerId, true, 'Loading market share data...');
+    
+    try {
+        // Process data
+        const shareData = processShareOfWalletData(model);
+        
+        if (!shareData || shareData.length === 0) {
+            displayNoData(containerId, 'No market share data available.');
+            return;
+        }
+        
+        // Display chart
+        displayEnhancedDonutChart(shareData, containerId, {
+            title: "Market",
+            subtitle: "Share",
+            labelField: "name",
+            topN: 7,
+            legendPosition: "left",
+            showExternalLabels: false,
+            minPercentageForLabel: 5
+        });
+        
+        console.log("Share of Wallet chart displayed successfully");
+    } catch (error) {
+        console.error("Error displaying Share of Wallet chart:", error);
+        displayError(containerId, `Failed to display chart: ${error.message}`);
+    } finally {
+        setLoading(containerId, false);
+    }
+}
+
+// Hook into the dashboard update function
+const originalUpdateVisualsFromUnifiedModel = window.updateVisualsFromUnifiedModel;
+
+window.updateVisualsFromUnifiedModel = function(subAgencyFilter, naicsFilter, searchTerm) {
+    // Call the original function first
+    originalUpdateVisualsFromUnifiedModel.apply(this, arguments);
+    
+    // Add a slight delay to let other visualizations complete
+    setTimeout(() => {
+        try {
+            // Display Share of Wallet chart with the current model
+            displayShareOfWalletChart(unifiedModel);
+            
+            // Refresh NAICS chart if needed
+            const naicsContainer = document.getElementById('naics-donut-chart-container');
+            if (naicsContainer) {
+                const naicsData = processNaicsDistributionData(unifiedModel);
+                displayNaicsDonutChart(naicsData, 'naics-donut-chart-container');
+            }
+        } catch (e) {
+            console.error("Error updating additional charts:", e);
+        }
+    }, 300);
+};
