@@ -4061,7 +4061,7 @@ function displayForceDirectedRadial(model) {
             .attr("opacity", d => {
                 return d.type === 'agency' ? 1 :
                        d.type === 'subagency' ? 1 :
-                       d.type === 'prime' ? 0.9 : 0.7;
+                       d.type === 'prime' ? 0.9 : 0.9;
             })
             .text(d => {
                 if (d.type === 'root') return "";
@@ -4074,10 +4074,10 @@ function displayForceDirectedRadial(model) {
             })
             .attr("fill", getCssVar('--color-text-primary'))
             .attr("font-size", d => {
-                if (d.type === 'agency') return "12px";
-                if (d.type === 'subagency') return "12px";
-                if (d.type === 'prime') return "11px";
-                return "10px";
+                if (d.type === 'agency') return "11px";
+                if (d.type === 'subagency') return "11px";
+                if (d.type === 'prime') return "10px";
+                return "9px";
             })
             .attr("dy", "0.32em");
             
