@@ -1366,18 +1366,15 @@ function applyFiltersAndUpdateVisuals() {
 function initializeEnhancedFeatures() {
     console.log("Initializing enhanced UI features...");
     
-    // Initialize preset views to replace complex filtering
-    initializePresetViews();
+    try {
+        // Initialize preset views to replace complex filtering
+        initializePresetViews();
+        console.log("Preset views initialized");
+    } catch (e) {
+        console.error("Error initializing preset views:", e);
+    }
     
-    // Add export buttons to existing tables (these will be added when the tables are rendered)
-    
-    // Allow clicks on items to show profiles
-    // This is handled in the displayContractLeadersTable function we've already updated
-    
-    // Create initial bento boxes for new visualizations if needed
-    // (These will be created on-demand when the charts are rendered)
-    
-    console.log("Enhanced UI features initialized");
+    console.log("Enhanced UI features initialization complete");
 }
 function updateVisualsFromUnifiedModel(subAgencyFilter, naicsFilter, searchTerm) {
     // Apply filters to get filtered data
@@ -3883,7 +3880,13 @@ document.addEventListener('DOMContentLoaded', function() {
     // Setup all event listeners
     setupEventListeners();
     // Initialize our new enhanced features
-    initializeEnhancedFeatures();
+    setTimeout(() => {
+        try {
+            initializeEnhancedFeatures();
+        } catch (e) {
+            console.error("Error initializing enhanced features:", e);
+        }
+    }, 1000); 
     // Auto-load a dataset (SOCOM combined if possible)
     const socomPrimes = DATASETS.find(d => d.id === 'socom_primes');
     const socomSubs = DATASETS.find(d => d.id === 'socom');
@@ -6964,17 +6967,15 @@ function displayContractValueTiers(model, containerId = 'contract-value-tiers-co
     
     // Create line for cumulative value percentage
     const line = d3.line()
-        .x((d, i) => x(d.name) + x.bandwidth() / 2)
-        .y(d => y2(cumulativePercentage(tierData, i)));
-    
-    // Function to calculate cumulative percentage up to index i
-    function cumulativePercentage(data, i) {
-        let sum = 0;
-        for (let j = 0; j <= i; j++) {
-            sum += data[j].valuePercentage;
-        }
-        return sum;
-    }
+        .x(d => x(d.name) + x.bandwidth() / 2)
+        .y((d, i) => {
+            // Fix: Calculate cumulative percentage inside the function
+            let sum = 0;
+            for (let j = 0; j <= i; j++) {
+                sum += tierData[j].valuePercentage;
+            }
+            return y2(sum);
+        });
     
     // Add the value percentage line
     svg.append('path')
@@ -6984,19 +6985,26 @@ function displayContractValueTiers(model, containerId = 'contract-value-tiers-co
         .attr('stroke-width', 2)
         .attr('d', line);
     
-    // Add dots to the line
+    // Add dots to the line - fixed to not use external cumulativePercentage function
     svg.selectAll('.dot')
         .data(tierData)
         .enter()
         .append('circle')
         .attr('class', 'dot')
-        .attr('cx', (d, i) => x(d.name) + x.bandwidth() / 2)
-        .attr('cy', (d, i) => y2(cumulativePercentage(tierData, i)))
+        .attr('cx', d => x(d.name) + x.bandwidth() / 2)
+        .attr('cy', (d, i) => {
+            // Calculate cumulative percentage here instead
+            let sum = 0;
+            for (let j = 0; j <= i; j++) {
+                sum += tierData[j].valuePercentage;
+            }
+            return y2(sum);
+        })
         .attr('r', 4)
         .attr('fill', color('valuePercentage'))
         .attr('stroke', getCssVar('--color-surface'))
         .attr('stroke-width', 2);
-    
+		
     // Add axis labels
     svg.append('text')
         .attr('transform', 'rotate(-90)')
