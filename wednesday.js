@@ -5314,7 +5314,7 @@ if (typeof originalApplyFilters === 'function') {
 }
 /**
  * Enhanced donut chart function for both NAICS distribution and Share of Wallet visualizations
- * 
+ *
  * @param {Array} data - Array of objects with value and percentage properties
  * @param {string} containerId - The ID of the container element
  * @param {Object} options - Configuration options
@@ -5339,25 +5339,25 @@ function displayEnhancedDonutChart(data, containerId, options = {}) {
 
     // Merge defaults with provided options
     const config = { ...defaults, ...options };
-    
+
     // Get the container
     const container = document.getElementById(containerId);
-    
+
     if (!container) {
         console.error(`displayEnhancedDonutChart: Chart container element #${containerId} not found.`);
         return;
     }
-    
+
     // Clear previous content
     const d3Container = d3.select(`#${containerId}`);
     d3Container.html('');
-    
+
     // Basic data check
     if (!data || !Array.isArray(data) || data.length === 0) {
         displayNoData(containerId, "No data available for chart.");
         return;
     }
-    
+
     // Calculate percentages if not provided
     if (!data[0][config.percentageField]) {
         const totalValue = d3.sum(data, d => d[config.valueField] || 0);
@@ -5365,17 +5365,17 @@ function displayEnhancedDonutChart(data, containerId, options = {}) {
             d[config.percentageField] = totalValue > 0 ? (d[config.valueField] / totalValue) * 100 : 0;
         });
     }
-    
+
     // Prepare data: Top N + Other
     // First sort the data by value (descending)
     const sortedData = [...data].sort((a, b) => (b[config.valueField] || 0) - (a[config.valueField] || 0));
-    
+
     const topNData = sortedData.slice(0, config.topN);
     const otherValue = d3.sum(sortedData.slice(config.topN), d => d[config.valueField] || 0);
     const otherPercentage = d3.sum(sortedData.slice(config.topN), d => d[config.percentageField] || 0);
-    
+
     const chartPlotData = [...topNData];
-    
+
     // Add "Other" category if there are more items than topN
     if (otherValue > 0 && sortedData.length > config.topN) {
         const otherCount = sortedData.length - config.topN;
@@ -5392,27 +5392,27 @@ function displayEnhancedDonutChart(data, containerId, options = {}) {
         }
         chartPlotData.push(otherItem);
     }
-    
+
     // Get the item to display in the center text (usually the top one)
     const centerItem = sortedData[0];
-    
+
     if (!centerItem) {
         displayNoData(containerId, "Not enough data for chart.");
         return;
     }
-    
+
     // Chart setup
     // Get dimensions from the container element
     const rect = container.getBoundingClientRect();
     const availableWidth = rect.width;
     const availableHeight = rect.height;
-    
+
     if (availableWidth <= 10 || availableHeight <= 10) {
         console.warn(`Container #${containerId} has minimal/no dimensions. W: ${availableWidth}, H: ${availableHeight}. Chart not drawn.`);
         displayNoData(containerId, "Chart area too small.");
         return;
     }
-    
+
     // Define margins with adaptive sizing
     const showLabels = config.showExternalLabels && window.innerWidth > 768 && availableHeight > 200;
     const margin = {
@@ -5421,15 +5421,15 @@ function displayEnhancedDonutChart(data, containerId, options = {}) {
         bottom: showLabels ? 25 : 10,
         left: showLabels ? 25 : 10
     };
-    
+
     // Calculate actual drawing space and radius
     const drawingWidth = availableWidth - margin.left - margin.right;
     const drawingHeight = availableHeight - margin.top - margin.bottom;
-    
+
     // Adjust for legend space if legend is enabled
     let legendWidth = 0;
     let legendHeight = 0;
-    
+
     if (config.legendPosition !== "none") {
         if (config.legendPosition === "left" || config.legendPosition === "right") {
             legendWidth = Math.min(availableWidth * 0.3, 100); // 30% of width or 100px max
@@ -5437,27 +5437,27 @@ function displayEnhancedDonutChart(data, containerId, options = {}) {
             legendHeight = Math.min(availableHeight * 0.2, 80); // 20% of height or 80px max
         }
     }
-    
+
     // Final available space for the donut
     const donutWidth = drawingWidth - (config.legendPosition === "left" || config.legendPosition === "right" ? legendWidth : 0);
     const donutHeight = drawingHeight - (config.legendPosition === "bottom" ? legendHeight : 0);
-    
+
     // Calculate optimal radius
     const outerRadius = Math.min(donutWidth, donutHeight) / 2;
     const innerRadius = outerRadius * 0.6; // Donut hole size
-    
+
     if (outerRadius <= 10) {
         displayNoData(containerId, "Chart area too small for donut.");
         return;
     }
-    
+
     // Create SVG element
     const svg = d3Container.append("svg")
         .attr("width", "100%")
         .attr("height", "100%")
         .attr("viewBox", `0 0 ${availableWidth} ${availableHeight}`)
         .style("overflow", "visible"); // Allows labels to draw slightly outside
-    
+
     // Create a group for the donut, positioned in the center
     const donutG = svg.append("g")
         .attr("transform", `translate(${
@@ -5465,128 +5465,125 @@ function displayEnhancedDonutChart(data, containerId, options = {}) {
         }, ${
             margin.top + donutHeight/2
         })`);
-    
+
     // Generate colors
     const color = getDonutColorScale(chartPlotData, config);
-    
+
     // Create pie layout
     const pie = d3.pie()
         .padAngle(0.01) // Slight padding between slices
         .value(d => d[config.valueField])
         .sort(null); // Don't sort, preserve input order
-    
+
     // Create arc generators
     const arcGenerator = d3.arc()
         .innerRadius(innerRadius)
         .outerRadius(outerRadius);
-    
+
     // Arc for label positioning
     const labelArcStart = d3.arc()
         .innerRadius(outerRadius * 0.95)
         .outerRadius(outerRadius * 0.95);
-    
+
     // Arc for label line bending point
     const labelArcMid = d3.arc()
         .innerRadius(outerRadius * 1.1)
         .outerRadius(outerRadius * 1.1);
-    
+
     // Draw arcs
     const pieData = pie(chartPlotData);
 
-donutG.selectAll(".arc-path")
-    .data(pieData)
-    .join("path")
-    .attr("class", "arc-path")
-    // ... (other attributes like fill, d, stroke, etc.) ...
-    .style("cursor", "pointer")
-    .on("mouseover", function(event, d) {
-        // Highlight this arc
-        d3.select(this)
-            .transition()
-            .duration(200)
-            .attr("stroke", getCssVar('--color-primary'))
-            .style("stroke-width", "2px")
-            .attr("transform", "scale(1.03)");
+    donutG.selectAll(".arc-path")
+        .data(pieData)
+        .join("path")
+        .attr("class", "arc-path")
+        .attr("fill", (d, i) => color(d.data[config.colorField]))
+        .attr("d", arcGenerator)
+        .attr("stroke", getCssVar('--color-surface'))
+        .style("stroke-width", "1.5px")
+        .style("cursor", "pointer")
+        .on("mouseover", function(event, d) {
+            // Highlight this arc
+            d3.select(this)
+                .transition()
+                .duration(200)
+                .attr("stroke", getCssVar('--color-primary'))
+                .style("stroke-width", "2px")
+                .attr("transform", "scale(1.03)");
 
-        // == START MODIFICATION ==
-        // AGGRESSIVE CLEANUP: Remove any existing tooltips of this type first
-        d3.select("body").selectAll(".chart-tooltip").remove();
-        // == END MODIFICATION ==
+            // AGGRESSIVE CLEANUP: Remove any existing tooltips of this type first
+            d3.select("body").selectAll(".chart-tooltip").remove();
 
-        // Show tooltip (create a new one)
-        const tooltip = d3.select("body").append("div")
-            .attr("class", "chart-tooltip") // This class is targeted by the cleanup above
-            .style("position", "absolute")
-            .style("background-color", getCssVar('--color-surface'))
-            .style("color", getCssVar('--color-text-primary'))
-            .style("padding", "8px 12px")
-            .style("border-radius", "4px")
-            .style("font-size", "12px")
-            .style("pointer-events", "none") // Good, prevents tooltip from capturing mouse events
-            .style("opacity", 0) // Start invisible for fade-in
-            .style("box-shadow", getCssVar('--shadow-md'))
-            .style("border", `1px solid ${getCssVar('--color-border')}`)
-            .style("z-index", 1000);
+            // Show tooltip (create a new one)
+            const tooltip = d3.select("body").append("div")
+                .attr("class", "chart-tooltip") // This class is targeted by the cleanup above
+                .style("position", "absolute")
+                .style("background-color", getCssVar('--color-surface'))
+                .style("color", getCssVar('--color-text-primary'))
+                .style("padding", "8px 12px")
+                .style("border-radius", "4px")
+                .style("font-size", "12px")
+                .style("pointer-events", "none")
+                .style("opacity", 0) // Start invisible for fade-in
+                .style("box-shadow", getCssVar('--shadow-md'))
+                .style("border", `1px solid ${getCssVar('--color-border')}`)
+                .style("z-index", 1000);
 
-        tooltip.transition() // Fade in
-            .duration(200)
-            .style("opacity", 1);
+            tooltip.transition() // Fade in
+                .duration(200)
+                .style("opacity", 1);
 
-        const name = d.data[config.labelField];
-        const desc = d.data[config.descField] || "";
-        const value = formatCurrency(d.data[config.valueField]);
-        const percentage = d.data[config.percentageField].toFixed(1);
+            const name = d.data[config.labelField];
+            const desc = d.data[config.descField] || "";
+            const value = formatCurrency(d.data[config.valueField]);
+            const percentage = d.data[config.percentageField].toFixed(1);
 
-        tooltip.html(`
-            <div style="font-weight: bold; margin-bottom: 4px;">${name}</div>
-            ${desc ? `<div style="color: ${getCssVar('--color-text-secondary')}; margin-bottom: 4px;">${desc}</div>` : ""}
-            <div>Value: ${value}</div>
-            <div>Share: ${percentage}%</div>
-        `);
+            tooltip.html(`
+                <div style="font-weight: bold; margin-bottom: 4px;">${name}</div>
+                ${desc ? `<div style="color: ${getCssVar('--color-text-secondary')}; margin-bottom: 4px;">${desc}</div>` : ""}
+                <div>Value: ${value}</div>
+                <div>Share: ${percentage}%</div>
+            `);
 
-        // Position it
-        tooltip.style("left", (event.pageX + 10) + "px")
-               .style("top", (event.pageY - 28) + "px");
-    })
-    .on("mousemove", function(event) {
-        // Since we expect only one .chart-tooltip now due to the aggressive cleanup,
-        // this should reliably target the correct one.
-        d3.select("body").select(".chart-tooltip")
-            .style("left", (event.pageX + 10) + "px")
-            .style("top", (event.pageY - 28) + "px");
-    })
-    .on("mouseout", function() {
-        // Remove highlight
-        d3.select(this)
-            .transition()
-            .duration(200)
-            .attr("stroke", getCssVar('--color-surface'))
-            .style("stroke-width", "1.5px")
-            .attr("transform", "scale(1)");
+            // Position it
+            tooltip.style("left", (event.pageX + 10) + "px")
+                   .style("top", (event.pageY - 28) + "px");
+        })
+        .on("mousemove", function(event) {
+            d3.select("body").select(".chart-tooltip")
+                .style("left", (event.pageX + 10) + "px")
+                .style("top", (event.pageY - 28) + "px");
+        })
+        .on("mouseout", function() {
+            // Remove highlight
+            d3.select(this)
+                .transition()
+                .duration(200)
+                .attr("stroke", getCssVar('--color-surface'))
+                .style("stroke-width", "1.5px")
+                .attr("transform", "scale(1)");
 
-        // Remove the current tooltip
-        // This should now reliably target the single tooltip created on mouseover.
-        d3.select("body").select(".chart-tooltip")
-            .transition()
-            .duration(200)
-            .style("opacity", 0)
-            .remove();
-    });
+            // Remove the current tooltip
+            d3.select("body").select(".chart-tooltip")
+                .transition()
+                .duration(200)
+                .style("opacity", 0)
+                .remove();
+        });
 
-    
     // Add center text
     const centerText = donutG.append("text")
         .attr("text-anchor", "middle")
         .style("font-family", "var(--font-body, sans-serif)")
         .style("fill", getCssVar('--color-text-primary'));
-    
+
     centerText.append("tspan")
         .attr("x", 0)
         .attr("dy", "-0.6em")
         .style("font-size", "0.75em")
         .style("fill", getCssVar('--color-text-secondary'))
         .text(config.title);
-    
+
     if (config.subtitle) {
         centerText.append("tspan")
             .attr("x", 0)
@@ -5595,14 +5592,14 @@ donutG.selectAll(".arc-path")
             .style("fill", getCssVar('--color-text-tertiary'))
             .text(config.subtitle);
     }
-    
+
     centerText.append("tspan")
         .attr("x", 0)
         .attr("dy", config.subtitle ? "1.3em" : "1.5em")
         .style("font-size", "0.9em")
         .style("font-weight", "600")
         .text(centerItem[config.centerValueField] || "");
-    
+
     // Add external labels and lines (conditional)
     if (showLabels) {
         // Only show labels for slices that are large enough
@@ -5611,15 +5608,15 @@ donutG.selectAll(".arc-path")
             const percentage = (d.endAngle - d.startAngle) / (2 * Math.PI);
             return percentage >= labelThresholdPercentage && d.data[config.valueField] > 0;
         });
-        
+
         if (labelData.length > 0) {
             const lineGroup = donutG.append("g").attr("class", "label-lines");
             const textLabelGroup = donutG.append("g").attr("class", "text-labels");
-            
+
             const polylineStrokeColor = getCssVar('--color-text-tertiary');
             const labelTextColor = getCssVar('--color-text-secondary');
             const labelDescColor = getCssVar('--color-text-tertiary');
-            
+
             lineGroup.selectAll('polyline')
                 .data(labelData)
                 .join('polyline')
@@ -5629,40 +5626,39 @@ donutG.selectAll(".arc-path")
                 .attr('points', d => {
                     const posA = labelArcStart.centroid(d);
                     const posB = labelArcMid.centroid(d);
-                    const posC = [posB[0] * 1.1, posB[1]];
+                    const posC = [posB[0] * 1.1, posB[1]]; // Initialize posC before using midangle
                     const midangle = d.startAngle + (d.endAngle - d.startAngle) / 2;
-                    posC[0] = (outerRadius + margin.left/2.5) * (midangle < Math.PI ? 1 : -1);
+                    posC[0] = (outerRadius + margin.left/2.5) * (midangle < Math.PI ? 1 : -1); // Recalculate posC[0]
                     return [posA, posB, posC];
                 });
-            
+
             const textLabels = textLabelGroup.selectAll('text')
                 .data(labelData)
                 .join('text')
                 .style('font-family', "var(--font-body, sans-serif)")
                 .attr('dy', '0.35em')
                 .attr('transform', d => {
-                    const pos = [labelArcMid.centroid(d)[0] * 1.1, labelArcMid.centroid(d)[1]];
+                    const pos = [labelArcMid.centroid(d)[0] * 1.1, labelArcMid.centroid(d)[1]]; // Initialize pos before using midangle
                     const midangle = d.startAngle + (d.endAngle - d.startAngle) / 2;
-                    pos[0] = (outerRadius + margin.left/2.5 + 5) * (midangle < Math.PI ? 1 : -1);
+                    pos[0] = (outerRadius + margin.left/2.5 + 5) * (midangle < Math.PI ? 1 : -1); // Recalculate pos[0]
                     return `translate(${pos})`;
                 })
                 .style('text-anchor', d => (d.startAngle + (d.endAngle - d.startAngle) / 2 < Math.PI ? 'start' : 'end'));
-            
+
             textLabels.append('tspan')
                 .attr('x', 0)
                 .style('font-size', '11px')
                 .style('font-weight', '500')
                 .style('fill', labelTextColor)
                 .text(d => truncateText(d.data[config.labelField], 15));
-            
-            textLabels.filter(d => !d.data.isOther)
+
+            textLabels.filter(d => !d.data.isOther) // Only add this tspan if not "Other"
                 .append('tspan')
                 .attr('x', 0)
                 .attr('dy', '1.2em')
                 .style('font-size', '10px')
                 .style('fill', labelDescColor)
                 .text(d => {
-                    // If we have a description, show it, otherwise show the percentage
                     if (d.data[config.descField]) {
                         return truncateText(d.data[config.descField], 18);
                     } else {
@@ -5671,12 +5667,11 @@ donutG.selectAll(".arc-path")
                 });
         }
     }
-    
+
     // Add legend
     if (config.legendPosition !== "none") {
         let legendX, legendY, legendLayout = "vertical";
-        
-        // Position the legend based on configuration
+
         if (config.legendPosition === "left") {
             legendX = margin.left;
             legendY = margin.top;
@@ -5688,21 +5683,18 @@ donutG.selectAll(".arc-path")
             legendY = margin.top + donutHeight + 10;
             legendLayout = "horizontal";
         }
-        
+
         const legendGroup = svg.append("g")
             .attr("transform", `translate(${legendX}, ${legendY})`);
-        
-        // For horizontal layout, we'll create multiple rows if needed
+
         if (legendLayout === "horizontal") {
-            const itemsPerRow = Math.floor(donutWidth / 100); // Rough estimate
+            const itemsPerRow = Math.floor(donutWidth / 100);
             const rows = Math.ceil(chartPlotData.length / itemsPerRow);
-            
+
             for (let row = 0; row < rows; row++) {
                 const rowItems = chartPlotData.slice(row * itemsPerRow, (row + 1) * itemsPerRow);
-                
                 const rowGroup = legendGroup.append("g")
                     .attr("transform", `translate(0, ${row * 20})`);
-                
                 rowGroup.selectAll("g")
                     .data(rowItems)
                     .join("g")
@@ -5710,7 +5702,6 @@ donutG.selectAll(".arc-path")
                     .call(createLegendItem, color, config);
             }
         } else {
-            // Vertical layout is simpler
             legendGroup.selectAll("g")
                 .data(chartPlotData)
                 .join("g")
@@ -5718,15 +5709,13 @@ donutG.selectAll(".arc-path")
                 .call(createLegendItem, color, config);
         }
     }
-    
-    // Return the drawn chart data for potential further manipulation
+
     return {
         svg: svg,
         pieData: pieData,
         chartData: chartPlotData
     };
 }
-
 /**
  * Helper function to create a legend item
  */
