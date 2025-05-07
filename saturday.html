@@ -177,7 +177,24 @@
             <div id="choroplethMap" style="width: 100%; height: 100%;"></div>
         </div>
     </div>
-
+<div id="bento-dendrogram" class="bento-box col-span-2">
+    <div class="card-header">
+        <div class="card-icon-circle">
+            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M12 2a15 15 0 0 0 0 20"></path>
+                <path d="M2 12h20"></path>
+            </svg>
+        </div>
+        <h2>Prime-Sub Relationships</h2>
+    </div>
+    <div id="circular-dendrogram-container" class="chart-container">
+        <div class="loading-placeholder" style="display: none;">
+            <div class="spinner"></div>
+            <span>Loading relationship data...</span>
+        </div>
+    </div>
+</div>
     <!-- TAV vs TCV Chart -->
     <div id="bento-tavtcv" class="bento-box col-span-2">
         <div class="card-header">
