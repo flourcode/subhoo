@@ -132,9 +132,9 @@ h1, h2, h3, h4, h5, h6 {
   border: 1px solid var(--color-border);
   border-radius: var(--border-radius-md);  /* 8px */
   box-shadow: var(--shadow-lg);
-  margin: 32px;
-  height: calc(100vh - 64px);
-  max-height: calc(100vh - 64px);
+  margin: 16px;
+  height: calc(100vh - 32px);
+  max-height: calc(100vh - 32px);
   overflow: hidden;
   display: flex;
   flex-direction: column;
