@@ -3903,7 +3903,7 @@ function displayForceDirectedRadial(model) {
             return baseRadius;
         }
         
-        // Set up force simulation
+        // Set up force simulation with gentler forces
         const simulation = d3.forceSimulation()
             .force("link", d3.forceLink().id(d => d.id).distance(d => {
                 // Adjust distance based on node types
@@ -3912,12 +3912,12 @@ function displayForceDirectedRadial(model) {
                 if (d.source.type === 'agency' && d.target.type === 'prime') return 80;
                 if (d.source.type === 'prime' && d.target.type === 'sub') return 50;
                 return 80; // Default distance
-            }))
+            }).strength(0.3)) // Reduced link strength for more stability
             .force("charge", d3.forceManyBody().strength(d => {
-                // Stronger repulsion for bigger nodes 
-                return d.type === 'agency' ? -400 : 
-                       d.type === 'subagency' ? -300 :
-                       d.type === 'prime' ? -200 : -50;
+                // Gentler repulsion forces
+                return d.type === 'agency' ? -300 : 
+                       d.type === 'subagency' ? -200 :
+                       d.type === 'prime' ? -100 : -30;
             }))
             .force("center", d3.forceCenter(0, 0))
             .force("collide", d3.forceCollide(d => {
@@ -3928,17 +3928,17 @@ function displayForceDirectedRadial(model) {
                 
                 // Add padding for text
                 const textPadding = d.type !== 'sub' ? 
-                    Math.min(d.name.length * 3, 60) : 0;
+                    Math.min(d.name.length * 2.5, 50) : 0;
                     
                 return nodeRadius + textPadding;
-            }).strength(0.8))
+            }).strength(0.7))
             .force("radial", d3.forceRadial(d => {
                 // Adjust distance from center based on node type
                 if (d.type === 'agency') return 80;
                 if (d.type === 'subagency') return 160;
                 if (d.type === 'prime') return d.parent?.type === 'subagency' ? 240 : 180;
                 return 280; // Subcontractors
-            }, 0, 0).strength(1));
+            }, 0, 0).strength(0.3)); // Reduced radial strength
             
         // Convert hierarchical data to nodes and links for force layout
         const nodes = [];
@@ -4007,7 +4007,7 @@ function displayForceDirectedRadial(model) {
                 if (d.sourceType === 'prime') return getCssVar('--chart-color-secondary');
                 return getCssVar('--chart-color-tertiary');
             })
-            .attr("stroke-width", d => Math.max(0.5, Math.min(3, Math.sqrt(d.value) / 10000)))
+            .attr("stroke-width", d => Math.max(0.5, Math.min(2, Math.sqrt(d.value) / 12000)))
             .attr("stroke-opacity", 0.6);
             
         // Create node groups
@@ -4062,7 +4062,7 @@ function displayForceDirectedRadial(model) {
             })
             .attr("dy", "0.32em");
             
-        // Add hover interactions for highlighting
+        // Add simpler hover interactions - just highlight the node and its links
         node.on("mouseover", function(event, d) {
             // Highlight current node
             d3.select(this).select("circle")
@@ -4073,19 +4073,9 @@ function displayForceDirectedRadial(model) {
                 .attr("opacity", 1)
                 .attr("font-weight", "bold");
                 
-            // Highlight connected links and nodes
+            // Highlight connected links
             link.attr("stroke-opacity", l => 
-                (l.source.id === d.id || l.target.id === d.id) ? 1 : 0.1);
-                
-            node.filter(n => n.id !== d.id)
-                .attr("opacity", n => {
-                    // Check if this node is connected to the selected node
-                    const isConnected = links.some(l => 
-                        (l.source.id === d.id && l.target.id === n.id) || 
-                        (l.target.id === d.id && l.source.id === n.id));
-                    
-                    return isConnected ? 1 : 0.3;
-                });
+                (l.source.id === d.id || l.target.id === d.id) ? 1 : 0.2);
         })
         .on("mouseout", function() {
             // Reset highlights
@@ -4103,9 +4093,6 @@ function displayForceDirectedRadial(model) {
                 
             // Reset link opacity
             link.attr("stroke-opacity", 0.6);
-            
-            // Reset node opacity
-            node.attr("opacity", 1);
         });
             
         // Add tooltips with value information
@@ -4155,16 +4142,96 @@ function displayForceDirectedRadial(model) {
                 .text(`Filtered by: ${subAgencyFilter}`);
         }
             
-        // Add zoom behavior
+        // Add gentle zoom behavior
         const zoom = d3.zoom()
-            .scaleExtent([0.5, 3])
+            .scaleExtent([0.5, 2]) // Limit zoom range
             .on("zoom", (event) => {
                 g.attr("transform", event.transform);
             });
 
         svg.call(zoom);
+        
+        // Add a "home" button to reset the view
+        const resetButton = svg.append("g")
+            .attr("transform", `translate(${width - 40}, 40)`)
+            .attr("cursor", "pointer")
+            .on("click", function() {
+                // Reset the visualization
+                svg.transition().duration(750).call(
+                    zoom.transform,
+                    d3.zoomIdentity
+                );
+                // Reset any lost nodes and stabilize the simulation
+                resetSimulation();
+            });
             
-        // Set up simulation tick
+        resetButton.append("circle")
+            .attr("r", 12)
+            .attr("fill", getCssVar('--color-surface-container'))
+            .attr("stroke", getCssVar('--color-border'))
+            .attr("stroke-width", 1);
+            
+        resetButton.append("text")
+            .attr("text-anchor", "middle")
+            .attr("dy", "0.3em")
+            .attr("fill", getCssVar('--color-text-primary'))
+            .attr("font-size", "10px")
+            .text("⟳");
+            
+        resetButton.append("title")
+            .text("Reset View");
+        
+        // Helper function to reset the simulation when things go wrong
+        function resetSimulation() {
+            // Stop current simulation
+            simulation.stop();
+            
+            // Reinitialize node positions in a stable pattern
+            nodes.forEach(d => {
+                if (d.type === 'root') {
+                    d.x = 0;
+                    d.y = 0;
+                } else if (d.type === 'agency') {
+                    const angle = nodes.indexOf(d) * (2 * Math.PI / agencies.length);
+                    d.x = 80 * Math.cos(angle);
+                    d.y = 80 * Math.sin(angle);
+                } else if (d.type === 'subagency') {
+                    // Position relative to parent agency
+                    const parentIdx = nodes.findIndex(n => n.id === d.parent?.id);
+                    const angle = parentIdx * (2 * Math.PI / agencies.length);
+                    d.x = 160 * Math.cos(angle);
+                    d.y = 160 * Math.sin(angle);
+                } else if (d.type === 'prime') {
+                    const parentType = d.parent?.type;
+                    const parentIdx = nodes.findIndex(n => n.id === d.parent?.id);
+                    const angle = parentIdx * (2 * Math.PI / 12) + 
+                                  nodes.indexOf(d) * 0.2 * (Math.PI / 12);
+                    const radius = parentType === 'subagency' ? 240 : 180;
+                    d.x = radius * Math.cos(angle);
+                    d.y = radius * Math.sin(angle);
+                } else { // sub
+                    const parentIdx = nodes.findIndex(n => n.id === d.parent?.id);
+                    const angle = parentIdx * (2 * Math.PI / 20) + 
+                                  nodes.indexOf(d) * 0.3 * (Math.PI / 20);
+                    d.x = 280 * Math.cos(angle);
+                    d.y = 280 * Math.sin(angle);
+                }
+                
+                // Clear any fixed positions
+                d.fx = null;
+                d.fy = null;
+            });
+            
+            // Restart simulation with alpha target to warm it up
+            simulation.alpha(0.3).restart();
+            
+            // Run for a short time then cool it down
+            setTimeout(() => {
+                simulation.alphaTarget(0);
+            }, 2000);
+        }
+            
+        // Set up simulation tick - with boundary enforcement
         simulation
             .nodes(nodes)
             .on("tick", ticked);
@@ -4172,8 +4239,47 @@ function displayForceDirectedRadial(model) {
         simulation.force("link")
             .links(links);
             
+        // Keep track of whether simulation is stabilized
+        let isStabilized = false;
+        
+        // When simulation cools down enough, mark as stabilized
+        simulation.on("end", () => {
+            isStabilized = true;
+        });
+        
+        // Function to gently alpha heating
+        function reheatSimulation() {
+            // Only if it's already stabilized
+            if (isStabilized) {
+                simulation.alpha(0.1).restart();
+                setTimeout(() => {
+                    simulation.alphaTarget(0);
+                }, 1000);
+            }
+        }
+        
         // Functions for simulation
         function ticked() {
+            // Constrain nodes to prevent them from flying off-screen
+            const radius = Math.min(width, height) / 2 - 20;
+            
+            // Boundary enforcement for nodes
+            nodes.forEach(d => {
+                // Skip root node
+                if (d.type === 'root') return;
+                
+                // Calculate distance from center
+                const distanceFromCenter = Math.sqrt(d.x * d.x + d.y * d.y);
+                
+                // If node is too far from center, pull it back
+                if (distanceFromCenter > radius) {
+                    const scale = radius / distanceFromCenter;
+                    d.x = d.x * scale;
+                    d.y = d.y * scale;
+                }
+            });
+            
+            // Update links
             link
                 .attr("x1", d => d.source.x)
                 .attr("y1", d => d.source.y)
@@ -4187,7 +4293,15 @@ function displayForceDirectedRadial(model) {
                             'block' : 'none';
                 });
                 
-            node.attr("transform", d => `translate(${d.x},${d.y})`);
+            // Update nodes
+            node.attr("transform", d => {
+                // Safety check for NaN coordinates
+                if (isNaN(d.x) || isNaN(d.y)) {
+                    d.x = 0;
+                    d.y = 0;
+                }
+                return `translate(${d.x},${d.y})`;
+            });
             
             // Update text position based on node position relative to center
             node.select("text")
@@ -4205,29 +4319,74 @@ function displayForceDirectedRadial(model) {
                 .attr("text-anchor", d => d.x < 0 ? "end" : "start");
         }
         
+        // Modified drag functions with safety checks
         function dragstarted(event, d) {
-            if (!event.active) simulation.alphaTarget(0.3).restart();
-            d.fx = d.x;
-            d.fy = d.y;
-        }
-        
-        function dragged(event, d) {
+            if (!event.active) simulation.alphaTarget(0.1).restart(); // Gentle restart
+            isStabilized = false; // Mark as no longer stabilized
+            
+            // Fix the node position at the current pointer
             d.fx = event.x;
             d.fy = event.y;
         }
         
+        function dragged(event, d) {
+            // Constrain dragging within bounds
+            const radius = Math.min(width, height) / 2 - 30;
+            const distanceFromCenter = Math.sqrt(event.x * event.x + event.y * event.y);
+            
+            if (distanceFromCenter > radius) {
+                // Scale back to within bounds
+                const scale = radius / distanceFromCenter;
+                d.fx = event.x * scale;
+                d.fy = event.y * scale;
+            } else {
+                d.fx = event.x;
+                d.fy = event.y;
+            }
+        }
+        
         function dragended(event, d) {
-            if (!event.active) simulation.alphaTarget(0);
+            if (!event.active) {
+                simulation.alphaTarget(0); // Cool down
+            }
+            
+            // Release the fixed position - node will be governed by forces again
             d.fx = null;
             d.fy = null;
+            
+            // Check if any nodes are out of bounds and reset if needed
+            const anyOutOfBounds = nodes.some(node => {
+                const distance = Math.sqrt(node.x * node.x + node.y * node.y);
+                return distance > (Math.min(width, height) / 2) * 0.9;
+            });
+            
+            if (anyOutOfBounds) {
+                // Some nodes escaped - do a gentle reset
+                resetSimulation();
+            }
         }
+        
+        // Allow 1-2 seconds for initial stabilization
+        setTimeout(() => {
+            // Automatically cool down the simulation
+            simulation.alphaTarget(0);
+        }, 1500);
+        
+        // Create a double-click handler on the background to reset
+        svg.on("dblclick", function() {
+            // Reset zoom and stabilize the layout
+            svg.transition().duration(750).call(
+                zoom.transform,
+                d3.zoomIdentity
+            );
+            resetSimulation();
+        });
         
     } catch (error) {
         console.error("Error creating force-directed visualization:", error);
         displayError(containerId, `Failed to render visualization: ${error.message}`);
     }
 }
-
 // Helper function to create hierarchical data from unified model
 function createHierarchyData(model, subAgencyFilter) {
     // Create root node
