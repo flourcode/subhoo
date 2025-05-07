@@ -240,10 +240,10 @@ a:hover { color: var(--color-secondary); text-decoration: none; }
     grid-template-areas:
         "sankey sankey sankey share-wallet share-wallet"
 		"tavtcv tavtcv dendrogram dendrogram dendrogram"
-	    "naics-donut naics-donut map map arr"
+	    "map map naics-donut naics-donut arr"
 		"leaders leaders leaders leaders leaders"
         "expiring expiring expiring expiring expiring";
-    grid-template-rows: minmax(400px, auto) auto auto auto;
+    grid-template-rows: minmax(500px, auto) auto auto auto;
 }
 
 /* Add area assignment for Share of Wallet */
