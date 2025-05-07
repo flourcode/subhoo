@@ -239,7 +239,7 @@ a:hover { color: var(--color-secondary); text-decoration: none; }
     /* Updated layout with Share of Wallet */
     grid-template-areas:
         "sankey sankey sankey share-wallet share-wallet"
-		"tavtcv tavtcv dendrogram dendrogram dendrogram"
+		"dendrogram dendrogram dendrogram tavtcv tavtcv "
 	    "map map naics-donut naics-donut arr"
 		"leaders leaders leaders leaders leaders"
         "expiring expiring expiring expiring expiring";
