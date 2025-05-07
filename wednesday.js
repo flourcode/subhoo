@@ -4027,7 +4027,7 @@ function displayForceDirectedRadial(model) {
                 return getCssVar('--chart-color-tertiary');
             })
             .attr("stroke-width", d => Math.max(0.5, Math.min(2, Math.sqrt(d.value) / 12000)))
-            .attr("stroke-opacity", 0.6)
+            .attr("stroke-opacity", 0.9)
             .attr("stroke-dasharray", d => d.isDashed ? "3,3" : null); // Add dashed lines for prime-sub links
             
         // Create node groups
@@ -4122,12 +4122,12 @@ function displayForceDirectedRadial(model) {
                 .attr("opacity", d => {
                     return d.type === 'agency' ? 1 :
                            d.type === 'subagency' ? 1 :
-                           d.type === 'prime' ? 0.9 : 0.7;
+                           d.type === 'prime' ? 0.9 : 0.9;
                 })
                 .attr("font-weight", "normal");
                 
             // Reset link opacity
-            link.attr("stroke-opacity", 0.6);
+            link.attr("stroke-opacity", 0.9);
         });
             
         // Add tooltips with value information
