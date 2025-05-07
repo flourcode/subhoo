@@ -1382,10 +1382,8 @@ function updateVisualsFromUnifiedModel(subAgencyFilter, naicsFilter, searchTerm)
 
     // Choropleth Map
     const mapData = processMapDataFromModel(filteredModel);
-    displayChoroplethMap(mapData);
-    
-	displayForceDirectedRadial(filteredModel);
-    
+    // New: Circular Dendrogram
+    displayCircularDendrogram(filteredModel);
     // Calculate ARR
     calculateAverageARRFromModel(filteredModel);
 }
