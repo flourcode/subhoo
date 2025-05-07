@@ -4324,16 +4324,25 @@ function displayForceDirectedRadial(model) {
                 .text(`Filtered by: ${subAgencyFilter}`);
         }
             
-        // Add simple zoom behavior with constraints
-        const zoom = d3.zoom()
-            .scaleExtent([0.5, 2]) // Limit zoom range
-            .translateExtent([[-width, -height], [width*2, height*2]]) // Limit pan range
-            .on("zoom", (event) => {
-                g.attr("transform", event.transform);
-            });
+// Modify just the zoom behavior in your displayForceDirectedRadial function
+const zoom = d3.zoom()
+    .scaleExtent([0.5, 2]) // Limit zoom range
+    // Restrict how far the entire diagram can be panned
+    .translateExtent([[-width/3, -height/3], [width/3, height/3]])
+    .on("zoom", (event) => {
+        // This still allows zooming/panning, but within the limits set above
+        g.attr("transform", event.transform);
+    });
 
-        svg.call(zoom);
-            
+// Add the zoom behavior to the SVG with a double-click reset
+svg.call(zoom)
+   .on("dblclick.zoom", function() {
+       // Reset view on double-click
+       svg.transition().duration(750).call(
+           zoom.transform,
+           d3.zoomIdentity.translate(0, 0).scale(1)
+       );
+   });
         // Set up simulation tick with constraint
         simulation
             .nodes(nodes)
