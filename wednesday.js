@@ -5811,77 +5811,78 @@ function displayNaicsDonutChart(naicsData, containerId, topN = 5) {
         displayError(containerId, `Failed to display chart: ${error.message}`);
     }
 }
-
 /**
- * Create and display Share of Wallet chart
+ * Create and display Share of Wallet chart, styled similarly to the NAICS chart.
  */
 function displayShareOfWalletChart(model) {
-    // Ensure container exists
     const containerId = 'share-of-wallet-container';
     const bentoId = 'bento-share-of-wallet';
-    
     let container = document.getElementById(containerId);
-    
-    // Create container if it doesn't exist
+
+    // Create container and bento box if they don't exist
     if (!container) {
-        console.log("Creating Share of Wallet container");
-        
-        // Find bento grid
+        console.log("Creating Share of Wallet container and/or bento box");
         const bentoGrid = document.querySelector('.bento-grid');
         if (!bentoGrid) {
             console.error("Could not find bento grid for Share of Wallet container");
             return;
         }
-        
-        // Check if bento box already exists
+
         let bentoBox = document.getElementById(bentoId);
         if (!bentoBox) {
             bentoBox = document.createElement('div');
             bentoBox.id = bentoId;
             bentoBox.className = 'bento-box';
+            // Ensure CSS grid-area property controls the span, removed inline styles for column/row span
             bentoBox.style.minHeight = '240px';
-            
-            // Create header
+
             const header = document.createElement('div');
-            header.className = 'bento-header';
-            header.innerHTML = '<h3>Wallet Share</h3>';
+            // Use same header structure as other cards
+            header.className = 'card-header'; // Use standard card header class
+            header.innerHTML = `
+                <div class="card-icon-circle">
+                    <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21.21 15.89A10 10 0 1 1 8.11 2.99"></path>
+                        <path d="M22 12A10 10 0 0 0 12 2v10z"></path>
+                    </svg>
+                </div>
+                <h2>Market Share</h2>
+            `; // Use h2 like other cards
             bentoBox.appendChild(header);
-            
-            // Add to grid
             bentoGrid.appendChild(bentoBox);
         }
-        
-        // Create chart container
+
+        // Ensure the chart's inner container exists within the bento box
         container = document.createElement('div');
         container.id = containerId;
-        container.style.width = '100%';
-        container.style.height = 'calc(100% - 40px)';
+        container.className = 'chart-container'; // Use standard chart container class
+        // Remove fixed height calculation, let flexbox handle it if card-content structure is used
         bentoBox.appendChild(container);
     }
-    
-    // Set loading state
+
     setLoading(containerId, true, 'Loading market share data...');
-    
+
     try {
-        // Process data
         const shareData = processShareOfWalletData(model);
-        
         if (!shareData || shareData.length === 0) {
             displayNoData(containerId, 'No market share data available.');
             return;
         }
-        
-        // Display chart
+
+        // Display chart using updated options to match NAICS chart style
         displayEnhancedDonutChart(shareData, containerId, {
-            title: "Market",
-            subtitle: "Share",
-            labelField: "name",
-            topN: 7,
-            legendPosition: "left",
-            showExternalLabels: false,
-            minPercentageForLabel: 5
+            title: "Market",            // Main title in center
+            subtitle: "Share",          // Subtitle in center
+            labelField: "name",         // Use company 'name' for labels
+            descField: null,            // Don't show a second line in the label
+            centerValueField: "name",   // Show top company 'name' in the center
+            topN: 7,                    // Show top 7 companies + Other
+            legendPosition: "none",     // MODIFICATION: Remove legend
+            showExternalLabels: true,   // MODIFICATION: Show external labels with lines
+            minPercentageForLabel: 4,   // MODIFICATION: Same threshold as NAICS (adjust if needed)
+            radiusScaleFactor: 0.75     // MODIFICATION: Same scale factor as NAICS (adjust if needed)
         });
-        
+
         console.log("Share of Wallet chart displayed successfully");
     } catch (error) {
         console.error("Error displaying Share of Wallet chart:", error);
