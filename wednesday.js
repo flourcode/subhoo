@@ -5312,13 +5312,11 @@ if (typeof originalApplyFilters === 'function') {
     }
   };
 }
-
-
 /**
- * Enhanced donut chart function for both NAICS distribution and Share of Wallet visualizations
- *
+ * Enhanced donut chart function with consistent styling, better scaling, and proper label positioning
  * @param {Array} data - Array of objects with value and percentage properties
  * @param {string} containerId - The ID of the container element
+ * @param {number} topN - Number of top items to show individually (others grouped)
  * @param {Object} options - Configuration options
  */
 function displayEnhancedDonutChart(data, containerId, options = {}) {
@@ -5334,10 +5332,11 @@ function displayEnhancedDonutChart(data, containerId, options = {}) {
         valueField: "value",
         percentageField: "percentage",
         otherLabel: "Other",
-        legendPosition: "left",
+        legendPosition: "none", // Changed default to "none" to favor external labels
         showExternalLabels: true,
         minPercentageForLabel: 3,
-        radiusScaleFactor: 1.0 // New option for scaling radius (1.0 = 100%)
+        radiusScaleFactor: 0.85, // Scale factor for radius (increased from 0.75)
+        adaptiveRadius: true // Enables auto-scaling radius based on container size
     };
 
     const config = { ...defaults, ...options };
@@ -5392,9 +5391,10 @@ function displayEnhancedDonutChart(data, containerId, options = {}) {
         return;
     }
 
+    // Get container dimensions
     const rect = container.getBoundingClientRect();
-    const availableWidth = rect.width;
-    const availableHeight = rect.height;
+    const availableWidth = Math.max(rect.width, 200); // Ensure minimum width
+    const availableHeight = Math.max(rect.height, 200); // Ensure minimum height
 
     if (availableWidth <= 10 || availableHeight <= 10) {
         console.warn(`Container #${containerId} has minimal/no dimensions. W: ${availableWidth}, H: ${availableHeight}. Chart not drawn.`);
@@ -5402,61 +5402,74 @@ function displayEnhancedDonutChart(data, containerId, options = {}) {
         return;
     }
 
-    const showLabels = config.showExternalLabels && window.innerWidth > 768 && availableHeight > 200;
-    const marginValue = showLabels ? 35 : 10; // Use 35px margin if labels shown, else 10px
+    // Dynamically calculate margin based on container size
+    const marginFactor = Math.min(1, Math.max(0.5, availableWidth / 400));
+    const baseMargin = config.showExternalLabels ? 40 : 20;
     const margin = {
-        top: marginValue,
-        right: marginValue,
-        bottom: marginValue,
-        left: marginValue
+        top: baseMargin * marginFactor,
+        right: baseMargin * marginFactor,
+        bottom: baseMargin * marginFactor,
+        left: baseMargin * marginFactor
     };
 
     const drawingWidth = availableWidth - margin.left - margin.right;
     const drawingHeight = availableHeight - margin.top - margin.bottom;
-    let legendWidth = 0;
-    let legendHeight = 0;
+    
+    // Calculate donut dimensions
+    const donutWidth = drawingWidth;
+    const donutHeight = drawingHeight;
 
-    if (config.legendPosition !== "none") {
-        if (config.legendPosition === "left" || config.legendPosition === "right") {
-            legendWidth = Math.min(availableWidth * 0.3, 100);
-        } else if (config.legendPosition === "bottom") {
-            legendHeight = Math.min(availableHeight * 0.2, 80);
-        }
+    // Calculate optimal radius
+    let radiusScaleFactor = config.radiusScaleFactor;
+    if (config.adaptiveRadius) {
+        // Adapt radius based on container size and label presence
+        const containerRatio = Math.min(availableWidth, availableHeight) / 300;
+        radiusScaleFactor = Math.min(0.9, Math.max(0.6, config.radiusScaleFactor * containerRatio));
     }
 
-    const donutWidth = drawingWidth - (config.legendPosition === "left" || config.legendPosition === "right" ? legendWidth : 0);
-    const donutHeight = drawingHeight - (config.legendPosition === "bottom" ? legendHeight : 0);
-
-    // Apply radiusScaleFactor
     const baseOuterRadius = Math.min(donutWidth, donutHeight) / 2;
-    const outerRadius = baseOuterRadius * config.radiusScaleFactor; // Apply scale factor
+    const outerRadius = baseOuterRadius * radiusScaleFactor;
     const innerRadius = outerRadius * 0.6; // Keep hole proportional
 
-    if (outerRadius <= 10) {
+    if (outerRadius <= 15) {
         displayNoData(containerId, "Chart area too small for donut.");
         return;
     }
 
+    // Create SVG with proper sizing
     const svg = d3Container.append("svg")
         .attr("width", "100%")
         .attr("height", "100%")
         .attr("viewBox", `0 0 ${availableWidth} ${availableHeight}`)
-        .style("overflow", "visible");
+        .style("overflow", "visible"); // Allow labels to extend beyond container
 
+    // Center the donut
     const donutG = svg.append("g")
-        .attr("transform", `translate(${
-            margin.left + donutWidth/2 + (config.legendPosition === "right" ? 0 : config.legendPosition === "left" ? legendWidth : 0)
-        }, ${
-            margin.top + donutHeight/2
-        })`);
+        .attr("transform", `translate(${margin.left + donutWidth/2}, ${margin.top + donutHeight/2})`);
 
+    // Set up colors, pie layout, and arc generators
     const color = getDonutColorScale(chartPlotData, config);
-    const pie = d3.pie().padAngle(0.01).value(d => d[config.valueField]).sort(null);
-    const arcGenerator = d3.arc().innerRadius(innerRadius).outerRadius(outerRadius);
-    const labelArcStart = d3.arc().innerRadius(outerRadius * 0.98).outerRadius(outerRadius * 0.98);
-    const labelArcMid = d3.arc().innerRadius(outerRadius * 1.05).outerRadius(outerRadius * 1.05);
+    const pie = d3.pie()
+        .padAngle(0.01)
+        .value(d => d[config.valueField])
+        .sort(null);
+    
+    const arcGenerator = d3.arc()
+        .innerRadius(innerRadius)
+        .outerRadius(outerRadius)
+        .cornerRadius(1); // Slightly round the corners for a nicer look
+    
+    const labelArcStart = d3.arc()
+        .innerRadius(outerRadius * 0.98)
+        .outerRadius(outerRadius * 0.98);
+    
+    const labelArcMid = d3.arc()
+        .innerRadius(outerRadius * 1.10) // Increased from 1.05
+        .outerRadius(outerRadius * 1.10);
+    
     const pieData = pie(chartPlotData);
 
+    // Create arcs with hover effects
     donutG.selectAll(".arc-path")
         .data(pieData)
         .join("path")
@@ -5471,28 +5484,41 @@ function displayEnhancedDonutChart(data, containerId, options = {}) {
                 .attr("stroke", getCssVar('--color-primary'))
                 .style("stroke-width", "2px")
                 .attr("transform", "scale(1.03)");
-            d3.select("body").selectAll(".chart-tooltip").remove(); // Aggressive cleanup
+            
+            // Remove any existing tooltips
+            d3.select("body").selectAll(".chart-tooltip").remove();
+            
+            // Create tooltip
             const tooltip = d3.select("body").append("div")
                 .attr("class", "chart-tooltip")
                 .style("position", "absolute")
                 .style("background-color", getCssVar('--color-surface'))
                 .style("color", getCssVar('--color-text-primary'))
-                .style("padding", "8px 12px").style("border-radius", "4px")
-                .style("font-size", "12px").style("pointer-events", "none")
-                .style("opacity", 0).style("box-shadow", getCssVar('--shadow-md'))
+                .style("padding", "8px 12px")
+                .style("border-radius", "4px")
+                .style("font-size", "12px")
+                .style("pointer-events", "none")
+                .style("opacity", 0)
+                .style("box-shadow", getCssVar('--shadow-md'))
                 .style("border", `1px solid ${getCssVar('--color-border')}`)
                 .style("z-index", 1000);
+            
             tooltip.transition().duration(200).style("opacity", 1);
+            
+            // Format tooltip content
             const name = d.data[config.labelField];
             const desc = d.data[config.descField] || "";
             const value = formatCurrency(d.data[config.valueField]);
             const percentage = d.data[config.percentageField].toFixed(1);
+            
             tooltip.html(
                 `<div style="font-weight: bold; margin-bottom: 4px;">${name}</div>` +
                 `${desc ? `<div style="color: ${getCssVar('--color-text-secondary')}; margin-bottom: 4px;">${desc}</div>` : ""}` +
                 `<div>Value: ${value}</div><div>Share: ${percentage}%</div>`
             );
-            tooltip.style("left", (event.pageX + 10) + "px").style("top", (event.pageY - 28) + "px");
+            
+            tooltip.style("left", (event.pageX + 10) + "px")
+                   .style("top", (event.pageY - 28) + "px");
         })
         .on("mousemove", function(event) {
             d3.select("body").select(".chart-tooltip")
@@ -5504,26 +5530,44 @@ function displayEnhancedDonutChart(data, containerId, options = {}) {
                 .attr("stroke", getCssVar('--color-surface'))
                 .style("stroke-width", "1.5px")
                 .attr("transform", "scale(1)");
-            d3.select("body").select(".chart-tooltip").transition().duration(200).style("opacity", 0).remove();
+            d3.select("body").select(".chart-tooltip")
+                .transition().duration(200)
+                .style("opacity", 0)
+                .remove();
         });
 
+    // Add center text
     const centerText = donutG.append("text")
         .attr("text-anchor", "middle")
         .style("font-family", "var(--font-body, sans-serif)")
         .style("fill", getCssVar('--color-text-primary'));
-    centerText.append("tspan").attr("x", 0).attr("dy", "-0.6em")
-        .style("font-size", "0.75em").style("fill", getCssVar('--color-text-secondary'))
+    
+    centerText.append("tspan")
+        .attr("x", 0)
+        .attr("dy", "-0.6em")
+        .style("font-size", "0.75em")
+        .style("fill", getCssVar('--color-text-secondary'))
         .text(config.title);
+    
     if (config.subtitle) {
-        centerText.append("tspan").attr("x", 0).attr("dy", "1.1em")
-            .style("font-size", "0.7em").style("fill", getCssVar('--color-text-tertiary'))
+        centerText.append("tspan")
+            .attr("x", 0)
+            .attr("dy", "1.1em")
+            .style("font-size", "0.7em")
+            .style("fill", getCssVar('--color-text-tertiary'))
             .text(config.subtitle);
     }
-    centerText.append("tspan").attr("x", 0).attr("dy", config.subtitle ? "1.3em" : "1.5em")
-        .style("font-size", "0.9em").style("font-weight", "600")
+    
+    centerText.append("tspan")
+        .attr("x", 0)
+        .attr("dy", config.subtitle ? "1.3em" : "1.5em")
+        .style("font-size", "0.9em")
+        .style("font-weight", "600")
         .text(centerItem[config.centerValueField] || "");
 
-    if (showLabels) {
+    // Add external labels with lead lines
+    if (config.showExternalLabels) {
+        // Only show labels for segments that are large enough
         const labelThresholdPercentage = config.minPercentageForLabel / 100;
         const labelData = pieData.filter(d => {
             const percentage = (d.endAngle - d.startAngle) / (2 * Math.PI);
@@ -5531,28 +5575,41 @@ function displayEnhancedDonutChart(data, containerId, options = {}) {
         });
 
         if (labelData.length > 0) {
+            // Create lead lines group
             const lineGroup = donutG.append("g").attr("class", "label-lines");
+            
+            // Create text labels group
             const textLabelGroup = donutG.append("g").attr("class", "text-labels");
+            
+            // Set styling properties
             const polylineStrokeColor = getCssVar('--color-text-tertiary');
             const labelTextColor = getCssVar('--color-text-secondary');
             const labelDescColor = getCssVar('--color-text-tertiary');
-            const leaderLineHorizontalPartLength = 8;
+            
+            // Calculate dimensions for lead lines
+            const leaderLineHorizontalPartLength = Math.max(8, Math.min(15, outerRadius * 0.2));
             const textStartOffsetFromLeaderLine = 4;
 
+            // Add leader lines
             lineGroup.selectAll('polyline')
                 .data(labelData)
                 .join('polyline')
-                .attr('stroke', polylineStrokeColor).style('fill', 'none').attr('stroke-width', 1)
+                .attr('stroke', polylineStrokeColor)
+                .style('fill', 'none')
+                .attr('stroke-width', 1)
                 .attr('points', d => {
                     const posA = labelArcStart.centroid(d);
                     const posB = labelArcMid.centroid(d);
-                    const posC = [posB[0], posB[1]]; // Initialize posC with posB's coordinates
+                    const posC = [posB[0], posB[1]]; // Initialize posC with posB coordinates
                     const midangle = d.startAngle + (d.endAngle - d.startAngle) / 2;
-                    // Extend posC horizontally from the original posB x-coordinate, but ensure it's relative to outerRadius
-                    posC[0] = (outerRadius + leaderLineHorizontalPartLength) * (midangle < Math.PI ? 1 : -1);
+                    
+                    // Extend posC horizontally based on angle
+                    posC[0] = posB[0] + leaderLineHorizontalPartLength * (midangle < Math.PI ? 1 : -1);
+                    
                     return [posA, posB, posC];
                 });
 
+            // Add text labels
             const textLabels = textLabelGroup.selectAll('text')
                 .data(labelData)
                 .join('text')
@@ -5560,18 +5617,32 @@ function displayEnhancedDonutChart(data, containerId, options = {}) {
                 .attr('dy', '0.35em')
                 .attr('transform', d => {
                     const midangle = d.startAngle + (d.endAngle - d.startAngle) / 2;
-                    const xPos = (outerRadius + leaderLineHorizontalPartLength + textStartOffsetFromLeaderLine) * (midangle < Math.PI ? 1 : -1);
-                    const yPos = labelArcMid.centroid(d)[1]; // y-position aligned with the polyline's elbow
+                    const labelRadius = outerRadius * 1.1;
+                    const posB = labelArcMid.centroid(d);
+                    const xPos = posB[0] + (leaderLineHorizontalPartLength + textStartOffsetFromLeaderLine) * (midangle < Math.PI ? 1 : -1);
+                    const yPos = posB[1];
                     return `translate(${xPos},${yPos})`;
                 })
-                .style('text-anchor', d => (d.startAngle + (d.endAngle - d.startAngle) / 2 < Math.PI ? 'start' : 'end'));
+                .style('text-anchor', d => {
+                    const midangle = d.startAngle + (d.endAngle - d.startAngle) / 2;
+                    return midangle < Math.PI ? 'start' : 'end';
+                });
 
-            textLabels.append('tspan').attr('x', 0)
-                .style('font-size', '11px').style('font-weight', '500').style('fill', labelTextColor)
+            // Add primary label text
+            textLabels.append('tspan')
+                .attr('x', 0)
+                .style('font-size', '11px')
+                .style('font-weight', '500')
+                .style('fill', labelTextColor)
                 .text(d => truncateText(d.data[config.labelField], 15));
+            
+            // Add secondary label text (description or percentage)
             textLabels.filter(d => !d.data.isOther)
-                .append('tspan').attr('x', 0).attr('dy', '1.2em')
-                .style('font-size', '10px').style('fill', labelDescColor)
+                .append('tspan')
+                .attr('x', 0)
+                .attr('dy', '1.2em')
+                .style('font-size', '10px')
+                .style('fill', labelDescColor)
                 .text(d => {
                     if (d.data[config.descField]) {
                         return truncateText(d.data[config.descField], 18);
@@ -5582,54 +5653,9 @@ function displayEnhancedDonutChart(data, containerId, options = {}) {
         }
     }
 
-    if (config.legendPosition !== "none") {
-        let legendX, legendY, legendLayout = "vertical";
-        if (config.legendPosition === "left") {
-            legendX = margin.left; legendY = margin.top;
-        } else if (config.legendPosition === "right") {
-            legendX = margin.left + donutWidth + 10; legendY = margin.top;
-        } else if (config.legendPosition === "bottom") {
-            legendX = margin.left; legendY = margin.top + donutHeight + 10; legendLayout = "horizontal";
-        }
-        const legendGroup = svg.append("g").attr("transform", `translate(${legendX}, ${legendY})`);
-        if (legendLayout === "horizontal") {
-            const itemsPerRow = Math.floor(donutWidth / 100); // Approximate items per row
-            const rows = Math.ceil(chartPlotData.length / itemsPerRow);
-            for (let row = 0; row < rows; row++) {
-                const rowItems = chartPlotData.slice(row * itemsPerRow, (row + 1) * itemsPerRow);
-                const rowGroup = legendGroup.append("g").attr("transform", `translate(0, ${row * 20})`);
-                rowGroup.selectAll("g").data(rowItems).join("g")
-                    .attr("transform", (d, i) => `translate(${i * 100}, 0)`) // Adjust spacing as needed
-                    .call(createLegendItem, color, config);
-            }
-        } else { // Vertical layout
-            legendGroup.selectAll("g").data(chartPlotData).join("g")
-                .attr("transform", (d, i) => `translate(0, ${i * 20})`)
-                .call(createLegendItem, color, config);
-        }
-    }
-
     return { svg: svg, pieData: pieData, chartData: chartPlotData };
 }
-function createLegendItem(selection, colorScale, config) {
-    // Add color squares
-    selection.append("rect")
-        .attr("width", 12)
-        .attr("height", 12)
-        .attr("fill", d => colorScale(d[config.colorField]));
-    
-    // Add legend text
-    selection.append("text")
-        .attr("x", 18)
-        .attr("y", 9)
-        .attr("dy", "0.1em")
-        .style("font-size", "11px")
-        .style("fill", getCssVar('--color-text-secondary'))
-        .text(d => {
-            const label = truncateText(d[config.labelField], 20);
-            return `${label} (${d[config.percentageField].toFixed(1)}%)`;
-        });
-}
+
 /**
  * Color scale generator for donut charts
  * @param {Array} data - Chart data 
@@ -5802,7 +5828,8 @@ function displayNaicsDonutChart(naicsData, containerId, topN = 5) {
             topN: topN,
             legendPosition: "none",
             showExternalLabels: true,
-            minPercentageForLabel: 4
+            minPercentageForLabel: 4,
+            adaptiveRadius: true // Enable auto-scaling to container
         });
         
         console.log("NAICS donut chart displayed successfully");
@@ -5811,8 +5838,9 @@ function displayNaicsDonutChart(naicsData, containerId, topN = 5) {
         displayError(containerId, `Failed to display chart: ${error.message}`);
     }
 }
+
 /**
- * Create and display Share of Wallet chart, styled similarly to the NAICS chart.
+ * Display Share of Wallet chart
  */
 function displayShareOfWalletChart(model) {
     const containerId = 'share-of-wallet-container';
@@ -5833,12 +5861,10 @@ function displayShareOfWalletChart(model) {
             bentoBox = document.createElement('div');
             bentoBox.id = bentoId;
             bentoBox.className = 'bento-box';
-            // Ensure CSS grid-area property controls the span, removed inline styles for column/row span
             bentoBox.style.minHeight = '240px';
 
             const header = document.createElement('div');
-            // Use same header structure as other cards
-            header.className = 'card-header'; // Use standard card header class
+            header.className = 'card-header';
             header.innerHTML = `
                 <div class="card-icon-circle">
                     <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
@@ -5847,16 +5873,16 @@ function displayShareOfWalletChart(model) {
                     </svg>
                 </div>
                 <h2>Market Share</h2>
-            `; // Use h2 like other cards
+            `;
             bentoBox.appendChild(header);
             bentoGrid.appendChild(bentoBox);
         }
 
-        // Ensure the chart's inner container exists within the bento box
+        // Create chart container
         container = document.createElement('div');
         container.id = containerId;
-        container.className = 'chart-container'; // Use standard chart container class
-        // Remove fixed height calculation, let flexbox handle it if card-content structure is used
+        container.className = 'chart-container';
+        container.style.height = '220px'; // Set explicit height
         bentoBox.appendChild(container);
     }
 
@@ -5869,18 +5895,33 @@ function displayShareOfWalletChart(model) {
             return;
         }
 
-        // Display chart using updated options to match NAICS chart style
+        // Format contractor names to be more concise if needed
+        shareData.forEach(item => {
+            if (item.name && item.name.length > 20 && !item.isOther) {
+                // Store original name
+                item.fullName = item.name;
+                // Create shortened version
+                const parts = item.name.split(' ');
+                if (parts.length > 2) {
+                    item.name = parts[0] + ' ' + parts[1];
+                } else {
+                    item.name = item.name.substring(0, 18) + '...';
+                }
+            }
+        });
+
+        // Display chart using options to match NAICS chart style
         displayEnhancedDonutChart(shareData, containerId, {
-            title: "Market",            // Main title in center
-            subtitle: "Share",          // Subtitle in center
-            labelField: "name",         // Use company 'name' for labels
-            descField: null,            // Don't show a second line in the label
-            centerValueField: "name",   // Show top company 'name' in the center
-            topN: 7,                    // Show top 7 companies + Other
-            legendPosition: "none",     // MODIFICATION: Remove legend
-            showExternalLabels: true,   // MODIFICATION: Show external labels with lines
-            minPercentageForLabel: 4,   // MODIFICATION: Same threshold as NAICS (adjust if needed)
-            radiusScaleFactor: 0.75     // MODIFICATION: Same scale factor as NAICS (adjust if needed)
+            title: "Market",
+            subtitle: "Share",
+            labelField: "name",
+            descField: null,
+            centerValueField: "name",
+            topN: 7,
+            legendPosition: "none",
+            showExternalLabels: true,
+            minPercentageForLabel: 4,
+            adaptiveRadius: true // Enable adaptive sizing for container
         });
 
         console.log("Share of Wallet chart displayed successfully");
@@ -5892,27 +5933,33 @@ function displayShareOfWalletChart(model) {
     }
 }
 
-// Hook into the dashboard update function
-const originalUpdateVisualsFromUnifiedModel = window.updateVisualsFromUnifiedModel;
+// Hook into window update functions - patching existing code
+window.displayNaicsDonutChart = displayNaicsDonutChart;
+window.displayShareOfWalletChart = displayShareOfWalletChart;
+window.displayEnhancedDonutChart = displayEnhancedDonutChart;
 
-window.updateVisualsFromUnifiedModel = function(subAgencyFilter, naicsFilter, searchTerm) {
-    // Call the original function first
-    originalUpdateVisualsFromUnifiedModel.apply(this, arguments);
-    
-    // Add a slight delay to let other visualizations complete
-    setTimeout(() => {
-        try {
-            // Display Share of Wallet chart with the current model
-            displayShareOfWalletChart(unifiedModel);
-            
-            // Refresh NAICS chart if needed
-            const naicsContainer = document.getElementById('naics-donut-chart-container');
-            if (naicsContainer) {
-                const naicsData = processNaicsDistributionData(unifiedModel);
-                displayNaicsDonutChart(naicsData, 'naics-donut-chart-container');
+// Override the updateVisualsFromUnifiedModel function if it exists
+const originalUpdateVisualsFromUnifiedModel = window.updateVisualsFromUnifiedModel;
+if (originalUpdateVisualsFromUnifiedModel) {
+    window.updateVisualsFromUnifiedModel = function(subAgencyFilter, naicsFilter, searchTerm) {
+        // Call the original function first
+        originalUpdateVisualsFromUnifiedModel.apply(this, arguments);
+        
+        // Add a slight delay to let other visualizations complete
+        setTimeout(() => {
+            try {
+                // Display Share of Wallet chart with the current model
+                displayShareOfWalletChart(unifiedModel);
+                
+                // Refresh NAICS chart if needed
+                const naicsContainer = document.getElementById('naics-donut-chart-container');
+                if (naicsContainer) {
+                    const naicsData = processNaicsDistributionData(unifiedModel);
+                    displayNaicsDonutChart(naicsData, 'naics-donut-chart-container');
+                }
+            } catch (e) {
+                console.error("Error updating additional charts:", e);
             }
-        } catch (e) {
-            console.error("Error updating additional charts:", e);
-        }
-    }, 300);
-};
+        }, 300);
+    };
+}
