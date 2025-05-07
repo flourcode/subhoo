@@ -235,15 +235,15 @@ a:hover { color: var(--color-secondary); text-decoration: none; }
 .bento-grid {
     display: grid;
     gap: var(--bento-gap);
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(5, 1fr);
     /* Updated layout with Share of Wallet */
     grid-template-areas:
-        "sankey sankey sankey naics-donut"
-		"dendrogram dendrogram tavtcv tavtcv "
-	    "share-wallet share-wallet map arr"
-		"leaders leaders leaders leaders"
-        "expiring expiring expiring expiring";
-    grid-template-rows: minmax(500px, auto) auto auto auto;
+        "sankey sankey sankey naics-donut naics-donut"
+		"share-wallet share-wallet dendrogram dendrogram dendrogram "
+	    "tavtcv tavtcv map map arr"
+		"leaders leaders leaders leaders leaders"
+        "expiring expiring expiring expiring expiring";
+    grid-template-rows: minmax(400px, auto) auto auto auto;
 }
 
 /* Add area assignment for Share of Wallet */
