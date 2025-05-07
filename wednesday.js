@@ -5310,1344 +5310,111 @@ if (typeof originalApplyFilters === 'function') {
     }
   };
 }
-
 /**
- * Helper function to create a legend item
+ * Color scale generator for donut charts
+ * @param {Array} data - Chart data 
+ * @param {Object} config - Chart configuration
+ * @return {Function} Color scale function
  */
-function createLegendItem(selection, colorScale, config) {
-    // Add color squares
-    selection.append("rect")
-        .attr("width", 12)
-        .attr("height", 12)
-        .attr("fill", d => colorScale(d[config.colorField]));
+function getDonutColorScale(data, config) {
+    const colorField = config.colorField || 'name';
     
-    // Add legend text
-    selection.append("text")
-        .attr("x", 18)
-        .attr("y", 9)
-        .attr("dy", "0.1em")
-        .style("font-size", "11px")
-        .style("fill", getCssVar('--color-text-secondary'))
-        .text(d => {
-            const label = truncateText(d[config.labelField], 20);
-            return `${label} (${d[config.percentageField].toFixed(1)}%)`;
-        });
+    // Create domain from data
+    const domain = data.map(d => d[colorField]);
+    
+    // Get base colors from CSS
+    const primary = getCssVar('--chart-color-primary');
+    const secondary = getCssVar('--chart-color-secondary');
+    const tertiary = getCssVar('--chart-color-tertiary');
+    
+    // Create color variations
+    const colors = [
+        primary,
+        secondary,
+        tertiary,
+        d3.color(primary).darker(0.3).toString(),
+        d3.color(secondary).darker(0.3).toString(), 
+        d3.color(tertiary).brighter(0.3).toString(),
+        d3.color(primary).brighter(0.5).toString(),
+        d3.color(secondary).brighter(0.5).toString()
+    ];
+    
+    // Make sure we have enough colors
+    while (colors.length < domain.length) {
+        colors.push(d3.color(colors[colors.length % 3]).brighter(0.2 * Math.floor(colors.length / 3)).toString());
+    }
+    
+    // Create the scale
+    const colorScale = d3.scaleOrdinal()
+        .domain(domain)
+        .range(colors.slice(0, domain.length));
+    
+    // Return function that handles special cases
+    return function(value) {
+        // Special handling for "Other" category
+        const item = data.find(d => d[colorField] === value);
+        if (item && item.isOther) {
+            return getCssVar('--color-text-tertiary');
+        }
+        return colorScale(value);
+    };
 }
 
+/**
+ * Process data for NAICS distribution visualization
+ */
 function processNaicsDistributionData(model) {
     if (!model || !model.contracts) {
         return [];
     }
 
     const naicsAggregates = {};
-
+    
     // Aggregate from prime contracts
     Object.values(model.contracts).forEach(contract => {
         if (contract.naicsCode && contract.value > 0) {
             const code = contract.naicsCode;
-            const desc = contract.naicsDesc || "N/A"; // Fallback for description
+            const desc = contract.naicsDesc || "N/A";
+            
             if (!naicsAggregates[code]) {
-                naicsAggregates[code] = { code: code, desc: desc, value: 0 };
+                naicsAggregates[code] = { 
+                    code: code, 
+                    desc: desc, 
+                    name: code, // For color mapping
+                    value: 0 
+                };
             }
             naicsAggregates[code].value += contract.value;
         }
     });
-
-    // OPTIONAL: Aggregate from subcontracts if their NAICS data is distinct or relevant
-    // Object.values(model.subcontracts).forEach(subcontract => {
-    //     if (subcontract.naicsCode && subcontract.value > 0) {
-    //         const code = subcontract.naicsCode;
-    //         const desc = subcontract.naicsDesc || "N/A";
-    //         if (!naicsAggregates[code]) {
-    //             naicsAggregates[code] = { code: code, desc: desc, value: 0 };
-    //         }
-    //         // Be careful here: do you want to add sub_value to the same NAICS code?
-    //         // Or treat prime_naics and sub_naics separately?
-    //         // For this example, I'm assuming we add to the same NAICS bucket.
-    //         naicsAggregates[code].value += subcontract.value;
-    //     }
-    // });
-
+    
     // Convert to array and sort
     const sortedNaicsData = Object.values(naicsAggregates)
         .sort((a, b) => b.value - a.value);
-
+    
+    // Calculate percentages
+    const totalValue = sortedNaicsData.reduce((sum, item) => sum + item.value, 0);
+    sortedNaicsData.forEach(item => {
+        item.percentage = totalValue > 0 ? (item.value / totalValue) * 100 : 0;
+    });
+    
     return sortedNaicsData;
 }
-// (Add this function if you don't have a similar one for ordinal colors)
-function getThemeOrdinalChartColors(count = 6) {
-    const baseColors = [
-        getCssVar('--chart-color-primary'),
-        getCssVar('--chart-color-secondary'),
-        getCssVar('--chart-color-tertiary'),
-        // Add more base colors from your theme if available, or generate variants
-        d3.color(getCssVar('--chart-color-primary')).darker(0.5).toString(),
-        d3.color(getCssVar('--chart-color-secondary')).darker(0.5).toString(),
-        d3.color(getCssVar('--chart-color-tertiary')).brighter(0.5).toString(),
-        d3.color(getCssVar('--chart-color-primary')).brighter(0.7).toString(),
-        d3.color(getCssVar('--chart-color-secondary')).brighter(0.7).toString()
-    ];
-    // Ensure we have enough colors by cycling/repeating if count is larger
-    const colors = [];
-    for (let i = 0; i < count; i++) {
-        colors.push(baseColors[i % baseColors.length]);
-    }
-    return d3.scaleOrdinal(colors);
-}
 
-// Global variable to store current contractor profile data
-let currentContractorProfileData = null;
-
-
-// Function to get contractor profile data
-function getContractorProfile(primeId, model) {
-    const prime = model.primes[primeId];
-    if (!prime) return null;
-    
-    // Basic information
-    const profile = {
-        id: primeId,
-        name: prime.name,
-        totalValue: prime.value || 0,
-        contractCount: prime.contracts ? prime.contracts.size : 0,
-        subContractorCount: prime.subcontractors ? prime.subcontractors.size : 0,
-        contracts: [],
-        topSubcontractors: [],
-        topNaicsCodes: []
-    };
-    
-    // Get contracts for this prime
-    if (prime.contracts) {
-        const contractsArray = [];
-        prime.contracts.forEach(contractId => {
-            const contract = model.contracts[contractId];
-            if (contract) {
-                contractsArray.push({
-                    id: contract.id,
-                    value: contract.value,
-                    description: contract.description || "No description",
-                    naicsCode: contract.naicsCode,
-                    naicsDesc: contract.naicsDesc,
-                    startDate: contract.startDate,
-                    endDate: contract.endDate,
-                    durationDays: contract.startDate && contract.endDate ? 
-                        calculateDurationDays(contract.startDate, contract.endDate) : 0,
-                    agency: model.agencies[contract.agencyId]?.name || "Unknown Agency",
-                    subAgency: model.subAgencies[contract.subAgencyId]?.name || "Unknown Sub-Agency"
-                });
-            }
-        });
-        
-        // Sort contracts by value (descending)
-        profile.contracts = contractsArray.sort((a, b) => b.value - a.value);
-    }
-    
-    // Get top subcontractors used by this prime
-    if (prime.subcontractors) {
-        const subValues = {};
-        
-        // Find relationships for this prime
-        model.relationships.primeToSub.forEach(rel => {
-            if (rel.source === primeId) {
-                const subId = rel.target;
-                const sub = model.subs[subId];
-                if (sub) {
-                    if (!subValues[subId]) {
-                        subValues[subId] = {
-                            id: subId,
-                            name: sub.name,
-                            value: 0,
-                            contractCount: 0
-                        };
-                    }
-                    subValues[subId].value += rel.value;
-                    subValues[subId].contractCount++;
-                }
-            }
-        });
-        
-        // Convert to array and sort by value
-        profile.topSubcontractors = Object.values(subValues)
-            .sort((a, b) => b.value - a.value)
-            .slice(0, 10); // Top 10 subs
-    }
-    
-    // Analyze NAICS codes for this prime
-    const naicsCounts = {};
-    const naicsValues = {};
-    
-    profile.contracts.forEach(contract => {
-        if (contract.naicsCode) {
-            if (!naicsCounts[contract.naicsCode]) {
-                naicsCounts[contract.naicsCode] = 0;
-                naicsValues[contract.naicsCode] = 0;
-            }
-            naicsCounts[contract.naicsCode]++;
-            naicsValues[contract.naicsCode] += contract.value;
-        }
-    });
-    
-    // Convert to array and sort by value
-    const naicsArray = Object.keys(naicsCounts).map(code => ({
-        code: code,
-        description: profile.contracts.find(c => c.naicsCode === code)?.naicsDesc || "Unknown",
-        count: naicsCounts[code],
-        value: naicsValues[code]
-    }));
-    
-    profile.topNaicsCodes = naicsArray.sort((a, b) => b.value - a.value).slice(0, 5); // Top 5 NAICS
-    
-    // Calculate average contract duration
-    let totalDuration = 0;
-    let contractsWithDuration = 0;
-    
-    profile.contracts.forEach(contract => {
-        if (contract.durationDays > 0) {
-            totalDuration += contract.durationDays;
-            contractsWithDuration++;
-        }
-    });
-    
-    profile.avgDurationDays = contractsWithDuration > 0 ? 
-        Math.round(totalDuration / contractsWithDuration) : 0;
-        
-    // Calculate average contract value
-    profile.avgContractValue = profile.contractCount > 0 ? 
-        profile.totalValue / profile.contractCount : 0;
-    
-    return profile;
-}
-
-// Function to create or update the contractor profile modal
-function createContractorProfileModal(profileData) {
-    // Remove existing modal if present
-    const existingModal = document.getElementById('contractor-profile-modal');
-    if (existingModal) {
-        document.body.removeChild(existingModal);
-    }
-    
-    if (!profileData) {
-        console.error("No profile data provided for modal");
-        return;
-    }
-    
-    // Create modal container
-    const modal = document.createElement('div');
-    modal.id = 'contractor-profile-modal';
-    modal.style.position = 'fixed';
-    modal.style.top = '50%';
-    modal.style.left = '50%';
-    modal.style.transform = 'translate(-50%, -50%)';
-    modal.style.zIndex = '1000';
-    modal.style.backgroundColor = getCssVar('--color-surface');
-    modal.style.borderRadius = getCssVar('--border-radius-lg');
-    modal.style.boxShadow = getCssVar('--shadow-lg');
-    modal.style.width = '90%';
-    modal.style.maxWidth = '900px';
-    modal.style.maxHeight = '85vh';
-    modal.style.overflow = 'auto';
-    modal.style.padding = '20px';
-    modal.style.border = `1px solid ${getCssVar('--color-border')}`;
-    
-    // Create modal backdrop
-    const backdrop = document.createElement('div');
-    backdrop.style.position = 'fixed';
-    backdrop.style.top = '0';
-    backdrop.style.left = '0';
-    backdrop.style.width = '100%';
-    backdrop.style.height = '100%';
-    backdrop.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
-    backdrop.style.zIndex = '999';
-    
-    // Add close button
-    const closeButton = document.createElement('button');
-    closeButton.innerHTML = `
-        <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none">
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-            <line x1="6" y1="6" x2="18" y2="18"></line>
-        </svg>
-    `;
-    closeButton.style.position = 'absolute';
-    closeButton.style.top = '10px';
-    closeButton.style.right = '10px';
-    closeButton.style.background = 'none';
-    closeButton.style.border = 'none';
-    closeButton.style.cursor = 'pointer';
-    closeButton.style.color = getCssVar('--color-text-secondary');
-    
-    closeButton.addEventListener('click', () => {
-        document.body.removeChild(backdrop);
-        document.body.removeChild(modal);
-    });
-    
-    backdrop.addEventListener('click', () => {
-        document.body.removeChild(backdrop);
-        document.body.removeChild(modal);
-    });
-    
-    modal.appendChild(closeButton);
-    
-    // Create modal content
-    const content = document.createElement('div');
-    content.style.display = 'flex';
-    content.style.flexDirection = 'column';
-    content.style.gap = '20px';
-    
-    // Header section with contractor name and key stats
-    const header = document.createElement('div');
-    header.style.display = 'flex';
-    header.style.flexDirection = 'column';
-    header.style.gap = '10px';
-    header.style.borderBottom = `1px solid ${getCssVar('--color-border')}`;
-    header.style.paddingBottom = '15px';
-    
-    const title = document.createElement('h2');
-    title.textContent = profileData.name;
-    title.style.margin = '0';
-    title.style.fontSize = '24px';
-    title.style.fontWeight = 'bold';
-    
-    const statsContainer = document.createElement('div');
-    statsContainer.style.display = 'flex';
-    statsContainer.style.flexWrap = 'wrap';
-    statsContainer.style.gap = '20px';
-    
-    // Define key stats
-    const stats = [
-        { label: 'Total Value', value: formatCurrency(profileData.totalValue) },
-        { label: 'Number of Contracts', value: profileData.contractCount.toLocaleString() },
-        { label: 'Avg. Contract Value', value: formatCurrency(profileData.avgContractValue) },
-        { label: 'Avg. Duration', value: `${profileData.avgDurationDays} days` },
-        { label: 'Subcontractors Used', value: profileData.subContractorCount.toLocaleString() }
-    ];
-    
-    // Add key stats
-    stats.forEach(stat => {
-        const statBox = document.createElement('div');
-        statBox.style.display = 'flex';
-        statBox.style.flexDirection = 'column';
-        statBox.style.gap = '5px';
-        statBox.style.backgroundColor = getCssVar('--color-surface-container');
-        statBox.style.padding = '10px 15px';
-        statBox.style.borderRadius = getCssVar('--border-radius-sm');
-        
-        const statValue = document.createElement('div');
-        statValue.textContent = stat.value;
-        statValue.style.fontWeight = 'bold';
-        statValue.style.fontSize = '16px';
-        
-        const statLabel = document.createElement('div');
-        statLabel.textContent = stat.label;
-        statLabel.style.fontSize = '12px';
-        statLabel.style.color = getCssVar('--color-text-secondary');
-        
-        statBox.appendChild(statValue);
-        statBox.appendChild(statLabel);
-        statsContainer.appendChild(statBox);
-    });
-    
-    header.appendChild(title);
-    header.appendChild(statsContainer);
-    
-    // Tabs for different sections
-    const tabsContainer = document.createElement('div');
-    tabsContainer.style.display = 'flex';
-    tabsContainer.style.borderBottom = `1px solid ${getCssVar('--color-border')}`;
-    
-    const tabs = [
-        { id: 'contracts-tab', text: 'Contracts' },
-        { id: 'subs-tab', text: 'Subcontractors' },
-        { id: 'naics-tab', text: 'NAICS Analysis' }
-    ];
-    
-    tabs.forEach((tab, index) => {
-        const tabButton = document.createElement('button');
-        tabButton.id = tab.id;
-        tabButton.textContent = tab.text;
-        tabButton.style.padding = '10px 15px';
-        tabButton.style.background = 'none';
-        tabButton.style.border = 'none';
-        tabButton.style.borderBottom = index === 0 ? 
-            `2px solid ${getCssVar('--color-primary')}` : 
-            '2px solid transparent';
-        tabButton.style.color = index === 0 ? 
-            getCssVar('--color-text-primary') : 
-            getCssVar('--color-text-secondary');
-        tabButton.style.fontWeight = index === 0 ? 'bold' : 'normal';
-        tabButton.style.cursor = 'pointer';
-        
-        tabButton.addEventListener('click', () => {
-            // Deactivate all tabs
-            document.querySelectorAll(`#contractor-profile-modal button[id$="-tab"]`).forEach(btn => {
-                btn.style.borderBottom = '2px solid transparent';
-                btn.style.color = getCssVar('--color-text-secondary');
-                btn.style.fontWeight = 'normal';
-            });
-            
-            // Activate selected tab
-            tabButton.style.borderBottom = `2px solid ${getCssVar('--color-primary')}`;
-            tabButton.style.color = getCssVar('--color-text-primary');
-            tabButton.style.fontWeight = 'bold';
-            
-            // Hide all content sections
-            document.querySelectorAll(`#contractor-profile-modal div[id$="-content"]`).forEach(section => {
-                section.style.display = 'none';
-            });
-            
-            // Show selected content
-            const contentId = tab.id.replace('-tab', '-content');
-            document.getElementById(contentId).style.display = 'block';
-        });
-        
-        tabsContainer.appendChild(tabButton);
-    });
-    
-// Tab content sections
-    const tabContentsContainer = document.createElement('div');
-    tabContentsContainer.style.marginTop = '15px';
-    
-    // Contracts tab content
-    const contractsContent = document.createElement('div');
-    contractsContent.id = 'contracts-tab-content';
-    contractsContent.style.display = 'block'; // Show by default
-    
-    // Add export button for contracts
-    const contractsExportBtn = document.createElement('button');
-    contractsExportBtn.className = 'button';
-    contractsExportBtn.style.marginBottom = '10px';
-    contractsExportBtn.innerHTML = `
-        <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-            <polyline points="7 10 12 15 17 10"></polyline>
-            <line x1="12" y1="15" x2="12" y2="3"></line>
-        </svg>
-        Export Contracts
-    `;
-    
-    contractsExportBtn.addEventListener('click', () => {
-        if (!profileData.contracts.length) return;
-        
-        const exportData = profileData.contracts.map(contract => ({
-            contract_id: contract.id,
-            value: contract.value,
-            description: contract.description,
-            agency: contract.agency,
-            sub_agency: contract.subAgency,
-            naics_code: contract.naicsCode,
-            naics_description: contract.naicsDesc,
-            start_date: contract.startDate instanceof Date ? 
-                contract.startDate.toISOString().split('T')[0] : contract.startDate,
-            end_date: contract.endDate instanceof Date ? 
-                contract.endDate.toISOString().split('T')[0] : contract.endDate,
-            duration_days: contract.durationDays
-        }));
-        
-        exportToCSV(exportData, `${profileData.name.replace(/[^a-z0-9]/gi, '-')}-contracts.csv`);
-    });
-    
-    contractsContent.appendChild(contractsExportBtn);
-    
-    // Create contracts table
-    if (profileData.contracts.length > 0) {
-        const contractsTable = document.createElement('table');
-        contractsTable.style.width = '100%';
-        contractsTable.style.borderCollapse = 'collapse';
-        
-        // Table header
-        const thead = contractsTable.createTHead();
-        const headerRow = thead.insertRow();
-        
-        ['Description', 'Agency', 'Value', 'NAICS', 'End Date', 'Duration'].forEach(header => {
-            const th = document.createElement('th');
-            th.textContent = header;
-            th.style.textAlign = header === 'Value' ? 'right' : 'left';
-            th.style.padding = '8px';
-            th.style.borderBottom = `1px solid ${getCssVar('--color-border')}`;
-            headerRow.appendChild(th);
-        });
-        
-        // Table body
-        const tbody = contractsTable.createTBody();
-        
-        profileData.contracts.slice(0, 10).forEach(contract => {
-            const row = tbody.insertRow();
-            
-            // Description
-            let cell = row.insertCell();
-            cell.textContent = truncateText(contract.description, 40);
-            cell.title = contract.description;
-            cell.style.padding = '8px';
-            
-            // Agency
-            cell = row.insertCell();
-            cell.textContent = truncateText(contract.subAgency, 30);
-            cell.title = contract.subAgency;
-            cell.style.padding = '8px';
-            
-            // Value
-            cell = row.insertCell();
-            cell.textContent = formatCurrency(contract.value);
-            cell.style.textAlign = 'right';
-            cell.style.padding = '8px';
-            
-            // NAICS
-            cell = row.insertCell();
-            cell.textContent = contract.naicsCode || '-';
-            cell.title = contract.naicsDesc || '';
-            cell.style.padding = '8px';
-            
-            // End Date
-            cell = row.insertCell();
-            cell.textContent = contract.endDate instanceof Date ? 
-                contract.endDate.toLocaleDateString() : 
-                (contract.endDate ? new Date(contract.endDate).toLocaleDateString() : '-');
-            cell.style.padding = '8px';
-            
-            // Duration
-            cell = row.insertCell();
-            cell.textContent = contract.durationDays ? `${contract.durationDays} days` : '-';
-            cell.style.padding = '8px';
-        });
-        
-        contractsContent.appendChild(contractsTable);
-        
-        // Add note if there are more contracts
-        if (profileData.contracts.length > 10) {
-            const note = document.createElement('p');
-            note.textContent = `Showing top 10 of ${profileData.contracts.length} contracts by value.`;
-            note.style.fontSize = '12px';
-            note.style.color = getCssVar('--color-text-secondary');
-            note.style.marginTop = '10px';
-            contractsContent.appendChild(note);
-        }
-    } else {
-        const noData = document.createElement('p');
-        noData.textContent = 'No contract data available.';
-        noData.style.color = getCssVar('--color-text-secondary');
-        contractsContent.appendChild(noData);
-    }
-    
-    // Subcontractors tab content
-    const subsContent = document.createElement('div');
-    subsContent.id = 'subs-tab-content';
-    subsContent.style.display = 'none'; // Hidden by default
-    
-    // Add export button for subcontractors
-    const subsExportBtn = document.createElement('button');
-    subsExportBtn.className = 'button';
-    subsExportBtn.style.marginBottom = '10px';
-    subsExportBtn.innerHTML = `
-        <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-            <polyline points="7 10 12 15 17 10"></polyline>
-            <line x1="12" y1="15" x2="12" y2="3"></line>
-        </svg>
-        Export Subcontractors
-    `;
-    
-    subsExportBtn.addEventListener('click', () => {
-        if (!profileData.topSubcontractors.length) return;
-        
-        const exportData = profileData.topSubcontractors.map(sub => ({
-            subcontractor_name: sub.name,
-            total_value: sub.value,
-            contract_count: sub.contractCount
-        }));
-        
-        exportToCSV(exportData, `${profileData.name.replace(/[^a-z0-9]/gi, '-')}-subcontractors.csv`);
-    });
-    
-    subsContent.appendChild(subsExportBtn);
-    
-    // Create top subcontractors section
-    subsContent.appendChild(document.createElement('h3')).textContent = 'Top Subcontractors Used';
-    
-    if (profileData.topSubcontractors.length > 0) {
-        const subsTable = document.createElement('table');
-        subsTable.style.width = '100%';
-        subsTable.style.borderCollapse = 'collapse';
-        
-        // Table header
-        const thead = subsTable.createTHead();
-        const headerRow = thead.insertRow();
-        
-        ['Subcontractor', 'Total Value', 'Contract Count'].forEach(header => {
-            const th = document.createElement('th');
-            th.textContent = header;
-            th.style.textAlign = header === 'Total Value' ? 'right' : 'left';
-            th.style.padding = '8px';
-            th.style.borderBottom = `1px solid ${getCssVar('--color-border')}`;
-            headerRow.appendChild(th);
-        });
-        
-        // Table body
-        const tbody = subsTable.createTBody();
-        
-        profileData.topSubcontractors.forEach(sub => {
-            const row = tbody.insertRow();
-            
-            // Subcontractor name (clickable)
-            let cell = row.insertCell();
-            
-            // Create clickable name for subcontractor profile
-            const nameLink = document.createElement('a');
-            nameLink.href = '#';
-            nameLink.style.color = getCssVar('--color-primary');
-            nameLink.style.textDecoration = 'none';
-            nameLink.style.fontWeight = '500';
-            nameLink.textContent = sub.name;
-            nameLink.title = `View profile for ${sub.name}`;
-            
-            // This would need to be implemented separately for subs
-            // nameLink.addEventListener('click', (e) => {
-            //     e.preventDefault();
-            //     showSubcontractorProfile(sub.id);
-            // });
-            
-            cell.appendChild(nameLink);
-            cell.style.padding = '8px';
-            
-            // Total Value
-            cell = row.insertCell();
-            cell.textContent = formatCurrency(sub.value);
-            cell.style.textAlign = 'right';
-            cell.style.padding = '8px';
-            
-            // Contract Count
-            cell = row.insertCell();
-            cell.textContent = sub.contractCount.toLocaleString();
-            cell.style.padding = '8px';
-        });
-        
-        subsContent.appendChild(subsTable);
-    } else {
-        const noData = document.createElement('p');
-        noData.textContent = 'No subcontractor data available.';
-        noData.style.color = getCssVar('--color-text-secondary');
-        subsContent.appendChild(noData);
-    }
-    
-    // NAICS tab content
-    const naicsContent = document.createElement('div');
-    naicsContent.id = 'naics-tab-content';
-    naicsContent.style.display = 'none'; // Hidden by default
-    
-    // Create NAICS analysis
-    naicsContent.appendChild(document.createElement('h3')).textContent = 'NAICS Code Analysis';
-    
-    if (profileData.topNaicsCodes.length > 0) {
-        // Create chart container
-        const chartContainer = document.createElement('div');
-        chartContainer.style.height = '250px';
-        chartContainer.style.marginBottom = '20px';
-        
-        // Create NAICS table
-        const naicsTable = document.createElement('table');
-        naicsTable.style.width = '100%';
-        naicsTable.style.borderCollapse = 'collapse';
-        
-        // Table header
-        const thead = naicsTable.createTHead();
-        const headerRow = thead.insertRow();
-        
-        ['NAICS Code', 'Description', 'Contract Count', 'Total Value', 'Percentage'].forEach(header => {
-            const th = document.createElement('th');
-            th.textContent = header;
-            th.style.textAlign = ['Total Value', 'Percentage'].includes(header) ? 'right' : 'left';
-            th.style.padding = '8px';
-            th.style.borderBottom = `1px solid ${getCssVar('--color-border')}`;
-            headerRow.appendChild(th);
-        });
-        
-        // Calculate total NAICS value for percentage
-        const totalNaicsValue = profileData.topNaicsCodes.reduce((sum, naics) => sum + naics.value, 0);
-        
-        // Table body
-        const tbody = naicsTable.createTBody();
-        
-        profileData.topNaicsCodes.forEach(naics => {
-            const row = tbody.insertRow();
-            
-            // NAICS Code
-            let cell = row.insertCell();
-            cell.textContent = naics.code;
-            cell.style.padding = '8px';
-            
-            // Description
-            cell = row.insertCell();
-            cell.textContent = truncateText(naics.description, 40);
-            cell.title = naics.description;
-            cell.style.padding = '8px';
-            
-            // Contract Count
-            cell = row.insertCell();
-            cell.textContent = naics.count.toLocaleString();
-            cell.style.padding = '8px';
-            
-            // Total Value
-            cell = row.insertCell();
-            cell.textContent = formatCurrency(naics.value);
-            cell.style.textAlign = 'right';
-            cell.style.padding = '8px';
-            
-            // Percentage
-            cell = row.insertCell();
-            const percentage = totalNaicsValue > 0 ? (naics.value / totalNaicsValue) * 100 : 0;
-            cell.textContent = `${percentage.toFixed(1)}%`;
-            cell.style.textAlign = 'right';
-            cell.style.padding = '8px';
-        });
-        
-        // Add export button for NAICS
-        const naicsExportBtn = document.createElement('button');
-        naicsExportBtn.className = 'button';
-        naicsExportBtn.style.marginBottom = '10px';
-        naicsExportBtn.innerHTML = `
-            <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                <polyline points="7 10 12 15 17 10"></polyline>
-                <line x1="12" y1="15" x2="12" y2="3"></line>
-            </svg>
-            Export NAICS Data
-        `;
-        
-        naicsExportBtn.addEventListener('click', () => {
-            if (!profileData.topNaicsCodes.length) return;
-            
-            const exportData = profileData.topNaicsCodes.map(naics => ({
-                naics_code: naics.code,
-                description: naics.description,
-                contract_count: naics.count,
-                total_value: naics.value,
-                percentage: totalNaicsValue > 0 ? (naics.value / totalNaicsValue) * 100 : 0
-            }));
-            
-            exportToCSV(exportData, `${profileData.name.replace(/[^a-z0-9]/gi, '-')}-naics.csv`);
-        });
-        
-        naicsContent.insertBefore(naicsExportBtn, naicsContent.firstChild);
-        
-        // NAICS chart using D3.js - can be implemented if needed
-        
-        naicsContent.appendChild(naicsTable);
-    } else {
-        const noData = document.createElement('p');
-        noData.textContent = 'No NAICS code data available.';
-        noData.style.color = getCssVar('--color-text-secondary');
-        naicsContent.appendChild(noData);
-    }
-    
-    // Add tab contents to container
-    tabContentsContainer.appendChild(contractsContent);
-    tabContentsContainer.appendChild(subsContent);
-    tabContentsContainer.appendChild(naicsContent);
-    
-    // Add all sections to modal content
-    content.appendChild(header);
-    content.appendChild(tabsContainer);
-    content.appendChild(tabContentsContainer);
-    
-    // Add content to modal
-    modal.appendChild(content);
-    
-    // Add modal and backdrop to body
-    document.body.appendChild(backdrop);
-    document.body.appendChild(modal);
-}
 /**
- * Enhanced donut chart function that works for both NAICS distribution and Share of Wallet visualizations
- * with consistent styling and better bento box integration.
- * 
- * @param {Array} data - Array of objects with name/code, desc (optional), value, and percentage properties
- * @param {string} containerId - The ID of the container element
- * @param {Object} options - Configuration options
+ * Process data for Share of Wallet chart
  */
-function displayEnhancedDonutChart(data, containerId, options = {}) {
-    // Default options
-    const defaults = {
-        title: "Distribution", // Center title
-        subtitle: "", // Center subtitle (optional)
-        topN: 5, // Number of top items to show separately
-        centerValueField: "code", // Which field to show in the center
-        colorField: "name", // Which field to use for color assignment
-        labelField: "name", // Which field to use for labels
-        descField: "desc", // Which field to use for descriptions
-        valueField: "value", // Which field contains the numeric value
-        percentageField: "percentage", // Which field contains the percentage (calculated if not present)
-        otherLabel: "Other", // Label for the combined "Other" category
-        legendPosition: "left", // Position of the legend: "left", "right", "bottom", "none"
-        showExternalLabels: true, // Whether to show external labels with lines
-        minPercentageForLabel: 3, // Minimum percentage to show a label on the chart
-    };
-
-    // Merge defaults with provided options
-    const config = { ...defaults, ...options };
-    
-    // Get the container
-    const container = document.getElementById(containerId);
-    
-    if (!container) {
-        console.error(`displayEnhancedDonutChart: Chart container element #${containerId} not found.`);
-        return;
-    }
-    
-    // Clear previous content
-    const d3Container = d3.select(`#${containerId}`);
-    d3Container.html('');
-    
-    // --- Basic Data Check ---
-    if (!data || !Array.isArray(data) || data.length === 0) {
-        displayNoData(containerId, "No data available for chart.");
-        return;
-    }
-    
-    // --- Calculate percentages if not provided ---
-    if (!data[0][config.percentageField]) {
-        const totalValue = d3.sum(data, d => d[config.valueField] || 0);
-        data.forEach(d => {
-            d[config.percentageField] = totalValue > 0 ? (d[config.valueField] / totalValue) * 100 : 0;
-        });
-    }
-    
-    // --- Prepare Data: Top N + Other ---
-    // First sort the data by value (descending)
-    const sortedData = [...data].sort((a, b) => (b[config.valueField] || 0) - (a[config.valueField] || 0));
-    
-    const topNData = sortedData.slice(0, config.topN);
-    const otherValue = d3.sum(sortedData.slice(config.topN), d => d[config.valueField] || 0);
-    const otherPercentage = d3.sum(sortedData.slice(config.topN), d => d[config.percentageField] || 0);
-    
-    const chartPlotData = [...topNData];
-    
-    // Add "Other" category if there are more items than topN
-    if (otherValue > 0 && sortedData.length > config.topN) {
-        const otherCount = sortedData.length - config.topN;
-        const otherItem = {
-            [config.labelField]: config.otherLabel,
-            [config.descField]: `${config.otherLabel} (${otherCount} items)`,
-            [config.valueField]: otherValue,
-            [config.percentageField]: otherPercentage,
-            isOther: true
-        };
-        // Ensure the centerValueField is present
-        if (config.centerValueField && !otherItem[config.centerValueField]) {
-            otherItem[config.centerValueField] = config.otherLabel;
-        }
-        chartPlotData.push(otherItem);
-    }
-    
-    // Get the item to display in the center text (usually the top one)
-    const centerItem = sortedData[0];
-    
-    if (!centerItem) {
-        displayNoData(containerId, "Not enough data for chart.");
-        return;
-    }
-    
-    // --- Chart Setup ---
-    // Get dimensions from the container element
-    const rect = container.getBoundingClientRect();
-    const availableWidth = rect.width;
-    const availableHeight = rect.height;
-    
-    if (availableWidth <= 10 || availableHeight <= 10) {
-        console.warn(`Container #${containerId} has minimal/no dimensions. W: ${availableWidth}, H: ${availableHeight}. Chart not drawn.`);
-        displayNoData(containerId, "Chart area too small.");
-        return;
-    }
-    
-    // Define margins with adaptive sizing
-    const showLabels = config.showExternalLabels && window.innerWidth > 768 && availableHeight > 200;
-    const margin = {
-        top: showLabels ? 25 : 10,
-        right: showLabels ? 25 : 10,
-        bottom: showLabels ? 25 : 10,
-        left: showLabels ? 25 : 10
-    };
-    
-    // Calculate actual drawing space and radius
-    const drawingWidth = availableWidth - margin.left - margin.right;
-    const drawingHeight = availableHeight - margin.top - margin.bottom;
-    
-    // Adjust for legend space if legend is enabled
-    let legendWidth = 0;
-    let legendHeight = 0;
-    
-    if (config.legendPosition !== "none") {
-        if (config.legendPosition === "left" || config.legendPosition === "right") {
-            legendWidth = Math.min(availableWidth * 0.3, 100); // 30% of width or 100px max
-        } else if (config.legendPosition === "bottom") {
-            legendHeight = Math.min(availableHeight * 0.2, 80); // 20% of height or 80px max
-        }
-    }
-    
-    // Final available space for the donut
-    const donutWidth = drawingWidth - (config.legendPosition === "left" || config.legendPosition === "right" ? legendWidth : 0);
-    const donutHeight = drawingHeight - (config.legendPosition === "bottom" ? legendHeight : 0);
-    
-    // Calculate optimal radius
-    const outerRadius = Math.min(donutWidth, donutHeight) / 2;
-    const innerRadius = outerRadius * 0.6; // Donut hole size
-    
-    if (outerRadius <= 10) {
-        displayNoData(containerId, "Chart area too small for donut.");
-        return;
-    }
-    
-    // Create SVG element
-    const svg = d3Container.append("svg")
-        .attr("width", "100%")
-        .attr("height", "100%")
-        .attr("viewBox", `0 0 ${availableWidth} ${availableHeight}`)
-        .style("overflow", "visible"); // Allows labels to draw slightly outside
-    
-    // Create a group for the donut, positioned in the center
-    const donutG = svg.append("g")
-        .attr("transform", `translate(${
-            margin.left + donutWidth/2 + (config.legendPosition === "right" ? 0 : config.legendPosition === "left" ? legendWidth : 0)
-        }, ${
-            margin.top + donutHeight/2
-        })`);
-    
-    // Generate colors
-    const color = getDonutColorScale(chartPlotData, config);
-    
-    // Create pie layout
-    const pie = d3.pie()
-        .padAngle(0.01) // Slight padding between slices
-        .value(d => d[config.valueField])
-        .sort(null); // Don't sort, preserve input order
-    
-    // Create arc generators
-    const arcGenerator = d3.arc()
-        .innerRadius(innerRadius)
-        .outerRadius(outerRadius);
-    
-    // Arc for label positioning
-    const labelArcStart = d3.arc()
-        .innerRadius(outerRadius * 0.95)
-        .outerRadius(outerRadius * 0.95);
-    
-    // Arc for label line bending point
-    const labelArcMid = d3.arc()
-        .innerRadius(outerRadius * 1.1)
-        .outerRadius(outerRadius * 1.1);
-    
-    // --- Draw Arcs ---
-    const pieData = pie(chartPlotData);
-    
-    donutG.selectAll(".arc-path")
-        .data(pieData)
-        .join("path")
-        .attr("class", "arc-path")
-        .attr("fill", (d, i) => color(d.data[config.colorField]))
-        .attr("d", arcGenerator)
-        .attr("stroke", getCssVar('--color-surface'))
-        .style("stroke-width", "1.5px")
-        .style("cursor", "pointer")
-        .on("mouseover", function(event, d) {
-            // Highlight this arc
-            d3.select(this)
-                .transition()
-                .duration(200)
-                .attr("stroke", getCssVar('--color-primary'))
-                .style("stroke-width", "2px")
-                .attr("transform", "scale(1.03)");
-            
-            // Show tooltip
-            const tooltip = d3.select("body").append("div")
-                .attr("class", "chart-tooltip")
-                .style("position", "absolute")
-                .style("background-color", getCssVar('--color-surface'))
-                .style("color", getCssVar('--color-text-primary'))
-                .style("padding", "8px 12px")
-                .style("border-radius", "4px")
-                .style("font-size", "12px")
-                .style("pointer-events", "none")
-                .style("opacity", 0)
-                .style("box-shadow", getCssVar('--shadow-md'))
-                .style("border", `1px solid ${getCssVar('--color-border')}`)
-                .style("z-index", 1000);
-            
-            tooltip.transition()
-                .duration(200)
-                .style("opacity", 1);
-            
-            const name = d.data[config.labelField];
-            const desc = d.data[config.descField] || "";
-            const value = formatCurrency(d.data[config.valueField]);
-            const percentage = d.data[config.percentageField].toFixed(1);
-            
-            tooltip.html(`
-                <div style="font-weight: bold; margin-bottom: 4px;">${name}</div>
-                ${desc ? `<div style="color: ${getCssVar('--color-text-secondary')}; margin-bottom: 4px;">${desc}</div>` : ""}
-                <div>Value: ${value}</div>
-                <div>Share: ${percentage}%</div>
-            `);
-            
-            tooltip.style("left", (event.pageX + 10) + "px")
-                .style("top", (event.pageY - 28) + "px");
-        })
-        .on("mousemove", function(event) {
-            d3.select("body").select(".chart-tooltip")
-                .style("left", (event.pageX + 10) + "px")
-                .style("top", (event.pageY - 28) + "px");
-        })
-        .on("mouseout", function() {
-            // Remove highlight
-            d3.select(this)
-                .transition()
-                .duration(200)
-                .attr("stroke", getCssVar('--color-surface'))
-                .style("stroke-width", "1.5px")
-                .attr("transform", "scale(1)");
-            
-            // Remove tooltip
-            d3.select("body").select(".chart-tooltip")
-                .transition()
-                .duration(200)
-                .style("opacity", 0)
-                .remove();
-        });
-    
-    // --- Add Center Text ---
-    const centerText = donutG.append("text")
-        .attr("text-anchor", "middle")
-        .style("font-family", "var(--font-body, sans-serif)")
-        .style("fill", getCssVar('--color-text-primary'));
-    
-    centerText.append("tspan")
-        .attr("x", 0)
-        .attr("dy", "-0.6em")
-        .style("font-size", "0.75em")
-        .style("fill", getCssVar('--color-text-secondary'))
-        .text(config.title);
-    
-    if (config.subtitle) {
-        centerText.append("tspan")
-            .attr("x", 0)
-            .attr("dy", "1.1em")
-            .style("font-size", "0.7em")
-            .style("fill", getCssVar('--color-text-tertiary'))
-            .text(config.subtitle);
-    }
-    
-    centerText.append("tspan")
-        .attr("x", 0)
-        .attr("dy", config.subtitle ? "1.3em" : "1.5em")
-        .style("font-size", "0.9em")
-        .style("font-weight", "600")
-        .text(centerItem[config.centerValueField] || "");
-    
-    // --- Add External Labels and Lines (conditional) ---
-    if (showLabels) {
-        // Only show labels for slices that are large enough
-        const labelThresholdPercentage = config.minPercentageForLabel / 100;
-        const labelData = pieData.filter(d => {
-            const percentage = (d.endAngle - d.startAngle) / (2 * Math.PI);
-            return percentage >= labelThresholdPercentage && d.data[config.valueField] > 0;
-        });
-        
-        if (labelData.length > 0) {
-            const lineGroup = donutG.append("g").attr("class", "label-lines");
-            const textLabelGroup = donutG.append("g").attr("class", "text-labels");
-            
-            const polylineStrokeColor = getCssVar('--color-text-tertiary');
-            const labelTextColor = getCssVar('--color-text-secondary');
-            const labelDescColor = getCssVar('--color-text-tertiary');
-            
-            lineGroup.selectAll('polyline')
-                .data(labelData)
-                .join('polyline')
-                .attr('stroke', polylineStrokeColor)
-                .style('fill', 'none')
-                .attr('stroke-width', 1)
-                .attr('points', d => {
-                    const posA = labelArcStart.centroid(d);
-                    const posB = labelArcMid.centroid(d);
-                    const posC = [posB[0] * 1.1, posB[1]];
-                    const midangle = d.startAngle + (d.endAngle - d.startAngle) / 2;
-                    posC[0] = (outerRadius + margin.left/2.5) * (midangle < Math.PI ? 1 : -1);
-                    return [posA, posB, posC];
-                });
-            
-            const textLabels = textLabelGroup.selectAll('text')
-                .data(labelData)
-                .join('text')
-                .style('font-family', "var(--font-body, sans-serif)")
-                .attr('dy', '0.35em')
-                .attr('transform', d => {
-                    const pos = [labelArcMid.centroid(d)[0] * 1.1, labelArcMid.centroid(d)[1]];
-                    const midangle = d.startAngle + (d.endAngle - d.startAngle) / 2;
-                    pos[0] = (outerRadius + margin.left/2.5 + 5) * (midangle < Math.PI ? 1 : -1);
-                    return `translate(${pos})`;
-                })
-                .style('text-anchor', d => (d.startAngle + (d.endAngle - d.startAngle) / 2 < Math.PI ? 'start' : 'end'));
-            
-            textLabels.append('tspan')
-                .attr('x', 0)
-                .style('font-size', '11px')
-                .style('font-weight', '500')
-                .style('fill', labelTextColor)
-                .text(d => truncateText(d.data[config.labelField], 15));
-            
-            textLabels.filter(d => !d.data.isOther)
-                .append('tspan')
-                .attr('x', 0)
-                .attr('dy', '1.2em')
-                .style('font-size', '10px')
-                .style('fill', labelDescColor)
-                .text(d => {
-                    // If we have a description, show it, otherwise show the percentage
-                    if (d.data[config.descField]) {
-                        return truncateText(d.data[config.descField], 18);
-                    } else {
-                        return `${d.data[config.percentageField].toFixed(1)}%`;
-                    }
-                });
-        }
-    }
-    
-    // --- Add Legend ---
-    if (config.legendPosition !== "none") {
-        let legendX, legendY, legendLayout = "vertical";
-        
-        // Position the legend based on configuration
-        if (config.legendPosition === "left") {
-            legendX = margin.left;
-            legendY = margin.top;
-        } else if (config.legendPosition === "right") {
-            legendX = margin.left + donutWidth + 10;
-            legendY = margin.top;
-        } else if (config.legendPosition === "bottom") {
-            legendX = margin.left;
-            legendY = margin.top + donutHeight + 10;
-            legendLayout = "horizontal";
-        }
-        
-        const legendGroup = svg.append("g")
-            .attr("transform", `translate(${legendX}, ${legendY})`);
-        
-        // For horizontal layout, we'll create multiple rows if needed
-        if (legendLayout === "horizontal") {
-            const itemsPerRow = Math.floor(donutWidth / 100); // Rough estimate
-            const rows = Math.ceil(chartPlotData.length / itemsPerRow);
-            
-            for (let row = 0; row < rows; row++) {
-                const rowItems = chartPlotData.slice(row * itemsPerRow, (row + 1) * itemsPerRow);
-                
-                const rowGroup = legendGroup.append("g")
-                    .attr("transform", `translate(0, ${row * 20})`);
-                
-                rowGroup.selectAll("g")
-                    .data(rowItems)
-                    .join("g")
-                    .attr("transform", (d, i) => `translate(${i * 100}, 0)`)
-                    .call(createLegendItem, color, config);
-            }
-        } else {
-            // Vertical layout is simpler
-            legendGroup.selectAll("g")
-                .data(chartPlotData)
-                .join("g")
-                .attr("transform", (d, i) => `translate(0, ${i * 20})`)
-                .call(createLegendItem, color, config);
-        }
-    }
-    
-    // Return the drawn chart data for potential further manipulation
-    return {
-        svg: svg,
-        pieData: pieData,
-        chartData: chartPlotData
-    };
-}
-/**
- * Comprehensive fix for NAICS donut and Share of Wallet charts
- * 
- * 1. Fixes Share of Wallet chart not displaying
- * 2. Ensures proper color inheritance from CSS variables
- * 3. Creates container for Share of Wallet if missing
- */
-(function() {
-  // =====================================================================
-  // UTILITY FUNCTIONS
-  // =====================================================================
-  
-  /**
-   * Enhanced CSS variable getter with better fallbacks
-   * Uses the original getCssVar function but adds better fallbacks
-   */
-  function getChartCssVar(varName) {
-    let value;
-    
-    // Try to use the existing function first
-    if (typeof window.getCssVar === 'function') {
-      value = window.getCssVar(varName);
-      if (value && value !== '#cccccc') {
-        return value;
-      }
-    }
-    
-    // Direct lookup with fallbacks
-    try {
-      value = getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
-      if (value) return value;
-    } catch (e) {
-      console.warn(`Error getting CSS variable ${varName}:`, e);
-    }
-    
-    // Fallback values based on theme
-    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-    
-    // Chart colors
-    if (varName === '--chart-color-primary') return isDark ? '#A59FA8' : '#9A949B';
-    if (varName === '--chart-color-secondary') return isDark ? '#908A91' : '#7A747B';
-    if (varName === '--chart-color-tertiary') return isDark ? '#767077' : '#B6B1B7';
-    
-    // Text colors
-    if (varName === '--color-text-primary') return isDark ? '#F5F5F5' : '#222222';
-    if (varName === '--color-text-secondary') return isDark ? '#C8C8C8' : '#555555';
-    if (varName === '--color-text-tertiary') return isDark ? '#767077' : '#B3B3B3';
-    
-    // Surface colors
-    if (varName === '--color-surface') return isDark ? '#2B2B2B' : '#FFFFFF';
-    if (varName === '--color-border') return isDark ? '#444444' : '#DDDDDD';
-    
-    // Default color
-    return isDark ? '#CCCCCC' : '#666666';
-  }
-  
-  /**
-   * Generate chart colors from CSS variables
-   */
-  function generateChartColors(count = 8) {
-    // Get colors from CSS
-    const primary = getChartCssVar('--chart-color-primary');
-    const secondary = getChartCssVar('--chart-color-secondary');
-    const tertiary = getChartCssVar('--chart-color-tertiary');
-    
-    // Create variations
-    const colors = [
-      primary,
-      secondary,
-      tertiary,
-      d3.color(primary).darker(0.3).toString(),
-      d3.color(secondary).darker(0.3).toString(),
-      d3.color(tertiary).brighter(0.3).toString(),
-      d3.color(primary).brighter(0.5).toString(),
-      d3.color(secondary).brighter(0.5).toString()
-    ];
-    
-    // Return the requested number of colors
-    return colors.slice(0, count);
-  }
-  
-  /**
-   * Fixed color scale function for donut charts
-   */
-  function getFixedDonutColorScale(data, config) {
-    const colorField = config.colorField || 'name';
-    
-    // Create domain from data
-    const domain = data.map(d => d[colorField]);
-    
-    // Get colors that match the domain length
-    const colors = generateChartColors(domain.length);
-    
-    // Create the scale
-    const colorScale = d3.scaleOrdinal()
-      .domain(domain)
-      .range(colors);
-    
-    // Return a function that handles special cases
-    return function(value) {
-      // Special handling for "Other" category
-      const item = data.find(d => d[colorField] === value);
-      if (item && item.isOther) {
-        return getChartCssVar('--color-text-tertiary');
-      }
-      return colorScale(value);
-    };
-  }
-  
-  // =====================================================================
-  // SHARE OF WALLET CHART
-  // =====================================================================
-  
-  /**
-   * Create Share of Wallet container if it doesn't exist
-   */
-  function createShareOfWalletContainer() {
-    // Check if container already exists
-    if (document.getElementById('share-of-wallet-container')) {
-      return true;
-    }
-    
-    console.log("Creating Share of Wallet container");
-    
-    // Find bento grid
-    const bentoGrid = document.querySelector('.bento-grid');
-    if (!bentoGrid) {
-      console.error("Could not find bento grid for Share of Wallet container");
-      return false;
-    }
-    
-    // Create bento box
-    const bentoBox = document.createElement('div');
-    bentoBox.id = 'bento-share-of-wallet';
-    bentoBox.className = 'bento-box';
-    bentoBox.style.gridColumn = 'span 1';
-    bentoBox.style.gridRow = 'span 1';
-    bentoBox.style.minHeight = '240px';
-    
-    // Create header
-    const header = document.createElement('div');
-    header.className = 'bento-header';
-    header.innerHTML = '<h3>Market Share</h3>';
-    
-    // Create container
-    const container = document.createElement('div');
-    container.id = 'share-of-wallet-container';
-    container.style.width = '100%';
-    container.style.height = 'calc(100% - 40px)';
-    
-    // Create loading placeholder
-    const placeholder = document.createElement('div');
-    placeholder.className = 'no-data-placeholder';
-    placeholder.style.display = 'flex';
-    placeholder.style.alignItems = 'center';
-    placeholder.style.justifyContent = 'center';
-    placeholder.style.height = '100%';
-    placeholder.style.color = getChartCssVar('--color-text-tertiary');
-    placeholder.textContent = 'Select a dataset to view market share.';
-    container.appendChild(placeholder);
-    
-    // Assemble
-    bentoBox.appendChild(header);
-    bentoBox.appendChild(container);
-    
-    // Add to grid
-    bentoGrid.appendChild(bentoBox);
-    
-    return true;
-  }
-  
-  /**
-   * Process data for Share of Wallet chart
-   */
-  function processShareOfWalletData(model, topN = 7) {
+function processShareOfWalletData(model) {
     if (!model || !model.primes) {
-      return [];
+        return [];
     }
     
-    try {
-      // Aggregate by prime
-      const primeValues = {};
-      let totalValue = 0;
-      
-      // Process from contracts
-      Object.values(model.contracts || {}).forEach(contract => {
+    // Aggregate by prime
+    const primeValues = {};
+    let totalValue = 0;
+    
+    // Process from contracts
+    Object.values(model.contracts || {}).forEach(contract => {
         if (!contract.primeId || !contract.value || contract.value <= 0) return;
         
         const prime = model.primes[contract.primeId];
@@ -6655,281 +5422,178 @@ function displayEnhancedDonutChart(data, containerId, options = {}) {
         
         const primeName = prime.name;
         if (!primeValues[primeName]) {
-          primeValues[primeName] = 0;
+            primeValues[primeName] = 0;
         }
         
         primeValues[primeName] += contract.value;
         totalValue += contract.value;
-      });
-      
-      // Convert to array and sort
-      const sortedPrimes = Object.entries(primeValues)
+    });
+    
+    // Convert to array and sort
+    const sortedPrimes = Object.entries(primeValues)
         .map(([name, value]) => ({
-          name: name,
-          value: value,
-          percentage: 0 // Calculate after
+            name: name,
+            value: value,
+            percentage: 0 // Calculate after
         }))
         .sort((a, b) => b.value - a.value);
-      
-      // Take top N primes
-      const result = sortedPrimes.slice(0, topN);
-      
-      // Add "Other" category if needed
-      if (sortedPrimes.length > topN) {
-        const otherValue = sortedPrimes.slice(topN)
-          .reduce((sum, item) => sum + item.value, 0);
+    
+    // Take top 7 primes
+    const result = sortedPrimes.slice(0, 7);
+    
+    // Add "Other" category if needed
+    if (sortedPrimes.length > 7) {
+        const otherValue = sortedPrimes.slice(7)
+            .reduce((sum, item) => sum + item.value, 0);
         
         if (otherValue > 0) {
-          result.push({
-            name: "Other",
-            value: otherValue,
-            isOther: true,
-            count: sortedPrimes.length - topN
-          });
+            result.push({
+                name: "Other",
+                value: otherValue,
+                isOther: true,
+                count: sortedPrimes.length - 7
+            });
         }
-      }
-      
-      // Calculate percentages
-      result.forEach(item => {
+    }
+    
+    // Calculate percentages
+    result.forEach(item => {
         item.percentage = totalValue > 0 ? (item.value / totalValue) * 100 : 0;
-      });
-      
-      console.log(`Processed Share of Wallet data: ${result.length} items`);
-      return result;
-    } catch (error) {
-      console.error("Error processing Share of Wallet data:", error);
-      return [];
-    }
-  }
-  
-  /**
-   * Enhanced Share of Wallet chart display function
-   */
-  function displayEnhancedShareOfWalletChart(model, containerId = 'share-of-wallet-container') {
-    // Create container if needed
-    if (!document.getElementById(containerId)) {
-      createShareOfWalletContainer();
-    }
-    
-    const container = document.getElementById(containerId);
-    if (!container) {
-      console.error("Share of Wallet container not found!");
-      return;
-    }
-    
-    // Show loading state
-    if (typeof setLoading === 'function') {
-      setLoading(containerId, true, 'Loading market share data...');
-    }
-    
-    try {
-      // Process data
-      const shareData = processShareOfWalletData(model);
-      
-      if (!shareData || shareData.length === 0) {
-        if (typeof displayNoData === 'function') {
-          displayNoData(containerId, 'No market share data available.');
-        }
-        return;
-      }
-      
-      // Use original chart function with our fixed color function
-      const originalGetDonutColorScale = window.getDonutColorScale;
-      window.getDonutColorScale = getFixedDonutColorScale;
-      
-      // Display chart
-      if (typeof displayEnhancedDonutChart === 'function') {
-        displayEnhancedDonutChart(shareData, containerId, {
-          title: "Market",
-          subtitle: "Share",
-          labelField: "name",
-          topN: 7,
-          legendPosition: "left",
-          showExternalLabels: false,
-          minPercentageForLabel: 5
-        });
-      }
-      
-      // Restore original function
-      window.getDonutColorScale = originalGetDonutColorScale;
-      
-      console.log("Share of Wallet chart displayed successfully");
-    } catch (error) {
-      console.error("Error displaying Share of Wallet chart:", error);
-      if (typeof displayError === 'function') {
-        displayError(containerId, `Failed to display chart: ${error.message}`);
-      }
-    } finally {
-      // Turn off loading
-      if (typeof setLoading === 'function') {
-        setLoading(containerId, false);
-      }
-    }
-  }
-  
-  // =====================================================================
-  // NAICS CHART FIX
-  // =====================================================================
-  
-  /**
-   * Fix for NAICS donut chart to use correct colors
-   */
-  function displayFixedNaicsDonutChart(naicsData, chartElementId, topN = 5) {
-    if (!naicsData || naicsData.length === 0) {
-      if (typeof displayNoData === 'function') {
-        displayNoData(chartElementId, 'No NAICS data available.');
-      }
-      return;
-    }
-    
-    // Show loading state
-    if (typeof setLoading === 'function') {
-      setLoading(chartElementId, true, 'Preparing NAICS distribution...');
-    }
-    
-    try {
-      // Replace color function temporarily
-      const originalGetDonutColorScale = window.getDonutColorScale;
-      window.getDonutColorScale = getFixedDonutColorScale;
-      
-      // Display the chart
-      if (typeof displayEnhancedDonutChart === 'function') {
-        displayEnhancedDonutChart(naicsData, chartElementId, {
-          title: "Top NAICS",
-          centerValueField: "code",
-          labelField: "code",
-          descField: "desc",
-          topN: topN,
-          legendPosition: "none",
-          showExternalLabels: true,
-          minPercentageForLabel: 4
-        });
-      }
-      
-      // Restore original function
-      window.getDonutColorScale = originalGetDonutColorScale;
-      
-      console.log("NAICS donut chart displayed successfully");
-    } catch (error) {
-      console.error("Error displaying NAICS chart:", error);
-      if (typeof displayError === 'function') {
-        displayError(chartElementId, `Failed to display chart: ${error.message}`);
-      }
-    } finally {
-      // Turn off loading
-      if (typeof setLoading === 'function') {
-        setLoading(chartElementId, false);
-      }
-    }
-  }
-  
-  // =====================================================================
-  // INITIALIZATION AND HOOKUP
-  // =====================================================================
-  
-  /**
-   * Hook into the visualization update function to ensure our charts display correctly
-   */
-  function initChartFixes() {
-    console.log("Initializing chart fixes...");
-    
-    // Create Share of Wallet container
-    createShareOfWalletContainer();
-    
-    // Hook into the dashboard update function
-    const originalUpdateVisuals = window.updateVisualsFromUnifiedModel;
-    if (typeof originalUpdateVisuals === 'function') {
-      window.updateVisualsFromUnifiedModel = function(subAgencyFilter, naicsFilter, searchTerm) {
-        // Call the original function
-        originalUpdateVisuals.apply(this, arguments);
-        
-        // Add our chart rendering
-        setTimeout(() => {
-          if (window.unifiedModel) {
-            // Display Share of Wallet chart
-            displayEnhancedShareOfWalletChart(window.unifiedModel);
-            
-            // Fix NAICS chart colors if needed
-            const naicsContainer = document.getElementById('naics-donut-chart-container');
-            if (naicsContainer && naicsContainer.querySelector('svg')) {
-              const naicsData = processNaicsDistributionData(window.unifiedModel);
-              if (naicsData && naicsData.length > 0) {
-                displayFixedNaicsDonutChart(naicsData, 'naics-donut-chart-container');
-              }
-            }
-          }
-        }, 500);
-      };
-    }
-    
-    // Replace the NAICS processing function to ensure it works consistently
-    window.processNaicsDistributionData = function(model) {
-      if (!model || !model.contracts) {
-        return [];
-      }
-      
-      const naicsAggregates = {};
-      
-      // Aggregate from prime contracts
-      Object.values(model.contracts).forEach(contract => {
-        if (contract.naicsCode && contract.value > 0) {
-          const code = contract.naicsCode;
-          const desc = contract.naicsDesc || "N/A";
-          
-          if (!naicsAggregates[code]) {
-            naicsAggregates[code] = { code: code, desc: desc, value: 0 };
-          }
-          naicsAggregates[code].value += contract.value;
-        }
-      });
-      
-      // Convert to array and sort
-      const sortedNaicsData = Object.values(naicsAggregates)
-        .sort((a, b) => b.value - a.value);
-      
-      // Calculate percentages
-      const totalValue = sortedNaicsData.reduce((sum, item) => sum + item.value, 0);
-      sortedNaicsData.forEach(item => {
-        item.percentage = totalValue > 0 ? (item.value / totalValue) * 100 : 0;
-      });
-      
-      return sortedNaicsData;
-    };
-    
-    // Replace other methods if they exist
-    if (window.displayShareOfWalletChart) {
-      window.displayShareOfWalletChart = displayEnhancedShareOfWalletChart;
-    }
-    
-    if (window.displayNaicsDonutChart) {
-      const originalDisplayNaicsDonutChart = window.displayNaicsDonutChart;
-      window.displayNaicsDonutChart = function() {
-        // Process NAICS data first
-        if (window.unifiedModel) {
-          const naicsData = processNaicsDistributionData(window.unifiedModel);
-          displayFixedNaicsDonutChart(naicsData, 'naics-donut-chart-container');
-        } else {
-          originalDisplayNaicsDonutChart.apply(this, arguments);
-        }
-      };
-    }
-    
-    // If unifiedModel already exists, trigger a display of the charts
-    if (window.unifiedModel) {
-      setTimeout(() => {
-        displayEnhancedShareOfWalletChart(window.unifiedModel);
-      }, 500);
-    }
-    
-    console.log("Chart fixes initialized successfully");
-  }
-  
-  // Run initialization immediately or when the page loads
-  if (document.readyState === 'complete' || document.readyState === 'interactive') {
-    setTimeout(initChartFixes, 100);
-  } else {
-    document.addEventListener('DOMContentLoaded', function() {
-      setTimeout(initChartFixes, 500);
     });
-  }
-})();
+    
+    return result;
+}
+
+/**
+ * Display NAICS Donut Chart
+ */
+function displayNaicsDonutChart(naicsData, containerId, topN = 5) {
+    if (!naicsData || naicsData.length === 0) {
+        displayNoData(containerId, 'No NAICS data available.');
+        return;
+    }
+    
+    try {
+        displayEnhancedDonutChart(naicsData, containerId, {
+            title: "Top NAICS",
+            centerValueField: "code",
+            labelField: "code",
+            descField: "desc",
+            topN: topN,
+            legendPosition: "none",
+            showExternalLabels: true,
+            minPercentageForLabel: 4
+        });
+        
+        console.log("NAICS donut chart displayed successfully");
+    } catch (error) {
+        console.error("Error displaying NAICS chart:", error);
+        displayError(containerId, `Failed to display chart: ${error.message}`);
+    }
+}
+
+/**
+ * Create and display Share of Wallet chart
+ */
+function displayShareOfWalletChart(model) {
+    // Ensure container exists
+    const containerId = 'share-of-wallet-container';
+    const bentoId = 'bento-share-of-wallet';
+    
+    let container = document.getElementById(containerId);
+    
+    // Create container if it doesn't exist
+    if (!container) {
+        console.log("Creating Share of Wallet container");
+        
+        // Find bento grid
+        const bentoGrid = document.querySelector('.bento-grid');
+        if (!bentoGrid) {
+            console.error("Could not find bento grid for Share of Wallet container");
+            return;
+        }
+        
+        // Check if bento box already exists
+        let bentoBox = document.getElementById(bentoId);
+        if (!bentoBox) {
+            bentoBox = document.createElement('div');
+            bentoBox.id = bentoId;
+            bentoBox.className = 'bento-box';
+            bentoBox.style.gridColumn = 'span 1';
+            bentoBox.style.gridRow = 'span 1';
+            bentoBox.style.minHeight = '240px';
+            
+            // Create header
+            const header = document.createElement('div');
+            header.className = 'bento-header';
+            header.innerHTML = '<h3>Market Share</h3>';
+            bentoBox.appendChild(header);
+            
+            // Add to grid
+            bentoGrid.appendChild(bentoBox);
+        }
+        
+        // Create chart container
+        container = document.createElement('div');
+        container.id = containerId;
+        container.style.width = '100%';
+        container.style.height = 'calc(100% - 40px)';
+        bentoBox.appendChild(container);
+    }
+    
+    // Set loading state
+    setLoading(containerId, true, 'Loading market share data...');
+    
+    try {
+        // Process data
+        const shareData = processShareOfWalletData(model);
+        
+        if (!shareData || shareData.length === 0) {
+            displayNoData(containerId, 'No market share data available.');
+            return;
+        }
+        
+        // Display chart
+        displayEnhancedDonutChart(shareData, containerId, {
+            title: "Market",
+            subtitle: "Share",
+            labelField: "name",
+            topN: 7,
+            legendPosition: "left",
+            showExternalLabels: false,
+            minPercentageForLabel: 5
+        });
+        
+        console.log("Share of Wallet chart displayed successfully");
+    } catch (error) {
+        console.error("Error displaying Share of Wallet chart:", error);
+        displayError(containerId, `Failed to display chart: ${error.message}`);
+    } finally {
+        setLoading(containerId, false);
+    }
+}
+
+// Hook into the dashboard update function
+const originalUpdateVisualsFromUnifiedModel = window.updateVisualsFromUnifiedModel;
+
+window.updateVisualsFromUnifiedModel = function(subAgencyFilter, naicsFilter, searchTerm) {
+    // Call the original function first
+    originalUpdateVisualsFromUnifiedModel.apply(this, arguments);
+    
+    // Add a slight delay to let other visualizations complete
+    setTimeout(() => {
+        try {
+            // Display Share of Wallet chart with the current model
+            displayShareOfWalletChart(unifiedModel);
+            
+            // Refresh NAICS chart if needed
+            const naicsContainer = document.getElementById('naics-donut-chart-container');
+            if (naicsContainer) {
+                const naicsData = processNaicsDistributionData(unifiedModel);
+                displayNaicsDonutChart(naicsData, 'naics-donut-chart-container');
+            }
+        } catch (e) {
+            console.error("Error updating additional charts:", e);
+        }
+    }, 300);
+};
