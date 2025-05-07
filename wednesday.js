@@ -7075,8 +7075,71 @@ function displayNaicsDonutChart(naicsData, chartElementId, topN = 5) {
 }
 
 /**
- * Wrapper for Share of Wallet Chart with specific configuration
+ * Process model data to prepare for Share of Wallet visualization
+ * @param {Object} model - The unified data model
+ * @param {number} topN - Number of top items to show (default: 7)
+ * @returns {Array} Processed data for the chart
  */
+function processShareOfWalletData(model, topN = 7) {
+  try {
+    if (!model || !model.primes) {
+      console.warn("processShareOfWalletData: Invalid model data");
+      return [];
+    }
+    
+    // Get total value by prime
+    const primeValues = {};
+    let grandTotal = 0;
+    
+    // Aggregate from contracts
+    Object.values(model.contracts).forEach(contract => {
+      if (contract.primeId && contract.value > 0) {
+        const prime = model.primes[contract.primeId];
+        if (prime) {
+          const primeName = prime.name;
+          if (!primeValues[primeName]) {
+            primeValues[primeName] = 0;
+          }
+          primeValues[primeName] += contract.value;
+          grandTotal += contract.value;
+        }
+      }
+    });
+    
+    // Convert to array and sort
+    const sortedPrimes = Object.entries(primeValues)
+      .map(([name, value]) => ({
+        name: name,
+        value: value,
+        percentage: grandTotal > 0 ? (value / grandTotal) * 100 : 0
+      }))
+      .sort((a, b) => b.value - a.value);
+    
+    // Take top N primes and roll up the rest as "Other"
+    const result = sortedPrimes.slice(0, topN);
+    
+    // Add "Other" category if needed
+    if (sortedPrimes.length > topN) {
+      const otherValue = sortedPrimes.slice(topN).reduce((sum, prime) => sum + prime.value, 0);
+      const otherPercentage = grandTotal > 0 ? (otherValue / grandTotal) * 100 : 0;
+      
+      if (otherValue > 0) {
+        result.push({
+          name: "Other",
+          value: otherValue,
+          percentage: otherPercentage,
+          count: sortedPrimes.length - topN
+        });
+      }
+    }
+    
+    console.log(`Share of Wallet data processed: ${result.length} items (${sortedPrimes.length} total primes)`);
+    return result;
+  } catch (e) {
+    console.error("Error in processShareOfWalletData:", e);
+    return [];
+  }
+}
 function displayShareOfWalletChart(model, containerId = 'share-of-wallet-container') {
     // Process data for Share of Wallet (taken from your existing function)
     const shareData = processShareOfWalletData(model);
