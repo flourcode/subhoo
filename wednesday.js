@@ -5492,7 +5492,7 @@ function displayEnhancedDonutChart(data, containerId, options = {}) {
     
     // Draw arcs
     const pieData = pie(chartPlotData);
-    
+
 donutG.selectAll(".arc-path")
     .data(pieData)
     .join("path")
@@ -5572,6 +5572,7 @@ donutG.selectAll(".arc-path")
             .style("opacity", 0)
             .remove();
     });
+
     
     // Add center text
     const centerText = donutG.append("text")
