@@ -1,103 +1,119 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Ubuntu:wght@500;700&display=swap');
+
 /* ========================================= */
-/* CSS Variables - Light Mode Muted Purples  */
+/* Theme Variables (Inspired by Screenshot 2025-05-05 111205.png) */
 /* ========================================= */
 :root {
-    /* Core Color Palette - Muted Purples */
-    --light-purple-50: #F4F2F6;  /* Lightest - Background */
-    --light-purple-100: #E9E6ED; /* Light - Surface Container */
-    --light-purple-200: #D7D4DC; /* Light Mid - Surface Variant */
-    --light-purple-300: #B5B0BD; /* Mid - Outline */
-    --light-purple-400: #9993A1; /* Mid Dark - Primary */
-    --light-purple-500: #797484; /* Dark - Secondary */
-    --light-purple-600: #615C66; /* Darkest - Text */
+    /* --- Font Families --- */
+    --font-heading: 'Ubuntu', sans-serif;
+    --font-body: 'Poppins', sans-serif;
 
-    /* Neutral Colors */
-    --white: #FFFFFF;
-    --light-text: #36323A;      /* Dark Purple-Gray Text */
-    --dark-text: #252327;       /* Darkest Text */
-
-    /* Status Colors */
-    --red-500: #ef4444;         /* Error */
-    --green-500: #10b981;       /* Success */
-    --blue-500: #3e95cd;        /* Info */
-
-    /* Semantic Color Mapping - Light Mode Default */
-    --color-background: var(--white);
-    --color-surface: var(--light-purple-50);
-    --color-surface-container: var(--light-purple-100);
-    --color-surface-variant: var(--light-purple-200);
-
-    /* Text Colors */
-    --color-text-primary: var(--light-text);
-    --color-text-secondary: var(--light-purple-600);
-    --color-text-tertiary: var(--light-purple-500);
-
-    /* Action Colors */
-    --color-primary: var(--light-purple-400);
-    --color-on-primary: var(--white);
-    --color-secondary: var(--light-purple-500);
-    --color-on-secondary: var(--white);
-
-    /* Border & Outline */
-    --color-outline: var(--light-purple-300);
-    --color-border: var(--light-purple-200);
-
-    /* Chart Colors */
-    --chart-color-primary: var(--light-purple-400);
-    --chart-color-secondary: var(--light-purple-500);
-    --chart-color-tertiary: var(--light-purple-300);
+    /* --- Core Hex Palette (Light Mode) --- */
+    --lm-bg: #F7F9FC;             /* Very Light Blue-Gray Background */
+    --lm-surface: #FFFFFF;       /* White Surfaces (App Container, Cards) */
+    --lm-surface-alt: #F0F4F8;   /* Slightly Off-White (Side Panel, Containers within cards) */
+    --lm-border: #E2E8F0;          /* Light Gray Border */
+    --lm-outline: #CBD5E0;         /* Mid-Light Gray Outline */
+    --lm-text-primary: #1A202C;    /* Dark Charcoal Text */
+    --lm-text-secondary: #4A5568;  /* Mid Gray Text */
+    --lm-text-tertiary: #718096;   /* Light Gray Text */
+    --lm-accent-primary: #38B2AC;  /* Teal/Blue-Green */
+    --lm-accent-secondary: #ECC94B; /* Yellow */
+    --lm-on-accent: #FFFFFF;
 
     /* Status Colors */
-    --color-error: var(--red-500);
-    --color-success: var(--green-500);
-    --color-info: var(--blue-500);
+    --status-red: #E53E3E; --status-green: #38A169; --status-blue: #3182CE; --status-yellow: #D69E2E;
 
-    /* Layout Values */
-    --border-radius-sm: 8px;
+    /* --- Semantic Color Mapping (Light Mode) --- */
+    --color-background: var(--lm-bg);
+    --color-surface: var(--lm-surface);
+    --color-surface-container: var(--lm-surface-alt);
+    --color-surface-variant: var(--lm-border);
+
+    --color-text-primary: var(--lm-text-primary);
+    --color-text-secondary: var(--lm-text-secondary);
+    --color-text-tertiary: var(--lm-text-tertiary);
+
+    --color-primary: var(--lm-accent-primary);
+    --color-on-primary: var(--lm-on-accent);
+    --color-secondary: var(--lm-accent-secondary);
+    --color-on-secondary: var(--lm-text-primary);
+
+    --color-border: var(--lm-border);
+    --color-outline: var(--lm-outline);
+    --color-focus-ring: rgba(56, 178, 172, 0.5);
+
+    --chart-color-primary: var(--lm-accent-primary);
+    --chart-color-secondary: var(--lm-accent-secondary);
+    --chart-color-tertiary: var(--lm-text-tertiary);
+
+    --color-error: var(--status-red); --color-success: var(--status-green);
+    --color-warning: var(--status-yellow); --color-info: var(--status-blue);
+
+    /* --- Layout & Feel Adjustments --- */
+    --border-radius-sm: 6px;
     --border-radius-md: 12px;
-    --border-radius-lg: 16px;
-    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
-    --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.08);
-    --shadow-lg: 0 4px 6px rgba(0, 0, 0, 0.12);
-    --transition-standard: all 0.2s ease;
-    --bento-gap: 20px;
+    --border-radius-lg: 16px; /* Generous rounding for cards */
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.07), 0 4px 6px -2px rgba(0, 0, 0, 0.03);
+    --transition-standard: all 0.2s ease-in-out;
+    --bento-gap: 20px; /* More spacing */
+    --scale-interactive: scale(1.02);
 }
 
 /* ========================================= */
-/* CSS Variables - Dark Mode                 */
+/* CSS Variables - Dark Mode (Inspired by Screenshot) */
 /* ========================================= */
 [data-theme="dark"] {
-    /* Dark Mode - Core Color Palette */
-    --color-background: #1E1A22;
-    --color-surface: #252229;
-    --color-surface-container: #2D2A31;
-    --color-surface-variant: #3A373E;
+    /* --- Core Hex Palette (Dark Mode) --- */
+    --dm-bg: #1A202C;
+    --dm-surface: #2D3748; /* Slightly lighter than BG for App Container */
+    --dm-surface-alt: #343F51; /* Lighter still for Bento Boxes/Side Panel */
+    --dm-border: #4A5568;
+    --dm-outline: #718096;
+    --dm-text-primary: #F7FAFC;
+    --dm-text-secondary: #E2E8F0;
+    --dm-text-tertiary: #A0AEC0;
+    --dm-accent-primary: #4FD1C5;
+    --dm-accent-secondary: #F6E05E;
+    --dm-on-accent: #1A202C;
 
-    /* Text Colors */
-    --color-text-primary: #F4F2F6;
-    --color-text-secondary: #D7D4DC;
-    --color-text-tertiary: #B5B0BD;
+    /* Status Colors (Brighter) */
+    --status-red-dark: #FC8181; --status-green-dark: #68D391; --status-blue-dark: #63B3ED; --status-yellow-dark: #F6E05E;
 
-    /* Action Colors - Brighter for dark mode */
-    --color-primary: #A29AAA;
-    --color-on-primary: #1E1A22;
-    --color-secondary: #8C85A0;
-    --color-on-secondary: #1E1A22;
+    /* --- Semantic Color Mapping --- */
+    --color-background: var(--dm-bg);
+    --color-surface: var(--dm-surface);
+    --color-surface-container: var(--dm-surface-alt);
+    --color-surface-variant: var(--dm-border);
 
-    /* Border & Outline */
-    --color-outline: #3A373E;
-    --color-border: #3A373E;
+    --color-text-primary: var(--dm-text-primary);
+    --color-text-secondary: var(--dm-text-secondary);
+    --color-text-tertiary: var(--dm-text-tertiary);
 
-    /* Chart Colors - Brighter for dark mode */
-    --chart-color-primary: #A29AAA;
-    --chart-color-secondary: #8C85A0;
-    --chart-color-tertiary: #635C7A;
+    --color-primary: var(--dm-accent-primary);
+    --color-on-primary: var(--dm-on-accent);
+    --color-secondary: var(--dm-accent-secondary);
+    --color-on-secondary: var(--dm-on-accent);
 
-    /* Shadow adjustments for dark mode */
-    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
-    --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.25);
-    --shadow-lg: 0 4px 6px rgba(0, 0, 0, 0.3);
+    --color-border: var(--dm-border);
+    --color-outline: var(--dm-outline);
+    --color-focus-ring: rgba(79, 209, 197, 0.5);
+
+    --chart-color-primary: var(--dm-accent-primary);
+    --chart-color-secondary: var(--dm-accent-secondary);
+    --chart-color-tertiary: var(--dm-text-tertiary);
+
+    --color-error: var(--status-red-dark); --color-success: var(--status-green-dark);
+    --color-warning: var(--status-yellow-dark); --color-info: var(--status-blue-dark);
+
+    /* Dark Mode Shadows */
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.15);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.15);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.15);
 }
+
 
 /* ========================================= */
 /* Base Styles & Reset                       */
@@ -106,17 +122,15 @@
 html { height: 100%; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; scroll-behavior: smooth; }
 
 body {
-    font-family: 'Inter', -apple-system, sans-serif;
-    background-color: var(--color-background);
+    font-family: var(--font-body), sans-serif; /* Poppins */
+    background-color: var(--color-background); /* PAGE background */
     color: var(--color-text-primary);
-    line-height: 1.5;
-    font-size: 14px; /* Base size */
-    margin: 0; /* Ensure no default margin */
-    padding: 0; /* Ensure no default padding */
-    height: 100%;
-    overflow: hidden; /* Prevent body scroll when layout manages scrolling */
-    transition: background-color 0.3s ease, color 0.3s ease;
+    line-height: 1.6; /* Increased line height for Poppins */
+    font-size: 14px;
+    margin: 0; padding: 0; height: 100%; overflow: hidden;
+    transition: background-color 0.2s ease, color 0.2s ease;
 }
+
 /* Apply heading font */
 h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-heading), sans-serif; /* Ubuntu */

@@ -3882,13 +3882,13 @@ function displayForceDirectedRadial(model) {
         const g = svg.append("g")
             .attr("transform", `translate(${width/2}, ${height/2})`);
             
-        // Create hierarchical data - only showing subagencies, primes, and subs
-        const hierarchyData = createSimplifiedHierarchyData(model, subAgencyFilter);
+        // Create hierarchical data - agency, prime, sub
+        const hierarchyData = createHierarchyData(model, subAgencyFilter);
         
         // Calculate node size based on value
         function calculateNodeSize(type, value) {
             // Base radius by type
-            const baseRadius = type === 'subagency' ? 8 :
+            const baseRadius = type === 'agency' ? 8 :
                               type === 'prime' ? 6 : 4;
             
             // Scale by value (use log scale to handle wide range of values)
@@ -3903,12 +3903,12 @@ function displayForceDirectedRadial(model) {
         // Set up force simulation with gentle forces
         const simulation = d3.forceSimulation()
             .force("link", d3.forceLink().id(d => d.id).distance(d => {
-                if (d.source.type === 'subagency' && d.target.type === 'prime') return 70;
+                if (d.source.type === 'agency' && d.target.type === 'prime') return 80;
                 if (d.source.type === 'prime' && d.target.type === 'sub') return 50;
-                return 70;
+                return 80;
             }).strength(0.2))
             .force("charge", d3.forceManyBody().strength(d => {
-                return d.type === 'subagency' ? -200 :
+                return d.type === 'agency' ? -300 :
                        d.type === 'prime' ? -100 : -30;
             }))
             .force("center", d3.forceCenter(0, 0))
@@ -3919,7 +3919,7 @@ function displayForceDirectedRadial(model) {
                 return nodeRadius + textPadding;
             }).strength(0.7))
             .force("radial", d3.forceRadial(d => {
-                if (d.type === 'subagency') return 80;
+                if (d.type === 'agency') return 80;
                 if (d.type === 'prime') return 180;
                 return 280; // Subcontractors
             }, 0, 0).strength(0.2));
@@ -3932,9 +3932,9 @@ function displayForceDirectedRadial(model) {
         function processNode(node, parent = null, depth = 0) {
             const id = node.name + (Math.random().toString(36).substring(2, 5));
             
-            // Determine node type (skipping agency)
+            // Determine node type
             let nodeType = 'root';
-            if (depth === 1) nodeType = 'subagency';
+            if (depth === 1) nodeType = 'agency';
             else if (depth === 2) nodeType = 'prime';
             else if (depth > 2) nodeType = 'sub';
             
@@ -3983,7 +3983,7 @@ function displayForceDirectedRadial(model) {
             .data(links.filter(l => l.source && l.target))
             .enter().append("line")
             .attr("stroke", d => {
-                if (d.sourceType === 'subagency') return getCssVar('--chart-color-primary');
+                if (d.sourceType === 'agency') return getCssVar('--chart-color-primary');
                 if (d.sourceType === 'prime') return getCssVar('--chart-color-secondary');
                 return getCssVar('--chart-color-tertiary');
             })
@@ -4009,7 +4009,7 @@ function displayForceDirectedRadial(model) {
                 return calculateNodeSize(d.type, d.value);
             })
             .attr("fill", d => {
-                if (d.type === 'subagency') return getCssVar('--chart-color-primary');
+                if (d.type === 'agency') return getCssVar('--chart-color-primary');
                 if (d.type === 'prime') return getCssVar('--chart-color-secondary');
                 return getCssVar('--chart-color-tertiary');
             })
@@ -4019,20 +4019,20 @@ function displayForceDirectedRadial(model) {
         // Add labels to nodes
         node.append("text")
             .attr("opacity", d => {
-                return d.type === 'subagency' ? 1 :
+                return d.type === 'agency' ? 1 :
                        d.type === 'prime' ? 0.9 : 0.7;
             })
             .text(d => {
                 if (d.type === 'root') return "";
                 // Truncate text based on node type
-                if (d.type === 'subagency' && d.name.length > 25) return d.name.substring(0, 22) + "...";
+                if (d.type === 'agency' && d.name.length > 25) return d.name.substring(0, 22) + "...";
                 if (d.type === 'prime' && d.name.length > 25) return d.name.substring(0, 22) + "...";
                 if (d.type === 'sub' && d.name.length > 20) return d.name.substring(0, 17) + "...";
                 return d.name;
             })
             .attr("fill", getCssVar('--color-text-primary'))
             .attr("font-size", d => {
-                if (d.type === 'subagency') return "12px";
+                if (d.type === 'agency') return "12px";
                 if (d.type === 'prime') return "11px";
                 return "10px";
             })
@@ -4061,7 +4061,7 @@ function displayForceDirectedRadial(model) {
                 
             node.select("text")
                 .attr("opacity", d => {
-                    return d.type === 'subagency' ? 1 :
+                    return d.type === 'agency' ? 1 :
                            d.type === 'prime' ? 0.9 : 0.7;
                 })
                 .attr("font-weight", "normal");
@@ -4083,7 +4083,7 @@ function displayForceDirectedRadial(model) {
             .attr("transform", `translate(20, 20)`);
             
         const colorLegendData = [
-            { label: "Sub-Agency", color: getCssVar('--chart-color-primary') },
+            { label: "Agency", color: getCssVar('--chart-color-primary') },
             { label: "Prime Contractor", color: getCssVar('--chart-color-secondary') },
             { label: "Subcontractor", color: getCssVar('--chart-color-tertiary') }
         ];
@@ -4214,55 +4214,86 @@ function displayForceDirectedRadial(model) {
     }
 }
 
-// Helper function to create simplified hierarchical data (no agencies)
-function createSimplifiedHierarchyData(model, subAgencyFilter) {
+// Helper function to create hierarchical data (agency, prime, sub)
+function createHierarchyData(model, subAgencyFilter) {
     // Create root node
     const root = {
         name: "Root",
         children: []
     };
     
-    // Get sub-agencies to display
-    let subAgenciesToShow = [];
+    // Get agencies to display
+    let agenciesToShow = [];
     
+    // When a sub-agency filter is applied, find the parent agency
     if (subAgencyFilter) {
-        // Find only the specific sub-agency
-        Object.values(model.subAgencies).forEach(subAgency => {
-            if (subAgency.name === subAgencyFilter) {
-                subAgenciesToShow.push(subAgency);
+        // Find agencies that have the specified sub-agency
+        Object.values(model.agencies).forEach(agency => {
+            const hasMatchingSubAgency = Array.from(agency.subAgencies || []).some(subAgencyId => {
+                const subAgency = model.subAgencies[subAgencyId];
+                return subAgency && subAgency.name === subAgencyFilter;
+            });
+            
+            if (hasMatchingSubAgency) {
+                agenciesToShow.push(agency);
             }
         });
     } else {
-        // Show top sub-agencies by value
-        subAgenciesToShow = Object.values(model.subAgencies)
+        // Show top agencies by value
+        agenciesToShow = Object.values(model.agencies)
             .sort((a, b) => b.value - a.value)
-            .slice(0, 6);
+            .slice(0, 5);
     }
     
-    // Add sub-agencies as top-level nodes
-    subAgenciesToShow.forEach(subAgency => {
-        const subAgencyNode = {
-            name: subAgency.name,
-            value: subAgency.value,
+    // Add agencies as top-level nodes
+    agenciesToShow.forEach(agency => {
+        const agencyNode = {
+            name: agency.name,
+            value: agency.value,
             children: []
         };
         
-        // Find primes for this sub-agency
-        const primesForSubAgency = {};
+        // Find primes for this agency
+        const primesForAgency = {};
         
-        // Get contracts connected to this sub-agency
-        Object.values(model.contracts).forEach(contract => {
-            if (contract.subAgencyId === subAgency.id) {
-                const primeId = contract.primeId;
-                if (!primesForSubAgency[primeId]) {
-                    primesForSubAgency[primeId] = 0;
+        // If a sub-agency filter is applied, only get primes for that sub-agency
+        if (subAgencyFilter) {
+            // Find the specified sub-agency
+            let matchingSubAgencyId = null;
+            Array.from(agency.subAgencies || []).forEach(subAgencyId => {
+                const subAgency = model.subAgencies[subAgencyId];
+                if (subAgency && subAgency.name === subAgencyFilter) {
+                    matchingSubAgencyId = subAgencyId;
                 }
-                primesForSubAgency[primeId] += contract.value;
+            });
+            
+            if (matchingSubAgencyId) {
+                // Get contracts connected to this sub-agency
+                Object.values(model.contracts).forEach(contract => {
+                    if (contract.subAgencyId === matchingSubAgencyId) {
+                        const primeId = contract.primeId;
+                        if (!primesForAgency[primeId]) {
+                            primesForAgency[primeId] = 0;
+                        }
+                        primesForAgency[primeId] += contract.value;
+                    }
+                });
             }
-        });
+        } else {
+            // No filter - get all primes for this agency
+            model.relationships.agencyToPrime.forEach(rel => {
+                if (rel.source === agency.id) {
+                    const primeId = rel.target;
+                    if (!primesForAgency[primeId]) {
+                        primesForAgency[primeId] = 0;
+                    }
+                    primesForAgency[primeId] += rel.value;
+                }
+            });
+        }
         
         // Sort primes by value and take top 8
-        const topPrimes = Object.entries(primesForSubAgency)
+        const topPrimes = Object.entries(primesForAgency)
             .sort((a, b) => b[1] - a[1])
             .slice(0, 8)
             .map(([primeId, value]) => ({
@@ -4271,19 +4302,19 @@ function createSimplifiedHierarchyData(model, subAgencyFilter) {
             }));
             
         // Add prime contractor nodes
-        addPrimeNodes(topPrimes, model, subAgencyNode);
+        addPrimeNodes(topPrimes, model, agencyNode);
         
-        // Add sub-agency if it has children
-        if (subAgencyNode.children.length > 0) {
-            root.children.push(subAgencyNode);
+        // Add agency if it has children
+        if (agencyNode.children.length > 0) {
+            root.children.push(agencyNode);
         }
     });
     
     // Add a check for empty visualization
     if (root.children.length === 0) {
-        // Create a dummy sub-agency to ensure something displays
+        // Create a dummy agency to ensure something displays
         root.children.push({
-            name: subAgencyFilter ? `No data for ${subAgencyFilter}` : "Selected Agency",
+            name: subAgencyFilter ? `${subAgencyFilter} Agency` : "Selected Agency",
             value: 1000000,
             children: [{
                 name: "No Prime Contractors Found",
