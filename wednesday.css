@@ -232,12 +232,37 @@ a:hover { color: var(--color-secondary); text-decoration: none; }
 /* ========================================= */
 /* Card Styles (`.bento-box`)                */
 /* ========================================= */
+/* In wednesday.css */
+
 .bento-box {
-    background-color: var(--color-surface-container); /* UPDATED: Bento Box BG */
+    background-color: #ffffff; /* UPDATED: Bento Box BG - This is your default */
     border-radius: var(--border-radius-lg);
-    box-shadow: var(--shadow-sm); padding: 16px; border: 1px solid var(--color-border);
-    display: flex; flex-direction: column; height: 100%; position: relative; overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    padding: 16px;
+    border: 1px solid var(--color-border);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
     transition: var(--transition-standard);
+
+    /* --- Development Overrides for Bento Box Background --- */
+    /* Uncomment one of the following lines to manually set the background for light mode. */
+    /* background-color: #e0e7ff !important; /* Example: A light blue for light mode */
+    /* background-color: #d1fae5 !important; /* Example: A light green for light mode */
+    /* background-color: #fee2e2 !important; /* Example: A light red for light mode */
+}
+
+/* Dark Mode specific overrides for .bento-box background */
+[data-theme="dark"] .bento-box {
+	background-color: #1E1A22 !important;
+
+    /* --- Development Overrides for Bento Box Background (Dark Mode) --- */
+    /* Uncomment one of the following lines to manually set the background for dark mode. */
+    /* background-color: #3730a3 !important; /* Example: An indigo for dark mode */
+    /* background-color: #065f46 !important; /* Example: A dark green for dark mode */
+    /* background-color: #7f1d1d !important; /* Example: A dark red for dark mode */
 }
 .bento-box:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); border-color: var(--color-outline); }
 
