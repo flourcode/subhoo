@@ -1394,17 +1394,18 @@ function updateVisualsFromUnifiedModel(subAgencyFilter, naicsFilter, searchTerm)
     calculateAverageARRFromModel(filteredModel);
 	// --- NEW: NAICS Donut Chart ---
     const naicsDistributionData = processNaicsDistributionData(filteredModel);
-    // The container ID for the donut chart itself (the one D3 selects)
-    const naicsDonutChartContainerId = 'naics-donut-chart-container';
-    // The ID of the bento-box wrapper for loading state management
-    const naicsBentoBoxId = 'bento-naics-distribution';
+    const naicsDonutChartContainerId = 'naics-donut-chart-container'; // The div D3 will select
+    const naicsBentoBoxId = 'bento-naics-distribution'; // The parent bento box for overall loading
 
-    setLoading(naicsBentoBoxId, true, 'Loading NAICS distribution...'); // Show loading on the bento box
-    // A slight delay to allow the loading spinner to render before D3 takes over the inner container
+    // Set loading state for the bento box just before trying to draw
+    setLoading(naicsBentoBoxId, true, 'Loading NAICS distribution...');
+
+    // Use a timeout to allow the DOM to update and containers to get their sizes
     setTimeout(() => {
-        displayNaicsDonutChart(naicsDistributionData, naicsDonutChartContainerId, 5); // Show Top 5 + Other
-         setLoading(naicsBentoBoxId, false); // Hide loading from bento box AFTER chart draws or displays no data
-    }, 50);
+        displayNaicsDonutChart(naicsDistributionData, naicsDonutChartContainerId, 5);
+        // Turn off loading for the bento box AFTER the chart attempts to draw or shows a no-data message
+        setLoading(naicsBentoBoxId, false);
+    }, 100); // Increased timeout slightly, adjust if needed
 }
 function filterUnifiedModel(subAgencyFilter, naicsFilter, searchTerm) {
     // Create a deep copy of the model structure but with empty collections
@@ -5199,153 +5200,164 @@ if (typeof originalApplyFilters === 'function') {
  * - Shows "Top NAICS [Code]" text in the center.
  * - Disables tooltips on donut slices.
  * @param {Array} naicsData - Array of {code, desc, value} objects, sorted descending.
- * @param {string} chartContainerId - The ID of the div container for the chart.
+ * @param {string} chartElementId - The ID of the div container for the chart.
  * @param {number} topN - Number of top categories to show separately.
  */
-function displayNaicsDonutChart(naicsData, chartContainerId, topN = 5) {
-    const containerId = chartContainerId; // Use the chart specific container
-    const chartWrapper = document.getElementById(containerId); // Get the wrapper for setLoading
+function displayNaicsDonutChart(naicsData, chartElementId, topN = 5) {
+    const chartContainer = document.getElementById(chartElementId);
 
-    if (!chartWrapper) {
-        console.error(`displayNaicsDonutChart: Chart container element #${containerId} not found.`);
+    if (!chartContainer) {
+        console.error(`displayNaicsDonutChart: Chart container element #${chartElementId} not found.`);
         return;
     }
-    setLoading(containerId, false); // Turn off loading spinner for this specific chart
+    // setLoading for the specific chart container should be handled before calling this,
+    // or pass the bento box ID if you want to control its loading state.
+    // For now, we assume loading is handled externally or we just draw.
 
-    const d3Container = d3.select(`#${containerId}`);
-    d3Container.html(''); // Clear previous content from the specific chart div
+    const d3Container = d3.select(`#${chartElementId}`);
+    d3Container.html(''); // Clear previous content
 
     // --- Basic Data Check ---
     if (!naicsData || !Array.isArray(naicsData)) {
         console.warn("displayNaicsDonutChart: Invalid naicsData input", naicsData);
-        displayNoData(containerId, "Invalid NAICS data for chart.");
+        displayNoData(chartElementId, "Invalid NAICS data.");
         return;
     }
     if (naicsData.length === 0) {
-        displayNoData(containerId, "No NAICS data to display.");
+        displayNoData(chartElementId, "No NAICS data available.");
         return;
     }
 
     // --- Prepare Data: Top N + Other ---
     const topNData = naicsData.slice(0, topN);
     const otherValue = d3.sum(naicsData.slice(topN), d => d.value);
-    const chartPlotData = [...topNData]; // Use a different name to avoid confusion with input
+    const chartPlotData = [...topNData];
     let hasOther = false;
-    if (otherValue > 0 && naicsData.length > topN) { // Only add "Other" if there are items beyond topN
-        chartPlotData.push({ code: "Other", desc: `Other (${naicsData.length - topN} NAICS)`, value: otherValue });
+    if (otherValue > 0 && naicsData.length > topN) {
+        chartPlotData.push({ code: "Other", desc: `Other (${naicsData.length - topN} codes)`, value: otherValue });
         hasOther = true;
     }
 
-    const topSliceForCenterText = naicsData[0]; // For center text, always use the actual top NAICS
+    const topSliceForCenterText = naicsData[0];
 
     if (chartPlotData.length === 0 || !topSliceForCenterText) {
-         displayNoData(containerId, "Not enough data for NAICS chart.");
-         return;
-    }
-    if (chartPlotData.length === 1 && hasOther && chartPlotData[0].code === "Other") {
-        // This case means all significant data fell into "Other" after slicing topN
-        // or there wasn't enough distinct data to begin with.
-        displayNoData(containerId, 'NAICS data primarily in "Other" category or insufficient distinct codes.');
+        displayNoData(chartElementId, "Not enough data for NAICS chart.");
         return;
     }
-
+    if (chartPlotData.length === 1 && chartPlotData[0].code === "Other") {
+        displayNoData(chartElementId, 'NAICS data primarily in "Other".');
+        return;
+    }
 
     // --- Chart Setup ---
-    const containerNode = d3Container.node();
-    if (!containerNode) {
-        console.error(`displayNaicsDonutChart: D3 Container node #${containerId} not found after clearing.`);
+    // Get dimensions from the container element
+    const rect = chartContainer.getBoundingClientRect();
+    const availableWidth = rect.width;
+    const availableHeight = rect.height;
+
+    if (availableWidth <= 10 || availableHeight <= 10) { // Check for genuinely small/non-rendered container
+        console.warn(`Container #${chartElementId} has minimal/no dimensions. W: ${availableWidth}, H: ${availableHeight}. Chart not drawn.`);
+        // displayNoData might have already been called if data was also an issue,
+        // but good to have a check here. If it's just a size issue after data is loaded:
+        if (naicsData.length > 0) displayNoData(chartElementId, "Chart area too small.");
         return;
     }
-    const width = containerNode.clientWidth;
-    // Ensure a minimum height for the chart, especially if clientHeight is 0 initially.
-    const height = Math.max(150, containerNode.clientHeight || 150);
-    // Explicitly set container height to ensure space, D3 will draw within this
-    d3Container.style('height', `${height}px`).style('min-height', '150px');
 
+    // Define margins for labels around the donut
+    const margin = {
+        top: (window.innerWidth > 768 && availableHeight > 200) ? 30 : 10, // More space for labels on larger views
+        right: (window.innerWidth > 768 && availableWidth > 200) ? 30 : 10,
+        bottom: (window.innerWidth > 768 && availableHeight > 200) ? 30 : 10,
+        left: (window.innerWidth > 768 && availableWidth > 200) ? 30 : 10
+    };
 
-    const margin = 10; // Reduced margin for labels
-    const radius = Math.min(width, height) / 2 - margin;
-    const innerRadius = radius * 0.65;
+    // Calculate actual drawing space and radius
+    const drawingWidth = availableWidth - margin.left - margin.right;
+    const drawingHeight = availableHeight - margin.top - margin.bottom;
+    const outerRadius = Math.min(drawingWidth, drawingHeight) / 2;
+    const innerRadius = outerRadius * 0.65; // Donut thickness
 
-    if (width <= 0 || height <= 0 || radius <= 20) {
-        console.warn(`Container #${containerId} too small for donut. W: ${width}, H: ${height}, R: ${radius}`);
-        displayNoData(containerId, "Chart area too small.");
-        // Ensure container has *some* height even if chart doesn't draw
-        d3Container.style('height', '150px').style('min-height', '150px');
+    if (outerRadius <= 10) { // If radius is too small after margins
+        displayNoData(chartElementId, "Chart area too small for donut.");
         return;
     }
 
     const svg = d3Container.append("svg")
-        .attr("width", width)
-        .attr("height", height)
-        .style("overflow", "visible") // Allow labels to go outside SVG bounds slightly
+        .attr("width", "100%") // SVG fills container
+        .attr("height", "100%") // SVG fills container
+        .attr("viewBox", `0 0 ${availableWidth} ${availableHeight}`) // Establish internal coordinate system
+        .style("overflow", "visible") // Allows labels to draw slightly outside the main circle if needed
         .append("g")
-        .attr("transform", `translate(<span class="math-inline">\{width / 2\},</span>{height / 2})`);
+        // Translate the group to the center of the SVG (which is sized by availableWidth/Height)
+        .attr("transform", `translate(${availableWidth / 2}, ${availableHeight / 2})`);
 
-    const color = getThemeOrdinalChartColors(chartPlotData.length); // Use theme colors
+    const color = getThemeOrdinalChartColors(chartPlotData.length);
 
     const pie = d3.pie()
         .padAngle(0.008)
         .value(d => d.value)
-        .sort(null); // Respect data order
+        .sort(null);
 
-    const arcGenerator = d3.arc() // Renamed from 'arc' to avoid conflict if 'arc' is a var name
+    const arcGenerator = d3.arc()
         .innerRadius(innerRadius)
-        .outerRadius(radius);
+        .outerRadius(outerRadius);
 
-    const outerArcForLabels = d3.arc()
-        .innerRadius(radius * 0.92) // Adjusted for label line start
-        .outerRadius(radius * 0.92);
+    // Arc for label positioning (where lines attach to donut)
+    const labelArcStart = d3.arc()
+        .innerRadius(outerRadius * 0.95) // Lines start just inside the outer edge
+        .outerRadius(outerRadius * 0.95);
+
+    // Arc for label line bending point
+    const labelArcMid = d3.arc()
+        .innerRadius(outerRadius * 1.1) // Lines bend slightly outside
+        .outerRadius(outerRadius * 1.1);
+
 
     // --- Draw Arcs ---
     svg.selectAll(".arc-path")
         .data(pie(chartPlotData))
         .join("path")
         .attr("class", "arc-path")
-        .attr("fill", (d, i) => color(i)) // Color by index in the prepared chartPlotData
+        .attr("fill", (d, i) => color(i))
         .attr("d", arcGenerator)
-        .attr("stroke", getCssVar('--color-surface')) // From your theme
+        .attr("stroke", getCssVar('--color-surface'))
         .style("stroke-width", "1.5px");
 
     // --- Add Center Text ---
     const centerText = svg.append("text")
         .attr("text-anchor", "middle")
-        .style("font-family", "var(--font-body)") // Use your theme's body font
+        .style("font-family", "var(--font-body)")
         .style("fill", getCssVar('--color-text-primary'))
         .attr("dy", "-0.4em");
 
     centerText.append("tspan")
-        .attr("x", 0)
-        .attr("dy", 0)
+        .attr("x", 0).attr("dy", 0)
         .style("font-size", "0.75em")
-        .style("fill", getCssVar('--color-text-secondary')) // Dimmer text for label
+        .style("fill", getCssVar('--color-text-secondary'))
         .text("Top NAICS");
 
     centerText.append("tspan")
-        .attr("x", 0)
-        .attr("dy", "1.3em")
+        .attr("x", 0).attr("dy", "1.3em")
         .style("font-size", "0.9em")
         .style("font-weight", "600")
         .text(topSliceForCenterText.code);
 
-    // --- External Labels and Lines (only if not too small and screen is wide enough) ---
-    // Adjusted threshold and screen width condition
-    if (window.innerWidth > 768 && radius > 50) {
-        const labelThresholdPercentage = 0.05; // Slices smaller than 5% won't get labels
+    // --- External Labels and Lines (conditional) ---
+    if (window.innerWidth > 768 && outerRadius > 40) { // Only draw if screen is wide enough & radius is decent
+        const labelThresholdPercentage = 0.03; // Slices smaller than 3% won't get labels
         const labelData = pie(chartPlotData).filter(d => {
             const percentage = (d.endAngle - d.startAngle) / (2 * Math.PI);
-            return percentage > labelThresholdPercentage && d.value > 0; // Also ensure value is > 0
+            return percentage >= labelThresholdPercentage && d.value > 0;
         });
 
         if (labelData.length > 0) {
             const lineGroup = svg.append("g").attr("class", "label-lines");
-            const textLabelGroup = svg.append("g").attr("class", "text-labels"); // Renamed to avoid conflict
+            const textLabelGroup = svg.append("g").attr("class", "text-labels");
 
             const polylineStrokeColor = getCssVar('--color-text-tertiary');
             const labelTextColor = getCssVar('--color-text-secondary');
             const labelDescColor = getCssVar('--color-text-tertiary');
 
-            // Draw Polylines
             lineGroup.selectAll('polyline')
                 .data(labelData)
                 .join('polyline')
@@ -5353,47 +5365,39 @@ function displayNaicsDonutChart(naicsData, chartContainerId, topN = 5) {
                 .style('fill', 'none')
                 .attr('stroke-width', 1)
                 .attr('points', d => {
-                    const posA = arcGenerator.centroid(d); // Start from the arc centroid
-                    const posB = outerArcForLabels.centroid(d); // Intermediate point
-                    const posC = outerArcForLabels.centroid(d); // End point for line
+                    const posA = labelArcStart.centroid(d);
+                    const posB = labelArcMid.centroid(d);
+                    const posC = [posB[0] * 1.1, posB[1]]; // Extend line horizontally from bend point
                     const midangle = d.startAngle + (d.endAngle - d.startAngle) / 2;
-                    posC[0] = (radius + 15) * (midangle < Math.PI ? 1 : -1); // Extend line horizontally
+                    posC[0] = (outerRadius + margin.left/2.5) * (midangle < Math.PI ? 1 : -1); // Line end based on outerRadius and margin
                     return [posA, posB, posC];
                 });
 
-            // Draw Text Labels
-            const textElements = textLabelGroup.selectAll('text')
+            const textLabels = textLabelGroup.selectAll('text')
                 .data(labelData)
                 .join('text')
                 .style('font-family', "var(--font-body)")
-                .attr('dy', '0.35em') // Vertically center text
+                .attr('dy', '0.35em')
                 .attr('transform', d => {
-                    const pos = outerArcForLabels.centroid(d);
+                    const pos = [labelArcMid.centroid(d)[0] * 1.1, labelArcMid.centroid(d)[1]]; // Base on bend point
                     const midangle = d.startAngle + (d.endAngle - d.startAngle) / 2;
-                    pos[0] = (radius + 20) * (midangle < Math.PI ? 1 : -1); // Position text next to line end
+                    // Position text next to extended line end
+                    pos[0] = (outerRadius + margin.left/2.5 + 5) * (midangle < Math.PI ? 1 : -1);
                     return `translate(${pos})`;
                 })
-                .style('text-anchor', d => {
-                    const midangle = d.startAngle + (d.endAngle - d.startAngle) / 2;
-                    return (midangle < Math.PI ? 'start' : 'end');
-                });
+                .style('text-anchor', d => (d.startAngle + (d.endAngle - d.startAngle) / 2 < Math.PI ? 'start' : 'end'));
 
-            // Add NAICS Code tspan
-            textElements.append('tspan')
+            textLabels.append('tspan')
                 .attr('x', 0)
-                .style('font-size', '11px')
-                .style('font-weight', '500')
+                .style('font-size', '11px').style('font-weight', '500')
                 .style('fill', labelTextColor)
                 .text(d => d.data.code);
 
-            // Add Description tspan (if not "Other" and fits)
-            textElements.filter(d => d.data.code !== "Other")
+            textLabels.filter(d => d.data.code !== "Other")
                 .append('tspan')
-                .attr('x', 0)
-                .attr('dy', '1.2em') // New line for description
-                .style('font-size', '10px')
-                .style('fill', labelDescColor)
-                .text(d => truncateText(d.data.desc, midAngle => (midAngle < Math.PI ? 1 : -1) === 1 ? 20 : 25)); // Truncate based on side
+                .attr('x', 0).attr('dy', '1.2em')
+                .style('font-size', '10px').style('fill', labelDescColor)
+                .text(d => truncateText(d.data.desc, 20)); // Simple truncation for now
         }
     }
 }
