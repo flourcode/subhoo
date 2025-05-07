@@ -240,7 +240,7 @@ a:hover { color: var(--color-secondary); text-decoration: none; }
     grid-template-areas:
         "sankey sankey sankey naics-donut naics-donut"
         "tavtcv tavtcv dendrogram dendrogram dendrogram"
-		"leaders leaders leaders leaders map"
+		"leaders leaders leaders map arr"
         "expiring expiring expiring expiring expiring";
     grid-template-rows: minmax(400px, auto) auto auto;
 }
