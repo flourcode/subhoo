@@ -3948,8 +3948,8 @@ function displayForceDirectedRadial(model) {
             let nodeType = 'root';
             if (depth === 1) nodeType = 'agency';
             else if (depth === 2 && node.isSubAgency) nodeType = 'subagency';
-            else if ((depth === 2 && !node.isSubAgency) || depth === 3) nodeType = 'prime';
-            else if (depth > 2) nodeType = 'sub';
+            else if ((depth === 2 && !node.isSubAgency) || (depth === 3 && parent?.type !== 'prime')) nodeType = 'prime';
+            else nodeType = 'sub';
             
             const newNode = {
                 id: id,
@@ -4431,7 +4431,8 @@ function addPrimeNodes(topPrimes, model, parentNode) {
             primeNode.children.push({
                 name: subData.name,
                 id: "sub-" + Math.random().toString(36).substring(2, 9),
-                value: sub.value
+                value: sub.value,
+                isSub: true // Explicitly mark as a subcontractor
             });
         });
         
