@@ -3882,63 +3882,47 @@ function displayForceDirectedRadial(model) {
         const g = svg.append("g")
             .attr("transform", `translate(${width/2}, ${height/2})`);
             
-        // Create hierarchical data
-        const hierarchyData = createHierarchyData(model, subAgencyFilter);
+        // Create hierarchical data - only showing subagencies, primes, and subs
+        const hierarchyData = createSimplifiedHierarchyData(model, subAgencyFilter);
         
         // Calculate node size based on value
         function calculateNodeSize(type, value) {
             // Base radius by type
-            const baseRadius = type === 'agency' ? 8 : 
-                              type === 'subagency' ? 7 :
+            const baseRadius = type === 'subagency' ? 8 :
                               type === 'prime' ? 6 : 4;
             
             // Scale by value (use log scale to handle wide range of values)
             if (value && value > 0) {
-                // Minimum size is the base radius
-                // Maximum size is 3x the base radius for largest values
-                const scaleFactor = Math.log10(value) / 8; // Adjust divisor to taste
+                const scaleFactor = Math.log10(value) / 8;
                 return baseRadius * (1 + Math.min(2, scaleFactor));
             }
             
             return baseRadius;
         }
         
-        // Set up force simulation with gentler forces
+        // Set up force simulation with gentle forces
         const simulation = d3.forceSimulation()
             .force("link", d3.forceLink().id(d => d.id).distance(d => {
-                // Adjust distance based on node types
-                if (d.source.type === 'agency' && d.target.type === 'subagency') return 60;
-                if (d.source.type === 'subagency' && d.target.type === 'prime') return 60;
-                if (d.source.type === 'agency' && d.target.type === 'prime') return 80;
+                if (d.source.type === 'subagency' && d.target.type === 'prime') return 70;
                 if (d.source.type === 'prime' && d.target.type === 'sub') return 50;
-                return 80; // Default distance
-            }).strength(0.3)) // Reduced link strength for more stability
+                return 70;
+            }).strength(0.2))
             .force("charge", d3.forceManyBody().strength(d => {
-                // Gentler repulsion forces
-                return d.type === 'agency' ? -300 : 
-                       d.type === 'subagency' ? -200 :
+                return d.type === 'subagency' ? -200 :
                        d.type === 'prime' ? -100 : -30;
             }))
             .force("center", d3.forceCenter(0, 0))
             .force("collide", d3.forceCollide(d => {
-                if (d.type === 'root') return 0;
-                
-                // Calculate node radius based on value
                 const nodeRadius = calculateNodeSize(d.type, d.value);
-                
-                // Add padding for text
                 const textPadding = d.type !== 'sub' ? 
                     Math.min(d.name.length * 2.5, 50) : 0;
-                    
                 return nodeRadius + textPadding;
             }).strength(0.7))
             .force("radial", d3.forceRadial(d => {
-                // Adjust distance from center based on node type
-                if (d.type === 'agency') return 80;
-                if (d.type === 'subagency') return 160;
-                if (d.type === 'prime') return d.parent?.type === 'subagency' ? 240 : 180;
+                if (d.type === 'subagency') return 80;
+                if (d.type === 'prime') return 180;
                 return 280; // Subcontractors
-            }, 0, 0).strength(0.3)); // Reduced radial strength
+            }, 0, 0).strength(0.2));
             
         // Convert hierarchical data to nodes and links for force layout
         const nodes = [];
@@ -3948,11 +3932,10 @@ function displayForceDirectedRadial(model) {
         function processNode(node, parent = null, depth = 0) {
             const id = node.name + (Math.random().toString(36).substring(2, 5));
             
-            // Determine node type based on depth and parent
+            // Determine node type (skipping agency)
             let nodeType = 'root';
-            if (depth === 1) nodeType = 'agency';
-            else if (depth === 2 && node.isSubAgency) nodeType = 'subagency';
-            else if (depth === 2 || depth === 3) nodeType = 'prime';
+            if (depth === 1) nodeType = 'subagency';
+            else if (depth === 2) nodeType = 'prime';
             else if (depth > 2) nodeType = 'sub';
             
             const newNode = {
@@ -3966,18 +3949,19 @@ function displayForceDirectedRadial(model) {
             
             nodes.push(newNode);
             
-            // Add link to parent if not root - with validation
+            // Add link to parent if not root
             if (parent) {
-                // Only add link if both nodes are valid
-                if (parent.id && id) {
-                    links.push({
-                        source: parent.id,
-                        target: id,
-                        value: node.value || 1,
-                        sourceType: parent.type,
-                        targetType: nodeType
-                    });
-                }
+                // Define link type - use dashed line between prime and sub for accessibility
+                const isDashed = (parent.type === 'prime' && nodeType === 'sub');
+                
+                links.push({
+                    source: parent.id,
+                    target: id,
+                    value: node.value || 1,
+                    sourceType: parent.type,
+                    targetType: nodeType,
+                    isDashed: isDashed
+                });
             }
             
             // Process children
@@ -3993,22 +3977,19 @@ function displayForceDirectedRadial(model) {
         // Start processing from root
         processNode(hierarchyData);
         
-        // Create links - with validation to prevent stray lines
+        // Create links
         const link = g.append("g")
             .selectAll("line")
-            .data(links.filter(l => 
-                // Only include links where both source and target exist
-                l.source && l.target))
+            .data(links.filter(l => l.source && l.target))
             .enter().append("line")
             .attr("stroke", d => {
-                if (d.sourceType === 'root') return getCssVar('--color-border');
-                if (d.sourceType === 'agency') return getCssVar('--chart-color-primary');
-                if (d.sourceType === 'subagency') return d3.color(getCssVar('--chart-color-primary')).brighter(0.5);
+                if (d.sourceType === 'subagency') return getCssVar('--chart-color-primary');
                 if (d.sourceType === 'prime') return getCssVar('--chart-color-secondary');
                 return getCssVar('--chart-color-tertiary');
             })
             .attr("stroke-width", d => Math.max(0.5, Math.min(2, Math.sqrt(d.value) / 12000)))
-            .attr("stroke-opacity", 0.6);
+            .attr("stroke-opacity", 0.6)
+            .attr("stroke-dasharray", d => d.isDashed ? "3,3" : null); // Add dashed lines for prime-sub links
             
         // Create node groups
         const node = g.append("g")
@@ -4028,8 +4009,7 @@ function displayForceDirectedRadial(model) {
                 return calculateNodeSize(d.type, d.value);
             })
             .attr("fill", d => {
-                if (d.type === 'agency') return getCssVar('--chart-color-primary');
-                if (d.type === 'subagency') return d3.color(getCssVar('--chart-color-primary')).brighter(0.5);
+                if (d.type === 'subagency') return getCssVar('--chart-color-primary');
                 if (d.type === 'prime') return getCssVar('--chart-color-secondary');
                 return getCssVar('--chart-color-tertiary');
             })
@@ -4039,15 +4019,12 @@ function displayForceDirectedRadial(model) {
         // Add labels to nodes
         node.append("text")
             .attr("opacity", d => {
-                // Show all labels by default, with different opacity levels
-                return d.type === 'agency' ? 1 : 
-                       d.type === 'subagency' ? 1 :
-                       d.type === 'prime' ? 0.9 : 0.7; // Show sub labels at 0.7 opacity
+                return d.type === 'subagency' ? 1 :
+                       d.type === 'prime' ? 0.9 : 0.7;
             })
             .text(d => {
                 if (d.type === 'root') return "";
                 // Truncate text based on node type
-                if (d.type === 'agency' && d.name.length > 30) return d.name.substring(0, 27) + "...";
                 if (d.type === 'subagency' && d.name.length > 25) return d.name.substring(0, 22) + "...";
                 if (d.type === 'prime' && d.name.length > 25) return d.name.substring(0, 22) + "...";
                 if (d.type === 'sub' && d.name.length > 20) return d.name.substring(0, 17) + "...";
@@ -4055,14 +4032,13 @@ function displayForceDirectedRadial(model) {
             })
             .attr("fill", getCssVar('--color-text-primary'))
             .attr("font-size", d => {
-                if (d.type === 'agency') return "12px";
                 if (d.type === 'subagency') return "12px";
                 if (d.type === 'prime') return "11px";
                 return "10px";
             })
             .attr("dy", "0.32em");
             
-        // Add simpler hover interactions - just highlight the node and its links
+        // Add hover interactions
         node.on("mouseover", function(event, d) {
             // Highlight current node
             d3.select(this).select("circle")
@@ -4085,8 +4061,7 @@ function displayForceDirectedRadial(model) {
                 
             node.select("text")
                 .attr("opacity", d => {
-                    return d.type === 'agency' ? 1 : 
-                           d.type === 'subagency' ? 1 :
+                    return d.type === 'subagency' ? 1 :
                            d.type === 'prime' ? 0.9 : 0.7;
                 })
                 .attr("font-weight", "normal");
@@ -4108,8 +4083,7 @@ function displayForceDirectedRadial(model) {
             .attr("transform", `translate(20, 20)`);
             
         const colorLegendData = [
-            { label: "Agency", color: getCssVar('--chart-color-primary') },
-            { label: "Sub-Agency", color: d3.color(getCssVar('--chart-color-primary')).brighter(0.5) },
+            { label: "Sub-Agency", color: getCssVar('--chart-color-primary') },
             { label: "Prime Contractor", color: getCssVar('--chart-color-secondary') },
             { label: "Subcontractor", color: getCssVar('--chart-color-tertiary') }
         ];
@@ -4131,7 +4105,15 @@ function displayForceDirectedRadial(model) {
                 .text(item.label);
         });
         
-        // Add visual indicator if a filter is active
+        // Add note about dashed lines
+        svg.append("g")
+            .attr("transform", `translate(20, ${colorLegendData.length * 20 + 30})`)
+            .append("text")
+            .attr("font-size", "11px")
+            .attr("fill", getCssVar('--color-text-secondary'))
+            .text("Dashed lines connect Primes to Subs");
+        
+        // Add filter indicator if filtered
         if (subAgencyFilter) {
             svg.append("text")
                 .attr("x", width - 20)
@@ -4142,96 +4124,16 @@ function displayForceDirectedRadial(model) {
                 .text(`Filtered by: ${subAgencyFilter}`);
         }
             
-        // Add gentle zoom behavior
+        // Add simple zoom behavior
         const zoom = d3.zoom()
-            .scaleExtent([0.5, 2]) // Limit zoom range
+            .scaleExtent([0.5, 2])
             .on("zoom", (event) => {
                 g.attr("transform", event.transform);
             });
 
         svg.call(zoom);
-        
-        // Add a "home" button to reset the view
-        const resetButton = svg.append("g")
-            .attr("transform", `translate(${width - 40}, 40)`)
-            .attr("cursor", "pointer")
-            .on("click", function() {
-                // Reset the visualization
-                svg.transition().duration(750).call(
-                    zoom.transform,
-                    d3.zoomIdentity
-                );
-                // Reset any lost nodes and stabilize the simulation
-                resetSimulation();
-            });
             
-        resetButton.append("circle")
-            .attr("r", 12)
-            .attr("fill", getCssVar('--color-surface-container'))
-            .attr("stroke", getCssVar('--color-border'))
-            .attr("stroke-width", 1);
-            
-        resetButton.append("text")
-            .attr("text-anchor", "middle")
-            .attr("dy", "0.3em")
-            .attr("fill", getCssVar('--color-text-primary'))
-            .attr("font-size", "10px")
-            .text("⟳");
-            
-        resetButton.append("title")
-            .text("Reset View");
-        
-        // Helper function to reset the simulation when things go wrong
-        function resetSimulation() {
-            // Stop current simulation
-            simulation.stop();
-            
-            // Reinitialize node positions in a stable pattern
-            nodes.forEach(d => {
-                if (d.type === 'root') {
-                    d.x = 0;
-                    d.y = 0;
-                } else if (d.type === 'agency') {
-                    const angle = nodes.indexOf(d) * (2 * Math.PI / agencies.length);
-                    d.x = 80 * Math.cos(angle);
-                    d.y = 80 * Math.sin(angle);
-                } else if (d.type === 'subagency') {
-                    // Position relative to parent agency
-                    const parentIdx = nodes.findIndex(n => n.id === d.parent?.id);
-                    const angle = parentIdx * (2 * Math.PI / agencies.length);
-                    d.x = 160 * Math.cos(angle);
-                    d.y = 160 * Math.sin(angle);
-                } else if (d.type === 'prime') {
-                    const parentType = d.parent?.type;
-                    const parentIdx = nodes.findIndex(n => n.id === d.parent?.id);
-                    const angle = parentIdx * (2 * Math.PI / 12) + 
-                                  nodes.indexOf(d) * 0.2 * (Math.PI / 12);
-                    const radius = parentType === 'subagency' ? 240 : 180;
-                    d.x = radius * Math.cos(angle);
-                    d.y = radius * Math.sin(angle);
-                } else { // sub
-                    const parentIdx = nodes.findIndex(n => n.id === d.parent?.id);
-                    const angle = parentIdx * (2 * Math.PI / 20) + 
-                                  nodes.indexOf(d) * 0.3 * (Math.PI / 20);
-                    d.x = 280 * Math.cos(angle);
-                    d.y = 280 * Math.sin(angle);
-                }
-                
-                // Clear any fixed positions
-                d.fx = null;
-                d.fy = null;
-            });
-            
-            // Restart simulation with alpha target to warm it up
-            simulation.alpha(0.3).restart();
-            
-            // Run for a short time then cool it down
-            setTimeout(() => {
-                simulation.alphaTarget(0);
-            }, 2000);
-        }
-            
-        // Set up simulation tick - with boundary enforcement
+        // Set up simulation tick
         simulation
             .nodes(nodes)
             .on("tick", ticked);
@@ -4239,103 +4141,58 @@ function displayForceDirectedRadial(model) {
         simulation.force("link")
             .links(links);
             
-        // Keep track of whether simulation is stabilized
-        let isStabilized = false;
-        
-        // When simulation cools down enough, mark as stabilized
-        simulation.on("end", () => {
-            isStabilized = true;
-        });
-        
-        // Function to gently alpha heating
-        function reheatSimulation() {
-            // Only if it's already stabilized
-            if (isStabilized) {
-                simulation.alpha(0.1).restart();
-                setTimeout(() => {
-                    simulation.alphaTarget(0);
-                }, 1000);
-            }
-        }
-        
         // Functions for simulation
         function ticked() {
-            // Constrain nodes to prevent them from flying off-screen
-            const radius = Math.min(width, height) / 2 - 20;
-            
-            // Boundary enforcement for nodes
+            // Boundary enforcement
+            const radius = Math.min(width, height) / 2 - 40;
             nodes.forEach(d => {
-                // Skip root node
                 if (d.type === 'root') return;
                 
-                // Calculate distance from center
+                // Constrain to visible area
                 const distanceFromCenter = Math.sqrt(d.x * d.x + d.y * d.y);
-                
-                // If node is too far from center, pull it back
                 if (distanceFromCenter > radius) {
                     const scale = radius / distanceFromCenter;
                     d.x = d.x * scale;
                     d.y = d.y * scale;
                 }
+                
+                // Fix NaN values
+                if (isNaN(d.x)) d.x = 0;
+                if (isNaN(d.y)) d.y = 0;
             });
             
-            // Update links
+            // Update link positions
             link
                 .attr("x1", d => d.source.x)
                 .attr("y1", d => d.source.y)
                 .attr("x2", d => d.target.x)
-                .attr("y2", d => d.target.y)
-                .style("display", d => {
-                    // Hide links with invalid coordinates
-                    return (d.source && d.target && 
-                            typeof d.source.x === 'number' && typeof d.source.y === 'number' &&
-                            typeof d.target.x === 'number' && typeof d.target.y === 'number') ? 
-                            'block' : 'none';
-                });
+                .attr("y2", d => d.target.y);
                 
-            // Update nodes
-            node.attr("transform", d => {
-                // Safety check for NaN coordinates
-                if (isNaN(d.x) || isNaN(d.y)) {
-                    d.x = 0;
-                    d.y = 0;
-                }
-                return `translate(${d.x},${d.y})`;
-            });
+            // Update node positions
+            node.attr("transform", d => `translate(${d.x},${d.y})`);
             
-            // Update text position based on node position relative to center
+            // Update text positioning
             node.select("text")
                 .attr("x", d => {
-                    // Calculate which side of the center the node is on
                     const nodeRadius = calculateNodeSize(d.type, d.value);
-                    
-                    // If on the left side of the visualization
-                    if (d.x < 0) {
-                        return -nodeRadius - 5; // Position text to the left of the node
-                    } else {
-                        return nodeRadius + 5; // Position text to the right of the node
-                    }
+                    return d.x < 0 ? -nodeRadius - 5 : nodeRadius + 5;
                 })
                 .attr("text-anchor", d => d.x < 0 ? "end" : "start");
         }
         
-        // Modified drag functions with safety checks
+        // Simple drag functions
         function dragstarted(event, d) {
-            if (!event.active) simulation.alphaTarget(0.1).restart(); // Gentle restart
-            isStabilized = false; // Mark as no longer stabilized
-            
-            // Fix the node position at the current pointer
-            d.fx = event.x;
-            d.fy = event.y;
+            if (!event.active) simulation.alphaTarget(0.1).restart();
+            d.fx = d.x;
+            d.fy = d.y;
         }
         
         function dragged(event, d) {
-            // Constrain dragging within bounds
-            const radius = Math.min(width, height) / 2 - 30;
+            // Constrain dragging to visible area
+            const radius = Math.min(width, height) / 2 - 40;
             const distanceFromCenter = Math.sqrt(event.x * event.x + event.y * event.y);
             
             if (distanceFromCenter > radius) {
-                // Scale back to within bounds
                 const scale = radius / distanceFromCenter;
                 d.fx = event.x * scale;
                 d.fy = event.y * scale;
@@ -4346,167 +4203,90 @@ function displayForceDirectedRadial(model) {
         }
         
         function dragended(event, d) {
-            if (!event.active) {
-                simulation.alphaTarget(0); // Cool down
-            }
-            
-            // Release the fixed position - node will be governed by forces again
+            if (!event.active) simulation.alphaTarget(0);
             d.fx = null;
             d.fy = null;
-            
-            // Check if any nodes are out of bounds and reset if needed
-            const anyOutOfBounds = nodes.some(node => {
-                const distance = Math.sqrt(node.x * node.x + node.y * node.y);
-                return distance > (Math.min(width, height) / 2) * 0.9;
-            });
-            
-            if (anyOutOfBounds) {
-                // Some nodes escaped - do a gentle reset
-                resetSimulation();
-            }
         }
-        
-        // Allow 1-2 seconds for initial stabilization
-        setTimeout(() => {
-            // Automatically cool down the simulation
-            simulation.alphaTarget(0);
-        }, 1500);
-        
-        // Create a double-click handler on the background to reset
-        svg.on("dblclick", function() {
-            // Reset zoom and stabilize the layout
-            svg.transition().duration(750).call(
-                zoom.transform,
-                d3.zoomIdentity
-            );
-            resetSimulation();
-        });
         
     } catch (error) {
         console.error("Error creating force-directed visualization:", error);
         displayError(containerId, `Failed to render visualization: ${error.message}`);
     }
 }
-// Helper function to create hierarchical data from unified model
-function createHierarchyData(model, subAgencyFilter) {
+
+// Helper function to create simplified hierarchical data (no agencies)
+function createSimplifiedHierarchyData(model, subAgencyFilter) {
     // Create root node
     const root = {
-        name: "All Contracts",
+        name: "Root",
         children: []
     };
     
-    // Add top agencies (by value)
-    const agencies = Object.values(model.agencies)
-        .sort((a, b) => b.value - a.value)
-        .slice(0, 6); // Limit to top 6 agencies
-        
-    agencies.forEach(agency => {
-        const agencyNode = {
-            name: agency.name,
-            value: agency.value,
+    // Get sub-agencies to display
+    let subAgenciesToShow = [];
+    
+    if (subAgencyFilter) {
+        // Find only the specific sub-agency
+        Object.values(model.subAgencies).forEach(subAgency => {
+            if (subAgency.name === subAgencyFilter) {
+                subAgenciesToShow.push(subAgency);
+            }
+        });
+    } else {
+        // Show top sub-agencies by value
+        subAgenciesToShow = Object.values(model.subAgencies)
+            .sort((a, b) => b.value - a.value)
+            .slice(0, 6);
+    }
+    
+    // Add sub-agencies as top-level nodes
+    subAgenciesToShow.forEach(subAgency => {
+        const subAgencyNode = {
+            name: subAgency.name,
+            value: subAgency.value,
             children: []
         };
         
-        // If a specific sub-agency filter is applied
-        if (subAgencyFilter) {
-            // Find all sub-agencies for this agency
-            const subAgencies = [];
-            
-            // Get sub-agencies from the agency object
-            Array.from(agency.subAgencies || []).forEach(subAgencyId => {
-                const subAgency = model.subAgencies[subAgencyId];
-                if (subAgency && subAgency.name === subAgencyFilter) {
-                    subAgencies.push(subAgency);
-                }
-            });
-            
-            // If we found matching sub-agencies
-            if (subAgencies.length > 0) {
-                // Add sub-agency nodes
-                subAgencies.forEach(subAgency => {
-                    const subAgencyNode = {
-                        name: subAgency.name,
-                        value: subAgency.value,
-                        isSubAgency: true,
-                        children: []
-                    };
-                    
-                    // Find primes for this sub-agency
-                    const primesForSubAgency = {};
-                    
-                    // Get contracts connected to this sub-agency
-                    Object.values(model.contracts).forEach(contract => {
-                        if (contract.subAgencyId === subAgency.id) {
-                            const primeId = contract.primeId;
-                            if (!primesForSubAgency[primeId]) {
-                                primesForSubAgency[primeId] = 0;
-                            }
-                            primesForSubAgency[primeId] += contract.value;
-                        }
-                    });
-                    
-                    // Sort primes by value and take top 8
-                    const topPrimes = Object.entries(primesForSubAgency)
-                        .sort((a, b) => b[1] - a[1])
-                        .slice(0, 8)
-                        .map(([primeId, value]) => ({
-                            id: primeId,
-                            value: value
-                        }));
-                        
-                    // Add prime contractor nodes
-                    addPrimeNodes(topPrimes, model, subAgencyNode);
-                    
-                    // Add sub-agency if it has children
-                    if (subAgencyNode.children.length > 0) {
-                        agencyNode.children.push(subAgencyNode);
-                    }
-                });
-            }
-        } else {
-            // No specific filter, show top-level agency data
-            
-            // Find top primes for this agency
-            const primesForAgency = {};
-            
-            // Get agency to prime relationships
-            model.relationships.agencyToPrime.forEach(rel => {
-                if (rel.source === agency.id) {
-                    const primeId = rel.target;
-                    if (!primesForAgency[primeId]) {
-                        primesForAgency[primeId] = 0;
-                    }
-                    primesForAgency[primeId] += rel.value;
-                }
-            });
-            
-            // Sort primes by value and take top 8
-            const topPrimes = Object.entries(primesForAgency)
-                .sort((a, b) => b[1] - a[1])
-                .slice(0, 8)
-                .map(([primeId, value]) => ({
-                    id: primeId,
-                    value: value
-                }));
-                
-            // Add prime contractor nodes
-            addPrimeNodes(topPrimes, model, agencyNode);
-        }
+        // Find primes for this sub-agency
+        const primesForSubAgency = {};
         
-        // Add agency if it has children
-        if (agencyNode.children.length > 0) {
-            root.children.push(agencyNode);
+        // Get contracts connected to this sub-agency
+        Object.values(model.contracts).forEach(contract => {
+            if (contract.subAgencyId === subAgency.id) {
+                const primeId = contract.primeId;
+                if (!primesForSubAgency[primeId]) {
+                    primesForSubAgency[primeId] = 0;
+                }
+                primesForSubAgency[primeId] += contract.value;
+            }
+        });
+        
+        // Sort primes by value and take top 8
+        const topPrimes = Object.entries(primesForSubAgency)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 8)
+            .map(([primeId, value]) => ({
+                id: primeId,
+                value: value
+            }));
+            
+        // Add prime contractor nodes
+        addPrimeNodes(topPrimes, model, subAgencyNode);
+        
+        // Add sub-agency if it has children
+        if (subAgencyNode.children.length > 0) {
+            root.children.push(subAgencyNode);
         }
     });
     
     // Add a check for empty visualization
     if (root.children.length === 0) {
-        // Create a dummy agency and prime to ensure something displays
+        // Create a dummy sub-agency to ensure something displays
         root.children.push({
             name: subAgencyFilter ? `No data for ${subAgencyFilter}` : "Selected Agency",
             value: 1000000,
             children: [{
-                name: "No Subcontractor Relationships",
+                name: "No Prime Contractors Found",
                 value: 1000000,
                 children: []
             }]
