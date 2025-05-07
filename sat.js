@@ -3882,6 +3882,23 @@ function displayForceDirectedRadial(model) {
         // Create hierarchical data
         const hierarchyData = createHierarchyData(model);
         
+        // Calculate node size based on value
+        function calculateNodeSize(type, value) {
+            // Base radius by type
+            const baseRadius = type === 'agency' ? 8 : 
+                              type === 'prime' ? 6 : 4;
+            
+            // Scale by value (use log scale to handle wide range of values)
+            if (value && value > 0) {
+                // Minimum size is the base radius
+                // Maximum size is 3x the base radius for largest values
+                const scaleFactor = Math.log10(value) / 8; // Adjust divisor to taste
+                return baseRadius * (1 + Math.min(2, scaleFactor));
+            }
+            
+            return baseRadius;
+        }
+        
         // Set up force simulation
         const simulation = d3.forceSimulation()
             .force("link", d3.forceLink().id(d => d.id).distance(d => {
@@ -3895,12 +3912,17 @@ function displayForceDirectedRadial(model) {
             }))
             .force("center", d3.forceCenter(0, 0))
             .force("collide", d3.forceCollide(d => {
-                // Collision detection based on node size plus text length
-                const baseRadius = d.type === 'agency' ? 10 : 
-                                  d.type === 'prime' ? 8 : 6;
-                const textSpace = d.name ? Math.min(d.name.length * 3, 60) : 0;
-                return baseRadius + (d.type !== 'sub' ? textSpace : 0);
-            }))
+                if (d.type === 'root') return 0;
+                
+                // Calculate node radius based on value
+                const nodeRadius = calculateNodeSize(d.type, d.value);
+                
+                // Add padding for text
+                const textPadding = d.type !== 'sub' ? 
+                    Math.min(d.name.length * 3, 60) : 0;
+                    
+                return nodeRadius + textPadding;
+            }).strength(0.8))
             .force("radial", d3.forceRadial(d => d.depth * 100, 0, 0).strength(1));
             
         // Convert hierarchical data to nodes and links for force layout
@@ -3968,13 +3990,11 @@ function displayForceDirectedRadial(model) {
                 .on("drag", dragged)
                 .on("end", dragended));
                 
-        // Add circles to nodes
+        // Add circles to nodes with size proportional to value
         node.append("circle")
             .attr("r", d => {
                 if (d.type === 'root') return 0; // Hide root
-                if (d.type === 'agency') return 8;
-                if (d.type === 'prime') return 6;
-                return 4;
+                return calculateNodeSize(d.type, d.value);
             })
             .attr("fill", d => {
                 if (d.type === 'agency') return getCssVar('--chart-color-primary');
@@ -3984,20 +4004,22 @@ function displayForceDirectedRadial(model) {
             .attr("stroke", getCssVar('--color-surface'))
             .attr("stroke-width", 1);
             
-        // Add labels to nodes
+        // Add labels to nodes - showing all labels with appropriate opacity
         node.append("text")
-            .attr("class", d => d.type === 'sub' ? "label-hidden" : "label-visible")
             .attr("x", 8)
             .attr("y", 0)
             .attr("dy", "0.32em")
             .attr("opacity", d => {
-                // Show important nodes' labels by default
+                // Show all labels by default, with different opacity levels
                 return d.type === 'agency' ? 1 : 
-                       d.type === 'prime' ? (d.value > 2000000 ? 0.9 : 0.5) : 0;
+                       d.type === 'prime' ? 0.9 : 0.7; // Show sub labels at 0.7 opacity
             })
             .text(d => {
                 if (d.type === 'root') return "";
-                if (d.name.length > 25) return d.name.substring(0, 22) + "...";
+                // Truncate text based on node type
+                if (d.type === 'agency' && d.name.length > 30) return d.name.substring(0, 27) + "...";
+                if (d.type === 'prime' && d.name.length > 25) return d.name.substring(0, 22) + "...";
+                if (d.type === 'sub' && d.name.length > 20) return d.name.substring(0, 17) + "...";
                 return d.name;
             })
             .attr("fill", getCssVar('--color-text-primary'))
@@ -4007,45 +4029,70 @@ function displayForceDirectedRadial(model) {
                 return "10px";
             });
             
-        // Add hover interactions for text visibility
+        // Add hover interactions for highlighting
         node.on("mouseover", function(event, d) {
-            d3.select(this).select("text")
-                .transition().duration(200)
-                .attr("opacity", 1);
+            // Highlight current node
+            d3.select(this).select("circle")
+                .attr("stroke", getCssVar('--chart-color-primary'))
+                .attr("stroke-width", 2);
                 
-            // Highlight connected links
+            d3.select(this).select("text")
+                .attr("opacity", 1)
+                .attr("font-weight", "bold");
+                
+            // Highlight connected links and nodes
             link.attr("stroke-opacity", l => 
-                (l.source.id === d.id || l.target.id === d.id) ? 1 : 0.2);
+                (l.source.id === d.id || l.target.id === d.id) ? 1 : 0.1);
+                
+            node.filter(n => n.id !== d.id)
+                .attr("opacity", n => {
+                    // Check if this node is connected to the selected node
+                    const isConnected = links.some(l => 
+                        (l.source.id === d.id && l.target.id === n.id) || 
+                        (l.target.id === d.id && l.source.id === n.id));
+                    
+                    return isConnected ? 1 : 0.3;
+                });
         })
-        .on("mouseout", function(event, d) {
-            // Return to default opacity unless it's an agency
-            if (d.type !== 'agency') {
-                d3.select(this).select("text")
-                    .transition().duration(200)
-                    .attr("opacity", d => d.type === 'prime' ? 
-                          (d.value > 2000000 ? 0.9 : 0.5) : 0);
-            }
-            
+        .on("mouseout", function() {
+            // Reset highlights
+            node.select("circle")
+                .attr("stroke", getCssVar('--color-surface'))
+                .attr("stroke-width", 1);
+                
+            node.select("text")
+                .attr("opacity", d => {
+                    return d.type === 'agency' ? 1 : 
+                           d.type === 'prime' ? 0.9 : 0.7;
+                })
+                .attr("font-weight", "normal");
+                
             // Reset link opacity
             link.attr("stroke-opacity", 0.6);
+            
+            // Reset node opacity
+            node.attr("opacity", 1);
         });
             
-        // Add tooltips
+        // Add tooltips with value information
         node.append("title")
-            .text(d => d.name + (d.value ? `: ${formatCurrency(d.value)}` : ""));
+            .text(d => {
+                const valueText = d.value ? formatCurrency(d.value) : "Value not available";
+                return `${d.name}\n${valueText}`;
+            });
             
-        // Add legend
-        const legendData = [
+        // Add color legend
+        const colorLegend = svg.append("g")
+            .attr("transform", `translate(20, 20)`);
+            
+        const colorLegendData = [
             { label: "Agency", color: getCssVar('--chart-color-primary') },
             { label: "Prime Contractor", color: getCssVar('--chart-color-secondary') },
             { label: "Subcontractor", color: getCssVar('--chart-color-tertiary') }
         ];
         
-        const legend = svg.append("g")
-            .attr("transform", `translate(20, 20)`);
-            
-        legendData.forEach((item, i) => {
-            const g = legend.append("g")
+        colorLegendData.forEach((item, i) => {
+            const g = colorLegend.append("g")
                 .attr("transform", `translate(0, ${i * 20})`);
                 
             g.append("rect")
@@ -4061,6 +4108,42 @@ function displayForceDirectedRadial(model) {
                 .text(item.label);
         });
         
+        // Add size legend
+        const sizeLegend = svg.append("g")
+            .attr("transform", `translate(${width - 150}, 20)`);
+
+        sizeLegend.append("text")
+            .attr("x", 0)
+            .attr("y", 0)
+            .attr("font-size", "12px")
+            .attr("font-weight", "bold")
+            .attr("fill", getCssVar('--color-text-secondary'))
+            .text("Node Size = Contract Value");
+
+        // Add example circles
+        const sizeValues = [100000, 1000000, 10000000];
+        const sizeLabels = ["$100K", "$1M", "$10M"];
+
+        sizeValues.forEach((value, i) => {
+            // Use the same scaling as the nodes
+            const radius = calculateNodeSize('prime', value);
+            
+            sizeLegend.append("circle")
+                .attr("cx", 10)
+                .attr("cy", 20 + i * 25)
+                .attr("r", radius)
+                .attr("fill", getCssVar('--chart-color-secondary'))
+                .attr("stroke", getCssVar('--color-surface'))
+                .attr("stroke-width", 1);
+                
+            sizeLegend.append("text")
+                .attr("x", 25)
+                .attr("y", 24 + i * 25)
+                .attr("font-size", "11px")
+                .attr("fill", getCssVar('--color-text-secondary'))
+                .text(sizeLabels[i]);
+        });
+            
         // Add zoom behavior
         const zoom = d3.zoom()
             .scaleExtent([0.5, 3])
@@ -4214,7 +4297,6 @@ function createHierarchyData(model) {
     
     return root;
 }
-// Add Sankey visualization options to the existing filters section
 function initializeSankeyFilters() {
   // Find the existing filter container - this is where your current filters are located
   const filtersContainer = document.querySelector('div[style*="display: flex; flex-direction: column"]');
