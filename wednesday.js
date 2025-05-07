@@ -249,6 +249,8 @@ function cleanupTooltips() {
     
     // Also clean up any Chart.js tooltips that might be created
     d3.select("body").selectAll(".chartjs-tooltip").remove();
+	d3.select("body").selectAll(".chart-tooltip").remove(); // Specifically for your enhanced donut charts
+        
     const chartjsTooltip = document.getElementById('chartjs-tooltip');
     if (chartjsTooltip && chartjsTooltip.parentNode) {
         chartjsTooltip.parentNode.removeChild(chartjsTooltip);
