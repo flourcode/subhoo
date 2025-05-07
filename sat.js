@@ -3901,42 +3901,12 @@ function displayForceDirectedRadial(model) {
             return baseRadius;
         }
         
-        // Set up force simulation with gentle forces
-        const simulation = d3.forceSimulation()
-            .force("link", d3.forceLink().id(d => d.id).distance(d => {
-                if (d.source.type === 'agency' && d.target.type === 'subagency') return 60;
-                if (d.source.type === 'agency' && d.target.type === 'prime') return 80;
-                if (d.source.type === 'subagency' && d.target.type === 'prime') return 70;
-                if (d.source.type === 'prime' && d.target.type === 'sub') return 50;
-                return 80;
-            }).strength(0.2))
-            .force("charge", d3.forceManyBody().strength(d => {
-                return d.type === 'agency' ? -300 :
-                       d.type === 'subagency' ? -250 :
-                       d.type === 'prime' ? -100 : -30;
-            }))
-            .force("center", d3.forceCenter(0, 0))
-            .force("collide", d3.forceCollide(d => {
-                if (d.type === 'root') return 0;
-                
-                const nodeRadius = calculateNodeSize(d.type, d.value);
-                const textPadding = d.type !== 'sub' ? 
-                    Math.min(d.name.length * 2.5, 50) : 0;
-                return nodeRadius + textPadding;
-            }).strength(0.7))
-            .force("radial", d3.forceRadial(d => {
-                if (d.type === 'agency') return 80;
-                if (d.type === 'subagency') return 140;
-                if (d.type === 'prime') {
-                    if (d.parent?.type === 'subagency') return 210;
-                    return 180;
-                }
-                return 280; // Subcontractors
-            }, 0, 0).strength(0.2));
-            
         // Convert hierarchical data to nodes and links for force layout
         const nodes = [];
         const links = [];
+        
+        // Keep track of clustering information
+        const primeToSubsMap = new Map();
         
         // Process nodes recursively with tracking of parent references
         function processNode(node, parent = null, depth = 0) {
@@ -3975,6 +3945,14 @@ function displayForceDirectedRadial(model) {
                     targetType: nodeType,
                     isDashed: isDashed
                 });
+                
+                // Track prime-to-sub relationships for clustering
+                if (parent.type === 'prime' && nodeType === 'sub') {
+                    if (!primeToSubsMap.has(parent.id)) {
+                        primeToSubsMap.set(parent.id, []);
+                    }
+                    primeToSubsMap.get(parent.id).push(id);
+                }
             }
             
             // Process children
@@ -3993,6 +3971,53 @@ function displayForceDirectedRadial(model) {
                 processNode(child, null, 1);
             });
         }
+        
+        // Set up custom forces for better clustering
+        const simulation = d3.forceSimulation()
+            // Standard link force - looser connections for better flexibility
+            .force("link", d3.forceLink().id(d => d.id)
+                .distance(d => {
+                    if (d.source.type === 'agency' && d.target.type === 'subagency') return 60;
+                    if (d.source.type === 'agency' && d.target.type === 'prime') return 80;
+                    if (d.source.type === 'subagency' && d.target.type === 'prime') return 70;
+                    if (d.source.type === 'prime' && d.target.type === 'sub') return 40; // Keep subs closer to primes
+                    return 60;
+                })
+                .strength(d => {
+                    // Stronger connection between primes and their subs
+                    if (d.source.type === 'prime' && d.target.type === 'sub') return 0.5;
+                    return 0.2;
+                }))
+            // General charge for separation
+            .force("charge", d3.forceManyBody()
+                .strength(d => {
+                    return d.type === 'agency' ? -300 :
+                        d.type === 'subagency' ? -250 :
+                        d.type === 'prime' ? -100 : -30;
+                }))
+            .force("center", d3.forceCenter(0, 0))
+            // Collision prevention with appropriate sizes
+            .force("collide", d3.forceCollide(d => {
+                if (d.type === 'root') return 0;
+                
+                const nodeRadius = calculateNodeSize(d.type, d.value);
+                const textPadding = d.type !== 'sub' ? 
+                    Math.min(d.name.length * 2.5, 50) : 0;
+                return nodeRadius + textPadding;
+            }).strength(0.7))
+            // Radial positioning by type
+            .force("radial", d3.forceRadial(d => {
+                if (d.type === 'agency') return 80;
+                if (d.type === 'subagency') return 140;
+                if (d.type === 'prime') {
+                    if (d.parent?.type === 'subagency') return 210;
+                    return 180;
+                }
+                return 280; // Default for subcontractors
+            }, 0, 0).strength(0.2));
+            
+        // Add custom clustering force for subs with their primes
+        simulation.force("cluster", isolatedNodesClusterForce(nodes, primeToSubsMap));
         
         // Create links - ensure source and target are valid
         const link = g.append("g")
@@ -4074,6 +4099,22 @@ function displayForceDirectedRadial(model) {
             // Highlight connected links
             link.attr("stroke-opacity", l => 
                 (l.source.id === d.id || l.target.id === d.id) ? 1 : 0.2);
+                
+            // Highlight related nodes too
+            if (d.type === 'prime') {
+                // If prime, highlight its subs
+                const subsForPrime = primeToSubsMap.get(d.id) || [];
+                node.filter(n => subsForPrime.includes(n.id))
+                    .select("circle")
+                    .attr("stroke", getCssVar('--chart-color-secondary'))
+                    .attr("stroke-width", 1.5);
+            } else if (d.type === 'sub' && d.parent) {
+                // If sub, highlight its prime
+                node.filter(n => n.id === d.parent.id)
+                    .select("circle")
+                    .attr("stroke", getCssVar('--chart-color-tertiary'))
+                    .attr("stroke-width", 1.5);
+            }
         })
         .on("mouseout", function() {
             // Reset highlights
@@ -4238,6 +4279,54 @@ function displayForceDirectedRadial(model) {
     }
 }
 
+// Custom force function for clustering subcontractors with their parent primes
+function isolatedNodesClusterForce(nodes, primeToSubsMap) {
+    let strength = 0.5; // Clustering strength
+    
+    function force(alpha) {
+        // Process each prime and its subcontractors
+        primeToSubsMap.forEach((subIds, primeId) => {
+            // Find the prime node
+            const primeNode = nodes.find(n => n.id === primeId);
+            if (!primeNode) return;
+            
+            // Find connected sub nodes
+            const subNodes = nodes.filter(n => subIds.includes(n.id));
+            if (subNodes.length === 0) return;
+            
+            // Calculate a clustering angle for this prime's subs
+            // This ensures subs are arranged in an arc around their prime
+            const primeAngle = Math.atan2(primeNode.y, primeNode.x);
+            const arcRange = Math.PI / 3; // 60 degrees arc for subs
+            
+            // Apply clustering force to each sub
+            subNodes.forEach((subNode, i) => {
+                // Calculate position in the arc
+                const subAngle = primeAngle - (arcRange / 2) + (arcRange * (i / (subNodes.length || 1)));
+                
+                // Calculate ideal position for sub (30-50 units from prime at the calculated angle)
+                const distance = 40 + (Math.random() * 10); // Some variation in distance
+                const targetX = primeNode.x + (distance * Math.cos(subAngle));
+                const targetY = primeNode.y + (distance * Math.sin(subAngle));
+                
+                // Move sub toward this position based on alpha and strength
+                subNode.x += (targetX - subNode.x) * alpha * strength;
+                subNode.y += (targetY - subNode.y) * alpha * strength;
+            });
+        });
+    }
+    
+    // Allow strength to be configured
+    force.strength = function(s) {
+        if (arguments.length) {
+            strength = s;
+            return force;
+        }
+        return strength;
+    };
+    
+    return force;
+}
 // Helper function to create hierarchical data (agency, prime, sub)
 function createHierarchyData(model, subAgencyFilter) {
     // Create root node
