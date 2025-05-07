@@ -5437,3 +5437,23 @@ function processNaicsDistributionData(model) {
 
     return sortedNaicsData;
 }
+// (Add this function if you don't have a similar one for ordinal colors)
+function getThemeOrdinalChartColors(count = 6) {
+    const baseColors = [
+        getCssVar('--chart-color-primary'),
+        getCssVar('--chart-color-secondary'),
+        getCssVar('--chart-color-tertiary'),
+        // Add more base colors from your theme if available, or generate variants
+        d3.color(getCssVar('--chart-color-primary')).darker(0.5).toString(),
+        d3.color(getCssVar('--chart-color-secondary')).darker(0.5).toString(),
+        d3.color(getCssVar('--chart-color-tertiary')).brighter(0.5).toString(),
+        d3.color(getCssVar('--chart-color-primary')).brighter(0.7).toString(),
+        d3.color(getCssVar('--chart-color-secondary')).brighter(0.7).toString()
+    ];
+    // Ensure we have enough colors by cycling/repeating if count is larger
+    const colors = [];
+    for (let i = 0; i < count; i++) {
+        colors.push(baseColors[i % baseColors.length]);
+    }
+    return d3.scaleOrdinal(colors);
+}
