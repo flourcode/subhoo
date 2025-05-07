@@ -5310,414 +5310,6 @@ if (typeof originalApplyFilters === 'function') {
     }
   };
 }
-/**
- * Enhanced donut chart function that works for both NAICS distribution and Share of Wallet visualizations
- * with consistent styling and better bento box integration.
- * 
- * @param {Array} data - Array of objects with name/code, desc (optional), value, and percentage properties
- * @param {string} containerId - The ID of the container element
- * @param {Object} options - Configuration options
- */
-function displayEnhancedDonutChart(data, containerId, options = {}) {
-    // Default options
-    const defaults = {
-        title: "Distribution", // Center title
-        subtitle: "", // Center subtitle (optional)
-        topN: 5, // Number of top items to show separately
-        centerValueField: "code", // Which field to show in the center
-        colorField: "name", // Which field to use for color assignment
-        labelField: "name", // Which field to use for labels
-        descField: "desc", // Which field to use for descriptions
-        valueField: "value", // Which field contains the numeric value
-        percentageField: "percentage", // Which field contains the percentage (calculated if not present)
-        otherLabel: "Other", // Label for the combined "Other" category
-        legendPosition: "left", // Position of the legend: "left", "right", "bottom", "none"
-        showExternalLabels: true, // Whether to show external labels with lines
-        minPercentageForLabel: 3, // Minimum percentage to show a label on the chart
-    };
-
-    // Merge defaults with provided options
-    const config = { ...defaults, ...options };
-    
-    // Get the container
-    const container = document.getElementById(containerId);
-    
-    if (!container) {
-        console.error(`displayEnhancedDonutChart: Chart container element #${containerId} not found.`);
-        return;
-    }
-    
-    // Clear previous content
-    const d3Container = d3.select(`#${containerId}`);
-    d3Container.html('');
-    
-    // --- Basic Data Check ---
-    if (!data || !Array.isArray(data) || data.length === 0) {
-        displayNoData(containerId, "No data available for chart.");
-        return;
-    }
-    
-    // --- Calculate percentages if not provided ---
-    if (!data[0][config.percentageField]) {
-        const totalValue = d3.sum(data, d => d[config.valueField] || 0);
-        data.forEach(d => {
-            d[config.percentageField] = totalValue > 0 ? (d[config.valueField] / totalValue) * 100 : 0;
-        });
-    }
-    
-    // --- Prepare Data: Top N + Other ---
-    // First sort the data by value (descending)
-    const sortedData = [...data].sort((a, b) => (b[config.valueField] || 0) - (a[config.valueField] || 0));
-    
-    const topNData = sortedData.slice(0, config.topN);
-    const otherValue = d3.sum(sortedData.slice(config.topN), d => d[config.valueField] || 0);
-    const otherPercentage = d3.sum(sortedData.slice(config.topN), d => d[config.percentageField] || 0);
-    
-    const chartPlotData = [...topNData];
-    
-    // Add "Other" category if there are more items than topN
-    if (otherValue > 0 && sortedData.length > config.topN) {
-        const otherCount = sortedData.length - config.topN;
-        const otherItem = {
-            [config.labelField]: config.otherLabel,
-            [config.descField]: `${config.otherLabel} (${otherCount} items)`,
-            [config.valueField]: otherValue,
-            [config.percentageField]: otherPercentage,
-            isOther: true
-        };
-        // Ensure the centerValueField is present
-        if (config.centerValueField && !otherItem[config.centerValueField]) {
-            otherItem[config.centerValueField] = config.otherLabel;
-        }
-        chartPlotData.push(otherItem);
-    }
-    
-    // Get the item to display in the center text (usually the top one)
-    const centerItem = sortedData[0];
-    
-    if (!centerItem) {
-        displayNoData(containerId, "Not enough data for chart.");
-        return;
-    }
-    
-    // --- Chart Setup ---
-    // Get dimensions from the container element
-    const rect = container.getBoundingClientRect();
-    const availableWidth = rect.width;
-    const availableHeight = rect.height;
-    
-    if (availableWidth <= 10 || availableHeight <= 10) {
-        console.warn(`Container #${containerId} has minimal/no dimensions. W: ${availableWidth}, H: ${availableHeight}. Chart not drawn.`);
-        displayNoData(containerId, "Chart area too small.");
-        return;
-    }
-    
-    // Define margins with adaptive sizing
-    const showLabels = config.showExternalLabels && window.innerWidth > 768 && availableHeight > 200;
-    const margin = {
-        top: showLabels ? 25 : 10,
-        right: showLabels ? 25 : 10,
-        bottom: showLabels ? 25 : 10,
-        left: showLabels ? 25 : 10
-    };
-    
-    // Calculate actual drawing space and radius
-    const drawingWidth = availableWidth - margin.left - margin.right;
-    const drawingHeight = availableHeight - margin.top - margin.bottom;
-    
-    // Adjust for legend space if legend is enabled
-    let legendWidth = 0;
-    let legendHeight = 0;
-    
-    if (config.legendPosition !== "none") {
-        if (config.legendPosition === "left" || config.legendPosition === "right") {
-            legendWidth = Math.min(availableWidth * 0.3, 100); // 30% of width or 100px max
-        } else if (config.legendPosition === "bottom") {
-            legendHeight = Math.min(availableHeight * 0.2, 80); // 20% of height or 80px max
-        }
-    }
-    
-    // Final available space for the donut
-    const donutWidth = drawingWidth - (config.legendPosition === "left" || config.legendPosition === "right" ? legendWidth : 0);
-    const donutHeight = drawingHeight - (config.legendPosition === "bottom" ? legendHeight : 0);
-    
-    // Calculate optimal radius
-    const outerRadius = Math.min(donutWidth, donutHeight) / 2;
-    const innerRadius = outerRadius * 0.6; // Donut hole size
-    
-    if (outerRadius <= 10) {
-        displayNoData(containerId, "Chart area too small for donut.");
-        return;
-    }
-    
-    // Create SVG element
-    const svg = d3Container.append("svg")
-        .attr("width", "100%")
-        .attr("height", "100%")
-        .attr("viewBox", `0 0 ${availableWidth} ${availableHeight}`)
-        .style("overflow", "visible"); // Allows labels to draw slightly outside
-    
-    // Create a group for the donut, positioned in the center
-    const donutG = svg.append("g")
-        .attr("transform", `translate(${
-            margin.left + donutWidth/2 + (config.legendPosition === "right" ? 0 : config.legendPosition === "left" ? legendWidth : 0)
-        }, ${
-            margin.top + donutHeight/2
-        })`);
-    
-    // Generate colors
-    const color = getDonutColorScale(chartPlotData, config);
-    
-    // Create pie layout
-    const pie = d3.pie()
-        .padAngle(0.01) // Slight padding between slices
-        .value(d => d[config.valueField])
-        .sort(null); // Don't sort, preserve input order
-    
-    // Create arc generators
-    const arcGenerator = d3.arc()
-        .innerRadius(innerRadius)
-        .outerRadius(outerRadius);
-    
-    // Arc for label positioning
-    const labelArcStart = d3.arc()
-        .innerRadius(outerRadius * 0.95)
-        .outerRadius(outerRadius * 0.95);
-    
-    // Arc for label line bending point
-    const labelArcMid = d3.arc()
-        .innerRadius(outerRadius * 1.1)
-        .outerRadius(outerRadius * 1.1);
-    
-    // --- Draw Arcs ---
-    const pieData = pie(chartPlotData);
-    
-    donutG.selectAll(".arc-path")
-        .data(pieData)
-        .join("path")
-        .attr("class", "arc-path")
-        .attr("fill", (d, i) => color(d.data[config.colorField]))
-        .attr("d", arcGenerator)
-        .attr("stroke", getCssVar('--color-surface'))
-        .style("stroke-width", "1.5px")
-        .style("cursor", "pointer")
-        .on("mouseover", function(event, d) {
-            // Highlight this arc
-            d3.select(this)
-                .transition()
-                .duration(200)
-                .attr("stroke", getCssVar('--color-primary'))
-                .style("stroke-width", "2px")
-                .attr("transform", "scale(1.03)");
-            
-            // Show tooltip
-            const tooltip = d3.select("body").append("div")
-                .attr("class", "chart-tooltip")
-                .style("position", "absolute")
-                .style("background-color", getCssVar('--color-surface'))
-                .style("color", getCssVar('--color-text-primary'))
-                .style("padding", "8px 12px")
-                .style("border-radius", "4px")
-                .style("font-size", "12px")
-                .style("pointer-events", "none")
-                .style("opacity", 0)
-                .style("box-shadow", getCssVar('--shadow-md'))
-                .style("border", `1px solid ${getCssVar('--color-border')}`)
-                .style("z-index", 1000);
-            
-            tooltip.transition()
-                .duration(200)
-                .style("opacity", 1);
-            
-            const name = d.data[config.labelField];
-            const desc = d.data[config.descField] || "";
-            const value = formatCurrency(d.data[config.valueField]);
-            const percentage = d.data[config.percentageField].toFixed(1);
-            
-            tooltip.html(`
-                <div style="font-weight: bold; margin-bottom: 4px;">${name}</div>
-                ${desc ? `<div style="color: ${getCssVar('--color-text-secondary')}; margin-bottom: 4px;">${desc}</div>` : ""}
-                <div>Value: ${value}</div>
-                <div>Share: ${percentage}%</div>
-            `);
-            
-            tooltip.style("left", (event.pageX + 10) + "px")
-                .style("top", (event.pageY - 28) + "px");
-        })
-        .on("mousemove", function(event) {
-            d3.select("body").select(".chart-tooltip")
-                .style("left", (event.pageX + 10) + "px")
-                .style("top", (event.pageY - 28) + "px");
-        })
-        .on("mouseout", function() {
-            // Remove highlight
-            d3.select(this)
-                .transition()
-                .duration(200)
-                .attr("stroke", getCssVar('--color-surface'))
-                .style("stroke-width", "1.5px")
-                .attr("transform", "scale(1)");
-            
-            // Remove tooltip
-            d3.select("body").select(".chart-tooltip")
-                .transition()
-                .duration(200)
-                .style("opacity", 0)
-                .remove();
-        });
-    
-    // --- Add Center Text ---
-    const centerText = donutG.append("text")
-        .attr("text-anchor", "middle")
-        .style("font-family", "var(--font-body, sans-serif)")
-        .style("fill", getCssVar('--color-text-primary'));
-    
-    centerText.append("tspan")
-        .attr("x", 0)
-        .attr("dy", "-0.6em")
-        .style("font-size", "0.75em")
-        .style("fill", getCssVar('--color-text-secondary'))
-        .text(config.title);
-    
-    if (config.subtitle) {
-        centerText.append("tspan")
-            .attr("x", 0)
-            .attr("dy", "1.1em")
-            .style("font-size", "0.7em")
-            .style("fill", getCssVar('--color-text-tertiary'))
-            .text(config.subtitle);
-    }
-    
-    centerText.append("tspan")
-        .attr("x", 0)
-        .attr("dy", config.subtitle ? "1.3em" : "1.5em")
-        .style("font-size", "0.9em")
-        .style("font-weight", "600")
-        .text(centerItem[config.centerValueField] || "");
-    
-    // --- Add External Labels and Lines (conditional) ---
-    if (showLabels) {
-        // Only show labels for slices that are large enough
-        const labelThresholdPercentage = config.minPercentageForLabel / 100;
-        const labelData = pieData.filter(d => {
-            const percentage = (d.endAngle - d.startAngle) / (2 * Math.PI);
-            return percentage >= labelThresholdPercentage && d.data[config.valueField] > 0;
-        });
-        
-        if (labelData.length > 0) {
-            const lineGroup = donutG.append("g").attr("class", "label-lines");
-            const textLabelGroup = donutG.append("g").attr("class", "text-labels");
-            
-            const polylineStrokeColor = getCssVar('--color-text-tertiary');
-            const labelTextColor = getCssVar('--color-text-secondary');
-            const labelDescColor = getCssVar('--color-text-tertiary');
-            
-            lineGroup.selectAll('polyline')
-                .data(labelData)
-                .join('polyline')
-                .attr('stroke', polylineStrokeColor)
-                .style('fill', 'none')
-                .attr('stroke-width', 1)
-                .attr('points', d => {
-                    const posA = labelArcStart.centroid(d);
-                    const posB = labelArcMid.centroid(d);
-                    const posC = [posB[0] * 1.1, posB[1]];
-                    const midangle = d.startAngle + (d.endAngle - d.startAngle) / 2;
-                    posC[0] = (outerRadius + margin.left/2.5) * (midangle < Math.PI ? 1 : -1);
-                    return [posA, posB, posC];
-                });
-            
-            const textLabels = textLabelGroup.selectAll('text')
-                .data(labelData)
-                .join('text')
-                .style('font-family', "var(--font-body, sans-serif)")
-                .attr('dy', '0.35em')
-                .attr('transform', d => {
-                    const pos = [labelArcMid.centroid(d)[0] * 1.1, labelArcMid.centroid(d)[1]];
-                    const midangle = d.startAngle + (d.endAngle - d.startAngle) / 2;
-                    pos[0] = (outerRadius + margin.left/2.5 + 5) * (midangle < Math.PI ? 1 : -1);
-                    return `translate(${pos})`;
-                })
-                .style('text-anchor', d => (d.startAngle + (d.endAngle - d.startAngle) / 2 < Math.PI ? 'start' : 'end'));
-            
-            textLabels.append('tspan')
-                .attr('x', 0)
-                .style('font-size', '11px')
-                .style('font-weight', '500')
-                .style('fill', labelTextColor)
-                .text(d => truncateText(d.data[config.labelField], 15));
-            
-            textLabels.filter(d => !d.data.isOther)
-                .append('tspan')
-                .attr('x', 0)
-                .attr('dy', '1.2em')
-                .style('font-size', '10px')
-                .style('fill', labelDescColor)
-                .text(d => {
-                    // If we have a description, show it, otherwise show the percentage
-                    if (d.data[config.descField]) {
-                        return truncateText(d.data[config.descField], 18);
-                    } else {
-                        return `${d.data[config.percentageField].toFixed(1)}%`;
-                    }
-                });
-        }
-    }
-    
-    // --- Add Legend ---
-    if (config.legendPosition !== "none") {
-        let legendX, legendY, legendLayout = "vertical";
-        
-        // Position the legend based on configuration
-        if (config.legendPosition === "left") {
-            legendX = margin.left;
-            legendY = margin.top;
-        } else if (config.legendPosition === "right") {
-            legendX = margin.left + donutWidth + 10;
-            legendY = margin.top;
-        } else if (config.legendPosition === "bottom") {
-            legendX = margin.left;
-            legendY = margin.top + donutHeight + 10;
-            legendLayout = "horizontal";
-        }
-        
-        const legendGroup = svg.append("g")
-            .attr("transform", `translate(${legendX}, ${legendY})`);
-        
-        // For horizontal layout, we'll create multiple rows if needed
-        if (legendLayout === "horizontal") {
-            const itemsPerRow = Math.floor(donutWidth / 100); // Rough estimate
-            const rows = Math.ceil(chartPlotData.length / itemsPerRow);
-            
-            for (let row = 0; row < rows; row++) {
-                const rowItems = chartPlotData.slice(row * itemsPerRow, (row + 1) * itemsPerRow);
-                
-                const rowGroup = legendGroup.append("g")
-                    .attr("transform", `translate(0, ${row * 20})`);
-                
-                rowGroup.selectAll("g")
-                    .data(rowItems)
-                    .join("g")
-                    .attr("transform", (d, i) => `translate(${i * 100}, 0)`)
-                    .call(createLegendItem, color, config);
-            }
-        } else {
-            // Vertical layout is simpler
-            legendGroup.selectAll("g")
-                .data(chartPlotData)
-                .join("g")
-                .attr("transform", (d, i) => `translate(0, ${i * 20})`)
-                .call(createLegendItem, color, config);
-        }
-    }
-    
-    // Return the drawn chart data for potential further manipulation
-    return {
-        svg: svg,
-        pieData: pieData,
-        chartData: chartPlotData
-    };
-}
 
 /**
  * Helper function to create a legend item
@@ -5742,77 +5334,6 @@ function createLegendItem(selection, colorScale, config) {
         });
 }
 
-/**
- * Get color scale for donut chart based on theme
- */
-function getDonutColorScale(data, config) {
-    // Prefer using a color function from the theme if available
-    if (typeof getThemeOrdinalChartColors === 'function') {
-        return d3.scaleOrdinal()
-            .domain(data.map(d => d[config.colorField]))
-            .range(getThemeOrdinalChartColors(data.length));
-    }
-    
-    // Fallback colors if theme function not available
-    const baseColors = [
-        getCssVar('--chart-color-primary'),
-        getCssVar('--chart-color-secondary'),
-        getCssVar('--chart-color-tertiary'),
-        d3.color(getCssVar('--chart-color-primary')).darker(0.5).toString(),
-        d3.color(getCssVar('--chart-color-secondary')).darker(0.5).toString(),
-        d3.color(getCssVar('--chart-color-primary')).brighter(0.5).toString(),
-        d3.color(getCssVar('--chart-color-secondary')).brighter(0.5).toString(),
-        d3.color(getCssVar('--chart-color-tertiary')).brighter(0.5).toString(),
-    ];
-    
-    // Special color handling for "Other" category
-    return d3.scaleOrdinal()
-        .domain(data.map(d => d[config.colorField]))
-        .range(data.map((d, i) => {
-            if (d.isOther) {
-                return getCssVar('--chart-color-tertiary');
-            }
-            return baseColors[i % baseColors.length];
-        }));
-}
-
-/**
- * Wrapper for NAICS Donut Chart with specific configuration
- */
-function displayNaicsDonutChart(naicsData, chartElementId, topN = 5) {
-    return displayEnhancedDonutChart(naicsData, chartElementId, {
-        title: "Top NAICS",
-        centerValueField: "code",
-        labelField: "code",
-        descField: "desc",
-        topN: topN,
-        legendPosition: "none",
-        showExternalLabels: true
-    });
-}
-
-/**
- * Wrapper for Share of Wallet Chart with specific configuration
- */
-function displayShareOfWalletChart(model, containerId = 'share-of-wallet-container') {
-    // Process data for Share of Wallet (taken from your existing function)
-    const shareData = processShareOfWalletData(model);
-    
-    if (!shareData || shareData.length === 0) {
-        displayNoData(containerId, 'No market share data available.');
-        return;
-    }
-    
-    return displayEnhancedDonutChart(shareData, containerId, {
-        title: "Market",
-        subtitle: "Share",
-        labelField: "name",
-        topN: 7,
-        legendPosition: "left",
-        showExternalLabels: false,
-        minPercentageForLabel: 5
-    });
-}
 function processNaicsDistributionData(model) {
     if (!model || !model.contracts) {
         return [];
@@ -5872,66 +5393,6 @@ function getThemeOrdinalChartColors(count = 6) {
         colors.push(baseColors[i % baseColors.length]);
     }
     return d3.scaleOrdinal(colors);
-}
-
-// Only add this if you want the Share of Wallet visualization
-function processShareOfWalletData(model, topN = 7) {
-  try {
-    if (!model || !model.primes) {
-      return [];
-    }
-    
-    // Get total value by prime
-    const primeValues = {};
-    let grandTotal = 0;
-    
-    // Aggregate from contracts
-    Object.values(model.contracts).forEach(contract => {
-      if (contract.primeId && contract.value > 0) {
-        const prime = model.primes[contract.primeId];
-        if (prime) {
-          const primeName = prime.name;
-          if (!primeValues[primeName]) {
-            primeValues[primeName] = 0;
-          }
-          primeValues[primeName] += contract.value;
-          grandTotal += contract.value;
-        }
-      }
-    });
-    
-    // Convert to array and sort
-    const sortedPrimes = Object.entries(primeValues)
-      .map(([name, value]) => ({
-        name: name,
-        value: value,
-        percentage: grandTotal > 0 ? (value / grandTotal) * 100 : 0
-      }))
-      .sort((a, b) => b.value - a.value);
-    
-    // Take top N primes and roll up the rest as "Other"
-    const result = sortedPrimes.slice(0, topN);
-    
-    // Add "Other" category if needed
-    if (sortedPrimes.length > topN) {
-      const otherValue = sortedPrimes.slice(topN).reduce((sum, prime) => sum + prime.value, 0);
-      const otherPercentage = grandTotal > 0 ? (otherValue / grandTotal) * 100 : 0;
-      
-      if (otherValue > 0) {
-        result.push({
-          name: "Other",
-          value: otherValue,
-          percentage: otherPercentage,
-          count: sortedPrimes.length - topN
-        });
-      }
-    }
-    
-    return result;
-  } catch (e) {
-    console.error("Error in processShareOfWalletData:", e);
-    return [];
-  }
 }
 
 // Global variable to store current contractor profile data
@@ -7001,161 +6462,474 @@ function displayEnhancedDonutChart(data, containerId, options = {}) {
         chartData: chartPlotData
     };
 }
-
 /**
- * Helper function to create a legend item
+ * Comprehensive fix for NAICS donut and Share of Wallet charts
+ * 
+ * 1. Fixes Share of Wallet chart not displaying
+ * 2. Ensures proper color inheritance from CSS variables
+ * 3. Creates container for Share of Wallet if missing
  */
-function createLegendItem(selection, colorScale, config) {
-    // Add color squares
-    selection.append("rect")
-        .attr("width", 12)
-        .attr("height", 12)
-        .attr("fill", d => colorScale(d[config.colorField]));
+(function() {
+  // =====================================================================
+  // UTILITY FUNCTIONS
+  // =====================================================================
+  
+  /**
+   * Enhanced CSS variable getter with better fallbacks
+   * Uses the original getCssVar function but adds better fallbacks
+   */
+  function getChartCssVar(varName) {
+    let value;
     
-    // Add legend text
-    selection.append("text")
-        .attr("x", 18)
-        .attr("y", 9)
-        .attr("dy", "0.1em")
-        .style("font-size", "11px")
-        .style("fill", getCssVar('--color-text-secondary'))
-        .text(d => {
-            const label = truncateText(d[config.labelField], 20);
-            return `${label} (${d[config.percentageField].toFixed(1)}%)`;
-        });
-}
-
-/**
- * Get color scale for donut chart based on theme
- */
-function getDonutColorScale(data, config) {
-    // Prefer using a color function from the theme if available
-    if (typeof getThemeOrdinalChartColors === 'function') {
-        return d3.scaleOrdinal()
-            .domain(data.map(d => d[config.colorField]))
-            .range(getThemeOrdinalChartColors(data.length));
+    // Try to use the existing function first
+    if (typeof window.getCssVar === 'function') {
+      value = window.getCssVar(varName);
+      if (value && value !== '#cccccc') {
+        return value;
+      }
     }
     
-    // Fallback colors if theme function not available
-    const baseColors = [
-        getCssVar('--chart-color-primary'),
-        getCssVar('--chart-color-secondary'),
-        getCssVar('--chart-color-tertiary'),
-        d3.color(getCssVar('--chart-color-primary')).darker(0.5).toString(),
-        d3.color(getCssVar('--chart-color-secondary')).darker(0.5).toString(),
-        d3.color(getCssVar('--chart-color-primary')).brighter(0.5).toString(),
-        d3.color(getCssVar('--chart-color-secondary')).brighter(0.5).toString(),
-        d3.color(getCssVar('--chart-color-tertiary')).brighter(0.5).toString(),
+    // Direct lookup with fallbacks
+    try {
+      value = getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+      if (value) return value;
+    } catch (e) {
+      console.warn(`Error getting CSS variable ${varName}:`, e);
+    }
+    
+    // Fallback values based on theme
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    
+    // Chart colors
+    if (varName === '--chart-color-primary') return isDark ? '#A59FA8' : '#9A949B';
+    if (varName === '--chart-color-secondary') return isDark ? '#908A91' : '#7A747B';
+    if (varName === '--chart-color-tertiary') return isDark ? '#767077' : '#B6B1B7';
+    
+    // Text colors
+    if (varName === '--color-text-primary') return isDark ? '#F5F5F5' : '#222222';
+    if (varName === '--color-text-secondary') return isDark ? '#C8C8C8' : '#555555';
+    if (varName === '--color-text-tertiary') return isDark ? '#767077' : '#B3B3B3';
+    
+    // Surface colors
+    if (varName === '--color-surface') return isDark ? '#2B2B2B' : '#FFFFFF';
+    if (varName === '--color-border') return isDark ? '#444444' : '#DDDDDD';
+    
+    // Default color
+    return isDark ? '#CCCCCC' : '#666666';
+  }
+  
+  /**
+   * Generate chart colors from CSS variables
+   */
+  function generateChartColors(count = 8) {
+    // Get colors from CSS
+    const primary = getChartCssVar('--chart-color-primary');
+    const secondary = getChartCssVar('--chart-color-secondary');
+    const tertiary = getChartCssVar('--chart-color-tertiary');
+    
+    // Create variations
+    const colors = [
+      primary,
+      secondary,
+      tertiary,
+      d3.color(primary).darker(0.3).toString(),
+      d3.color(secondary).darker(0.3).toString(),
+      d3.color(tertiary).brighter(0.3).toString(),
+      d3.color(primary).brighter(0.5).toString(),
+      d3.color(secondary).brighter(0.5).toString()
     ];
     
-    // Special color handling for "Other" category
-    return d3.scaleOrdinal()
-        .domain(data.map(d => d[config.colorField]))
-        .range(data.map((d, i) => {
-            if (d.isOther) {
-                return getCssVar('--chart-color-tertiary');
-            }
-            return baseColors[i % baseColors.length];
-        }));
-}
-
-/**
- * Wrapper for NAICS Donut Chart with specific configuration
- */
-function displayNaicsDonutChart(naicsData, chartElementId, topN = 5) {
-    return displayEnhancedDonutChart(naicsData, chartElementId, {
-        title: "Top NAICS",
-        centerValueField: "code",
-        labelField: "code",
-        descField: "desc",
-        topN: topN,
-        legendPosition: "none",
-        showExternalLabels: true
-    });
-}
-
-/**
- * Process model data to prepare for Share of Wallet visualization
- * @param {Object} model - The unified data model
- * @param {number} topN - Number of top items to show (default: 7)
- * @returns {Array} Processed data for the chart
- */
-function processShareOfWalletData(model, topN = 7) {
-  try {
+    // Return the requested number of colors
+    return colors.slice(0, count);
+  }
+  
+  /**
+   * Fixed color scale function for donut charts
+   */
+  function getFixedDonutColorScale(data, config) {
+    const colorField = config.colorField || 'name';
+    
+    // Create domain from data
+    const domain = data.map(d => d[colorField]);
+    
+    // Get colors that match the domain length
+    const colors = generateChartColors(domain.length);
+    
+    // Create the scale
+    const colorScale = d3.scaleOrdinal()
+      .domain(domain)
+      .range(colors);
+    
+    // Return a function that handles special cases
+    return function(value) {
+      // Special handling for "Other" category
+      const item = data.find(d => d[colorField] === value);
+      if (item && item.isOther) {
+        return getChartCssVar('--color-text-tertiary');
+      }
+      return colorScale(value);
+    };
+  }
+  
+  // =====================================================================
+  // SHARE OF WALLET CHART
+  // =====================================================================
+  
+  /**
+   * Create Share of Wallet container if it doesn't exist
+   */
+  function createShareOfWalletContainer() {
+    // Check if container already exists
+    if (document.getElementById('share-of-wallet-container')) {
+      return true;
+    }
+    
+    console.log("Creating Share of Wallet container");
+    
+    // Find bento grid
+    const bentoGrid = document.querySelector('.bento-grid');
+    if (!bentoGrid) {
+      console.error("Could not find bento grid for Share of Wallet container");
+      return false;
+    }
+    
+    // Create bento box
+    const bentoBox = document.createElement('div');
+    bentoBox.id = 'bento-share-of-wallet';
+    bentoBox.className = 'bento-box';
+    bentoBox.style.gridColumn = 'span 1';
+    bentoBox.style.gridRow = 'span 1';
+    bentoBox.style.minHeight = '240px';
+    
+    // Create header
+    const header = document.createElement('div');
+    header.className = 'bento-header';
+    header.innerHTML = '<h3>Market Share</h3>';
+    
+    // Create container
+    const container = document.createElement('div');
+    container.id = 'share-of-wallet-container';
+    container.style.width = '100%';
+    container.style.height = 'calc(100% - 40px)';
+    
+    // Create loading placeholder
+    const placeholder = document.createElement('div');
+    placeholder.className = 'no-data-placeholder';
+    placeholder.style.display = 'flex';
+    placeholder.style.alignItems = 'center';
+    placeholder.style.justifyContent = 'center';
+    placeholder.style.height = '100%';
+    placeholder.style.color = getChartCssVar('--color-text-tertiary');
+    placeholder.textContent = 'Select a dataset to view market share.';
+    container.appendChild(placeholder);
+    
+    // Assemble
+    bentoBox.appendChild(header);
+    bentoBox.appendChild(container);
+    
+    // Add to grid
+    bentoGrid.appendChild(bentoBox);
+    
+    return true;
+  }
+  
+  /**
+   * Process data for Share of Wallet chart
+   */
+  function processShareOfWalletData(model, topN = 7) {
     if (!model || !model.primes) {
-      console.warn("processShareOfWalletData: Invalid model data");
       return [];
     }
     
-    // Get total value by prime
-    const primeValues = {};
-    let grandTotal = 0;
-    
-    // Aggregate from contracts
-    Object.values(model.contracts).forEach(contract => {
-      if (contract.primeId && contract.value > 0) {
+    try {
+      // Aggregate by prime
+      const primeValues = {};
+      let totalValue = 0;
+      
+      // Process from contracts
+      Object.values(model.contracts || {}).forEach(contract => {
+        if (!contract.primeId || !contract.value || contract.value <= 0) return;
+        
         const prime = model.primes[contract.primeId];
-        if (prime) {
-          const primeName = prime.name;
-          if (!primeValues[primeName]) {
-            primeValues[primeName] = 0;
-          }
-          primeValues[primeName] += contract.value;
-          grandTotal += contract.value;
+        if (!prime || !prime.name) return;
+        
+        const primeName = prime.name;
+        if (!primeValues[primeName]) {
+          primeValues[primeName] = 0;
+        }
+        
+        primeValues[primeName] += contract.value;
+        totalValue += contract.value;
+      });
+      
+      // Convert to array and sort
+      const sortedPrimes = Object.entries(primeValues)
+        .map(([name, value]) => ({
+          name: name,
+          value: value,
+          percentage: 0 // Calculate after
+        }))
+        .sort((a, b) => b.value - a.value);
+      
+      // Take top N primes
+      const result = sortedPrimes.slice(0, topN);
+      
+      // Add "Other" category if needed
+      if (sortedPrimes.length > topN) {
+        const otherValue = sortedPrimes.slice(topN)
+          .reduce((sum, item) => sum + item.value, 0);
+        
+        if (otherValue > 0) {
+          result.push({
+            name: "Other",
+            value: otherValue,
+            isOther: true,
+            count: sortedPrimes.length - topN
+          });
         }
       }
-    });
-    
-    // Convert to array and sort
-    const sortedPrimes = Object.entries(primeValues)
-      .map(([name, value]) => ({
-        name: name,
-        value: value,
-        percentage: grandTotal > 0 ? (value / grandTotal) * 100 : 0
-      }))
-      .sort((a, b) => b.value - a.value);
-    
-    // Take top N primes and roll up the rest as "Other"
-    const result = sortedPrimes.slice(0, topN);
-    
-    // Add "Other" category if needed
-    if (sortedPrimes.length > topN) {
-      const otherValue = sortedPrimes.slice(topN).reduce((sum, prime) => sum + prime.value, 0);
-      const otherPercentage = grandTotal > 0 ? (otherValue / grandTotal) * 100 : 0;
       
-      if (otherValue > 0) {
-        result.push({
-          name: "Other",
-          value: otherValue,
-          percentage: otherPercentage,
-          count: sortedPrimes.length - topN
+      // Calculate percentages
+      result.forEach(item => {
+        item.percentage = totalValue > 0 ? (item.value / totalValue) * 100 : 0;
+      });
+      
+      console.log(`Processed Share of Wallet data: ${result.length} items`);
+      return result;
+    } catch (error) {
+      console.error("Error processing Share of Wallet data:", error);
+      return [];
+    }
+  }
+  
+  /**
+   * Enhanced Share of Wallet chart display function
+   */
+  function displayEnhancedShareOfWalletChart(model, containerId = 'share-of-wallet-container') {
+    // Create container if needed
+    if (!document.getElementById(containerId)) {
+      createShareOfWalletContainer();
+    }
+    
+    const container = document.getElementById(containerId);
+    if (!container) {
+      console.error("Share of Wallet container not found!");
+      return;
+    }
+    
+    // Show loading state
+    if (typeof setLoading === 'function') {
+      setLoading(containerId, true, 'Loading market share data...');
+    }
+    
+    try {
+      // Process data
+      const shareData = processShareOfWalletData(model);
+      
+      if (!shareData || shareData.length === 0) {
+        if (typeof displayNoData === 'function') {
+          displayNoData(containerId, 'No market share data available.');
+        }
+        return;
+      }
+      
+      // Use original chart function with our fixed color function
+      const originalGetDonutColorScale = window.getDonutColorScale;
+      window.getDonutColorScale = getFixedDonutColorScale;
+      
+      // Display chart
+      if (typeof displayEnhancedDonutChart === 'function') {
+        displayEnhancedDonutChart(shareData, containerId, {
+          title: "Market",
+          subtitle: "Share",
+          labelField: "name",
+          topN: 7,
+          legendPosition: "left",
+          showExternalLabels: false,
+          minPercentageForLabel: 5
         });
       }
+      
+      // Restore original function
+      window.getDonutColorScale = originalGetDonutColorScale;
+      
+      console.log("Share of Wallet chart displayed successfully");
+    } catch (error) {
+      console.error("Error displaying Share of Wallet chart:", error);
+      if (typeof displayError === 'function') {
+        displayError(containerId, `Failed to display chart: ${error.message}`);
+      }
+    } finally {
+      // Turn off loading
+      if (typeof setLoading === 'function') {
+        setLoading(containerId, false);
+      }
     }
-    
-    console.log(`Share of Wallet data processed: ${result.length} items (${sortedPrimes.length} total primes)`);
-    return result;
-  } catch (e) {
-    console.error("Error in processShareOfWalletData:", e);
-    return [];
   }
-}
-function displayShareOfWalletChart(model, containerId = 'share-of-wallet-container') {
-    // Process data for Share of Wallet (taken from your existing function)
-    const shareData = processShareOfWalletData(model);
-    
-    if (!shareData || shareData.length === 0) {
-        displayNoData(containerId, 'No market share data available.');
-        return;
+  
+  // =====================================================================
+  // NAICS CHART FIX
+  // =====================================================================
+  
+  /**
+   * Fix for NAICS donut chart to use correct colors
+   */
+  function displayFixedNaicsDonutChart(naicsData, chartElementId, topN = 5) {
+    if (!naicsData || naicsData.length === 0) {
+      if (typeof displayNoData === 'function') {
+        displayNoData(chartElementId, 'No NAICS data available.');
+      }
+      return;
     }
     
-    return displayEnhancedDonutChart(shareData, containerId, {
-        title: "Market",
-        subtitle: "Share",
-        labelField: "name",
-        topN: 7,
-        legendPosition: "left",
-        showExternalLabels: false,
-        minPercentageForLabel: 5
+    // Show loading state
+    if (typeof setLoading === 'function') {
+      setLoading(chartElementId, true, 'Preparing NAICS distribution...');
+    }
+    
+    try {
+      // Replace color function temporarily
+      const originalGetDonutColorScale = window.getDonutColorScale;
+      window.getDonutColorScale = getFixedDonutColorScale;
+      
+      // Display the chart
+      if (typeof displayEnhancedDonutChart === 'function') {
+        displayEnhancedDonutChart(naicsData, chartElementId, {
+          title: "Top NAICS",
+          centerValueField: "code",
+          labelField: "code",
+          descField: "desc",
+          topN: topN,
+          legendPosition: "none",
+          showExternalLabels: true,
+          minPercentageForLabel: 4
+        });
+      }
+      
+      // Restore original function
+      window.getDonutColorScale = originalGetDonutColorScale;
+      
+      console.log("NAICS donut chart displayed successfully");
+    } catch (error) {
+      console.error("Error displaying NAICS chart:", error);
+      if (typeof displayError === 'function') {
+        displayError(chartElementId, `Failed to display chart: ${error.message}`);
+      }
+    } finally {
+      // Turn off loading
+      if (typeof setLoading === 'function') {
+        setLoading(chartElementId, false);
+      }
+    }
+  }
+  
+  // =====================================================================
+  // INITIALIZATION AND HOOKUP
+  // =====================================================================
+  
+  /**
+   * Hook into the visualization update function to ensure our charts display correctly
+   */
+  function initChartFixes() {
+    console.log("Initializing chart fixes...");
+    
+    // Create Share of Wallet container
+    createShareOfWalletContainer();
+    
+    // Hook into the dashboard update function
+    const originalUpdateVisuals = window.updateVisualsFromUnifiedModel;
+    if (typeof originalUpdateVisuals === 'function') {
+      window.updateVisualsFromUnifiedModel = function(subAgencyFilter, naicsFilter, searchTerm) {
+        // Call the original function
+        originalUpdateVisuals.apply(this, arguments);
+        
+        // Add our chart rendering
+        setTimeout(() => {
+          if (window.unifiedModel) {
+            // Display Share of Wallet chart
+            displayEnhancedShareOfWalletChart(window.unifiedModel);
+            
+            // Fix NAICS chart colors if needed
+            const naicsContainer = document.getElementById('naics-donut-chart-container');
+            if (naicsContainer && naicsContainer.querySelector('svg')) {
+              const naicsData = processNaicsDistributionData(window.unifiedModel);
+              if (naicsData && naicsData.length > 0) {
+                displayFixedNaicsDonutChart(naicsData, 'naics-donut-chart-container');
+              }
+            }
+          }
+        }, 500);
+      };
+    }
+    
+    // Replace the NAICS processing function to ensure it works consistently
+    window.processNaicsDistributionData = function(model) {
+      if (!model || !model.contracts) {
+        return [];
+      }
+      
+      const naicsAggregates = {};
+      
+      // Aggregate from prime contracts
+      Object.values(model.contracts).forEach(contract => {
+        if (contract.naicsCode && contract.value > 0) {
+          const code = contract.naicsCode;
+          const desc = contract.naicsDesc || "N/A";
+          
+          if (!naicsAggregates[code]) {
+            naicsAggregates[code] = { code: code, desc: desc, value: 0 };
+          }
+          naicsAggregates[code].value += contract.value;
+        }
+      });
+      
+      // Convert to array and sort
+      const sortedNaicsData = Object.values(naicsAggregates)
+        .sort((a, b) => b.value - a.value);
+      
+      // Calculate percentages
+      const totalValue = sortedNaicsData.reduce((sum, item) => sum + item.value, 0);
+      sortedNaicsData.forEach(item => {
+        item.percentage = totalValue > 0 ? (item.value / totalValue) * 100 : 0;
+      });
+      
+      return sortedNaicsData;
+    };
+    
+    // Replace other methods if they exist
+    if (window.displayShareOfWalletChart) {
+      window.displayShareOfWalletChart = displayEnhancedShareOfWalletChart;
+    }
+    
+    if (window.displayNaicsDonutChart) {
+      const originalDisplayNaicsDonutChart = window.displayNaicsDonutChart;
+      window.displayNaicsDonutChart = function() {
+        // Process NAICS data first
+        if (window.unifiedModel) {
+          const naicsData = processNaicsDistributionData(window.unifiedModel);
+          displayFixedNaicsDonutChart(naicsData, 'naics-donut-chart-container');
+        } else {
+          originalDisplayNaicsDonutChart.apply(this, arguments);
+        }
+      };
+    }
+    
+    // If unifiedModel already exists, trigger a display of the charts
+    if (window.unifiedModel) {
+      setTimeout(() => {
+        displayEnhancedShareOfWalletChart(window.unifiedModel);
+      }, 500);
+    }
+    
+    console.log("Chart fixes initialized successfully");
+  }
+  
+  // Run initialization immediately or when the page loads
+  if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    setTimeout(initChartFixes, 100);
+  } else {
+    document.addEventListener('DOMContentLoaded', function() {
+      setTimeout(initChartFixes, 500);
     });
-}
+  }
+})();
