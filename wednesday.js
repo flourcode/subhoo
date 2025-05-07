@@ -5850,14 +5850,12 @@ function displayShareOfWalletChart(model) {
             bentoBox = document.createElement('div');
             bentoBox.id = bentoId;
             bentoBox.className = 'bento-box';
-            bentoBox.style.gridColumn = 'span 1';
-            bentoBox.style.gridRow = 'span 1';
             bentoBox.style.minHeight = '240px';
             
             // Create header
             const header = document.createElement('div');
             header.className = 'bento-header';
-            header.innerHTML = '<h3>Market Share</h3>';
+            header.innerHTML = '<h3>Wallet Share</h3>';
             bentoBox.appendChild(header);
             
             // Add to grid
