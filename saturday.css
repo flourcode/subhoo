@@ -213,7 +213,8 @@ a:hover { color: var(--color-secondary); text-decoration: none; }
     /* Add dendrogram to layout */
     grid-template-areas:
         "sankey sankey sankey map arr"
-        "tavtcv tavtcv dendrogram dendrogram leaders"
+        "tavtcv tavtcv dendrogram dendrogram dendrogram"
+		"leaders leaders leaders leaders leaders"
         "expiring expiring expiring expiring expiring";
     grid-template-rows: minmax(400px, auto) auto auto;
 }
