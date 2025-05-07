@@ -182,15 +182,41 @@ a:hover { color: var(--color-secondary); text-decoration: none; }
 .sidebar-info { font-family: var(--font-body); margin: 10px 0; font-size: 12px; line-height: 1.4; color: var(--color-text-secondary); background-color: var(--color-surface-variant); padding: 12px; border-radius: var(--border-radius-md); border: 1px solid var(--color-border); }
 .sidebar-footer { font-family: var(--font-body); margin-top: auto; padding-top: 12px; border-top: 1px solid var(--color-border); font-size: 11px; color: var(--color-text-tertiary); text-align: center; }
 
-.main-content {
-    flex: 1; height: 100%; overflow-y: auto; padding: var(--bento-gap);
-    background-color: transparent; /* UPDATED: Let app-container bg show through */
-    scrollbar-width: thin; scrollbar-color: var(--color-outline) transparent;
-}
-.main-content::-webkit-scrollbar { width: 8px; }
-.main-content::-webkit-scrollbar-track { background: transparent; }
-.main-content::-webkit-scrollbar-thumb { background-color: var(--color-outline); border-radius: 4px; }
+/* In wednesday.css */
 
+.main-content {
+    flex: 1;
+    height: 100%;
+    overflow-y: auto;
+    padding: var(--bento-gap);
+    background-color: transparent; /* UPDATED: Let app-container bg show through */
+
+    /* For Firefox */
+    scrollbar-width: auto; /* CHANGED from thin to auto for a thicker scrollbar */
+    scrollbar-color: var(--color-outline) transparent; /* Thumb and track color */
+}
+
+/* For WebKit browsers (Chrome, Safari, Edge, Opera) */
+.main-content::-webkit-scrollbar {
+    width: 12px; /* INCREASED from 8px - Adjust this value as needed */
+}
+
+.main-content::-webkit-scrollbar-track {
+    background: transparent; /* Or var(--color-surface-container) if you want a visible track */
+}
+
+.main-content::-webkit-scrollbar-thumb {
+    background-color: var(--color-outline);
+    border-radius: 6px; /* Optional: Adjust if the scrollbar is much thicker, e.g., width/2 for a pill shape */
+    /* You could add a subtle border to the thumb for better definition if needed: */
+    /* border: 2px solid transparent; */
+    /* background-clip: content-box; */ /* If using a border, this helps keep border inside thumb area */
+}
+
+/* Optional: Hover effect for WebKit scrollbar thumb for better interactivity */
+.main-content::-webkit-scrollbar-thumb:hover {
+    background-color: var(--color-primary); /* Or a slightly darker/brighter version of --color-outline */
+}
 /* ========================================= */
 /* Header Styles                             */
 /* ========================================= */
@@ -214,13 +240,14 @@ a:hover { color: var(--color-secondary); text-decoration: none; }
     grid-template-areas:
         "sankey sankey sankey map arr"
         "tavtcv tavtcv dendrogram dendrogram dendrogram"
-		"leaders leaders leaders leaders leaders"
+		"leaders leaders leaders leaders naics-donut"
         "expiring expiring expiring expiring expiring";
     grid-template-rows: minmax(400px, auto) auto auto;
 }
 
 /* Add area assignment for dendrogram */
 #bento-dendrogram { grid-area: dendrogram; }
+#bento-naics-distribution { grid-area: naics-donut; }
 #bento-arr { grid-area: arr; } #bento-sankey { grid-area: sankey; } #bento-map { grid-area: map; }
 #bento-tavtcv { grid-area: tavtcv; } #bento-leaders { grid-area: leaders; } #bento-expiring { grid-area: expiring; }
 
