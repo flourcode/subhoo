@@ -5493,79 +5493,85 @@ function displayEnhancedDonutChart(data, containerId, options = {}) {
     // Draw arcs
     const pieData = pie(chartPlotData);
     
-    donutG.selectAll(".arc-path")
-        .data(pieData)
-        .join("path")
-        .attr("class", "arc-path")
-        .attr("fill", (d, i) => color(d.data[config.colorField]))
-        .attr("d", arcGenerator)
-        .attr("stroke", getCssVar('--color-surface'))
-        .style("stroke-width", "1.5px")
-        .style("cursor", "pointer")
-        .on("mouseover", function(event, d) {
-            // Highlight this arc
-            d3.select(this)
-                .transition()
-                .duration(200)
-                .attr("stroke", getCssVar('--color-primary'))
-                .style("stroke-width", "2px")
-                .attr("transform", "scale(1.03)");
-            
-            // Show tooltip
-            const tooltip = d3.select("body").append("div")
-                .attr("class", "chart-tooltip")
-                .style("position", "absolute")
-                .style("background-color", getCssVar('--color-surface'))
-                .style("color", getCssVar('--color-text-primary'))
-                .style("padding", "8px 12px")
-                .style("border-radius", "4px")
-                .style("font-size", "12px")
-                .style("pointer-events", "none")
-                .style("opacity", 0)
-                .style("box-shadow", getCssVar('--shadow-md'))
-                .style("border", `1px solid ${getCssVar('--color-border')}`)
-                .style("z-index", 1000);
-            
-            tooltip.transition()
-                .duration(200)
-                .style("opacity", 1);
-            
-            const name = d.data[config.labelField];
-            const desc = d.data[config.descField] || "";
-            const value = formatCurrency(d.data[config.valueField]);
-            const percentage = d.data[config.percentageField].toFixed(1);
-            
-            tooltip.html(`
-                <div style="font-weight: bold; margin-bottom: 4px;">${name}</div>
-                ${desc ? `<div style="color: ${getCssVar('--color-text-secondary')}; margin-bottom: 4px;">${desc}</div>` : ""}
-                <div>Value: ${value}</div>
-                <div>Share: ${percentage}%</div>
-            `);
-            
-            tooltip.style("left", (event.pageX + 10) + "px")
-                .style("top", (event.pageY - 28) + "px");
-        })
-        .on("mousemove", function(event) {
-            d3.select("body").select(".chart-tooltip")
-                .style("left", (event.pageX + 10) + "px")
-                .style("top", (event.pageY - 28) + "px");
-        })
-        .on("mouseout", function() {
-            // Remove highlight
-            d3.select(this)
-                .transition()
-                .duration(200)
-                .attr("stroke", getCssVar('--color-surface'))
-                .style("stroke-width", "1.5px")
-                .attr("transform", "scale(1)");
-            
-            // Remove tooltip
-            d3.select("body").select(".chart-tooltip")
-                .transition()
-                .duration(200)
-                .style("opacity", 0)
-                .remove();
-        });
+donutG.selectAll(".arc-path")
+    .data(pieData)
+    .join("path")
+    .attr("class", "arc-path")
+    // ... (other attributes like fill, d, stroke, etc.) ...
+    .style("cursor", "pointer")
+    .on("mouseover", function(event, d) {
+        // Highlight this arc
+        d3.select(this)
+            .transition()
+            .duration(200)
+            .attr("stroke", getCssVar('--color-primary'))
+            .style("stroke-width", "2px")
+            .attr("transform", "scale(1.03)");
+
+        // == START MODIFICATION ==
+        // AGGRESSIVE CLEANUP: Remove any existing tooltips of this type first
+        d3.select("body").selectAll(".chart-tooltip").remove();
+        // == END MODIFICATION ==
+
+        // Show tooltip (create a new one)
+        const tooltip = d3.select("body").append("div")
+            .attr("class", "chart-tooltip") // This class is targeted by the cleanup above
+            .style("position", "absolute")
+            .style("background-color", getCssVar('--color-surface'))
+            .style("color", getCssVar('--color-text-primary'))
+            .style("padding", "8px 12px")
+            .style("border-radius", "4px")
+            .style("font-size", "12px")
+            .style("pointer-events", "none") // Good, prevents tooltip from capturing mouse events
+            .style("opacity", 0) // Start invisible for fade-in
+            .style("box-shadow", getCssVar('--shadow-md'))
+            .style("border", `1px solid ${getCssVar('--color-border')}`)
+            .style("z-index", 1000);
+
+        tooltip.transition() // Fade in
+            .duration(200)
+            .style("opacity", 1);
+
+        const name = d.data[config.labelField];
+        const desc = d.data[config.descField] || "";
+        const value = formatCurrency(d.data[config.valueField]);
+        const percentage = d.data[config.percentageField].toFixed(1);
+
+        tooltip.html(`
+            <div style="font-weight: bold; margin-bottom: 4px;">${name}</div>
+            ${desc ? `<div style="color: ${getCssVar('--color-text-secondary')}; margin-bottom: 4px;">${desc}</div>` : ""}
+            <div>Value: ${value}</div>
+            <div>Share: ${percentage}%</div>
+        `);
+
+        // Position it
+        tooltip.style("left", (event.pageX + 10) + "px")
+               .style("top", (event.pageY - 28) + "px");
+    })
+    .on("mousemove", function(event) {
+        // Since we expect only one .chart-tooltip now due to the aggressive cleanup,
+        // this should reliably target the correct one.
+        d3.select("body").select(".chart-tooltip")
+            .style("left", (event.pageX + 10) + "px")
+            .style("top", (event.pageY - 28) + "px");
+    })
+    .on("mouseout", function() {
+        // Remove highlight
+        d3.select(this)
+            .transition()
+            .duration(200)
+            .attr("stroke", getCssVar('--color-surface'))
+            .style("stroke-width", "1.5px")
+            .attr("transform", "scale(1)");
+
+        // Remove the current tooltip
+        // This should now reliably target the single tooltip created on mouseover.
+        d3.select("body").select(".chart-tooltip")
+            .transition()
+            .duration(200)
+            .style("opacity", 0)
+            .remove();
+    });
     
     // Add center text
     const centerText = donutG.append("text")
