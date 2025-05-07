@@ -4261,21 +4261,34 @@ function createHierarchyData(model) {
                 });
             });
             
-            // Only add prime if it has subs or significant value
-            if (primeNode.children.length > 0 || prime.value > 1000000) {
+            // Modified: Always add prime if it has significant value, regardless of whether it has subs
+            if (prime.value > 100000) {
                 agencyNode.children.push(primeNode);
             }
         });
         
-        // Only add agency if it has prime contractors
+        // Modified: Always add agency if it has prime contractors with significant value
         if (agencyNode.children.length > 0) {
             root.children.push(agencyNode);
         }
     });
     
+    // Add a check for empty visualization
+    if (root.children.length === 0) {
+        // Create a dummy agency and prime to ensure something displays
+        root.children.push({
+            name: "Selected Agency",
+            value: 1000000,
+            children: [{
+                name: "No Subcontractor Relationships",
+                value: 1000000,
+                children: []
+            }]
+        });
+    }
+    
     return root;
 }
-
 function initializeSankeyFilters() {
   // Find the existing filter container - this is where your current filters are located
   const filtersContainer = document.querySelector('div[style*="display: flex; flex-direction: column"]');
