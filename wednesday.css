@@ -236,20 +236,27 @@ a:hover { color: var(--color-secondary); text-decoration: none; }
     display: grid;
     gap: var(--bento-gap);
     grid-template-columns: repeat(5, 1fr);
-    /* Add dendrogram to layout */
+    /* Updated layout with Share of Wallet */
     grid-template-areas:
         "sankey sankey sankey naics-donut naics-donut"
         "tavtcv tavtcv dendrogram dendrogram dendrogram"
-		"leaders leaders leaders map arr"
+        "share-wallet share-wallet leaders leaders arr"
         "expiring expiring expiring expiring expiring";
-    grid-template-rows: minmax(400px, auto) auto auto;
+    grid-template-rows: minmax(400px, auto) auto auto auto;
 }
 
-/* Add area assignment for dendrogram */
+/* Add area assignment for Share of Wallet */
+#bento-share-of-wallet { grid-area: share-wallet; }
+
+/* Existing area assignments */
 #bento-dendrogram { grid-area: dendrogram; }
 #bento-naics-distribution { grid-area: naics-donut; }
-#bento-arr { grid-area: arr; } #bento-sankey { grid-area: sankey; } #bento-map { grid-area: map; }
-#bento-tavtcv { grid-area: tavtcv; } #bento-leaders { grid-area: leaders; } #bento-expiring { grid-area: expiring; }
+#bento-arr { grid-area: arr; } 
+#bento-sankey { grid-area: sankey; } 
+#bento-map { grid-area: map; }
+#bento-tavtcv { grid-area: tavtcv; } 
+#bento-leaders { grid-area: leaders; } 
+#bento-expiring { grid-area: expiring; }
 
 /* Keep Span Utilities */
 .col-span-2 { grid-column: span 2; }
