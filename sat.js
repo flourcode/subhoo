@@ -4005,10 +4005,8 @@ function displayForceDirectedRadial(model) {
             .attr("stroke-width", 1);
             
         // Add labels to nodes - showing all labels with appropriate opacity
+        // and positioning based on which side of the circle they are
         node.append("text")
-            .attr("x", 8)
-            .attr("y", 0)
-            .attr("dy", "0.32em")
             .attr("opacity", d => {
                 // Show all labels by default, with different opacity levels
                 return d.type === 'agency' ? 1 : 
@@ -4024,10 +4022,11 @@ function displayForceDirectedRadial(model) {
             })
             .attr("fill", getCssVar('--color-text-primary'))
             .attr("font-size", d => {
-                if (d.type === 'agency') return "10px";
-                if (d.type === 'prime') return "10px";
-                return "9px";
-            });
+                if (d.type === 'agency') return "12px";
+                if (d.type === 'prime') return "11px";
+                return "10px";
+            })
+            .attr("dy", "0.32em");
             
         // Add hover interactions for highlighting
         node.on("mouseover", function(event, d) {
@@ -4107,42 +4106,6 @@ function displayForceDirectedRadial(model) {
                 .attr("fill", getCssVar('--color-text-secondary'))
                 .text(item.label);
         });
-        
-        // Add size legend
-        const sizeLegend = svg.append("g")
-            .attr("transform", `translate(${width - 150}, 20)`);
-
-        sizeLegend.append("text")
-            .attr("x", 0)
-            .attr("y", 0)
-            .attr("font-size", "12px")
-            .attr("font-weight", "bold")
-            .attr("fill", getCssVar('--color-text-secondary'))
-            .text("Node Size = Contract Value");
-
-        // Add example circles
-        const sizeValues = [100000, 1000000, 10000000];
-        const sizeLabels = ["$100K", "$1M", "$10M"];
-
-        sizeValues.forEach((value, i) => {
-            // Use the same scaling as the nodes
-            const radius = calculateNodeSize('prime', value);
-            
-            sizeLegend.append("circle")
-                .attr("cx", 10)
-                .attr("cy", 20 + i * 25)
-                .attr("r", radius)
-                .attr("fill", getCssVar('--chart-color-secondary'))
-                .attr("stroke", getCssVar('--color-surface'))
-                .attr("stroke-width", 1);
-                
-            sizeLegend.append("text")
-                .attr("x", 25)
-                .attr("y", 24 + i * 25)
-                .attr("font-size", "11px")
-                .attr("fill", getCssVar('--color-text-secondary'))
-                .text(sizeLabels[i]);
-        });
             
         // Add zoom behavior
         const zoom = d3.zoom()
@@ -4170,6 +4133,21 @@ function displayForceDirectedRadial(model) {
                 .attr("y2", d => d.target.y);
                 
             node.attr("transform", d => `translate(${d.x},${d.y})`);
+            
+            // Update text position based on node position relative to center
+            node.select("text")
+                .attr("x", d => {
+                    // Calculate which side of the center the node is on
+                    const nodeRadius = calculateNodeSize(d.type, d.value);
+                    
+                    // If on the left side of the visualization
+                    if (d.x < 0) {
+                        return -nodeRadius - 5; // Position text to the left of the node
+                    } else {
+                        return nodeRadius + 5; // Position text to the right of the node
+                    }
+                })
+                .attr("text-anchor", d => d.x < 0 ? "end" : "start");
         }
         
         function dragstarted(event, d) {
