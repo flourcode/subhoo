@@ -1351,18 +1351,26 @@ function applyFiltersAndUpdateVisuals() {
     setLoading('expiring-contracts-table-container', true);
     setLoading('sankey-chart-container', true);
     setLoading('map-container', true);
-	setLoading('bento-naics-distribution', true); // Add new chart's bento box ID here
+    setLoading('bento-naics-distribution', true); // Add new chart's bento box ID here
    
     // Check if we're using unified model or direct raw data
     if (unifiedModel) {
         updateVisualsFromUnifiedModel(subAgencyFilter, naicsFilter, searchTerm);
-		displayShareOfWalletChart(unifiedModel);
-        displayContractValueTiers(unifiedModel);
+        
+        // Add Share of Wallet chart with a delay
+        try {
+            setTimeout(() => {
+                displayShareOfWalletChart(unifiedModel);
+            }, 300);
+        } catch (e) {
+            console.error("Error displaying Share of Wallet chart:", e);
+        }
     } else {
         // Fall back to using direct raw data for backward compatibility
         updateVisualsFromRawData(subAgencyFilter, naicsFilter, searchTerm);
     }
 }
+
 function initializeEnhancedFeatures() {
     console.log("Initializing enhanced UI features...");
     
@@ -1376,6 +1384,8 @@ function initializeEnhancedFeatures() {
     
     console.log("Enhanced UI features initialization complete");
 }
+
+
 function updateVisualsFromUnifiedModel(subAgencyFilter, naicsFilter, searchTerm) {
     // Apply filters to get filtered data
     const filteredModel = filterUnifiedModel(subAgencyFilter, naicsFilter, searchTerm);
@@ -3866,63 +3876,70 @@ function displayContractLeadersTable(leaderData) {
 document.addEventListener('DOMContentLoaded', function() {
     console.log("DOM fully loaded and parsed");
     
-    // Initialize the dataset selector dropdown
-    initializeDatasetSelector();
-    
-    // Initialize theme toggle
-    initializeThemeToggle();
+    try {
+        // Initialize the dataset selector dropdown
+        initializeDatasetSelector();
+        
+        // Initialize theme toggle
+        initializeThemeToggle();
 
-    // Initial dashboard setup
-    updateDashboardTitle(null);
-    resetUIForNoDataset();
-    updateDateDisplay();
-    
-    // Setup all event listeners
-    setupEventListeners();
-    // Initialize our new enhanced features
-    setTimeout(() => {
-        try {
-            initializeEnhancedFeatures();
-        } catch (e) {
-            console.error("Error initializing enhanced features:", e);
+        // Initial dashboard setup
+        updateDashboardTitle(null);
+        resetUIForNoDataset();
+        updateDateDisplay();
+        
+        // Setup all event listeners
+        setupEventListeners();
+        
+        // Initialize preset views with timeout
+        setTimeout(function() {
+            try {
+                initializePresetViews();
+                console.log("Preset views initialized successfully");
+            } catch(e) {
+                console.error("Error initializing preset views:", e);
+            }
+        }, 500);
+        
+        // Auto-load a dataset (SOCOM combined if possible)
+        const socomPrimes = DATASETS.find(d => d.id === 'socom_primes');
+        const socomSubs = DATASETS.find(d => d.id === 'socom');
+        
+        if (socomPrimes && socomSubs) {
+            console.log("Automatically loading combined SOCOM dataset...");
+            
+            // Update the dropdown to show SOCOM as selected
+            const datasetSelect = document.getElementById('dataset-select');
+            if (datasetSelect) {
+                // Look for the combined SOCOM option
+                Array.from(datasetSelect.options).forEach(option => {
+                    if (option.value === `combined:${socomPrimes.id},${socomSubs.id}`) {
+                        datasetSelect.value = option.value;
+                    }
+                });
+            }
+            
+            // Load combined datasets
+            loadCombinedDatasets([socomPrimes.id, socomSubs.id]);
+        } else if (socomPrimes) {
+            console.log("Automatically loading SOCOM primes dataset...");
+            
+            // Update the dropdown to show SOCOM as selected
+            const datasetSelect = document.getElementById('dataset-select');
+            if (datasetSelect) {
+                datasetSelect.value = 'socom_primes';
+            }
+            
+            // Load the SOCOM dataset
+            loadSingleDataset(socomPrimes);
+        } else {
+            console.log("SOCOM dataset not found in the DATASETS array");
         }
-    }, 1000); 
-    // Auto-load a dataset (SOCOM combined if possible)
-    const socomPrimes = DATASETS.find(d => d.id === 'socom_primes');
-    const socomSubs = DATASETS.find(d => d.id === 'socom');
-    
-    if (socomPrimes && socomSubs) {
-        console.log("Automatically loading combined SOCOM dataset...");
         
-        // Update the dropdown to show SOCOM as selected
-        const datasetSelect = document.getElementById('dataset-select');
-        if (datasetSelect) {
-            // Look for the combined SOCOM option
-            Array.from(datasetSelect.options).forEach(option => {
-                if (option.value === `combined:${socomPrimes.id},${socomSubs.id}`) {
-                    datasetSelect.value = option.value;
-                }
-            });
-        }
-        
-        // Load combined datasets
-        loadCombinedDatasets([socomPrimes.id, socomSubs.id]);
-    } else if (socomPrimes) {
-        console.log("Automatically loading SOCOM primes dataset...");
-        
-        // Update the dropdown to show SOCOM as selected
-        const datasetSelect = document.getElementById('dataset-select');
-        if (datasetSelect) {
-            datasetSelect.value = 'socom_primes';
-        }
-        
-        // Load the SOCOM dataset
-        loadSingleDataset(socomPrimes);
-    } else {
-        console.log("SOCOM dataset not found in the DATASETS array");
+        console.log("Dashboard initialized.");
+    } catch (e) {
+        console.error("Error during dashboard initialization:", e);
     }
-    
-    console.log("Dashboard initialized.");
 });
 
 // Handle window resize events
@@ -5546,233 +5563,271 @@ function getThemeOrdinalChartColors(count = 6) {
     }
     return d3.scaleOrdinal(colors);
 }
-// Implement preset views instead of complex filtering
+
+// Simplified implementation of preset views
+// Simplified implementation of preset views
 function initializePresetViews() {
-  // Find the existing filter container
-  const filtersContainer = document.querySelector('.side-panel > div:has(#dataset-select)');
+  console.log("Setting up simplified preset views...");
   
-  if (!filtersContainer) {
-    console.error("Filter container not found, cannot add preset views");
-    return;
-  }
-  
-  // Create preset views dropdown
-  const presetViewsDropdown = document.createElement('select');
-  presetViewsDropdown.id = 'preset-view-selector';
-  presetViewsDropdown.className = 'input-select';
-  presetViewsDropdown.style.width = '100%';
-  
-  // Add preset options
-  presetViewsDropdown.innerHTML = `
-    <option value="" disabled selected>Select a View</option>
-    <option value="all">All Data (No Filter)</option>
-    <option value="top-contractors">Top 10 Contractors</option>
-    <option value="expiring-soon">Contracts Expiring Soon</option>
-    <option value="high-value">High-Value Contracts (>$1M)</option>
-    <option value="small-business">Small Business Set-Asides</option>
-    <option value="advanced">Advanced Filtering</option>
-  `;
-  
-  // Create a heading for preset views
-  const presetHeading = document.createElement('h2');
-  presetHeading.style.fontSize = '14px';
-  presetHeading.style.margin = '12px 0 4px 0';
-  presetHeading.textContent = 'Quick Views';
-  
-  // Add a container for showing current filter status
-  const currentViewStatus = document.createElement('div');
-  currentViewStatus.id = 'current-view-status';
-  currentViewStatus.style.fontSize = '12px';
-  currentViewStatus.style.color = 'var(--color-text-secondary)';
-  currentViewStatus.style.marginTop = '4px';
-  currentViewStatus.textContent = 'No filters applied';
-  
-  // Find the existing search input and filters
-  const searchInput = document.getElementById('search-input');
-  const subAgencyFilter = document.getElementById('sub-agency-filter');
-  const naicsFilter = document.getElementById('naics-filter');
-  const filtersHeading = document.querySelector('h2:contains("Search & Filters")');
-  
-  // Create a container for the advanced filters
-  const advancedFiltersContainer = document.createElement('div');
-  advancedFiltersContainer.id = 'advanced-filters-container';
-  advancedFiltersContainer.style.display = 'none'; // Hidden by default
-  
-  // Move the existing filters to the advanced container
-  if (searchInput && searchInput.parentNode) {
-    if (filtersHeading) advancedFiltersContainer.appendChild(filtersHeading.cloneNode(true));
-    advancedFiltersContainer.appendChild(searchInput.cloneNode(true));
-    if (subAgencyFilter) advancedFiltersContainer.appendChild(subAgencyFilter.cloneNode(true));
-    if (naicsFilter) advancedFiltersContainer.appendChild(naicsFilter.cloneNode(true));
+  try {
+    // Find the existing filter heading and elements
+    const filtersHeading = document.querySelector('.side-panel h2');
+    const searchInput = document.getElementById('search-input');
+    const subAgencyFilter = document.getElementById('sub-agency-filter');
+    const naicsFilter = document.getElementById('naics-filter');
     
-    // Remove the original elements (if this approach doesn't work, use the commented code to hide them instead)
-    if (filtersHeading) filtersHeading.remove();
-    searchInput.remove();
-    if (subAgencyFilter) subAgencyFilter.remove();
-    if (naicsFilter) naicsFilter.remove();
-    
-    // Alternative: Hide instead of remove
-    // if (filtersHeading) filtersHeading.style.display = 'none';
-    // searchInput.style.display = 'none';
-    // if (subAgencyFilter) subAgencyFilter.style.display = 'none';
-    // if (naicsFilter) naicsFilter.style.display = 'none';
-  }
-  
-  // Add the preset view dropdown and advanced filters
-  const statusBanner = document.getElementById('status-banner');
-  if (statusBanner && statusBanner.parentNode) {
-    statusBanner.parentNode.insertBefore(presetHeading, statusBanner);
-    statusBanner.parentNode.insertBefore(presetViewsDropdown, statusBanner);
-    statusBanner.parentNode.insertBefore(currentViewStatus, statusBanner);
-    statusBanner.parentNode.insertBefore(advancedFiltersContainer, statusBanner);
-  }
-  
-  // Add event listener to handle preset view selection
-  presetViewsDropdown.addEventListener('change', function() {
-    const selectedView = this.value;
-    
-    // Handle showing/hiding advanced filters
-    if (selectedView === 'advanced') {
-      advancedFiltersContainer.style.display = 'block';
-      currentViewStatus.textContent = 'Using advanced filtering';
+    if (!searchInput) {
+      console.error("Could not find required filter elements");
       return;
-    } else {
-      advancedFiltersContainer.style.display = 'none';
+    }
+
+    // Get the parent container of the filters
+    const filtersContainer = searchInput.parentNode;
+    if (!filtersContainer) {
+      console.error("Could not find filters container");
+      return;
     }
     
-    // Reset current filters
-    document.getElementById('search-input').value = '';
-    document.getElementById('sub-agency-filter').value = '';
-    document.getElementById('naics-filter').value = '';
+    // Create new elements
+    const presetHeading = document.createElement('h2');
+    presetHeading.style.fontSize = '14px';
+    presetHeading.style.margin = '12px 0 4px 0';
+    presetHeading.textContent = 'Quick Views';
     
-    // Apply preset filter based on selection
-    applyPresetView(selectedView);
-  });
-}
-
-// Function to apply preset view filters
-function applyPresetView(viewType) {
-  const currentViewStatus = document.getElementById('current-view-status');
-  
-  switch(viewType) {
-    case 'all':
-      currentViewStatus.textContent = 'Viewing all data (no filters)';
-      break;
+    const presetDropdown = document.createElement('select');
+    presetDropdown.id = 'preset-view-selector';
+    presetDropdown.className = 'input-select';
+    presetDropdown.style.width = '100%';
     
-    case 'top-contractors':
-      currentViewStatus.textContent = 'Viewing top 10 contractors by value';
-      // This view is already the default for most visualizations
-      // Just highlight the relevant sections
-      highlightBentoBox('bento-leaders', true);
-      scrollToBentoBox('bento-leaders');
-      break;
+    // Add preset options
+    presetDropdown.innerHTML = `
+      <option value="" disabled selected>Select a View</option>
+      <option value="all">All Data (No Filter)</option>
+      <option value="top-contractors">Top 10 Contractors</option>
+      <option value="expiring-soon">Contracts Expiring Soon</option>
+      <option value="high-value">High-Value Contracts (>$1M)</option>
+    `;
     
-    case 'expiring-soon':
-      currentViewStatus.textContent = 'Viewing contracts expiring in next 6 months';
-      // Highlight the expiring contracts section
-      highlightBentoBox('bento-expiring', true);
-      scrollToBentoBox('bento-expiring');
-      break;
+    const statusDiv = document.createElement('div');
+    statusDiv.id = 'current-view-status';
+    statusDiv.style.fontSize = '12px';
+    statusDiv.style.color = 'var(--color-text-secondary)';
+    statusDiv.style.marginTop = '4px';
+    statusDiv.textContent = 'No filters applied';
     
-    case 'high-value':
-      currentViewStatus.textContent = 'Viewing high-value contracts (>$1M)';
-      // To be implemented with high-value contract filtering
-      // We would need to add a value filter to the unified model
-      highlightBentoBox('bento-tavtcv', true);
-      scrollToBentoBox('bento-tavtcv');
-      break;
+    // Move elements around - first hide existing search & filters
+    if (filtersHeading) filtersHeading.style.display = 'none';
+    searchInput.style.display = 'none';
+    if (subAgencyFilter) subAgencyFilter.style.display = 'none';
+    if (naicsFilter) naicsFilter.style.display = 'none';
     
-    case 'small-business':
-      currentViewStatus.textContent = 'Viewing small business set-asides';
-      // This would require additional data in the model
-      break;
+    // Find status banner to insert before
+    const statusBanner = document.getElementById('status-banner');
+    
+    // Insert new preset view elements
+    if (statusBanner && statusBanner.parentNode) {
+      statusBanner.parentNode.insertBefore(presetHeading, statusBanner);
+      statusBanner.parentNode.insertBefore(presetDropdown, statusBanner);
+      statusBanner.parentNode.insertBefore(statusDiv, statusBanner);
+    } else {
+      // Fallback - add to filters container
+      filtersContainer.appendChild(presetHeading);
+      filtersContainer.appendChild(presetDropdown);
+      filtersContainer.appendChild(statusDiv);
+    }
+    
+    // Add event listener for preset selection
+    presetDropdown.addEventListener('change', function() {
+      const selectedView = this.value;
       
-    default:
-      currentViewStatus.textContent = 'No filters applied';
-      break;
+      // If "Advanced" selected, show original filters
+      if (selectedView === 'advanced') {
+        if (filtersHeading) filtersHeading.style.display = '';
+        searchInput.style.display = '';
+        if (subAgencyFilter) subAgencyFilter.style.display = '';
+        if (naicsFilter) naicsFilter.style.display = '';
+        statusDiv.textContent = 'Using advanced filtering';
+        return;
+      } else {
+        // Hide advanced filters
+        if (filtersHeading) filtersHeading.style.display = 'none';
+        searchInput.style.display = 'none';
+        if (subAgencyFilter) subAgencyFilter.style.display = 'none';
+        if (naicsFilter) naicsFilter.style.display = 'none';
+      }
+      
+      // Apply the selected preset
+      applyPresetView(selectedView, statusDiv);
+    });
+    
+    console.log("Preset views setup complete");
+  } catch (e) {
+    console.error("Error in initializePresetViews:", e);
   }
-  
-  // Apply the filters and update visualizations
-  applyFiltersAndUpdateVisuals();
 }
 
-// Helper function to highlight a bento box
+function applyPresetView(viewType, statusElement) {
+  try {
+    if (!statusElement) {
+      statusElement = document.getElementById('current-view-status');
+    }
+    
+    // Clear existing filters
+    const searchInput = document.getElementById('search-input');
+    const subAgencyFilter = document.getElementById('sub-agency-filter');
+    const naicsFilter = document.getElementById('naics-filter');
+    
+    if (searchInput) searchInput.value = '';
+    if (subAgencyFilter) subAgencyFilter.value = '';
+    if (naicsFilter) naicsFilter.value = '';
+    
+    // Apply preset based on type
+    switch(viewType) {
+      case 'all':
+        if (statusElement) statusElement.textContent = 'Viewing all data (no filters)';
+        break;
+      
+      case 'top-contractors':
+        if (statusElement) statusElement.textContent = 'Viewing top 10 contractors by value';
+        highlightBentoBox('bento-leaders', true);
+        scrollToBentoBox('bento-leaders');
+        break;
+      
+      case 'expiring-soon':
+        if (statusElement) statusElement.textContent = 'Viewing contracts expiring in next 6 months';
+        highlightBentoBox('bento-expiring', true);
+        scrollToBentoBox('bento-expiring');
+        break;
+      
+      case 'high-value':
+        if (statusElement) statusElement.textContent = 'Viewing high-value contracts (>$1M)';
+        highlightBentoBox('bento-tavtcv', true);
+        scrollToBentoBox('bento-tavtcv');
+        break;
+      
+      default:
+        if (statusElement) statusElement.textContent = 'No filters applied';
+        break;
+    }
+    
+    // Apply the filters and update visualizations
+    applyFiltersAndUpdateVisuals();
+  } catch (e) {
+    console.error("Error in applyPresetView:", e);
+  }
+}
+
+// Helper functions
 function highlightBentoBox(bentoId, shouldHighlight) {
-  const bentoBox = document.getElementById(bentoId);
-  if (!bentoBox) return;
-  
-  if (shouldHighlight) {
-    // Store the original border for later restoration
-    bentoBox.dataset.originalBorder = bentoBox.style.border;
-    bentoBox.style.border = `2px solid ${getCssVar('--color-primary')}`;
-    bentoBox.style.boxShadow = `0 0 8px ${getCssVar('--color-primary')}`;
-    bentoBox.style.zIndex = '10';
+  try {
+    const bentoBox = document.getElementById(bentoId);
+    if (!bentoBox) return;
     
-    // Add a highlight class
-    bentoBox.classList.add('highlighted-bento');
-    
-    // Set a timeout to remove the highlight
-    setTimeout(() => {
-      const highlightedBoxes = document.querySelectorAll('.highlighted-bento');
-      highlightedBoxes.forEach(box => {
-        box.style.border = box.dataset.originalBorder || '';
-        box.style.boxShadow = '';
-        box.style.zIndex = '';
-        box.classList.remove('highlighted-bento');
-      });
-    }, 5000); // 5 seconds highlight
-  } else {
-    bentoBox.style.border = bentoBox.dataset.originalBorder || '';
-    bentoBox.style.boxShadow = '';
-    bentoBox.style.zIndex = '';
-    bentoBox.classList.remove('highlighted-bento');
+    if (shouldHighlight) {
+      // Store the original border for later restoration
+      bentoBox.dataset.originalBorder = bentoBox.style.border;
+      bentoBox.style.border = `2px solid ${getCssVar('--color-primary')}`;
+      bentoBox.style.boxShadow = `0 0 8px ${getCssVar('--color-primary')}`;
+      bentoBox.style.zIndex = '10';
+      
+      // Add a highlight class
+      bentoBox.classList.add('highlighted-bento');
+      
+      // Set a timeout to remove the highlight
+      setTimeout(() => {
+        const highlightedBoxes = document.querySelectorAll('.highlighted-bento');
+        highlightedBoxes.forEach(box => {
+          box.style.border = box.dataset.originalBorder || '';
+          box.style.boxShadow = '';
+          box.style.zIndex = '';
+          box.classList.remove('highlighted-bento');
+        });
+      }, 5000); // 5 seconds highlight
+    } else {
+      bentoBox.style.border = bentoBox.dataset.originalBorder || '';
+      bentoBox.style.boxShadow = '';
+      bentoBox.style.zIndex = '';
+      bentoBox.classList.remove('highlighted-bento');
+    }
+  } catch (e) {
+    console.error("Error in highlightBentoBox:", e);
   }
 }
 
-// Helper function to scroll to a bento box
 function scrollToBentoBox(bentoId) {
-  const bentoBox = document.getElementById(bentoId);
-  if (!bentoBox) return;
-  
-  bentoBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  try {
+    const bentoBox = document.getElementById(bentoId);
+    if (!bentoBox) return;
+    
+    bentoBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  } catch (e) {
+    console.error("Error in scrollToBentoBox:", e);
+  }
 }
+
+// Only add this if you want the Share of Wallet visualization
+function processShareOfWalletData(model, topN = 7) {
+  try {
+    if (!model || !model.primes) {
+      return [];
+    }
+    
+    // Get total value by prime
+    const primeValues = {};
+    let grandTotal = 0;
+    
+    // Aggregate from contracts
+    Object.values(model.contracts).forEach(contract => {
+      if (contract.primeId && contract.value > 0) {
+        const prime = model.primes[contract.primeId];
+        if (prime) {
+          const primeName = prime.name;
+          if (!primeValues[primeName]) {
+            primeValues[primeName] = 0;
+          }
+          primeValues[primeName] += contract.value;
+          grandTotal += contract.value;
+        }
+      }
+    });
+    
+    // Convert to array and sort
+    const sortedPrimes = Object.entries(primeValues)
+      .map(([name, value]) => ({
+        name: name,
+        value: value,
+        percentage: grandTotal > 0 ? (value / grandTotal) * 100 : 0
+      }))
+      .sort((a, b) => b.value - a.value);
+    
+    // Take top N primes and roll up the rest as "Other"
+    const result = sortedPrimes.slice(0, topN);
+    
+    // Add "Other" category if needed
+    if (sortedPrimes.length > topN) {
+      const otherValue = sortedPrimes.slice(topN).reduce((sum, prime) => sum + prime.value, 0);
+      const otherPercentage = grandTotal > 0 ? (otherValue / grandTotal) * 100 : 0;
+      
+      if (otherValue > 0) {
+        result.push({
+          name: "Other",
+          value: otherValue,
+          percentage: otherPercentage,
+          count: sortedPrimes.length - topN
+        });
+      }
+    }
+    
+    return result;
+  } catch (e) {
+    console.error("Error in processShareOfWalletData:", e);
+    return [];
+  }
+}
+
 // Global variable to store current contractor profile data
 let currentContractorProfileData = null;
 
-// Function to show contractor profile/tear sheet
-function showContractorProfile(contractorName) {
-    console.log(`Showing profile for ${contractorName}`);
-    
-    // If there's no unified model, we can't show a profile
-    if (!unifiedModel) {
-        console.error("No unified model available for contractor profile");
-        return;
-    }
-    
-    // Find the contractor in the model
-    let primeId = null;
-    let primeData = null;
-    
-    // Search for the contractor by name
-    Object.entries(unifiedModel.primes).forEach(([id, prime]) => {
-        if (prime.name === contractorName) {
-            primeId = id;
-            primeData = prime;
-        }
-    });
-    
-    if (!primeId || !primeData) {
-        console.error(`Could not find contractor with name: ${contractorName}`);
-        return;
-    }
-    
-    // Get contractor profile data
-    const profileData = getContractorProfile(primeId, unifiedModel);
-    currentContractorProfileData = profileData;
-    
-    // Create or update the profile modal
-    createContractorProfileModal(profileData);
-}
 
 // Function to get contractor profile data
 function getContractorProfile(primeId, model) {
@@ -6429,60 +6484,7 @@ function createContractorProfileModal(profileData) {
     document.body.appendChild(backdrop);
     document.body.appendChild(modal);
 }
-// Process data for Share of Wallet visualization 
-function processShareOfWalletData(model, topN = 7) {
-    if (!model || !model.primes) {
-        return [];
-    }
-    
-    // Get total value by prime
-    const primeValues = {};
-    let grandTotal = 0;
-    
-    // Aggregate from contracts
-    Object.values(model.contracts).forEach(contract => {
-        if (contract.primeId && contract.value > 0) {
-            const prime = model.primes[contract.primeId];
-            if (prime) {
-                const primeName = prime.name;
-                if (!primeValues[primeName]) {
-                    primeValues[primeName] = 0;
-                }
-                primeValues[primeName] += contract.value;
-                grandTotal += contract.value;
-            }
-        }
-    });
-    
-    // Convert to array and sort
-    const sortedPrimes = Object.entries(primeValues)
-        .map(([name, value]) => ({
-            name: name,
-            value: value,
-            percentage: grandTotal > 0 ? (value / grandTotal) * 100 : 0
-        }))
-        .sort((a, b) => b.value - a.value);
-    
-    // Take top N primes and roll up the rest as "Other"
-    const result = sortedPrimes.slice(0, topN);
-    
-    // Add "Other" category if needed
-    if (sortedPrimes.length > topN) {
-        const otherValue = sortedPrimes.slice(topN).reduce((sum, prime) => sum + prime.value, 0);
-        const otherPercentage = grandTotal > 0 ? (otherValue / grandTotal) * 100 : 0;
-        
-        if (otherValue > 0) {
-            result.push({
-                name: "Other",
-                value: otherValue,
-                percentage: otherPercentage,
-                count: sortedPrimes.length - topN
-            });
-        }
-    }
-    
-    return result;
-}
+
 
 // Function to display Share of Wallet visualization
 function displayShareOfWalletChart(model, containerId = 'share-of-wallet-container') {
