@@ -241,7 +241,7 @@ a:hover { color: var(--color-secondary); text-decoration: none; }
         "sankey sankey sankey naics-donut naics-donut"
         "tavtcv tavtcv dendrogram dendrogram dendrogram"
         "share-wallet share-wallet leaders leaders arr"
-        "expiring expiring expiring expiring expiring";
+        "expiring expiring expiring expiring map";
     grid-template-rows: minmax(400px, auto) auto auto auto;
 }
 
@@ -262,6 +262,7 @@ a:hover { color: var(--color-secondary); text-decoration: none; }
 .col-span-2 { grid-column: span 2; }
 .col-span-4 { grid-column: span 4; }
 .col-span-5 { grid-column: span 5; }
+
 
 /* ========================================= */
 /* Card Styles (`.bento-box`)                */
