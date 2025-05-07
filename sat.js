@@ -1382,8 +1382,10 @@ function updateVisualsFromUnifiedModel(subAgencyFilter, naicsFilter, searchTerm)
 
     // Choropleth Map
     const mapData = processMapDataFromModel(filteredModel);
-    // New: Circular Dendrogram
-    displayCircularDendrogram(filteredModel);
+    displayChoroplethMap(mapData);
+    
+	displayForceDirectedRadial(filteredModel);
+    
     // Calculate ARR
     calculateAverageARRFromModel(filteredModel);
 }
@@ -3842,12 +3844,13 @@ window.addEventListener('resize', function() {
        }
    }, 250); // Debounce for 250ms
 });
-function displayCircularDendrogram(model) {
+// Main visualization function
+function displayForceDirectedRadial(model) {
     const containerId = 'circular-dendrogram-container';
     const container = document.getElementById(containerId);
     
     if (!container) {
-        console.error("Circular dendrogram container not found.");
+        console.error("Container not found.");
         return;
     }
 
@@ -3866,136 +3869,230 @@ function displayCircularDendrogram(model) {
         // Create SVG container
         const width = container.clientWidth;
         const height = Math.max(500, container.clientHeight);
-        const margin = 40;
-        const radius = Math.min(width, height) / 2 - margin;
         
         const svg = d3.select(container)
             .append("svg")
             .attr("width", width)
-            .attr("height", height)
-            .append("g")
-            .attr("transform", `translate(${width / 2}, ${height / 2})`);
+            .attr("height", height);
+            
+        // Add a group for the visualization
+        const g = svg.append("g")
+            .attr("transform", `translate(${width/2}, ${height/2})`);
             
         // Create hierarchical data
         const hierarchyData = createHierarchyData(model);
         
-        // Create cluster layout
-        const cluster = d3.cluster()
-            .size([360, radius]);
+        // Calculate node size based on value
+        function calculateNodeSize(type, value) {
+            // Base radius by type
+            const baseRadius = type === 'agency' ? 8 : 
+                              type === 'prime' ? 6 : 4;
             
-        // Create hierarchy and prepare layout
-        const root = d3.hierarchy(hierarchyData)
-            .sort((a, b) => (b.data.value || 0) - (a.data.value || 0));
-        
-        // Apply layout
-        cluster(root);
-        
-        // Function to project nodes in a circular manner
-        function project(x, y) {
-            const angle = (x - 90) / 180 * Math.PI;
-            return [y * Math.cos(angle), y * Math.sin(angle)];
+            // Scale by value (use log scale to handle wide range of values)
+            if (value && value > 0) {
+                // Minimum size is the base radius
+                // Maximum size is 3x the base radius for largest values
+                const scaleFactor = Math.log10(value) / 8; // Adjust divisor to taste
+                return baseRadius * (1 + Math.min(2, scaleFactor));
+            }
+            
+            return baseRadius;
         }
         
-        // Draw links between nodes
-        svg.selectAll(".link")
-            .data(root.links())
-            .enter()
-            .append("path")
-            .attr("class", "link")
-            .attr("d", d => {
-                const source = project(d.source.x, d.source.y);
-                const target = project(d.target.x, d.target.y);
-                return `M${source[0]},${source[1]}L${target[0]},${target[1]}`;
-            })
-            .attr("fill", "none")
+        // Set up force simulation
+        const simulation = d3.forceSimulation()
+            .force("link", d3.forceLink().id(d => d.id).distance(d => {
+                // Shorter distances for subcontractor links
+                return d.source.type === 'prime' ? 50 : 80;
+            }))
+            .force("charge", d3.forceManyBody().strength(d => {
+                // Stronger repulsion for bigger nodes 
+                return d.type === 'agency' ? -400 : 
+                      d.type === 'prime' ? -200 : -50;
+            }))
+            .force("center", d3.forceCenter(0, 0))
+            .force("collide", d3.forceCollide(d => {
+                if (d.type === 'root') return 0;
+                
+                // Calculate node radius based on value
+                const nodeRadius = calculateNodeSize(d.type, d.value);
+                
+                // Add padding for text
+                const textPadding = d.type !== 'sub' ? 
+                    Math.min(d.name.length * 3, 60) : 0;
+                    
+                return nodeRadius + textPadding;
+            }).strength(0.8))
+            .force("radial", d3.forceRadial(d => d.depth * 100, 0, 0).strength(1));
+            
+        // Convert hierarchical data to nodes and links for force layout
+        const nodes = [];
+        const links = [];
+        
+        // Process nodes recursively
+        function processNode(node, parent = null, depth = 0) {
+            const id = node.name + (Math.random().toString(36).substring(2, 5));
+            
+            const newNode = {
+                id: id,
+                name: node.name,
+                value: node.value || 0,
+                depth: depth,
+                type: depth === 0 ? 'root' : depth === 1 ? 'agency' : depth === 2 ? 'prime' : 'sub'
+            };
+            
+            nodes.push(newNode);
+            
+            // Add link to parent if not root
+            if (parent) {
+                links.push({
+                    source: parent.id,
+                    target: id,
+                    value: node.value || 1
+                });
+            }
+            
+            // Process children
+            if (node.children) {
+                node.children.forEach(child => {
+                    processNode(child, newNode, depth + 1);
+                });
+            }
+            
+            return newNode;
+        }
+        
+        // Start processing from root
+        processNode(hierarchyData);
+        
+        // Create links
+        const link = g.append("g")
+            .selectAll("line")
+            .data(links)
+            .enter().append("line")
             .attr("stroke", d => {
-                // Determine node type based on depth
-                if (d.source.depth === 0) return getCssVar('--chart-color-primary');
-                if (d.source.depth === 1) return getCssVar('--chart-color-secondary');
+                if (d.source.type === 'root') return getCssVar('--color-border');
+                if (d.source.type === 'agency') return getCssVar('--chart-color-primary');
+                if (d.source.type === 'prime') return getCssVar('--chart-color-secondary');
                 return getCssVar('--chart-color-tertiary');
             })
-            .attr("stroke-width", d => {
-                const value = d.target.data.value || 0;
-                return Math.max(0.5, Math.min(3, Math.log10(value) / 8));
-            })
-            .attr("stroke-opacity", 0.4);
+            .attr("stroke-width", d => Math.max(0.5, Math.min(3, Math.sqrt(d.value) / 10000)))
+            .attr("stroke-opacity", 0.6);
             
-        // Draw nodes
-        const nodes = svg.selectAll(".node")
-            .data(root.descendants())
-            .enter()
-            .append("g")
+        // Create node groups
+        const node = g.append("g")
+            .selectAll("g")
+            .data(nodes)
+            .enter().append("g")
             .attr("class", "node")
-            .attr("transform", d => {
-                const [x, y] = project(d.x, d.y);
-                return `translate(${x},${y})`;
-            });
-            
-        // Node circles
-        nodes.append("circle")
+            .call(d3.drag()
+                .on("start", dragstarted)
+                .on("drag", dragged)
+                .on("end", dragended));
+                
+        // Add circles to nodes with size proportional to value
+        node.append("circle")
             .attr("r", d => {
-                if (d.depth === 0) return 5; // Root
-                const value = d.data.value || 0;
-                return Math.max(2, Math.min(8, Math.log10(value) / 2));
+                if (d.type === 'root') return 0; // Hide root
+                return calculateNodeSize(d.type, d.value);
             })
             .attr("fill", d => {
-                if (d.depth === 0) return getCssVar('--color-surface');
-                if (d.depth === 1) return getCssVar('--chart-color-primary');
-                if (d.depth === 2) return getCssVar('--chart-color-secondary');
+                if (d.type === 'agency') return getCssVar('--chart-color-primary');
+                if (d.type === 'prime') return getCssVar('--chart-color-secondary');
                 return getCssVar('--chart-color-tertiary');
             })
             .attr("stroke", getCssVar('--color-surface'))
             .attr("stroke-width", 1);
             
-        // Labels
-// Labels - improved text orientation
-nodes.append("text")
-    .attr("dy", d => d.x < 180 ? "0.31em" : "-0.31em")
-    .attr("text-anchor", d => d.x < 180 ? "start" : "end")
-    .attr("transform", d => {
-        // This is the key fix - we always want text to be readable from outside the circle
-        // For the bottom half, we need to rotate the text 180 degrees
-        let rotation = d.x < 180 ? d.x - 90 : d.x + 90;
-        return `rotate(${rotation})translate(${d.depth === 0 ? 0 : 8},0)`;
-    })
-    .attr("font-size", d => {
-        if (d.depth === 0) return "14px";
-        if (d.depth === 1) return "12px";
-        return "10px";
-    })
-    .attr("fill", getCssVar('--color-text-primary'))
-    .text(d => {
-        if (d.depth === 0) return ""; // Hide root label
-        if (d.depth === 1 && d.data.name.length > 25) {
-            return d.data.name.substring(0, 22) + "...";
-        }
-        if (d.depth > 1 && d.data.name.length > 20) {
-            return d.data.name.substring(0, 17) + "...";
-        }
-        return d.data.name;
-    })
-    .attr("opacity", d => {
-        // Hide labels for nodes that are too small or overcrowded
-        if (d.depth > 2 && d.parent.children.length > 10) return 0.5;
-        return 1;
-    });
+        // Add labels to nodes - showing all labels with appropriate opacity
+        node.append("text")
+            .attr("x", 8)
+            .attr("y", 0)
+            .attr("dy", "0.32em")
+            .attr("opacity", d => {
+                // Show all labels by default, with different opacity levels
+                return d.type === 'agency' ? 1 : 
+                       d.type === 'prime' ? 0.9 : 0.7; // Show sub labels at 0.7 opacity
+            })
+            .text(d => {
+                if (d.type === 'root') return "";
+                // Truncate text based on node type
+                if (d.type === 'agency' && d.name.length > 30) return d.name.substring(0, 27) + "...";
+                if (d.type === 'prime' && d.name.length > 25) return d.name.substring(0, 22) + "...";
+                if (d.type === 'sub' && d.name.length > 20) return d.name.substring(0, 17) + "...";
+                return d.name;
+            })
+            .attr("fill", getCssVar('--color-text-primary'))
+            .attr("font-size", d => {
+                if (d.type === 'agency') return "10px";
+                if (d.type === 'prime') return "10px";
+                return "9px";
+            });
             
-        // Add tooltips
-        nodes.append("title")
-            .text(d => d.data.name + (d.data.value ? `: ${formatCurrency(d.data.value)}` : ""));
-        
-        // Add legend
-        const legendData = [
+        // Add hover interactions for highlighting
+        node.on("mouseover", function(event, d) {
+            // Highlight current node
+            d3.select(this).select("circle")
+                .attr("stroke", getCssVar('--chart-color-primary'))
+                .attr("stroke-width", 2);
+                
+            d3.select(this).select("text")
+                .attr("opacity", 1)
+                .attr("font-weight", "bold");
+                
+            // Highlight connected links and nodes
+            link.attr("stroke-opacity", l => 
+                (l.source.id === d.id || l.target.id === d.id) ? 1 : 0.1);
+                
+            node.filter(n => n.id !== d.id)
+                .attr("opacity", n => {
+                    // Check if this node is connected to the selected node
+                    const isConnected = links.some(l => 
+                        (l.source.id === d.id && l.target.id === n.id) || 
+                        (l.target.id === d.id && l.source.id === n.id));
+                    
+                    return isConnected ? 1 : 0.3;
+                });
+        })
+        .on("mouseout", function() {
+            // Reset highlights
+            node.select("circle")
+                .attr("stroke", getCssVar('--color-surface'))
+                .attr("stroke-width", 1);
+                
+            node.select("text")
+                .attr("opacity", d => {
+                    return d.type === 'agency' ? 1 : 
+                           d.type === 'prime' ? 0.9 : 0.7;
+                })
+                .attr("font-weight", "normal");
+                
+            // Reset link opacity
+            link.attr("stroke-opacity", 0.6);
+            
+            // Reset node opacity
+            node.attr("opacity", 1);
+        });
+            
+        // Add tooltips with value information
+        node.append("title")
+            .text(d => {
+                const valueText = d.value ? formatCurrency(d.value) : "Value not available";
+                return `${d.name}\n${valueText}`;
+            });
+            
+        // Add color legend
+        const colorLegend = svg.append("g")
+            .attr("transform", `translate(20, 20)`);
+            
+        const colorLegendData = [
             { label: "Agency", color: getCssVar('--chart-color-primary') },
             { label: "Prime Contractor", color: getCssVar('--chart-color-secondary') },
             { label: "Subcontractor", color: getCssVar('--chart-color-tertiary') }
         ];
         
-        const legend = svg.append("g")
-            .attr("transform", `translate(${-width/2 + 20}, ${-height/2 + 30})`);
-            
-        legendData.forEach((item, i) => {
-            const g = legend.append("g")
+        colorLegendData.forEach((item, i) => {
+            const g = colorLegend.append("g")
                 .attr("transform", `translate(0, ${i * 20})`);
                 
             g.append("rect")
@@ -4011,9 +4108,90 @@ nodes.append("text")
                 .text(item.label);
         });
         
+        // Add size legend
+        const sizeLegend = svg.append("g")
+            .attr("transform", `translate(${width - 150}, 20)`);
+
+        sizeLegend.append("text")
+            .attr("x", 0)
+            .attr("y", 0)
+            .attr("font-size", "12px")
+            .attr("font-weight", "bold")
+            .attr("fill", getCssVar('--color-text-secondary'))
+            .text("Node Size = Contract Value");
+
+        // Add example circles
+        const sizeValues = [100000, 1000000, 10000000];
+        const sizeLabels = ["$100K", "$1M", "$10M"];
+
+        sizeValues.forEach((value, i) => {
+            // Use the same scaling as the nodes
+            const radius = calculateNodeSize('prime', value);
+            
+            sizeLegend.append("circle")
+                .attr("cx", 10)
+                .attr("cy", 20 + i * 25)
+                .attr("r", radius)
+                .attr("fill", getCssVar('--chart-color-secondary'))
+                .attr("stroke", getCssVar('--color-surface'))
+                .attr("stroke-width", 1);
+                
+            sizeLegend.append("text")
+                .attr("x", 25)
+                .attr("y", 24 + i * 25)
+                .attr("font-size", "11px")
+                .attr("fill", getCssVar('--color-text-secondary'))
+                .text(sizeLabels[i]);
+        });
+            
+        // Add zoom behavior
+        const zoom = d3.zoom()
+            .scaleExtent([0.5, 3])
+            .on("zoom", (event) => {
+                g.attr("transform", event.transform);
+            });
+
+        svg.call(zoom);
+            
+        // Set up simulation tick
+        simulation
+            .nodes(nodes)
+            .on("tick", ticked);
+            
+        simulation.force("link")
+            .links(links);
+            
+        // Functions for simulation
+        function ticked() {
+            link
+                .attr("x1", d => d.source.x)
+                .attr("y1", d => d.source.y)
+                .attr("x2", d => d.target.x)
+                .attr("y2", d => d.target.y);
+                
+            node.attr("transform", d => `translate(${d.x},${d.y})`);
+        }
+        
+        function dragstarted(event, d) {
+            if (!event.active) simulation.alphaTarget(0.3).restart();
+            d.fx = d.x;
+            d.fy = d.y;
+        }
+        
+        function dragged(event, d) {
+            d.fx = event.x;
+            d.fy = event.y;
+        }
+        
+        function dragended(event, d) {
+            if (!event.active) simulation.alphaTarget(0);
+            d.fx = null;
+            d.fy = null;
+        }
+        
     } catch (error) {
-        console.error("Error creating circular dendrogram:", error);
-        displayError(containerId, `Failed to render circular dendrogram: ${error.message}`);
+        console.error("Error creating force-directed visualization:", error);
+        displayError(containerId, `Failed to render visualization: ${error.message}`);
     }
 }
 
@@ -4119,6 +4297,7 @@ function createHierarchyData(model) {
     
     return root;
 }
+
 function initializeSankeyFilters() {
   // Find the existing filter container - this is where your current filters are located
   const filtersContainer = document.querySelector('div[style*="display: flex; flex-direction: column"]');
