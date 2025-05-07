@@ -5312,6 +5312,8 @@ if (typeof originalApplyFilters === 'function') {
     }
   };
 }
+
+
 /**
  * Enhanced donut chart function for both NAICS distribution and Share of Wallet visualizations
  *
@@ -5335,6 +5337,7 @@ function displayEnhancedDonutChart(data, containerId, options = {}) {
         legendPosition: "left",
         showExternalLabels: true,
         minPercentageForLabel: 3,
+        radiusScaleFactor: 1.0 // New option for scaling radius (1.0 = 100%)
     };
 
     const config = { ...defaults, ...options };
@@ -5346,13 +5349,14 @@ function displayEnhancedDonutChart(data, containerId, options = {}) {
     }
 
     const d3Container = d3.select(`#${containerId}`);
-    d3Container.html('');
+    d3Container.html(''); // Clear previous content
 
     if (!data || !Array.isArray(data) || data.length === 0) {
         displayNoData(containerId, "No data available for chart.");
         return;
     }
 
+    // Calculate percentages if not provided
     if (!data[0][config.percentageField]) {
         const totalValue = d3.sum(data, d => d[config.valueField] || 0);
         data.forEach(d => {
@@ -5360,6 +5364,7 @@ function displayEnhancedDonutChart(data, containerId, options = {}) {
         });
     }
 
+    // Prepare data: Top N + Other
     const sortedData = [...data].sort((a, b) => (b[config.valueField] || 0) - (a[config.valueField] || 0));
     const topNData = sortedData.slice(0, config.topN);
     const otherValue = d3.sum(sortedData.slice(config.topN), d => d[config.valueField] || 0);
@@ -5392,20 +5397,19 @@ function displayEnhancedDonutChart(data, containerId, options = {}) {
     const availableHeight = rect.height;
 
     if (availableWidth <= 10 || availableHeight <= 10) {
+        console.warn(`Container #${containerId} has minimal/no dimensions. W: ${availableWidth}, H: ${availableHeight}. Chart not drawn.`);
         displayNoData(containerId, "Chart area too small.");
         return;
     }
 
-    // MODIFICATION START: Increase margins slightly if labels are shown
     const showLabels = config.showExternalLabels && window.innerWidth > 768 && availableHeight > 200;
-    const marginValue = showLabels ? 35 : 10; // Increased from 25 to 35 for labels
+    const marginValue = showLabels ? 35 : 10; // Use 35px margin if labels shown, else 10px
     const margin = {
         top: marginValue,
         right: marginValue,
         bottom: marginValue,
         left: marginValue
     };
-    // MODIFICATION END
 
     const drawingWidth = availableWidth - margin.left - margin.right;
     const drawingHeight = availableHeight - margin.top - margin.bottom;
@@ -5422,8 +5426,11 @@ function displayEnhancedDonutChart(data, containerId, options = {}) {
 
     const donutWidth = drawingWidth - (config.legendPosition === "left" || config.legendPosition === "right" ? legendWidth : 0);
     const donutHeight = drawingHeight - (config.legendPosition === "bottom" ? legendHeight : 0);
-    const outerRadius = Math.min(donutWidth, donutHeight) / 2;
-    const innerRadius = outerRadius * 0.6;
+
+    // Apply radiusScaleFactor
+    const baseOuterRadius = Math.min(donutWidth, donutHeight) / 2;
+    const outerRadius = baseOuterRadius * config.radiusScaleFactor; // Apply scale factor
+    const innerRadius = outerRadius * 0.6; // Keep hole proportional
 
     if (outerRadius <= 10) {
         displayNoData(containerId, "Chart area too small for donut.");
@@ -5446,17 +5453,8 @@ function displayEnhancedDonutChart(data, containerId, options = {}) {
     const color = getDonutColorScale(chartPlotData, config);
     const pie = d3.pie().padAngle(0.01).value(d => d[config.valueField]).sort(null);
     const arcGenerator = d3.arc().innerRadius(innerRadius).outerRadius(outerRadius);
-
-    // MODIFICATION START: Adjust label arc calculations for less outward extension
-    const labelArcStart = d3.arc() // Point on the donut slice
-        .innerRadius(outerRadius * 0.98) // Slightly inside the outer edge
-        .outerRadius(outerRadius * 0.98);
-
-    const labelArcMid = d3.arc() // Mid-point for the leader line break
-        .innerRadius(outerRadius * 1.05) // Closer to the donut (was 1.1)
-        .outerRadius(outerRadius * 1.05);
-    // MODIFICATION END
-
+    const labelArcStart = d3.arc().innerRadius(outerRadius * 0.98).outerRadius(outerRadius * 0.98);
+    const labelArcMid = d3.arc().innerRadius(outerRadius * 1.05).outerRadius(outerRadius * 1.05);
     const pieData = pie(chartPlotData);
 
     donutG.selectAll(".arc-path")
@@ -5473,7 +5471,7 @@ function displayEnhancedDonutChart(data, containerId, options = {}) {
                 .attr("stroke", getCssVar('--color-primary'))
                 .style("stroke-width", "2px")
                 .attr("transform", "scale(1.03)");
-            d3.select("body").selectAll(".chart-tooltip").remove();
+            d3.select("body").selectAll(".chart-tooltip").remove(); // Aggressive cleanup
             const tooltip = d3.select("body").append("div")
                 .attr("class", "chart-tooltip")
                 .style("position", "absolute")
@@ -5538,22 +5536,19 @@ function displayEnhancedDonutChart(data, containerId, options = {}) {
             const polylineStrokeColor = getCssVar('--color-text-tertiary');
             const labelTextColor = getCssVar('--color-text-secondary');
             const labelDescColor = getCssVar('--color-text-tertiary');
-
-            // MODIFICATION START: Adjust fixed offsets for polyline and text
-            const leaderLineHorizontalPartLength = 8; // Reduced from effectively 10 (margin.left/2.5)
-            const textStartOffsetFromLeaderLine = 4; // Reduced from 5
-            // MODIFICATION END
+            const leaderLineHorizontalPartLength = 8;
+            const textStartOffsetFromLeaderLine = 4;
 
             lineGroup.selectAll('polyline')
                 .data(labelData)
                 .join('polyline')
                 .attr('stroke', polylineStrokeColor).style('fill', 'none').attr('stroke-width', 1)
                 .attr('points', d => {
-                    const posA = labelArcStart.centroid(d); // Start point on/near the arc
-                    const posB = labelArcMid.centroid(d);   // Break point slightly further out
-                    const posC = [posB[0], posB[1]];       // End point of leader line (base it on posB)
+                    const posA = labelArcStart.centroid(d);
+                    const posB = labelArcMid.centroid(d);
+                    const posC = [posB[0], posB[1]]; // Initialize posC with posB's coordinates
                     const midangle = d.startAngle + (d.endAngle - d.startAngle) / 2;
-                    // Extend posC horizontally
+                    // Extend posC horizontally from the original posB x-coordinate, but ensure it's relative to outerRadius
                     posC[0] = (outerRadius + leaderLineHorizontalPartLength) * (midangle < Math.PI ? 1 : -1);
                     return [posA, posB, posC];
                 });
@@ -5565,10 +5560,8 @@ function displayEnhancedDonutChart(data, containerId, options = {}) {
                 .attr('dy', '0.35em')
                 .attr('transform', d => {
                     const midangle = d.startAngle + (d.endAngle - d.startAngle) / 2;
-                    // Calculate text position based on the new leader line end
                     const xPos = (outerRadius + leaderLineHorizontalPartLength + textStartOffsetFromLeaderLine) * (midangle < Math.PI ? 1 : -1);
-                    // Use the y-coordinate of the leader line's break point (posB's y) for vertical alignment
-                    const yPos = labelArcMid.centroid(d)[1];
+                    const yPos = labelArcMid.centroid(d)[1]; // y-position aligned with the polyline's elbow
                     return `translate(${xPos},${yPos})`;
                 })
                 .style('text-anchor', d => (d.startAngle + (d.endAngle - d.startAngle) / 2 < Math.PI ? 'start' : 'end'));
@@ -5600,16 +5593,16 @@ function displayEnhancedDonutChart(data, containerId, options = {}) {
         }
         const legendGroup = svg.append("g").attr("transform", `translate(${legendX}, ${legendY})`);
         if (legendLayout === "horizontal") {
-            const itemsPerRow = Math.floor(donutWidth / 100);
+            const itemsPerRow = Math.floor(donutWidth / 100); // Approximate items per row
             const rows = Math.ceil(chartPlotData.length / itemsPerRow);
             for (let row = 0; row < rows; row++) {
                 const rowItems = chartPlotData.slice(row * itemsPerRow, (row + 1) * itemsPerRow);
                 const rowGroup = legendGroup.append("g").attr("transform", `translate(0, ${row * 20})`);
                 rowGroup.selectAll("g").data(rowItems).join("g")
-                    .attr("transform", (d, i) => `translate(${i * 100}, 0)`)
+                    .attr("transform", (d, i) => `translate(${i * 100}, 0)`) // Adjust spacing as needed
                     .call(createLegendItem, color, config);
             }
-        } else {
+        } else { // Vertical layout
             legendGroup.selectAll("g").data(chartPlotData).join("g")
                 .attr("transform", (d, i) => `translate(0, ${i * 20})`)
                 .call(createLegendItem, color, config);
@@ -5618,10 +5611,6 @@ function displayEnhancedDonutChart(data, containerId, options = {}) {
 
     return { svg: svg, pieData: pieData, chartData: chartPlotData };
 }
-
-/**
- * Helper function to create a legend item
- */
 function createLegendItem(selection, colorScale, config) {
     // Add color squares
     selection.append("rect")
