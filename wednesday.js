@@ -5311,169 +5311,307 @@ if (typeof originalApplyFilters === 'function') {
   };
 }
 /**
- * Draws a Donut chart for Top N NAICS + Other.
- * - Shows external labels/lines (on wider screens).
- * - Shows "Top NAICS [Code]" text in the center.
- * - Disables tooltips on donut slices.
- * @param {Array} naicsData - Array of {code, desc, value} objects, sorted descending.
- * @param {string} chartElementId - The ID of the div container for the chart.
- * @param {number} topN - Number of top categories to show separately.
+ * Enhanced donut chart function that works for both NAICS distribution and Share of Wallet visualizations
+ * with consistent styling and better bento box integration.
+ * 
+ * @param {Array} data - Array of objects with name/code, desc (optional), value, and percentage properties
+ * @param {string} containerId - The ID of the container element
+ * @param {Object} options - Configuration options
  */
-function displayNaicsDonutChart(naicsData, chartElementId, topN = 5) {
-    const chartContainer = document.getElementById(chartElementId);
-
-    if (!chartContainer) {
-        console.error(`displayNaicsDonutChart: Chart container element #${chartElementId} not found.`);
-        return;
-    }
-    // setLoading for the specific chart container should be handled before calling this,
-    // or pass the bento box ID if you want to control its loading state.
-    // For now, we assume loading is handled externally or we just draw.
-
-    const d3Container = d3.select(`#${chartElementId}`);
-    d3Container.html(''); // Clear previous content
-
-    // --- Basic Data Check ---
-    if (!naicsData || !Array.isArray(naicsData)) {
-        console.warn("displayNaicsDonutChart: Invalid naicsData input", naicsData);
-        displayNoData(chartElementId, "Invalid NAICS data.");
-        return;
-    }
-    if (naicsData.length === 0) {
-        displayNoData(chartElementId, "No NAICS data available.");
-        return;
-    }
-
-    // --- Prepare Data: Top N + Other ---
-    const topNData = naicsData.slice(0, topN);
-    const otherValue = d3.sum(naicsData.slice(topN), d => d.value);
-    const chartPlotData = [...topNData];
-    let hasOther = false;
-    if (otherValue > 0 && naicsData.length > topN) {
-        chartPlotData.push({ code: "Other", desc: `Other (${naicsData.length - topN} codes)`, value: otherValue });
-        hasOther = true;
-    }
-
-    const topSliceForCenterText = naicsData[0];
-
-    if (chartPlotData.length === 0 || !topSliceForCenterText) {
-        displayNoData(chartElementId, "Not enough data for NAICS chart.");
-        return;
-    }
-    if (chartPlotData.length === 1 && chartPlotData[0].code === "Other") {
-        displayNoData(chartElementId, 'NAICS data primarily in "Other".');
-        return;
-    }
-
-    // --- Chart Setup ---
-    // Get dimensions from the container element
-    const rect = chartContainer.getBoundingClientRect();
-    const availableWidth = rect.width;
-    const availableHeight = rect.height;
-
-    if (availableWidth <= 10 || availableHeight <= 10) { // Check for genuinely small/non-rendered container
-        console.warn(`Container #${chartElementId} has minimal/no dimensions. W: ${availableWidth}, H: ${availableHeight}. Chart not drawn.`);
-        // displayNoData might have already been called if data was also an issue,
-        // but good to have a check here. If it's just a size issue after data is loaded:
-        if (naicsData.length > 0) displayNoData(chartElementId, "Chart area too small.");
-        return;
-    }
-
-    // Define margins for labels around the donut
-    const margin = {
-        top: (window.innerWidth > 768 && availableHeight > 200) ? 30 : 10, // More space for labels on larger views
-        right: (window.innerWidth > 768 && availableWidth > 200) ? 30 : 10,
-        bottom: (window.innerWidth > 768 && availableHeight > 200) ? 30 : 10,
-        left: (window.innerWidth > 768 && availableWidth > 200) ? 30 : 10
+function displayEnhancedDonutChart(data, containerId, options = {}) {
+    // Default options
+    const defaults = {
+        title: "Distribution", // Center title
+        subtitle: "", // Center subtitle (optional)
+        topN: 5, // Number of top items to show separately
+        centerValueField: "code", // Which field to show in the center
+        colorField: "name", // Which field to use for color assignment
+        labelField: "name", // Which field to use for labels
+        descField: "desc", // Which field to use for descriptions
+        valueField: "value", // Which field contains the numeric value
+        percentageField: "percentage", // Which field contains the percentage (calculated if not present)
+        otherLabel: "Other", // Label for the combined "Other" category
+        legendPosition: "left", // Position of the legend: "left", "right", "bottom", "none"
+        showExternalLabels: true, // Whether to show external labels with lines
+        minPercentageForLabel: 3, // Minimum percentage to show a label on the chart
     };
 
+    // Merge defaults with provided options
+    const config = { ...defaults, ...options };
+    
+    // Get the container
+    const container = document.getElementById(containerId);
+    
+    if (!container) {
+        console.error(`displayEnhancedDonutChart: Chart container element #${containerId} not found.`);
+        return;
+    }
+    
+    // Clear previous content
+    const d3Container = d3.select(`#${containerId}`);
+    d3Container.html('');
+    
+    // --- Basic Data Check ---
+    if (!data || !Array.isArray(data) || data.length === 0) {
+        displayNoData(containerId, "No data available for chart.");
+        return;
+    }
+    
+    // --- Calculate percentages if not provided ---
+    if (!data[0][config.percentageField]) {
+        const totalValue = d3.sum(data, d => d[config.valueField] || 0);
+        data.forEach(d => {
+            d[config.percentageField] = totalValue > 0 ? (d[config.valueField] / totalValue) * 100 : 0;
+        });
+    }
+    
+    // --- Prepare Data: Top N + Other ---
+    // First sort the data by value (descending)
+    const sortedData = [...data].sort((a, b) => (b[config.valueField] || 0) - (a[config.valueField] || 0));
+    
+    const topNData = sortedData.slice(0, config.topN);
+    const otherValue = d3.sum(sortedData.slice(config.topN), d => d[config.valueField] || 0);
+    const otherPercentage = d3.sum(sortedData.slice(config.topN), d => d[config.percentageField] || 0);
+    
+    const chartPlotData = [...topNData];
+    
+    // Add "Other" category if there are more items than topN
+    if (otherValue > 0 && sortedData.length > config.topN) {
+        const otherCount = sortedData.length - config.topN;
+        const otherItem = {
+            [config.labelField]: config.otherLabel,
+            [config.descField]: `${config.otherLabel} (${otherCount} items)`,
+            [config.valueField]: otherValue,
+            [config.percentageField]: otherPercentage,
+            isOther: true
+        };
+        // Ensure the centerValueField is present
+        if (config.centerValueField && !otherItem[config.centerValueField]) {
+            otherItem[config.centerValueField] = config.otherLabel;
+        }
+        chartPlotData.push(otherItem);
+    }
+    
+    // Get the item to display in the center text (usually the top one)
+    const centerItem = sortedData[0];
+    
+    if (!centerItem) {
+        displayNoData(containerId, "Not enough data for chart.");
+        return;
+    }
+    
+    // --- Chart Setup ---
+    // Get dimensions from the container element
+    const rect = container.getBoundingClientRect();
+    const availableWidth = rect.width;
+    const availableHeight = rect.height;
+    
+    if (availableWidth <= 10 || availableHeight <= 10) {
+        console.warn(`Container #${containerId} has minimal/no dimensions. W: ${availableWidth}, H: ${availableHeight}. Chart not drawn.`);
+        displayNoData(containerId, "Chart area too small.");
+        return;
+    }
+    
+    // Define margins with adaptive sizing
+    const showLabels = config.showExternalLabels && window.innerWidth > 768 && availableHeight > 200;
+    const margin = {
+        top: showLabels ? 25 : 10,
+        right: showLabels ? 25 : 10,
+        bottom: showLabels ? 25 : 10,
+        left: showLabels ? 25 : 10
+    };
+    
     // Calculate actual drawing space and radius
     const drawingWidth = availableWidth - margin.left - margin.right;
     const drawingHeight = availableHeight - margin.top - margin.bottom;
-    const outerRadius = Math.min(drawingWidth, drawingHeight) / 2;
-    const innerRadius = outerRadius * 0.65; // Donut thickness
-
-    if (outerRadius <= 10) { // If radius is too small after margins
-        displayNoData(chartElementId, "Chart area too small for donut.");
+    
+    // Adjust for legend space if legend is enabled
+    let legendWidth = 0;
+    let legendHeight = 0;
+    
+    if (config.legendPosition !== "none") {
+        if (config.legendPosition === "left" || config.legendPosition === "right") {
+            legendWidth = Math.min(availableWidth * 0.3, 100); // 30% of width or 100px max
+        } else if (config.legendPosition === "bottom") {
+            legendHeight = Math.min(availableHeight * 0.2, 80); // 20% of height or 80px max
+        }
+    }
+    
+    // Final available space for the donut
+    const donutWidth = drawingWidth - (config.legendPosition === "left" || config.legendPosition === "right" ? legendWidth : 0);
+    const donutHeight = drawingHeight - (config.legendPosition === "bottom" ? legendHeight : 0);
+    
+    // Calculate optimal radius
+    const outerRadius = Math.min(donutWidth, donutHeight) / 2;
+    const innerRadius = outerRadius * 0.6; // Donut hole size
+    
+    if (outerRadius <= 10) {
+        displayNoData(containerId, "Chart area too small for donut.");
         return;
     }
-
+    
+    // Create SVG element
     const svg = d3Container.append("svg")
-        .attr("width", "100%") // SVG fills container
-        .attr("height", "100%") // SVG fills container
-        .attr("viewBox", `0 0 ${availableWidth} ${availableHeight}`) // Establish internal coordinate system
-        .style("overflow", "visible") // Allows labels to draw slightly outside the main circle if needed
-        .append("g")
-        // Translate the group to the center of the SVG (which is sized by availableWidth/Height)
-        .attr("transform", `translate(${availableWidth / 2}, ${availableHeight / 2})`);
-
-    const color = getThemeOrdinalChartColors(chartPlotData.length);
-
+        .attr("width", "100%")
+        .attr("height", "100%")
+        .attr("viewBox", `0 0 ${availableWidth} ${availableHeight}`)
+        .style("overflow", "visible"); // Allows labels to draw slightly outside
+    
+    // Create a group for the donut, positioned in the center
+    const donutG = svg.append("g")
+        .attr("transform", `translate(${
+            margin.left + donutWidth/2 + (config.legendPosition === "right" ? 0 : config.legendPosition === "left" ? legendWidth : 0)
+        }, ${
+            margin.top + donutHeight/2
+        })`);
+    
+    // Generate colors
+    const color = getDonutColorScale(chartPlotData, config);
+    
+    // Create pie layout
     const pie = d3.pie()
-        .padAngle(0.008)
-        .value(d => d.value)
-        .sort(null);
-
+        .padAngle(0.01) // Slight padding between slices
+        .value(d => d[config.valueField])
+        .sort(null); // Don't sort, preserve input order
+    
+    // Create arc generators
     const arcGenerator = d3.arc()
         .innerRadius(innerRadius)
         .outerRadius(outerRadius);
-
-    // Arc for label positioning (where lines attach to donut)
+    
+    // Arc for label positioning
     const labelArcStart = d3.arc()
-        .innerRadius(outerRadius * 0.95) // Lines start just inside the outer edge
+        .innerRadius(outerRadius * 0.95)
         .outerRadius(outerRadius * 0.95);
-
+    
     // Arc for label line bending point
     const labelArcMid = d3.arc()
-        .innerRadius(outerRadius * 1.1) // Lines bend slightly outside
+        .innerRadius(outerRadius * 1.1)
         .outerRadius(outerRadius * 1.1);
-
-
+    
     // --- Draw Arcs ---
-    svg.selectAll(".arc-path")
-        .data(pie(chartPlotData))
+    const pieData = pie(chartPlotData);
+    
+    donutG.selectAll(".arc-path")
+        .data(pieData)
         .join("path")
         .attr("class", "arc-path")
-        .attr("fill", (d, i) => color(i))
+        .attr("fill", (d, i) => color(d.data[config.colorField]))
         .attr("d", arcGenerator)
         .attr("stroke", getCssVar('--color-surface'))
-        .style("stroke-width", "1.5px");
-
+        .style("stroke-width", "1.5px")
+        .style("cursor", "pointer")
+        .on("mouseover", function(event, d) {
+            // Highlight this arc
+            d3.select(this)
+                .transition()
+                .duration(200)
+                .attr("stroke", getCssVar('--color-primary'))
+                .style("stroke-width", "2px")
+                .attr("transform", "scale(1.03)");
+            
+            // Show tooltip
+            const tooltip = d3.select("body").append("div")
+                .attr("class", "chart-tooltip")
+                .style("position", "absolute")
+                .style("background-color", getCssVar('--color-surface'))
+                .style("color", getCssVar('--color-text-primary'))
+                .style("padding", "8px 12px")
+                .style("border-radius", "4px")
+                .style("font-size", "12px")
+                .style("pointer-events", "none")
+                .style("opacity", 0)
+                .style("box-shadow", getCssVar('--shadow-md'))
+                .style("border", `1px solid ${getCssVar('--color-border')}`)
+                .style("z-index", 1000);
+            
+            tooltip.transition()
+                .duration(200)
+                .style("opacity", 1);
+            
+            const name = d.data[config.labelField];
+            const desc = d.data[config.descField] || "";
+            const value = formatCurrency(d.data[config.valueField]);
+            const percentage = d.data[config.percentageField].toFixed(1);
+            
+            tooltip.html(`
+                <div style="font-weight: bold; margin-bottom: 4px;">${name}</div>
+                ${desc ? `<div style="color: ${getCssVar('--color-text-secondary')}; margin-bottom: 4px;">${desc}</div>` : ""}
+                <div>Value: ${value}</div>
+                <div>Share: ${percentage}%</div>
+            `);
+            
+            tooltip.style("left", (event.pageX + 10) + "px")
+                .style("top", (event.pageY - 28) + "px");
+        })
+        .on("mousemove", function(event) {
+            d3.select("body").select(".chart-tooltip")
+                .style("left", (event.pageX + 10) + "px")
+                .style("top", (event.pageY - 28) + "px");
+        })
+        .on("mouseout", function() {
+            // Remove highlight
+            d3.select(this)
+                .transition()
+                .duration(200)
+                .attr("stroke", getCssVar('--color-surface'))
+                .style("stroke-width", "1.5px")
+                .attr("transform", "scale(1)");
+            
+            // Remove tooltip
+            d3.select("body").select(".chart-tooltip")
+                .transition()
+                .duration(200)
+                .style("opacity", 0)
+                .remove();
+        });
+    
     // --- Add Center Text ---
-    const centerText = svg.append("text")
+    const centerText = donutG.append("text")
         .attr("text-anchor", "middle")
-        .style("font-family", "var(--font-body)")
-        .style("fill", getCssVar('--color-text-primary'))
-        .attr("dy", "-0.4em");
-
+        .style("font-family", "var(--font-body, sans-serif)")
+        .style("fill", getCssVar('--color-text-primary'));
+    
     centerText.append("tspan")
-        .attr("x", 0).attr("dy", 0)
+        .attr("x", 0)
+        .attr("dy", "-0.6em")
         .style("font-size", "0.75em")
         .style("fill", getCssVar('--color-text-secondary'))
-        .text("Top NAICS");
-
+        .text(config.title);
+    
+    if (config.subtitle) {
+        centerText.append("tspan")
+            .attr("x", 0)
+            .attr("dy", "1.1em")
+            .style("font-size", "0.7em")
+            .style("fill", getCssVar('--color-text-tertiary'))
+            .text(config.subtitle);
+    }
+    
     centerText.append("tspan")
-        .attr("x", 0).attr("dy", "1.3em")
+        .attr("x", 0)
+        .attr("dy", config.subtitle ? "1.3em" : "1.5em")
         .style("font-size", "0.9em")
         .style("font-weight", "600")
-        .text(topSliceForCenterText.code);
-
-    // --- External Labels and Lines (conditional) ---
-    if (window.innerWidth > 768 && outerRadius > 40) { // Only draw if screen is wide enough & radius is decent
-        const labelThresholdPercentage = 0.03; // Slices smaller than 3% won't get labels
-        const labelData = pie(chartPlotData).filter(d => {
+        .text(centerItem[config.centerValueField] || "");
+    
+    // --- Add External Labels and Lines (conditional) ---
+    if (showLabels) {
+        // Only show labels for slices that are large enough
+        const labelThresholdPercentage = config.minPercentageForLabel / 100;
+        const labelData = pieData.filter(d => {
             const percentage = (d.endAngle - d.startAngle) / (2 * Math.PI);
-            return percentage >= labelThresholdPercentage && d.value > 0;
+            return percentage >= labelThresholdPercentage && d.data[config.valueField] > 0;
         });
-
+        
         if (labelData.length > 0) {
-            const lineGroup = svg.append("g").attr("class", "label-lines");
-            const textLabelGroup = svg.append("g").attr("class", "text-labels");
-
+            const lineGroup = donutG.append("g").attr("class", "label-lines");
+            const textLabelGroup = donutG.append("g").attr("class", "text-labels");
+            
             const polylineStrokeColor = getCssVar('--color-text-tertiary');
             const labelTextColor = getCssVar('--color-text-secondary');
             const labelDescColor = getCssVar('--color-text-tertiary');
-
+            
             lineGroup.selectAll('polyline')
                 .data(labelData)
                 .join('polyline')
@@ -5483,39 +5621,197 @@ function displayNaicsDonutChart(naicsData, chartElementId, topN = 5) {
                 .attr('points', d => {
                     const posA = labelArcStart.centroid(d);
                     const posB = labelArcMid.centroid(d);
-                    const posC = [posB[0] * 1.1, posB[1]]; // Extend line horizontally from bend point
+                    const posC = [posB[0] * 1.1, posB[1]];
                     const midangle = d.startAngle + (d.endAngle - d.startAngle) / 2;
-                    posC[0] = (outerRadius + margin.left/2.5) * (midangle < Math.PI ? 1 : -1); // Line end based on outerRadius and margin
+                    posC[0] = (outerRadius + margin.left/2.5) * (midangle < Math.PI ? 1 : -1);
                     return [posA, posB, posC];
                 });
-
+            
             const textLabels = textLabelGroup.selectAll('text')
                 .data(labelData)
                 .join('text')
-                .style('font-family', "var(--font-body)")
+                .style('font-family', "var(--font-body, sans-serif)")
                 .attr('dy', '0.35em')
                 .attr('transform', d => {
-                    const pos = [labelArcMid.centroid(d)[0] * 1.1, labelArcMid.centroid(d)[1]]; // Base on bend point
+                    const pos = [labelArcMid.centroid(d)[0] * 1.1, labelArcMid.centroid(d)[1]];
                     const midangle = d.startAngle + (d.endAngle - d.startAngle) / 2;
-                    // Position text next to extended line end
                     pos[0] = (outerRadius + margin.left/2.5 + 5) * (midangle < Math.PI ? 1 : -1);
                     return `translate(${pos})`;
                 })
                 .style('text-anchor', d => (d.startAngle + (d.endAngle - d.startAngle) / 2 < Math.PI ? 'start' : 'end'));
-
+            
             textLabels.append('tspan')
                 .attr('x', 0)
-                .style('font-size', '11px').style('font-weight', '500')
+                .style('font-size', '11px')
+                .style('font-weight', '500')
                 .style('fill', labelTextColor)
-                .text(d => d.data.code);
-
-            textLabels.filter(d => d.data.code !== "Other")
+                .text(d => truncateText(d.data[config.labelField], 15));
+            
+            textLabels.filter(d => !d.data.isOther)
                 .append('tspan')
-                .attr('x', 0).attr('dy', '1.2em')
-                .style('font-size', '10px').style('fill', labelDescColor)
-                .text(d => truncateText(d.data.desc, 20)); // Simple truncation for now
+                .attr('x', 0)
+                .attr('dy', '1.2em')
+                .style('font-size', '10px')
+                .style('fill', labelDescColor)
+                .text(d => {
+                    // If we have a description, show it, otherwise show the percentage
+                    if (d.data[config.descField]) {
+                        return truncateText(d.data[config.descField], 18);
+                    } else {
+                        return `${d.data[config.percentageField].toFixed(1)}%`;
+                    }
+                });
         }
     }
+    
+    // --- Add Legend ---
+    if (config.legendPosition !== "none") {
+        let legendX, legendY, legendLayout = "vertical";
+        
+        // Position the legend based on configuration
+        if (config.legendPosition === "left") {
+            legendX = margin.left;
+            legendY = margin.top;
+        } else if (config.legendPosition === "right") {
+            legendX = margin.left + donutWidth + 10;
+            legendY = margin.top;
+        } else if (config.legendPosition === "bottom") {
+            legendX = margin.left;
+            legendY = margin.top + donutHeight + 10;
+            legendLayout = "horizontal";
+        }
+        
+        const legendGroup = svg.append("g")
+            .attr("transform", `translate(${legendX}, ${legendY})`);
+        
+        // For horizontal layout, we'll create multiple rows if needed
+        if (legendLayout === "horizontal") {
+            const itemsPerRow = Math.floor(donutWidth / 100); // Rough estimate
+            const rows = Math.ceil(chartPlotData.length / itemsPerRow);
+            
+            for (let row = 0; row < rows; row++) {
+                const rowItems = chartPlotData.slice(row * itemsPerRow, (row + 1) * itemsPerRow);
+                
+                const rowGroup = legendGroup.append("g")
+                    .attr("transform", `translate(0, ${row * 20})`);
+                
+                rowGroup.selectAll("g")
+                    .data(rowItems)
+                    .join("g")
+                    .attr("transform", (d, i) => `translate(${i * 100}, 0)`)
+                    .call(createLegendItem, color, config);
+            }
+        } else {
+            // Vertical layout is simpler
+            legendGroup.selectAll("g")
+                .data(chartPlotData)
+                .join("g")
+                .attr("transform", (d, i) => `translate(0, ${i * 20})`)
+                .call(createLegendItem, color, config);
+        }
+    }
+    
+    // Return the drawn chart data for potential further manipulation
+    return {
+        svg: svg,
+        pieData: pieData,
+        chartData: chartPlotData
+    };
+}
+
+/**
+ * Helper function to create a legend item
+ */
+function createLegendItem(selection, colorScale, config) {
+    // Add color squares
+    selection.append("rect")
+        .attr("width", 12)
+        .attr("height", 12)
+        .attr("fill", d => colorScale(d[config.colorField]));
+    
+    // Add legend text
+    selection.append("text")
+        .attr("x", 18)
+        .attr("y", 9)
+        .attr("dy", "0.1em")
+        .style("font-size", "11px")
+        .style("fill", getCssVar('--color-text-secondary'))
+        .text(d => {
+            const label = truncateText(d[config.labelField], 20);
+            return `${label} (${d[config.percentageField].toFixed(1)}%)`;
+        });
+}
+
+/**
+ * Get color scale for donut chart based on theme
+ */
+function getDonutColorScale(data, config) {
+    // Prefer using a color function from the theme if available
+    if (typeof getThemeOrdinalChartColors === 'function') {
+        return d3.scaleOrdinal()
+            .domain(data.map(d => d[config.colorField]))
+            .range(getThemeOrdinalChartColors(data.length));
+    }
+    
+    // Fallback colors if theme function not available
+    const baseColors = [
+        getCssVar('--chart-color-primary'),
+        getCssVar('--chart-color-secondary'),
+        getCssVar('--chart-color-tertiary'),
+        d3.color(getCssVar('--chart-color-primary')).darker(0.5).toString(),
+        d3.color(getCssVar('--chart-color-secondary')).darker(0.5).toString(),
+        d3.color(getCssVar('--chart-color-primary')).brighter(0.5).toString(),
+        d3.color(getCssVar('--chart-color-secondary')).brighter(0.5).toString(),
+        d3.color(getCssVar('--chart-color-tertiary')).brighter(0.5).toString(),
+    ];
+    
+    // Special color handling for "Other" category
+    return d3.scaleOrdinal()
+        .domain(data.map(d => d[config.colorField]))
+        .range(data.map((d, i) => {
+            if (d.isOther) {
+                return getCssVar('--chart-color-tertiary');
+            }
+            return baseColors[i % baseColors.length];
+        }));
+}
+
+/**
+ * Wrapper for NAICS Donut Chart with specific configuration
+ */
+function displayNaicsDonutChart(naicsData, chartElementId, topN = 5) {
+    return displayEnhancedDonutChart(naicsData, chartElementId, {
+        title: "Top NAICS",
+        centerValueField: "code",
+        labelField: "code",
+        descField: "desc",
+        topN: topN,
+        legendPosition: "none",
+        showExternalLabels: true
+    });
+}
+
+/**
+ * Wrapper for Share of Wallet Chart with specific configuration
+ */
+function displayShareOfWalletChart(model, containerId = 'share-of-wallet-container') {
+    // Process data for Share of Wallet (taken from your existing function)
+    const shareData = processShareOfWalletData(model);
+    
+    if (!shareData || shareData.length === 0) {
+        displayNoData(containerId, 'No market share data available.');
+        return;
+    }
+    
+    return displayEnhancedDonutChart(shareData, containerId, {
+        title: "Market",
+        subtitle: "Share",
+        labelField: "name",
+        topN: 7,
+        legendPosition: "left",
+        showExternalLabels: false,
+        minPercentageForLabel: 5
+    });
 }
 function processNaicsDistributionData(model) {
     if (!model || !model.contracts) {
@@ -6297,72 +6593,492 @@ function createContractorProfileModal(profileData) {
     document.body.appendChild(backdrop);
     document.body.appendChild(modal);
 }
+/**
+ * Enhanced donut chart function that works for both NAICS distribution and Share of Wallet visualizations
+ * with consistent styling and better bento box integration.
+ * 
+ * @param {Array} data - Array of objects with name/code, desc (optional), value, and percentage properties
+ * @param {string} containerId - The ID of the container element
+ * @param {Object} options - Configuration options
+ */
+function displayEnhancedDonutChart(data, containerId, options = {}) {
+    // Default options
+    const defaults = {
+        title: "Distribution", // Center title
+        subtitle: "", // Center subtitle (optional)
+        topN: 5, // Number of top items to show separately
+        centerValueField: "code", // Which field to show in the center
+        colorField: "name", // Which field to use for color assignment
+        labelField: "name", // Which field to use for labels
+        descField: "desc", // Which field to use for descriptions
+        valueField: "value", // Which field contains the numeric value
+        percentageField: "percentage", // Which field contains the percentage (calculated if not present)
+        otherLabel: "Other", // Label for the combined "Other" category
+        legendPosition: "left", // Position of the legend: "left", "right", "bottom", "none"
+        showExternalLabels: true, // Whether to show external labels with lines
+        minPercentageForLabel: 3, // Minimum percentage to show a label on the chart
+    };
 
-// Function to display Share of Wallet visualization
-function displayShareOfWalletChart(model, containerId = 'share-of-wallet-container') {
-    // Make sure we have a container to render into
-    let container = document.getElementById(containerId);
+    // Merge defaults with provided options
+    const config = { ...defaults, ...options };
     
-    // If not found, create a new bento box
+    // Get the container
+    const container = document.getElementById(containerId);
+    
     if (!container) {
-        // Create a new bento box for Share of Wallet
-        const bentoBox = document.createElement('div');
-        bentoBox.id = 'bento-share-of-wallet';
-        bentoBox.className = 'bento-box';
-        
-        // Create card header
-        const cardHeader = document.createElement('div');
-        cardHeader.className = 'card-header';
-        
-        // Create icon circle
-        const iconCircle = document.createElement('div');
-        iconCircle.className = 'card-icon-circle';
-        iconCircle.innerHTML = `
-            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 22V2M17 6l-5-4-5 4M17 18l-5 4-5-4"></path>
-            </svg>
-        `;
-        
-        // Create title
-        const title = document.createElement('h2');
-        title.textContent = 'Market Share';
-        
-        // Assemble header
-        cardHeader.appendChild(iconCircle);
-        cardHeader.appendChild(title);
-        
-        // Create chart container
-        container = document.createElement('div');
-        container.id = containerId;
-        container.className = 'chart-container';
-        
-        // Assemble bento box
-        bentoBox.appendChild(cardHeader);
-        bentoBox.appendChild(container);
-        
-        // Find the bento grid to add this to
-        const bentoGrid = document.querySelector('.bento-grid');
-        if (bentoGrid) {
-            // Decide where to insert the new bento box
-            // For example, right after the ARR bento box
-            const bentoArr = document.getElementById('bento-arr');
-            if (bentoArr && bentoArr.nextSibling) {
-                bentoGrid.insertBefore(bentoBox, bentoArr.nextSibling);
-            } else {
-                bentoGrid.appendChild(bentoBox);
-            }
-        } else {
-            console.error('Could not find bento grid to add Share of Wallet chart');
-            return;
-        }
+        console.error(`displayEnhancedDonutChart: Chart container element #${containerId} not found.`);
+        return;
     }
     
     // Clear previous content
-    container.innerHTML = '';
+    const d3Container = d3.select(`#${containerId}`);
+    d3Container.html('');
     
-    setLoading(containerId, true, 'Processing market share data...');
+    // --- Basic Data Check ---
+    if (!data || !Array.isArray(data) || data.length === 0) {
+        displayNoData(containerId, "No data available for chart.");
+        return;
+    }
     
-    // Get the data
+    // --- Calculate percentages if not provided ---
+    if (!data[0][config.percentageField]) {
+        const totalValue = d3.sum(data, d => d[config.valueField] || 0);
+        data.forEach(d => {
+            d[config.percentageField] = totalValue > 0 ? (d[config.valueField] / totalValue) * 100 : 0;
+        });
+    }
+    
+    // --- Prepare Data: Top N + Other ---
+    // First sort the data by value (descending)
+    const sortedData = [...data].sort((a, b) => (b[config.valueField] || 0) - (a[config.valueField] || 0));
+    
+    const topNData = sortedData.slice(0, config.topN);
+    const otherValue = d3.sum(sortedData.slice(config.topN), d => d[config.valueField] || 0);
+    const otherPercentage = d3.sum(sortedData.slice(config.topN), d => d[config.percentageField] || 0);
+    
+    const chartPlotData = [...topNData];
+    
+    // Add "Other" category if there are more items than topN
+    if (otherValue > 0 && sortedData.length > config.topN) {
+        const otherCount = sortedData.length - config.topN;
+        const otherItem = {
+            [config.labelField]: config.otherLabel,
+            [config.descField]: `${config.otherLabel} (${otherCount} items)`,
+            [config.valueField]: otherValue,
+            [config.percentageField]: otherPercentage,
+            isOther: true
+        };
+        // Ensure the centerValueField is present
+        if (config.centerValueField && !otherItem[config.centerValueField]) {
+            otherItem[config.centerValueField] = config.otherLabel;
+        }
+        chartPlotData.push(otherItem);
+    }
+    
+    // Get the item to display in the center text (usually the top one)
+    const centerItem = sortedData[0];
+    
+    if (!centerItem) {
+        displayNoData(containerId, "Not enough data for chart.");
+        return;
+    }
+    
+    // --- Chart Setup ---
+    // Get dimensions from the container element
+    const rect = container.getBoundingClientRect();
+    const availableWidth = rect.width;
+    const availableHeight = rect.height;
+    
+    if (availableWidth <= 10 || availableHeight <= 10) {
+        console.warn(`Container #${containerId} has minimal/no dimensions. W: ${availableWidth}, H: ${availableHeight}. Chart not drawn.`);
+        displayNoData(containerId, "Chart area too small.");
+        return;
+    }
+    
+    // Define margins with adaptive sizing
+    const showLabels = config.showExternalLabels && window.innerWidth > 768 && availableHeight > 200;
+    const margin = {
+        top: showLabels ? 25 : 10,
+        right: showLabels ? 25 : 10,
+        bottom: showLabels ? 25 : 10,
+        left: showLabels ? 25 : 10
+    };
+    
+    // Calculate actual drawing space and radius
+    const drawingWidth = availableWidth - margin.left - margin.right;
+    const drawingHeight = availableHeight - margin.top - margin.bottom;
+    
+    // Adjust for legend space if legend is enabled
+    let legendWidth = 0;
+    let legendHeight = 0;
+    
+    if (config.legendPosition !== "none") {
+        if (config.legendPosition === "left" || config.legendPosition === "right") {
+            legendWidth = Math.min(availableWidth * 0.3, 100); // 30% of width or 100px max
+        } else if (config.legendPosition === "bottom") {
+            legendHeight = Math.min(availableHeight * 0.2, 80); // 20% of height or 80px max
+        }
+    }
+    
+    // Final available space for the donut
+    const donutWidth = drawingWidth - (config.legendPosition === "left" || config.legendPosition === "right" ? legendWidth : 0);
+    const donutHeight = drawingHeight - (config.legendPosition === "bottom" ? legendHeight : 0);
+    
+    // Calculate optimal radius
+    const outerRadius = Math.min(donutWidth, donutHeight) / 2;
+    const innerRadius = outerRadius * 0.6; // Donut hole size
+    
+    if (outerRadius <= 10) {
+        displayNoData(containerId, "Chart area too small for donut.");
+        return;
+    }
+    
+    // Create SVG element
+    const svg = d3Container.append("svg")
+        .attr("width", "100%")
+        .attr("height", "100%")
+        .attr("viewBox", `0 0 ${availableWidth} ${availableHeight}`)
+        .style("overflow", "visible"); // Allows labels to draw slightly outside
+    
+    // Create a group for the donut, positioned in the center
+    const donutG = svg.append("g")
+        .attr("transform", `translate(${
+            margin.left + donutWidth/2 + (config.legendPosition === "right" ? 0 : config.legendPosition === "left" ? legendWidth : 0)
+        }, ${
+            margin.top + donutHeight/2
+        })`);
+    
+    // Generate colors
+    const color = getDonutColorScale(chartPlotData, config);
+    
+    // Create pie layout
+    const pie = d3.pie()
+        .padAngle(0.01) // Slight padding between slices
+        .value(d => d[config.valueField])
+        .sort(null); // Don't sort, preserve input order
+    
+    // Create arc generators
+    const arcGenerator = d3.arc()
+        .innerRadius(innerRadius)
+        .outerRadius(outerRadius);
+    
+    // Arc for label positioning
+    const labelArcStart = d3.arc()
+        .innerRadius(outerRadius * 0.95)
+        .outerRadius(outerRadius * 0.95);
+    
+    // Arc for label line bending point
+    const labelArcMid = d3.arc()
+        .innerRadius(outerRadius * 1.1)
+        .outerRadius(outerRadius * 1.1);
+    
+    // --- Draw Arcs ---
+    const pieData = pie(chartPlotData);
+    
+    donutG.selectAll(".arc-path")
+        .data(pieData)
+        .join("path")
+        .attr("class", "arc-path")
+        .attr("fill", (d, i) => color(d.data[config.colorField]))
+        .attr("d", arcGenerator)
+        .attr("stroke", getCssVar('--color-surface'))
+        .style("stroke-width", "1.5px")
+        .style("cursor", "pointer")
+        .on("mouseover", function(event, d) {
+            // Highlight this arc
+            d3.select(this)
+                .transition()
+                .duration(200)
+                .attr("stroke", getCssVar('--color-primary'))
+                .style("stroke-width", "2px")
+                .attr("transform", "scale(1.03)");
+            
+            // Show tooltip
+            const tooltip = d3.select("body").append("div")
+                .attr("class", "chart-tooltip")
+                .style("position", "absolute")
+                .style("background-color", getCssVar('--color-surface'))
+                .style("color", getCssVar('--color-text-primary'))
+                .style("padding", "8px 12px")
+                .style("border-radius", "4px")
+                .style("font-size", "12px")
+                .style("pointer-events", "none")
+                .style("opacity", 0)
+                .style("box-shadow", getCssVar('--shadow-md'))
+                .style("border", `1px solid ${getCssVar('--color-border')}`)
+                .style("z-index", 1000);
+            
+            tooltip.transition()
+                .duration(200)
+                .style("opacity", 1);
+            
+            const name = d.data[config.labelField];
+            const desc = d.data[config.descField] || "";
+            const value = formatCurrency(d.data[config.valueField]);
+            const percentage = d.data[config.percentageField].toFixed(1);
+            
+            tooltip.html(`
+                <div style="font-weight: bold; margin-bottom: 4px;">${name}</div>
+                ${desc ? `<div style="color: ${getCssVar('--color-text-secondary')}; margin-bottom: 4px;">${desc}</div>` : ""}
+                <div>Value: ${value}</div>
+                <div>Share: ${percentage}%</div>
+            `);
+            
+            tooltip.style("left", (event.pageX + 10) + "px")
+                .style("top", (event.pageY - 28) + "px");
+        })
+        .on("mousemove", function(event) {
+            d3.select("body").select(".chart-tooltip")
+                .style("left", (event.pageX + 10) + "px")
+                .style("top", (event.pageY - 28) + "px");
+        })
+        .on("mouseout", function() {
+            // Remove highlight
+            d3.select(this)
+                .transition()
+                .duration(200)
+                .attr("stroke", getCssVar('--color-surface'))
+                .style("stroke-width", "1.5px")
+                .attr("transform", "scale(1)");
+            
+            // Remove tooltip
+            d3.select("body").select(".chart-tooltip")
+                .transition()
+                .duration(200)
+                .style("opacity", 0)
+                .remove();
+        });
+    
+    // --- Add Center Text ---
+    const centerText = donutG.append("text")
+        .attr("text-anchor", "middle")
+        .style("font-family", "var(--font-body, sans-serif)")
+        .style("fill", getCssVar('--color-text-primary'));
+    
+    centerText.append("tspan")
+        .attr("x", 0)
+        .attr("dy", "-0.6em")
+        .style("font-size", "0.75em")
+        .style("fill", getCssVar('--color-text-secondary'))
+        .text(config.title);
+    
+    if (config.subtitle) {
+        centerText.append("tspan")
+            .attr("x", 0)
+            .attr("dy", "1.1em")
+            .style("font-size", "0.7em")
+            .style("fill", getCssVar('--color-text-tertiary'))
+            .text(config.subtitle);
+    }
+    
+    centerText.append("tspan")
+        .attr("x", 0)
+        .attr("dy", config.subtitle ? "1.3em" : "1.5em")
+        .style("font-size", "0.9em")
+        .style("font-weight", "600")
+        .text(centerItem[config.centerValueField] || "");
+    
+    // --- Add External Labels and Lines (conditional) ---
+    if (showLabels) {
+        // Only show labels for slices that are large enough
+        const labelThresholdPercentage = config.minPercentageForLabel / 100;
+        const labelData = pieData.filter(d => {
+            const percentage = (d.endAngle - d.startAngle) / (2 * Math.PI);
+            return percentage >= labelThresholdPercentage && d.data[config.valueField] > 0;
+        });
+        
+        if (labelData.length > 0) {
+            const lineGroup = donutG.append("g").attr("class", "label-lines");
+            const textLabelGroup = donutG.append("g").attr("class", "text-labels");
+            
+            const polylineStrokeColor = getCssVar('--color-text-tertiary');
+            const labelTextColor = getCssVar('--color-text-secondary');
+            const labelDescColor = getCssVar('--color-text-tertiary');
+            
+            lineGroup.selectAll('polyline')
+                .data(labelData)
+                .join('polyline')
+                .attr('stroke', polylineStrokeColor)
+                .style('fill', 'none')
+                .attr('stroke-width', 1)
+                .attr('points', d => {
+                    const posA = labelArcStart.centroid(d);
+                    const posB = labelArcMid.centroid(d);
+                    const posC = [posB[0] * 1.1, posB[1]];
+                    const midangle = d.startAngle + (d.endAngle - d.startAngle) / 2;
+                    posC[0] = (outerRadius + margin.left/2.5) * (midangle < Math.PI ? 1 : -1);
+                    return [posA, posB, posC];
+                });
+            
+            const textLabels = textLabelGroup.selectAll('text')
+                .data(labelData)
+                .join('text')
+                .style('font-family', "var(--font-body, sans-serif)")
+                .attr('dy', '0.35em')
+                .attr('transform', d => {
+                    const pos = [labelArcMid.centroid(d)[0] * 1.1, labelArcMid.centroid(d)[1]];
+                    const midangle = d.startAngle + (d.endAngle - d.startAngle) / 2;
+                    pos[0] = (outerRadius + margin.left/2.5 + 5) * (midangle < Math.PI ? 1 : -1);
+                    return `translate(${pos})`;
+                })
+                .style('text-anchor', d => (d.startAngle + (d.endAngle - d.startAngle) / 2 < Math.PI ? 'start' : 'end'));
+            
+            textLabels.append('tspan')
+                .attr('x', 0)
+                .style('font-size', '11px')
+                .style('font-weight', '500')
+                .style('fill', labelTextColor)
+                .text(d => truncateText(d.data[config.labelField], 15));
+            
+            textLabels.filter(d => !d.data.isOther)
+                .append('tspan')
+                .attr('x', 0)
+                .attr('dy', '1.2em')
+                .style('font-size', '10px')
+                .style('fill', labelDescColor)
+                .text(d => {
+                    // If we have a description, show it, otherwise show the percentage
+                    if (d.data[config.descField]) {
+                        return truncateText(d.data[config.descField], 18);
+                    } else {
+                        return `${d.data[config.percentageField].toFixed(1)}%`;
+                    }
+                });
+        }
+    }
+    
+    // --- Add Legend ---
+    if (config.legendPosition !== "none") {
+        let legendX, legendY, legendLayout = "vertical";
+        
+        // Position the legend based on configuration
+        if (config.legendPosition === "left") {
+            legendX = margin.left;
+            legendY = margin.top;
+        } else if (config.legendPosition === "right") {
+            legendX = margin.left + donutWidth + 10;
+            legendY = margin.top;
+        } else if (config.legendPosition === "bottom") {
+            legendX = margin.left;
+            legendY = margin.top + donutHeight + 10;
+            legendLayout = "horizontal";
+        }
+        
+        const legendGroup = svg.append("g")
+            .attr("transform", `translate(${legendX}, ${legendY})`);
+        
+        // For horizontal layout, we'll create multiple rows if needed
+        if (legendLayout === "horizontal") {
+            const itemsPerRow = Math.floor(donutWidth / 100); // Rough estimate
+            const rows = Math.ceil(chartPlotData.length / itemsPerRow);
+            
+            for (let row = 0; row < rows; row++) {
+                const rowItems = chartPlotData.slice(row * itemsPerRow, (row + 1) * itemsPerRow);
+                
+                const rowGroup = legendGroup.append("g")
+                    .attr("transform", `translate(0, ${row * 20})`);
+                
+                rowGroup.selectAll("g")
+                    .data(rowItems)
+                    .join("g")
+                    .attr("transform", (d, i) => `translate(${i * 100}, 0)`)
+                    .call(createLegendItem, color, config);
+            }
+        } else {
+            // Vertical layout is simpler
+            legendGroup.selectAll("g")
+                .data(chartPlotData)
+                .join("g")
+                .attr("transform", (d, i) => `translate(0, ${i * 20})`)
+                .call(createLegendItem, color, config);
+        }
+    }
+    
+    // Return the drawn chart data for potential further manipulation
+    return {
+        svg: svg,
+        pieData: pieData,
+        chartData: chartPlotData
+    };
+}
+
+/**
+ * Helper function to create a legend item
+ */
+function createLegendItem(selection, colorScale, config) {
+    // Add color squares
+    selection.append("rect")
+        .attr("width", 12)
+        .attr("height", 12)
+        .attr("fill", d => colorScale(d[config.colorField]));
+    
+    // Add legend text
+    selection.append("text")
+        .attr("x", 18)
+        .attr("y", 9)
+        .attr("dy", "0.1em")
+        .style("font-size", "11px")
+        .style("fill", getCssVar('--color-text-secondary'))
+        .text(d => {
+            const label = truncateText(d[config.labelField], 20);
+            return `${label} (${d[config.percentageField].toFixed(1)}%)`;
+        });
+}
+
+/**
+ * Get color scale for donut chart based on theme
+ */
+function getDonutColorScale(data, config) {
+    // Prefer using a color function from the theme if available
+    if (typeof getThemeOrdinalChartColors === 'function') {
+        return d3.scaleOrdinal()
+            .domain(data.map(d => d[config.colorField]))
+            .range(getThemeOrdinalChartColors(data.length));
+    }
+    
+    // Fallback colors if theme function not available
+    const baseColors = [
+        getCssVar('--chart-color-primary'),
+        getCssVar('--chart-color-secondary'),
+        getCssVar('--chart-color-tertiary'),
+        d3.color(getCssVar('--chart-color-primary')).darker(0.5).toString(),
+        d3.color(getCssVar('--chart-color-secondary')).darker(0.5).toString(),
+        d3.color(getCssVar('--chart-color-primary')).brighter(0.5).toString(),
+        d3.color(getCssVar('--chart-color-secondary')).brighter(0.5).toString(),
+        d3.color(getCssVar('--chart-color-tertiary')).brighter(0.5).toString(),
+    ];
+    
+    // Special color handling for "Other" category
+    return d3.scaleOrdinal()
+        .domain(data.map(d => d[config.colorField]))
+        .range(data.map((d, i) => {
+            if (d.isOther) {
+                return getCssVar('--chart-color-tertiary');
+            }
+            return baseColors[i % baseColors.length];
+        }));
+}
+
+/**
+ * Wrapper for NAICS Donut Chart with specific configuration
+ */
+function displayNaicsDonutChart(naicsData, chartElementId, topN = 5) {
+    return displayEnhancedDonutChart(naicsData, chartElementId, {
+        title: "Top NAICS",
+        centerValueField: "code",
+        labelField: "code",
+        descField: "desc",
+        topN: topN,
+        legendPosition: "none",
+        showExternalLabels: true
+    });
+}
+
+/**
+ * Wrapper for Share of Wallet Chart with specific configuration
+ */
+function displayShareOfWalletChart(model, containerId = 'share-of-wallet-container') {
+    // Process data for Share of Wallet (taken from your existing function)
     const shareData = processShareOfWalletData(model);
     
     if (!shareData || shareData.length === 0) {
@@ -6370,149 +7086,13 @@ function displayShareOfWalletChart(model, containerId = 'share-of-wallet-contain
         return;
     }
     
-    setLoading(containerId, false);
-    
-    // Get dimensions from the container element
-    const rect = container.getBoundingClientRect();
-    const width = rect.width;
-    const height = rect.height;
-    
-    if (width <= 10 || height <= 10) {
-        console.warn(`Container #${containerId} has minimal/no dimensions. W: ${width}, H: ${height}. Chart not drawn.`);
-        displayNoData(containerId, 'Chart area too small.');
-        return;
-    }
-    
-    // Create container for the donut chart
-    const chartDiv = document.createElement('div');
-    chartDiv.style.width = '100%';
-    chartDiv.style.height = '100%';
-    chartDiv.style.position = 'relative';
-    container.appendChild(chartDiv);
-    
-    // Create a new SVG element
-    const svg = d3.select(chartDiv)
-        .append('svg')
-        .attr('width', '100%')
-        .attr('height', '100%')
-        .attr('viewBox', `0 0 ${width} ${height}`)
-        .append('g')
-        .attr('transform', `translate(${width / 2}, ${height / 2})`);
-    
-    // Prepare colors
-    const color = d3.scaleOrdinal()
-        .domain(shareData.map(d => d.name))
-        .range(shareData.map((_, i) => {
-            if (i === shareData.length - 1 && shareData[i].name === 'Other') {
-                // Use a more muted color for "Other"
-                return getCssVar('--chart-color-tertiary');
-            }
-            // For the main segments, use primary colors
-            const baseColors = [
-                getCssVar('--chart-color-primary'),
-                getCssVar('--chart-color-secondary'),
-                d3.color(getCssVar('--chart-color-primary')).darker(0.5).toString(),
-                d3.color(getCssVar('--chart-color-secondary')).darker(0.5).toString(),
-                d3.color(getCssVar('--chart-color-primary')).brighter(0.5).toString(),
-                d3.color(getCssVar('--chart-color-secondary')).brighter(0.5).toString(),
-                d3.color(getCssVar('--chart-color-tertiary')).brighter(0.5).toString(),
-            ];
-            return baseColors[i % baseColors.length];
-        }));
-    
-    // Create pie layout
-    const pie = d3.pie()
-        .value(d => d.value)
-        .sort(null);
-    
-    // Calculate radius
-    const radius = Math.min(width, height) / 2 * 0.8;
-    
-    // Create arc generator
-    const arc = d3.arc()
-        .innerRadius(radius * 0.5) // Donut hole size
-        .outerRadius(radius);
-    
-    // Create the arcs
-    const arcs = svg.selectAll('path')
-        .data(pie(shareData))
-        .enter()
-        .append('path')
-        .attr('d', arc)
-        .attr('fill', (d, i) => color(d.data.name))
-        .attr('stroke', getCssVar('--color-surface'))
-        .attr('stroke-width', '1px');
-    
-    // Add percentage labels
-    const labelArc = d3.arc()
-        .innerRadius(radius * 0.8)
-        .outerRadius(radius * 0.8);
-    
-    svg.selectAll('text.percentage')
-        .data(pie(shareData))
-        .enter()
-        .append('text')
-        .attr('class', 'percentage')
-        .attr('transform', d => `translate(${labelArc.centroid(d)})`)
-        .attr('dy', '0.35em')
-        .attr('text-anchor', 'middle')
-        .style('font-size', '11px')
-        .style('fill', getCssVar('--color-text-primary'))
-        .style('font-weight', '600')
-        .text(d => {
-            const percentage = d.data.percentage;
-            return percentage >= 5 ? `${Math.round(percentage)}%` : '';
-        });
-    
-    // Add center text
-    svg.append('text')
-        .attr('text-anchor', 'middle')
-        .attr('dy', '-0.5em')
-        .style('font-size', '12px')
-        .style('fill', getCssVar('--color-text-secondary'))
-        .text('Market');
-    
-    svg.append('text')
-        .attr('text-anchor', 'middle')
-        .attr('dy', '0.5em')
-        .style('font-size', '12px')
-        .style('fill', getCssVar('--color-text-secondary'))
-        .text('Share');
-    
-    // Add legend
-    const legendGroup = svg.append('g')
-        .attr('transform', `translate(${-width / 2 + 15}, ${-height / 2 + 15})`);
-    
-    const legendItems = legendGroup.selectAll('g')
-        .data(shareData)
-        .enter()
-        .append('g')
-        .attr('transform', (d, i) => `translate(0, ${i * 20})`);
-    
-    // Add color squares
-    legendItems.append('rect')
-        .attr('width', 12)
-        .attr('height', 12)
-        .attr('fill', (d, i) => color(d.name));
-    
-    // Add legend text
-    legendItems.append('text')
-        .attr('x', 18)
-        .attr('y', 9)
-        .attr('dy', '0.1em')
-        .style('font-size', '11px')
-        .style('fill', getCssVar('--color-text-secondary'))
-        .text(d => {
-            const label = truncateText(d.name, 35);
-            return `${label} (${d.percentage.toFixed(1)}%)`;
-        });
-    
-    // Add tooltips
-    arcs.append('title')
-        .text(d => {
-            const name = d.data.name;
-            const value = formatCurrency(d.data.value);
-            const percentage = d.data.percentage.toFixed(1);
-            return `${name}\nValue: ${value}\nShare: ${percentage}%`;
-        });
+    return displayEnhancedDonutChart(shareData, containerId, {
+        title: "Market",
+        subtitle: "Share",
+        labelField: "name",
+        topN: 7,
+        legendPosition: "left",
+        showExternalLabels: false,
+        minPercentageForLabel: 5
+    });
 }
