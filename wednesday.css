@@ -240,7 +240,8 @@ a:hover { color: var(--color-secondary); text-decoration: none; }
     grid-template-areas:
 	
 		"share-wallet share-wallet sankey sankey sankey"
-		"tavtcv tavtcv dendrogram dendrogram dendrogram"
+		"tavtcv tavtcv tavtcv tavtcv tavtcv"
+		"dendrogram dendrogram dendrogram dendrogram dendrogram"
 		"naics-donut naics-donut map map arr"
 		"leaders leaders leaders leaders leaders"
         "expiring expiring expiring expiring expiring";
@@ -249,7 +250,11 @@ a:hover { color: var(--color-secondary); text-decoration: none; }
 
 /* Add area assignment for Share of Wallet */
 #bento-share-of-wallet { grid-area: share-wallet; }
-#bento-dendrogram { grid-area: dendrogram; }
+#bento-dendrogram {
+    grid-area: dendrogram;
+    min-height: 600px;
+    min-width: 800px;
+}
 #bento-naics-distribution { grid-area: naics-donut; }
 #bento-arr { grid-area: arr; } 
 #bento-sankey { grid-area: sankey; } 

@@ -6293,14 +6293,15 @@ function displayForceDirectedRadial(model) {
     }
     
     try {
-        // Create SVG container
-        const width = container.clientWidth;
-        const height = Math.max(600, container.clientHeight); // Increase height for top-down layout
+        // Create SVG container - ensure minimum dimensions
+        const width = Math.max(800, container.clientWidth);
+        const height = Math.max(600, container.clientHeight);
         
         const svg = d3.select(container)
             .append("svg")
-            .attr("width", width)
-            .attr("height", height);
+            .attr("width", "100%")
+            .attr("height", "100%")
+            .attr("viewBox", `0 0 ${width} ${height}`);
             
         // Create hierarchical data with the complete chain
         const hierarchyData = createHierarchyData(model, subAgencyFilter);
@@ -6308,9 +6309,9 @@ function displayForceDirectedRadial(model) {
         // Convert to d3 hierarchy for tree layout
         const root = d3.hierarchy(hierarchyData);
         
-        // Create a tree layout
+        // Create a horizontal tree layout
         const treeLayout = d3.tree()
-            .size([width - 80, height - 120])
+            .size([height - 120, width - 160]) // Horizontal layout (height, width)
             .separation((a, b) => (a.parent === b.parent ? 1 : 1.2));
         
         // Compute the tree layout
@@ -6318,19 +6319,19 @@ function displayForceDirectedRadial(model) {
         
         // Create a group for the visualization with margin
         const g = svg.append("g")
-            .attr("transform", `translate(40, 60)`);
+            .attr("transform", `translate(80, 60)`);
         
-        // Create links (paths between nodes)
+        // Create links (paths between nodes) - filter out root node links
         const link = g.append("g")
             .attr("fill", "none")
             .attr("stroke", getCssVar('--color-border'))
             .attr("stroke-opacity", 0.8)
             .selectAll("path")
-            .data(root.links())
+            .data(root.links().filter(link => link.source.depth > 0)) // Remove root links
             .join("path")
-            .attr("d", d3.linkVertical()
-                .x(d => d.x)
-                .y(d => d.y))
+            .attr("d", d3.linkHorizontal() // Horizontal link
+                .x(d => d.y)
+                .y(d => d.x))
             .attr("stroke-width", d => {
                 // Calculate stroke width based on value
                 const value = d.target.data.value || 0;
@@ -6372,12 +6373,12 @@ function displayForceDirectedRadial(model) {
             return baseRadius;
         }
         
-        // Create node groups
+        // Create node groups with horizontal layout
         const node = g.append("g")
             .selectAll("g")
             .data(root.descendants())
             .join("g")
-            .attr("transform", d => `translate(${d.x},${d.y})`)
+            .attr("transform", d => `translate(${d.y},${d.x})`) // Swap x and y for horizontal
             .attr("data-type", d => getNodeType(d));
         
         // Add circles to nodes
@@ -6398,14 +6399,15 @@ function displayForceDirectedRadial(model) {
             .attr("stroke", getCssVar('--color-surface'))
             .attr("stroke-width", 1.5);
         
-        // Add labels to nodes
+        // Add labels to nodes - adjust for horizontal layout
         node.append("text")
-            .attr("dy", d => {
+            .attr("dy", "0.35em")
+            .attr("x", d => {
                 const type = getNodeType(d);
                 const size = calculateNodeSize(type, d.data.value);
-                return -size - 5; // Position above the node
+                return d.children ? -size - 8 : size + 8; // Left for parent nodes, right for leaf nodes
             })
-            .attr("text-anchor", "middle")
+            .attr("text-anchor", d => d.children ? "end" : "start")
             .attr("font-size", d => {
                 const type = getNodeType(d);
                 if (type === 'agency') return "12px";
@@ -6431,15 +6433,16 @@ function displayForceDirectedRadial(model) {
                 return name;
             });
         
-        // Add value labels below nodes (except for root)
+        // Add value labels below nodes (except for root) - adjust for horizontal layout
         node.filter(d => getNodeType(d) !== 'root')
             .append("text")
-            .attr("dy", d => {
+            .attr("x", d => {
                 const type = getNodeType(d);
                 const size = calculateNodeSize(type, d.data.value);
-                return size + 15; // Position below the node
+                return d.children ? -size - 8 : size + 8; // Same position as name
             })
-            .attr("text-anchor", "middle")
+            .attr("y", 15) // Position below the name
+            .attr("text-anchor", d => d.children ? "end" : "start")
             .attr("font-size", "8px")
             .attr("fill", getCssVar('--color-text-secondary'))
             .text(d => {
@@ -6592,7 +6595,7 @@ function displayForceDirectedRadial(model) {
             .on("dblclick.zoom", function() {
                 svg.transition().duration(750).call(
                     zoom.transform,
-                    d3.zoomIdentity.translate(40, 60).scale(1)
+                    d3.zoomIdentity.translate(80, 60).scale(1)
                 );
             });
         
