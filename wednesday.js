@@ -6351,30 +6351,7 @@ function displayForceDirectedRadial(model) {
         let currentRoot = originalRoot;
         let breadcrumbPath = [];
         
-        // Store complete reference to all nodes (will be populated)
-        const nodeRegistry = new Map();
-        
-        // Register all nodes by their unique path
-        function registerNodes(node, parentPath = []) {
-            const currentPath = [...parentPath, node.data.name];
-            const pathKey = currentPath.join('|');
-            
-            // Register this node
-            nodeRegistry.set(pathKey, {
-                node: node,
-                path: currentPath
-            });
-            
-            // Register all children recursively
-            if (node.children) {
-                node.children.forEach(child => {
-                    registerNodes(child, currentPath);
-                });
-            }
-        }
-        
-        // Register all nodes in the hierarchy
-        registerNodes(originalRoot);
+        // We don't need the node registry since we're using a simpler approach
         
         // Initial render
         renderView();
@@ -6407,14 +6384,17 @@ function displayForceDirectedRadial(model) {
                 .attr("class", "chart")
                 .attr("transform", `translate(30, 75)`);
             
-            // Create links
+            // Create links, but hide the root leader line
             const link = chart.append("g")
                 .attr("class", "links")
                 .selectAll("path")
                 .data(root.links())
                 .join("path")
                 .attr("fill", "none")
-                .attr("stroke", getCssVar('--color-border'))
+                .attr("stroke", d => {
+                    // Hide the line if it's connected to the root node (depth 0)
+                    return d.source.depth === 0 ? "none" : getCssVar('--color-border');
+                })
                 .attr("stroke-opacity", 0.8)
                 .attr("d", d3.linkHorizontal()
                     .x(d => d.y)
@@ -6618,33 +6598,29 @@ function displayForceDirectedRadial(model) {
             nodeGroups.on("click", function(event, d) {
                 event.stopPropagation(); // Stop event propagation
                 
-                // Build the full path to this node
-                const nodePath = [];
-                let current = d;
-                
-                // Walk up the tree to build the path
-                while (current) {
-                    if (current.data.name) {
-                        nodePath.unshift(current.data.name);
+                // Only proceed if this node has children to drill down into
+                if (d.children && d.children.length > 0) {
+                    // Build the full path to this node
+                    const nodePath = [];
+                    let current = d;
+                    
+                    // Walk up the tree to build the path
+                    while (current) {
+                        if (current.data.name) {
+                            nodePath.unshift(current.data.name);
+                        }
+                        current = current.parent;
                     }
-                    current = current.parent;
-                }
-                
-                // Combine with current breadcrumb to get the full path
-                const fullPath = getFullPath(nodePath);
-                
-                // Look up the node in the registry by its path
-                const pathKey = fullPath.join('|');
-                const targetInfo = nodeRegistry.get(pathKey);
-                
-                if (targetInfo) {
-                    // Set the new breadcrumb path
-                    breadcrumbPath = fullPath;
+                    
+                    // Get the full path by combining breadcrumb path with local path
+                    const fullPath = breadcrumbPath.concat(nodePath);
                     
                     // Find the node in the original hierarchy
                     const targetNode = findNodeByPath(originalRoot, fullPath);
                     
                     if (targetNode) {
+                        // Update breadcrumb path and current root
+                        breadcrumbPath = fullPath;
                         currentRoot = targetNode;
                         renderView();
                     }
