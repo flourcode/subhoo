@@ -6303,64 +6303,58 @@ function displayForceDirectedRadial(model) {
             .attr("height", "100%")
             .attr("viewBox", `0 0 ${width} ${height}`)
             .attr("preserveAspectRatio", "xMidYMid meet");
+        
+        // Create a single container group for the visualization
+        const vizContainer = svg.append("g")
+            .attr("class", "viz-container");
             
         // Create hierarchical data
         const hierarchyData = createHierarchyData(model, subAgencyFilter);
         
         // Convert to d3 hierarchy
-        const root = d3.hierarchy(hierarchyData);
+        const originalRoot = d3.hierarchy(hierarchyData);
+        originalRoot.sort((a, b) => (b.data.value || 0) - (a.data.value || 0));
         
-        // Sort by value
-        root.sort((a, b) => (b.data.value || 0) - (a.data.value || 0));
+        // Keep track of current view state
+        let currentRoot = originalRoot;
+        let breadcrumbPath = [];
         
-        // State for focused node and breadcrumb
-        let focusNode = root;
-        const breadcrumb = [];
+        // Initial render
+        renderView();
         
-        // Function to update the visualization with a new focus node
-        function update(focusNode) {
-            // Calculate the tree layout for the focused subtree
+        // Main render function
+        function renderView() {
+            // Clear previous content
+            vizContainer.selectAll("*").remove();
+            
+            // Create tree layout for current root
             const treeLayout = d3.tree()
                 .size([height - 150, width - 300])
                 .separation((a, b) => (a.parent === b.parent ? 1 : 1.2));
             
-            // Create a copy of the focused node to avoid modifying the original
-            const focusCopy = d3.hierarchy(focusNode.data);
+            // Clone the current root to avoid modifying the original
+            const root = d3.hierarchy(currentRoot.data);
+            root.sort((a, b) => (b.data.value || 0) - (a.data.value || 0));
             
-            // Sort by value
-            focusCopy.sort((a, b) => (b.data.value || 0) - (a.data.value || 0));
+            // Apply layout
+            treeLayout(root);
             
-            // Compute the tree layout
-            treeLayout(focusCopy);
-            
-            // Determine max depth of visible nodes
-            let maxDepth = 0;
-            focusCopy.eachBefore(d => {
-                maxDepth = Math.max(maxDepth, d.depth);
-            });
-            
-            // Calculate fixed level spacing
-            const levelWidth = (width - 300) / (maxDepth + 1);
-            
-            // Override the y positions to force fixed level spacing
-            focusCopy.each(d => {
+            // Adjust horizontal spacing
+            const levelWidth = (width - 300) / (root.height + 1);
+            root.each(d => {
                 d.y = 100 + (d.depth * levelWidth);
             });
             
-            // Clear previous visualization
-            svg.selectAll("g.nodes, g.links, g.breadcrumb, g.legend, g.help-text").remove();
-            
-            // Create a group for the visualization
-            const g = svg.append("g")
-                .attr("class", "nodes-container")
+            // Create a group for the chart
+            const chart = vizContainer.append("g")
+                .attr("class", "chart")
                 .attr("transform", `translate(30, 75)`);
             
-            // Draw links
-            const linksGroup = g.append("g")
-                .attr("class", "links");
-                
-            const link = linksGroup.selectAll("path")
-                .data(focusCopy.links())
+            // Create links
+            const link = chart.append("g")
+                .attr("class", "links")
+                .selectAll("path")
+                .data(root.links())
                 .join("path")
                 .attr("fill", "none")
                 .attr("stroke", getCssVar('--color-border'))
@@ -6373,26 +6367,25 @@ function displayForceDirectedRadial(model) {
                     return Math.max(0.5, Math.min(2, Math.log10(value + 1) / 6));
                 });
             
-            // Get node type function
+            // Get node type function (accounting for breadcrumb depth)
             function getNodeType(d) {
-                // Adjust for the focused view - depth is relative to current focus
-                const absoluteDepth = breadcrumb.length + d.depth;
+                const effectiveDepth = breadcrumbPath.length + d.depth;
                 
-                if (absoluteDepth === 0) return 'root';
-                if (absoluteDepth === 1) return 'agency';
-                if (absoluteDepth === 2) {
+                if (effectiveDepth === 0) return 'root';
+                if (effectiveDepth === 1) return 'agency';
+                if (effectiveDepth === 2) {
                     return d.data.isSubAgency ? 'subagency' : 'unknown';
                 }
-                if (absoluteDepth === 3) {
+                if (effectiveDepth === 3) {
                     return d.data.isOffice ? 'office' : 'prime';
                 }
-                if (absoluteDepth === 4) {
+                if (effectiveDepth === 4) {
                     return d.data.isPrime ? 'prime' : 'sub';
                 }
                 return 'sub';
             }
             
-            // Calculate node radius based on type and value
+            // Calculate node radius based on type
             function getNodeRadius(d) {
                 const type = getNodeType(d);
                 if (type === 'root') return 0;
@@ -6404,19 +6397,19 @@ function displayForceDirectedRadial(model) {
             }
             
             // Create node groups
-            const nodesGroup = g.append("g")
-                .attr("class", "nodes");
-                
-            const node = nodesGroup.selectAll("g")
-                .data(focusCopy.descendants())
+            const nodeGroups = chart.append("g")
+                .attr("class", "nodes")
+                .selectAll("g.node")
+                .data(root.descendants())
                 .join("g")
-                .attr("class", "node")
+                .attr("class", d => `node ${d.children && d.children.length > 0 ? 'has-children' : 'leaf'}`)
                 .attr("transform", d => `translate(${d.y},${d.x})`)
                 .attr("data-type", d => getNodeType(d))
-                .attr("cursor", d => d.children ? "pointer" : "default");
+                .attr("data-name", d => d.data.name)
+                .style("cursor", d => d.children && d.children.length > 0 ? "pointer" : "default");
             
             // Add circles to nodes
-            node.append("circle")
+            nodeGroups.append("circle")
                 .attr("r", d => getNodeRadius(d))
                 .attr("fill", d => {
                     const type = getNodeType(d);
@@ -6430,21 +6423,19 @@ function displayForceDirectedRadial(model) {
                 .attr("stroke", getCssVar('--color-surface'))
                 .attr("stroke-width", 1.5);
             
-            // Add expand/drill icon for nodes with children
-            node.filter(d => d.children && d.children.length > 0)
+            // Add plus icon for nodes with children
+            nodeGroups.filter(d => d.children && d.children.length > 0)
                 .append("text")
                 .attr("class", "drill-icon")
-                .attr("x", 0)
-                .attr("y", 0)
-                .attr("font-size", "12px")
+                .attr("dy", "0.3em")
+                .attr("font-size", "10px")
                 .attr("text-anchor", "middle")
-                .attr("dominant-baseline", "central")
                 .attr("fill", getCssVar('--color-surface'))
                 .text("+");
             
             // Add labels with inline values
-            node.filter(d => d.depth > 0 || breadcrumb.length > 0) // Skip root node if at top level
-                .append("text")
+            nodeGroups.append("text")
+                .attr("class", "node-label")
                 .attr("dy", "0.32em")
                 .attr("x", d => {
                     const nodeRadius = getNodeRadius(d);
@@ -6489,11 +6480,12 @@ function displayForceDirectedRadial(model) {
                 });
             
             // Add separate value labels for agency, subagency, and office nodes
-            node.filter(d => {
+            nodeGroups.filter(d => {
                 const type = getNodeType(d);
                 return (type === 'agency' || type === 'subagency' || type === 'office') && d.data.value;
             })
             .append("text")
+            .attr("class", "value-label")
             .attr("x", d => {
                 const nodeRadius = getNodeRadius(d);
                 return d.children ? -nodeRadius - 6 : nodeRadius + 6;
@@ -6503,110 +6495,6 @@ function displayForceDirectedRadial(model) {
             .attr("font-size", "9px")
             .attr("fill", getCssVar('--color-text-secondary'))
             .text(d => formatConciseCurrency(d.data.value));
-            
-            // Add click events for drill-down
-            node.filter(d => d.children && d.children.length > 0)
-                .on("click", function(event, d) {
-                    // Update breadcrumb
-                    breadcrumb.push({
-                        node: focusNode,
-                        name: focusNode.data.name
-                    });
-                    
-                    // Update focus node
-                    focusNode = findNodeInOriginalHierarchy(root, d.data.name, breadcrumb.length);
-                    
-                    // Update visualization
-                    update(focusNode);
-                });
-            
-            // Draw breadcrumb navigation
-            const breadcrumbGroup = svg.append("g")
-                .attr("class", "breadcrumb")
-                .attr("transform", `translate(20, 20)`);
-                
-            if (breadcrumb.length > 0) {
-                let xOffset = 0;
-                
-                // Add "Back to Root" button at the beginning
-                const rootButton = breadcrumbGroup.append("g")
-                    .attr("transform", `translate(${xOffset}, 0)`)
-                    .attr("cursor", "pointer")
-                    .on("click", function() {
-                        // Reset to root
-                        breadcrumb.length = 0;
-                        focusNode = root;
-                        update(focusNode);
-                    });
-                    
-                rootButton.append("rect")
-                    .attr("width", 70)
-                    .attr("height", 24)
-                    .attr("rx", 4)
-                    .attr("fill", getCssVar('--color-surface-variant'))
-                    .attr("stroke", getCssVar('--color-border'));
-                    
-                rootButton.append("text")
-                    .attr("x", 35)
-                    .attr("y", 16)
-                    .attr("text-anchor", "middle")
-                    .attr("font-size", "11px")
-                    .attr("fill", getCssVar('--color-text-primary'))
-                    .text("Root View");
-                    
-                xOffset += 80;
-                
-                // Add each breadcrumb item
-                breadcrumb.forEach((item, i) => {
-                    const isLast = i === breadcrumb.length - 1;
-                    
-                    // Add separator
-                    breadcrumbGroup.append("text")
-                        .attr("x", xOffset)
-                        .attr("y", 16)
-                        .attr("text-anchor", "middle")
-                        .attr("font-size", "14px")
-                        .attr("fill", getCssVar('--color-text-tertiary'))
-                        .text("›");
-                        
-                    xOffset += 15;
-                    
-                    // Calculate text width
-                    const displayName = item.name.length > 20 ? item.name.substring(0, 17) + "..." : item.name;
-                    const textWidth = displayName.length * 6 + 20; // Approximate width
-                    
-                    // Add breadcrumb item
-                    const crumb = breadcrumbGroup.append("g")
-                        .attr("transform", `translate(${xOffset}, 0)`)
-                        .attr("cursor", isLast ? "default" : "pointer");
-                        
-                    if (!isLast) {
-                        crumb.on("click", function() {
-                            // Go back to this breadcrumb item
-                            focusNode = item.node;
-                            breadcrumb.splice(i + 1);
-                            update(focusNode);
-                        });
-                    }
-                    
-                    crumb.append("rect")
-                        .attr("width", textWidth)
-                        .attr("height", 24)
-                        .attr("rx", 4)
-                        .attr("fill", isLast ? getCssVar('--color-primary') : getCssVar('--color-surface-variant'))
-                        .attr("stroke", getCssVar('--color-border'));
-                        
-                    crumb.append("text")
-                        .attr("x", textWidth / 2)
-                        .attr("y", 16)
-                        .attr("text-anchor", "middle")
-                        .attr("font-size", "11px")
-                        .attr("fill", isLast ? getCssVar('--color-on-primary') : getCssVar('--color-text-primary'))
-                        .text(displayName);
-                        
-                    xOffset += textWidth + 5;
-                });
-            }
             
             // Set up tooltip
             let tooltip = d3.select("body").select("#tree-tooltip");
@@ -6628,9 +6516,9 @@ function displayForceDirectedRadial(model) {
                     .style("box-shadow", "0 3px 14px rgba(0,0,0,0.15)");
             }
             
-            // Basic tooltip functions
+            // Tooltip functions
             function showTooltip(event, d) {
-                const percentage = (100 * d.data.value / root.data.value).toFixed(1);
+                const percentage = (100 * d.data.value / originalRoot.data.value).toFixed(1);
                 const type = getNodeType(d);
                 
                 let tooltipContent = `
@@ -6640,25 +6528,42 @@ function displayForceDirectedRadial(model) {
                     <div>Share: ${percentage}%</div>
                 `;
                 
-                // Add child count info
+                // Add child count info for clickable nodes
                 if (d.children && d.children.length > 0) {
                     tooltipContent += `<div>Children: ${d.children.length}</div>`;
                     tooltipContent += `<div style="color: ${getCssVar('--color-text-tertiary')}; font-style: italic; margin-top: 5px;">Click to drill down</div>`;
                 }
                 
                 tooltip.html(tooltipContent)
-                .style("visibility", "visible")
-                .style("opacity", 1)
-                .style("left", (event.pageX + 15) + "px")
-                .style("top", (event.pageY - 28) + "px");
+                    .style("visibility", "visible")
+                    .style("opacity", 1)
+                    .style("left", (event.pageX + 15) + "px")
+                    .style("top", (event.pageY - 28) + "px");
             }
             
             function hideTooltip() {
                 tooltip.style("visibility", "hidden").style("opacity", 0);
             }
             
-            // Add hover interactions
-            node.on("mouseover", function(event, d) {
+            // Add direct click handler to nodes with children
+            nodeGroups.filter(d => d.children && d.children.length > 0)
+                .on("click", function(event, d) {
+                    event.stopPropagation(); // Stop event propagation
+                    
+                    // Find the node in the original hierarchy by path
+                    const path = [...breadcrumbPath, d.data.name];
+                    const targetNode = findNodeByPath(originalRoot, path);
+                    
+                    if (targetNode) {
+                        // Save current view in breadcrumb
+                        breadcrumbPath.push(d.data.name);
+                        currentRoot = targetNode;
+                        renderView();
+                    }
+                });
+            
+            // Add hover effects
+            nodeGroups.on("mouseover", function(event, d) {
                 d3.select(this).select("circle")
                     .attr("stroke", getCssVar('--chart-color-primary'))
                     .attr("stroke-width", 2);
@@ -6678,10 +6583,102 @@ function displayForceDirectedRadial(model) {
                 hideTooltip();
             });
             
+            // Add breadcrumb navigation if we're not at the root
+            if (breadcrumbPath.length > 0) {
+                const breadcrumb = vizContainer.append("g")
+                    .attr("class", "breadcrumb")
+                    .attr("transform", "translate(30, 30)");
+                
+                // Add "Root" button
+                const rootBtn = breadcrumb.append("g")
+                    .attr("class", "breadcrumb-item")
+                    .attr("transform", "translate(0, 0)")
+                    .style("cursor", "pointer");
+                
+                rootBtn.append("rect")
+                    .attr("width", 70)
+                    .attr("height", 24)
+                    .attr("rx", 4)
+                    .attr("fill", getCssVar('--color-surface-variant'))
+                    .attr("stroke", getCssVar('--color-border'));
+                
+                rootBtn.append("text")
+                    .attr("x", 35)
+                    .attr("y", 16)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "11px")
+                    .attr("fill", getCssVar('--color-text-primary'))
+                    .text("Root View");
+                
+                rootBtn.on("click", function() {
+                    // Reset to root
+                    breadcrumbPath = [];
+                    currentRoot = originalRoot;
+                    renderView();
+                });
+                
+                // Add breadcrumb items
+                let xOffset = 80;
+                
+                breadcrumbPath.forEach((name, i) => {
+                    const isLast = i === breadcrumbPath.length - 1;
+                    
+                    // Add separator
+                    breadcrumb.append("text")
+                        .attr("x", xOffset)
+                        .attr("y", 16)
+                        .attr("text-anchor", "middle")
+                        .attr("font-size", "14px")
+                        .attr("fill", getCssVar('--color-text-tertiary'))
+                        .text("›");
+                    
+                    xOffset += 15;
+                    
+                    // Calculate width for item
+                    const displayName = name.length > 20 ? name.substring(0, 17) + "..." : name;
+                    const textWidth = displayName.length * 6 + 20; // Approximate width
+                    
+                    // Create breadcrumb item
+                    const item = breadcrumb.append("g")
+                        .attr("class", "breadcrumb-item")
+                        .attr("transform", `translate(${xOffset}, 0)`)
+                        .style("cursor", isLast ? "default" : "pointer");
+                    
+                    item.append("rect")
+                        .attr("width", textWidth)
+                        .attr("height", 24)
+                        .attr("rx", 4)
+                        .attr("fill", isLast ? getCssVar('--color-primary') : getCssVar('--color-surface-variant'))
+                        .attr("stroke", getCssVar('--color-border'));
+                    
+                    item.append("text")
+                        .attr("x", textWidth / 2)
+                        .attr("y", 16)
+                        .attr("text-anchor", "middle")
+                        .attr("font-size", "11px")
+                        .attr("fill", isLast ? getCssVar('--color-on-primary') : getCssVar('--color-text-primary'))
+                        .text(displayName);
+                    
+                    if (!isLast) {
+                        item.on("click", function() {
+                            // Navigate to this breadcrumb
+                            breadcrumbPath = breadcrumbPath.slice(0, i + 1);
+                            const targetNode = findNodeByPath(originalRoot, breadcrumbPath);
+                            if (targetNode) {
+                                currentRoot = targetNode;
+                                renderView();
+                            }
+                        });
+                    }
+                    
+                    xOffset += textWidth + 5;
+                });
+            }
+            
             // Add simple legend
-            const legend = svg.append("g")
+            const legend = vizContainer.append("g")
                 .attr("class", "legend")
-                .attr("transform", "translate(20, 80)");
+                .attr("transform", breadcrumbPath.length > 0 ? "translate(30, 80)" : "translate(30, 30)");
                 
             const legendData = [
                 { label: "Agency", color: getCssVar('--chart-color-primary') },
@@ -6708,55 +6705,58 @@ function displayForceDirectedRadial(model) {
                     .text(item.label);
             });
             
-            // Add zoom functionality
-            const zoom = d3.zoom()
-                .scaleExtent([0.2, 5])
-                .on("zoom", (event) => {
-                    g.attr("transform", event.transform);
-                });
-                
-            svg.call(zoom)
-               .on("dblclick.zoom", function() {
-                    svg.transition().duration(750).call(
-                        zoom.transform,
-                        d3.zoomIdentity.translate(30, 75).scale(1)
-                    );
-                });
-            
             // Add help text
-            svg.append("g")
+            vizContainer.append("g")
                 .attr("class", "help-text")
                 .attr("transform", `translate(${width - 20}, ${height - 10})`)
                 .append("text")
                 .attr("text-anchor", "end")
                 .attr("font-size", "9px")
                 .attr("fill", getCssVar('--color-text-tertiary'))
-                .text("Click to drill down, scroll to zoom, drag to pan, double-click to reset view");
+                .text("Click node to drill down, click breadcrumb to navigate back");
         }
         
-        // Helper function to find a node by name in the original hierarchy
-        function findNodeInOriginalHierarchy(node, name, depth) {
-            if (!node) return null;
+        // Helper function to find a node by path from root
+        function findNodeByPath(root, path) {
+            let current = root;
             
-            // If at the target depth and name matches, return this node
-            if (depth === 0 && node.data.name === name) {
-                return node;
-            }
-            
-            // If we need to go deeper and have children, check them
-            if (depth > 0 && node.children) {
-                for (let i = 0; i < node.children.length; i++) {
-                    const childMatch = findNodeInOriginalHierarchy(node.children[i], name, depth - 1);
-                    if (childMatch) return childMatch;
+            // Follow each name in the path
+            for (let i = 0; i < path.length; i++) {
+                const name = path[i];
+                
+                // Find child with this name
+                if (!current.children) return null;
+                
+                let found = false;
+                for (let j = 0; j < current.children.length; j++) {
+                    if (current.children[j].data.name === name) {
+                        current = current.children[j];
+                        found = true;
+                        break;
+                    }
                 }
+                
+                if (!found) return null;
             }
             
-            return null;
+            return current;
         }
         
-        // Initial update with root node
-        update(focusNode);
-        
+        // Add zoom functionality to the SVG
+        const zoom = d3.zoom()
+            .scaleExtent([0.2, 5])
+            .on("zoom", (event) => {
+                vizContainer.attr("transform", event.transform);
+            });
+            
+        svg.call(zoom)
+           .on("dblclick.zoom", function() {
+                svg.transition().duration(750).call(
+                    zoom.transform,
+                    d3.zoomIdentity.translate(0, 0).scale(1)
+                );
+            });
+            
     } catch (error) {
         console.error("Error creating visualization:", error);
         displayError(containerId, `Failed to render visualization: ${error.message}`);
