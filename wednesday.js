@@ -6408,7 +6408,7 @@ function displayForceDirectedRadial(model) {
             function getNodeType(d) {
                 const effectiveDepth = breadcrumbPath.length + d.depth;
                 
-                if (effectiveDepth === 0) return 'root';
+                if (effectiveDepth === 0) return 'main';
                 if (effectiveDepth === 1) return 'agency';
                 if (effectiveDepth === 2) {
                     return d.data.isSubAgency ? 'subagency' : 'unknown';
@@ -6425,7 +6425,7 @@ function displayForceDirectedRadial(model) {
             // Calculate node radius based on type
             function getNodeRadius(d) {
                 const type = getNodeType(d);
-                if (type === 'root') return 0;
+                if (type === 'main') return 0;
                 if (type === 'agency') return 8;
                 if (type === 'subagency') return 7;
                 if (type === 'office') return 6;
@@ -6443,7 +6443,7 @@ function displayForceDirectedRadial(model) {
                 .attr("transform", d => `translate(${d.y},${d.x})`)
                 .attr("data-type", d => getNodeType(d))
                 .attr("data-name", d => d.data.name)
-                .style("cursor", "pointer"); // Make all nodes clickable
+                .style("cursor", d => d.children && d.children.length > 0 ? "pointer" : "default");
             
             // Get theme-aware colors
             const colors = getDendrogramColors();
@@ -6571,9 +6571,7 @@ function displayForceDirectedRadial(model) {
                 // Add child count info for clickable nodes
                 if (d.children && d.children.length > 0) {
                     tooltipContent += `<div>Children: ${d.children.length}</div>`;
-                    tooltipContent += `<div style="color: ${getCssVar('--color-text-tertiary')}; font-style: italic; margin-top: 5px;">Click to view this node</div>`;
-                } else {
-                    tooltipContent += `<div style="color: ${getCssVar('--color-text-tertiary')}; font-style: italic; margin-top: 5px;">Click to view details</div>`;
+                    tooltipContent += `<div style="color: ${getCssVar('--color-text-tertiary')}; font-style: italic; margin-top: 5px;">Click to drill down</div>`;
                 }
                 
                 tooltip.html(tooltipContent)
@@ -6587,45 +6585,18 @@ function displayForceDirectedRadial(model) {
                 tooltip.style("visibility", "hidden").style("opacity", 0);
             }
             
-            // Find the full path to a node based on its local path and the current breadcrumb
-            function getFullPath(localNodePath) {
-                // Get the full path by combining breadcrumb path and local node path
-                // (skipping the first element which is already included in breadcrumb)
-                return [...breadcrumbPath, ...localNodePath.slice(1)];
-            }
+            // No longer needed as we're using a simpler approach
             
-            // Add click handler to all nodes
-            nodeGroups.on("click", function(event, d) {
-                event.stopPropagation(); // Stop event propagation
-                
-                // Only proceed if this node has children to drill down into
-                if (d.children && d.children.length > 0) {
-                    // Build the full path to this node
-                    const nodePath = [];
-                    let current = d;
+            // Add click handler to all nodes with children
+            nodeGroups.filter(d => d.children && d.children.length > 0)
+                .on("click", function(event, d) {
+                    event.stopPropagation(); // Stop event propagation
                     
-                    // Walk up the tree to build the path
-                    while (current) {
-                        if (current.data.name) {
-                            nodePath.unshift(current.data.name);
-                        }
-                        current = current.parent;
-                    }
-                    
-                    // Get the full path by combining breadcrumb path with local path
-                    const fullPath = breadcrumbPath.concat(nodePath);
-                    
-                    // Find the node in the original hierarchy
-                    const targetNode = findNodeByPath(originalRoot, fullPath);
-                    
-                    if (targetNode) {
-                        // Update breadcrumb path and current root
-                        breadcrumbPath = fullPath;
-                        currentRoot = targetNode;
-                        renderView();
-                    }
-                }
-            });
+                    // Save current node as new root
+                    breadcrumbPath.push(d.data.name);
+                    currentRoot = d;
+                    renderView();
+                });
             
             // Add hover effects
             nodeGroups.on("mouseover", function(event, d) {
@@ -6673,7 +6644,7 @@ function displayForceDirectedRadial(model) {
                     .attr("text-anchor", "middle")
                     .attr("font-size", "11px")
                     .attr("fill", getCssVar('--color-text-primary'))
-                    .text("Root View");
+                    .text("Main View");
                 
                 rootBtn.on("click", function() {
                     // Reset to root
@@ -6778,7 +6749,7 @@ function displayForceDirectedRadial(model) {
                 .attr("text-anchor", "end")
                 .attr("font-size", "9px")
                 .attr("fill", getCssVar('--color-text-tertiary'))
-                .text("Click any node to view it, use breadcrumbs to navigate back");
+                .text("Click node to drill down, use breadcrumb to navigate");
         }
         
         // Helper function to find a node by path from root
