@@ -5938,72 +5938,6 @@ window.displayNaicsDonutChart = displayNaicsDonutChart;
 window.displayShareOfWalletChart = displayShareOfWalletChart;
 window.displayEnhancedDonutChart = displayEnhancedDonutChart;
 
-// Make sure both charts update with any filter change
-function bindChartUpdatesToFilterChanges() {
-    // Elements that trigger filter updates
-    const filterTriggers = [
-        document.getElementById('search-input'),
-        document.getElementById('sub-agency-filter'),
-        document.getElementById('naics-filter'),
-        document.getElementById('refresh-button')
-    ];
-
-    // Add additional triggers that might exist
-    const additionalTriggers = [
-        document.getElementById('preset-view-selector'),
-        document.getElementById('advanced-filter-button')
-    ];
-
-    // Combine all triggers that exist
-    const allTriggers = [...filterTriggers, ...additionalTriggers].filter(Boolean);
-
-    // For each trigger, add appropriate event listener
-    allTriggers.forEach(element => {
-        if (!element) return;
-
-        // Determine the event type based on element
-        const eventType = element.tagName === 'BUTTON' ? 'click' : 
-                         (element.tagName === 'INPUT' ? 'input' : 'change');
-
-        // Add event listener that will update both charts after filter changes
-        element.addEventListener(eventType, () => {
-            // Give time for the main filter function to complete
-            setTimeout(updateBothCharts, 500);
-        });
-
-        console.log(`Added ${eventType} listener to ${element.id || element.tagName} for chart updates`);
-    });
-
-    // Also hook into the Apply Filters function if it exists
-    if (typeof window.applyFiltersAndUpdateVisuals === 'function') {
-        const originalApplyFilters = window.applyFiltersAndUpdateVisuals;
-        window.applyFiltersAndUpdateVisuals = function() {
-            originalApplyFilters.apply(this, arguments);
-            setTimeout(updateBothCharts, 300);
-        };
-        console.log("Hooked into applyFiltersAndUpdateVisuals for chart updates");
-    }
-}
-
-// Function to update both charts based on current model
-function updateBothCharts() {
-    try {
-        // Display Share of Wallet chart with the current filtered model
-        displayShareOfWalletChart(unifiedModel);
-        
-        // Refresh NAICS chart 
-        const naicsContainer = document.getElementById('naics-donut-chart-container');
-        if (naicsContainer) {
-            const naicsData = processNaicsDistributionData(unifiedModel);
-            displayNaicsDonutChart(naicsData, 'naics-donut-chart-container');
-        }
-
-        console.log("Both charts updated with current filters");
-    } catch (e) {
-        console.error("Error updating charts after filter change:", e);
-    }
-}
-
 // Override the updateVisualsFromUnifiedModel function if it exists
 const originalUpdateVisualsFromUnifiedModel = window.updateVisualsFromUnifiedModel;
 if (originalUpdateVisualsFromUnifiedModel) {
@@ -6012,14 +5946,20 @@ if (originalUpdateVisualsFromUnifiedModel) {
         originalUpdateVisualsFromUnifiedModel.apply(this, arguments);
         
         // Add a slight delay to let other visualizations complete
-        setTimeout(updateBothCharts, 300);
+        setTimeout(() => {
+            try {
+                // Display Share of Wallet chart with the current model
+                displayShareOfWalletChart(unifiedModel);
+                
+                // Refresh NAICS chart if needed
+                const naicsContainer = document.getElementById('naics-donut-chart-container');
+                if (naicsContainer) {
+                    const naicsData = processNaicsDistributionData(unifiedModel);
+                    displayNaicsDonutChart(naicsData, 'naics-donut-chart-container');
+                }
+            } catch (e) {
+                console.error("Error updating additional charts:", e);
+            }
+        }, 300);
     };
-}
-
-// Initialize event listeners when the DOM is ready
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', bindChartUpdatesToFilterChanges);
-} else {
-    // Document already loaded, run immediately
-    bindChartUpdatesToFilterChanges();
 }
