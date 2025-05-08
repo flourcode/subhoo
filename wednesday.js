@@ -6294,38 +6294,51 @@ function displayForceDirectedRadial(model) {
     
     try {
         // Create SVG container - ensure minimum dimensions
-        const containerWidth = container.clientWidth;
-        const containerHeight = container.clientHeight;
-        const width = Math.max(400, containerWidth);
-        const height = Math.max(400, containerHeight);
-        
-        // Calculate the maximum radius for the sunburst
-        const radius = Math.min(width, height) / 2;
+        const width = Math.max(800, container.clientWidth);
+        const height = Math.max(600, container.clientHeight);
         
         const svg = d3.select(container)
             .append("svg")
             .attr("width", "100%")
             .attr("height", "100%")
-            .attr("viewBox", `0 0 ${width} ${height}`)
-            .append("g")
-            .attr("transform", `translate(${width / 2},${height / 2})`);
+            .attr("viewBox", `0 0 ${width} ${height}`);
             
         // Create hierarchical data with the complete chain
         const hierarchyData = createHierarchyData(model, subAgencyFilter);
         
-        // Convert to d3 hierarchy for sunburst layout
-        const root = d3.hierarchy(hierarchyData)
-            .sum(d => d.value || 0)  // Use contract value for sizing
-            .sort((a, b) => b.value - a.value);  // Sort by value
+        // Convert to d3 hierarchy for tree layout
+        const root = d3.hierarchy(hierarchyData);
         
-        // Create partition layout
-        const partition = d3.partition()
-            .size([2 * Math.PI, radius * radius]);
+        // Create a horizontal tree layout
+        const treeLayout = d3.tree()
+            .size([height - 120, width - 160]) // Horizontal layout (height, width)
+            .separation((a, b) => (a.parent === b.parent ? 1 : 1.2));
         
-        // Calculate partition layout
-        partition(root);
+        // Compute the tree layout
+        treeLayout(root);
         
-        // Define color scale based on node type
+        // Create a group for the visualization with margin
+        const g = svg.append("g")
+            .attr("transform", `translate(80, 60)`);
+        
+        // Create links (paths between nodes) - filter out root node links
+        const link = g.append("g")
+            .attr("fill", "none")
+            .attr("stroke", getCssVar('--color-border'))
+            .attr("stroke-opacity", 0.8)
+            .selectAll("path")
+            .data(root.links().filter(link => link.source.depth > 0)) // Remove root links
+            .join("path")
+            .attr("d", d3.linkHorizontal() // Horizontal link
+                .x(d => d.y)
+                .y(d => d.x))
+            .attr("stroke-width", d => {
+                // Calculate stroke width based on value
+                const value = d.target.data.value || 0;
+                return Math.max(1, Math.min(3, Math.log10(value + 1) / 2));
+            });
+        
+        // Determine node type
         function getNodeType(d) {
             const depth = d.depth;
             if (depth === 0) return 'root';
@@ -6342,59 +6355,198 @@ function displayForceDirectedRadial(model) {
             return 'sub';
         }
         
-        function getNodeColor(d) {
-            const type = getNodeType(d);
-            if (type === 'root') return 'none';
-            if (type === 'agency') return getCssVar('--chart-color-primary');
-            if (type === 'subagency') return d3.color(getCssVar('--chart-color-primary')).brighter(0.2);
-            if (type === 'office') return d3.color(getCssVar('--chart-color-secondary')).darker(0.2);
-            if (type === 'prime') return getCssVar('--chart-color-secondary');
-            return getCssVar('--chart-color-tertiary');
+        // Calculate node size based on type and value
+        function calculateNodeSize(type, value) {
+            // Base radius by type
+            const baseRadius = 
+                type === 'agency' ? 10 :
+                type === 'subagency' ? 9 :
+                type === 'office' ? 8 :
+                type === 'prime' ? 7 : 5;
+            
+            // Scale by value
+            if (value && value > 0) {
+                const scaleFactor = Math.log10(value) / 8;
+                return baseRadius * (1 + Math.min(2, scaleFactor));
+            }
+            
+            return baseRadius;
         }
         
-        // Create arc generator for the sunburst segments
-        const arc = d3.arc()
-            .startAngle(d => d.x0)
-            .endAngle(d => d.x1)
-            .padAngle(d => Math.min((d.x1 - d.x0) / 2, 0.005)) // Add padding between segments
-            .padRadius(radius / 2)
-            .innerRadius(d => Math.sqrt(d.y0))
-            .outerRadius(d => Math.sqrt(d.y1) - 1);
+        // Create node groups with horizontal layout
+        const node = g.append("g")
+            .selectAll("g")
+            .data(root.descendants())
+            .join("g")
+            .attr("transform", d => `translate(${d.y},${d.x})`) // Swap x and y for horizontal
+            .attr("data-type", d => getNodeType(d));
         
-        // Create path elements for each arc
-        const path = svg.append("g")
-            .selectAll("path")
-            .data(root.descendants().filter(d => d.depth > 0)) // Skip root node
-            .join("path")
-            .attr("fill", d => getNodeColor(d))
-            .attr("d", arc)
+        // Add circles to nodes
+        node.append("circle")
+            .attr("r", d => {
+                const type = getNodeType(d);
+                return calculateNodeSize(type, d.data.value);
+            })
+            .attr("fill", d => {
+                const type = getNodeType(d);
+                if (type === 'root') return 'none';
+                if (type === 'agency') return getCssVar('--chart-color-primary');
+                if (type === 'subagency') return d3.color(getCssVar('--chart-color-primary')).brighter(0.2);
+                if (type === 'office') return d3.color(getCssVar('--chart-color-secondary')).darker(0.2);
+                if (type === 'prime') return getCssVar('--chart-color-secondary');
+                return getCssVar('--chart-color-tertiary');
+            })
             .attr("stroke", getCssVar('--color-surface'))
-            .attr("stroke-width", 1);
+            .attr("stroke-width", 1.5);
         
-        // Add hover interactivity and tooltips
-        function format(value) {
-            return formatCurrency(value);
-        }
+        // Add labels to nodes - adjust for horizontal layout
+        node.append("text")
+            .attr("dy", "0.35em")
+            .attr("x", d => {
+                const type = getNodeType(d);
+                const size = calculateNodeSize(type, d.data.value);
+                return d.children ? -size - 8 : size + 8; // Left for parent nodes, right for leaf nodes
+            })
+            .attr("text-anchor", d => d.children ? "end" : "start")
+            .attr("font-size", d => {
+                const type = getNodeType(d);
+                if (type === 'agency') return "12px";
+                if (type === 'subagency') return "11px";
+                if (type === 'office') return "10px";
+                if (type === 'prime') return "9px";
+                return "8px";
+            })
+            .attr("fill", getCssVar('--color-text-primary'))
+            .text(d => {
+                if (getNodeType(d) === 'root') return "";
+                
+                // Truncate text based on node type
+                const name = d.data.name || "";
+                const type = getNodeType(d);
+                
+                if (type === 'agency' && name.length > 25) return name.substring(0, 22) + "...";
+                if (type === 'subagency' && name.length > 20) return name.substring(0, 17) + "...";
+                if (type === 'office' && name.length > 20) return name.substring(0, 17) + "...";
+                if (type === 'prime' && name.length > 18) return name.substring(0, 15) + "...";
+                if (type === 'sub' && name.length > 15) return name.substring(0, 12) + "...";
+                
+                return name;
+            });
         
-        function arcVisible(d) {
-            return d.y1 <= 3 && d.y0 >= 1 && d.x1 > d.x0;
-        }
+        // Add value labels below nodes (except for root) - adjust for horizontal layout
+        node.filter(d => getNodeType(d) !== 'root')
+            .append("text")
+            .attr("x", d => {
+                const type = getNodeType(d);
+                const size = calculateNodeSize(type, d.data.value);
+                return d.children ? -size - 8 : size + 8; // Same position as name
+            })
+            .attr("y", 15) // Position below the name
+            .attr("text-anchor", d => d.children ? "end" : "start")
+            .attr("font-size", "8px")
+            .attr("fill", getCssVar('--color-text-secondary'))
+            .text(d => {
+                return d.data.value ? formatConciseCurrency(d.data.value) : "";
+            });
         
-        function labelVisible(d) {
-            return d.y1 <= 3 && d.y0 >= 1 && (d.y1 - d.y0) * (d.x1 - d.x0) > 0.03;
-        }
+        // Add hover interactions
+        node.on("mouseover", function(event, d) {
+            // Highlight current node
+            d3.select(this).select("circle")
+                .attr("stroke", getCssVar('--chart-color-primary'))
+                .attr("stroke-width", 2);
+            
+            // Highlight path to root
+            let current = d;
+            while (current.parent) {
+                link.filter(l => l.target === current)
+                    .attr("stroke", getCssVar('--chart-color-primary'))
+                    .attr("stroke-opacity", 1)
+                    .attr("stroke-width", l => {
+                        const baseWidth = l.target.data.value ? Math.log10(l.target.data.value + 1) / 2 : 1;
+                        return Math.max(1, Math.min(3, baseWidth)) + 1;
+                    });
+                
+                node.filter(n => n === current.parent)
+                    .select("circle")
+                    .attr("stroke", getCssVar('--chart-color-primary'))
+                    .attr("stroke-width", 2);
+                
+                current = current.parent;
+            }
+            
+            // Display tooltip
+            const tooltipContent = `
+                <div style="font-weight: bold; margin-bottom: 4px;">${d.data.name || "Unknown"}</div>
+                <div>Type: ${getNodeType(d).charAt(0).toUpperCase() + getNodeType(d).slice(1)}</div>
+                <div>Value: ${formatCurrency(d.data.value || 0)}</div>
+                ${d.parent ? `<div>Parent: ${d.parent.data.name || "Unknown"}</div>` : ""}
+                ${d.children ? `<div>Children: ${d.children.length}</div>` : ""}
+            `;
+            
+            showTooltip(event.pageX, event.pageY, tooltipContent);
+        })
+        .on("mousemove", function(event) {
+            updateTooltipPosition(event.pageX, event.pageY);
+        })
+        .on("mouseout", function(event, d) {
+            // Reset highlights
+            node.select("circle")
+                .attr("stroke", getCssVar('--color-surface'))
+                .attr("stroke-width", 1.5);
+            
+            link.attr("stroke", getCssVar('--color-border'))
+                .attr("stroke-opacity", 0.8)
+                .attr("stroke-width", d => {
+                    const value = d.target.data.value || 0;
+                    return Math.max(1, Math.min(3, Math.log10(value + 1) / 2));
+                });
+            
+            hideTooltip();
+        });
         
-        function labelTransform(d) {
-            const x = (d.x0 + d.x1) / 2 * 180 / Math.PI;
-            const y = Math.sqrt(d.y0 + d.y1) / 2;
-            return `rotate(${x - 90}) translate(${y},0) rotate(${x < 180 ? 0 : 180})`;
-        }
+        // Add color legend
+        const colorLegend = svg.append("g")
+            .attr("transform", `translate(20, 20)`);
+            
+        const colorLegendData = [
+            { label: "Agency", color: getCssVar('--chart-color-primary') },
+            { label: "Sub-Agency", color: d3.color(getCssVar('--chart-color-primary')).brighter(0.2) },
+            { label: "Office", color: d3.color(getCssVar('--chart-color-secondary')).darker(0.2) },
+            { label: "Prime Contractor", color: getCssVar('--chart-color-secondary') },
+            { label: "Subcontractor", color: getCssVar('--chart-color-tertiary') }
+        ];
         
-        // Create tooltip
-        let tooltip = d3.select("body").select("#sunburst-tooltip");
+        colorLegendData.forEach((item, i) => {
+            const g = colorLegend.append("g")
+                .attr("transform", `translate(0, ${i * 20})`);
+                
+            g.append("rect")
+                .attr("width", 14)
+                .attr("height", 14)
+                .attr("fill", item.color);
+                
+            g.append("text")
+                .attr("x", 20)
+                .attr("y", 12)
+                .attr("font-size", "12px")
+                .attr("fill", getCssVar('--color-text-secondary'))
+                .text(item.label);
+        });
+        
+        // Add explanation text for hierarchy
+        svg.append("g")
+            .attr("transform", `translate(20, ${colorLegendData.length * 20 + 20})`)
+            .append("text")
+            .attr("font-size", "11px")
+            .attr("fill", getCssVar('--color-text-secondary'))
+            .text("Hierarchical view from agency to subcontractor");
+        
+        // Create tooltip element (if not exists)
+        let tooltip = d3.select("body").select("#tree-tooltip");
         if (tooltip.empty()) {
             tooltip = d3.select("body").append("div")
-                .attr("id", "sunburst-tooltip")
+                .attr("id", "tree-tooltip")
                 .style("position", "absolute")
                 .style("visibility", "hidden")
                 .style("opacity", 0)
@@ -6411,38 +6563,19 @@ function displayForceDirectedRadial(model) {
         }
         
         // Tooltip functions
-        function showTooltip(event, d) {
-            const percentage = (100 * d.value / root.value).toFixed(1);
-            const type = getNodeType(d);
-            const typeName = type.charAt(0).toUpperCase() + type.slice(1);
-            
-            const ancestry = [];
-            let node = d;
-            while (node.parent && node.parent.depth > 0) {
-                ancestry.unshift(node.parent.data.name);
-                node = node.parent;
-            }
-            
-            let pathText = '';
-            if (ancestry.length > 0) {
-                pathText = `<div style="color: ${getCssVar('--color-text-secondary')}; margin-bottom: 4px;">Path: ${ancestry.join(' → ')}</div>`;
-            }
-            
-            const html = `
-                <div style="font-weight: bold; margin-bottom: 4px;">${d.data.name || 'Unknown'}</div>
-                ${pathText}
-                <div>Type: ${typeName}</div>
-                <div>Value: ${format(d.value)}</div>
-                <div>Share: ${percentage}%</div>
-                ${d.children ? `<div>Children: ${d.children.length}</div>` : ''}
-            `;
-            
+        function showTooltip(x, y, html) {
             tooltip
                 .html(html)
                 .style("visibility", "visible")
                 .style("opacity", 1)
-                .style("left", (event.pageX + 15) + "px")
-                .style("top", (event.pageY - 28) + "px");
+                .style("left", (x + 15) + "px")
+                .style("top", (y - 28) + "px");
+        }
+        
+        function updateTooltipPosition(x, y) {
+            tooltip
+                .style("left", (x + 15) + "px")
+                .style("top", (y - 28) + "px");
         }
         
         function hideTooltip() {
@@ -6451,144 +6584,23 @@ function displayForceDirectedRadial(model) {
                 .style("opacity", 0);
         }
         
-        // Add interaction to arcs
-        path.on("mouseover", function(event, d) {
-            // Highlight the current arc
-            d3.select(this)
-                .attr("stroke", getCssVar('--color-primary'))
-                .attr("stroke-width", 2);
-            
-            // Show tooltip
-            showTooltip(event, d);
-        })
-        .on("mousemove", function(event) {
-            // Update tooltip position
-            tooltip
-                .style("left", (event.pageX + 15) + "px")
-                .style("top", (event.pageY - 28) + "px");
-        })
-        .on("mouseout", function() {
-            // Reset highlighting
-            d3.select(this)
-                .attr("stroke", getCssVar('--color-surface'))
-                .attr("stroke-width", 1);
-            
-            // Hide tooltip
-            hideTooltip();
-        })
-        .on("click", function(event, d) {
-            // Zoom on click functionality
-            parent.datum(d.parent || root);
-            
-            root.each(d => d.target = {
-                x0: Math.max(0, Math.min(1, (d.x0 - p.x0) / (p.x1 - p.x0))) * 2 * Math.PI,
-                x1: Math.max(0, Math.min(1, (d.x1 - p.x0) / (p.x1 - p.x0))) * 2 * Math.PI,
-                y0: Math.max(0, d.y0 - p.depth),
-                y1: Math.max(0, d.y1 - p.depth)
-            });
-            
-            // Create transition
-            const t = d3.transition().duration(750);
-            
-            // Transition the arcs
-            path.transition(t)
-                .tween("data", d => {
-                    const i = d3.interpolate(d.current, d.target);
-                    return t => d.current = i(t);
-                })
-                .filter(function(d) {
-                    return +this.getAttribute("fill-opacity") || arcVisible(d.target);
-                })
-                .attr("fill-opacity", d => arcVisible(d.target) ? (d.children ? 0.8 : 0.5) : 0)
-                .attr("pointer-events", d => arcVisible(d.target) ? "auto" : "none")
-                .attrTween("d", d => () => arc(d.current));
-            
-            // Transition labels
-            label.filter(function(d) {
-                return +this.getAttribute("fill-opacity") || labelVisible(d.target);
-            }).transition(t)
-                .attr("fill-opacity", d => labelVisible(d.target) ? 1 : 0)
-                .attrTween("transform", d => () => labelTransform(d.current));
-        });
-        
-        // Add labels for larger arcs
-        const label = svg.append("g")
-            .attr("pointer-events", "none")
-            .attr("text-anchor", "middle")
-            .selectAll("text")
-            .data(root.descendants().filter(d => d.depth > 0 && (d.y1 - d.y0) * (d.x1 - d.x0) > 0.03))
-            .join("text")
-            .attr("dy", "0.35em")
-            .attr("fill-opacity", d => labelVisible(d) ? 1 : 0)
-            .attr("transform", d => labelTransform(d))
-            .attr("font-size", d => {
-                const type = getNodeType(d);
-                // Adjust font size based on node type
-                if (type === 'agency') return "12px";
-                if (type === 'subagency') return "10px";
-                if (type === 'office') return "9px";
-                return "8px";
-            })
-            .attr("fill", getCssVar('--color-text-primary'))
-            .text(d => {
-                // Truncate text based on arc size
-                const name = d.data.name || "";
-                const arcLength = (d.x1 - d.x0) * Math.sqrt(d.y1);
-                const maxChars = Math.floor(arcLength * 4);
-                
-                if (name.length > maxChars) {
-                    return name.substring(0, Math.max(1, maxChars - 3)) + "...";
-                }
-                return name;
+        // Add zoom and pan functionality
+        const zoom = d3.zoom()
+            .scaleExtent([0.3, 3])
+            .on("zoom", (event) => {
+                g.attr("transform", event.transform);
             });
         
-        // Add title text in the center
-        svg.append("text")
-            .attr("text-anchor", "middle")
-            .attr("dy", "-0.5em")
-            .attr("font-size", "14px")
-            .attr("fill", getCssVar('--color-text-primary'))
-            .text("Contract Hierarchy");
-        
-        // Add subtitle showing total value
-        svg.append("text")
-            .attr("text-anchor", "middle")
-            .attr("dy", "1em")
-            .attr("font-size", "12px")
-            .attr("fill", getCssVar('--color-text-secondary'))
-            .text(`Total: ${formatCurrency(root.value)}`);
-        
-        // Add legend for node types
-        const legendData = [
-            { label: "Agency", color: getCssVar('--chart-color-primary') },
-            { label: "Sub-Agency", color: d3.color(getCssVar('--chart-color-primary')).brighter(0.2) },
-            { label: "Office", color: d3.color(getCssVar('--chart-color-secondary')).darker(0.2) },
-            { label: "Prime Contractor", color: getCssVar('--chart-color-secondary') },
-            { label: "Subcontractor", color: getCssVar('--chart-color-tertiary') }
-        ];
-        
-        const legendG = svg.append("g")
-            .attr("transform", `translate(${-radius + 20}, ${-radius + 20})`);
-        
-        legendData.forEach((item, i) => {
-            const g = legendG.append("g")
-                .attr("transform", `translate(0, ${i * 20})`);
-            
-            g.append("rect")
-                .attr("width", 12)
-                .attr("height", 12)
-                .attr("fill", item.color);
-            
-            g.append("text")
-                .attr("x", 20)
-                .attr("y", 10)
-                .attr("font-size", "10px")
-                .attr("fill", getCssVar('--color-text-secondary'))
-                .text(item.label);
-        });
+        svg.call(zoom)
+            .on("dblclick.zoom", function() {
+                svg.transition().duration(750).call(
+                    zoom.transform,
+                    d3.zoomIdentity.translate(80, 60).scale(1)
+                );
+            });
         
     } catch (error) {
-        console.error("Error creating sunburst chart:", error);
+        console.error("Error creating hierarchical tree visualization:", error);
         displayError(containerId, `Failed to render visualization: ${error.message}`);
     }
 }
