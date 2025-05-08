@@ -6293,9 +6293,9 @@ function displayForceDirectedRadial(model) {
     }
     
     try {
-        // Create SVG container with specific dimensions for optimization
-        const width = 900;
-        const height = 900;
+        // Create SVG container with wider aspect ratio for better horizontal spread
+        const width = 1200; // Increased width for better horizontal spread
+        const height = 800;  // Reduced height to create better aspect ratio
         
         const svg = d3.select(container)
             .append("svg")
@@ -6310,33 +6310,29 @@ function displayForceDirectedRadial(model) {
         // Convert to d3 hierarchy for tree layout
         const root = d3.hierarchy(hierarchyData);
         
-        // Custom sorting to optimize the tree layout
-        // Sort by values but also try to balance the tree
+        // Optimize node ordering for better layout
         root.sort((a, b) => {
             // Primary sort by value (largest first)
-            const valueSort = (b.data.value || 0) - (a.data.value || 0);
-            
-            // If values are similar (within 20%), consider other factors
-            if (Math.abs(valueSort) < (b.data.value || 0) * 0.2) {
-                // Secondary sort: try to balance children count
-                if (a.children && b.children) {
-                    return b.children.length - a.children.length;
-                }
-            }
-            
-            return valueSort;
+            return (b.data.value || 0) - (a.data.value || 0);
         });
         
-        // Count total nodes for space optimization
+        // Count total nodes and levels for spacing calculations
         let totalNodes = 0;
-        root.eachBefore(() => totalNodes++);
+        let maxDepth = 0;
+        root.eachBefore(d => {
+            totalNodes++;
+            maxDepth = Math.max(maxDepth, d.depth);
+        });
         
-        // Calculate optimal node separation based on total nodes
-        const nodeSeparation = Math.min(2, Math.max(1, 10 / Math.sqrt(totalNodes)));
+        // Calculate optimal vertical separation based on total nodes
+        const nodeSeparation = Math.min(2, Math.max(1, 8 / Math.sqrt(totalNodes / maxDepth)));
         
-        // Create a horizontal tree layout with dynamic sizing
+        // Allocate more horizontal space between levels
+        const xSpacing = (width - 200) / (maxDepth + 1);
+        
+        // Create a horizontal tree layout with optimized spacing
         const treeLayout = d3.tree()
-            .size([height - 100, width - 200]) // Horizontal layout (height, width)
+            .size([height - 100, width - 300]) // More horizontal space
             .separation((a, b) => {
                 return (a.parent === b.parent ? 1 : 1.2) * nodeSeparation;
             });
@@ -6344,9 +6340,15 @@ function displayForceDirectedRadial(model) {
         // Compute the tree layout
         treeLayout(root);
         
+        // Manually adjust x positions to create more horizontal space between levels
+        root.each(d => {
+            // Adjust horizontal position to spread levels more evenly
+            d.y = d.depth * xSpacing + 100;
+        });
+        
         // Create a group for the visualization with margin
         const g = svg.append("g")
-            .attr("transform", `translate(100, 50)`);
+            .attr("transform", `translate(50, 50)`);
         
         // Create links (paths between nodes) - filter out root node links
         const link = g.append("g")
@@ -6362,7 +6364,7 @@ function displayForceDirectedRadial(model) {
             .attr("stroke-width", d => {
                 // Calculate stroke width based on value
                 const value = d.target.data.value || 0;
-                const maxWidth = 3;
+                const maxWidth = 2.5;
                 const minWidth = 0.5;
                 const widthScale = d3.scaleLog()
                     .domain([1, root.data.value || 1000000])
@@ -6409,7 +6411,7 @@ function displayForceDirectedRadial(model) {
                 'subagency': 10,
                 'office': 9,
                 'prime': 8,
-                'sub': 7
+                'sub': 6
             };
             
             // Create log scale for size
@@ -6448,7 +6450,7 @@ function displayForceDirectedRadial(model) {
             .attr("stroke", getCssVar('--color-surface'))
             .attr("stroke-width", 1.5);
         
-        // Calculate if a node label should be visible based on available space
+        // Calculate if a node should show label based on available vertical space
         function shouldShowNodeLabel(d) {
             if (d.depth === 0) return false; // Skip root
             
@@ -6470,23 +6472,28 @@ function displayForceDirectedRadial(model) {
                 }
             }
             
-            // Adjust threshold based on node type
-            const type = getNodeType(d);
+            // Adjust threshold based on node type - lower thresholds to show more labels
             const minSpace = {
-                'agency': 15,
-                'subagency': 15,
-                'office': 14,
-                'prime': 13,
-                'sub': 12
+                'agency': 12,
+                'subagency': 12,
+                'office': 10,
+                'prime': 8,
+                'sub': 8
             };
             
-            return availableSpace >= (minSpace[type] || 15);
+            return availableSpace >= (minSpace[getNodeType(d)] || 12);
         }
         
-        // Add entity labels with inline dollar values (only where there's enough space)
-        node.filter(d => shouldShowNodeLabel(d))
-            .append("text")
-            .attr("dy", "0.35em")
+        // Add entity names and values as separate elements to allow for better positioning
+        // First add the label containers
+        const labelGroups = node.filter(d => shouldShowNodeLabel(d))
+            .append("g")
+            .attr("class", "label-group");
+        
+        // Add name labels
+        labelGroups.append("text")
+            .attr("class", "name-label")
+            .attr("dy", "0.32em")
             .attr("x", d => {
                 const type = getNodeType(d);
                 const size = calculateNodeSize(d);
@@ -6506,33 +6513,18 @@ function displayForceDirectedRadial(model) {
             .text(d => {
                 if (getNodeType(d) === 'root') return "";
                 
-                // Truncate name based on available space and show value inline
+                // Just show name without truncating as much
                 const name = d.data.name || "";
                 const type = getNodeType(d);
-                const value = d.data.value;
                 
-                // Dynamic truncation based on space and node type
-                let maxLength = 25;
-                if (type === 'agency') maxLength = 20;
-                if (type === 'subagency') maxLength = 18;
-                if (type === 'office') maxLength = 15;
-                if (type === 'prime') maxLength = 15;
-                if (type === 'sub') maxLength = 13;
+                // Increased max length for names since we have more horizontal space
+                let maxLength = 30;
+                if (type === 'agency') maxLength = 25;
+                if (type === 'subagency') maxLength = 22;
+                if (type === 'office') maxLength = 20;
+                if (type === 'prime') maxLength = 18;
+                if (type === 'sub') maxLength = 16;
                 
-                // For primes and subs, add dollar value inline
-                if ((type === 'prime' || type === 'sub') && value) {
-                    // Reduce name length further to accommodate value
-                    const valueStr = ` (${formatConciseCurrency(value)})`;
-                    const reducedMaxLength = maxLength - Math.floor(valueStr.length * 1.5);
-                    
-                    const truncatedName = name.length > reducedMaxLength 
-                        ? name.substring(0, reducedMaxLength - 3) + "..." 
-                        : name;
-                        
-                    return truncatedName + valueStr;
-                }
-                
-                // For other node types (or if no value), just show truncated name
                 if (name.length > maxLength) {
                     return name.substring(0, maxLength - 3) + "...";
                 }
@@ -6540,31 +6532,36 @@ function displayForceDirectedRadial(model) {
                 return name;
             });
         
-        // Add value labels for agency, subagency and office levels
-        node.filter(d => {
-            const type = getNodeType(d);
-            // Only show values for higher level nodes and ensure they're not primes/subs (already have inline values)
-            return (type === 'agency' || type === 'subagency' || type === 'office') && 
-                   shouldShowNodeLabel(d);
-        })
-        .append("text")
-        .attr("x", d => {
-            const type = getNodeType(d);
-            const size = calculateNodeSize(d);
-            return d.children ? -size - 6 : size + 6; // Same position as name
-        })
-        .attr("y", 14) // Position below the name
-        .attr("text-anchor", d => d.children ? "end" : "start")
-        .attr("font-size", "8px")
-        .attr("fill", getCssVar('--color-text-secondary'))
-        .text(d => {
-            if (d.data.value) {
-                return formatConciseCurrency(d.data.value);
-            }
-            return "";
-        });
+        // Add value labels
+        labelGroups.append("text")
+            .attr("class", "value-label")
+            .attr("x", d => {
+                const type = getNodeType(d);
+                const size = calculateNodeSize(d);
+                const nameLabel = d3.select(d3.select(this).node().parentNode).select(".name-label");
+                
+                // Position based on parent/child status
+                if (d.children) {
+                    return -size - 6; // For left-aligned text (parents)
+                } else {
+                    return size + 6; // For right-aligned text (leaves)
+                }
+            })
+            .attr("y", d => {
+                const type = getNodeType(d);
+                // Position below the name
+                return type === 'agency' || type === 'subagency' ? 14 : 12;
+            })
+            .attr("text-anchor", d => d.children ? "end" : "start")
+            .attr("font-size", "8px")
+            .attr("fill", getCssVar('--color-text-secondary'))
+            .text(d => {
+                if (d.data.value) {
+                    return formatConciseCurrency(d.data.value);
+                }
+                return "";
+            });
         
-        // Add expanded tooltips with additional details
         // Create tooltip element
         let tooltip = d3.select("body").select("#tree-tooltip");
         if (tooltip.empty()) {
@@ -6581,7 +6578,7 @@ function displayForceDirectedRadial(model) {
                 .style("font-size", "12px")
                 .style("pointer-events", "none")
                 .style("z-index", 1000)
-                .style("max-width", "300px")
+                .style("max-width", "350px")
                 .style("box-shadow", "0 3px 14px rgba(0,0,0,0.15)");
         }
         
@@ -6591,6 +6588,7 @@ function displayForceDirectedRadial(model) {
             const type = getNodeType(d);
             const typeName = type.charAt(0).toUpperCase() + type.slice(1);
             
+            // Build complete path
             const ancestry = [];
             let node = d;
             while (node.parent && node.parent.depth > 0) {
@@ -6606,14 +6604,14 @@ function displayForceDirectedRadial(model) {
             // Calculate children details
             let childrenDetails = '';
             if (d.children && d.children.length > 0) {
-                // Show top 3 children by value
+                // Show top 5 children by value (increased from 3)
                 const topChildren = [...d.children]
                     .sort((a, b) => (b.data.value || 0) - (a.data.value || 0))
-                    .slice(0, 3);
+                    .slice(0, 5);
                 
                 childrenDetails = `
                 <div style="margin-top: 5px; border-top: 1px solid ${getCssVar('--color-border')}; padding-top: 5px;">
-                    <div style="font-weight: bold; margin-bottom: 3px;">Top ${Math.min(3, d.children.length)} of ${d.children.length} children:</div>
+                    <div style="font-weight: bold; margin-bottom: 3px;">Top ${Math.min(5, d.children.length)} of ${d.children.length} children:</div>
                     ${topChildren.map(child => `
                         <div style="display: flex; justify-content: space-between;">
                             <span>${child.data.name}</span>
@@ -6624,7 +6622,7 @@ function displayForceDirectedRadial(model) {
             }
             
             const html = `
-                <div style="font-weight: bold; margin-bottom: 4px;">${d.data.name || 'Unknown'}</div>
+                <div style="font-weight: bold; margin-bottom: 4px; font-size: 14px;">${d.data.name || 'Unknown'}</div>
                 ${pathText}
                 <div>Type: ${typeName}</div>
                 <div>Value: ${formatCurrency(d.data.value || 0)}</div>
@@ -6699,7 +6697,7 @@ function displayForceDirectedRadial(model) {
                     });
             }
             
-            // Display enhanced tooltip
+            // Display tooltip
             showTooltip(event, d);
         })
         .on("mousemove", function(event) {
@@ -6715,7 +6713,7 @@ function displayForceDirectedRadial(model) {
                 .attr("stroke-opacity", 0.8)
                 .attr("stroke-width", d => {
                     const value = d.target.data.value || 0;
-                    const maxWidth = 3;
+                    const maxWidth = 2.5;
                     const minWidth = 0.5;
                     const widthScale = d3.scaleLog()
                         .domain([1, root.data.value || 1000000])
@@ -6739,7 +6737,7 @@ function displayForceDirectedRadial(model) {
         const legend = svg.append("g")
             .attr("transform", "translate(20, 20)");
         
-        // Create a more compact legend
+        // Create a compact legend
         legendData.forEach((item, i) => {
             const g = legend.append("g")
                 .attr("transform", `translate(0, ${i * 16})`);
@@ -6774,9 +6772,9 @@ function displayForceDirectedRadial(model) {
             .attr("fill", getCssVar('--color-text-secondary'))
             .text(`Primes: ${Object.keys(model.primes).length}, Subs: ${Object.keys(model.subs).length} | Contracts: ${Object.keys(model.contracts).length}, Subcontracts: ${Object.keys(model.subcontracts).length}`);
         
-        // Add zoom and pan functionality
+        // Add zoom and pan functionality with wider range
         const zoom = d3.zoom()
-            .scaleExtent([0.3, 5]) // Wider zoom range
+            .scaleExtent([0.2, 6]) // Wider zoom range for more flexibility
             .on("zoom", (event) => {
                 g.attr("transform", event.transform);
             });
@@ -6785,7 +6783,7 @@ function displayForceDirectedRadial(model) {
             .on("dblclick.zoom", function() {
                 svg.transition().duration(750).call(
                     zoom.transform,
-                    d3.zoomIdentity.translate(100, 50).scale(1)
+                    d3.zoomIdentity.translate(50, 50).scale(1)
                 );
             });
         
