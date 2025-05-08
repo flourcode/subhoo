@@ -5768,8 +5768,7 @@ function renderConsistentShareOfWalletChart() {
   // Resize and create the chart
   resizeDonutChart(containerId, renderDonutChartCore, {
     data: shareData,
-    title: "Market",
-    subtitle: "Share",
+    title: "Leader",
     centerValue: shareData[0].name,
     labelField: "name",
     descField: null,
