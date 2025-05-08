@@ -6444,3 +6444,104 @@ window.setupChartSizingSystem = function() {
 if (document.readyState !== 'loading') {
   hookIntoDataLoading();
 }
+/**
+ * Fix for "Loading NAICS distribution..." text not disappearing
+ */
+
+// Update renderConsistentNaicsChart to properly handle loading state
+const originalRenderConsistentNaicsChart = window.renderConsistentNaicsChart;
+window.renderConsistentNaicsChart = function() {
+  const containerId = 'naics-donut-chart-container';
+  const bentoId = 'bento-naics-distribution';
+  
+  // Clear loading state for both container and bento box
+  clearLoadingState(containerId);
+  clearLoadingState(bentoId);
+  
+  // Call the original rendering function
+  if (typeof originalRenderConsistentNaicsChart === 'function') {
+    originalRenderConsistentNaicsChart();
+  }
+  
+  // Make sure loading is cleared after rendering completes
+  setTimeout(function() {
+    clearLoadingState(containerId);
+    clearLoadingState(bentoId);
+  }, 100);
+};
+
+// Update renderConsistentShareOfWalletChart similarly
+const originalRenderConsistentShareOfWalletChart = window.renderConsistentShareOfWalletChart;
+window.renderConsistentShareOfWalletChart = function() {
+  const containerId = 'share-of-wallet-container';
+  const bentoId = 'bento-share-of-wallet';
+  
+  // Clear loading state for both container and bento box
+  clearLoadingState(containerId);
+  clearLoadingState(bentoId);
+  
+  // Call the original rendering function
+  if (typeof originalRenderConsistentShareOfWalletChart === 'function') {
+    originalRenderConsistentShareOfWalletChart();
+  }
+  
+  // Make sure loading is cleared after rendering completes
+  setTimeout(function() {
+    clearLoadingState(containerId);
+    clearLoadingState(bentoId);
+  }, 100);
+};
+
+/**
+ * Helper function to clear loading state for a container
+ */
+function clearLoadingState(containerId) {
+  if (!containerId) return;
+  
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  
+  // Find and remove loading placeholder
+  const loadingPlaceholder = container.querySelector('.loading-placeholder');
+  if (loadingPlaceholder) {
+    loadingPlaceholder.style.display = 'none';
+  }
+  
+  // Call setLoading if it exists as a function
+  if (typeof window.setLoading === 'function') {
+    try {
+      window.setLoading(containerId, false);
+    } catch (e) {
+      console.warn(`Error calling setLoading for ${containerId}:`, e);
+    }
+  }
+}
+
+// Update the main charts update function
+const originalUpdateBothChartsWithConsistentSizing = window.updateBothChartsWithConsistentSizing;
+window.updateBothChartsWithConsistentSizing = function() {
+  // Clear loading states first
+  clearLoadingState('naics-donut-chart-container');
+  clearLoadingState('bento-naics-distribution');
+  clearLoadingState('share-of-wallet-container');
+  clearLoadingState('bento-share-of-wallet');
+  
+  // Call original function
+  if (typeof originalUpdateBothChartsWithConsistentSizing === 'function') {
+    originalUpdateBothChartsWithConsistentSizing();
+  }
+  
+  // Clear loading states again after rendering completes
+  setTimeout(function() {
+    clearLoadingState('naics-donut-chart-container');
+    clearLoadingState('bento-naics-distribution');
+    clearLoadingState('share-of-wallet-container');
+    clearLoadingState('bento-share-of-wallet');
+  }, 200);
+};
+
+// Run immediately to clear any existing loading states
+clearLoadingState('naics-donut-chart-container');
+clearLoadingState('bento-naics-distribution');
+clearLoadingState('share-of-wallet-container');
+clearLoadingState('bento-share-of-wallet');
