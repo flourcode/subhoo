@@ -5313,6 +5313,246 @@ if (typeof originalApplyFilters === 'function') {
   };
 }
 /**
+ * Fix for "processNaicsDistributionData is not defined" error
+ * 
+ * This ensures the function is available when needed during data loading
+ */
+
+// Define the function directly if it doesn't exist yet
+if (typeof window.processNaicsDistributionData !== 'function') {
+  /**
+   * Process data for NAICS distribution visualization with proper filtering
+   * @param {Object} model - The unified data model
+   * @param {string} naicsFilter - Current NAICS filter selection
+   * @param {string} subAgencyFilter - Current sub-agency filter selection
+   * @param {string} searchTerm - Current search term
+   */
+  window.processNaicsDistributionData = function(model, naicsFilter, subAgencyFilter, searchTerm) {
+    if (!model || !model.contracts) {
+      return [];
+    }
+
+    // Handle undefined parameters
+    naicsFilter = naicsFilter || '';
+    subAgencyFilter = subAgencyFilter || '';
+    searchTerm = searchTerm || '';
+
+    console.log(`Processing NAICS data with filters: NAICS=${naicsFilter}, SubAgency=${subAgencyFilter}, Search=${searchTerm}`);
+
+    const naicsAggregates = {};
+    
+    // Process all contracts
+    Object.values(model.contracts || {}).forEach(contract => {
+      // Skip if no NAICS code or no value
+      if (!contract.naicsCode || contract.value <= 0) return;
+
+      // Apply sub-agency filter if set
+      if (subAgencyFilter && contract.subAgencyId) {
+        const subAgency = model.subAgencies[contract.subAgencyId];
+        if (!subAgency || subAgency.name !== subAgencyFilter) return;
+      }
+
+      // Apply search filter if set
+      if (searchTerm) {
+        const searchFields = [
+          contract.description,
+          model.primes[contract.primeId]?.name,
+          model.subAgencies[contract.subAgencyId]?.name,
+          model.offices[contract.officeId]?.name,
+          contract.naicsCode,
+          contract.naicsDesc
+        ];
+        
+        if (!searchFields.some(field => field && field.toLowerCase().includes(searchTerm.toLowerCase()))) {
+          return;
+        }
+      }
+
+      // Add to aggregates
+      const code = contract.naicsCode;
+      const desc = contract.naicsDesc || "N/A";
+      
+      if (!naicsAggregates[code]) {
+        naicsAggregates[code] = { 
+          code: code, 
+          desc: desc, 
+          name: code, // For color mapping
+          value: 0,
+          isSelected: (naicsFilter && code === naicsFilter) 
+        };
+      }
+      
+      naicsAggregates[code].value += contract.value;
+    });
+    
+    // Convert to array and sort
+    const sortedNaicsData = Object.values(naicsAggregates)
+      .sort((a, b) => b.value - a.value);
+    
+    // Calculate percentages
+    const totalValue = sortedNaicsData.reduce((sum, item) => sum + item.value, 0);
+    sortedNaicsData.forEach(item => {
+      item.percentage = totalValue > 0 ? (item.value / totalValue) * 100 : 0;
+    });
+
+    // If we have a NAICS filter, ensure the selected NAICS is included in top N
+    if (naicsFilter && naicsAggregates[naicsFilter]) {
+      // Create a copy to manipulate for display purposes
+      const displayData = [...sortedNaicsData];
+      const selectedData = naicsAggregates[naicsFilter];
+      
+      // If the selected NAICS isn't already in top 5
+      const topN = 5;
+      if (!displayData.slice(0, topN).some(item => item.code === naicsFilter)) {
+        const selectedIndex = displayData.findIndex(item => item.code === naicsFilter);
+        
+        if (selectedIndex >= 0) {
+          // Remove from current position
+          const selected = displayData.splice(selectedIndex, 1)[0];
+          // Add in at position 5 (replacing the last item in top 5)
+          displayData.splice(Math.min(topN - 1, displayData.length), 0, selected);
+        }
+      }
+      
+      return displayData; // Return modified list ensuring selected NAICS is visible
+    }
+    
+    return sortedNaicsData;
+  };
+  console.log("Defined processNaicsDistributionData function");
+}
+
+/**
+ * Make sure Share of Wallet data processing is also defined
+ */
+if (typeof window.processShareOfWalletData !== 'function') {
+  /**
+   * Process data for Share of Wallet chart with proper filtering
+   * @param {Object} model - The unified data model
+   * @param {string} naicsFilter - Current NAICS filter selection
+   * @param {string} subAgencyFilter - Current sub-agency filter selection
+   * @param {string} searchTerm - Current search term
+   */
+  window.processShareOfWalletData = function(model, naicsFilter, subAgencyFilter, searchTerm) {
+    if (!model || !model.primes) {
+      return [];
+    }
+    
+    // Handle undefined parameters
+    naicsFilter = naicsFilter || '';
+    subAgencyFilter = subAgencyFilter || '';
+    searchTerm = searchTerm || '';
+    
+    // Aggregate by prime
+    const primeValues = {};
+    let totalValue = 0;
+    
+    // Process from contracts, applying all filters
+    Object.values(model.contracts || {}).forEach(contract => {
+      if (!contract.primeId || !contract.value || contract.value <= 0) return;
+      
+      // Apply NAICS filter if set
+      if (naicsFilter && contract.naicsCode !== naicsFilter) return;
+      
+      // Apply sub-agency filter if set
+      if (subAgencyFilter && contract.subAgencyId) {
+        const subAgency = model.subAgencies[contract.subAgencyId];
+        if (!subAgency || subAgency.name !== subAgencyFilter) return;
+      }
+      
+      // Apply search filter if set
+      if (searchTerm) {
+        const searchFields = [
+          contract.description,
+          model.primes[contract.primeId]?.name,
+          model.subAgencies[contract.subAgencyId]?.name,
+          model.offices[contract.officeId]?.name,
+          contract.naicsCode,
+          contract.naicsDesc
+        ];
+        
+        if (!searchFields.some(field => field && field.toLowerCase().includes(searchTerm.toLowerCase()))) {
+          return;
+        }
+      }
+      
+      // Get prime details
+      const prime = model.primes[contract.primeId];
+      if (!prime || !prime.name) return;
+      
+      const primeName = prime.name;
+      if (!primeValues[primeName]) {
+        primeValues[primeName] = 0;
+      }
+      
+      primeValues[primeName] += contract.value;
+      totalValue += contract.value;
+    });
+    
+    // Convert to array and sort
+    const sortedPrimes = Object.entries(primeValues)
+      .map(([name, value]) => ({
+        name: name,
+        value: value,
+        percentage: 0 // Calculate after
+      }))
+      .sort((a, b) => b.value - a.value);
+    
+    // Take top 7 primes
+    const result = sortedPrimes.slice(0, 7);
+    
+    // Add "Other" category if needed
+    if (sortedPrimes.length > 7) {
+      const otherValue = sortedPrimes.slice(7)
+        .reduce((sum, item) => sum + item.value, 0);
+      
+      if (otherValue > 0) {
+        result.push({
+          name: "Other",
+          value: otherValue,
+          isOther: true,
+          count: sortedPrimes.length - 7
+        });
+      }
+    }
+    
+    // Calculate percentages
+    result.forEach(item => {
+      item.percentage = totalValue > 0 ? (item.value / totalValue) * 100 : 0;
+    });
+    
+    return result;
+  };
+  console.log("Defined processShareOfWalletData function");
+}
+
+// Fix for init code to handle cases where data is available but chart isn't rendered
+function loadChartsIfDataExists() {
+  // Check if data already exists
+  if (typeof window.unifiedModel !== 'undefined' && 
+      window.unifiedModel !== null && 
+      typeof window.unifiedModel.contracts !== 'undefined' &&
+      Object.keys(window.unifiedModel.contracts || {}).length > 0) {
+    console.log("Data already exists, rendering charts immediately");
+    
+    try {
+      // Directly try to render charts
+      if (typeof window.updateBothChartsWithConsistentSizing === 'function') {
+        window.updateBothChartsWithConsistentSizing();
+      } else if (typeof window.renderConsistentNaicsChart === 'function') {
+        window.renderConsistentNaicsChart();
+        window.renderConsistentShareOfWalletChart();
+      }
+    } catch (e) {
+      console.error("Error rendering charts with existing data:", e);
+    }
+  }
+}
+
+// Run immediately and also after a short delay to catch any race conditions
+loadChartsIfDataExists();
+setTimeout(loadChartsIfDataExists, 500);
+/**
  * FIXED CHART SIZING FOR DONUT CHARTS
  * 
  * This code specifically addresses the inconsistent scaling of donut charts
@@ -5796,12 +6036,25 @@ function renderDonutChartCore(container, dimensions, options) {
   }
   
   // Center value (typically the top item's label)
-  centerText.append("tspan")
-    .attr("x", 0)
-    .attr("dy", config.subtitle ? "1.3em" : "1.5em")
-    .style("font-size", `${0.9 * dimensions.scaleFactor}em`)
-    .style("font-weight", "600")
-    .text(config.centerValue || "");
+centerText.append("tspan")
+  .attr("x", 0)
+  .attr("dy", config.subtitle ? "1.3em" : "1.5em")
+  .style("font-size", `${0.9 * dimensions.scaleFactor}em`)
+  .style("font-weight", "600")
+  .text(config.centerValue || "");
+
+// Add NAICS description for NAICS chart
+if (config.labelField === "code" && data.length > 0) {
+  const centerItem = data[0]; // Top NAICS code
+  if (centerItem && centerItem.desc) {
+    centerText.append("tspan")
+      .attr("x", 0)
+      .attr("dy", "1.2em")
+      .style("font-size", `${0.7 * dimensions.scaleFactor}em`)
+      .style("fill", getCssVar('--color-text-tertiary'))
+      .text(truncateText(centerItem.desc, 24));
+  }
+}
   
   // Add external labels with lead lines
   // Calculate which segments are large enough for labels
