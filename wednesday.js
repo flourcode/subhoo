@@ -5990,7 +5990,7 @@ function createHierarchyData(model, subAgencyFilter) {
                     // Sort offices by value and take top 5
                     const topOffices = Object.values(officesForSubAgency)
                         .sort((a, b) => b.value - a.value)
-                        .slice(0, 5);
+                        .slice(0, 7);
                     
                     // Add office nodes
                     topOffices.forEach(office => {
@@ -6019,7 +6019,7 @@ function createHierarchyData(model, subAgencyFilter) {
                         // Sort primes by value and take top 3
                         const topPrimes = Object.entries(primesForOffice)
                             .sort((a, b) => b[1] - a[1])
-                            .slice(0, 3)
+                            .slice(0, 7)
                             .map(([primeId, value]) => ({
                                 id: primeId,
                                 value: value
@@ -6055,7 +6055,7 @@ function createHierarchyData(model, subAgencyFilter) {
                             // Sort subs by value and take top 2
                             const topSubs = Object.entries(subsForPrime)
                                 .sort((a, b) => b[1] - a[1])
-                                .slice(0, 2)
+                                .slice(0, 7)
                                 .map(([subId, value]) => ({
                                     id: subId,
                                     value: value
@@ -6292,49 +6292,78 @@ function displayForceDirectedRadial(model) {
         return;
     }
     
-    // Add debugging code for office data
-    console.log("Checking for office data in model:");
-    console.log("Offices in model:", Object.keys(model.offices || {}).length);
-    let officesReferenced = 0;
-    Object.values(model.subAgencies || {}).forEach(subAgency => {
-        if (subAgency.offices && subAgency.offices.size > 0) {
-            officesReferenced += subAgency.offices.size;
-        }
-    });
-    console.log("Office references in subAgencies:", officesReferenced);
-    let contractsWithOffices = 0;
-    Object.values(model.contracts || {}).forEach(contract => {
-        if (contract.officeId) contractsWithOffices++;
-    });
-    console.log("Contracts with office IDs:", contractsWithOffices);
-    
     try {
         // Create SVG container
         const width = container.clientWidth;
-        const height = Math.max(500, container.clientHeight);
+        const height = Math.max(600, container.clientHeight); // Increase height for top-down layout
         
         const svg = d3.select(container)
             .append("svg")
             .attr("width", width)
             .attr("height", height);
             
-        // Add a group for the visualization
-        const g = svg.append("g")
-            .attr("transform", `translate(${width/2}, ${height/2})`);
-            
         // Create hierarchical data with the complete chain
         const hierarchyData = createHierarchyData(model, subAgencyFilter);
         
+        // Convert to d3 hierarchy for tree layout
+        const root = d3.hierarchy(hierarchyData);
+        
+        // Create a tree layout
+        const treeLayout = d3.tree()
+            .size([width - 80, height - 120])
+            .separation((a, b) => (a.parent === b.parent ? 1 : 1.2));
+        
+        // Compute the tree layout
+        treeLayout(root);
+        
+        // Create a group for the visualization with margin
+        const g = svg.append("g")
+            .attr("transform", `translate(40, 60)`);
+        
+        // Create links (paths between nodes)
+        const link = g.append("g")
+            .attr("fill", "none")
+            .attr("stroke", getCssVar('--color-border'))
+            .attr("stroke-opacity", 0.8)
+            .selectAll("path")
+            .data(root.links())
+            .join("path")
+            .attr("d", d3.linkVertical()
+                .x(d => d.x)
+                .y(d => d.y))
+            .attr("stroke-width", d => {
+                // Calculate stroke width based on value
+                const value = d.target.data.value || 0;
+                return Math.max(1, Math.min(3, Math.log10(value + 1) / 2));
+            });
+        
+        // Determine node type
+        function getNodeType(d) {
+            const depth = d.depth;
+            if (depth === 0) return 'root';
+            if (depth === 1) return 'agency';
+            if (depth === 2) {
+                return d.data.isSubAgency ? 'subagency' : 'unknown';
+            }
+            if (depth === 3) {
+                return d.data.isOffice ? 'office' : 'prime';
+            }
+            if (depth === 4) {
+                return d.data.isPrime ? 'prime' : 'sub';
+            }
+            return 'sub';
+        }
+        
         // Calculate node size based on type and value
         function calculateNodeSize(type, value) {
-            // Increase the base radius for offices
+            // Base radius by type
             const baseRadius = 
                 type === 'agency' ? 10 :
                 type === 'subagency' ? 9 :
-                type === 'office' ? 8 :      // Increase office size
-                type === 'prime' ? 6 : 4;
+                type === 'office' ? 8 :
+                type === 'prime' ? 7 : 5;
             
-            // Scale by value (use log scale to handle wide range of values)
+            // Scale by value
             if (value && value > 0) {
                 const scaleFactor = Math.log10(value) / 8;
                 return baseRadius * (1 + Math.min(2, scaleFactor));
@@ -6343,325 +6372,136 @@ function displayForceDirectedRadial(model) {
             return baseRadius;
         }
         
-        // Convert hierarchical data to nodes and links for force layout
-        const nodes = [];
-        const links = [];
-        
-        // Keep track of clustering information
-        const primeToSubsMap = new Map();
-        const officeTosPrimesMap = new Map();
-        const subagencyToOfficesMap = new Map();
-        
-        // Process nodes recursively with tracking of parent references
-        function processNode(node, parent = null, depth = 0) {
-            if (!node) return null;
-            
-            const id = node.id || (node.name + (Math.random().toString(36).substring(2, 5)));
-            
-            // Determine node type
-            let nodeType = 'root';
-            if (depth === 1) nodeType = 'agency';
-            else if (depth === 2 && node.isSubAgency) nodeType = 'subagency';
-            else if (depth === 3 && node.isOffice) nodeType = 'office';
-            else if ((depth === 3 && !node.isOffice) || 
-                    (depth === 4 && !node.isSub)) nodeType = 'prime';
-            else nodeType = 'sub';
-            
-            const newNode = {
-                id: id,
-                name: node.name,
-                value: node.value || 0,
-                depth: depth,
-                type: nodeType,
-                parent: parent
-            };
-            
-            nodes.push(newNode);
-            
-            // Add link to parent if not root AND if parent exists
-            if (parent && parent.id) {
-                // Define link type
-                const isDashed = (parent.type === 'prime' && nodeType === 'sub');
-                
-                links.push({
-                    source: parent.id,
-                    target: id,
-                    value: node.value || 1,
-                    sourceType: parent.type,
-                    targetType: nodeType,
-                    isDashed: isDashed
-                });
-                
-                // Track relationships for clustering
-                if (parent.type === 'prime' && nodeType === 'sub') {
-                    if (!primeToSubsMap.has(parent.id)) {
-                        primeToSubsMap.set(parent.id, []);
-                    }
-                    primeToSubsMap.get(parent.id).push(id);
-                }
-                else if (parent.type === 'office' && nodeType === 'prime') {
-                    if (!officeTosPrimesMap.has(parent.id)) {
-                        officeTosPrimesMap.set(parent.id, []);
-                    }
-                    officeTosPrimesMap.get(parent.id).push(id);
-                }
-                else if (parent.type === 'subagency' && nodeType === 'office') {
-                    if (!subagencyToOfficesMap.has(parent.id)) {
-                        subagencyToOfficesMap.set(parent.id, []);
-                    }
-                    subagencyToOfficesMap.get(parent.id).push(id);
-                }
-            }
-            
-            // Process children
-            if (node.children && Array.isArray(node.children)) {
-                node.children.forEach(child => {
-                    if (child) processNode(child, newNode, depth + 1);
-                });
-            }
-            
-            return newNode;
-        }
-        
-        // Start processing from root - skip the root node itself to avoid stray lines
-        if (hierarchyData.children && Array.isArray(hierarchyData.children)) {
-            hierarchyData.children.forEach(child => {
-                processNode(child, null, 1);
-            });
-        }
-        
-        // Define boundary constraint function to keep nodes inside visible area
-        function constrainToBoundary() {
-            const radius = Math.min(width, height) / 2 - 40;
-            
-            nodes.forEach(d => {
-                if (d.type === 'root') return;
-                
-                // Calculate distance from center
-                const distanceFromCenter = Math.sqrt(d.x * d.x + d.y * d.y);
-                
-                // If node is outside boundary, scale it back
-                if (distanceFromCenter > radius) {
-                    const scale = radius / distanceFromCenter;
-                    d.x = d.x * scale;
-                    d.y = d.y * scale;
-                }
-                
-                // Fix NaN values
-                if (isNaN(d.x)) d.x = 0;
-                if (isNaN(d.y)) d.y = 0;
-            });
-        }
-        
-        // Set up custom forces for better clustering
-        const simulation = d3.forceSimulation()
-            // Standard link force - looser connections for better flexibility
-            .force("link", d3.forceLink().id(d => d.id)
-                .distance(d => {
-                    if (d.source.type === 'prime' && d.target.type === 'sub') return 40;
-                    if (d.source.type === 'office' && d.target.type === 'prime') return 50;
-                    if (d.source.type === 'subagency' && d.target.type === 'office') return 60;
-                    return 70;
-                })
-                .strength(d => {
-                    if (d.source.type === 'prime' && d.target.type === 'sub') return 0.7;
-                    if (d.source.type === 'office' && d.target.type === 'prime') return 0.5;
-                    if (d.source.type === 'subagency' && d.target.type === 'office') return 0.3;
-                    return 0.2;
-                }))
-            .force("charge", d3.forceManyBody()
-                .strength(d => {
-                    return d.type === 'agency' ? -400 :
-                           d.type === 'subagency' ? -300 :
-                           d.type === 'office' ? -200 :
-                           d.type === 'prime' ? -100 : -50;
-                }))
-            .force("collide", d3.forceCollide(d => {
-                if (d.type === 'root') return 0;
-                const nodeRadius = calculateNodeSize(d.type, d.value);
-                const textPadding = d.type === 'sub' ?
-                                    Math.min((d.name || "").length * 2, 20) :
-                                    d.type === 'prime' ?
-                                    Math.min((d.name || "").length * 2.2, 30) :
-                                    (d.type !== 'root' ? Math.min((d.name || "").length * 2.5, 40) : 0);
-                return nodeRadius + textPadding;
-            }).strength(0.8))
-            // Make the radial positioning more spread out to accommodate all levels
-            .force("radial", d3.forceRadial(d => {
-                if (d.type === 'agency') return 70;      // Keep agencies close to center
-                if (d.type === 'subagency') return 130;  // Position sub-agencies
-                if (d.type === 'office') return 190;     // Make offices more visible
-                if (d.type === 'prime') return 250;      // Position primes
-                return 310;                              // Subcontractors at the edge
-            }, 0, 0).strength(0.3))
-            // Add office-specific repulsion force
-            .force("officeRepulsion", d3.forceManyBody()
-                .strength((d, i) => {
-                    return d.type === 'office' ? -150 : 0;
-                })
-                .distanceMax(100)
-            );
-            
-        // Add custom clustering forces for each relationship level
-        simulation.force("clusterSubs", isolatedNodesClusterForce(nodes, primeToSubsMap, 0.7));
-        simulation.force("clusterPrimes", isolatedNodesClusterForce(nodes, officeTosPrimesMap, 0.5));
-        simulation.force("clusterOffices", isolatedNodesClusterForce(nodes, subagencyToOfficesMap, 0.3));
-        
-        // Create links - ensure source and target are valid
-        const link = g.append("g")
-            .selectAll("line")
-            .data(links.filter(l => l.source && l.target))
-            .enter().append("line")
-            .attr("stroke", d => {
-                if (d.sourceType === 'agency') return getCssVar('--chart-color-primary');
-                if (d.sourceType === 'subagency') return d3.color(getCssVar('--chart-color-primary')).brighter(0.2);
-                if (d.sourceType === 'office') return d3.color(getCssVar('--chart-color-primary')).brighter(0.4);
-                if (d.sourceType === 'prime') return getCssVar('--chart-color-secondary');
-                return getCssVar('--chart-color-tertiary');
-            })
-            .attr("stroke-width", d => Math.max(0.5, Math.min(2, Math.sqrt(d.value) / 12000)))
-            .attr("stroke-opacity", 0.8)
-            .attr("stroke-dasharray", d => d.isDashed ? "3,3" : null);
-            
         // Create node groups
         const node = g.append("g")
             .selectAll("g")
-            .data(nodes)
-            .enter().append("g")
-            .attr("class", "node")
-            .call(d3.drag()
-                .on("start", dragstarted)
-                .on("drag", dragged)
-                .on("end", dragended));
-                
-        // Add circles to nodes with size proportional to value
+            .data(root.descendants())
+            .join("g")
+            .attr("transform", d => `translate(${d.x},${d.y})`)
+            .attr("data-type", d => getNodeType(d));
+        
+        // Add circles to nodes
         node.append("circle")
             .attr("r", d => {
-                if (d.type === 'root') return 0; // Hide root
-                return calculateNodeSize(d.type, d.value);
+                const type = getNodeType(d);
+                return calculateNodeSize(type, d.data.value);
             })
             .attr("fill", d => {
-                if (d.type === 'agency') return getCssVar('--chart-color-primary');
-                if (d.type === 'subagency') return d3.color(getCssVar('--chart-color-primary')).brighter(0.2);
-                // Make office color more distinctive
-                if (d.type === 'office') return d3.color(getCssVar('--chart-color-secondary')).darker(0.2);
-                if (d.type === 'prime') return getCssVar('--chart-color-secondary');
+                const type = getNodeType(d);
+                if (type === 'root') return 'none';
+                if (type === 'agency') return getCssVar('--chart-color-primary');
+                if (type === 'subagency') return d3.color(getCssVar('--chart-color-primary')).brighter(0.2);
+                if (type === 'office') return d3.color(getCssVar('--chart-color-secondary')).darker(0.2);
+                if (type === 'prime') return getCssVar('--chart-color-secondary');
                 return getCssVar('--chart-color-tertiary');
             })
             .attr("stroke", getCssVar('--color-surface'))
-            .attr("stroke-width", 1);
-            
+            .attr("stroke-width", 1.5);
+        
         // Add labels to nodes
         node.append("text")
-            .attr("opacity", d => {
-                if (d.type === 'sub') return 0.8;
-                return 0.9;
+            .attr("dy", d => {
+                const type = getNodeType(d);
+                const size = calculateNodeSize(type, d.data.value);
+                return -size - 5; // Position above the node
             })
-            .text(d => {
-                if (d.type === 'root') return "";
-                // Truncate text based on node type
-                if (d.type === 'agency' && d.name.length > 25) return d.name.substring(0, 22) + "...";
-                if (d.type === 'subagency' && d.name.length > 20) return d.name.substring(0, 17) + "...";
-                if (d.type === 'office' && d.name.length > 20) return d.name.substring(0, 17) + "...";
-                if (d.type === 'prime' && d.name.length > 18) return d.name.substring(0, 15) + "...";
-                if (d.type === 'sub' && d.name.length > 15) return d.name.substring(0, 12) + "...";
-                return d.name;
-            })
-            .attr("fill", getCssVar('--color-text-primary'))
+            .attr("text-anchor", "middle")
             .attr("font-size", d => {
-                if (d.type === 'agency') return "12px";
-                if (d.type === 'subagency') return "11px";
-                if (d.type === 'office') return "10px";
-                if (d.type === 'prime') return "9px";
+                const type = getNodeType(d);
+                if (type === 'agency') return "12px";
+                if (type === 'subagency') return "11px";
+                if (type === 'office') return "10px";
+                if (type === 'prime') return "9px";
                 return "8px";
             })
-            .attr("dy", "0.32em");
-            
+            .attr("fill", getCssVar('--color-text-primary'))
+            .text(d => {
+                if (getNodeType(d) === 'root') return "";
+                
+                // Truncate text based on node type
+                const name = d.data.name || "";
+                const type = getNodeType(d);
+                
+                if (type === 'agency' && name.length > 25) return name.substring(0, 22) + "...";
+                if (type === 'subagency' && name.length > 20) return name.substring(0, 17) + "...";
+                if (type === 'office' && name.length > 20) return name.substring(0, 17) + "...";
+                if (type === 'prime' && name.length > 18) return name.substring(0, 15) + "...";
+                if (type === 'sub' && name.length > 15) return name.substring(0, 12) + "...";
+                
+                return name;
+            });
+        
+        // Add value labels below nodes (except for root)
+        node.filter(d => getNodeType(d) !== 'root')
+            .append("text")
+            .attr("dy", d => {
+                const type = getNodeType(d);
+                const size = calculateNodeSize(type, d.data.value);
+                return size + 15; // Position below the node
+            })
+            .attr("text-anchor", "middle")
+            .attr("font-size", "8px")
+            .attr("fill", getCssVar('--color-text-secondary'))
+            .text(d => {
+                return d.data.value ? formatConciseCurrency(d.data.value) : "";
+            });
+        
         // Add hover interactions
         node.on("mouseover", function(event, d) {
             // Highlight current node
             d3.select(this).select("circle")
                 .attr("stroke", getCssVar('--chart-color-primary'))
                 .attr("stroke-width", 2);
+            
+            // Highlight path to root
+            let current = d;
+            while (current.parent) {
+                link.filter(l => l.target === current)
+                    .attr("stroke", getCssVar('--chart-color-primary'))
+                    .attr("stroke-opacity", 1)
+                    .attr("stroke-width", l => {
+                        const baseWidth = l.target.data.value ? Math.log10(l.target.data.value + 1) / 2 : 1;
+                        return Math.max(1, Math.min(3, baseWidth)) + 1;
+                    });
                 
-            d3.select(this).select("text")
-                .attr("opacity", 1)
-                .attr("font-weight", "bold");
+                node.filter(n => n === current.parent)
+                    .select("circle")
+                    .attr("stroke", getCssVar('--chart-color-primary'))
+                    .attr("stroke-width", 2);
                 
-            // Highlight connected links
-            link.attr("stroke-opacity", l => 
-                (l.source.id === d.id || l.target.id === d.id) ? 1 : 0.3);
-                
-            // Highlight related nodes
-            if (d.type === 'prime') {
-                // If prime, highlight its subs
-                const subsForPrime = primeToSubsMap.get(d.id) || [];
-                node.filter(n => subsForPrime.includes(n.id))
-                    .select("circle")
-                    .attr("stroke", getCssVar('--chart-color-secondary'))
-                    .attr("stroke-width", 1.5);
-            } else if (d.type === 'sub' && d.parent) {
-                // If sub, highlight its prime
-                node.filter(n => n.id === d.parent.id)
-                    .select("circle")
-                    .attr("stroke", getCssVar('--chart-color-tertiary'))
-                    .attr("stroke-width", 1.5);
-            } else if (d.type === 'office') {
-                // If office, highlight its primes
-                const primesForOffice = officeTosPrimesMap.get(d.id) || [];
-                node.filter(n => primesForOffice.includes(n.id))
-                    .select("circle")
-                    .attr("stroke", getCssVar('--chart-color-secondary'))
-                    .attr("stroke-width", 1.5);
-            } else if (d.type === 'subagency') {
-                // If subagency, highlight its offices
-                const officesForSubagency = subagencyToOfficesMap.get(d.id) || [];
-                node.filter(n => officesForSubagency.includes(n.id))
-                    .select("circle")
-                    .attr("stroke", getCssVar('--chart-color-tertiary'))
-                    .attr("stroke-width", 1.5);
+                current = current.parent;
             }
+            
+            // Display tooltip
+            const tooltipContent = `
+                <div style="font-weight: bold; margin-bottom: 4px;">${d.data.name || "Unknown"}</div>
+                <div>Type: ${getNodeType(d).charAt(0).toUpperCase() + getNodeType(d).slice(1)}</div>
+                <div>Value: ${formatCurrency(d.data.value || 0)}</div>
+                ${d.parent ? `<div>Parent: ${d.parent.data.name || "Unknown"}</div>` : ""}
+                ${d.children ? `<div>Children: ${d.children.length}</div>` : ""}
+            `;
+            
+            showTooltip(event.pageX, event.pageY, tooltipContent);
         })
-        .on("mouseout", function() {
+        .on("mousemove", function(event) {
+            updateTooltipPosition(event.pageX, event.pageY);
+        })
+        .on("mouseout", function(event, d) {
             // Reset highlights
             node.select("circle")
                 .attr("stroke", getCssVar('--color-surface'))
-                .attr("stroke-width", 1);
-                
-            node.select("text")
-                .attr("opacity", d => {
-                    if (d.type === 'sub') return 0.8;
-                    return 0.9;
-                })
-                .attr("font-weight", "normal");
-                
-            // Reset link opacity
-            link.attr("stroke-opacity", 0.8);
+                .attr("stroke-width", 1.5);
+            
+            link.attr("stroke", getCssVar('--color-border'))
+                .attr("stroke-opacity", 0.8)
+                .attr("stroke-width", d => {
+                    const value = d.target.data.value || 0;
+                    return Math.max(1, Math.min(3, Math.log10(value + 1) / 2));
+                });
+            
+            hideTooltip();
         });
-            
-        // Add tooltips with value information
-        node.append("title")
-            .text(d => {
-                const valueText = d.value ? formatCurrency(d.value) : "Value not available";
-                const typeText = d.type.charAt(0).toUpperCase() + d.type.slice(1);
-                let tooltipText = `${d.name}\nType: ${typeText}\nValue: ${valueText}`;
-                
-                // Add hierarchy information
-                if (d.parent) {
-                    if (d.type === 'sub') {
-                        tooltipText += `\nPrime Contractor: ${d.parent.name}`;
-                    } else if (d.type === 'prime') {
-                        tooltipText += `\nOffice: ${d.parent.name}`;
-                    } else if (d.type === 'office') {
-                        tooltipText += `\nSub-Agency: ${d.parent.name}`;
-                    } else if (d.type === 'subagency') {
-                        tooltipText += `\nAgency: ${d.parent.name}`;
-                    }
-                }
-                
-                return tooltipText;
-            });
-            
+        
         // Add color legend
         const colorLegend = svg.append("g")
             .attr("transform", `translate(20, 20)`);
@@ -6697,100 +6537,67 @@ function displayForceDirectedRadial(model) {
             .append("text")
             .attr("font-size", "11px")
             .attr("fill", getCssVar('--color-text-secondary'))
-            .text("Showing hierarchy from agency to subcontractor");
+            .text("Hierarchical view from agency to subcontractor");
         
-        // Add filter indicator if filtered
-        if (subAgencyFilter) {
-            svg.append("text")
-                .attr("x", width - 20)
-                .attr("y", height - 20)
-                .attr("text-anchor", "end")
-                .attr("font-size", "12px")
-                .attr("fill", getCssVar('--color-text-secondary'))
-                .text(`Filtered by: ${subAgencyFilter}`);
+        // Create tooltip element (if not exists)
+        let tooltip = d3.select("body").select("#tree-tooltip");
+        if (tooltip.empty()) {
+            tooltip = d3.select("body").append("div")
+                .attr("id", "tree-tooltip")
+                .style("position", "absolute")
+                .style("visibility", "hidden")
+                .style("opacity", 0)
+                .style("background-color", getCssVar('--color-surface'))
+                .style("border", `1px solid ${getCssVar('--color-border')}`)
+                .style("border-radius", "4px")
+                .style("padding", "10px")
+                .style("color", getCssVar('--color-text-primary'))
+                .style("font-size", "12px")
+                .style("pointer-events", "none")
+                .style("z-index", 1000)
+                .style("max-width", "300px")
+                .style("box-shadow", "0 3px 14px rgba(0,0,0,0.15)");
         }
-            
-        // Add zoom behavior
+        
+        // Tooltip functions
+        function showTooltip(x, y, html) {
+            tooltip
+                .html(html)
+                .style("visibility", "visible")
+                .style("opacity", 1)
+                .style("left", (x + 15) + "px")
+                .style("top", (y - 28) + "px");
+        }
+        
+        function updateTooltipPosition(x, y) {
+            tooltip
+                .style("left", (x + 15) + "px")
+                .style("top", (y - 28) + "px");
+        }
+        
+        function hideTooltip() {
+            tooltip
+                .style("visibility", "hidden")
+                .style("opacity", 0);
+        }
+        
+        // Add zoom and pan functionality
         const zoom = d3.zoom()
-            .scaleExtent([0.4, 3]) // Widen zoom range
-            .translateExtent([[-width/2, -height/2], [width*1.5, height*1.5]])
+            .scaleExtent([0.3, 3])
             .on("zoom", (event) => {
                 g.attr("transform", event.transform);
             });
-
-        // Add the zoom behavior to the SVG with a double-click reset
+        
         svg.call(zoom)
-          .on("dblclick.zoom", function() {
-              // Reset view on double-click
-              svg.transition().duration(750).call(
-                  zoom.transform,
-                  d3.zoomIdentity.translate(width/2, height/2).scale(1)
-              );
-          });
-        
-        // Set up simulation tick with constraint
-        simulation
-            .nodes(nodes)
-            .on("tick", ticked)
-            .on("end", constrainToBoundary);
-            
-        simulation.force("link")
-            .links(links);
-            
-        // Functions for simulation
-        function ticked() {
-            // Apply boundary constraints on every tick
-            constrainToBoundary();
-            
-            // Update link positions
-            link
-                .attr("x1", d => d.source.x)
-                .attr("y1", d => d.source.y)
-                .attr("x2", d => d.target.x)
-                .attr("y2", d => d.target.y);
-                
-            // Update node positions
-            node.attr("transform", d => `translate(${d.x},${d.y})`);
-            
-            // Update text positioning
-            node.select("text")
-                .attr("x", d => {
-                    const nodeRadius = calculateNodeSize(d.type, d.value);
-                    return d.x < 0 ? -nodeRadius - 5 : nodeRadius + 5;
-                })
-                .attr("text-anchor", d => d.x < 0 ? "end" : "start");
-        }
-        
-        // Modified drag functions to maintain boundary constraints
-        function dragstarted(event, d) {
-            if (!event.active) simulation.alphaTarget(0.1).restart();
-            d.fx = d.x;
-            d.fy = d.y;
-        }
-        
-        function dragged(event, d) {
-            // Constrain to visible area during drag
-            const radius = Math.min(width, height) / 2 - 40;
-            const distanceFromCenter = Math.sqrt(event.x * event.x + event.y * event.y);
-            
-            if (distanceFromCenter > radius) {
-                const scale = radius / distanceFromCenter;
-                d.fx = event.x * scale;
-                d.fy = event.y * scale;
-            } else {
-                d.fx = event.x;
-                d.fy = event.y;
-            }
-        }
-        
-        function dragended(event, d) {
-            if (!event.active) simulation.alphaTarget(0);
-            // Keep the node fixed at its final position rather than releasing it
-            // This helps prevent the diagram from floating away
-        }
+            .on("dblclick.zoom", function() {
+                svg.transition().duration(750).call(
+                    zoom.transform,
+                    d3.zoomIdentity.translate(40, 60).scale(1)
+                );
+            });
         
     } catch (error) {
-        console.error("Error creating force-directed visualization:", error);
+        console.error("Error creating hierarchical tree visualization:", error);
         displayError(containerId, `Failed to render visualization: ${error.message}`);
     }
 }
