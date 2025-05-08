@@ -6372,6 +6372,17 @@ function displayForceDirectedRadial(model) {
             return 'sub';
         }
         
+        // Calculate node radius based on type and value
+        function getNodeRadius(d) {
+            const type = getNodeType(d);
+            if (type === 'root') return 0;
+            if (type === 'agency') return 8;
+            if (type === 'subagency') return 7;
+            if (type === 'office') return 6;
+            if (type === 'prime') return 5;
+            return 4;
+        }
+        
         // Create node groups
         const node = g.append("g")
             .selectAll("g")
@@ -6382,15 +6393,7 @@ function displayForceDirectedRadial(model) {
         
         // Add circles to nodes
         node.append("circle")
-            .attr("r", d => {
-                const type = getNodeType(d);
-                if (type === 'root') return 0;
-                if (type === 'agency') return 8;
-                if (type === 'subagency') return 7;
-                if (type === 'office') return 6;
-                if (type === 'prime') return 5;
-                return 4;
-            })
+            .attr("r", d => getNodeRadius(d))
             .attr("fill", d => {
                 const type = getNodeType(d);
                 if (type === 'root') return 'none';
@@ -6408,8 +6411,8 @@ function displayForceDirectedRadial(model) {
             .append("text")
             .attr("dy", "0.32em")
             .attr("x", d => {
-                const size = d3.select(d.parentNode).select("circle").attr("r");
-                return d.children ? -size - 6 : Number(size) + 6;
+                const nodeRadius = getNodeRadius(d);
+                return d.children ? -nodeRadius - 6 : nodeRadius + 6;
             })
             .attr("text-anchor", d => d.children ? "end" : "start")
             .attr("font-size", d => {
@@ -6456,8 +6459,8 @@ function displayForceDirectedRadial(model) {
         })
         .append("text")
         .attr("x", d => {
-            const size = d3.select(d.parentNode).select("circle").attr("r");
-            return d.children ? -size - 6 : Number(size) + 6;
+            const nodeRadius = getNodeRadius(d);
+            return d.children ? -nodeRadius - 6 : nodeRadius + 6;
         })
         .attr("y", 14)
         .attr("text-anchor", d => d.children ? "end" : "start")
@@ -6576,6 +6579,16 @@ function displayForceDirectedRadial(model) {
             });
             
         svg.call(zoom);
+        
+        // Add bottom stats
+        const stats = svg.append("g")
+            .attr("transform", `translate(${width/2}, ${height - 30})`);
+            
+        stats.append("text")
+            .attr("text-anchor", "middle")
+            .attr("font-size", "11px")
+            .attr("fill", getCssVar('--color-text-secondary'))
+            .text(`Total Value: ${formatCurrency(root.data.value || 0)}`);
         
     } catch (error) {
         console.error("Error creating visualization:", error);
