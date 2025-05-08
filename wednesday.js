@@ -5313,211 +5313,235 @@ if (typeof originalApplyFilters === 'function') {
   };
 }
 /**
- * FIXED IMPLEMENTATION FOR NAICS AND SHARE OF WALLET CHARTS
+ * FIXED CHART SIZING FOR DONUT CHARTS
  * 
- * This implementation addresses two key issues:
- * 1. NAICS chart briefly showing filtered data then reverting
- * 2. Share of Wallet chart not responding to filters
+ * This code specifically addresses the inconsistent scaling of donut charts
+ * within bento boxes, ensuring they have consistent sizes regardless of browser window size.
  */
 
-// Store the last used filter for comparison
-let lastFilterState = {
-  subAgency: '',
-  naicsCode: '',
-  searchTerm: ''
+// Common size configuration for both charts
+const CHART_CONFIG = {
+  // Default aspect ratio (width:height)
+  aspectRatio: 1.0,
+  
+  // Minimum dimensions to ensure charts are visible
+  minWidth: 150,
+  minHeight: 150,
+  
+  // Maximum dimensions to prevent charts from growing too large
+  maxWidth: 400,
+  maxHeight: 400,
+  
+  // Standard radius as percentage of container size (when aspectRatio = 1)
+  radiusPercent: 0.38,
+  
+  // Base padding around chart (will be adjusted based on container size)
+  basePadding: {
+    top: 20,
+    right: 40,
+    bottom: 20,
+    left: 40
+  },
+  
+  // Enable debug mode to show container boundaries
+  debug: false
 };
 
 /**
- * Process data for NAICS distribution visualization with proper filtering
- * @param {Object} model - The unified data model
- * @param {string} naicsFilter - Current NAICS filter selection
- * @param {string} subAgencyFilter - Current sub-agency filter selection
- * @param {string} searchTerm - Current search term
+ * Calculate optimal chart dimensions to ensure consistent sizing
+ * @param {HTMLElement} container - The chart container element
+ * @returns {Object} Dimensions and settings for optimal chart display
  */
-function processNaicsDistributionData(model, naicsFilter, subAgencyFilter, searchTerm) {
-  if (!model || !model.contracts) {
-    return [];
-  }
-
-  // Log what we're working with
-  console.log(`Processing NAICS data with filters: NAICS=${naicsFilter}, SubAgency=${subAgencyFilter}, Search=${searchTerm}`);
-
-  const naicsAggregates = {};
-  
-  // Start with ALL contracts, even if filtered
-  // We'll respect the subAgency and search filters, but handle NAICS special
-  Object.values(model.contracts).forEach(contract => {
-    // Skip if no NAICS code or no value
-    if (!contract.naicsCode || contract.value <= 0) return;
-
-    // Apply sub-agency filter if set
-    if (subAgencyFilter && contract.subAgencyId) {
-      const subAgency = model.subAgencies[contract.subAgencyId];
-      if (!subAgency || subAgency.name !== subAgencyFilter) return;
-    }
-
-    // Apply search filter if set
-    if (searchTerm) {
-      const searchFields = [
-        contract.description,
-        model.primes[contract.primeId]?.name,
-        model.subAgencies[contract.subAgencyId]?.name,
-        model.offices[contract.officeId]?.name,
-        contract.naicsCode,
-        contract.naicsDesc
-      ];
-      
-      if (!searchFields.some(field => field && field.toLowerCase().includes(searchTerm.toLowerCase()))) {
-        return;
-      }
-    }
-
-    // For NAICS filters, we still show distribution but highlight the selected code
-    const code = contract.naicsCode;
-    const desc = contract.naicsDesc || "N/A";
-    
-    if (!naicsAggregates[code]) {
-      naicsAggregates[code] = { 
-        code: code, 
-        desc: desc, 
-        name: code, // For color mapping
-        value: 0,
-        isSelected: (naicsFilter && code === naicsFilter) 
-      };
-    }
-    
-    naicsAggregates[code].value += contract.value;
-  });
-  
-  // Convert to array and sort
-  const sortedNaicsData = Object.values(naicsAggregates)
-    .sort((a, b) => b.value - a.value);
-  
-  // Calculate percentages
-  const totalValue = sortedNaicsData.reduce((sum, item) => sum + item.value, 0);
-  sortedNaicsData.forEach(item => {
-    item.percentage = totalValue > 0 ? (item.value / totalValue) * 100 : 0;
-  });
-
-  // If we have a NAICS filter, ensure the selected NAICS is included in top N
-  if (naicsFilter && naicsAggregates[naicsFilter]) {
-    // Create a copy to manipulate for display purposes
-    const displayData = [...sortedNaicsData];
-    const selectedData = naicsAggregates[naicsFilter];
-    
-    // If the selected NAICS isn't already in top 5
-    const topN = 5;
-    if (!displayData.slice(0, topN).some(item => item.code === naicsFilter)) {
-      const selectedIndex = displayData.findIndex(item => item.code === naicsFilter);
-      
-      if (selectedIndex >= 0) {
-        // Remove from current position
-        const selected = displayData.splice(selectedIndex, 1)[0];
-        // Add in at position 5 (replacing the last item in top 5)
-        displayData.splice(Math.min(topN - 1, displayData.length), 0, selected);
-      }
-    }
-    
-    return displayData; // Return modified list ensuring selected NAICS is visible
+function calculateChartDimensions(container) {
+  if (!container) {
+    console.error("No container provided for dimension calculation");
+    return null;
   }
   
-  return sortedNaicsData;
+  // Get the actual container dimensions
+  const containerRect = container.getBoundingClientRect();
+  const containerWidth = Math.max(containerRect.width, CHART_CONFIG.minWidth);
+  const containerHeight = Math.max(containerRect.height, CHART_CONFIG.minHeight);
+  
+  // Calculate padding scales based on container size
+  // For smaller containers, reduce padding proportionally
+  const scaleFactor = Math.min(1, Math.max(0.5, containerWidth / 300));
+  const padding = {
+    top: CHART_CONFIG.basePadding.top * scaleFactor,
+    right: CHART_CONFIG.basePadding.right * scaleFactor,
+    bottom: CHART_CONFIG.basePadding.bottom * scaleFactor,
+    left: CHART_CONFIG.basePadding.left * scaleFactor
+  };
+  
+  // Calculate available space for chart
+  const availableWidth = containerWidth - padding.left - padding.right;
+  const availableHeight = containerHeight - padding.top - padding.bottom;
+  
+  // Determine the chart size based on available space
+  // We'll use the smaller dimension to maintain aspect ratio
+  const chartSize = Math.min(
+    availableWidth,
+    availableHeight,
+    Math.min(CHART_CONFIG.maxWidth, CHART_CONFIG.maxHeight)
+  );
+  
+  // Calculate chart dimensions with desired aspect ratio
+  const chartWidth = chartSize;
+  const chartHeight = chartSize / CHART_CONFIG.aspectRatio;
+  
+  // Calculate radius based on the smaller dimension
+  const diameter = Math.min(chartWidth, chartHeight);
+  const radius = diameter * CHART_CONFIG.radiusPercent;
+  
+  // Center position within the container
+  const centerX = padding.left + availableWidth / 2;
+  const centerY = padding.top + availableHeight / 2;
+  
+  return {
+    width: containerWidth,
+    height: containerHeight,
+    chartWidth: chartWidth,
+    chartHeight: chartHeight,
+    padding: padding,
+    radius: radius,
+    innerRadius: radius * 0.6, // Standard inner radius for donut
+    centerX: centerX,
+    centerY: centerY,
+    scaleFactor: scaleFactor
+  };
 }
 
 /**
- * Process data for Share of Wallet chart with proper filtering
- * @param {Object} model - The unified data model
- * @param {string} naicsFilter - Current NAICS filter selection
- * @param {string} subAgencyFilter - Current sub-agency filter selection
- * @param {string} searchTerm - Current search term
+ * Rebuild a donut chart with correct sizing and dimensions
+ * 
+ * @param {string} containerId - ID of the container element
+ * @param {Function} chartFunction - Function to call for rendering the chart
+ * @param {Array} additionalArgs - Any additional arguments for the chart function
  */
-function processShareOfWalletData(model, naicsFilter, subAgencyFilter, searchTerm) {
-  if (!model || !model.primes) {
-    return [];
+function resizeDonutChart(containerId, chartFunction, ...additionalArgs) {
+  const container = document.getElementById(containerId);
+  if (!container) {
+    console.error(`Container #${containerId} not found`);
+    return;
   }
   
-  console.log(`Processing Share of Wallet with filters: NAICS=${naicsFilter}, SubAgency=${subAgencyFilter}, Search=${searchTerm}`);
+  // Clear the container
+  container.innerHTML = '';
   
-  // Aggregate by prime
-  const primeValues = {};
-  let totalValue = 0;
-  
-  // Process from contracts, applying all filters
-  Object.values(model.contracts || {}).forEach(contract => {
-    if (!contract.primeId || !contract.value || contract.value <= 0) return;
-    
-    // Apply NAICS filter if set
-    if (naicsFilter && contract.naicsCode !== naicsFilter) return;
-    
-    // Apply sub-agency filter if set
-    if (subAgencyFilter && contract.subAgencyId) {
-      const subAgency = model.subAgencies[contract.subAgencyId];
-      if (!subAgency || subAgency.name !== subAgencyFilter) return;
-    }
-    
-    // Apply search filter if set
-    if (searchTerm) {
-      const searchFields = [
-        contract.description,
-        model.primes[contract.primeId]?.name,
-        model.subAgencies[contract.subAgencyId]?.name,
-        model.offices[contract.officeId]?.name,
-        contract.naicsCode,
-        contract.naicsDesc
-      ];
-      
-      if (!searchFields.some(field => field && field.toLowerCase().includes(searchTerm.toLowerCase()))) {
-        return;
-      }
-    }
-    
-    // Get prime details
-    const prime = model.primes[contract.primeId];
-    if (!prime || !prime.name) return;
-    
-    const primeName = prime.name;
-    if (!primeValues[primeName]) {
-      primeValues[primeName] = 0;
-    }
-    
-    primeValues[primeName] += contract.value;
-    totalValue += contract.value;
-  });
-  
-  // Convert to array and sort
-  const sortedPrimes = Object.entries(primeValues)
-    .map(([name, value]) => ({
-      name: name,
-      value: value,
-      percentage: 0 // Calculate after
-    }))
-    .sort((a, b) => b.value - a.value);
-  
-  // Take top 7 primes
-  const result = sortedPrimes.slice(0, 7);
-  
-  // Add "Other" category if needed
-  if (sortedPrimes.length > 7) {
-    const otherValue = sortedPrimes.slice(7)
-      .reduce((sum, item) => sum + item.value, 0);
-    
-    if (otherValue > 0) {
-      result.push({
-        name: "Other",
-        value: otherValue,
-        isOther: true,
-        count: sortedPrimes.length - 7
-      });
-    }
+  if (CHART_CONFIG.debug) {
+    // Add debug outline
+    container.style.border = '1px dashed red';
   }
   
-  // Calculate percentages
-  result.forEach(item => {
-    item.percentage = totalValue > 0 ? (item.value / totalValue) * 100 : 0;
+  // Calculate dimensions
+  const dimensions = calculateChartDimensions(container);
+  if (!dimensions) return;
+  
+  // Create an appropriately sized SVG container
+  const svg = d3.select(container)
+    .append('svg')
+    .attr('width', dimensions.width)
+    .attr('height', dimensions.height)
+    .attr('viewBox', `0 0 ${dimensions.width} ${dimensions.height}`)
+    .attr('class', 'donut-chart-svg')
+    .style('overflow', 'visible'); // Allows labels to extend beyond
+  
+  if (CHART_CONFIG.debug) {
+    // Show actual chart area in debug mode
+    svg.append('rect')
+      .attr('x', dimensions.padding.left)
+      .attr('y', dimensions.padding.top)
+      .attr('width', dimensions.chartWidth)
+      .attr('height', dimensions.chartHeight)
+      .attr('fill', 'none')
+      .attr('stroke', 'blue')
+      .attr('stroke-dasharray', '3,3');
+  }
+  
+  // Create the chart container group, centered
+  const chartGroup = svg.append('g')
+    .attr('transform', `translate(${dimensions.centerX}, ${dimensions.centerY})`)
+    .attr('class', 'donut-chart-group');
+  
+  // Call the chart function with the prepared container and dimensions
+  // Chart function should expect (container, dimensions, ...args)
+  chartFunction(chartGroup, dimensions, ...additionalArgs);
+  
+  return dimensions;
+}
+
+/**
+ * Render NAICS donut chart with consistent sizing
+ */
+function renderConsistentNaicsChart() {
+  const containerId = 'naics-donut-chart-container';
+  
+  // Get current filters directly from UI elements
+  const naicsFilter = document.getElementById('naics-filter')?.value || '';
+  const subAgencyFilter = document.getElementById('sub-agency-filter')?.value || '';
+  const searchTerm = document.getElementById('search-input')?.value?.trim().toLowerCase() || '';
+  
+  // Process data with filters
+  const naicsData = processNaicsDistributionData(unifiedModel, naicsFilter, subAgencyFilter, searchTerm);
+  if (!naicsData || naicsData.length === 0) {
+    displayNoData(containerId, 'No NAICS data available with current filters.');
+    return;
+  }
+  
+  // Resize and create the chart
+  resizeDonutChart(containerId, renderDonutChartCore, {
+    data: naicsData,
+    title: naicsFilter ? `NAICS ${naicsFilter}` : "Top NAICS",
+    centerValue: naicsData[0].code,
+    labelField: "code",
+    descField: "desc",
+    highlightField: naicsFilter ? "code" : null,
+    highlightValue: naicsFilter,
+    topN: 5
   });
+}
+
+/**
+ * Render Share of Wallet donut chart with consistent sizing
+ */
+function renderConsistentShareOfWalletChart() {
+  const containerId = 'share-of-wallet-container';
+  
+  // Create container if it doesn't exist
+  ensureShareOfWalletContainer();
+  
+  // Get current filters
+  const naicsFilter = document.getElementById('naics-filter')?.value || '';
+  const subAgencyFilter = document.getElementById('sub-agency-filter')?.value || '';
+  const searchTerm = document.getElementById('search-input')?.value?.trim().toLowerCase() || '';
+  
+  // Process data with filters
+  const shareData = processShareOfWalletData(unifiedModel, naicsFilter, subAgencyFilter, searchTerm);
+  if (!shareData || shareData.length === 0) {
+    displayNoData(containerId, 'No market share data available with current filters.');
+    return;
+  }
   
   // Format long names
-  result.forEach(item => {
+  formatPrimeContractorNames(shareData);
+  
+  // Resize and create the chart
+  resizeDonutChart(containerId, renderDonutChartCore, {
+    data: shareData,
+    title: "Market",
+    subtitle: "Share",
+    centerValue: shareData[0].name,
+    labelField: "name",
+    descField: null,
+    topN: 7
+  });
+}
+
+/**
+ * Format contractor names to make them more suitable for display
+ */
+function formatPrimeContractorNames(data) {
+  data.forEach(item => {
     if (item.name && item.name.length > 20 && !item.isOther) {
       // Store original name
       item.fullName = item.name;
@@ -5530,83 +5554,16 @@ function processShareOfWalletData(model, naicsFilter, subAgencyFilter, searchTer
       }
     }
   });
-  
-  return result;
 }
 
 /**
- * Display NAICS Donut Chart with proper filtering
+ * Ensure the Share of Wallet container exists
  */
-function displayNaicsDonutChart(containerId, topN = 5) {
-  const container = document.getElementById(containerId);
-  if (!container) {
-    console.error(`NAICS chart container #${containerId} not found`);
-    return;
-  }
-  
-  // Get current filter values directly from UI elements
-  const naicsFilter = document.getElementById('naics-filter')?.value || '';
-  const subAgencyFilter = document.getElementById('sub-agency-filter')?.value || '';
-  const searchTerm = document.getElementById('search-input')?.value?.trim().toLowerCase() || '';
-  
-  // Update last filter state for comparison
-  lastFilterState.naicsCode = naicsFilter;
-  lastFilterState.subAgency = subAgencyFilter;
-  lastFilterState.searchTerm = searchTerm;
-  
-  console.log("Displaying NAICS chart with filters:", { naicsFilter, subAgencyFilter, searchTerm });
-  
-  // Process data with current filters
-  const naicsData = processNaicsDistributionData(unifiedModel, naicsFilter, subAgencyFilter, searchTerm);
-  
-  if (!naicsData || naicsData.length === 0) {
-    displayNoData(containerId, 'No NAICS data available with current filters.');
-    return;
-  }
-  
-  try {
-    // Highlight if a specific NAICS is filtered
-    const customColors = {};
-    if (naicsFilter) {
-      // Set special color function that highlights the selected NAICS
-      customColors.getColor = function(colorField, item) {
-        if (item && item.code === naicsFilter) {
-          return getCssVar('--color-primary'); // Highlight selected NAICS
-        }
-        return null; // Use default color assignment for others
-      };
-    }
-    
-    // Display chart with enhanced options
-    displayEnhancedDonutChart(naicsData, containerId, {
-      title: naicsFilter ? `NAICS ${naicsFilter}` : "Top NAICS",
-      centerValueField: "code",
-      labelField: "code",
-      descField: "desc",
-      topN: topN,
-      legendPosition: "none",
-      showExternalLabels: true,
-      minPercentageForLabel: 4,
-      adaptiveRadius: true,
-      customColors: customColors
-    });
-    
-    console.log(`NAICS chart displayed with ${naicsData.length} data points`);
-  } catch (error) {
-    console.error("Error displaying NAICS chart:", error);
-    displayError(containerId, `Failed to display chart: ${error.message}`);
-  }
-}
-
-/**
- * Display Share of Wallet chart with proper filtering
- */
-function displayShareOfWalletChart() {
+function ensureShareOfWalletContainer() {
   const containerId = 'share-of-wallet-container';
   const bentoId = 'bento-share-of-wallet';
   let container = document.getElementById(containerId);
-
-  // Create container and bento box if they don't exist
+  
   if (!container) {
     console.log("Creating Share of Wallet container");
     const bentoGrid = document.querySelector('.bento-grid');
@@ -5614,14 +5571,14 @@ function displayShareOfWalletChart() {
       console.error("Could not find bento grid for Share of Wallet container");
       return;
     }
-
+    
     let bentoBox = document.getElementById(bentoId);
     if (!bentoBox) {
       bentoBox = document.createElement('div');
       bentoBox.id = bentoId;
       bentoBox.className = 'bento-box';
       bentoBox.style.minHeight = '240px';
-
+      
       const header = document.createElement('div');
       header.className = 'card-header';
       header.innerHTML = `
@@ -5636,111 +5593,70 @@ function displayShareOfWalletChart() {
       bentoBox.appendChild(header);
       bentoGrid.appendChild(bentoBox);
     }
-
+    
     // Create chart container
     container = document.createElement('div');
     container.id = containerId;
     container.className = 'chart-container';
+    // Set explicit height to match other chart containers
+    container.style.minHeight = '220px';
+    container.style.height = '100%';
     bentoBox.appendChild(container);
   }
-
-  setLoading(containerId, true, 'Loading market share data...');
-
-  try {
-    // Get current filter values directly from UI elements
-    const naicsFilter = document.getElementById('naics-filter')?.value || '';
-    const subAgencyFilter = document.getElementById('sub-agency-filter')?.value || '';
-    const searchTerm = document.getElementById('search-input')?.value?.trim().toLowerCase() || '';
-    
-    // Process data with current filters
-    const shareData = processShareOfWalletData(unifiedModel, naicsFilter, subAgencyFilter, searchTerm);
-    
-    if (!shareData || shareData.length === 0) {
-      displayNoData(containerId, 'No market share data available with current filters.');
-      return;
-    }
-
-    // Display chart with options to match NAICS chart style
-    displayEnhancedDonutChart(shareData, containerId, {
-      title: "Market",
-      subtitle: "Share",
-      labelField: "name",
-      descField: null,
-      centerValueField: "name",
-      topN: 7,
-      legendPosition: "none",
-      showExternalLabels: true,
-      minPercentageForLabel: 4,
-      adaptiveRadius: true
-    });
-
-    console.log(`Share of Wallet chart displayed with ${shareData.length} data points`);
-  } catch (error) {
-    console.error("Error displaying Share of Wallet chart:", error);
-    displayError(containerId, `Failed to display chart: ${error.message}`);
-  } finally {
-    setLoading(containerId, false);
-  }
+  
+  return container;
 }
 
 /**
- * Enhanced donut chart function with consistent styling, better scaling, and proper label positioning
- * @param {Array} data - Array of objects with value and percentage properties
- * @param {string} containerId - The ID of the container element
- * @param {Object} options - Configuration options
+ * Core donut chart renderer that works with the resizing framework
  */
-function displayEnhancedDonutChart(data, containerId, options = {}) {
+function renderDonutChartCore(container, dimensions, options) {
   // Default options
   const defaults = {
+    data: [],
     title: "Distribution",
     subtitle: "",
-    topN: 5,
-    centerValueField: "code",
-    colorField: "name",
+    centerValue: "",
     labelField: "name",
     descField: "desc",
     valueField: "value",
     percentageField: "percentage",
     otherLabel: "Other",
-    legendPosition: "none",
-    showExternalLabels: true,
-    minPercentageForLabel: 3,
-    radiusScaleFactor: 0.85,
-    adaptiveRadius: true,
-    customColors: null // Optional custom color function
+    topN: 5,
+    highlightField: null,
+    highlightValue: null
   };
-
+  
   const config = { ...defaults, ...options };
-  const container = document.getElementById(containerId);
-
-  if (!container) {
-    console.error(`displayEnhancedDonutChart: Chart container element #${containerId} not found.`);
+  const data = config.data;
+  
+  if (!data || data.length === 0) {
+    container.append("text")
+      .attr("text-anchor", "middle")
+      .attr("dy", "0.35em")
+      .style("fill", getCssVar('--color-text-secondary'))
+      .text("No data available");
     return;
   }
-
-  const d3Container = d3.select(`#${containerId}`);
-  d3Container.html(''); // Clear previous content
-
-  if (!data || !Array.isArray(data) || data.length === 0) {
-    displayNoData(containerId, "No data available for chart.");
-    return;
-  }
-
-  // Calculate percentages if not provided
-  if (!data[0][config.percentageField]) {
-    const totalValue = d3.sum(data, d => d[config.valueField] || 0);
-    data.forEach(d => {
-      d[config.percentageField] = totalValue > 0 ? (d[config.valueField] / totalValue) * 100 : 0;
-    });
-  }
-
-  // Prepare data: Top N + Other
+  
+  // Prepare top N data + Other
   const sortedData = [...data].sort((a, b) => (b[config.valueField] || 0) - (a[config.valueField] || 0));
   const topNData = sortedData.slice(0, config.topN);
+  
+  // If highlighting a specific value, ensure it's included in the top data
+  if (config.highlightField && config.highlightValue) {
+    const highlightedItem = sortedData.find(d => d[config.highlightField] === config.highlightValue);
+    if (highlightedItem && !topNData.some(d => d[config.highlightField] === config.highlightValue)) {
+      // Replace the last item
+      topNData.pop();
+      topNData.push(highlightedItem);
+    }
+  }
+  
   const otherValue = d3.sum(sortedData.slice(config.topN), d => d[config.valueField] || 0);
   const otherPercentage = d3.sum(sortedData.slice(config.topN), d => d[config.percentageField] || 0);
   const chartPlotData = [...topNData];
-
+  
   if (otherValue > 0 && sortedData.length > config.topN) {
     const otherCount = sortedData.length - config.topN;
     const otherItem = {
@@ -5750,108 +5666,48 @@ function displayEnhancedDonutChart(data, containerId, options = {}) {
       [config.percentageField]: otherPercentage,
       isOther: true
     };
-    if (config.centerValueField && !otherItem[config.centerValueField]) {
-      otherItem[config.centerValueField] = config.otherLabel;
-    }
+    
     chartPlotData.push(otherItem);
   }
-
-  const centerItem = sortedData[0];
-  if (!centerItem) {
-    displayNoData(containerId, "Not enough data for chart.");
-    return;
-  }
-
-  // Get container dimensions
-  const rect = container.getBoundingClientRect();
-  const availableWidth = Math.max(rect.width, 200);
-  const availableHeight = Math.max(rect.height, 200);
-
-  if (availableWidth <= 10 || availableHeight <= 10) {
-    console.warn(`Container #${containerId} has minimal dimensions. W: ${availableWidth}, H: ${availableHeight}. Chart not drawn.`);
-    displayNoData(containerId, "Chart area too small.");
-    return;
-  }
-
-  // Dynamically calculate margin based on container size
-  const marginFactor = Math.min(1, Math.max(0.5, availableWidth / 400));
-  const baseMargin = config.showExternalLabels ? 40 : 20;
-  const margin = {
-    top: baseMargin * marginFactor,
-    right: baseMargin * marginFactor,
-    bottom: baseMargin * marginFactor,
-    left: baseMargin * marginFactor
-  };
-
-  const drawingWidth = availableWidth - margin.left - margin.right;
-  const drawingHeight = availableHeight - margin.top - margin.bottom;
   
-  // Calculate donut dimensions
-  const donutWidth = drawingWidth;
-  const donutHeight = drawingHeight;
-
-  // Calculate optimal radius
-  let radiusScaleFactor = config.radiusScaleFactor;
-  if (config.adaptiveRadius) {
-    // Adapt radius based on container size and label presence
-    const containerRatio = Math.min(availableWidth, availableHeight) / 300;
-    radiusScaleFactor = Math.min(0.9, Math.max(0.6, config.radiusScaleFactor * containerRatio));
-  }
-
-  const baseOuterRadius = Math.min(donutWidth, donutHeight) / 2;
-  const outerRadius = baseOuterRadius * radiusScaleFactor;
-  const innerRadius = outerRadius * 0.6;
-
-  if (outerRadius <= 15) {
-    displayNoData(containerId, "Chart area too small for donut.");
-    return;
-  }
-
-  // Create SVG with proper sizing
-  const svg = d3Container.append("svg")
-    .attr("width", "100%")
-    .attr("height", "100%")
-    .attr("viewBox", `0 0 ${availableWidth} ${availableHeight}`)
-    .style("overflow", "visible");
-
-  // Center the donut
-  const donutG = svg.append("g")
-    .attr("transform", `translate(${margin.left + donutWidth/2}, ${margin.top + donutHeight/2})`);
-
-  // Set up colors, pie layout, and arc generators
-  const color = getDonutColorScale(chartPlotData, config);
+  // Set up colors based on theme
+  const color = getDonutColorScale(chartPlotData, config.labelField, config.highlightField, config.highlightValue);
+  
+  // Set up pie layout with equal spacing
   const pie = d3.pie()
     .padAngle(0.01)
     .value(d => d[config.valueField])
     .sort(null);
   
+  // Generate arc paths
   const arcGenerator = d3.arc()
-    .innerRadius(innerRadius)
-    .outerRadius(outerRadius)
+    .innerRadius(dimensions.innerRadius)
+    .outerRadius(dimensions.radius)
     .cornerRadius(1);
   
+  // Arc generators for lead lines
   const labelArcStart = d3.arc()
-    .innerRadius(outerRadius * 0.98)
-    .outerRadius(outerRadius * 0.98);
+    .innerRadius(dimensions.radius * 0.98)
+    .outerRadius(dimensions.radius * 0.98);
   
   const labelArcMid = d3.arc()
-    .innerRadius(outerRadius * 1.10)
-    .outerRadius(outerRadius * 1.10);
+    .innerRadius(dimensions.radius * 1.10)
+    .outerRadius(dimensions.radius * 1.10);
   
   const pieData = pie(chartPlotData);
-
-  // Create arcs with hover effects
-  donutG.selectAll(".arc-path")
+  
+  // Create arc segments
+  container.selectAll(".arc-path")
     .data(pieData)
     .join("path")
     .attr("class", "arc-path")
     .attr("fill", (d, i) => {
-      // Use custom color function if provided
-      if (config.customColors && typeof config.customColors.getColor === 'function') {
-        const customColor = config.customColors.getColor(config.colorField, d.data);
-        if (customColor) return customColor;
+      // Highlight selected item if specified
+      if (config.highlightField && config.highlightValue && 
+          d.data[config.highlightField] === config.highlightValue) {
+        return getCssVar('--color-primary');
       }
-      return color(d.data[config.colorField]);
+      return color(d.data[config.labelField]);
     })
     .attr("d", arcGenerator)
     .attr("stroke", getCssVar('--color-surface'))
@@ -5908,138 +5764,144 @@ function displayEnhancedDonutChart(data, containerId, options = {}) {
         .attr("stroke", getCssVar('--color-surface'))
         .style("stroke-width", "1.5px")
         .attr("transform", "scale(1)");
+      
       d3.select("body").select(".chart-tooltip")
         .transition().duration(200)
         .style("opacity", 0)
         .remove();
     });
-
+  
   // Add center text
-  const centerText = donutG.append("text")
+  const centerText = container.append("text")
     .attr("text-anchor", "middle")
     .style("font-family", "var(--font-body, sans-serif)")
     .style("fill", getCssVar('--color-text-primary'));
   
+  // Title text
   centerText.append("tspan")
     .attr("x", 0)
     .attr("dy", "-0.6em")
-    .style("font-size", "0.75em")
+    .style("font-size", `${0.75 * dimensions.scaleFactor}em`)
     .style("fill", getCssVar('--color-text-secondary'))
     .text(config.title);
   
+  // Optional subtitle
   if (config.subtitle) {
     centerText.append("tspan")
       .attr("x", 0)
       .attr("dy", "1.1em")
-      .style("font-size", "0.7em")
+      .style("font-size", `${0.7 * dimensions.scaleFactor}em`)
       .style("fill", getCssVar('--color-text-tertiary'))
       .text(config.subtitle);
   }
   
+  // Center value (typically the top item's label)
   centerText.append("tspan")
     .attr("x", 0)
     .attr("dy", config.subtitle ? "1.3em" : "1.5em")
-    .style("font-size", "0.9em")
+    .style("font-size", `${0.9 * dimensions.scaleFactor}em`)
     .style("font-weight", "600")
-    .text(centerItem[config.centerValueField] || "");
-
+    .text(config.centerValue || "");
+  
   // Add external labels with lead lines
-  if (config.showExternalLabels) {
-    // Only show labels for segments that are large enough
-    const labelThresholdPercentage = config.minPercentageForLabel / 100;
-    const labelData = pieData.filter(d => {
-      const percentage = (d.endAngle - d.startAngle) / (2 * Math.PI);
-      return percentage >= labelThresholdPercentage && d.data[config.valueField] > 0;
-    });
-
-    if (labelData.length > 0) {
-      // Create lead lines group
-      const lineGroup = donutG.append("g").attr("class", "label-lines");
-      
-      // Create text labels group
-      const textLabelGroup = donutG.append("g").attr("class", "text-labels");
-      
-      // Set styling properties
-      const polylineStrokeColor = getCssVar('--color-text-tertiary');
-      const labelTextColor = getCssVar('--color-text-secondary');
-      const labelDescColor = getCssVar('--color-text-tertiary');
-      
-      // Calculate dimensions for lead lines
-      const leaderLineHorizontalPartLength = Math.max(8, Math.min(15, outerRadius * 0.2));
-      const textStartOffsetFromLeaderLine = 4;
-
-      // Add leader lines
-      lineGroup.selectAll('polyline')
-        .data(labelData)
-        .join('polyline')
-        .attr('stroke', polylineStrokeColor)
-        .style('fill', 'none')
-        .attr('stroke-width', 1)
-        .attr('points', d => {
-          const posA = labelArcStart.centroid(d);
-          const posB = labelArcMid.centroid(d);
-          const posC = [posB[0], posB[1]]; // Initialize posC with posB coordinates
-          const midangle = d.startAngle + (d.endAngle - d.startAngle) / 2;
-          
-          // Extend posC horizontally based on angle
-          posC[0] = posB[0] + leaderLineHorizontalPartLength * (midangle < Math.PI ? 1 : -1);
-          
-          return [posA, posB, posC];
-        });
-
-      // Add text labels
-      const textLabels = textLabelGroup.selectAll('text')
-        .data(labelData)
-        .join('text')
-        .style('font-family', "var(--font-body, sans-serif)")
-        .attr('dy', '0.35em')
-        .attr('transform', d => {
-          const midangle = d.startAngle + (d.endAngle - d.startAngle) / 2;
-          const labelRadius = outerRadius * 1.1;
-          const posB = labelArcMid.centroid(d);
-          const xPos = posB[0] + (leaderLineHorizontalPartLength + textStartOffsetFromLeaderLine) * (midangle < Math.PI ? 1 : -1);
-          const yPos = posB[1];
-          return `translate(${xPos},${yPos})`;
-        })
-        .style('text-anchor', d => {
-          const midangle = d.startAngle + (d.endAngle - d.startAngle) / 2;
-          return midangle < Math.PI ? 'start' : 'end';
-        });
-
-      // Add primary label text
-      textLabels.append('tspan')
-        .attr('x', 0)
-        .style('font-size', '11px')
-        .style('font-weight', '500')
-        .style('fill', labelTextColor)
-        .text(d => truncateText(d.data[config.labelField], 15));
-      
-      // Add secondary label text (description or percentage)
-      textLabels.filter(d => !d.data.isOther)
-        .append('tspan')
-        .attr('x', 0)
-        .attr('dy', '1.2em')
-        .style('font-size', '10px')
-        .style('fill', labelDescColor)
-        .text(d => {
-          if (d.data[config.descField]) {
-            return truncateText(d.data[config.descField], 18);
-          } else {
-            return `${d.data[config.percentageField].toFixed(1)}%`;
-          }
-        });
-    }
+  // Calculate which segments are large enough for labels
+  const minPercentageForLabel = 4.0; // 4%
+  const labelThresholdPercentage = minPercentageForLabel / 100;
+  
+  const labelData = pieData.filter(d => {
+    const percentage = (d.endAngle - d.startAngle) / (2 * Math.PI);
+    return percentage >= labelThresholdPercentage && d.data[config.valueField] > 0;
+  });
+  
+  if (labelData.length > 0) {
+    // Create lead lines group
+    const lineGroup = container.append("g").attr("class", "label-lines");
+    
+    // Create text labels group
+    const textLabelGroup = container.append("g").attr("class", "text-labels");
+    
+    // Set styling properties
+    const polylineStrokeColor = getCssVar('--color-text-tertiary');
+    const labelTextColor = getCssVar('--color-text-secondary');
+    const labelDescColor = getCssVar('--color-text-tertiary');
+    
+    // Calculate dimensions for lead lines
+    const leaderLineHorizontalPartLength = Math.max(8, Math.min(15, dimensions.radius * 0.2));
+    const textStartOffsetFromLeaderLine = 4;
+    
+    // Add leader lines
+    lineGroup.selectAll('polyline')
+      .data(labelData)
+      .join('polyline')
+      .attr('stroke', polylineStrokeColor)
+      .style('fill', 'none')
+      .attr('stroke-width', 1)
+      .attr('points', d => {
+        const posA = labelArcStart.centroid(d);
+        const posB = labelArcMid.centroid(d);
+        const posC = [posB[0], posB[1]]; // Initialize posC with posB coordinates
+        const midangle = d.startAngle + (d.endAngle - d.startAngle) / 2;
+        
+        // Extend posC horizontally based on angle
+        posC[0] = posB[0] + leaderLineHorizontalPartLength * (midangle < Math.PI ? 1 : -1);
+        
+        return [posA, posB, posC];
+      });
+    
+    // Calculate optimal font size based on container dimensions
+    const baseFontSize = 11;
+    const fontSizeFactor = Math.min(1, Math.max(0.8, dimensions.radius / 80));
+    const labelFontSize = Math.round(baseFontSize * fontSizeFactor);
+    const descFontSize = Math.round(labelFontSize * 0.9);
+    
+    // Add text labels
+    const textLabels = textLabelGroup.selectAll('text')
+      .data(labelData)
+      .join('text')
+      .style('font-family', "var(--font-body, sans-serif)")
+      .attr('dy', '0.35em')
+      .attr('transform', d => {
+        const midangle = d.startAngle + (d.endAngle - d.startAngle) / 2;
+        const posB = labelArcMid.centroid(d);
+        const xPos = posB[0] + (leaderLineHorizontalPartLength + textStartOffsetFromLeaderLine) * (midangle < Math.PI ? 1 : -1);
+        const yPos = posB[1];
+        return `translate(${xPos},${yPos})`;
+      })
+      .style('text-anchor', d => {
+        const midangle = d.startAngle + (d.endAngle - d.startAngle) / 2;
+        return midangle < Math.PI ? 'start' : 'end';
+      });
+    
+    // Add primary label text
+    textLabels.append('tspan')
+      .attr('x', 0)
+      .style('font-size', `${labelFontSize}px`)
+      .style('font-weight', '500')
+      .style('fill', labelTextColor)
+      .text(d => truncateText(d.data[config.labelField], 15));
+    
+    // Add secondary label text (description or percentage)
+    textLabels.filter(d => !d.data.isOther && (config.descField || true))
+      .append('tspan')
+      .attr('x', 0)
+      .attr('dy', '1.2em')
+      .style('font-size', `${descFontSize}px`)
+      .style('fill', labelDescColor)
+      .text(d => {
+        if (config.descField && d.data[config.descField]) {
+          return truncateText(d.data[config.descField], 18);
+        } else {
+          // Always show percentage if no description
+          return `${d.data[config.percentageField].toFixed(1)}%`;
+        }
+      });
   }
-
-  return { svg: svg, pieData: pieData, chartData: chartPlotData };
 }
 
 /**
- * Get color scale for donut chart
+ * Get color scale for donut chart with special handling for highlighted items
  */
-function getDonutColorScale(data, config) {
-  const colorField = config.colorField || 'name';
-  
+function getDonutColorScale(data, colorField, highlightField, highlightValue) {
   // Create domain from data
   const domain = data.map(d => d[colorField]);
   
@@ -6072,58 +5934,52 @@ function getDonutColorScale(data, config) {
   
   // Return function that handles special cases
   return function(value) {
+    // Special handling for highlighted item
+    if (highlightField && highlightValue) {
+      const item = data.find(d => d[colorField] === value);
+      if (item && item[highlightField] === highlightValue) {
+        return getCssVar('--color-primary');
+      }
+    }
+    
     // Special handling for "Other" category
     const item = data.find(d => d[colorField] === value);
     if (item && item.isOther) {
       return getCssVar('--color-text-tertiary');
     }
+    
     return colorScale(value);
   };
 }
 
 /**
- * Update both charts when filters change
+ * Update both charts to ensure consistent sizing
  */
-function updateBothChartsWithFilters() {
-  console.log("Updating both charts with current filters");
-  
-  // Get current filter values
-  const naicsFilter = document.getElementById('naics-filter')?.value || '';
-  const subAgencyFilter = document.getElementById('sub-agency-filter')?.value || '';
-  const searchTerm = document.getElementById('search-input')?.value?.trim().toLowerCase() || '';
-  
-  // Check if filters have actually changed
-  if (naicsFilter === lastFilterState.naicsCode && 
-      subAgencyFilter === lastFilterState.subAgency && 
-      searchTerm === lastFilterState.searchTerm) {
-    console.log("Filters unchanged, skipping redundant update");
-    return;
+function updateBothChartsWithConsistentSizing() {
+  try {
+    // Update NAICS chart
+    renderConsistentNaicsChart();
+    
+    // Update Share of Wallet chart
+    renderConsistentShareOfWalletChart();
+    
+  } catch (error) {
+    console.error("Error updating charts with consistent sizing:", error);
   }
-  
-  // Update NAICS chart
-  displayNaicsDonutChart('naics-donut-chart-container');
-  
-  // Update Share of Wallet chart
-  displayShareOfWalletChart();
-  
-  // Update last known filter state
-  lastFilterState.naicsCode = naicsFilter;
-  lastFilterState.subAgency = subAgencyFilter;
-  lastFilterState.searchTerm = searchTerm;
 }
 
 /**
- * Direct hook into the main filter application function
+ * Hook this into both the filter system and window resizing
  */
-function integrateWithFilters() {
-  // Set up initial state
+function setupChartSizingSystem() {
+  // Get current filter values
   lastFilterState = {
     naicsCode: document.getElementById('naics-filter')?.value || '',
     subAgency: document.getElementById('sub-agency-filter')?.value || '',
     searchTerm: document.getElementById('search-input')?.value?.trim().toLowerCase() || ''
   };
   
-  // Hook into the applyFiltersAndUpdateVisuals function if it exists
+  // Hook into filter application
   if (typeof window.applyFiltersAndUpdateVisuals === 'function') {
     const originalApplyFilters = window.applyFiltersAndUpdateVisuals;
     window.applyFiltersAndUpdateVisuals = function() {
@@ -6131,12 +5987,12 @@ function integrateWithFilters() {
       originalApplyFilters.apply(this, arguments);
       
       // Update our charts with a delay to let the model filtering complete
-      setTimeout(updateBothChartsWithFilters, 300);
+      setTimeout(updateBothChartsWithConsistentSizing, 300);
     };
     console.log("Successfully hooked into applyFiltersAndUpdateVisuals");
   }
   
-  // Hook into the updateVisualsFromUnifiedModel function if it exists
+  // Hook into unified model updates
   if (typeof window.updateVisualsFromUnifiedModel === 'function') {
     const originalUpdateVisuals = window.updateVisualsFromUnifiedModel;
     window.updateVisualsFromUnifiedModel = function() {
@@ -6144,12 +6000,12 @@ function integrateWithFilters() {
       originalUpdateVisuals.apply(this, arguments);
       
       // Update our charts with a delay
-      setTimeout(updateBothChartsWithFilters, 300);
+      setTimeout(updateBothChartsWithConsistentSizing, 300);
     };
     console.log("Successfully hooked into updateVisualsFromUnifiedModel");
   }
   
-  // Add event listeners to filter elements
+  // Add filter event listeners
   const filterElements = [
     { id: 'search-input', event: 'input' },
     { id: 'sub-agency-filter', event: 'change' },
@@ -6162,27 +6018,176 @@ function integrateWithFilters() {
     if (element) {
       element.addEventListener(item.event, function() {
         // Use a small delay to let other event handlers complete
-        setTimeout(updateBothChartsWithFilters, 300);
+        setTimeout(updateBothChartsWithConsistentSizing, 300);
       });
       console.log(`Added ${item.event} listener to ${item.id}`);
     }
   });
+  
+  // Handle window resize events
+  window.addEventListener('resize', function() {
+    // Debounce resize handling
+    if (this.resizeTimeout) clearTimeout(this.resizeTimeout);
+    this.resizeTimeout = setTimeout(function() {
+      console.log("Window resized, updating chart sizes");
+      updateBothChartsWithConsistentSizing();
+    }, 250);
+  });
+  
+  // Initial render
+  updateBothChartsWithConsistentSizing();
 }
 
 // Initialize when DOM is ready
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', function() {
     // Wait for the main code to initialize
-    setTimeout(integrateWithFilters, 500);
+    setTimeout(setupChartSizingSystem, 500);
   });
 } else {
   // Document already loaded, initialize with a delay
-  setTimeout(integrateWithFilters, 500);
+  setTimeout(setupChartSizingSystem, 500);
 }
 
-// Make our functions available globally
-window.displayNaicsDonutChart = displayNaicsDonutChart;
-window.displayShareOfWalletChart = displayShareOfWalletChart;
-window.displayEnhancedDonutChart = displayEnhancedDonutChart;
-window.processNaicsDistributionData = processNaicsDistributionData;
-window.processShareOfWalletData = processShareOfWalletData;
+// Make functions available globally
+window.renderConsistentNaicsChart = renderConsistentNaicsChart;
+window.renderConsistentShareOfWalletChart = renderConsistentShareOfWalletChart;
+window.updateBothChartsWithConsistentSizing = updateBothChartsWithConsistentSizing;
+/**
+ * This code fixes the initial load of the NAICS chart by hooking into the data loading functions
+ */
+
+// Add hooks into the data loading process
+function hookIntoDataLoading() {
+  console.log("Setting up hooks for NAICS chart initial load");
+  
+  // Hook into loadSingleDataset
+  if (typeof window.loadSingleDataset === 'function') {
+    const originalLoadSingleDataset = window.loadSingleDataset;
+    window.loadSingleDataset = function(dataset) {
+      // Call original function
+      originalLoadSingleDataset.apply(this, arguments);
+      
+      // After data loads and processes, render our charts
+      setTimeout(function() {
+        console.log("Dataset loaded, initializing charts");
+        updateBothChartsWithConsistentSizing();
+      }, 1500); // Longer delay to allow data to load and process
+    };
+    console.log("Successfully hooked into loadSingleDataset");
+  }
+  
+  // Hook into loadCombinedDatasets
+  if (typeof window.loadCombinedDatasets === 'function') {
+    const originalLoadCombinedDatasets = window.loadCombinedDatasets;
+    window.loadCombinedDatasets = function(datasetIds) {
+      // Call original function
+      originalLoadCombinedDatasets.apply(this, arguments);
+      
+      // After data loads and processes, render our charts
+      setTimeout(function() {
+        console.log("Combined datasets loaded, initializing charts");
+        updateBothChartsWithConsistentSizing();
+      }, 2000); // Even longer delay for combined datasets
+    };
+    console.log("Successfully hooked into loadCombinedDatasets");
+  }
+  
+  // Hook into processDataset, which is called when data is ready
+  if (typeof window.processDataset === 'function') {
+    const originalProcessDataset = window.processDataset;
+    window.processDataset = function(dataset, data) {
+      // Call original function
+      const result = originalProcessDataset.apply(this, arguments);
+      
+      // After processing completes (which means data is ready)
+      setTimeout(function() {
+        console.log("Dataset processed, initializing charts");
+        updateBothChartsWithConsistentSizing();
+      }, 500);
+      
+      return result;
+    };
+    console.log("Successfully hooked into processDataset");
+  }
+  
+  // Hook into buildUnifiedModel, which is called after all data is loaded
+  if (typeof window.buildUnifiedModel === 'function') {
+    const originalBuildUnifiedModel = window.buildUnifiedModel;
+    window.buildUnifiedModel = function() {
+      // Call original function
+      originalBuildUnifiedModel.apply(this, arguments);
+      
+      // After unified model is built, render our charts
+      console.log("Unified model built, initializing charts");
+      updateBothChartsWithConsistentSizing();
+    };
+    console.log("Successfully hooked into buildUnifiedModel");
+  }
+  
+  // Add manual button to force chart refresh
+  addRefreshChartsButton();
+  
+  // Set up a periodic check for loaded data
+  checkForLoadedDataAndRender();
+}
+
+// Create a temporary button to manually refresh charts (useful for debugging)
+function addRefreshChartsButton() {
+  // Don't add in production
+  const isDebug = false;
+  if (!isDebug) return;
+  
+  const container = document.querySelector('.header-controls');
+  if (!container) return;
+  
+  const button = document.createElement('button');
+  button.textContent = "Refresh Charts";
+  button.style.padding = "6px 10px";
+  button.style.marginLeft = "8px";
+  button.addEventListener('click', function() {
+    updateBothChartsWithConsistentSizing();
+  });
+  
+  container.appendChild(button);
+}
+
+// Function to periodically check if data is loaded and render charts
+function checkForLoadedDataAndRender() {
+  console.log("Setting up periodic check for loaded data");
+  
+  // Initial delay before first check
+  setTimeout(function checkData() {
+    // Check if we have NAICS data available
+    const hasData = typeof unifiedModel !== 'undefined' && 
+                   unifiedModel !== null && 
+                   typeof unifiedModel.contracts !== 'undefined' &&
+                   Object.keys(unifiedModel.contracts || {}).length > 0;
+    
+    if (hasData) {
+      console.log("Data detected, initializing charts");
+      updateBothChartsWithConsistentSizing();
+    } else {
+      console.log("No data yet, checking again soon");
+      // Check again in a moment
+      setTimeout(checkData, 1000);
+    }
+  }, 1000);
+}
+
+// Update your initialization to include the new hooks
+const originalSetupChartSizingSystem = window.setupChartSizingSystem;
+window.setupChartSizingSystem = function() {
+  // Call original setup
+  if (typeof originalSetupChartSizingSystem === 'function') {
+    originalSetupChartSizingSystem();
+  }
+  
+  // Add our data loading hooks
+  hookIntoDataLoading();
+};
+
+// Initialize right away if page is already loaded
+if (document.readyState !== 'loading') {
+  hookIntoDataLoading();
+}
