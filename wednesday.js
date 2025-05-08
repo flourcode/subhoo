@@ -6483,7 +6483,7 @@ function displayForceDirectedRadial(model) {
             return availableSpace >= (minSpace[type] || 15);
         }
         
-        // Add entity labels (only where there's enough space)
+        // Add entity labels with inline dollar values (only where there's enough space)
         node.filter(d => shouldShowNodeLabel(d))
             .append("text")
             .attr("dy", "0.35em")
@@ -6506,18 +6506,33 @@ function displayForceDirectedRadial(model) {
             .text(d => {
                 if (getNodeType(d) === 'root') return "";
                 
-                // Truncate text based on node type and available space
+                // Truncate name based on available space and show value inline
                 const name = d.data.name || "";
                 const type = getNodeType(d);
+                const value = d.data.value;
                 
                 // Dynamic truncation based on space and node type
                 let maxLength = 25;
                 if (type === 'agency') maxLength = 20;
                 if (type === 'subagency') maxLength = 18;
                 if (type === 'office') maxLength = 15;
-                if (type === 'prime') maxLength = 13;
-                if (type === 'sub') maxLength = 10;
+                if (type === 'prime') maxLength = 15;
+                if (type === 'sub') maxLength = 13;
                 
+                // For primes and subs, add dollar value inline
+                if ((type === 'prime' || type === 'sub') && value) {
+                    // Reduce name length further to accommodate value
+                    const valueStr = ` (${formatConciseCurrency(value)})`;
+                    const reducedMaxLength = maxLength - Math.floor(valueStr.length * 1.5);
+                    
+                    const truncatedName = name.length > reducedMaxLength 
+                        ? name.substring(0, reducedMaxLength - 3) + "..." 
+                        : name;
+                        
+                    return truncatedName + valueStr;
+                }
+                
+                // For other node types (or if no value), just show truncated name
                 if (name.length > maxLength) {
                     return name.substring(0, maxLength - 3) + "...";
                 }
@@ -6525,15 +6540,12 @@ function displayForceDirectedRadial(model) {
                 return name;
             });
         
-        // Add value labels (only for selected important nodes)
+        // Add value labels for agency, subagency and office levels
         node.filter(d => {
             const type = getNodeType(d);
-            // Only show values for larger nodes and at certain levels
-            return (type === 'agency' || type === 'subagency' || 
-                  (type === 'office' && calculateNodeSize(d) > 5) ||
-                  (type === 'prime' && calculateNodeSize(d) > 5) ||
-                  (type === 'sub' && calculateNodeSize(d) > 5.5)) && 
-                  shouldShowNodeLabel(d);
+            // Only show values for higher level nodes and ensure they're not primes/subs (already have inline values)
+            return (type === 'agency' || type === 'subagency' || type === 'office') && 
+                   shouldShowNodeLabel(d);
         })
         .append("text")
         .attr("x", d => {
