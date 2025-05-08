@@ -6269,8 +6269,6 @@ function createHierarchyData(model, subAgencyFilter) {
     
     return root;
 }
-
-// Modified function to display the dendrogram with the complete hierarchy
 function displayForceDirectedRadial(model) {
     const containerId = 'circular-dendrogram-container';
     const container = document.getElementById(containerId);
@@ -6294,6 +6292,22 @@ function displayForceDirectedRadial(model) {
         return;
     }
     
+    // Add debugging code for office data
+    console.log("Checking for office data in model:");
+    console.log("Offices in model:", Object.keys(model.offices || {}).length);
+    let officesReferenced = 0;
+    Object.values(model.subAgencies || {}).forEach(subAgency => {
+        if (subAgency.offices && subAgency.offices.size > 0) {
+            officesReferenced += subAgency.offices.size;
+        }
+    });
+    console.log("Office references in subAgencies:", officesReferenced);
+    let contractsWithOffices = 0;
+    Object.values(model.contracts || {}).forEach(contract => {
+        if (contract.officeId) contractsWithOffices++;
+    });
+    console.log("Contracts with office IDs:", contractsWithOffices);
+    
     try {
         // Create SVG container
         const width = container.clientWidth;
@@ -6313,11 +6327,11 @@ function displayForceDirectedRadial(model) {
         
         // Calculate node size based on type and value
         function calculateNodeSize(type, value) {
-            // Base radius by type
+            // Increase the base radius for offices
             const baseRadius = 
                 type === 'agency' ? 10 :
-                type === 'subagency' ? 8 :
-                type === 'office' ? 7 :
+                type === 'subagency' ? 9 :
+                type === 'office' ? 8 :      // Increase office size
                 type === 'prime' ? 6 : 4;
             
             // Scale by value (use log scale to handle wide range of values)
@@ -6472,14 +6486,21 @@ function displayForceDirectedRadial(model) {
                                     (d.type !== 'root' ? Math.min((d.name || "").length * 2.5, 40) : 0);
                 return nodeRadius + textPadding;
             }).strength(0.8))
-            // Radial positioning by type
+            // Make the radial positioning more spread out to accommodate all levels
             .force("radial", d3.forceRadial(d => {
-                if (d.type === 'agency') return 70;
-                if (d.type === 'subagency') return 140;
-                if (d.type === 'office') return 210;
-                if (d.type === 'prime') return 280;
-                return 350; // Default for subcontractors
-            }, 0, 0).strength(0.3));
+                if (d.type === 'agency') return 70;      // Keep agencies close to center
+                if (d.type === 'subagency') return 130;  // Position sub-agencies
+                if (d.type === 'office') return 190;     // Make offices more visible
+                if (d.type === 'prime') return 250;      // Position primes
+                return 310;                              // Subcontractors at the edge
+            }, 0, 0).strength(0.3))
+            // Add office-specific repulsion force
+            .force("officeRepulsion", d3.forceManyBody()
+                .strength((d, i) => {
+                    return d.type === 'office' ? -150 : 0;
+                })
+                .distanceMax(100)
+            );
             
         // Add custom clustering forces for each relationship level
         simulation.force("clusterSubs", isolatedNodesClusterForce(nodes, primeToSubsMap, 0.7));
@@ -6522,7 +6543,8 @@ function displayForceDirectedRadial(model) {
             .attr("fill", d => {
                 if (d.type === 'agency') return getCssVar('--chart-color-primary');
                 if (d.type === 'subagency') return d3.color(getCssVar('--chart-color-primary')).brighter(0.2);
-                if (d.type === 'office') return d3.color(getCssVar('--chart-color-primary')).brighter(0.4);
+                // Make office color more distinctive
+                if (d.type === 'office') return d3.color(getCssVar('--chart-color-secondary')).darker(0.2);
                 if (d.type === 'prime') return getCssVar('--chart-color-secondary');
                 return getCssVar('--chart-color-tertiary');
             })
@@ -6647,7 +6669,7 @@ function displayForceDirectedRadial(model) {
         const colorLegendData = [
             { label: "Agency", color: getCssVar('--chart-color-primary') },
             { label: "Sub-Agency", color: d3.color(getCssVar('--chart-color-primary')).brighter(0.2) },
-            { label: "Office", color: d3.color(getCssVar('--chart-color-primary')).brighter(0.4) },
+            { label: "Office", color: d3.color(getCssVar('--chart-color-secondary')).darker(0.2) },
             { label: "Prime Contractor", color: getCssVar('--chart-color-secondary') },
             { label: "Subcontractor", color: getCssVar('--chart-color-tertiary') }
         ];
@@ -6772,7 +6794,6 @@ function displayForceDirectedRadial(model) {
         displayError(containerId, `Failed to render visualization: ${error.message}`);
     }
 }
-
 // Custom force function for clustering nodes at different relationship levels
 function isolatedNodesClusterForce(nodes, relationshipMap, strength = 0.5) {
     function force(alpha) {
