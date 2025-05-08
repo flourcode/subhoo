@@ -239,9 +239,10 @@ a:hover { color: var(--color-secondary); text-decoration: none; }
     /* Updated layout with Share of Wallet */
     grid-template-areas:
 	
-		"share-wallet share-wallet naics-donut naics-donut map"
-		"sankey sankey sankey tavtcv dendrogram"
-		"leaders leaders leaders leaders arr"
+		"share-wallet share-wallet sankey sankey sankey"
+		"tavtcv tavtcv dendrogram dendrogram dendrogram"
+		"naics-donut naics-donut map map arr"
+		"leaders leaders leaders leaders leaders"
         "expiring expiring expiring expiring expiring";
     grid-template-rows: minmax(400px, auto) auto auto auto;
 }
