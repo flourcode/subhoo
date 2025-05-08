@@ -6294,8 +6294,8 @@ function displayForceDirectedRadial(model) {
     
     try {
         // Create wide-format SVG container
-        const width = 1600;  // Much wider for horizontal spread
-        const height = 800;  // Standard height
+        const width = 1600;
+        const height = 800;
         
         const svg = d3.select(container)
             .append("svg")
@@ -6313,287 +6313,449 @@ function displayForceDirectedRadial(model) {
         // Sort by value
         root.sort((a, b) => (b.data.value || 0) - (a.data.value || 0));
         
-        // Count depth levels
-        let maxDepth = 0;
-        root.eachBefore(d => {
-            maxDepth = Math.max(maxDepth, d.depth);
-        });
+        // State for focused node and breadcrumb
+        let focusNode = root;
+        const breadcrumb = [];
         
-        // Calculate fixed level spacing
-        const levelWidth = (width - 300) / (maxDepth + 1);
-        
-        // Create a tree layout
-        const treeLayout = d3.tree()
-            .size([height - 150, width - 300])
-            .separation((a, b) => (a.parent === b.parent ? 1 : 1.2));
-        
-        // Compute the tree layout
-        treeLayout(root);
-        
-        // Override the x-positions to force fixed level spacing
-        root.each(d => {
-            d.y = 100 + (d.depth * levelWidth);
-        });
-        
-        // Create a group for the visualization
-        const g = svg.append("g")
-            .attr("transform", `translate(30, 75)`);
-        
-        // Draw links
-        const link = g.append("g")
-            .selectAll("path")
-            .data(root.links().filter(link => link.source.depth > 0))
-            .join("path")
-            .attr("fill", "none")
-            .attr("stroke", getCssVar('--color-border'))
-            .attr("stroke-opacity", 0.8)
-            .attr("d", d3.linkHorizontal()
-                .x(d => d.y)
-                .y(d => d.x))
-            .attr("stroke-width", d => {
-                const value = d.target.data.value || 0;
-                return Math.max(0.5, Math.min(2, Math.log10(value + 1) / 6));
+        // Function to update the visualization with a new focus node
+        function update(focusNode) {
+            // Calculate the tree layout for the focused subtree
+            const treeLayout = d3.tree()
+                .size([height - 150, width - 300])
+                .separation((a, b) => (a.parent === b.parent ? 1 : 1.2));
+            
+            // Create a copy of the focused node to avoid modifying the original
+            const focusCopy = d3.hierarchy(focusNode.data);
+            
+            // Sort by value
+            focusCopy.sort((a, b) => (b.data.value || 0) - (a.data.value || 0));
+            
+            // Compute the tree layout
+            treeLayout(focusCopy);
+            
+            // Determine max depth of visible nodes
+            let maxDepth = 0;
+            focusCopy.eachBefore(d => {
+                maxDepth = Math.max(maxDepth, d.depth);
             });
-        
-        // Get node type function
-        function getNodeType(d) {
-            const depth = d.depth;
-            if (depth === 0) return 'root';
-            if (depth === 1) return 'agency';
-            if (depth === 2) {
-                return d.data.isSubAgency ? 'subagency' : 'unknown';
+            
+            // Calculate fixed level spacing
+            const levelWidth = (width - 300) / (maxDepth + 1);
+            
+            // Override the y positions to force fixed level spacing
+            focusCopy.each(d => {
+                d.y = 100 + (d.depth * levelWidth);
+            });
+            
+            // Clear previous visualization
+            svg.selectAll("g.nodes, g.links, g.breadcrumb, g.legend, g.help-text").remove();
+            
+            // Create a group for the visualization
+            const g = svg.append("g")
+                .attr("class", "nodes-container")
+                .attr("transform", `translate(30, 75)`);
+            
+            // Draw links
+            const linksGroup = g.append("g")
+                .attr("class", "links");
+                
+            const link = linksGroup.selectAll("path")
+                .data(focusCopy.links())
+                .join("path")
+                .attr("fill", "none")
+                .attr("stroke", getCssVar('--color-border'))
+                .attr("stroke-opacity", 0.8)
+                .attr("d", d3.linkHorizontal()
+                    .x(d => d.y)
+                    .y(d => d.x))
+                .attr("stroke-width", d => {
+                    const value = d.target.data.value || 0;
+                    return Math.max(0.5, Math.min(2, Math.log10(value + 1) / 6));
+                });
+            
+            // Get node type function
+            function getNodeType(d) {
+                // Adjust for the focused view - depth is relative to current focus
+                const absoluteDepth = breadcrumb.length + d.depth;
+                
+                if (absoluteDepth === 0) return 'root';
+                if (absoluteDepth === 1) return 'agency';
+                if (absoluteDepth === 2) {
+                    return d.data.isSubAgency ? 'subagency' : 'unknown';
+                }
+                if (absoluteDepth === 3) {
+                    return d.data.isOffice ? 'office' : 'prime';
+                }
+                if (absoluteDepth === 4) {
+                    return d.data.isPrime ? 'prime' : 'sub';
+                }
+                return 'sub';
             }
-            if (depth === 3) {
-                return d.data.isOffice ? 'office' : 'prime';
-            }
-            if (depth === 4) {
-                return d.data.isPrime ? 'prime' : 'sub';
-            }
-            return 'sub';
-        }
-        
-        // Calculate node radius based on type and value
-        function getNodeRadius(d) {
-            const type = getNodeType(d);
-            if (type === 'root') return 0;
-            if (type === 'agency') return 8;
-            if (type === 'subagency') return 7;
-            if (type === 'office') return 6;
-            if (type === 'prime') return 5;
-            return 4;
-        }
-        
-        // Create node groups
-        const node = g.append("g")
-            .selectAll("g")
-            .data(root.descendants())
-            .join("g")
-            .attr("transform", d => `translate(${d.y},${d.x})`)
-            .attr("data-type", d => getNodeType(d));
-        
-        // Add circles to nodes
-        node.append("circle")
-            .attr("r", d => getNodeRadius(d))
-            .attr("fill", d => {
+            
+            // Calculate node radius based on type and value
+            function getNodeRadius(d) {
                 const type = getNodeType(d);
-                if (type === 'root') return 'none';
-                if (type === 'agency') return getCssVar('--chart-color-primary');
-                if (type === 'subagency') return d3.color(getCssVar('--chart-color-primary')).brighter(0.2);
-                if (type === 'office') return d3.color(getCssVar('--chart-color-secondary')).darker(0.2);
-                if (type === 'prime') return getCssVar('--chart-color-secondary');
-                return getCssVar('--chart-color-tertiary');
+                if (type === 'root') return 0;
+                if (type === 'agency') return 8;
+                if (type === 'subagency') return 7;
+                if (type === 'office') return 6;
+                if (type === 'prime') return 5;
+                return 4;
+            }
+            
+            // Create node groups
+            const nodesGroup = g.append("g")
+                .attr("class", "nodes");
+                
+            const node = nodesGroup.selectAll("g")
+                .data(focusCopy.descendants())
+                .join("g")
+                .attr("class", "node")
+                .attr("transform", d => `translate(${d.y},${d.x})`)
+                .attr("data-type", d => getNodeType(d))
+                .attr("cursor", d => d.children ? "pointer" : "default");
+            
+            // Add circles to nodes
+            node.append("circle")
+                .attr("r", d => getNodeRadius(d))
+                .attr("fill", d => {
+                    const type = getNodeType(d);
+                    if (type === 'root') return 'none';
+                    if (type === 'agency') return getCssVar('--chart-color-primary');
+                    if (type === 'subagency') return d3.color(getCssVar('--chart-color-primary')).brighter(0.2);
+                    if (type === 'office') return d3.color(getCssVar('--chart-color-secondary')).darker(0.2);
+                    if (type === 'prime') return getCssVar('--chart-color-secondary');
+                    return getCssVar('--chart-color-tertiary');
+                })
+                .attr("stroke", getCssVar('--color-surface'))
+                .attr("stroke-width", 1.5);
+            
+            // Add expand/drill icon for nodes with children
+            node.filter(d => d.children && d.children.length > 0)
+                .append("text")
+                .attr("class", "drill-icon")
+                .attr("x", 0)
+                .attr("y", 0)
+                .attr("font-size", "12px")
+                .attr("text-anchor", "middle")
+                .attr("dominant-baseline", "central")
+                .attr("fill", getCssVar('--color-surface'))
+                .text("+");
+            
+            // Add labels with inline values
+            node.filter(d => d.depth > 0 || breadcrumb.length > 0) // Skip root node if at top level
+                .append("text")
+                .attr("dy", "0.32em")
+                .attr("x", d => {
+                    const nodeRadius = getNodeRadius(d);
+                    return d.children ? -nodeRadius - 6 : nodeRadius + 6;
+                })
+                .attr("text-anchor", d => d.children ? "end" : "start")
+                .attr("font-size", d => {
+                    const type = getNodeType(d);
+                    if (type === 'agency') return "12px";
+                    if (type === 'subagency') return "11px";
+                    if (type === 'office') return "10px";
+                    return "9px";
+                })
+                .attr("fill", getCssVar('--color-text-primary'))
+                .text(d => {
+                    const name = d.data.name || "";
+                    const type = getNodeType(d);
+                    
+                    // Combine name and value for prime and sub nodes
+                    if (type === 'prime' || type === 'sub') {
+                        const valueStr = d.data.value ? ` (${formatConciseCurrency(d.data.value)})` : '';
+                        
+                        // Adjust max length based on name + value length
+                        const maxNameLength = 25 - valueStr.length;
+                        
+                        if (name.length > maxNameLength) {
+                            return name.substring(0, maxNameLength - 3) + "..." + valueStr;
+                        }
+                        return name + valueStr;
+                    }
+                    
+                    // For other node types, just display name
+                    const maxLength = type === 'agency' ? 30 : 
+                                     type === 'subagency' ? 25 :
+                                     type === 'office' ? 20 : 15;
+                                     
+                    if (name.length > maxLength) {
+                        return name.substring(0, maxLength - 3) + "...";
+                    }
+                    
+                    return name;
+                });
+            
+            // Add separate value labels for agency, subagency, and office nodes
+            node.filter(d => {
+                const type = getNodeType(d);
+                return (type === 'agency' || type === 'subagency' || type === 'office') && d.data.value;
             })
-            .attr("stroke", getCssVar('--color-surface'))
-            .attr("stroke-width", 1.5);
-        
-        // Add labels with inline values
-        node.filter(d => d.depth > 0) // Skip root node
             .append("text")
-            .attr("dy", "0.32em")
             .attr("x", d => {
                 const nodeRadius = getNodeRadius(d);
                 return d.children ? -nodeRadius - 6 : nodeRadius + 6;
             })
+            .attr("y", 14)
             .attr("text-anchor", d => d.children ? "end" : "start")
-            .attr("font-size", d => {
-                const type = getNodeType(d);
-                if (type === 'agency') return "12px";
-                if (type === 'subagency') return "11px";
-                if (type === 'office') return "10px";
-                return "9px";
-            })
-            .attr("fill", getCssVar('--color-text-primary'))
-            .text(d => {
-                const name = d.data.name || "";
-                const type = getNodeType(d);
-                
-                // Combine name and value for prime and sub nodes
-                if (type === 'prime' || type === 'sub') {
-                    const valueStr = d.data.value ? ` (${formatConciseCurrency(d.data.value)})` : '';
-                    
-                    // Adjust max length based on name + value length
-                    const maxNameLength = 25 - valueStr.length;
-                    
-                    if (name.length > maxNameLength) {
-                        return name.substring(0, maxNameLength - 3) + "..." + valueStr;
-                    }
-                    return name + valueStr;
-                }
-                
-                // For other node types, just display name
-                const maxLength = type === 'agency' ? 30 : 
-                                 type === 'subagency' ? 25 :
-                                 type === 'office' ? 20 : 15;
-                                 
-                if (name.length > maxLength) {
-                    return name.substring(0, maxLength - 3) + "...";
-                }
-                
-                return name;
-            });
-        
-        // Add separate value labels for agency, subagency, and office nodes
-        node.filter(d => {
-            const type = getNodeType(d);
-            return (type === 'agency' || type === 'subagency' || type === 'office') && d.data.value;
-        })
-        .append("text")
-        .attr("x", d => {
-            const nodeRadius = getNodeRadius(d);
-            return d.children ? -nodeRadius - 6 : nodeRadius + 6;
-        })
-        .attr("y", 14)
-        .attr("text-anchor", d => d.children ? "end" : "start")
-        .attr("font-size", "9px")
-        .attr("fill", getCssVar('--color-text-secondary'))
-        .text(d => formatConciseCurrency(d.data.value));
-        
-        // Set up tooltip
-        let tooltip = d3.select("body").select("#tree-tooltip");
-        if (tooltip.empty()) {
-            tooltip = d3.select("body").append("div")
-                .attr("id", "tree-tooltip")
-                .style("position", "absolute")
-                .style("visibility", "hidden")
-                .style("opacity", 0)
-                .style("background-color", getCssVar('--color-surface'))
-                .style("border", `1px solid ${getCssVar('--color-border')}`)
-                .style("border-radius", "4px")
-                .style("padding", "10px")
-                .style("color", getCssVar('--color-text-primary'))
-                .style("font-size", "12px")
-                .style("pointer-events", "none")
-                .style("z-index", 1000)
-                .style("max-width", "350px")
-                .style("box-shadow", "0 3px 14px rgba(0,0,0,0.15)");
-        }
-        
-        // Basic tooltip functions
-        function showTooltip(event, d) {
-            const percentage = (100 * d.data.value / root.data.value).toFixed(1);
-            const type = getNodeType(d);
+            .attr("font-size", "9px")
+            .attr("fill", getCssVar('--color-text-secondary'))
+            .text(d => formatConciseCurrency(d.data.value));
             
-            let ancestry = '';
-            if (d.depth > 1) {
-                let current = d.parent;
-                const path = [];
-                while (current && current.depth > 0) {
-                    path.unshift(current.data.name);
-                    current = current.parent;
-                }
-                ancestry = `<div>Path: ${path.join(' → ')}</div>`;
+            // Add click events for drill-down
+            node.filter(d => d.children && d.children.length > 0)
+                .on("click", function(event, d) {
+                    // Update breadcrumb
+                    breadcrumb.push({
+                        node: focusNode,
+                        name: focusNode.data.name
+                    });
+                    
+                    // Update focus node
+                    focusNode = findNodeInOriginalHierarchy(root, d.data.name, breadcrumb.length);
+                    
+                    // Update visualization
+                    update(focusNode);
+                });
+            
+            // Draw breadcrumb navigation
+            const breadcrumbGroup = svg.append("g")
+                .attr("class", "breadcrumb")
+                .attr("transform", `translate(20, 20)`);
+                
+            if (breadcrumb.length > 0) {
+                let xOffset = 0;
+                
+                // Add "Back to Root" button at the beginning
+                const rootButton = breadcrumbGroup.append("g")
+                    .attr("transform", `translate(${xOffset}, 0)`)
+                    .attr("cursor", "pointer")
+                    .on("click", function() {
+                        // Reset to root
+                        breadcrumb.length = 0;
+                        focusNode = root;
+                        update(focusNode);
+                    });
+                    
+                rootButton.append("rect")
+                    .attr("width", 70)
+                    .attr("height", 24)
+                    .attr("rx", 4)
+                    .attr("fill", getCssVar('--color-surface-variant'))
+                    .attr("stroke", getCssVar('--color-border'));
+                    
+                rootButton.append("text")
+                    .attr("x", 35)
+                    .attr("y", 16)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "11px")
+                    .attr("fill", getCssVar('--color-text-primary'))
+                    .text("Root View");
+                    
+                xOffset += 80;
+                
+                // Add each breadcrumb item
+                breadcrumb.forEach((item, i) => {
+                    const isLast = i === breadcrumb.length - 1;
+                    
+                    // Add separator
+                    breadcrumbGroup.append("text")
+                        .attr("x", xOffset)
+                        .attr("y", 16)
+                        .attr("text-anchor", "middle")
+                        .attr("font-size", "14px")
+                        .attr("fill", getCssVar('--color-text-tertiary'))
+                        .text("›");
+                        
+                    xOffset += 15;
+                    
+                    // Calculate text width
+                    const displayName = item.name.length > 20 ? item.name.substring(0, 17) + "..." : item.name;
+                    const textWidth = displayName.length * 6 + 20; // Approximate width
+                    
+                    // Add breadcrumb item
+                    const crumb = breadcrumbGroup.append("g")
+                        .attr("transform", `translate(${xOffset}, 0)`)
+                        .attr("cursor", isLast ? "default" : "pointer");
+                        
+                    if (!isLast) {
+                        crumb.on("click", function() {
+                            // Go back to this breadcrumb item
+                            focusNode = item.node;
+                            breadcrumb.splice(i + 1);
+                            update(focusNode);
+                        });
+                    }
+                    
+                    crumb.append("rect")
+                        .attr("width", textWidth)
+                        .attr("height", 24)
+                        .attr("rx", 4)
+                        .attr("fill", isLast ? getCssVar('--color-primary') : getCssVar('--color-surface-variant'))
+                        .attr("stroke", getCssVar('--color-border'));
+                        
+                    crumb.append("text")
+                        .attr("x", textWidth / 2)
+                        .attr("y", 16)
+                        .attr("text-anchor", "middle")
+                        .attr("font-size", "11px")
+                        .attr("fill", isLast ? getCssVar('--color-on-primary') : getCssVar('--color-text-primary'))
+                        .text(displayName);
+                        
+                    xOffset += textWidth + 5;
+                });
             }
             
-            tooltip.html(`
-                <div style="font-weight: bold; margin-bottom: 5px;">${d.data.name || 'Unknown'}</div>
-                <div>Type: ${type.charAt(0).toUpperCase() + type.slice(1)}</div>
-                <div>Value: ${formatCurrency(d.data.value || 0)}</div>
-                <div>Share: ${percentage}%</div>
-                ${ancestry}
-            `)
-            .style("visibility", "visible")
-            .style("opacity", 1)
-            .style("left", (event.pageX + 15) + "px")
-            .style("top", (event.pageY - 28) + "px");
-        }
-        
-        function hideTooltip() {
-            tooltip.style("visibility", "hidden").style("opacity", 0);
-        }
-        
-        // Add interactions
-        node.on("mouseover", function(event, d) {
-            d3.select(this).select("circle")
-                .attr("stroke", getCssVar('--chart-color-primary'))
-                .attr("stroke-width", 2);
+            // Set up tooltip
+            let tooltip = d3.select("body").select("#tree-tooltip");
+            if (tooltip.empty()) {
+                tooltip = d3.select("body").append("div")
+                    .attr("id", "tree-tooltip")
+                    .style("position", "absolute")
+                    .style("visibility", "hidden")
+                    .style("opacity", 0)
+                    .style("background-color", getCssVar('--color-surface'))
+                    .style("border", `1px solid ${getCssVar('--color-border')}`)
+                    .style("border-radius", "4px")
+                    .style("padding", "10px")
+                    .style("color", getCssVar('--color-text-primary'))
+                    .style("font-size", "12px")
+                    .style("pointer-events", "none")
+                    .style("z-index", 1000)
+                    .style("max-width", "350px")
+                    .style("box-shadow", "0 3px 14px rgba(0,0,0,0.15)");
+            }
             
-            showTooltip(event, d);
-        })
-        .on("mousemove", function(event) {
-            tooltip
+            // Basic tooltip functions
+            function showTooltip(event, d) {
+                const percentage = (100 * d.data.value / root.data.value).toFixed(1);
+                const type = getNodeType(d);
+                
+                let tooltipContent = `
+                    <div style="font-weight: bold; margin-bottom: 5px;">${d.data.name || 'Unknown'}</div>
+                    <div>Type: ${type.charAt(0).toUpperCase() + type.slice(1)}</div>
+                    <div>Value: ${formatCurrency(d.data.value || 0)}</div>
+                    <div>Share: ${percentage}%</div>
+                `;
+                
+                // Add child count info
+                if (d.children && d.children.length > 0) {
+                    tooltipContent += `<div>Children: ${d.children.length}</div>`;
+                    tooltipContent += `<div style="color: ${getCssVar('--color-text-tertiary')}; font-style: italic; margin-top: 5px;">Click to drill down</div>`;
+                }
+                
+                tooltip.html(tooltipContent)
+                .style("visibility", "visible")
+                .style("opacity", 1)
                 .style("left", (event.pageX + 15) + "px")
                 .style("top", (event.pageY - 28) + "px");
-        })
-        .on("mouseout", function() {
-            d3.select(this).select("circle")
-                .attr("stroke", getCssVar('--color-surface'))
-                .attr("stroke-width", 1.5);
+            }
             
-            hideTooltip();
-        });
-        
-        // Add simple legend
-        const legend = svg.append("g")
-            .attr("transform", "translate(20, 20)");
+            function hideTooltip() {
+                tooltip.style("visibility", "hidden").style("opacity", 0);
+            }
             
-        const legendData = [
-            { label: "Agency", color: getCssVar('--chart-color-primary') },
-            { label: "Sub-Agency", color: d3.color(getCssVar('--chart-color-primary')).brighter(0.2) },
-            { label: "Office", color: d3.color(getCssVar('--chart-color-secondary')).darker(0.2) },
-            { label: "Prime", color: getCssVar('--chart-color-secondary') },
-            { label: "Sub", color: getCssVar('--chart-color-tertiary') }
-        ];
-        
-        legendData.forEach((item, i) => {
-            const g = legend.append("g")
-                .attr("transform", `translate(0, ${i * 20})`);
+            // Add hover interactions
+            node.on("mouseover", function(event, d) {
+                d3.select(this).select("circle")
+                    .attr("stroke", getCssVar('--chart-color-primary'))
+                    .attr("stroke-width", 2);
                 
-            g.append("rect")
-                .attr("width", 12)
-                .attr("height", 12)
-                .attr("fill", item.color);
+                showTooltip(event, d);
+            })
+            .on("mousemove", function(event) {
+                tooltip
+                    .style("left", (event.pageX + 15) + "px")
+                    .style("top", (event.pageY - 28) + "px");
+            })
+            .on("mouseout", function() {
+                d3.select(this).select("circle")
+                    .attr("stroke", getCssVar('--color-surface'))
+                    .attr("stroke-width", 1.5);
                 
-            g.append("text")
-                .attr("x", 18)
-                .attr("y", 10)
-                .attr("font-size", "10px")
-                .attr("fill", getCssVar('--color-text-secondary'))
-                .text(item.label);
-        });
-        
-        // Add zoom functionality
-        const zoom = d3.zoom()
-            .scaleExtent([0.2, 5])
-            .on("zoom", (event) => {
-                g.attr("transform", event.transform);
+                hideTooltip();
             });
             
-        svg.call(zoom)
-           .on("dblclick.zoom", function() {
-                svg.transition().duration(750).call(
-                    zoom.transform,
-                    d3.zoomIdentity.translate(30, 75).scale(1)
-                );
+            // Add simple legend
+            const legend = svg.append("g")
+                .attr("class", "legend")
+                .attr("transform", "translate(20, 80)");
+                
+            const legendData = [
+                { label: "Agency", color: getCssVar('--chart-color-primary') },
+                { label: "Sub-Agency", color: d3.color(getCssVar('--chart-color-primary')).brighter(0.2) },
+                { label: "Office", color: d3.color(getCssVar('--chart-color-secondary')).darker(0.2) },
+                { label: "Prime", color: getCssVar('--chart-color-secondary') },
+                { label: "Sub", color: getCssVar('--chart-color-tertiary') }
+            ];
+            
+            legendData.forEach((item, i) => {
+                const g = legend.append("g")
+                    .attr("transform", `translate(0, ${i * 20})`);
+                    
+                g.append("rect")
+                    .attr("width", 12)
+                    .attr("height", 12)
+                    .attr("fill", item.color);
+                    
+                g.append("text")
+                    .attr("x", 18)
+                    .attr("y", 10)
+                    .attr("font-size", "10px")
+                    .attr("fill", getCssVar('--color-text-secondary'))
+                    .text(item.label);
             });
+            
+            // Add zoom functionality
+            const zoom = d3.zoom()
+                .scaleExtent([0.2, 5])
+                .on("zoom", (event) => {
+                    g.attr("transform", event.transform);
+                });
+                
+            svg.call(zoom)
+               .on("dblclick.zoom", function() {
+                    svg.transition().duration(750).call(
+                        zoom.transform,
+                        d3.zoomIdentity.translate(30, 75).scale(1)
+                    );
+                });
+            
+            // Add help text
+            svg.append("g")
+                .attr("class", "help-text")
+                .attr("transform", `translate(${width - 20}, ${height - 10})`)
+                .append("text")
+                .attr("text-anchor", "end")
+                .attr("font-size", "9px")
+                .attr("fill", getCssVar('--color-text-tertiary'))
+                .text("Click to drill down, scroll to zoom, drag to pan, double-click to reset view");
+        }
         
-        // Add help text for navigation
-        svg.append("text")
-            .attr("x", width - 20)
-            .attr("y", height - 10)
-            .attr("text-anchor", "end")
-            .attr("font-size", "9px")
-            .attr("fill", getCssVar('--color-text-tertiary'))
-            .text("Scroll to zoom, drag to pan, double-click to reset");
+        // Helper function to find a node by name in the original hierarchy
+        function findNodeInOriginalHierarchy(node, name, depth) {
+            if (!node) return null;
+            
+            // If at the target depth and name matches, return this node
+            if (depth === 0 && node.data.name === name) {
+                return node;
+            }
+            
+            // If we need to go deeper and have children, check them
+            if (depth > 0 && node.children) {
+                for (let i = 0; i < node.children.length; i++) {
+                    const childMatch = findNodeInOriginalHierarchy(node.children[i], name, depth - 1);
+                    if (childMatch) return childMatch;
+                }
+            }
+            
+            return null;
+        }
+        
+        // Initial update with root node
+        update(focusNode);
         
     } catch (error) {
         console.error("Error creating visualization:", error);
