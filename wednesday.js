@@ -6293,9 +6293,9 @@ function displayForceDirectedRadial(model) {
     }
     
     try {
-        // Create SVG container with wider aspect ratio for better horizontal spread
-        const width = 1200; // Increased width for better horizontal spread
-        const height = 800;  // Reduced height to create better aspect ratio
+        // Create wide-format SVG container
+        const width = 1600;  // Much wider for horizontal spread
+        const height = 800;  // Standard height
         
         const svg = d3.select(container)
             .append("svg")
@@ -6304,76 +6304,58 @@ function displayForceDirectedRadial(model) {
             .attr("viewBox", `0 0 ${width} ${height}`)
             .attr("preserveAspectRatio", "xMidYMid meet");
             
-        // Create hierarchical data with the complete chain
+        // Create hierarchical data
         const hierarchyData = createHierarchyData(model, subAgencyFilter);
         
-        // Convert to d3 hierarchy for tree layout
+        // Convert to d3 hierarchy
         const root = d3.hierarchy(hierarchyData);
         
-        // Optimize node ordering for better layout
-        root.sort((a, b) => {
-            // Primary sort by value (largest first)
-            return (b.data.value || 0) - (a.data.value || 0);
-        });
+        // Sort by value
+        root.sort((a, b) => (b.data.value || 0) - (a.data.value || 0));
         
-        // Count total nodes and levels for spacing calculations
-        let totalNodes = 0;
+        // Count depth levels
         let maxDepth = 0;
         root.eachBefore(d => {
-            totalNodes++;
             maxDepth = Math.max(maxDepth, d.depth);
         });
         
-        // Calculate optimal vertical separation based on total nodes
-        const nodeSeparation = Math.min(2, Math.max(1, 8 / Math.sqrt(totalNodes / maxDepth)));
+        // Calculate fixed level spacing
+        const levelWidth = (width - 300) / (maxDepth + 1);
         
-        // Allocate more horizontal space between levels
-        const xSpacing = (width - 200) / (maxDepth + 1);
-        
-        // Create a horizontal tree layout with optimized spacing
+        // Create a tree layout
         const treeLayout = d3.tree()
-            .size([height - 100, width - 300]) // More horizontal space
-            .separation((a, b) => {
-                return (a.parent === b.parent ? 1 : 1.2) * nodeSeparation;
-            });
+            .size([height - 150, width - 300])
+            .separation((a, b) => (a.parent === b.parent ? 1 : 1.2));
         
         // Compute the tree layout
         treeLayout(root);
         
-        // Manually adjust x positions to create more horizontal space between levels
+        // Override the x-positions to force fixed level spacing
         root.each(d => {
-            // Adjust horizontal position to spread levels more evenly
-            d.y = d.depth * xSpacing + 100;
+            d.y = 100 + (d.depth * levelWidth);
         });
         
-        // Create a group for the visualization with margin
+        // Create a group for the visualization
         const g = svg.append("g")
-            .attr("transform", `translate(50, 50)`);
+            .attr("transform", `translate(30, 75)`);
         
-        // Create links (paths between nodes) - filter out root node links
+        // Draw links
         const link = g.append("g")
+            .selectAll("path")
+            .data(root.links().filter(link => link.source.depth > 0))
+            .join("path")
             .attr("fill", "none")
             .attr("stroke", getCssVar('--color-border'))
             .attr("stroke-opacity", 0.8)
-            .selectAll("path")
-            .data(root.links().filter(link => link.source.depth > 0)) // Remove root links
-            .join("path")
-            .attr("d", d3.linkHorizontal() // Horizontal link
+            .attr("d", d3.linkHorizontal()
                 .x(d => d.y)
                 .y(d => d.x))
             .attr("stroke-width", d => {
-                // Calculate stroke width based on value
                 const value = d.target.data.value || 0;
-                const maxWidth = 2.5;
-                const minWidth = 0.5;
-                const widthScale = d3.scaleLog()
-                    .domain([1, root.data.value || 1000000])
-                    .range([minWidth, maxWidth])
-                    .clamp(true);
-                return widthScale(value);
+                return Math.max(0.5, Math.min(2, Math.log10(value + 1) / 6));
             });
         
-        // Determine node type
+        // Get node type function
         function getNodeType(d) {
             const depth = d.depth;
             if (depth === 0) return 'root';
@@ -6390,53 +6372,24 @@ function displayForceDirectedRadial(model) {
             return 'sub';
         }
         
-        // Calculate node size based on type and value
-        function calculateNodeSize(d) {
-            const type = getNodeType(d);
-            // Use log scale for better size distribution
-            const value = d.data.value || 1;
-            const rootValue = root.data.value || 1000000;
-            
-            // Base min and max radius by type
-            const minRadius = {
-                'agency': 6,
-                'subagency': 5,
-                'office': 4.5,
-                'prime': 4,
-                'sub': 3
-            };
-            
-            const maxRadius = {
-                'agency': 12,
-                'subagency': 10,
-                'office': 9,
-                'prime': 8,
-                'sub': 6
-            };
-            
-            // Create log scale for size
-            const radiusScale = d3.scaleLog()
-                .domain([1, rootValue])
-                .range([minRadius[type] || 3, maxRadius[type] || 6])
-                .clamp(true);
-            
-            return radiusScale(value);
-        }
-        
-        // Create node groups with horizontal layout
+        // Create node groups
         const node = g.append("g")
             .selectAll("g")
             .data(root.descendants())
             .join("g")
-            .attr("transform", d => `translate(${d.y},${d.x})`) // Swap x and y for horizontal
-            .attr("data-type", d => getNodeType(d))
-            .attr("data-name", d => d.data.name)
-            .attr("data-value", d => d.data.value);
+            .attr("transform", d => `translate(${d.y},${d.x})`)
+            .attr("data-type", d => getNodeType(d));
         
         // Add circles to nodes
         node.append("circle")
             .attr("r", d => {
-                return calculateNodeSize(d);
+                const type = getNodeType(d);
+                if (type === 'root') return 0;
+                if (type === 'agency') return 8;
+                if (type === 'subagency') return 7;
+                if (type === 'office') return 6;
+                if (type === 'prime') return 5;
+                return 4;
             })
             .attr("fill", d => {
                 const type = getNodeType(d);
@@ -6450,81 +6403,45 @@ function displayForceDirectedRadial(model) {
             .attr("stroke", getCssVar('--color-surface'))
             .attr("stroke-width", 1.5);
         
-        // Calculate if a node should show label based on available vertical space
-        function shouldShowNodeLabel(d) {
-            if (d.depth === 0) return false; // Skip root
-            
-            // Check next and previous sibling positions
-            let availableSpace = Infinity;
-            
-            if (d.parent) {
-                const siblings = d.parent.children;
-                const idx = siblings.indexOf(d);
-                
-                if (idx > 0) {
-                    const prevSibling = siblings[idx - 1];
-                    availableSpace = Math.min(availableSpace, d.x - prevSibling.x);
-                }
-                
-                if (idx < siblings.length - 1) {
-                    const nextSibling = siblings[idx + 1];
-                    availableSpace = Math.min(availableSpace, nextSibling.x - d.x);
-                }
-            }
-            
-            // Adjust threshold based on node type - lower thresholds to show more labels
-            const minSpace = {
-                'agency': 12,
-                'subagency': 12,
-                'office': 10,
-                'prime': 8,
-                'sub': 8
-            };
-            
-            return availableSpace >= (minSpace[getNodeType(d)] || 12);
-        }
-        
-        // Add entity names and values as separate elements to allow for better positioning
-        // First add the label containers
-        const labelGroups = node.filter(d => shouldShowNodeLabel(d))
-            .append("g")
-            .attr("class", "label-group");
-        
-        // Add name labels
-        labelGroups.append("text")
-            .attr("class", "name-label")
+        // Add labels with inline values
+        node.filter(d => d.depth > 0) // Skip root node
+            .append("text")
             .attr("dy", "0.32em")
             .attr("x", d => {
-                const type = getNodeType(d);
-                const size = calculateNodeSize(d);
-                return d.children ? -size - 6 : size + 6; // Left for parent nodes, right for leaf nodes
+                const size = d3.select(d.parentNode).select("circle").attr("r");
+                return d.children ? -size - 6 : Number(size) + 6;
             })
             .attr("text-anchor", d => d.children ? "end" : "start")
             .attr("font-size", d => {
                 const type = getNodeType(d);
-                // Scale font size based on node type for better legibility
-                if (type === 'agency') return "11px";
-                if (type === 'subagency') return "10px";
-                if (type === 'office') return "9px";
-                if (type === 'prime') return "9px";
-                return "8px";
+                if (type === 'agency') return "12px";
+                if (type === 'subagency') return "11px";
+                if (type === 'office') return "10px";
+                return "9px";
             })
             .attr("fill", getCssVar('--color-text-primary'))
             .text(d => {
-                if (getNodeType(d) === 'root') return "";
-                
-                // Just show name without truncating as much
                 const name = d.data.name || "";
                 const type = getNodeType(d);
                 
-                // Increased max length for names since we have more horizontal space
-                let maxLength = 30;
-                if (type === 'agency') maxLength = 25;
-                if (type === 'subagency') maxLength = 22;
-                if (type === 'office') maxLength = 20;
-                if (type === 'prime') maxLength = 18;
-                if (type === 'sub') maxLength = 16;
+                // Combine name and value for prime and sub nodes
+                if (type === 'prime' || type === 'sub') {
+                    const valueStr = d.data.value ? ` (${formatConciseCurrency(d.data.value)})` : '';
+                    
+                    // Adjust max length based on name + value length
+                    const maxNameLength = 25 - valueStr.length;
+                    
+                    if (name.length > maxNameLength) {
+                        return name.substring(0, maxNameLength - 3) + "..." + valueStr;
+                    }
+                    return name + valueStr;
+                }
                 
+                // For other node types, just display name
+                const maxLength = type === 'agency' ? 30 : 
+                                 type === 'subagency' ? 25 :
+                                 type === 'office' ? 20 : 15;
+                                 
                 if (name.length > maxLength) {
                     return name.substring(0, maxLength - 3) + "...";
                 }
@@ -6532,37 +6449,23 @@ function displayForceDirectedRadial(model) {
                 return name;
             });
         
-        // Add value labels
-        labelGroups.append("text")
-            .attr("class", "value-label")
-            .attr("x", d => {
-                const type = getNodeType(d);
-                const size = calculateNodeSize(d);
-                const nameLabel = d3.select(d3.select(this).node().parentNode).select(".name-label");
-                
-                // Position based on parent/child status
-                if (d.children) {
-                    return -size - 6; // For left-aligned text (parents)
-                } else {
-                    return size + 6; // For right-aligned text (leaves)
-                }
-            })
-            .attr("y", d => {
-                const type = getNodeType(d);
-                // Position below the name
-                return type === 'agency' || type === 'subagency' ? 14 : 12;
-            })
-            .attr("text-anchor", d => d.children ? "end" : "start")
-            .attr("font-size", "8px")
-            .attr("fill", getCssVar('--color-text-secondary'))
-            .text(d => {
-                if (d.data.value) {
-                    return formatConciseCurrency(d.data.value);
-                }
-                return "";
-            });
+        // Add separate value labels for agency, subagency, and office nodes
+        node.filter(d => {
+            const type = getNodeType(d);
+            return (type === 'agency' || type === 'subagency' || type === 'office') && d.data.value;
+        })
+        .append("text")
+        .attr("x", d => {
+            const size = d3.select(d.parentNode).select("circle").attr("r");
+            return d.children ? -size - 6 : Number(size) + 6;
+        })
+        .attr("y", 14)
+        .attr("text-anchor", d => d.children ? "end" : "start")
+        .attr("font-size", "9px")
+        .attr("fill", getCssVar('--color-text-secondary'))
+        .text(d => formatConciseCurrency(d.data.value));
         
-        // Create tooltip element
+        // Set up tooltip
         let tooltip = d3.select("body").select("#tree-tooltip");
         if (tooltip.empty()) {
             tooltip = d3.select("body").append("div")
@@ -6582,150 +6485,64 @@ function displayForceDirectedRadial(model) {
                 .style("box-shadow", "0 3px 14px rgba(0,0,0,0.15)");
         }
         
-        // Tooltip functions
+        // Basic tooltip functions
         function showTooltip(event, d) {
             const percentage = (100 * d.data.value / root.data.value).toFixed(1);
             const type = getNodeType(d);
-            const typeName = type.charAt(0).toUpperCase() + type.slice(1);
             
-            // Build complete path
-            const ancestry = [];
-            let node = d;
-            while (node.parent && node.parent.depth > 0) {
-                ancestry.unshift(node.parent.data.name);
-                node = node.parent;
+            let ancestry = '';
+            if (d.depth > 1) {
+                let current = d.parent;
+                const path = [];
+                while (current && current.depth > 0) {
+                    path.unshift(current.data.name);
+                    current = current.parent;
+                }
+                ancestry = `<div>Path: ${path.join(' → ')}</div>`;
             }
             
-            let pathText = '';
-            if (ancestry.length > 0) {
-                pathText = `<div style="color: ${getCssVar('--color-text-secondary')}; margin-bottom: 4px;">Path: ${ancestry.join(' → ')}</div>`;
-            }
-
-            // Calculate children details
-            let childrenDetails = '';
-            if (d.children && d.children.length > 0) {
-                // Show top 5 children by value (increased from 3)
-                const topChildren = [...d.children]
-                    .sort((a, b) => (b.data.value || 0) - (a.data.value || 0))
-                    .slice(0, 5);
-                
-                childrenDetails = `
-                <div style="margin-top: 5px; border-top: 1px solid ${getCssVar('--color-border')}; padding-top: 5px;">
-                    <div style="font-weight: bold; margin-bottom: 3px;">Top ${Math.min(5, d.children.length)} of ${d.children.length} children:</div>
-                    ${topChildren.map(child => `
-                        <div style="display: flex; justify-content: space-between;">
-                            <span>${child.data.name}</span>
-                            <span>${formatConciseCurrency(child.data.value || 0)}</span>
-                        </div>
-                    `).join('')}
-                </div>`;
-            }
-            
-            const html = `
-                <div style="font-weight: bold; margin-bottom: 4px; font-size: 14px;">${d.data.name || 'Unknown'}</div>
-                ${pathText}
-                <div>Type: ${typeName}</div>
+            tooltip.html(`
+                <div style="font-weight: bold; margin-bottom: 5px;">${d.data.name || 'Unknown'}</div>
+                <div>Type: ${type.charAt(0).toUpperCase() + type.slice(1)}</div>
                 <div>Value: ${formatCurrency(d.data.value || 0)}</div>
                 <div>Share: ${percentage}%</div>
-                ${d.children ? `<div>Direct Children: ${d.children.length}</div>` : ''}
-                ${childrenDetails}
-            `;
-            
-            tooltip
-                .html(html)
-                .style("visibility", "visible")
-                .style("opacity", 1)
-                .style("left", (event.pageX + 15) + "px")
-                .style("top", (event.pageY - 28) + "px");
-        }
-        
-        function updateTooltipPosition(x, y) {
-            tooltip
-                .style("left", (x + 15) + "px")
-                .style("top", (y - 28) + "px");
+                ${ancestry}
+            `)
+            .style("visibility", "visible")
+            .style("opacity", 1)
+            .style("left", (event.pageX + 15) + "px")
+            .style("top", (event.pageY - 28) + "px");
         }
         
         function hideTooltip() {
-            tooltip
-                .style("visibility", "hidden")
-                .style("opacity", 0);
+            tooltip.style("visibility", "hidden").style("opacity", 0);
         }
         
-        // Add hover interactions with improved path highlighting
+        // Add interactions
         node.on("mouseover", function(event, d) {
-            // Highlight current node
             d3.select(this).select("circle")
                 .attr("stroke", getCssVar('--chart-color-primary'))
                 .attr("stroke-width", 2);
             
-            // Highlight path to root
-            let current = d;
-            while (current.parent) {
-                // Highlight link to parent
-                link.filter(l => l.target === current)
-                    .attr("stroke", getCssVar('--chart-color-primary'))
-                    .attr("stroke-opacity", 1)
-                    .attr("stroke-width", l => {
-                        const baseWidth = l.target.data.value ? Math.log10(l.target.data.value + 1) / 2 : 1;
-                        return Math.max(1, Math.min(3, baseWidth)) + 1;
-                    });
-                
-                // Highlight parent node
-                node.filter(n => n === current.parent)
-                    .select("circle")
-                    .attr("stroke", getCssVar('--chart-color-primary'))
-                    .attr("stroke-width", 2);
-                
-                current = current.parent;
-            }
-            
-            // If node has children, highlight direct child nodes and links
-            if (d.children) {
-                // Highlight all direct child nodes
-                node.filter(n => n.parent === d)
-                    .select("circle")
-                    .attr("stroke", getCssVar('--chart-color-secondary'))
-                    .attr("stroke-width", 1.5);
-                
-                // Highlight links to children
-                link.filter(l => l.source === d)
-                    .attr("stroke", getCssVar('--chart-color-secondary'))
-                    .attr("stroke-opacity", 0.9)
-                    .attr("stroke-width", l => {
-                        const baseWidth = l.target.data.value ? Math.log10(l.target.data.value + 1) / 2 : 1;
-                        return Math.max(1, Math.min(3, baseWidth)) + 0.5;
-                    });
-            }
-            
-            // Display tooltip
             showTooltip(event, d);
         })
         .on("mousemove", function(event) {
-            updateTooltipPosition(event.pageX, event.pageY);
+            tooltip
+                .style("left", (event.pageX + 15) + "px")
+                .style("top", (event.pageY - 28) + "px");
         })
-        .on("mouseout", function(event, d) {
-            // Reset highlights
-            node.select("circle")
+        .on("mouseout", function() {
+            d3.select(this).select("circle")
                 .attr("stroke", getCssVar('--color-surface'))
                 .attr("stroke-width", 1.5);
-            
-            link.attr("stroke", getCssVar('--color-border'))
-                .attr("stroke-opacity", 0.8)
-                .attr("stroke-width", d => {
-                    const value = d.target.data.value || 0;
-                    const maxWidth = 2.5;
-                    const minWidth = 0.5;
-                    const widthScale = d3.scaleLog()
-                        .domain([1, root.data.value || 1000000])
-                        .range([minWidth, maxWidth])
-                        .clamp(true);
-                    return widthScale(value);
-                });
             
             hideTooltip();
         });
         
-        // Add compact legend in top-left corner
+        // Add simple legend
+        const legend = svg.append("g")
+            .attr("transform", "translate(20, 20)");
+            
         const legendData = [
             { label: "Agency", color: getCssVar('--chart-color-primary') },
             { label: "Sub-Agency", color: d3.color(getCssVar('--chart-color-primary')).brighter(0.2) },
@@ -6734,70 +6551,34 @@ function displayForceDirectedRadial(model) {
             { label: "Sub", color: getCssVar('--chart-color-tertiary') }
         ];
         
-        const legend = svg.append("g")
-            .attr("transform", "translate(20, 20)");
-        
-        // Create a compact legend
         legendData.forEach((item, i) => {
             const g = legend.append("g")
-                .attr("transform", `translate(0, ${i * 16})`);
-            
+                .attr("transform", `translate(0, ${i * 20})`);
+                
             g.append("rect")
-                .attr("width", 10)
-                .attr("height", 10)
+                .attr("width", 12)
+                .attr("height", 12)
                 .attr("fill", item.color);
-            
+                
             g.append("text")
-                .attr("x", 15)
-                .attr("y", 8)
-                .attr("font-size", "9px")
+                .attr("x", 18)
+                .attr("y", 10)
+                .attr("font-size", "10px")
                 .attr("fill", getCssVar('--color-text-secondary'))
                 .text(item.label);
         });
         
-        // Add informative stats at bottom
-        const stats = svg.append("g")
-            .attr("transform", `translate(${width/2}, ${height - 30})`);
-        
-        stats.append("text")
-            .attr("text-anchor", "middle")
-            .attr("font-size", "11px")
-            .attr("fill", getCssVar('--color-text-secondary'))
-            .text(`Total Value: ${formatCurrency(root.data.value || 0)} | Entities: Agencies: ${Object.keys(model.agencies).length}, Sub-Agencies: ${Object.keys(model.subAgencies).length}, Offices: ${Object.keys(model.offices).length}`);
-        
-        stats.append("text")
-            .attr("text-anchor", "middle")
-            .attr("y", 15)
-            .attr("font-size", "11px")
-            .attr("fill", getCssVar('--color-text-secondary'))
-            .text(`Primes: ${Object.keys(model.primes).length}, Subs: ${Object.keys(model.subs).length} | Contracts: ${Object.keys(model.contracts).length}, Subcontracts: ${Object.keys(model.subcontracts).length}`);
-        
-        // Add zoom and pan functionality with wider range
+        // Add zoom functionality
         const zoom = d3.zoom()
-            .scaleExtent([0.2, 6]) // Wider zoom range for more flexibility
+            .scaleExtent([0.2, 5])
             .on("zoom", (event) => {
                 g.attr("transform", event.transform);
             });
-        
-        svg.call(zoom)
-            .on("dblclick.zoom", function() {
-                svg.transition().duration(750).call(
-                    zoom.transform,
-                    d3.zoomIdentity.translate(50, 50).scale(1)
-                );
-            });
-        
-        // Add help text for navigation
-        svg.append("text")
-            .attr("x", width - 20)
-            .attr("y", height - 10)
-            .attr("text-anchor", "end")
-            .attr("font-size", "9px")
-            .attr("fill", getCssVar('--color-text-tertiary'))
-            .text("Scroll to zoom, drag to pan, double-click to reset");
+            
+        svg.call(zoom);
         
     } catch (error) {
-        console.error("Error creating horizontal dendrogram:", error);
+        console.error("Error creating visualization:", error);
         displayError(containerId, `Failed to render visualization: ${error.message}`);
     }
 }
