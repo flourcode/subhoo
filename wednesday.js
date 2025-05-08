@@ -6269,6 +6269,38 @@ function createHierarchyData(model, subAgencyFilter) {
     
     return root;
 }
+// Get theme-aware color scheme for the dendrogram
+function getDendrogramColors() {
+    const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
+    
+    if (isDarkMode) {
+        // Dark mode color palette - more saturated, slightly brighter colors
+        return {
+            agency: '#9580FF',          // Vibrant purple
+            subagency: '#B8A5FF',       // Lighter purple
+            office: '#5EADF2',          // Bright blue
+            prime: '#5CD6B2',           // Teal
+            sub: '#FFA15C',             // Orange
+            background: '#1E1A22',      // Dark background
+            text: '#F4F2F6',            // Light text
+            secondaryText: '#B5B0BD',   // Dimmed text
+            border: '#3A373E'           // Dark border
+        };
+    } else {
+        // Light mode color palette - slightly desaturated, deeper colors
+        return {
+            agency: '#6E56C7',          // Deep purple
+            subagency: '#9984E8',       // Medium purple
+            office: '#3F8CCA',          // Deep blue
+            prime: '#2EB28F',           // Deep teal
+            sub: '#E67A33',             // Deep orange
+            background: '#FFFFFF',      // Light background
+            text: '#36323A',            // Dark text
+            secondaryText: '#615C66',   // Medium text
+            border: '#D7D4DC'           // Light border
+        };
+    }
+}
 function displayForceDirectedRadial(model) {
     const containerId = 'circular-dendrogram-container';
     const container = document.getElementById(containerId);
@@ -6318,6 +6350,31 @@ function displayForceDirectedRadial(model) {
         // Keep track of current view state
         let currentRoot = originalRoot;
         let breadcrumbPath = [];
+        
+        // Store complete reference to all nodes (will be populated)
+        const nodeRegistry = new Map();
+        
+        // Register all nodes by their unique path
+        function registerNodes(node, parentPath = []) {
+            const currentPath = [...parentPath, node.data.name];
+            const pathKey = currentPath.join('|');
+            
+            // Register this node
+            nodeRegistry.set(pathKey, {
+                node: node,
+                path: currentPath
+            });
+            
+            // Register all children recursively
+            if (node.children) {
+                node.children.forEach(child => {
+                    registerNodes(child, currentPath);
+                });
+            }
+        }
+        
+        // Register all nodes in the hierarchy
+        registerNodes(originalRoot);
         
         // Initial render
         renderView();
@@ -6406,21 +6463,24 @@ function displayForceDirectedRadial(model) {
                 .attr("transform", d => `translate(${d.y},${d.x})`)
                 .attr("data-type", d => getNodeType(d))
                 .attr("data-name", d => d.data.name)
-                .style("cursor", d => d.children && d.children.length > 0 ? "pointer" : "default");
+                .style("cursor", "pointer"); // Make all nodes clickable
             
+            // Get theme-aware colors
+            const colors = getDendrogramColors();
+
             // Add circles to nodes
             nodeGroups.append("circle")
                 .attr("r", d => getNodeRadius(d))
                 .attr("fill", d => {
                     const type = getNodeType(d);
                     if (type === 'root') return 'none';
-                    if (type === 'agency') return getCssVar('--chart-color-primary');
-                    if (type === 'subagency') return d3.color(getCssVar('--chart-color-primary')).brighter(0.2);
-                    if (type === 'office') return d3.color(getCssVar('--chart-color-secondary')).darker(0.2);
-                    if (type === 'prime') return getCssVar('--chart-color-secondary');
-                    return getCssVar('--chart-color-tertiary');
+                    if (type === 'agency') return colors.agency;
+                    if (type === 'subagency') return colors.subagency;
+                    if (type === 'office') return colors.office;
+                    if (type === 'prime') return colors.prime;
+                    return colors.sub;
                 })
-                .attr("stroke", getCssVar('--color-surface'))
+                .attr("stroke", colors.background)
                 .attr("stroke-width", 1.5);
             
             // Add plus icon for nodes with children
@@ -6531,7 +6591,9 @@ function displayForceDirectedRadial(model) {
                 // Add child count info for clickable nodes
                 if (d.children && d.children.length > 0) {
                     tooltipContent += `<div>Children: ${d.children.length}</div>`;
-                    tooltipContent += `<div style="color: ${getCssVar('--color-text-tertiary')}; font-style: italic; margin-top: 5px;">Click to drill down</div>`;
+                    tooltipContent += `<div style="color: ${getCssVar('--color-text-tertiary')}; font-style: italic; margin-top: 5px;">Click to view this node</div>`;
+                } else {
+                    tooltipContent += `<div style="color: ${getCssVar('--color-text-tertiary')}; font-style: italic; margin-top: 5px;">Click to view details</div>`;
                 }
                 
                 tooltip.html(tooltipContent)
@@ -6545,22 +6607,49 @@ function displayForceDirectedRadial(model) {
                 tooltip.style("visibility", "hidden").style("opacity", 0);
             }
             
-            // Add direct click handler to nodes with children
-            nodeGroups.filter(d => d.children && d.children.length > 0)
-                .on("click", function(event, d) {
-                    event.stopPropagation(); // Stop event propagation
+            // Find the full path to a node based on its local path and the current breadcrumb
+            function getFullPath(localNodePath) {
+                // Get the full path by combining breadcrumb path and local node path
+                // (skipping the first element which is already included in breadcrumb)
+                return [...breadcrumbPath, ...localNodePath.slice(1)];
+            }
+            
+            // Add click handler to all nodes
+            nodeGroups.on("click", function(event, d) {
+                event.stopPropagation(); // Stop event propagation
+                
+                // Build the full path to this node
+                const nodePath = [];
+                let current = d;
+                
+                // Walk up the tree to build the path
+                while (current) {
+                    if (current.data.name) {
+                        nodePath.unshift(current.data.name);
+                    }
+                    current = current.parent;
+                }
+                
+                // Combine with current breadcrumb to get the full path
+                const fullPath = getFullPath(nodePath);
+                
+                // Look up the node in the registry by its path
+                const pathKey = fullPath.join('|');
+                const targetInfo = nodeRegistry.get(pathKey);
+                
+                if (targetInfo) {
+                    // Set the new breadcrumb path
+                    breadcrumbPath = fullPath;
                     
-                    // Find the node in the original hierarchy by path
-                    const path = [...breadcrumbPath, d.data.name];
-                    const targetNode = findNodeByPath(originalRoot, path);
+                    // Find the node in the original hierarchy
+                    const targetNode = findNodeByPath(originalRoot, fullPath);
                     
                     if (targetNode) {
-                        // Save current view in breadcrumb
-                        breadcrumbPath.push(d.data.name);
                         currentRoot = targetNode;
                         renderView();
                     }
-                });
+                }
+            });
             
             // Add hover effects
             nodeGroups.on("mouseover", function(event, d) {
@@ -6681,11 +6770,11 @@ function displayForceDirectedRadial(model) {
                 .attr("transform", breadcrumbPath.length > 0 ? "translate(30, 80)" : "translate(30, 30)");
                 
             const legendData = [
-                { label: "Agency", color: getCssVar('--chart-color-primary') },
-                { label: "Sub-Agency", color: d3.color(getCssVar('--chart-color-primary')).brighter(0.2) },
-                { label: "Office", color: d3.color(getCssVar('--chart-color-secondary')).darker(0.2) },
-                { label: "Prime", color: getCssVar('--chart-color-secondary') },
-                { label: "Sub", color: getCssVar('--chart-color-tertiary') }
+                { label: "Agency", color: colors.agency },
+                { label: "Sub-Agency", color: colors.subagency },
+                { label: "Office", color: colors.office },
+                { label: "Prime", color: colors.prime },
+                { label: "Sub", color: colors.sub }
             ];
             
             legendData.forEach((item, i) => {
@@ -6713,7 +6802,7 @@ function displayForceDirectedRadial(model) {
                 .attr("text-anchor", "end")
                 .attr("font-size", "9px")
                 .attr("fill", getCssVar('--color-text-tertiary'))
-                .text("Click node to drill down, click breadcrumb to navigate back");
+                .text("Click any node to view it, use breadcrumbs to navigate back");
         }
         
         // Helper function to find a node by path from root
