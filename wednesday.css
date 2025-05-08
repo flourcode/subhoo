@@ -252,7 +252,7 @@ a:hover { color: var(--color-secondary); text-decoration: none; }
 #bento-share-of-wallet { grid-area: share-wallet; }
 #bento-dendrogram {
     grid-area: dendrogram;
-    min-height: 600px;
+    min-height: 900px;
     min-width: 800px;
 }
 #bento-naics-distribution { grid-area: naics-donut; }
