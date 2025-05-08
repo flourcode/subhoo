@@ -6578,17 +6578,22 @@ function displayForceDirectedRadial(model) {
                 g.attr("transform", event.transform);
             });
             
-        svg.call(zoom);
+        svg.call(zoom)
+           .on("dblclick.zoom", function() {
+                svg.transition().duration(750).call(
+                    zoom.transform,
+                    d3.zoomIdentity.translate(30, 75).scale(1)
+                );
+            });
         
-        // Add bottom stats
-        const stats = svg.append("g")
-            .attr("transform", `translate(${width/2}, ${height - 30})`);
-            
-        stats.append("text")
-            .attr("text-anchor", "middle")
-            .attr("font-size", "11px")
-            .attr("fill", getCssVar('--color-text-secondary'))
-            .text(`Total Value: ${formatCurrency(root.data.value || 0)}`);
+        // Add help text for navigation
+        svg.append("text")
+            .attr("x", width - 20)
+            .attr("y", height - 10)
+            .attr("text-anchor", "end")
+            .attr("font-size", "9px")
+            .attr("fill", getCssVar('--color-text-tertiary'))
+            .text("Scroll to zoom, drag to pan, double-click to reset");
         
     } catch (error) {
         console.error("Error creating visualization:", error);
