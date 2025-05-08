@@ -6343,7 +6343,7 @@ function displayForceDirectedRadial(model) {
         // Create hierarchical data
         const hierarchyData = createHierarchyData(model, subAgencyFilter);
         
-        // Convert to d3 hierarchy
+        // Convert to d3 hierarchy and maintain the original structure
         const originalRoot = d3.hierarchy(hierarchyData);
         originalRoot.sort((a, b) => (b.data.value || 0) - (a.data.value || 0));
         
@@ -6351,7 +6351,9 @@ function displayForceDirectedRadial(model) {
         let currentRoot = originalRoot;
         let breadcrumbPath = [];
         
-        // Initial render
+        // We don't need the node registry since we're using a simpler approach
+        
+        // Initial render of the visualization
         renderView();
         
         // Main render function
@@ -6364,8 +6366,10 @@ function displayForceDirectedRadial(model) {
                 .size([height - 150, width - 300])
                 .separation((a, b) => (a.parent === b.parent ? 1 : 1.2));
             
-            // Clone the current root to avoid modifying the original
+            // Clone the current node's data to avoid modifying the original
             const root = d3.hierarchy(currentRoot.data);
+            
+            // Sort nodes and apply the tree layout
             root.sort((a, b) => (b.data.value || 0) - (a.data.value || 0));
             
             // Apply layout
@@ -6382,14 +6386,17 @@ function displayForceDirectedRadial(model) {
                 .attr("class", "chart")
                 .attr("transform", `translate(30, 75)`);
             
-            // Create links
+            // Create links, but hide the root leader line
             const link = chart.append("g")
                 .attr("class", "links")
                 .selectAll("path")
                 .data(root.links())
                 .join("path")
                 .attr("fill", "none")
-                .attr("stroke", getCssVar('--color-border'))
+                .attr("stroke", d => {
+                    // Hide the line if it's connected to the root node (depth 0)
+                    return d.source.depth === 0 ? "none" : getCssVar('--color-border');
+                })
                 .attr("stroke-opacity", 0.8)
                 .attr("d", d3.linkHorizontal()
                     .x(d => d.y)
@@ -6403,7 +6410,7 @@ function displayForceDirectedRadial(model) {
             function getNodeType(d) {
                 const effectiveDepth = breadcrumbPath.length + d.depth;
                 
-                if (effectiveDepth === 0) return 'root';
+                if (effectiveDepth === 0) return 'main';
                 if (effectiveDepth === 1) return 'agency';
                 if (effectiveDepth === 2) {
                     return d.data.isSubAgency ? 'subagency' : 'unknown';
@@ -6420,7 +6427,7 @@ function displayForceDirectedRadial(model) {
             // Calculate node radius based on type
             function getNodeRadius(d) {
                 const type = getNodeType(d);
-                if (type === 'root') return 0;
+                if (type === 'main') return 0;
                 if (type === 'agency') return 8;
                 if (type === 'subagency') return 7;
                 if (type === 'office') return 6;
@@ -6441,23 +6448,22 @@ function displayForceDirectedRadial(model) {
                 .style("cursor", d => d.children && d.children.length > 0 ? "pointer" : "default");
             
             // Get theme-aware colors
-const colors = getDendrogramColors();
+            const colors = getDendrogramColors();
 
-// Add circles to nodes
-nodeGroups.append("circle")
-    .attr("r", d => getNodeRadius(d))
-    .attr("fill", d => {
-        const type = getNodeType(d);
-        if (type === 'root') return 'none';
-        if (type === 'agency') return colors.agency;
-        if (type === 'subagency') return colors.subagency;
-        if (type === 'office') return colors.office;
-        if (type === 'prime') return colors.prime;
-        return colors.sub;
-    })
-    .attr("stroke", colors.background)
-    .attr("stroke-width", 1.5);
-
+            // Add circles to nodes
+            nodeGroups.append("circle")
+                .attr("r", d => getNodeRadius(d))
+                .attr("fill", d => {
+                    const type = getNodeType(d);
+                    if (type === 'root') return 'none';
+                    if (type === 'agency') return colors.agency;
+                    if (type === 'subagency') return colors.subagency;
+                    if (type === 'office') return colors.office;
+                    if (type === 'prime') return colors.prime;
+                    return colors.sub;
+                })
+                .attr("stroke", colors.background)
+                .attr("stroke-width", 1.5);
             
             // Add plus icon for nodes with children
             nodeGroups.filter(d => d.children && d.children.length > 0)
@@ -6581,20 +6587,23 @@ nodeGroups.append("circle")
                 tooltip.style("visibility", "hidden").style("opacity", 0);
             }
             
-            // Add direct click handler to nodes with children
+            // No longer needed as we're using a simpler approach
+            
+            // Add click handler to all nodes with children
             nodeGroups.filter(d => d.children && d.children.length > 0)
                 .on("click", function(event, d) {
                     event.stopPropagation(); // Stop event propagation
                     
-                    // Find the node in the original hierarchy by path
-                    const path = [...breadcrumbPath, d.data.name];
-                    const targetNode = findNodeByPath(originalRoot, path);
+                    // Find the node in the original hierarchy to ensure we have full data
+                    const originalNode = findNodeByDataName(originalRoot, d.data.name);
                     
-                    if (targetNode) {
-                        // Save current view in breadcrumb
-                        breadcrumbPath.push(d.data.name);
-                        currentRoot = targetNode;
-                        renderView();
+                    if (originalNode) {
+                        // Add to breadcrumb only if not the same as current view
+                        if (currentRoot.data.name !== d.data.name) {
+                            breadcrumbPath.push(d.data.name);
+                            currentRoot = originalNode;
+                            renderView();
+                        }
                     }
                 });
             
@@ -6644,10 +6653,10 @@ nodeGroups.append("circle")
                     .attr("text-anchor", "middle")
                     .attr("font-size", "11px")
                     .attr("fill", getCssVar('--color-text-primary'))
-                    .text("Root View");
+                    .text("Main View");
                 
                 rootBtn.on("click", function() {
-                    // Reset to root
+                    // Reset to main view
                     breadcrumbPath = [];
                     currentRoot = originalRoot;
                     renderView();
@@ -6699,7 +6708,11 @@ nodeGroups.append("circle")
                         item.on("click", function() {
                             // Navigate to this breadcrumb
                             breadcrumbPath = breadcrumbPath.slice(0, i + 1);
-                            const targetNode = findNodeByPath(originalRoot, breadcrumbPath);
+                            
+                            // Find the node in the hierarchy
+                            const pathToNode = breadcrumbPath.slice(breadcrumbPath.length - 1)[0];
+                            const targetNode = findNodeByDataName(originalRoot, pathToNode);
+                            
                             if (targetNode) {
                                 currentRoot = targetNode;
                                 renderView();
@@ -6717,12 +6730,12 @@ nodeGroups.append("circle")
                 .attr("transform", breadcrumbPath.length > 0 ? "translate(30, 80)" : "translate(30, 30)");
                 
             const legendData = [
-    { label: "Agency", color: colors.agency },
-    { label: "Sub-Agency", color: colors.subagency },
-    { label: "Office", color: colors.office },
-    { label: "Prime", color: colors.prime },
-    { label: "Sub", color: colors.sub }
-];
+                { label: "Agency", color: colors.agency },
+                { label: "Sub-Agency", color: colors.subagency },
+                { label: "Office", color: colors.office },
+                { label: "Prime", color: colors.prime },
+                { label: "Sub", color: colors.sub }
+            ];
             
             legendData.forEach((item, i) => {
                 const g = legend.append("g")
@@ -6749,33 +6762,25 @@ nodeGroups.append("circle")
                 .attr("text-anchor", "end")
                 .attr("font-size", "9px")
                 .attr("fill", getCssVar('--color-text-tertiary'))
-                .text("Click node to drill down, click breadcrumb to navigate back");
+                .text("Click node to drill down, use breadcrumb to navigate");
         }
         
-        // Helper function to find a node by path from root
-        function findNodeByPath(root, path) {
-            let current = root;
-            
-            // Follow each name in the path
-            for (let i = 0; i < path.length; i++) {
-                const name = path[i];
-                
-                // Find child with this name
-                if (!current.children) return null;
-                
-                let found = false;
-                for (let j = 0; j < current.children.length; j++) {
-                    if (current.children[j].data.name === name) {
-                        current = current.children[j];
-                        found = true;
-                        break;
-                    }
-                }
-                
-                if (!found) return null;
+        // Helper function to find a node by name in the hierarchy
+        function findNodeByDataName(node, name) {
+            // Check if this is the node we're looking for
+            if (node.data.name === name) {
+                return node;
             }
             
-            return current;
+            // Search in children
+            if (node.children) {
+                for (let i = 0; i < node.children.length; i++) {
+                    const found = findNodeByDataName(node.children[i], name);
+                    if (found) return found;
+                }
+            }
+            
+            return null;
         }
         
         // Add zoom functionality to the SVG
