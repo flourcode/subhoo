@@ -6486,21 +6486,34 @@ nodeGroups.append("circle")
                     return "9px";
                 })
                 .attr("fill", getCssVar('--color-text-primary'))
-.text(d => {
-    const name = d.data.name || "";
-    const type = getNodeType(d);
-    
-    // For all node types, just display name without value
-    const maxLength = type === 'agency' ? 30 : 
-                     type === 'subagency' ? 35 :
-                     type === 'office' ? 35 : 15;
-                     
-    if (name.length > maxLength) {
-        return name.substring(0, maxLength - 3) + "...";
-    }
-    
-    return name;
-});
+                .text(d => {
+                    const name = d.data.name || "";
+                    const type = getNodeType(d);
+                    
+                    // Combine name and value for prime and sub nodes
+                    if (type === 'prime' || type === 'sub') {
+                        const valueStr = d.data.value ? ` (${formatConciseCurrency(d.data.value)})` : '';
+                        
+                        // Adjust max length based on name + value length
+                        const maxNameLength = 45 - valueStr.length;
+                        
+                        if (name.length > maxNameLength) {
+                            return name.substring(0, maxNameLength - 3) + "..." + valueStr;
+                        }
+                        return name + valueStr;
+                    }
+                    
+                    // For other node types, just display name
+                    const maxLength = type === 'agency' ? 30 : 
+                                     type === 'subagency' ? 30 :
+                                     type === 'office' ? 30 : 25;
+                                     
+                    if (name.length > maxLength) {
+                        return name.substring(0, maxLength - 3) + "...";
+                    }
+                    
+                    return name;
+                });
             
             // Add separate value labels for agency, subagency, and office nodes
             nodeGroups.filter(d => {
