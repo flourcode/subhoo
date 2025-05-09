@@ -6343,7 +6343,7 @@ function displayForceDirectedRadial(model) {
         // Create hierarchical data
         const hierarchyData = createHierarchyData(model, subAgencyFilter);
         
-        // Convert to d3 hierarchy and maintain the original structure
+        // Convert to d3 hierarchy
         const originalRoot = d3.hierarchy(hierarchyData);
         originalRoot.sort((a, b) => (b.data.value || 0) - (a.data.value || 0));
         
@@ -6353,7 +6353,7 @@ function displayForceDirectedRadial(model) {
         
         // We don't need the node registry since we're using a simpler approach
         
-        // Initial render of the visualization
+        // Initial render
         renderView();
         
         // Main render function
@@ -6366,10 +6366,8 @@ function displayForceDirectedRadial(model) {
                 .size([height - 150, width - 300])
                 .separation((a, b) => (a.parent === b.parent ? 1 : 1.2));
             
-            // Clone the current node's data to avoid modifying the original
+            // Clone the current root to avoid modifying the original
             const root = d3.hierarchy(currentRoot.data);
-            
-            // Sort nodes and apply the tree layout
             root.sort((a, b) => (b.data.value || 0) - (a.data.value || 0));
             
             // Apply layout
@@ -6410,7 +6408,7 @@ function displayForceDirectedRadial(model) {
             function getNodeType(d) {
                 const effectiveDepth = breadcrumbPath.length + d.depth;
                 
-                if (effectiveDepth === 0) return 'main';
+                if (effectiveDepth === 0) return 'root';
                 if (effectiveDepth === 1) return 'agency';
                 if (effectiveDepth === 2) {
                     return d.data.isSubAgency ? 'subagency' : 'unknown';
@@ -6427,7 +6425,7 @@ function displayForceDirectedRadial(model) {
             // Calculate node radius based on type
             function getNodeRadius(d) {
                 const type = getNodeType(d);
-                if (type === 'main') return 0;
+                if (type === 'root') return 0;
                 if (type === 'agency') return 8;
                 if (type === 'subagency') return 7;
                 if (type === 'office') return 6;
@@ -6445,7 +6443,7 @@ function displayForceDirectedRadial(model) {
                 .attr("transform", d => `translate(${d.y},${d.x})`)
                 .attr("data-type", d => getNodeType(d))
                 .attr("data-name", d => d.data.name)
-                .style("cursor", d => d.children && d.children.length > 0 ? "pointer" : "default");
+                .style("cursor", "pointer"); // Make all nodes clickable
             
             // Get theme-aware colors
             const colors = getDendrogramColors();
@@ -6573,7 +6571,9 @@ function displayForceDirectedRadial(model) {
                 // Add child count info for clickable nodes
                 if (d.children && d.children.length > 0) {
                     tooltipContent += `<div>Children: ${d.children.length}</div>`;
-                    tooltipContent += `<div style="color: ${getCssVar('--color-text-tertiary')}; font-style: italic; margin-top: 5px;">Click to drill down</div>`;
+                    tooltipContent += `<div style="color: ${getCssVar('--color-text-tertiary')}; font-style: italic; margin-top: 5px;">Click to view this node</div>`;
+                } else {
+                    tooltipContent += `<div style="color: ${getCssVar('--color-text-tertiary')}; font-style: italic; margin-top: 5px;">Click to view details</div>`;
                 }
                 
                 tooltip.html(tooltipContent)
@@ -6587,25 +6587,45 @@ function displayForceDirectedRadial(model) {
                 tooltip.style("visibility", "hidden").style("opacity", 0);
             }
             
-            // No longer needed as we're using a simpler approach
+            // Find the full path to a node based on its local path and the current breadcrumb
+            function getFullPath(localNodePath) {
+                // Get the full path by combining breadcrumb path and local node path
+                // (skipping the first element which is already included in breadcrumb)
+                return [...breadcrumbPath, ...localNodePath.slice(1)];
+            }
             
-            // Add click handler to all nodes with children
-            nodeGroups.filter(d => d.children && d.children.length > 0)
-                .on("click", function(event, d) {
-                    event.stopPropagation(); // Stop event propagation
+            // Add click handler to all nodes
+            nodeGroups.on("click", function(event, d) {
+                event.stopPropagation(); // Stop event propagation
+                
+                // Only proceed if this node has children to drill down into
+                if (d.children && d.children.length > 0) {
+                    // Build the full path to this node
+                    const nodePath = [];
+                    let current = d;
                     
-                    // Find the node in the original hierarchy to ensure we have full data
-                    const originalNode = findNodeByDataName(originalRoot, d.data.name);
-                    
-                    if (originalNode) {
-                        // Add to breadcrumb only if not the same as current view
-                        if (currentRoot.data.name !== d.data.name) {
-                            breadcrumbPath.push(d.data.name);
-                            currentRoot = originalNode;
-                            renderView();
+                    // Walk up the tree to build the path
+                    while (current) {
+                        if (current.data.name) {
+                            nodePath.unshift(current.data.name);
                         }
+                        current = current.parent;
                     }
-                });
+                    
+                    // Get the full path by combining breadcrumb path with local path
+                    const fullPath = breadcrumbPath.concat(nodePath);
+                    
+                    // Find the node in the original hierarchy
+                    const targetNode = findNodeByPath(originalRoot, fullPath);
+                    
+                    if (targetNode) {
+                        // Update breadcrumb path and current root
+                        breadcrumbPath = fullPath;
+                        currentRoot = targetNode;
+                        renderView();
+                    }
+                }
+            });
             
             // Add hover effects
             nodeGroups.on("mouseover", function(event, d) {
@@ -6653,10 +6673,10 @@ function displayForceDirectedRadial(model) {
                     .attr("text-anchor", "middle")
                     .attr("font-size", "11px")
                     .attr("fill", getCssVar('--color-text-primary'))
-                    .text("Main View");
+                    .text("Root View");
                 
                 rootBtn.on("click", function() {
-                    // Reset to main view
+                    // Reset to root
                     breadcrumbPath = [];
                     currentRoot = originalRoot;
                     renderView();
@@ -6708,11 +6728,7 @@ function displayForceDirectedRadial(model) {
                         item.on("click", function() {
                             // Navigate to this breadcrumb
                             breadcrumbPath = breadcrumbPath.slice(0, i + 1);
-                            
-                            // Find the node in the hierarchy
-                            const pathToNode = breadcrumbPath.slice(breadcrumbPath.length - 1)[0];
-                            const targetNode = findNodeByDataName(originalRoot, pathToNode);
-                            
+                            const targetNode = findNodeByPath(originalRoot, breadcrumbPath);
                             if (targetNode) {
                                 currentRoot = targetNode;
                                 renderView();
@@ -6762,25 +6778,33 @@ function displayForceDirectedRadial(model) {
                 .attr("text-anchor", "end")
                 .attr("font-size", "9px")
                 .attr("fill", getCssVar('--color-text-tertiary'))
-                .text("Click node to drill down, use breadcrumb to navigate");
+                .text("Click any node to view it, use breadcrumbs to navigate back");
         }
         
-        // Helper function to find a node by name in the hierarchy
-        function findNodeByDataName(node, name) {
-            // Check if this is the node we're looking for
-            if (node.data.name === name) {
-                return node;
-            }
+        // Helper function to find a node by path from root
+        function findNodeByPath(root, path) {
+            let current = root;
             
-            // Search in children
-            if (node.children) {
-                for (let i = 0; i < node.children.length; i++) {
-                    const found = findNodeByDataName(node.children[i], name);
-                    if (found) return found;
+            // Follow each name in the path
+            for (let i = 0; i < path.length; i++) {
+                const name = path[i];
+                
+                // Find child with this name
+                if (!current.children) return null;
+                
+                let found = false;
+                for (let j = 0; j < current.children.length; j++) {
+                    if (current.children[j].data.name === name) {
+                        current = current.children[j];
+                        found = true;
+                        break;
+                    }
                 }
+                
+                if (!found) return null;
             }
             
-            return null;
+            return current;
         }
         
         // Add zoom functionality to the SVG
