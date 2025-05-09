@@ -6351,8 +6351,6 @@ function displayForceDirectedRadial(model) {
         let currentRoot = originalRoot;
         let breadcrumbPath = [];
         
-        // We don't need the node registry since we're using a simpler approach
-        
         // Initial render
         renderView();
         
@@ -6384,17 +6382,14 @@ function displayForceDirectedRadial(model) {
                 .attr("class", "chart")
                 .attr("transform", `translate(30, 75)`);
             
-            // Create links, but hide the root leader line
+            // Create links
             const link = chart.append("g")
                 .attr("class", "links")
                 .selectAll("path")
                 .data(root.links())
                 .join("path")
                 .attr("fill", "none")
-                .attr("stroke", d => {
-                    // Hide the line if it's connected to the root node (depth 0)
-                    return d.source.depth === 0 ? "none" : getCssVar('--color-border');
-                })
+                .attr("stroke", getCssVar('--color-border'))
                 .attr("stroke-opacity", 0.8)
                 .attr("d", d3.linkHorizontal()
                     .x(d => d.y)
@@ -6443,25 +6438,26 @@ function displayForceDirectedRadial(model) {
                 .attr("transform", d => `translate(${d.y},${d.x})`)
                 .attr("data-type", d => getNodeType(d))
                 .attr("data-name", d => d.data.name)
-                .style("cursor", "pointer"); // Make all nodes clickable
+                .style("cursor", d => d.children && d.children.length > 0 ? "pointer" : "default");
             
             // Get theme-aware colors
-            const colors = getDendrogramColors();
+const colors = getDendrogramColors();
 
-            // Add circles to nodes
-            nodeGroups.append("circle")
-                .attr("r", d => getNodeRadius(d))
-                .attr("fill", d => {
-                    const type = getNodeType(d);
-                    if (type === 'root') return 'none';
-                    if (type === 'agency') return colors.agency;
-                    if (type === 'subagency') return colors.subagency;
-                    if (type === 'office') return colors.office;
-                    if (type === 'prime') return colors.prime;
-                    return colors.sub;
-                })
-                .attr("stroke", colors.background)
-                .attr("stroke-width", 1.5);
+// Add circles to nodes
+nodeGroups.append("circle")
+    .attr("r", d => getNodeRadius(d))
+    .attr("fill", d => {
+        const type = getNodeType(d);
+        if (type === 'root') return 'none';
+        if (type === 'agency') return colors.agency;
+        if (type === 'subagency') return colors.subagency;
+        if (type === 'office') return colors.office;
+        if (type === 'prime') return colors.prime;
+        return colors.sub;
+    })
+    .attr("stroke", colors.background)
+    .attr("stroke-width", 1.5);
+
             
             // Add plus icon for nodes with children
             nodeGroups.filter(d => d.children && d.children.length > 0)
@@ -6571,9 +6567,7 @@ function displayForceDirectedRadial(model) {
                 // Add child count info for clickable nodes
                 if (d.children && d.children.length > 0) {
                     tooltipContent += `<div>Children: ${d.children.length}</div>`;
-                    tooltipContent += `<div style="color: ${getCssVar('--color-text-tertiary')}; font-style: italic; margin-top: 5px;">Click to view this node</div>`;
-                } else {
-                    tooltipContent += `<div style="color: ${getCssVar('--color-text-tertiary')}; font-style: italic; margin-top: 5px;">Click to view details</div>`;
+                    tooltipContent += `<div style="color: ${getCssVar('--color-text-tertiary')}; font-style: italic; margin-top: 5px;">Click to drill down</div>`;
                 }
                 
                 tooltip.html(tooltipContent)
@@ -6587,45 +6581,22 @@ function displayForceDirectedRadial(model) {
                 tooltip.style("visibility", "hidden").style("opacity", 0);
             }
             
-            // Find the full path to a node based on its local path and the current breadcrumb
-            function getFullPath(localNodePath) {
-                // Get the full path by combining breadcrumb path and local node path
-                // (skipping the first element which is already included in breadcrumb)
-                return [...breadcrumbPath, ...localNodePath.slice(1)];
-            }
-            
-            // Add click handler to all nodes
-            nodeGroups.on("click", function(event, d) {
-                event.stopPropagation(); // Stop event propagation
-                
-                // Only proceed if this node has children to drill down into
-                if (d.children && d.children.length > 0) {
-                    // Build the full path to this node
-                    const nodePath = [];
-                    let current = d;
+            // Add direct click handler to nodes with children
+            nodeGroups.filter(d => d.children && d.children.length > 0)
+                .on("click", function(event, d) {
+                    event.stopPropagation(); // Stop event propagation
                     
-                    // Walk up the tree to build the path
-                    while (current) {
-                        if (current.data.name) {
-                            nodePath.unshift(current.data.name);
-                        }
-                        current = current.parent;
-                    }
-                    
-                    // Get the full path by combining breadcrumb path with local path
-                    const fullPath = breadcrumbPath.concat(nodePath);
-                    
-                    // Find the node in the original hierarchy
-                    const targetNode = findNodeByPath(originalRoot, fullPath);
+                    // Find the node in the original hierarchy by path
+                    const path = [...breadcrumbPath, d.data.name];
+                    const targetNode = findNodeByPath(originalRoot, path);
                     
                     if (targetNode) {
-                        // Update breadcrumb path and current root
-                        breadcrumbPath = fullPath;
+                        // Save current view in breadcrumb
+                        breadcrumbPath.push(d.data.name);
                         currentRoot = targetNode;
                         renderView();
                     }
-                }
-            });
+                });
             
             // Add hover effects
             nodeGroups.on("mouseover", function(event, d) {
@@ -6746,12 +6717,12 @@ function displayForceDirectedRadial(model) {
                 .attr("transform", breadcrumbPath.length > 0 ? "translate(30, 80)" : "translate(30, 30)");
                 
             const legendData = [
-                { label: "Agency", color: colors.agency },
-                { label: "Sub-Agency", color: colors.subagency },
-                { label: "Office", color: colors.office },
-                { label: "Prime", color: colors.prime },
-                { label: "Sub", color: colors.sub }
-            ];
+    { label: "Agency", color: colors.agency },
+    { label: "Sub-Agency", color: colors.subagency },
+    { label: "Office", color: colors.office },
+    { label: "Prime", color: colors.prime },
+    { label: "Sub", color: colors.sub }
+];
             
             legendData.forEach((item, i) => {
                 const g = legend.append("g")
@@ -6778,7 +6749,7 @@ function displayForceDirectedRadial(model) {
                 .attr("text-anchor", "end")
                 .attr("font-size", "9px")
                 .attr("fill", getCssVar('--color-text-tertiary'))
-                .text("Click any node to view it, use breadcrumbs to navigate back");
+                .text("Click node to drill down, click breadcrumb to navigate back");
         }
         
         // Helper function to find a node by path from root
