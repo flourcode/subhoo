@@ -1724,3 +1724,128 @@ addInlineSnapshotButton();
     });
   }
 })();
+// Fix for snapshot buttons to handle undefined model
+(function() {
+  console.log("Adding snapshot button fix for undefined model...");
+  
+  // Original viewAgencySnapshot relies on window.unifiedModel
+  // Let's create a safer version that checks for model existence
+  const originalViewAgencySnapshot = window.viewAgencySnapshot;
+  
+  // Replace with a safer version that checks if model exists
+  window.viewAgencySnapshot = function() {
+    console.log("Running enhanced viewAgencySnapshot with model check");
+    
+    // Try to get model from various possible locations
+    const model = window.unifiedModel || window.model || window.dataModel;
+    
+    if (!model) {
+      alert("No data loaded. Please select an agency dataset first.");
+      return;
+    }
+    
+    // Call original function with the model
+    if (typeof originalViewAgencySnapshot === 'function') {
+      try {
+        // Either call with model parameter or set window.unifiedModel
+        window.unifiedModel = model;
+        originalViewAgencySnapshot();
+      } catch (e) {
+        console.error("Error in viewAgencySnapshot:", e);
+        alert("Error generating snapshot: " + e.message);
+      }
+    }
+  };
+  
+  // Similarly for inline snapshot
+  const originalViewInlineAgencySnapshot = window.viewInlineAgencySnapshot;
+  
+  window.viewInlineAgencySnapshot = function() {
+    console.log("Running enhanced viewInlineAgencySnapshot with model check");
+    
+    // Try to get model from various possible locations
+    const model = window.unifiedModel || window.model || window.dataModel;
+    
+    if (!model) {
+      alert("No data loaded. Please select an agency dataset first.");
+      return;
+    }
+    
+    // Call original function with the model
+    if (typeof originalViewInlineAgencySnapshot === 'function') {
+      try {
+        // Either call with model parameter or set window.unifiedModel
+        window.unifiedModel = model;
+        originalViewInlineAgencySnapshot();
+      } catch (e) {
+        console.error("Error in viewInlineAgencySnapshot:", e);
+        alert("Error generating inline snapshot: " + e.message);
+      }
+    }
+  };
+  
+  // Handle click events for snapshot buttons
+  function setupButtonHandlers() {
+    // Look for snapshot buttons
+    const fullButton = document.getElementById('snapshot-button');
+    const inlineButton = document.getElementById('inline-snapshot-button');
+    
+    // Setup handlers for full snapshot button
+    if (fullButton) {
+      // Remove existing event listeners by cloning the button
+      const newFullButton = fullButton.cloneNode(true);
+      fullButton.parentNode.replaceChild(newFullButton, fullButton);
+      
+      // Add new event listener
+      newFullButton.addEventListener('click', function(e) {
+        e.preventDefault();
+        console.log("Full snapshot button clicked (fixed handler)");
+        window.viewAgencySnapshot();
+      });
+    }
+    
+    // Setup handlers for inline snapshot button
+    if (inlineButton) {
+      // Remove existing event listeners by cloning the button
+      const newInlineButton = inlineButton.cloneNode(true);
+      inlineButton.parentNode.replaceChild(newInlineButton, inlineButton);
+      
+      // Add new event listener
+      newInlineButton.addEventListener('click', function(e) {
+        e.preventDefault();
+        console.log("Inline snapshot button clicked (fixed handler)");
+        window.viewInlineAgencySnapshot();
+      });
+    }
+  }
+  
+  // Run immediately
+  setupButtonHandlers();
+  
+  // Also run after a delay to catch buttons added after this script runs
+  setTimeout(setupButtonHandlers, 2000);
+  
+  // Also listen for dataset changes
+  const datasetSelect = document.getElementById('dataset-select');
+  if (datasetSelect) {
+    datasetSelect.addEventListener('change', function() {
+      // Wait for data to load then setup handlers
+      setTimeout(setupButtonHandlers, 2000);
+    });
+  }
+  
+  // Define missing functions as no-ops to prevent errors
+  if (typeof window.displayNaicsDonutChart !== 'function') {
+    window.displayNaicsDonutChart = function() {
+      console.log("displayNaicsDonutChart called but not implemented");
+    };
+  }
+  
+  if (typeof window.displayShareOfWalletChart !== 'function') {
+    window.displayShareOfWalletChart = function() {
+      console.log("displayShareOfWalletChart called but not implemented");
+    };
+  }
+  
+  console.log("Snapshot button fix complete");
+})();
