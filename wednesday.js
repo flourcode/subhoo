@@ -473,39 +473,50 @@ function displayNoData(containerId, message = "No data available for this view."
         tavTcvChartInstance = null;
     }
 }
-function fetchDataFromS3(dataset) {
-    const csvUrl = `${S3_BASE_URL}${dataset.id}.csv`;
-    console.log(`Loading data from URL: ${csvUrl}`);
+// In wednesday.js
 
-    fetch(csvUrl, {
-        method: 'GET',
-        mode: 'cors',
-        cache: 'no-cache',
-        headers: {
-            'Accept': 'text/csv',
-        }
-    })
-    .then(response => {
-        if (!response.ok) {
-            const statusText = response.statusText || 'Unknown Error';
-            throw new Error(`Failed to fetch data: ${response.status} ${statusText}`);
-        }
-        return response.text();
-    })
-    .then(csvText => {
-        // Process the CSV data
-        processDataset(dataset, Papa.parse(csvText, {
-            header: true,
-            dynamicTyping: false,
-            skipEmptyLines: 'greedy',
-            transformHeader: header => header.trim()
-        }).data);
-    })
-    .catch(error => {
-        console.error(`Error fetching dataset ${dataset.name}:`, error);
-        updateStatusBanner(`Error loading dataset: ${error.message}`, 'error');
-        isLoading = false;
-        document.getElementById('refresh-button').disabled = false;
+function fetchDataFromS3(dataset) {
+    return new Promise((resolve, reject) => { // MODIFICATION: Wrap in a Promise
+        const csvUrl = `${S3_BASE_URL}${dataset.id}.csv`;
+        console.log(`Loading data from URL: ${csvUrl}`);
+
+        fetch(csvUrl, {
+            method: 'GET',
+            mode: 'cors',
+            cache: 'no-cache',
+            headers: {
+                'Accept': 'text/csv',
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                const statusText = response.statusText || 'Unknown Error';
+                // MODIFICATION: Reject promise on error
+                reject(new Error(`Failed to fetch data: ${response.status} ${statusText}`)); 
+                return; // Important to return here after reject
+            }
+            return response.text();
+        })
+        .then(csvText => {
+            if (csvText === undefined) { // Check if response.text() resolved with undefined (e.g. from reject above)
+                 return; // Already handled by reject
+            }
+            // Process the CSV data
+            processDataset(dataset, Papa.parse(csvText, {
+                header: true,
+                dynamicTyping: false,
+                skipEmptyLines: 'greedy',
+                transformHeader: header => header.trim()
+            }).data);
+            resolve(); // MODIFICATION: Resolve the promise when done
+        })
+        .catch(error => {
+            console.error(`Error fetching dataset ${dataset.name}:`, error);
+            // updateStatusBanner is good, but also reject for the caller
+            // updateStatusBanner(`Error loading dataset: ${error.message}`, 'error'); 
+            // isLoading and refreshButton should be handled by the caller (loadSingleDataset)
+            reject(error); // MODIFICATION: Reject the promise on catch
+        });
     });
 }
 function updateDateDisplay() {
@@ -774,7 +785,7 @@ function resetUIForNoDataset() {
     }
 }
 // --- Enhanced Data Loading Functions ---
-function loadSingleDataset(dataset) {
+async function loadSingleDataset(dataset) { // MODIFICATION: Make async
     if (!dataset || !dataset.id || isLoading) {
         console.warn("Load dataset cancelled. Already loading or invalid dataset provided.");
         if (!dataset) updateStatusBanner('Invalid dataset specified.', 'error');
@@ -783,36 +794,32 @@ function loadSingleDataset(dataset) {
 
     console.log(`Initiating load for dataset: ${dataset.name} (ID: ${dataset.id})`);
     selectedAgencies = [dataset]; 
-    isLoading = true;
+    isLoading = true; // Set isLoading at the start of the operation
 
-    // Update UI to reflect loading state
     updateDashboardTitle([dataset]);
     updateStatusBanner(`Loading ${dataset.name} data...`, 'info');
     document.getElementById('refresh-button').disabled = true;
 
-    // Set loading states for containers
+    // Set loading states for containers (existing code)
     setLoading('contract-leaders-table-container', true, `Loading ${dataset.name} leader data...`);
     setLoading('tav-tcv-chart-container', true, `Loading ${dataset.name} TAV/TCV data...`);
     setLoading('expiring-contracts-table-container', true, `Loading ${dataset.name} expiring contracts...`);
     setLoading('sankey-chart-container', true, `Loading ${dataset.name} award flow...`);
     setLoading('map-container', true, `Loading ${dataset.name} performance data...`);
 
-    // Reset data based on dataset type
+    // Reset data based on dataset type (existing code)
     if (dataset.type === 'primes') {
         rawData.primes = [];
-        // Keep subs data if loading just primes
     } else {
         rawData.subs = [];
-        // Keep primes data if loading just subs
     }
     
-    // Clear previous chart instances
     if (tavTcvChartInstance) {
         tavTcvChartInstance.destroy();
         tavTcvChartInstance = null;
     }
 
-    // Clear ARR result and reset filters
+    // Clear ARR result and reset filters (existing code)
     document.getElementById('arr-result').textContent = '$0 / yr';
     document.getElementById('arr-loading').style.display = 'none';
     document.getElementById('arr-error').style.display = 'none';
@@ -827,6 +834,29 @@ function loadSingleDataset(dataset) {
 
     // Fetch the data from S3
     fetchDataFromS3(dataset);
+	try {
+        await fetchDataFromS3(dataset); // MODIFICATION: Await the promise
+
+        console.log(`Single dataset ${dataset.name} fetched and processed, building unified model...`);
+        buildUnifiedModel(); // This function populates the global 'unifiedModel'
+
+        // === ADD THIS LINE HERE (for single loads) ===
+        window.unifiedModel = unifiedModel;
+        console.log("window.unifiedModel updated after single load. Content length: " + (window.unifiedModel ? JSON.stringify(window.unifiedModel).length : "null"));
+        // ===========================================
+
+        updateStatusBanner(`Successfully loaded ${dataset.name}.`, 'success');
+        populateFiltersFromUnifiedModel();
+        applyFiltersAndUpdateVisuals();
+
+    } catch (error) {
+        console.error(`Error in loadSingleDataset for ${dataset.name}:`, error);
+        updateStatusBanner(`Error loading dataset ${dataset.name}: ${error.message}`, 'error');
+        resetUIForNoDataset(); // Or a more specific error display
+    } finally {
+        isLoading = false; // Ensure isLoading is reset
+        document.getElementById('refresh-button').disabled = false; // Ensure button is re-enabled
+    }
 }
 
 function loadCombinedDatasets(datasetIds) {
@@ -903,7 +933,10 @@ async function fetchDataSequentially(datasets) {
         // After all datasets are loaded, build unified model and update UI
         console.log("All datasets loaded, building unified model...");
         buildUnifiedModel();
-        updateStatusBanner(`Successfully loaded combined data.`, 'success');
+         window.unifiedModel = unifiedModel; 
+        console.log("window.unifiedModel updated after combined load. Content length: " + (window.unifiedModel ? JSON.stringify(window.unifiedModel).length : "null"));
+        
+		updateStatusBanner(`Successfully loaded combined data.`, 'success');
         
         // Update filters and visualizations
         populateFiltersFromUnifiedModel();
