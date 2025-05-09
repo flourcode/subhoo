@@ -3550,3 +3550,224 @@ addInlineSnapshotButton();
   // Run initialization
   initialize();
 })();
+/**
+ * Fix for "processContractLeaders is not defined" error
+ * This adds the missing function that is required by updateVisualsFromRawData
+ */
+(function() {
+  // Define the missing function if it doesn't exist
+  if (typeof window.processContractLeaders !== 'function') {
+    // Implementation of processContractLeaders
+    window.processContractLeaders = function(data) {
+      console.log("Using patched processContractLeaders function");
+      
+      // Check for empty data
+      if (!data || data.length === 0) {
+        return [];
+      }
+      
+      // Group by prime contractors (by name)
+      const primeGroups = {};
+      
+      data.forEach(row => {
+        const primeName = row.primeName || row.recipient_name || "Unknown";
+        if (!primeGroups[primeName]) {
+          primeGroups[primeName] = {
+            siName: primeName,
+            numAwards: 0,
+            totalValue: 0,
+            contracts: []
+          };
+        }
+        
+        // Increment counters and add contract
+        primeGroups[primeName].numAwards++;
+        primeGroups[primeName].totalValue += parseSafeFloat(row.contractValue || row.current_total_value_of_award || 0);
+        primeGroups[primeName].contracts.push(row);
+      });
+      
+      // Convert to array and calculate additional metrics
+      const leaders = Object.values(primeGroups).map(group => {
+        // Calculate average contract value
+        const avgValue = group.numAwards > 0 ? group.totalValue / group.numAwards : 0;
+        
+        // Calculate average duration
+        let totalDuration = 0;
+        let contractsWithDuration = 0;
+        
+        group.contracts.forEach(contract => {
+          if (contract.parsedStartDate && contract.parsedEndDate) {
+            const duration = calculateDurationDays(contract.parsedStartDate, contract.parsedEndDate);
+            if (duration > 0) {
+              totalDuration += duration;
+              contractsWithDuration++;
+            }
+          } else if (contract.period_of_performance_start_date && contract.period_of_performance_current_end_date) {
+            const duration = calculateDurationDays(
+              contract.period_of_performance_start_date, 
+              contract.period_of_performance_current_end_date
+            );
+            if (duration > 0) {
+              totalDuration += duration;
+              contractsWithDuration++;
+            }
+          }
+        });
+        
+        const avgDuration = contractsWithDuration > 0 ? totalDuration / contractsWithDuration : 0;
+        
+        // Find dominant contract type or NAICS
+        const typeCounts = {};
+        const naicsCounts = {};
+        
+        group.contracts.forEach(contract => {
+          // Count contract types if available
+          if (contract.type) {
+            typeCounts[contract.type] = (typeCounts[contract.type] || 0) + 1;
+          }
+          
+          // Count NAICS codes if available
+          if (contract.naicsCode) {
+            const naicsKey = contract.naicsCode;
+            naicsCounts[naicsKey] = (naicsCounts[naicsKey] || 0) + 1;
+          }
+        });
+        
+        // Find most common type
+        let dominantType = null;
+        let maxTypeCount = 0;
+        
+        Object.entries(typeCounts).forEach(([type, count]) => {
+          if (count > maxTypeCount) {
+            dominantType = type;
+            maxTypeCount = count;
+          }
+        });
+        
+        // Find most common NAICS
+        let dominantNaics = { code: null, desc: null, count: 0 };
+        
+        Object.entries(naicsCounts).forEach(([code, count]) => {
+          if (count > dominantNaics.count) {
+            // Find a contract with this NAICS to get the description
+            const contractWithNaics = group.contracts.find(c => c.naicsCode === code);
+            const desc = contractWithNaics ? 
+              (contractWithNaics.naicsDesc || contractWithNaics.naics_description) : 
+              "Unknown";
+            
+            dominantNaics = {
+              code: code,
+              desc: desc,
+              count: count
+            };
+          }
+        });
+        
+        // Get a sample contract ID for linking
+        const sampleContract = group.contracts[0];
+        const sampleContractId = sampleContract ? 
+          (sampleContract.contractId || sampleContract.contract_award_unique_key) : null;
+        
+        // Collect all unique contract keys
+        const uniqueContractKeys = new Set();
+        group.contracts.forEach(contract => {
+          const key = contract.contractId || contract.contract_award_unique_key;
+          if (key) uniqueContractKeys.add(key);
+        });
+        
+        return {
+          siName: group.siName,
+          numAwards: group.numAwards,
+          totalValue: group.totalValue,
+          avgValue: avgValue,
+          avgDurationDays: Math.round(avgDuration),
+          dominantType: dominantType,
+          dominantNaics: dominantNaics.code ? dominantNaics : null,
+          sampleContractId: sampleContractId,
+          uniqueContractKeys: Array.from(uniqueContractKeys)
+        };
+      });
+      
+      // Sort by total value (descending)
+      leaders.sort((a, b) => b.totalValue - a.totalValue);
+      
+      return leaders;
+    };
+    
+    // Also define a helper function if it's not already defined
+    if (typeof window.parseSafeFloat !== 'function') {
+      window.parseSafeFloat = function(value) {
+        if (value === null || value === undefined || value === '') return 0;
+        const cleanedString = String(value).replace(/[^0-9.-]+/g,'');
+        const num = parseFloat(cleanedString);
+        return isNaN(num) ? 0 : num;
+      };
+    }
+    
+    if (typeof window.calculateDurationDays !== 'function') {
+      window.calculateDurationDays = function(startDateStr, endDateStr) {
+        const start = parseDate(startDateStr);
+        const end = parseDate(endDateStr);
+        
+        // Ensure both dates are valid
+        if (!start || !end || !(start instanceof Date) || !(end instanceof Date) || 
+            isNaN(start.getTime()) || isNaN(end.getTime()) || end < start) {
+          return 0;
+        }
+        
+        // Calculate difference in days
+        const diffTime = end.getTime() - start.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // Add 1 to include both start and end date
+        
+        return diffDays > 0 ? diffDays : 0;
+      };
+    }
+    
+    if (typeof window.parseDate !== 'function') {
+      window.parseDate = function(dateString) {
+        if (!dateString || typeof dateString !== 'string') return null;
+        
+        // If already a Date object, return it
+        if (dateString instanceof Date && !isNaN(dateString.getTime())) return dateString;
+        
+        try {
+          // Try ISO format
+          const date = new Date(dateString);
+          if (!isNaN(date.getTime())) return date;
+          
+          // Try MM/DD/YYYY format
+          if (dateString.match(/^\d{1,2}\/\d{1,2}\/\d{4}$/)) {
+            const parts = dateString.split('/');
+            const newDate = new Date(parts[2], parts[0] - 1, parts[1]);
+            if (!isNaN(newDate.getTime())) return newDate;
+          }
+          
+          // Try other formats if needed
+          
+          return null;
+        } catch (e) {
+          console.error(`Error parsing date: "${dateString}"`, e);
+          return null;
+        }
+      };
+    }
+    
+    console.log("Added missing processContractLeaders function");
+  }
+  
+  // If there are other related missing functions that might be needed, define them here
+  
+  // Re-run filter update if necessary
+  if (typeof window.applyFiltersAndUpdateVisuals === 'function') {
+    console.log("Re-running visualization update with fixed functions");
+    setTimeout(function() {
+      try {
+        window.applyFiltersAndUpdateVisuals();
+      } catch (e) {
+        console.error("Error updating visualizations:", e);
+      }
+    }, 500);
+  }
+  
+  console.log("Function definition patch complete");
+})();
