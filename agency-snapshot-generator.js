@@ -1642,3 +1642,85 @@ addInlineSnapshotButton();
   // Run the initialization
   initialize();
 })();
+// Fix to ensure snapshot buttons are added properly
+(function() {
+  console.log("Initializing snapshot button fix...");
+  
+  // Function to make sure buttons are properly added
+  function ensureSnapshotButtons() {
+    // Check if buttons already exist
+    const existingFullButton = document.getElementById('snapshot-button');
+    const existingInlineButton = document.getElementById('inline-snapshot-button');
+    
+    // If both buttons exist, everything is working
+    if (existingFullButton && existingInlineButton) {
+      console.log("Snapshot buttons already exist");
+      return;
+    }
+    
+    console.log("Adding missing snapshot buttons");
+    
+    // Try both button-adding functions
+    if (typeof addSnapshotButton === 'function') {
+      addSnapshotButton();
+    }
+    
+    if (typeof addInlineSnapshotButton === 'function') {
+      addInlineSnapshotButton();
+    }
+    
+    // Explicitly assign the click handlers to ensure they work
+    setTimeout(() => {
+      const fullButton = document.getElementById('snapshot-button');
+      const inlineButton = document.getElementById('inline-snapshot-button');
+      
+      if (fullButton) {
+        fullButton.onclick = function() {
+          console.log("Full snapshot button clicked");
+          if (typeof window.viewAgencySnapshot === 'function') {
+            window.viewAgencySnapshot();
+          } else if (typeof viewAgencySnapshot === 'function') {
+            viewAgencySnapshot();
+          }
+        };
+      }
+      
+      if (inlineButton) {
+        inlineButton.onclick = function() {
+          console.log("Inline snapshot button clicked");
+          if (typeof window.viewInlineAgencySnapshot === 'function') {
+            window.viewInlineAgencySnapshot();
+          } else if (typeof viewInlineAgencySnapshot === 'function') {
+            viewInlineAgencySnapshot();
+          }
+        };
+      }
+    }, 500);
+  }
+  
+  // Check for model access function
+  function checkModelAccess() {
+    const model = window.unifiedModel;
+    if (!model) {
+      console.warn("No unified model found - buttons may not work until data is loaded");
+    } else {
+      console.log("Unified model found with data");
+    }
+  }
+  
+  // Run the fix now and also after page is fully loaded
+  ensureSnapshotButtons();
+  checkModelAccess();
+  
+  // Also run after a delay to catch any timing issues
+  setTimeout(ensureSnapshotButtons, 2000);
+  
+  // And when the dataset select changes
+  const datasetSelect = document.getElementById('dataset-select');
+  if (datasetSelect) {
+    datasetSelect.addEventListener('change', function() {
+      // Wait for data to load
+      setTimeout(ensureSnapshotButtons, 2000);
+    });
+  }
+})();
