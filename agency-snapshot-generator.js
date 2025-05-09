@@ -2425,3 +2425,1128 @@ addInlineSnapshotButton();
   
   console.log("All fixes applied successfully");
 })();
+/**
+ * Agency Snapshot Generator Fix
+ * 
+ * This script fixes issues with the Agency Snapshot Generator button
+ * to ensure it updates properly when a new agency is selected.
+ */
+
+(function() {
+  console.log("Installing Agency Snapshot Generator Fix...");
+  
+  // Function to ensure snapshot functions are properly defined
+  function ensureSnapshotFunctions() {
+    // Reference to the original functions
+    const originalGenerateSnapshotFromModel = window.generateSnapshotFromModel;
+    const originalGenerateAgencySnapshotHTML = window.generateAgencySnapshotHTML;
+    
+    // Create enhanced version of generateSnapshotFromModel
+    window.generateSnapshotFromModel = function(model) {
+      // Log the model that's being used
+      console.log("Generating snapshot from model:", model ? 
+        `${Object.keys(model.agencies || {}).length} agencies, ${Object.keys(model.contracts || {}).length} contracts` : 
+        "No model provided");
+      
+      try {
+        // Default model handling in case it's undefined
+        if (!model) {
+          console.warn("No model provided to generateSnapshotFromModel, using unifiedModel");
+          model = window.unifiedModel;
+          
+          if (!model) {
+            throw new Error("No data model available for snapshot generation");
+          }
+        }
+        
+        // Ensure model has required structure before passing to original function
+        ensureModelStructure(model);
+        
+        // Call original function with verified model
+        if (typeof originalGenerateSnapshotFromModel === 'function') {
+          return originalGenerateSnapshotFromModel(model);
+        } else {
+          // If original function not available, use fallback
+          return generateSnapshotFallback(model);
+        }
+      } catch (error) {
+        console.error("Error in generateSnapshotFromModel:", error);
+        alert("Error generating snapshot data: " + error.message);
+        return getFallbackSnapshotData();
+      }
+    };
+    
+    // Enhanced version of generateAgencySnapshotHTML
+    window.generateAgencySnapshotHTML = function(model) {
+      console.log("Generating snapshot HTML");
+      
+      try {
+        // Default model handling in case it's undefined
+        if (!model) {
+          console.warn("No model provided to generateAgencySnapshotHTML, using unifiedModel");
+          model = window.unifiedModel;
+          
+          if (!model) {
+            throw new Error("No data model available for snapshot generation");
+          }
+        }
+        
+        // Ensure model has required structure
+        ensureModelStructure(model);
+        
+        // Generate snapshot data from model
+        const snapshotData = window.generateSnapshotFromModel(model);
+        
+        // Call original function with snapshot data
+        if (typeof originalGenerateAgencySnapshotHTML === 'function') {
+          return originalGenerateAgencySnapshotHTML(model);
+        } else {
+          // If original function not available, use fallback
+          return generateHTMLFallback(snapshotData);
+        }
+      } catch (error) {
+        console.error("Error in generateAgencySnapshotHTML:", error);
+        alert("Error generating snapshot HTML: " + error.message);
+        return getFallbackHTML();
+      }
+    };
+    
+    // Enhanced version of viewAgencySnapshot
+    window.viewAgencySnapshot = function() {
+      try {
+        console.log("Viewing agency snapshot");
+        
+        // Get current selected dataset
+        const currentDataset = getCurrentSelectedDataset();
+        console.log("Current dataset:", currentDataset ? currentDataset.name : "Unknown");
+        
+        // Always use latest unifiedModel
+        const model = window.unifiedModel;
+        
+        if (!model) {
+          alert("No data loaded. Please select and load a dataset first.");
+          return;
+        }
+        
+        // Update agency information if needed
+        if (currentDataset && currentDataset.name) {
+          updateAgencyNameInModel(model, currentDataset.name);
+        }
+        
+        // Generate HTML for the snapshot
+        const html = window.generateAgencySnapshotHTML(model);
+        
+        // Open a new window with the HTML
+        const newWindow = window.open('', '_blank');
+        newWindow.document.write(html);
+        newWindow.document.close();
+      } catch (error) {
+        console.error("Error in viewAgencySnapshot:", error);
+        alert("Error viewing agency snapshot: " + error.message);
+      }
+    };
+    
+    // Enhanced version of viewInlineAgencySnapshot
+    window.viewInlineAgencySnapshot = function() {
+      try {
+        console.log("Viewing inline agency snapshot");
+        
+        // Get current selected dataset
+        const currentDataset = getCurrentSelectedDataset();
+        console.log("Current dataset:", currentDataset ? currentDataset.name : "Unknown");
+        
+        // Always use latest unifiedModel
+        const model = window.unifiedModel;
+        
+        if (!model) {
+          alert("No data loaded. Please select and load a dataset first.");
+          return;
+        }
+        
+        // Update agency information if needed
+        if (currentDataset && currentDataset.name) {
+          updateAgencyNameInModel(model, currentDataset.name);
+        }
+        
+        // Generate snapshot data
+        const snapshotData = window.generateSnapshotFromModel(model);
+        
+        // Create a modal to display the snapshot
+        createInlineSnapshotModal(snapshotData);
+      } catch (error) {
+        console.error("Error in viewInlineAgencySnapshot:", error);
+        alert("Error viewing inline agency snapshot: " + error.message);
+      }
+    };
+    
+    console.log("Snapshot functions enhanced successfully");
+  }
+  
+  // Helper function to ensure model has required structure
+  function ensureModelStructure(model) {
+    if (!model) return null;
+    
+    // Create any missing top-level properties
+    const requiredProps = [
+      'agencies', 'subAgencies', 'primes', 'subs', 'contracts', 'stats', 'relationships'
+    ];
+    
+    requiredProps.forEach(prop => {
+      if (!model[prop]) {
+        console.log(`Adding missing ${prop} property to model`);
+        model[prop] = prop === 'stats' ? { totalContractValue: 0 } :
+                     prop === 'relationships' ? { agencyToPrime: [], primeToSub: [] } : {};
+      }
+    });
+    
+    // Ensure relationships property has required sub-properties
+    if (!model.relationships.agencyToPrime) {
+      model.relationships.agencyToPrime = [];
+    }
+    
+    if (!model.relationships.primeToSub) {
+      model.relationships.primeToSub = [];
+    }
+    
+    // Ensure stats has required properties
+    if (!model.stats.totalContractValue) {
+      model.stats.totalContractValue = 0;
+      
+      // Calculate total contract value from contracts
+      if (model.contracts) {
+        model.stats.totalContractValue = Object.values(model.contracts)
+          .reduce((sum, contract) => sum + (contract.value || 0), 0);
+      }
+    }
+    
+    return model;
+  }
+  
+  // Helper function to get current selected dataset
+  function getCurrentSelectedDataset() {
+    try {
+      const selectElement = document.getElementById('dataset-select');
+      if (!selectElement) return null;
+      
+      const selectedValue = selectElement.value;
+      if (!selectedValue) return null;
+      
+      // Handle combined datasets
+      if (selectedValue.startsWith('combined:')) {
+        const datasetIds = selectedValue.split(':')[1].split(',');
+        const datasets = [];
+        
+        // Find datasets in DATASETS array
+        if (window.DATASETS) {
+          datasetIds.forEach(id => {
+            const dataset = window.DATASETS.find(d => d.id === id);
+            if (dataset) datasets.push(dataset);
+          });
+        }
+        
+        if (datasets.length > 0) {
+          // Create a combined dataset name
+          const name = datasets.map(d => d.name.split(' (')[0]).join(' + ');
+          return { id: selectedValue, name: name };
+        }
+      } else {
+        // Single dataset
+        if (window.DATASETS) {
+          const dataset = window.DATASETS.find(d => d.id === selectedValue);
+          if (dataset) return dataset;
+        }
+        
+        // Fallback - return selected value as name
+        const selectedOption = selectElement.options[selectElement.selectedIndex];
+        return { id: selectedValue, name: selectedOption.textContent };
+      }
+    } catch (error) {
+      console.error("Error getting current dataset:", error);
+    }
+    
+    return null;
+  }
+  
+  // Helper function to update agency name in model
+  function updateAgencyNameInModel(model, agencyName) {
+    if (!model || !model.agencies) return;
+    
+    // Check if agencyName is already in the model
+    const existingAgency = Object.values(model.agencies).find(a => a.name === agencyName);
+    if (existingAgency) return; // Already has correct name
+    
+    // Find the largest agency in the model
+    let largestAgency = null;
+    let largestValue = 0;
+    
+    Object.values(model.agencies).forEach(agency => {
+      if (agency.value > largestValue) {
+        largestAgency = agency;
+        largestValue = agency.value;
+      }
+    });
+    
+    // If we found an agency, update its name
+    if (largestAgency) {
+      console.log(`Updating agency name from "${largestAgency.name}" to "${agencyName}"`);
+      largestAgency.name = agencyName;
+    }
+  }
+  
+  // Fallback function for generating snapshot data
+  function generateSnapshotFallback(model) {
+    console.log("Using fallback snapshot data generator");
+    
+    // Extract agency name
+    let agencyName = "Unknown Agency";
+    if (model.agencies && Object.values(model.agencies).length > 0) {
+      const agency = Object.values(model.agencies).sort((a, b) => (b.value || 0) - (a.value || 0))[0];
+      if (agency) agencyName = agency.name;
+    }
+    
+    // Calculate total contract value
+    let totalValue = 0;
+    if (model.contracts) {
+      totalValue = Object.values(model.contracts).reduce((sum, contract) => sum + (contract.value || 0), 0);
+    }
+    
+    // Format currency
+    function formatCurrencyShort(value) {
+      if (!value) return '$0';
+      
+      if (value >= 1000000000) {
+        return `$${(value / 1000000000).toFixed(1)}B`;
+      } else if (value >= 1000000) {
+        return `$${(value / 1000000).toFixed(1)}M`;
+      } else if (value >= 1000) {
+        return `$${(value / 1000).toFixed(1)}K`;
+      }
+      
+      return `$${value.toFixed(0)}`;
+    }
+    
+    // Get top contractors
+    const topContractors = [];
+    if (model.primes) {
+      Object.values(model.primes).forEach(prime => {
+        topContractors.push({
+          name: prime.name,
+          value: prime.value || 0
+        });
+      });
+    }
+    
+    // Sort by value
+    topContractors.sort((a, b) => b.value - a.value);
+    
+    // Get NAICS distribution
+    const naicsCounts = {};
+    if (model.contracts) {
+      Object.values(model.contracts).forEach(contract => {
+        if (contract.naicsCode) {
+          if (!naicsCounts[contract.naicsCode]) {
+            naicsCounts[contract.naicsCode] = {
+              code: contract.naicsCode,
+              desc: contract.naicsDesc || "Unknown",
+              value: 0
+            };
+          }
+          
+          naicsCounts[contract.naicsCode].value += contract.value || 0;
+        }
+      });
+    }
+    
+    // Convert to array and sort
+    const naicsDistribution = Object.values(naicsCounts)
+      .sort((a, b) => b.value - a.value)
+      .map(item => ({
+        ...item,
+        percentage: totalValue > 0 ? (item.value / totalValue) * 100 : 0
+      }));
+    
+    // Get expiring contracts
+    const today = new Date();
+    const sixMonthsFromNow = new Date();
+    sixMonthsFromNow.setMonth(today.getMonth() + 6);
+    
+    const expiringContracts = {
+      count: 0,
+      value: 0,
+      list: []
+    };
+    
+    if (model.contracts) {
+      Object.values(model.contracts).forEach(contract => {
+        if (contract.endDate) {
+          const endDate = contract.endDate instanceof Date ? 
+            contract.endDate : new Date(contract.endDate);
+          
+          if (!isNaN(endDate.getTime()) && endDate >= today && endDate <= sixMonthsFromNow) {
+            expiringContracts.count++;
+            expiringContracts.value += contract.value || 0;
+            
+            if (expiringContracts.list.length < 5) {
+              const prime = model.primes[contract.primeId];
+              
+              expiringContracts.list.push({
+                id: contract.id,
+                contractor: prime ? prime.name : "Unknown",
+                description: contract.description || "No description",
+                endDate: endDate.toLocaleDateString(),
+                value: contract.value || 0
+              });
+            }
+          }
+        }
+      });
+    }
+    
+    // Calculate ARR estimate
+    let arrEstimate = { arr: 0, avgContractSize: 0, avgDuration: "0 years", naicsCode: "Unknown" };
+    
+    if (naicsDistribution.length > 0) {
+      const topNaicsCode = naicsDistribution[0].code;
+      let totalValue = 0;
+      let totalContracts = 0;
+      let totalDurationDays = 0;
+      let contractsWithDuration = 0;
+      
+      if (model.contracts) {
+        Object.values(model.contracts).forEach(contract => {
+          if (contract.naicsCode === topNaicsCode && contract.value > 0) {
+            totalValue += contract.value;
+            totalContracts++;
+            
+            if (contract.startDate && contract.endDate) {
+              let start = contract.startDate instanceof Date ? 
+                contract.startDate : new Date(contract.startDate);
+              
+              let end = contract.endDate instanceof Date ? 
+                contract.endDate : new Date(contract.endDate);
+              
+              if (!isNaN(start.getTime()) && !isNaN(end.getTime()) && end > start) {
+                const durationDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+                
+                if (durationDays > 0) {
+                  totalDurationDays += durationDays;
+                  contractsWithDuration++;
+                }
+              }
+            }
+          }
+        });
+      }
+      
+      if (totalContracts > 0) {
+        const avgContractSize = totalValue / totalContracts;
+        const avgDurationDays = contractsWithDuration > 0 ? totalDurationDays / contractsWithDuration : 0;
+        const avgDurationYears = avgDurationDays / 365;
+        
+        arrEstimate = {
+          arr: avgDurationYears > 0 ? avgContractSize / avgDurationYears : 0,
+          avgContractSize: avgContractSize,
+          avgDurationYears: avgDurationYears,
+          naicsCode: topNaicsCode,
+          naicsDesc: naicsDistribution[0].desc
+        };
+      }
+    }
+    
+    return {
+      agencyName: agencyName,
+      updateDate: new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+      totalAwarded: formatCurrencyShort(totalValue),
+      expiringContracts: {
+        count: expiringContracts.count,
+        value: formatCurrencyShort(expiringContracts.value)
+      },
+      topPrime: topContractors.length > 0 ? topContractors[0].name : "Unknown",
+      topSub: "Unknown",
+      topNaics: naicsDistribution.length > 0 ? 
+        (naicsDistribution[0].code + (naicsDistribution[0].desc ? ` – ${naicsDistribution[0].desc}` : "")) : 
+        "Unknown",
+      topPrimeContractors: topContractors.slice(0, 10).map(c => ({
+        name: c.name,
+        value: c.value,
+        awards: 0,
+        avgDuration: 0,
+        primaryNaics: "Unknown"
+      })),
+      naicsDistribution: naicsDistribution,
+      topContracts: [],
+      expiringContractsList: expiringContracts.list,
+      contractWorkLocations: "No location data available",
+      arrEstimate: {
+        arr: formatCurrencyShort(arrEstimate.arr),
+        avgContractSize: formatCurrencyShort(arrEstimate.avgContractSize),
+        avgDuration: `${Math.round(arrEstimate.avgDurationYears)} years`,
+        naicsCode: arrEstimate.naicsCode
+      }
+    };
+  }
+  
+  // Fallback function to generate HTML
+  function generateHTMLFallback(snapshotData) {
+    console.log("Using fallback HTML generator");
+    
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${snapshotData.agencyName} Snapshot</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f9f9f9;
+      color: #333;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background-color: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 15px;
+      margin-bottom: 20px;
+    }
+    h1 {
+      font-size: 24px;
+      margin-bottom: 5px;
+    }
+    h2 {
+      font-size: 18px;
+      margin-top: 25px;
+      margin-bottom: 15px;
+    }
+    .summary {
+      background-color: #f5f5f5;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 15px;
+      margin-bottom: 25px;
+    }
+    .stat-card {
+      border: 1px solid #eee;
+      border-radius: 8px;
+      padding: 15px;
+    }
+    .stat-value {
+      font-size: 24px;
+      font-weight: bold;
+      margin-bottom: 5px;
+      color: #4a6fa5;
+    }
+    .stat-label {
+      font-size: 14px;
+      color: #666;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+    }
+    th, td {
+      padding: 10px;
+      text-align: left;
+      border-bottom: 1px solid #eee;
+    }
+    th {
+      background-color: #f5f5f5;
+      font-weight: bold;
+    }
+    .footer {
+      margin-top: 30px;
+      padding-top: 15px;
+      border-top: 1px solid #eee;
+      color: #999;
+      font-size: 12px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div>
+        <h1>${snapshotData.agencyName} Snapshot</h1>
+        <p>Updated: ${snapshotData.updateDate}</p>
+      </div>
+      <div id="current-date"></div>
+    </header>
+    
+    <div class="summary">
+      <h2>Executive Summary</h2>
+      <p>The ${snapshotData.agencyName} spent <strong>${snapshotData.totalAwarded}</strong> with a significant focus on ${snapshotData.topNaics}. The agency has <strong>${snapshotData.expiringContracts.count}</strong> awards worth <strong>${snapshotData.expiringContracts.value}</strong> expiring in the next 6 months, presenting near-term opportunities.</p>
+      <ul>
+        <li>${snapshotData.topPrime} leads prime contract awards</li>
+        <li>Average annual run rate (ARR) for top NAICS is approximately ${snapshotData.arrEstimate.arr}</li>
+      </ul>
+    </div>
+    
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Top Prime</div>
+        <div class="stat-value">${snapshotData.topPrime}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Most Used NAICS</div>
+        <div class="stat-value">${snapshotData.naicsDistribution[0]?.code || 'N/A'}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Total Awarded</div>
+        <div class="stat-value">${snapshotData.totalAwarded}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Expiring Soon</div>
+        <div class="stat-value">${snapshotData.expiringContracts.count} awards</div>
+      </div>
+    </div>
+    
+    <h2>Top Prime Contractors</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Contractor</th>
+          <th>Total Value</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${snapshotData.topPrimeContractors.map(contractor => `
+          <tr>
+            <td>${contractor.name}</td>
+            <td>${formatCurrency(contractor.value)}</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+    
+    <h2>Expiring Contracts (Next 6 Months)</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Contractor</th>
+          <th>Description</th>
+          <th>End Date</th>
+          <th>Value</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${snapshotData.expiringContractsList.map(contract => `
+          <tr>
+            <td>${contract.contractor}</td>
+            <td>${contract.description}</td>
+            <td>${contract.endDate}</td>
+            <td>${formatCurrency(contract.value)}</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+    
+    <div class="footer">
+      <p>Data from USAspending.gov | Generated with Subhoo.com</p>
+    </div>
+  </div>
+
+  <script>
+    // Set current date
+    document.getElementById('current-date').textContent = new Date().toLocaleDateString('en-US', { 
+      weekday: 'short', 
+      month: 'short', 
+      day: 'numeric', 
+      year: 'numeric' 
+    });
+    
+    // Helper function to format currency
+    function formatCurrency(value) {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+      }).format(value);
+    }
+  </script>
+</body>
+</html>`;
+
+    // Helper function to format currency for the HTML template
+    function formatCurrency(value) {
+      if (!value) return '$0';
+      
+      // For numeric values
+      if (typeof value === 'number') {
+        return new Intl.NumberFormat('en-US', {
+          style: 'currency',
+          currency: 'USD',
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0
+        }).format(value);
+      }
+      
+      // For pre-formatted strings (already have $ sign)
+      if (typeof value === 'string' && value.startsWith('$')) {
+        return value;
+      }
+      
+      // Default - try to parse and format
+      return '$' + value;
+    }
+  }
+  
+  // Helper function to create an inline snapshot modal
+  function createInlineSnapshotModal(snapshotData) {
+    try {
+      // Create a modal container
+      const modalContainer = document.createElement('div');
+      modalContainer.style.position = 'fixed';
+      modalContainer.style.top = '0';
+      modalContainer.style.left = '0';
+      modalContainer.style.width = '100%';
+      modalContainer.style.height = '100%';
+      modalContainer.style.backgroundColor = 'rgba(0,0,0,0.7)';
+      modalContainer.style.zIndex = '9999';
+      modalContainer.style.overflow = 'auto';
+      modalContainer.style.display = 'flex';
+      modalContainer.style.justifyContent = 'center';
+      modalContainer.style.padding = '20px';
+      
+      // Create content frame
+      const contentFrame = document.createElement('div');
+      contentFrame.style.backgroundColor = 'white';
+      contentFrame.style.borderRadius = '8px';
+      contentFrame.style.maxWidth = '1200px';
+      contentFrame.style.width = '100%';
+      contentFrame.style.maxHeight = '90vh';
+      contentFrame.style.overflowY = 'auto';
+      contentFrame.style.position = 'relative';
+      contentFrame.style.boxShadow = '0 4px 20px rgba(0,0,0,0.2)';
+      
+      // Add close button
+      const closeButton = document.createElement('button');
+      closeButton.textContent = '✕';
+      closeButton.style.position = 'absolute';
+      closeButton.style.top = '10px';
+      closeButton.style.right = '10px';
+      closeButton.style.backgroundColor = 'transparent';
+      closeButton.style.border = 'none';
+      closeButton.style.fontSize = '24px';
+      closeButton.style.cursor = 'pointer';
+      closeButton.style.zIndex = '1';
+      closeButton.onclick = function() {
+        document.body.removeChild(modalContainer);
+      };
+      
+      // Add export button
+      const exportButton = document.createElement('button');
+      exportButton.textContent = 'Export as HTML';
+      exportButton.style.position = 'absolute';
+      exportButton.style.top = '10px';
+      exportButton.style.right = '50px';
+      exportButton.style.padding = '5px 10px';
+      exportButton.style.backgroundColor = '#7A747B';
+      exportButton.style.color = 'white';
+      exportButton.style.border = 'none';
+      exportButton.style.borderRadius = '4px';
+      exportButton.style.cursor = 'pointer';
+      exportButton.onclick = function() {
+        const html = window.generateAgencySnapshotHTML(window.unifiedModel);
+        const blob = new Blob([html], {type: 'text/html'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${snapshotData.agencyName}_Snapshot.html`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      };
+      
+      // Add snapshot content 
+      const snapshotContent = document.createElement('div');
+      snapshotContent.innerHTML = `
+        <div style="padding: 30px;">
+          <h1 style="font-size: 24px; margin-bottom: 5px;">${snapshotData.agencyName} Snapshot</h1>
+          <p style="color: gray; margin-bottom: 20px;">Updated: ${snapshotData.updateDate}</p>
+          
+          <div style="margin-bottom: 20px; padding: 15px; background-color: #f9f9f9; border-radius: 8px;">
+            <h2 style="font-size: 18px; margin-bottom: 10px;">Executive Summary</h2>
+            <p>The ${snapshotData.agencyName} spent <strong>${snapshotData.totalAwarded}</strong>, with ${snapshotData.expiringContracts.count} awards worth ${snapshotData.expiringContracts.value} expiring in the next 6 months.</p>
+            <ul style="margin-top: 10px; margin-left: 20px;">
+              <li>${snapshotData.topPrime} leads prime contract awards</li>
+              <li>Most used NAICS: ${snapshotData.naicsDistribution[0]?.code || 'N/A'}</li>
+              <li>ARR: ${snapshotData.arrEstimate.arr}</li>
+            </ul>
+          </div>
+          
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
+            ${snapshotData.topPrimeContractors.slice(0, 5).map(contractor => `
+              <div style="padding: 15px; border: 1px solid #eee; border-radius: 8px;">
+                <div style="font-size: 18px; font-weight: bold;">${contractor.name}</div>
+                <div style="font-size: 20px; color: #9A949B; margin: 5px 0;">${formatCurrencyShort(contractor.value)}</div>
+                <div style="font-size: 12px; color: gray;">${contractor.awards || 0} awards</div>
+              </div>
+            `).join('')}
+          </div>
+          
+          <div style="margin-bottom: 20px;">
+            <h2 style="font-size: 18px; margin-bottom: 10px;">Expiring Contracts (Next 6 Months)</h2>
+            <table style="width: 100%; border-collapse: collapse;">
+              <thead>
+                <tr style="background-color: #f5f5f5;">
+                  <th style="text-align: left; padding: 8px; border-bottom: 1px solid #ddd;">Contractor</th>
+                  <th style="text-align: left; padding: 8px; border-bottom: 1px solid #ddd;">Description</th>
+                  <th style="text-align: left; padding: 8px; border-bottom: 1px solid #ddd;">End Date</th>
+                  <th style="text-align: right; padding: 8px; border-bottom: 1px solid #ddd;">Value</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${snapshotData.expiringContractsList.map(contract => `
+                  <tr>
+                    <td style="padding: 8px; border-bottom: 1px solid #eee;">${contract.contractor}</td>
+                    <td style="padding: 8px; border-bottom: 1px solid #eee;">${contract.description}</td>
+                    <td style="padding: 8px; border-bottom: 1px solid #eee;">${contract.endDate}</td>
+                    <td style="text-align: right; padding: 8px; border-bottom: 1px solid #eee;">${formatCurrencyShort(contract.value)}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+          
+          <div style="text-align: center; font-size: 12px; color: gray; margin-top: 30px; padding-top: 10px; border-top: 1px solid #eee;">
+            Data from USAspending.gov | Generated with Subhoo.com
+          </div>
+        </div>
+      `;
+      
+      // Helper function for currency formatting
+      function formatCurrencyShort(value) {
+        if (!value) return '$0';
+        
+        if (typeof value === 'string' && value.startsWith('$')) {
+          return value; // Already formatted
+        }
+        
+        // Convert to number if it's a string
+        const numValue = typeof value === 'string' ? parseFloat(value.replace(/[^0-9.-]+/g, '')) : value;
+        
+        if (isNaN(numValue)) return '$0';
+        
+        if (numValue >= 1000000000) {
+          return `$${(numValue / 1000000000).toFixed(1)}B`;
+        } else if (numValue >= 1000000) {
+          return `$${(numValue / 1000000).toFixed(1)}M`;
+        } else if (numValue >= 1000) {
+          return `$${(numValue / 1000).toFixed(1)}K`;
+        }
+        
+        return `$${numValue.toFixed(0)}`;
+      }
+      
+      contentFrame.appendChild(closeButton);
+      contentFrame.appendChild(exportButton);
+      contentFrame.appendChild(snapshotContent);
+      modalContainer.appendChild(contentFrame);
+      document.body.appendChild(modalContainer);
+    } catch (error) {
+      console.error("Error creating inline snapshot modal:", error);
+      alert(`Error creating snapshot view: ${error.message}`);
+    }
+  }
+  
+  // Function to get fallback data if everything fails
+  function getFallbackSnapshotData() {
+    const dataset = getCurrentSelectedDataset();
+    const agencyName = dataset ? dataset.name : "Unknown Agency";
+    
+    return {
+      agencyName: agencyName,
+      updateDate: new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+      totalAwarded: "$0",
+      expiringContracts: {
+        count: 0,
+        value: "$0"
+      },
+      topPrime: "No data available",
+      topSub: "No data available",
+      topNaics: "No data available",
+      topPrimeContractors: [],
+      naicsDistribution: [],
+      topContracts: [],
+      expiringContractsList: [],
+      contractWorkLocations: "No location data available",
+      arrEstimate: {
+        arr: "$0 / yr",
+        avgContractSize: "$0",
+        avgDuration: "0 years",
+        naicsCode: "Unknown"
+      }
+    };
+  }
+  
+  // Function to get fallback HTML if everything fails
+  function getFallbackHTML() {
+    const dataset = getCurrentSelectedDataset();
+    const agencyName = dataset ? dataset.name : "Unknown Agency";
+    
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${agencyName} Snapshot</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f9f9f9;
+      color: #333;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background-color: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    h1 {
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+    .error-message {
+      background-color: #fff5f5;
+      border: 1px solid #ffdddd;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 20px 0;
+      color: #d32f2f;
+    }
+    .footer {
+      margin-top: 30px;
+      padding-top: 15px;
+      border-top: 1px solid #eee;
+      color: #999;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>${agencyName} Snapshot</h1>
+    
+    <div class="error-message">
+      <h2>No Data Available</h2>
+      <p>We couldn't find any data for this agency. This could be due to:</p>
+      <ul style="text-align: left; display: inline-block;">
+        <li>No contracts loaded yet</li>
+        <li>Data still processing</li>
+        <li>Temporary system error</li>
+      </ul>
+      <p>Please try loading the dataset again or selecting a different agency.</p>
+    </div>
+    
+    <div class="footer">
+      <p>Generated with Subhoo.com</p>
+    </div>
+  </div>
+</body>
+</html>`;
+  }
+  
+  // Function to fix snapshot buttons and ensure they're working
+  function fixSnapshotButtons() {
+    console.log("Fixing snapshot buttons...");
+    
+    // Find existing buttons
+    const fullButton = document.getElementById('snapshot-button');
+    const inlineButton = document.getElementById('inline-snapshot-button');
+    
+    // If buttons don't exist, add them
+    if (!fullButton || !inlineButton) {
+      addSnapshotButtons();
+      return;
+    }
+    
+    // Remove existing event listeners by cloning buttons
+    if (fullButton) {
+      const newFullButton = fullButton.cloneNode(true);
+      fullButton.parentNode.replaceChild(newFullButton, fullButton);
+      
+      // Add new event listener
+      newFullButton.addEventListener('click', function(e) {
+        e.preventDefault();
+        console.log("Full snapshot button clicked");
+        window.viewAgencySnapshot();
+      });
+    }
+    
+    if (inlineButton) {
+      const newInlineButton = inlineButton.cloneNode(true);
+      inlineButton.parentNode.replaceChild(newInlineButton, inlineButton);
+      
+      // Add new event listener
+      newInlineButton.addEventListener('click', function(e) {
+        e.preventDefault();
+        console.log("Inline snapshot button clicked");
+        window.viewInlineAgencySnapshot();
+      });
+    }
+    
+    console.log("Snapshot buttons fixed");
+  }
+  
+  // Function to add snapshot buttons if they don't exist
+  function addSnapshotButtons() {
+    console.log("Adding snapshot buttons...");
+    
+    // Find the refresh button as a reference point
+    const refreshButton = document.getElementById('refresh-button');
+    if (!refreshButton || !refreshButton.parentNode) {
+      console.warn("Could not find refresh button to add snapshot buttons next to it");
+      return;
+    }
+    
+    // Create the full snapshot button
+    const fullButton = document.createElement('button');
+    fullButton.id = 'snapshot-button';
+    fullButton.innerHTML = `
+      <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none">
+        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+        <circle cx="8.5" cy="8.5" r="1.5"></circle>
+        <polyline points="21 15 16 10 5 21"></polyline>
+      </svg>
+      Generate Snapshot
+    `;
+    fullButton.style.marginLeft = '8px';
+    fullButton.addEventListener('click', function(e) {
+      e.preventDefault();
+      console.log("Full snapshot button clicked");
+      window.viewAgencySnapshot();
+    });
+    
+    // Create the inline snapshot button
+    const inlineButton = document.createElement('button');
+    inlineButton.id = 'inline-snapshot-button';
+    inlineButton.innerHTML = `
+      <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none">
+        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+        <circle cx="8.5" cy="8.5" r="1.5"></circle>
+        <polyline points="21 15 16 10 5 21"></polyline>
+      </svg>
+      Quick Snapshot
+    `;
+    inlineButton.style.marginLeft = '8px';
+    inlineButton.addEventListener('click', function(e) {
+      e.preventDefault();
+      console.log("Inline snapshot button clicked");
+      window.viewInlineAgencySnapshot();
+    });
+    
+    // Add buttons next to the refresh button
+    refreshButton.parentNode.appendChild(fullButton);
+    refreshButton.parentNode.appendChild(inlineButton);
+    
+    console.log("Snapshot buttons added");
+  }
+  
+  // Function to add hooks to dataset loading functions
+  function addDatasetLoadingHooks() {
+    console.log("Adding dataset loading hooks...");
+    
+    // Hook into loadSingleDataset
+    if (typeof window.loadSingleDataset === 'function') {
+      const originalLoadSingleDataset = window.loadSingleDataset;
+      window.loadSingleDataset = function(dataset) {
+        // Call original function
+        originalLoadSingleDataset.apply(this, arguments);
+        
+        // Fix snapshot buttons after dataset loads
+        setTimeout(function() {
+          console.log("Dataset loaded, fixing snapshot buttons");
+          fixSnapshotButtons();
+        }, 1500);
+      };
+      console.log("Successfully hooked into loadSingleDataset");
+    }
+    
+    // Hook into loadCombinedDatasets
+    if (typeof window.loadCombinedDatasets === 'function') {
+      const originalLoadCombinedDatasets = window.loadCombinedDatasets;
+      window.loadCombinedDatasets = function(datasetIds) {
+        // Call original function
+        originalLoadCombinedDatasets.apply(this, arguments);
+        
+        // Fix snapshot buttons after dataset loads
+        setTimeout(function() {
+          console.log("Combined datasets loaded, fixing snapshot buttons");
+          fixSnapshotButtons();
+        }, 2000);
+      };
+      console.log("Successfully hooked into loadCombinedDatasets");
+    }
+    
+    // Hook into applyFiltersAndUpdateVisuals
+    if (typeof window.applyFiltersAndUpdateVisuals === 'function') {
+      const originalApplyFilters = window.applyFiltersAndUpdateVisuals;
+      window.applyFiltersAndUpdateVisuals = function() {
+        // Call original function
+        originalApplyFilters.apply(this, arguments);
+        
+        // Fix snapshot buttons after visualizations update
+        setTimeout(function() {
+          fixSnapshotButtons();
+        }, 500);
+      };
+      console.log("Successfully hooked into applyFiltersAndUpdateVisuals");
+    }
+  }
+  
+  // Initialize the fix
+  function initialize() {
+    console.log("Initializing Agency Snapshot Generator Fix");
+    
+    // Ensure snapshot functions are properly defined
+    ensureSnapshotFunctions();
+    
+    // Fix existing snapshot buttons
+    fixSnapshotButtons();
+    
+    // Add hooks to dataset loading functions
+    addDatasetLoadingHooks();
+    
+    // Add dataset selection change handler
+    const datasetSelect = document.getElementById('dataset-select');
+    if (datasetSelect) {
+      datasetSelect.addEventListener('change', function() {
+        // Fix snapshot buttons after a new dataset is selected
+        setTimeout(function() {
+          console.log("Dataset selection changed, fixing snapshot buttons");
+          fixSnapshotButtons();
+        }, 500);
+      });
+    }
+    
+    console.log("Agency Snapshot Generator Fix initialized");
+  }
+  
+  // Run initialization
+  initialize();
+})();
