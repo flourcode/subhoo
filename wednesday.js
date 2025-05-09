@@ -6419,14 +6419,10 @@ function displayForceDirectedRadial(model) {
             
             // Calculate node radius based on type
             function getNodeRadius(d) {
-                const type = getNodeType(d);
-                if (type === 'root') return 0;
-                if (type === 'agency') return 8;
-                if (type === 'subagency') return 7;
-                if (type === 'office') return 6;
-                if (type === 'prime') return 5;
-                return 4;
-            }
+    const baseRadius = getBaseNodeRadius(d);
+    const valueScale = Math.min(1.5, Math.log10(d.data.value / 10000) / 5);
+    return baseRadius * (1 + valueScale);
+}
             
             // Create node groups
             const nodeGroups = chart.append("g")
@@ -6445,15 +6441,15 @@ const colors = getDendrogramColors();
 
 // Add circles to nodes
 nodeGroups.append("circle")
-    .attr("r", d => getNodeRadius(d))
+    .filter(d => d.data.obligatedValue && d.data.potentialValue)
+    .attr("r", 3)
+    .attr("cx", d => getNodeRadius(d) * 0.5)
+    .attr("cy", d => getNodeRadius(d) * 0.5)
     .attr("fill", d => {
-        const type = getNodeType(d);
-        if (type === 'root') return 'none';
-        if (type === 'agency') return colors.agency;
-        if (type === 'subagency') return colors.subagency;
-        if (type === 'office') return colors.office;
-        if (type === 'prime') return colors.prime;
-        return colors.sub;
+        const ratio = d.data.obligatedValue / d.data.potentialValue;
+        if (ratio > 0.9) return "green"; // Nearly fully funded
+        if (ratio > 0.5) return "orange"; // Partially funded
+        return "red"; // Early stage funding
     })
     .attr("stroke", colors.background)
     .attr("stroke-width", 1.5);
@@ -6480,7 +6476,7 @@ nodeGroups.append("circle")
                 .attr("text-anchor", d => d.children ? "end" : "start")
                 .attr("font-size", d => {
                     const type = getNodeType(d);
-                    if (type === 'agency') return "12px";
+                    if (type === 'agency') return "11px";
                     if (type === 'subagency') return "11px";
                     if (type === 'office') return "10px";
                     return "9px";
@@ -6558,11 +6554,14 @@ nodeGroups.append("circle")
                 const type = getNodeType(d);
                 
                 let tooltipContent = `
-                    <div style="font-weight: bold; margin-bottom: 5px;">${d.data.name || 'Unknown'}</div>
-                    <div>Type: ${type.charAt(0).toUpperCase() + type.slice(1)}</div>
-                    <div>Value: ${formatCurrency(d.data.value || 0)}</div>
-                    <div>Share: ${percentage}%</div>
-                `;
+    <div style="font-weight: bold; margin-bottom: 5px;">${d.data.name || 'Unknown'}</div>
+    <div>Type: ${type.charAt(0).toUpperCase() + type.slice(1)}</div>
+    <div>Value: ${formatCurrency(d.data.value || 0)}</div>
+    <div>Share: ${percentage}%</div>
+    ${d.data.naicsCode ? `<div>NAICS: ${d.data.naicsCode} - ${truncateText(d.data.naicsDesc, 40)}</div>` : ''}
+    ${d.data.description ? `<div>Description: ${truncateText(d.data.description, 60)}</div>` : ''}
+    ${showDates ? `<div>Duration: ${formatDuration(d.data.startDate, d.data.endDate)}</div>` : ''}
+`;
                 
                 // Add child count info for clickable nodes
                 if (d.children && d.children.length > 0) {
