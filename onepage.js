@@ -1141,3 +1141,211 @@ document.addEventListener('DOMContentLoaded', function() {
 window.generateSnapshotFromModel = generateSnapshotFromModel;
 window.generateAgencySnapshotHTML = generateAgencySnapshotHTML;
 window.viewAgencySnapshot = viewAgencySnapshot;
+// Add this function to display the snapshot inside the current page
+function viewInlineAgencySnapshot() {
+  try {
+    // Check if the unified model exists
+    const model = window.unifiedModel;
+    if (!model) {
+      alert("Please load a dataset first");
+      return;
+    }
+    
+    // Generate the HTML content
+    const snapshotData = generateSnapshotFromModel(model);
+    
+    // Create a modal container
+    const modalContainer = document.createElement('div');
+    modalContainer.style.position = 'fixed';
+    modalContainer.style.top = '0';
+    modalContainer.style.left = '0';
+    modalContainer.style.width = '100%';
+    modalContainer.style.height = '100%';
+    modalContainer.style.backgroundColor = 'rgba(0,0,0,0.7)';
+    modalContainer.style.zIndex = '9999';
+    modalContainer.style.overflow = 'auto';
+    modalContainer.style.display = 'flex';
+    modalContainer.style.justifyContent = 'center';
+    modalContainer.style.padding = '20px';
+    
+    // Create content frame
+    const contentFrame = document.createElement('div');
+    contentFrame.style.backgroundColor = 'var(--color-surface, white)';
+    contentFrame.style.borderRadius = '8px';
+    contentFrame.style.maxWidth = '1200px';
+    contentFrame.style.width = '100%';
+    contentFrame.style.maxHeight = '90vh';
+    contentFrame.style.overflowY = 'auto';
+    contentFrame.style.position = 'relative';
+    contentFrame.style.boxShadow = '0 4px 20px rgba(0,0,0,0.2)';
+    
+    // Add close button
+    const closeButton = document.createElement('button');
+    closeButton.textContent = '✕';
+    closeButton.style.position = 'absolute';
+    closeButton.style.top = '10px';
+    closeButton.style.right = '10px';
+    closeButton.style.backgroundColor = 'transparent';
+    closeButton.style.border = 'none';
+    closeButton.style.fontSize = '24px';
+    closeButton.style.cursor = 'pointer';
+    closeButton.style.zIndex = '1';
+    closeButton.style.color = 'var(--color-text-secondary, gray)';
+    closeButton.onclick = function() {
+      document.body.removeChild(modalContainer);
+    };
+    
+    // Add export button
+    const exportButton = document.createElement('button');
+    exportButton.textContent = 'Export as HTML';
+    exportButton.style.position = 'absolute';
+    exportButton.style.top = '10px';
+    exportButton.style.right = '50px';
+    exportButton.style.padding = '5px 10px';
+    exportButton.style.backgroundColor = 'var(--color-primary, #9A949B)';
+    exportButton.style.color = 'white';
+    exportButton.style.border = 'none';
+    exportButton.style.borderRadius = '4px';
+    exportButton.style.cursor = 'pointer';
+    exportButton.onclick = function() {
+      const html = generateAgencySnapshotHTML(model);
+      const blob = new Blob([html], {type: 'text/html'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${snapshotData.agencyName}_Snapshot.html`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    };
+    
+    // Add snapshot content 
+    const snapshotContent = document.createElement('div');
+    snapshotContent.innerHTML = `
+      <div style="padding: 30px;">
+        <h1 style="font-size: 24px; margin-bottom: 5px;">${snapshotData.agencyName} Snapshot</h1>
+        <p style="color: gray; margin-bottom: 20px;">Updated: ${snapshotData.updateDate}</p>
+        
+        <div style="margin-bottom: 20px; padding: 15px; background-color: #f9f9f9; border-radius: 8px;">
+          <h2 style="font-size: 18px; margin-bottom: 10px;">Executive Summary</h2>
+          <p>The ${snapshotData.agencyName} spent <strong>${snapshotData.totalAwarded}</strong> in FY24, with ${snapshotData.expiringContracts.count} awards worth ${snapshotData.expiringContracts.value} expiring in the next 6 months.</p>
+          <ul style="margin-top: 10px; margin-left: 20px;">
+            <li>${snapshotData.topPrime} leads prime contract awards</li>
+            <li>${snapshotData.topSub} is the top subcontractor</li>
+            <li>Most used NAICS: ${snapshotData.topNaics}</li>
+            <li>ARR for ${snapshotData.arrEstimate.naicsCode}: ${snapshotData.arrEstimate.arr}</li>
+          </ul>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
+          ${snapshotData.topPrimeContractors.slice(0, 5).map(contractor => `
+            <div style="padding: 15px; border: 1px solid #eee; border-radius: 8px;">
+              <div style="font-size: 18px; font-weight: bold;">${contractor.name}</div>
+              <div style="font-size: 20px; color: var(--color-primary, #9A949B); margin: 5px 0;">${formatCurrencyShort(contractor.value)}</div>
+              <div style="font-size: 12px; color: gray;">${contractor.awards} awards • ${contractor.avgDuration} days avg</div>
+            </div>
+          `).join('')}
+        </div>
+        
+        <div style="margin-bottom: 20px;">
+          <h2 style="font-size: 18px; margin-bottom: 10px;">Expiring Contracts (Next 6 Months)</h2>
+          <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+              <tr style="background-color: #f5f5f5;">
+                <th style="text-align: left; padding: 8px; border-bottom: 1px solid #ddd;">Contractor</th>
+                <th style="text-align: left; padding: 8px; border-bottom: 1px solid #ddd;">Description</th>
+                <th style="text-align: left; padding: 8px; border-bottom: 1px solid #ddd;">End Date</th>
+                <th style="text-align: right; padding: 8px; border-bottom: 1px solid #ddd;">Value</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${snapshotData.expiringContractsList.map(contract => `
+                <tr>
+                  <td style="padding: 8px; border-bottom: 1px solid #eee;">${contract.contractor}</td>
+                  <td style="padding: 8px; border-bottom: 1px solid #eee;">${contract.description}</td>
+                  <td style="padding: 8px; border-bottom: 1px solid #eee;">${contract.endDate}</td>
+                  <td style="text-align: right; padding: 8px; border-bottom: 1px solid #eee;">${formatCurrencyShort(contract.value)}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+        
+        <div style="text-align: center; font-size: 12px; color: gray; margin-top: 30px; padding-top: 10px; border-top: 1px solid #eee;">
+          Data from USAspending.gov | Generated with Subhoo.com
+        </div>
+      </div>
+    `;
+    
+    contentFrame.appendChild(closeButton);
+    contentFrame.appendChild(exportButton);
+    contentFrame.appendChild(snapshotContent);
+    modalContainer.appendChild(contentFrame);
+    document.body.appendChild(modalContainer);
+    
+  } catch (error) {
+    console.error("Error generating inline snapshot:", error);
+    alert(`An error occurred: ${error.message}`);
+  }
+}
+
+// Helper function for the inline snapshot
+function formatCurrencyShort(value) {
+  if (!value) return '$0';
+  
+  if (typeof value === 'string' && value.startsWith('$')) {
+    return value; // Already formatted
+  }
+  
+  // Convert to number if it's a string
+  const numValue = typeof value === 'string' ? parseFloat(value.replace(/[^0-9.-]+/g, '')) : value;
+  
+  if (isNaN(numValue)) return '$0';
+  
+  if (numValue >= 1000000000) {
+    return `$${(numValue / 1000000000).toFixed(1)}B`;
+  } else if (numValue >= 1000000) {
+    return `$${(numValue / 1000000).toFixed(1)}M`;
+  } else if (numValue >= 1000) {
+    return `$${(numValue / 1000).toFixed(1)}K`;
+  }
+  
+  return `$${numValue.toFixed(0)}`;
+}
+
+// Add a new button for the inline snapshot
+function addInlineSnapshotButton() {
+  // Find the refresh button
+  const refreshButton = document.getElementById('refresh-button');
+  if (!refreshButton || !refreshButton.parentNode) {
+    console.warn("Could not find refresh button to add snapshot button next to it");
+    return;
+  }
+  
+  // Create the inline snapshot button
+  const inlineButton = document.createElement('button');
+  inlineButton.id = 'inline-snapshot-button';
+  inlineButton.innerHTML = `
+    <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none">
+      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+      <circle cx="8.5" cy="8.5" r="1.5"></circle>
+      <polyline points="21 15 16 10 5 21"></polyline>
+    </svg>
+    Quick Snapshot
+  `;
+  inlineButton.style.marginLeft = '8px';
+  
+  // Add click event directly
+  inlineButton.onclick = function() {
+    console.log("Inline button clicked");
+    viewInlineAgencySnapshot();
+  };
+  
+  // Add button next to the refresh button
+  refreshButton.parentNode.appendChild(inlineButton);
+  console.log("Inline snapshot button added");
+}
+
+// Add the inline button
+addInlineSnapshotButton();
