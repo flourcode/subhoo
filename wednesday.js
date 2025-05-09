@@ -6495,7 +6495,7 @@ nodeGroups.append("circle")
                         const valueStr = d.data.value ? ` (${formatConciseCurrency(d.data.value)})` : '';
                         
                         // Adjust max length based on name + value length
-                        const maxNameLength = 25 - valueStr.length;
+                        const maxNameLength = 45 - valueStr.length;
                         
                         if (name.length > maxNameLength) {
                             return name.substring(0, maxNameLength - 3) + "..." + valueStr;
@@ -6505,8 +6505,8 @@ nodeGroups.append("circle")
                     
                     // For other node types, just display name
                     const maxLength = type === 'agency' ? 30 : 
-                                     type === 'subagency' ? 25 :
-                                     type === 'office' ? 20 : 15;
+                                     type === 'subagency' ? 30 :
+                                     type === 'office' ? 30 : 25;
                                      
                     if (name.length > maxLength) {
                         return name.substring(0, maxLength - 3) + "...";
