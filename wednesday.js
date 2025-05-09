@@ -6797,6 +6797,25 @@ nodeGroups.append("circle")
         displayError(containerId, `Failed to render visualization: ${error.message}`);
     }
 }
+// Modify your node radius calculation
+function getNodeRadius(d) {
+    const type = getNodeType(d);
+    // Get base radius based on node type
+    let baseRadius;
+    if (type === 'root') baseRadius = 0;
+    else if (type === 'agency') baseRadius = 8;
+    else if (type === 'subagency') baseRadius = 7;
+    else if (type === 'office') baseRadius = 6;
+    else if (type === 'prime') baseRadius = 5;
+    else baseRadius = 4; // sub
+    
+    // Scale radius based on value (if available)
+    if (d.data.value && d.data.value > 0) {
+        const valueScale = Math.min(1.5, Math.log10(d.data.value / 10000) / 5);
+        return baseRadius * (1 + valueScale);
+    }
+    return baseRadius;
+}
 // Custom force function for clustering nodes at different relationship levels
 function isolatedNodesClusterForce(nodes, relationshipMap, strength = 0.5) {
     function force(alpha) {
