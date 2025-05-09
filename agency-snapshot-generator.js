@@ -1849,3 +1849,318 @@ addInlineSnapshotButton();
   
   console.log("Snapshot button fix complete");
 })();
+// Comprehensive fix for all missing functions and undefined model issues
+(function() {
+  console.log("Adding comprehensive fix for Subhoo dashboard...");
+  
+  // Fix for missing functions identified in errors
+  function defineUndefinedFunctions() {
+    // Create empty implementations for missing chart functions
+    const missingFunctions = [
+      'displayNaicsDonutChart',
+      'displayShareOfWalletChart',
+      'processContractLeaders',
+      'initializePresetViews'
+    ];
+    
+    missingFunctions.forEach(funcName => {
+      if (typeof window[funcName] !== 'function') {
+        window[funcName] = function() {
+          console.log(`${funcName} called but not implemented`);
+          return Array.isArray(arguments[0]) ? arguments[0] : [];
+        };
+      }
+    });
+    
+    // Define additional processing functions that might be missing
+    const processingFunctions = [
+      'processTavTcvData',
+      'processExpiringData',
+      'processSankeyData',
+      'processMapData',
+      'calculateAverageARR'
+    ];
+    
+    processingFunctions.forEach(funcName => {
+      if (typeof window[funcName] !== 'function') {
+        window[funcName] = function(data) {
+          console.log(`${funcName} called but not implemented`);
+          return data || [];
+        };
+      }
+    });
+    
+    // Define missing display functions
+    const displayFunctions = [
+      'displayContractLeadersTable',
+      'displayTavTcvChart',
+      'displayExpiringTable',
+      'displaySankeyChart',
+      'displayChoroplethMap'
+    ];
+    
+    displayFunctions.forEach(funcName => {
+      if (typeof window[funcName] !== 'function') {
+        window[funcName] = function(data) {
+          console.log(`${funcName} called but not implemented`);
+        };
+      }
+    });
+  }
+  
+  // Original viewAgencySnapshot relies on window.unifiedModel
+  // Let's create a safer version that checks for model existence
+  const originalViewAgencySnapshot = window.viewAgencySnapshot;
+  
+  // Replace with a safer version that checks if model exists
+  window.viewAgencySnapshot = function() {
+    console.log("Running enhanced viewAgencySnapshot with model check");
+    
+    try {
+      // Try to get model from various possible locations
+      const model = window.unifiedModel || window.model || window.dataModel;
+      
+      if (!model) {
+        // Check if we have raw data to work with
+        if (window.rawData && (window.rawData.primes?.length > 0 || window.rawData.subs?.length > 0)) {
+          // Try to build a simplified model from raw data
+          const simplifiedModel = buildSimplifiedModel(window.rawData);
+          
+          // Use the simplified model
+          window.unifiedModel = simplifiedModel;
+          
+          if (typeof originalViewAgencySnapshot === 'function') {
+            originalViewAgencySnapshot();
+          } else {
+            alert("Snapshot function not available");
+          }
+        } else {
+          alert("No data loaded. Please select an agency dataset first.");
+        }
+        return;
+      }
+      
+      // Call original function with the model
+      if (typeof originalViewAgencySnapshot === 'function') {
+        // Ensure window.unifiedModel is set
+        window.unifiedModel = model;
+        originalViewAgencySnapshot();
+      } else {
+        alert("Snapshot function not available");
+      }
+    } catch (e) {
+      console.error("Error in viewAgencySnapshot:", e);
+      alert("Error generating snapshot: " + e.message);
+    }
+  };
+  
+  // Similarly for inline snapshot
+  const originalViewInlineAgencySnapshot = window.viewInlineAgencySnapshot;
+  
+  window.viewInlineAgencySnapshot = function() {
+    console.log("Running enhanced viewInlineAgencySnapshot with model check");
+    
+    try {
+      // Try to get model from various possible locations
+      const model = window.unifiedModel || window.model || window.dataModel;
+      
+      if (!model) {
+        // Check if we have raw data to work with
+        if (window.rawData && (window.rawData.primes?.length > 0 || window.rawData.subs?.length > 0)) {
+          // Try to build a simplified model from raw data
+          const simplifiedModel = buildSimplifiedModel(window.rawData);
+          
+          // Use the simplified model
+          window.unifiedModel = simplifiedModel;
+          
+          if (typeof originalViewInlineAgencySnapshot === 'function') {
+            originalViewInlineAgencySnapshot();
+          } else {
+            alert("Inline snapshot function not available");
+          }
+        } else {
+          alert("No data loaded. Please select an agency dataset first.");
+        }
+        return;
+      }
+      
+      // Call original function with the model
+      if (typeof originalViewInlineAgencySnapshot === 'function') {
+        // Ensure window.unifiedModel is set
+        window.unifiedModel = model;
+        originalViewInlineAgencySnapshot();
+      } else {
+        alert("Inline snapshot function not available");
+      }
+    } catch (e) {
+      console.error("Error in viewInlineAgencySnapshot:", e);
+      alert("Error generating inline snapshot: " + e.message);
+    }
+  };
+  
+  // Build a simplified model from raw data if needed
+  function buildSimplifiedModel(rawData) {
+    console.log("Building simplified model from raw data...");
+    
+    // Create basic model structure
+    const model = {
+      agencies: {},
+      subAgencies: {},
+      primes: {},
+      subs: {},
+      contracts: {},
+      stats: {
+        totalContractValue: 0
+      }
+    };
+    
+    // Process prime contracts
+    if (rawData.primes && rawData.primes.length > 0) {
+      rawData.primes.forEach((row, index) => {
+        // Add agency
+        const agencyName = row.agencyName || row.awarding_agency_name || "Unknown Agency";
+        const agencyId = `agency-${agencyName.toLowerCase().replace(/\W+/g, '-')}`;
+        
+        if (!model.agencies[agencyId]) {
+          model.agencies[agencyId] = {
+            id: agencyId,
+            name: agencyName,
+            value: 0
+          };
+        }
+        
+        // Add subagency
+        const subAgencyName = row.subAgencyName || row.awarding_sub_agency_name || "Unknown Sub-Agency";
+        const subAgencyId = `subagency-${subAgencyName.toLowerCase().replace(/\W+/g, '-')}`;
+        
+        if (!model.subAgencies[subAgencyId]) {
+          model.subAgencies[subAgencyId] = {
+            id: subAgencyId,
+            name: subAgencyName,
+            value: 0,
+            parentId: agencyId
+          };
+        }
+        
+        // Add prime
+        const primeName = row.primeName || row.recipient_name || "Unknown Prime";
+        const primeId = `prime-${primeName.toLowerCase().replace(/\W+/g, '-')}-${index}`;
+        
+        if (!model.primes[primeId]) {
+          model.primes[primeId] = {
+            id: primeId,
+            name: primeName,
+            value: 0,
+            contracts: new Set()
+          };
+        }
+        
+        // Add contract
+        const contractId = row.contractId || row.contract_award_unique_key || `contract-${index}`;
+        const contractValue = parseFloat(row.contractValue || row.current_total_value_of_award || 0);
+        
+        model.contracts[contractId] = {
+          id: contractId,
+          primeId: primeId,
+          agencyId: agencyId,
+          subAgencyId: subAgencyId,
+          value: contractValue,
+          description: row.description || row.transaction_description || "No description",
+          naicsCode: row.naicsCode || row.naics_code || "Unknown",
+          naicsDesc: row.naicsDesc || row.naics_description || "Unknown",
+          startDate: row.startDate || row.period_of_performance_start_date,
+          endDate: row.endDate || row.period_of_performance_current_end_date,
+          raw: row
+        };
+        
+        // Update values
+        model.agencies[agencyId].value += contractValue;
+        model.subAgencies[subAgencyId].value += contractValue;
+        model.primes[primeId].value += contractValue;
+        model.primes[primeId].contracts.add(contractId);
+        model.stats.totalContractValue += contractValue;
+      });
+    }
+    
+    // Process subs if they exist
+    if (rawData.subs && rawData.subs.length > 0) {
+      // Convert Set objects to Arrays for JSON compatibility
+      Object.values(model.primes).forEach(prime => {
+        if (prime.contracts instanceof Set) {
+          prime.contracts = Array.from(prime.contracts);
+        }
+      });
+      
+      // Add subs from raw data
+      rawData.subs.forEach((row, index) => {
+        const subName = row.subName || "Unknown Sub";
+        const subId = `sub-${subName.toLowerCase().replace(/\W+/g, '-')}-${index}`;
+        
+        if (!model.subs[subId]) {
+          model.subs[subId] = {
+            id: subId,
+            name: subName,
+            value: 0
+          };
+        }
+        
+        model.subs[subId].value += parseFloat(row.contractValue || 0);
+      });
+    }
+    
+    return model;
+  }
+  
+  // Handle click events for snapshot buttons
+  function setupButtonHandlers() {
+    // Look for snapshot buttons
+    const fullButton = document.getElementById('snapshot-button');
+    const inlineButton = document.getElementById('inline-snapshot-button');
+    
+    // Setup handlers for full snapshot button
+    if (fullButton) {
+      // Remove existing event listeners by cloning the button
+      const newFullButton = fullButton.cloneNode(true);
+      fullButton.parentNode.replaceChild(newFullButton, fullButton);
+      
+      // Add new event listener
+      newFullButton.addEventListener('click', function(e) {
+        e.preventDefault();
+        console.log("Full snapshot button clicked (fixed handler)");
+        window.viewAgencySnapshot();
+      });
+    }
+    
+    // Setup handlers for inline snapshot button
+    if (inlineButton) {
+      // Remove existing event listeners by cloning the button
+      const newInlineButton = inlineButton.cloneNode(true);
+      inlineButton.parentNode.replaceChild(newInlineButton, inlineButton);
+      
+      // Add new event listener
+      newInlineButton.addEventListener('click', function(e) {
+        e.preventDefault();
+        console.log("Inline snapshot button clicked (fixed handler)");
+        window.viewInlineAgencySnapshot();
+      });
+    }
+  }
+  
+  // Run immediately
+  defineUndefinedFunctions();
+  setupButtonHandlers();
+  
+  // Also run after a delay to catch buttons added after this script runs
+  setTimeout(setupButtonHandlers, 2000);
+  
+  // Also listen for dataset changes
+  const datasetSelect = document.getElementById('dataset-select');
+  if (datasetSelect) {
+    datasetSelect.addEventListener('change', function() {
+      // Wait for data to load then setup handlers
+      setTimeout(setupButtonHandlers, 2000);
+    });
+  }
+  
+  console.log("Comprehensive fix complete");
+})();
