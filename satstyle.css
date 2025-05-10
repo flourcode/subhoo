@@ -1,72 +1,118 @@
 /* Modern Dashboard CSS - Responsive and accessible design */
 :root {
-    /* Primary color palette */
-    --primary-50: #eeeafd;
-    --primary-100: #d0c6fa;
-    --primary-200: #b39ef6;
-    --primary-300: #9576f2;
-    --primary-400: #7d57ed;
-    --primary-500: #6A5ACD; /* SlateBlue - Primary brand color */
-    --primary-600: #5f4fb7;
-    --primary-700: #4f42a1;
-    --primary-800: #41378b;
-    --primary-900: #352c75;
+    /* Base color palette */
+    --color-blue-50: #f0f7fb;
+    --color-blue-100: #d0e6f2;
+    --color-blue-200: #a6d0e4;
+    --color-blue-300: #7cbed7;
+    --color-blue-400: #51a5c4;
+    --color-blue-500: #3285a6;
+    --color-blue-600: #296c88;
+    --color-blue-700: #1f546a;
+    --color-blue-800: #163b4c;
+    --color-blue-900: #0c222e;
+
+    --color-teal-50: #f0f7f7;
+    --color-teal-100: #d1e7e7;
+    --color-teal-200: #aad8d3;
+    --color-teal-300: #83c7c0;
+    --color-teal-400: #5bb5ac;
+    --color-teal-500: #43a399;
+    --color-teal-600: #358378;
+    --color-teal-700: #29635c;
+    --color-teal-800: #1d4440;
+    --color-teal-900: #112725;
+
+    --color-green-50: #f3f7f0;
+    --color-green-100: #e0e9d4;
+    --color-green-200: #cfe0c3;
+    --color-green-300: #b8d0a3;
+    --color-green-400: #9cbf82;
+    --color-green-500: #81ad64;
+    --color-green-600: #688c50;
+    --color-green-700: #516b3d;
+    --color-green-800: #38492a;
+    --color-green-900: #202a18;
+
+    --color-neutral-50: #f8f8f6;
+    --color-neutral-100: #e9e9e4;
+    --color-neutral-200: #dbdbd3;
+    --color-neutral-300: #c9c9be;
+    --color-neutral-400: #b7b7a9;
+    --color-neutral-500: #a3a394;
+    --color-neutral-600: #88887b;
+    --color-neutral-700: #6d6d63;
+    --color-neutral-800: #505048;
+    --color-neutral-900: #33332e;
+
+    --color-beige-50: #fbf8f5;
+    --color-beige-100: #f7ede4;
+    --color-beige-200: #f7d9c4;
+    --color-beige-300: #e9c5b4;
+    --color-beige-400: #dbb09c;
+    --color-beige-500: #c99b85;
+    --color-beige-600: #b08070;
+    --color-beige-700: #8c6658;
+    --color-beige-800: #664b40;
+    --color-beige-900: #453027;
+
+    /* Gray scale for UI */
+    --color-gray-50: #f9fafb;
+    --color-gray-100: #f0f2f5;
+    --color-gray-200: #e1e4e8;
+    --color-gray-300: #d0d5dd;
+    --color-gray-400: #9da4ae;
+    --color-gray-500: #6c737f;
+    --color-gray-600: #4d5560;
+    --color-gray-700: #333940;
+    --color-gray-800: #1f2227;
+    --color-gray-900: #121417;
+
+    /* Semantic color assignments */
+    --color-info: var(--color-blue-500);
+    --color-success: var(--color-green-500);
+    --color-warning: var(--color-beige-500);
+    --color-error: #e53e3e;
+
+    /* Surface and UI elements */
+    --surface-background: var(--color-gray-50);
+    --surface-card: white;
+    --surface-hover: var(--color-gray-100);
+    --surface-active: var(--color-gray-200);
     
-    /* Neutral colors */
-    --gray-50: #f9fafb;
-    --gray-100: #f0f2f5;
-    --gray-200: #e1e4e8;
-    --gray-300: #d0d5dd;
-    --gray-400: #9da4ae;
-    --gray-500: #6c737f;
-    --gray-600: #4d5560;
-    --gray-700: #333940;
-    --gray-800: #1f2227;
-    --gray-900: #121417;
+    --text-primary: var(--color-gray-900);
+    --text-secondary: var(--color-gray-600);
+    --text-tertiary: var(--color-gray-500);
+    --text-on-primary: white;
+    --text-on-dark: var(--color-gray-100);
     
-    /* Semantic colors */
-    --success-light: #e6f4ea;
-    --success: #34a853;
-    --error-light: #feeee9;
-    --error: #d93025;
-    --warning-light: #fef7e6;
-    --warning: #f9ab00;
-    --info-light: #e8f5fe;
-    --info: #1a73e8;
-    
-    /* Chart colors - sequential palette for visualization */
-    --chart-color-1: var(--primary-500);
-    --chart-color-2: var(--primary-600);
-    --chart-color-3: var(--primary-700);
-    --chart-color-4: var(--primary-400);
-    --chart-color-5: var(--primary-300);
-    --chart-color-6: #8a63d2;
-    --chart-color-7: #9d7ad6;
-    --chart-color-8: #b092da;
-    
-    /* Accent colors for visualizations */
-    --accent-1: #3b82f6; /* blue */
-    --accent-2: #14b8a6; /* teal */
-    --accent-3: #f59e0b; /* amber */
-    --accent-4: #ef4444; /* red */
-    
-    /* UI component values */
-    --color-background: var(--gray-100);
-    --color-surface: white;
-    --color-surface-hover: var(--gray-50);
-    --color-surface-active: var(--gray-100);
-    --color-border: var(--gray-200);
-    --color-text-primary: var(--gray-900);
-    --color-text-secondary: var(--gray-600);
-    --color-text-tertiary: var(--gray-500);
-    --color-text-button: white;
-    
-    /* Layout */
-    --sidebar-width: 280px;
-    --header-height: 64px;
+    --border-default: var(--color-gray-200);
     --border-radius-sm: 4px;
     --border-radius-md: 8px;
     --border-radius-lg: 12px;
+    
+    /* Brand & Actions */
+    --brand-primary: var(--color-blue-500);
+    --brand-primary-hover: var(--color-blue-600);
+    --brand-primary-active: var(--color-blue-700);
+    
+    /* Data visualization colors - semantically named */
+    --viz-category-1: var(--color-blue-300);
+    --viz-category-2: var(--color-teal-300);
+    --viz-category-3: var(--color-green-300);
+    --viz-category-4: var(--color-beige-300);
+    --viz-category-5: var(--color-blue-200);
+    --viz-category-6: var(--color-teal-200);
+    --viz-category-7: var(--color-green-200);
+    --viz-category-8: var(--color-beige-200);
+    
+    /* Choropleth map colors */
+    --viz-map-min: var(--color-blue-50);
+    --viz-map-step-1: var(--color-blue-100);
+    --viz-map-step-2: var(--color-blue-200);
+    --viz-map-step-3: var(--color-blue-300);
+    --viz-map-step-4: var(--color-blue-400);
+    --viz-map-max: var(--color-blue-500);
     
     /* Spacing system */
     --space-1: 4px;
@@ -91,69 +137,42 @@
     
     /* Typography */
     --font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-}
-:root {
-    /* Add a consistent chart color palette */
-    --chart-color-1: #4361ee; /* Primary blue */
-    --chart-color-2: #3a0ca3; /* Deep purple */
-    --chart-color-3: #7209b7; /* Vibrant purple */
-    --chart-color-4: #f72585; /* Hot pink */
-    --chart-color-5: #4cc9f0; /* Light blue */
-    --chart-color-6: #4895ef; /* Sky blue */
-    --chart-color-7: #560bad; /* Deep violet */
-    --chart-color-8: #b5179e; /* Magenta */
     
-    /* Sequential/gradient palette for maps */
-    --map-color-1: #caf0f8; /* Lightest */
-    --map-color-2: #90e0ef;
-    --map-color-3: #48b5c4;
-    --map-color-4: #0096c7;
-    --map-color-5: #0077b6;
-    --map-color-6: #023e8a; /* Darkest */
+    /* Layout */
+    --sidebar-width: 280px;
+    --header-height: 64px;
 }
 
-/* Dark mode overrides */
+/* Dark theme variables */
 :root.dark-theme {
-    /* Brighter versions for dark mode */
-    --chart-color-1: #4cc9f0; /* Light blue */
-    --chart-color-2: #4895ef; /* Sky blue */
-    --chart-color-3: #4361ee; /* Primary blue */
-    --chart-color-4: #3f37c9; /* Royal blue */
-    --chart-color-5: #f72585; /* Hot pink */
-    --chart-color-6: #b5179e; /* Magenta */
-    --chart-color-7: #7209b7; /* Vibrant purple */
-    --chart-color-8: #560bad; /* Deep violet */
+    --surface-background: var(--color-gray-900);
+    --surface-card: var(--color-gray-800);
+    --surface-hover: var(--color-gray-700);
+    --surface-active: var(--color-gray-600);
     
-    /* Darker base but brighter highlights for maps in dark mode */
-    --map-color-1: #023e8a; /* Darkest */
-    --map-color-2: #0077b6;
-    --map-color-3: #0096c7;
-    --map-color-4: #00b4d8;
-    --map-color-5: #48cae4;
-    --map-color-6: #90e0ef; /* Lightest */
-}
-/* Dark mode color overrides */
-:root.dark-theme {
-    --primary-500: #8a63d2; /* Lighter shade for better contrast on dark */
+    --text-primary: var(--color-gray-50);
+    --text-secondary: var(--color-gray-300);
+    --text-tertiary: var(--color-gray-400);
     
-    --color-background: var(--gray-900);
-    --color-surface: var(--gray-800);
-    --color-surface-hover: var(--gray-700);
-    --color-surface-active: var(--gray-700);
-    --color-border: var(--gray-700);
-    --color-text-primary: var(--gray-100);
-    --color-text-secondary: var(--gray-300);
-    --color-text-tertiary: var(--gray-400);
+    --border-default: var(--color-gray-700);
     
-    /* Chart colors for dark mode */
-    --chart-color-1: #9d7ad6;
-    --chart-color-2: #8a63d2;
-    --chart-color-3: #7657cc;
-    --chart-color-4: #b092da;
-    --chart-color-5: #c3aadf;
-    --chart-color-6: #6A5ACD;
-    --chart-color-7: #5f4fb7;
-    --chart-color-8: #8a63d2;
+    /* Data visualization colors - adjusted for dark mode */
+    --viz-category-1: var(--color-blue-400);
+    --viz-category-2: var(--color-teal-400);
+    --viz-category-3: var(--color-green-400);
+    --viz-category-4: var(--color-beige-400);
+    --viz-category-5: var(--color-blue-300);
+    --viz-category-6: var(--color-teal-300);
+    --viz-category-7: var(--color-green-300);
+    --viz-category-8: var(--color-beige-300);
+    
+    /* Choropleth map colors for dark mode */
+    --viz-map-min: var(--color-blue-900);
+    --viz-map-step-1: var(--color-blue-800);
+    --viz-map-step-2: var(--color-blue-700);
+    --viz-map-step-3: var(--color-blue-600);
+    --viz-map-step-4: var(--color-blue-500);
+    --viz-map-max: var(--color-blue-400);
     
     /* Shadows for dark mode */
     --shadow-sm: 0px 1px 3px rgba(0, 0, 0, 0.3);
@@ -173,8 +192,8 @@ html, body {
     font-family: var(--font-family);
     font-size: 16px;
     line-height: 1.5;
-    color: var(--color-text-primary);
-    background-color: var(--color-background);
+    color: var(--text-primary);
+    background-color: var(--surface-background);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
@@ -195,8 +214,8 @@ button, input, select {
     display: flex;
     flex-direction: column;
     width: var(--sidebar-width);
-    background-color: var(--color-surface);
-    border-right: 1px solid var(--color-border);
+    background-color: var(--surface-card);
+    border-right: 1px solid var(--border-default);
     z-index: 40;
     transition: transform var(--transition-normal);
 }
@@ -205,8 +224,8 @@ button, input, select {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: var(--space-4) var(--space-4);
-    border-bottom: 1px solid var(--color-border);
+    padding: var(--space-4);
+    border-bottom: 1px solid var(--border-default);
 }
 
 .logo {
@@ -216,13 +235,13 @@ button, input, select {
 }
 
 .logo svg {
-    color: var(--primary-500);
+    color: var(--brand-primary);
 }
 
 .logo h1 {
     font-size: 1rem;
     font-weight: 600;
-    color: var(--color-text-primary);
+    color: var(--text-primary);
 }
 
 .sidebar-content {
@@ -234,9 +253,9 @@ button, input, select {
 .sidebar-footer {
     padding: var(--space-4);
     font-size: 0.75rem;
-    color: var(--color-text-tertiary);
+    color: var(--text-tertiary);
     text-align: center;
-    border-top: 1px solid var(--color-border);
+    border-top: 1px solid var(--border-default);
 }
 
 .version {
@@ -253,8 +272,8 @@ button, input, select {
     right: 0;
     height: var(--header-height);
     padding: 0 var(--space-4);
-    background-color: var(--color-surface);
-    border-bottom: 1px solid var(--color-border);
+    background-color: var(--surface-card);
+    border-bottom: 1px solid var(--border-default);
     z-index: 30;
     align-items: center;
 }
@@ -272,7 +291,7 @@ button, input, select {
     padding: var(--space-6);
     overflow-y: auto;
     height: 100vh;
-    background-color: var(--color-background);
+    background-color: var(--surface-background);
 }
 
 /* Form controls */
@@ -285,7 +304,7 @@ button, input, select {
     margin-bottom: var(--space-2);
     font-size: 0.875rem;
     font-weight: 500;
-    color: var(--color-text-secondary);
+    color: var(--text-secondary);
 }
 
 .select-wrapper,
@@ -298,11 +317,11 @@ input[type="search"] {
     width: 100%;
     padding: var(--space-3);
     font-size: 0.875rem;
-    background-color: var(--color-surface);
-    border: 1px solid var(--color-border);
+    background-color: var(--surface-card);
+    border: 1px solid var(--border-default);
     border-radius: var(--border-radius-md);
     appearance: none;
-    color: var(--color-text-primary);
+    color: var(--text-primary);
     transition: border-color var(--transition-fast);
 }
 
@@ -313,8 +332,8 @@ input[type="search"] {
 .select-wrapper select:focus,
 input[type="search"]:focus {
     outline: none;
-    border-color: var(--primary-500);
-    box-shadow: 0 0 0 2px var(--primary-50);
+    border-color: var(--brand-primary);
+    box-shadow: 0 0 0 2px rgba(50, 133, 166, 0.1);
 }
 
 .select-arrow {
@@ -322,7 +341,7 @@ input[type="search"]:focus {
     right: var(--space-3);
     top: 50%;
     transform: translateY(-50%);
-    color: var(--color-text-tertiary);
+    color: var(--text-tertiary);
     pointer-events: none;
 }
 
@@ -331,7 +350,7 @@ input[type="search"]:focus {
     right: var(--space-3);
     top: 50%;
     transform: translateY(-50%);
-    color: var(--color-text-tertiary);
+    color: var(--text-tertiary);
 }
 
 /* Buttons */
@@ -350,16 +369,16 @@ input[type="search"]:focus {
 }
 
 .primary-button {
-    background-color: var(--primary-500);
-    color: white;
+    background-color: var(--brand-primary);
+    color: var(--text-on-primary);
 }
 
 .primary-button:hover {
-    background-color: var(--primary-600);
+    background-color: var(--brand-primary-hover);
 }
 
 .primary-button:active {
-    background-color: var(--primary-700);
+    background-color: var(--brand-primary-active);
 }
 
 .icon-button {
@@ -371,13 +390,13 @@ input[type="search"]:focus {
     border-radius: 50%;
     background-color: transparent;
     border: none;
-    color: var(--color-text-secondary);
+    color: var(--text-secondary);
     cursor: pointer;
     transition: background-color var(--transition-fast);
 }
 
 .icon-button:hover {
-    background-color: var(--color-surface-hover);
+    background-color: var(--surface-hover);
 }
 
 /* Status banner */
@@ -393,28 +412,28 @@ input[type="search"]:focus {
 }
 
 .status-info {
-    background-color: var(--info-light);
-    color: var(--info);
+    background-color: rgba(50, 133, 166, 0.1);
+    color: var(--color-info);
 }
 
 .status-success {
-    background-color: var(--success-light);
-    color: var(--success);
+    background-color: rgba(129, 173, 100, 0.1);
+    color: var(--color-success);
 }
 
 .status-error {
-    background-color: var(--error-light);
-    color: var(--error);
+    background-color: rgba(229, 62, 62, 0.1);
+    color: var(--color-error);
 }
 
 .status-warning {
-    background-color: var(--warning-light);
-    color: var(--warning);
+    background-color: rgba(201, 155, 133, 0.1);
+    color: var(--color-warning);
 }
 
 /* Dashboard container */
 #dashboard-container {
-    background-color: var(--color-surface);
+    background-color: var(--surface-card);
     border-radius: var(--border-radius-lg);
     box-shadow: var(--shadow-md);
     height: 100%;
@@ -437,21 +456,21 @@ input[type="search"]:focus {
 
 .loader p {
     margin-top: var(--space-4);
-    color: var(--color-text-secondary);
+    color: var(--text-secondary);
 }
 
 .loader .small {
     font-size: 0.875rem;
     margin-top: var(--space-2);
-    color: var(--color-text-tertiary);
+    color: var(--text-tertiary);
 }
 
 .spinner {
     width: 40px;
     height: 40px;
-    border: 3px solid var(--color-border);
+    border: 3px solid var(--border-default);
     border-radius: 50%;
-    border-top-color: var(--primary-500);
+    border-top-color: var(--brand-primary);
     animation: spin 1s linear infinite;
 }
 
@@ -470,11 +489,11 @@ input[type="search"]:focus {
 }
 
 .card {
-    background-color: var(--color-surface);
+    background-color: var(--surface-card);
     border-radius: var(--border-radius-md);
     box-shadow: var(--shadow-sm);
     padding: var(--space-5);
-    border: 1px solid var(--color-border);
+    border: 1px solid var(--border-default);
     height: 100%;
 }
 
@@ -488,7 +507,7 @@ input[type="search"]:focus {
 .card-title {
     font-size: 1rem;
     font-weight: 600;
-    color: var(--color-text-primary);
+    color: var(--text-primary);
 }
 
 /* Dashboard header */
@@ -498,7 +517,7 @@ input[type="search"]:focus {
     align-items: center;
     margin-bottom: var(--space-6);
     padding-bottom: var(--space-4);
-    border-bottom: 1px solid var(--color-border);
+    border-bottom: 1px solid var(--border-default);
 }
 
 .dashboard-title {
@@ -508,19 +527,19 @@ input[type="search"]:focus {
 }
 
 .dashboard-agency {
-    color: var(--primary-500);
+    color: var(--brand-primary);
 }
 
 .dashboard-subtitle {
     margin-top: var(--space-1);
     font-size: 0.875rem;
-    color: var(--color-text-secondary);
+    color: var(--text-secondary);
 }
 
 .date-indicator {
     font-size: 0.813rem;
-    color: var(--color-text-tertiary);
-    background-color: var(--color-background);
+    color: var(--text-tertiary);
+    background-color: var(--surface-background);
     padding: var(--space-1) var(--space-3);
     border-radius: var(--border-radius-sm);
 }
@@ -539,23 +558,23 @@ input[type="search"]:focus {
     align-items: center;
     justify-content: center;
     padding: var(--space-4);
-    background-color: var(--color-surface);
+    background-color: var(--surface-card);
     border-radius: var(--border-radius-md);
-    border: 1px solid var(--color-border);
+    border: 1px solid var(--border-default);
     text-align: center;
 }
 
 .stat-value {
     font-size: 1.5rem;
     font-weight: 700;
-    color: var(--primary-500);
+    color: var(--brand-primary);
     margin-bottom: var(--space-1);
 }
 
 .stat-label {
     font-size: 0.75rem;
     font-weight: 500;
-    color: var(--color-text-secondary);
+    color: var(--text-secondary);
     text-transform: uppercase;
     letter-spacing: 0.05em;
 }
@@ -564,26 +583,26 @@ input[type="search"]:focus {
 .insight-card {
     margin-bottom: var(--space-5);
     padding: var(--space-5);
-    background-color: var(--color-surface);
+    background-color: var(--surface-card);
     border-radius: var(--border-radius-md);
-    border: 1px solid var(--color-border);
+    border: 1px solid var(--border-default);
 }
 
 .insight-card h3 {
     font-size: 1.125rem;
     font-weight: 600;
     margin-bottom: var(--space-3);
-    color: var(--color-text-primary);
+    color: var(--text-primary);
 }
 
 .insight-card p, .insight-card li {
     font-size: 0.875rem;
-    color: var(--color-text-secondary);
+    color: var(--text-secondary);
     margin-bottom: var(--space-2);
 }
 
 .insight-card strong {
-    color: var(--color-text-primary);
+    color: var(--text-primary);
     font-weight: 600;
 }
 
@@ -608,7 +627,7 @@ input[type="search"]:focus {
 .chart-title {
     font-size: 0.938rem;
     font-weight: 600;
-    color: var(--color-text-primary);
+    color: var(--text-primary);
 }
 
 /* Tables */
@@ -624,25 +643,25 @@ table {
 }
 
 thead {
-    background-color: var(--color-background);
+    background-color: var(--surface-background);
 }
 
 th {
     text-align: left;
     padding: var(--space-3) var(--space-4);
     font-weight: 600;
-    color: var(--color-text-secondary);
-    border-bottom: 2px solid var(--color-border);
+    color: var(--text-secondary);
+    border-bottom: 2px solid var(--border-default);
 }
 
 td {
     padding: var(--space-3) var(--space-4);
-    border-bottom: 1px solid var(--color-border);
-    color: var(--color-text-primary);
+    border-bottom: 1px solid var(--border-default);
+    color: var(--text-primary);
 }
 
 tbody tr:hover {
-    background-color: var(--color-surface-hover);
+    background-color: var(--surface-hover);
 }
 
 .number-cell {
@@ -655,7 +674,7 @@ tbody tr:hover {
     position: relative;
     height: 450px;
     width: 100%;
-    background-color: var(--color-surface);
+    background-color: var(--surface-card);
     overflow: hidden;
     border-radius: var(--border-radius-md);
 }
@@ -666,14 +685,71 @@ tbody tr:hover {
 
 .d3-tooltip {
     position: absolute;
-    padding: var(--space-2) var(--space-3);
-    background-color: rgba(0, 0, 0, 0.8);
-    color: white;
+    padding: 8px 12px;
+    background-color: var(--surface-card);
+    color: var(--text-primary);
     border-radius: var(--border-radius-sm);
     font-size: 0.75rem;
     pointer-events: none;
     z-index: 100;
     max-width: 200px;
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--border-default);
+}
+
+.d3-tooltip div {
+    margin-bottom: 4px;
+    line-height: 1.4;
+}
+
+/* ARR Estimator Card */
+.arr-estimator {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-5);
+    height: 100%;
+}
+
+.arr-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--brand-primary);
+    margin-bottom: var(--space-3);
+}
+
+.arr-details {
+    text-align: center;
+    margin-bottom: var(--space-4);
+}
+
+.arr-naics {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.arr-metrics {
+    font-size: 0.813rem;
+    color: var(--text-tertiary);
+    margin-top: var(--space-2);
+}
+
+/* Relationship insights */
+.relationship-insights {
+    margin-top: var(--space-3);
+}
+
+.relationship-insights ul {
+    list-style: none;
+    margin-left: 0;
+}
+
+.relationship-insights li {
+    background-color: var(--surface-hover);
+    padding: var(--space-3);
+    border-radius: var(--border-radius-sm);
+    margin-bottom: var(--space-2);
 }
 
 /* Grid column helpers */
@@ -682,6 +758,55 @@ tbody tr:hover {
 .col-span-6 { grid-column: span 6; }
 .col-span-4 { grid-column: span 4; }
 .col-span-3 { grid-column: span 3; }
+
+/* Loading status for operations */
+.loading-status {
+    margin-top: var(--space-3);
+    padding: var(--space-2);
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+    background-color: var(--surface-background);
+    border-radius: var(--border-radius-sm);
+}
+
+/* Error details for troubleshooting */
+.error-details {
+    margin-top: var(--space-6);
+    padding: var(--space-4);
+    background-color: rgba(229, 62, 62, 0.1);
+    border-radius: var(--border-radius-md);
+    text-align: left;
+    font-size: 0.875rem;
+}
+
+.error-details ul {
+    margin-left: var(--space-5);
+    margin-top: var(--space-2);
+}
+
+.error-details li {
+    margin-bottom: var(--space-2);
+}
+
+/* Accessibility focus states */
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+    outline: 2px solid var(--brand-primary);
+    outline-offset: 2px;
+}
+
+/* Loading placeholder for map/dendrogram when no data */
+.loading-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--text-tertiary);
+    font-size: 0.875rem;
+    text-align: center;
+    padding: var(--space-4);
+}
 
 /* Mobile & Responsiveness */
 .mobile-only {
@@ -776,76 +901,6 @@ tbody tr:hover {
     }
 }
 
-/* ARR Estimator Card */
-.arr-estimator {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: var(--space-5);
-    height: 100%;
-}
-
-.arr-value {
-    font-size: 2rem;
-    font-weight: 700;
-    color: var(--primary-500);
-    margin-bottom: var(--space-3);
-}
-
-.arr-details {
-    text-align: center;
-    margin-bottom: var(--space-4);
-}
-
-.arr-naics {
-    font-size: 0.875rem;
-    color: var(--color-text-secondary);
-}
-
-.arr-metrics {
-    font-size: 0.813rem;
-    color: var(--color-text-tertiary);
-    margin-top: var(--space-2);
-}
-
-/* Relationship insights */
-.relationship-insights {
-    margin-top: var(--space-3);
-}
-
-.relationship-insights ul {
-    list-style: none;
-    margin-left: 0;
-}
-
-.relationship-insights li {
-    background-color: var(--color-surface-hover);
-    padding: var(--space-3);
-    border-radius: var(--border-radius-sm);
-    margin-bottom: var(--space-2);
-}
-
-/* Accessibility focus states */
-button:focus-visible,
-input:focus-visible,
-select:focus-visible {
-    outline: 2px solid var(--primary-500);
-    outline-offset: 2px;
-}
-
-/* Loading placeholder for map/dendrogram when no data */
-.loading-placeholder {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
-    color: var(--color-text-tertiary);
-    font-size: 0.875rem;
-    text-align: center;
-    padding: var(--space-4);
-}
-
 /* Print styles */
 @media print {
     .sidebar,
@@ -867,41 +922,4 @@ select:focus-visible {
     .chart-container {
         break-inside: avoid;
     }
-}
-.d3-tooltip {
-    position: absolute;
-    padding: 8px 12px;
-    background-color: rgba(0, 0, 0, 0.8);
-    color: white;
-    border-radius: 4px;
-    font-size: 12px;
-    pointer-events: none;
-    z-index: 100;
-    max-width: 200px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-}
-
-.d3-tooltip div {
-    margin-bottom: 4px;
-}
-/* Add this to your CSS */
-.stat-value {
-    color: var(--chart-color-1); /* Match the primary chart color */
-}
-
-.dashboard-agency {
-    color: var(--chart-color-2); /* Match the secondary chart color */
-}
-
-.arr-value {
-    color: var(--chart-color-3); /* Match the tertiary chart color */
-}
-
-.primary-button {
-    background-color: var(--chart-color-1); /* Match the primary chart color */
-}
-
-.primary-button:hover {
-    background-color: var(--chart-color-2); /* Match the secondary chart color */
 }

@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // --- Configuration ---
+    // --- CONFIGURATION ---
     const DATASETS_CONFIG = [
         // Prime contract datasets
         { id: 'army_primes', name: 'Army (Primes)', type: 'primes' },
@@ -123,29 +123,41 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const S3_BASE_URL = 'https://subhoodata.s3.us-east-1.amazonaws.com/data/';
-// Update the CHART_COLORS array to use our new palette
-const CHART_COLORS = [
-    'var(--chart-color-1)',
-    'var(--chart-color-2)',
-    'var(--chart-color-3)',
-    'var(--chart-color-4)',
-    'var(--chart-color-5)',
-    'var(--chart-color-6)',
-    'var(--chart-color-7)',
-    'var(--chart-color-8)',
-];
+    
+    // Data visualization colors using CSS variables
+    const VIZ_COLORS = {
+        // Categories for bar and pie charts
+        categories: [
+            'var(--viz-category-1)',
+            'var(--viz-category-2)',
+            'var(--viz-category-3)',
+            'var(--viz-category-4)',
+            'var(--viz-category-5)',
+            'var(--viz-category-6)',
+            'var(--viz-category-7)',
+            'var(--viz-category-8)'
+        ],
+        // Colors for maps
+        map: [
+            'var(--viz-map-min)',
+            'var(--viz-map-step-1)',
+            'var(--viz-map-step-2)',
+            'var(--viz-map-step-3)',
+            'var(--viz-map-step-4)',
+            'var(--viz-map-max)'
+        ],
+        // Relationship node colors
+        nodes: {
+            root: 'var(--viz-category-1)',
+            agency: 'var(--viz-category-2)',
+            subagency: 'var(--viz-category-3)',
+            prime: 'var(--viz-category-4)',
+            sub: 'var(--viz-category-5)',
+            placeholder: 'var(--text-tertiary)'
+        }
+    };
 
-// Create a consistent gradient palette for maps and heatmaps
-const GRADIENT_COLORS = [
-    'var(--map-color-1)',
-    'var(--map-color-2)',
-    'var(--map-color-3)',
-    'var(--map-color-4)',
-    'var(--map-color-5)',
-    'var(--map-color-6)',
-];
-
-    // --- DOM Elements ---
+    // --- DOM ELEMENTS ---
     const datasetSelect = document.getElementById('dataset-select');
     const searchInput = document.getElementById('search-input');
     const subAgencyFilterEl = document.getElementById('sub-agency-filter');
@@ -162,13 +174,13 @@ const GRADIENT_COLORS = [
     // Set current year in footer
     document.getElementById('current-year').textContent = new Date().getFullYear();
 
-    // --- Global State ---
+    // --- GLOBAL STATE ---
     let rawData = { primes: [], subs: [] };
     let unifiedModel = null;
     let chartInstances = {}; // For Chart.js instances
     let isLoading = false;
 
-    // --- Utility Functions ---
+    // --- UTILITY FUNCTIONS ---
     function parseSafeFloat(value) {
         if (value === null || value === undefined || value === '') return 0;
         const cleanedString = String(value).replace(/[^0-9.-]+/g,'');
@@ -309,83 +321,65 @@ const GRADIENT_COLORS = [
         if (!text) return 'unknown';
         return String(text).toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, '').replace(/--+/g, '-');
     }
-// Update to the fetchDataset function
-async function fetchDataset(datasetConfig) {
-    const csvUrl = `${S3_BASE_URL}${datasetConfig.id}.csv`;
-    updateStatus(`Loading ${datasetConfig.name}...`, 'info');
-    
-    try {
+
+    // --- DATA SERVICE (Fetching) ---
+    async function fetchDataset(datasetConfig) {
+        const csvUrl = `${S3_BASE_URL}${datasetConfig.id}.csv`;
+        updateStatus(`Loading ${datasetConfig.name}...`, 'info');
         console.log(`Attempting to fetch data from: ${csvUrl}`);
         
-        const response = await fetch(csvUrl, { 
-            mode: 'cors', 
-            cache: 'no-cache',
-            headers: {
-                'Accept': 'text/csv,text/plain,*/*'
-            }
-        });
-        
-        if (!response.ok) {
-            console.error(`HTTP error ${response.status} for ${datasetConfig.name}`);
-            throw new Error(`HTTP error ${response.status}: ${response.statusText}`);
-        }
-        
-        const csvText = await response.text();
-        
-        if (!csvText || csvText.trim() === '') {
-            console.error(`Empty response received for ${datasetConfig.name}`);
-            throw new Error('Empty data received');
-        }
-        
-        console.log(`Successfully fetched ${csvText.length} bytes for ${datasetConfig.name}`);
-        console.log(`CSV sample: ${csvText.substring(0, 100)}...`);
-        
-        const parseResult = Papa.parse(csvText, { 
-            header: true, 
-            dynamicTyping: false, 
-            skipEmptyLines: 'greedy', 
-            transformHeader: h => h.trim() 
-        });
-        
-        if (parseResult.errors.length > 0) {
-            console.warn(`Parsing errors in ${datasetConfig.name}:`, parseResult.errors);
-        }
-        
-        if (!parseResult.data || parseResult.data.length === 0) {
-            console.error(`No data rows found in ${datasetConfig.name}`);
-            throw new Error('No data rows found after parsing');
-        }
-        
-        console.log(`Successfully parsed ${parseResult.data.length} rows for ${datasetConfig.name}`);
-        return parseResult.data;
-    } catch (error) {
-        console.error(`Error fetching ${datasetConfig.name}:`, error);
-        
-        // Check for CORS errors (they often appear as TypeError or NetworkError)
-        if (error instanceof TypeError && error.message.includes('Network') ||
-            error.message.includes('CORS') || 
-            error.message.includes('Failed to fetch')) {
-            updateStatus(`CORS error fetching ${datasetConfig.name}. Check console for details.`, 'error');
-            console.error('This appears to be a CORS issue. Make sure your S3 bucket has proper CORS configuration.');
-        } else {
-            updateStatus(`Error fetching ${datasetConfig.name}: ${error.message}`, 'error');
-        }
-        
-        // For debugging - attempt to fetch with no-cors mode to see if resource exists
         try {
-            const testResponse = await fetch(csvUrl, { mode: 'no-cors' });
-            console.log('Resource exists but might have CORS issues:', testResponse);
-        } catch (e) {
-            console.error('Resource appears to be completely unavailable:', e);
+            const response = await fetch(csvUrl, { 
+                mode: 'cors', 
+                cache: 'no-cache'
+            });
+            
+            if (!response.ok) {
+                const errorMsg = `HTTP error ${response.status} (${response.statusText})`;
+                console.error(`${errorMsg} for ${datasetConfig.name}`);
+                throw new Error(errorMsg);
+            }
+            
+            const csvText = await response.text();
+            
+            if (!csvText || csvText.trim() === '') {
+                throw new Error('Empty response received');
+            }
+            
+            console.log(`Successfully fetched ${csvText.length} bytes for ${datasetConfig.name}`);
+            
+            const parseResult = Papa.parse(csvText, { 
+                header: true, 
+                dynamicTyping: false, 
+                skipEmptyLines: 'greedy', 
+                transformHeader: h => h.trim() 
+            });
+            
+            if (parseResult.errors.length > 0) {
+                console.warn(`Parsing errors in ${datasetConfig.name}:`, parseResult.errors);
+            }
+            
+            if (!parseResult.data || parseResult.data.length === 0) {
+                throw new Error('No data rows found after parsing CSV');
+            }
+            
+            console.log(`Successfully parsed ${parseResult.data.length} rows for ${datasetConfig.name}`);
+            return parseResult.data;
+        } catch (error) {
+            console.error(`Failed to fetch or parse data for ${datasetConfig.name}:`, error);
+            
+            // Check for common CORS issues
+            if (error instanceof TypeError && 
+                (error.message.includes('Failed to fetch') || 
+                 error.message.includes('NetworkError'))) {
+                throw new Error(`Network or CORS error - check console and S3 bucket configuration`);
+            }
+            
+            throw new Error(`${error.message} when loading ${datasetConfig.name}`);
         }
-        
-        // You could implement a fallback here to demo data if needed
-        // return getDemoData(datasetConfig.type);
-        
-        throw error;
     }
-}
-    // --- Data Processor ---
+
+    // --- DATA PROCESSOR ---
     function processRawDataset(rawRows, datasetType) {
         return rawRows.map(row => {
             const cleanRow = { _sourceType: datasetType };
@@ -581,7 +575,28 @@ async function fetchDataset(datasetConfig) {
         return model;
     }
 
-    // --- Dashboard View Data Aggregation ---
+    // --- DATA VISUALIZATION HELPERS ---
+    
+    // Get chart colors based on count and index
+    function getChartColors(count) {
+        const colors = [];
+        for (let i = 0; i < count; i++) {
+            colors.push(VIZ_COLORS.categories[i % VIZ_COLORS.categories.length]);
+        }
+        return colors;
+    }
+    
+    // Get map colors
+    function getMapColors() {
+        return VIZ_COLORS.map.map(color => getCssVar(color));
+    }
+    
+    // Get node color by type
+    function getNodeColor(type) {
+        return getCssVar(VIZ_COLORS.nodes[type] || VIZ_COLORS.nodes.placeholder);
+    }
+
+    // --- DASHBOARD DATA AGGREGATION ---
     function aggregateDataForDashboardView(model) {
         // Helper functions for data aggregation
         const getAgencyInfo = (m) => {
@@ -987,7 +1002,7 @@ async function fetchDataset(datasetConfig) {
         };
     }
 
-    // --- D3 Visualization Data Processing ---
+    // --- D3 VISUALIZATION DATA PROCESSING ---
     function processMapDataForD3(model) {
         if (!model || !model.contracts) return {};
         
@@ -1128,8 +1143,7 @@ async function fetchDataset(datasetConfig) {
         
         return rootNode;
     }
-
-    // --- Dashboard Rendering ---
+	// --- DASHBOARD RENDERING ---
     function renderMainDashboard(data) {
         if (!dashboardContainer) {
             console.error("FATAL: dashboardContainer DOM element not found in renderMainDashboard.");
@@ -1197,394 +1211,428 @@ async function fetchDataset(datasetConfig) {
                         <div class="insight-card">
                             <h3>Executive Summary</h3>
                             <p>Approx. recent obligations: <strong>${data.totalAwardedFY || '$0'}</strong>. Key NAICS: <strong>${data.mostUsedNaicsFullText || 'N/A'}</strong>.
-Expiring soon: <strong>${data.expiringCount || 0}</strong> awards (<strong>${data.expiringValueFormatted || '$0'}</strong>) in next 6 months.</p>
-<h4>Key Intelligence:</h4>
-<ul>
-    <li>Top Prime: <strong>${data.topPrimeName || 'N/A'}</strong></li>
-    <li>Top Sub: <strong>${data.topSubName || 'N/A'}</strong></li>
-    <li>Dominant Services: <strong>${data.dominantNaicsTextShort || 'N/A'}</strong></li>
-    <li>ARR for ${data.arrNaicsCode || 'N/A'}: ~<strong>${data.arrForTopNaics || '$0'}</strong></li>
-    <li>Place of Performance: ${data.geoDistributionText || 'N/A'}</li>
-</ul>
-</div>
-</div>
+                               Expiring soon: <strong>${data.expiringCount || 0}</strong> awards (<strong>${data.expiringValueFormatted || '$0'}</strong>) in next 6 months.</p>
+                            <h4>Key Intelligence:</h4>
+                            <ul>
+                                <li>Top Prime: <strong>${data.topPrimeName || 'N/A'}</strong></li>
+                                <li>Top Sub: <strong>${data.topSubName || 'N/A'}</strong></li>
+                                <li>Dominant Services: <strong>${data.dominantNaicsTextShort || 'N/A'}</strong></li>
+                                <li>ARR for ${data.arrNaicsCode || 'N/A'}: ~<strong>${data.arrForTopNaics || '$0'}</strong></li>
+                                <li>Place of Performance: ${data.geoDistributionText || 'N/A'}</li>
+                            </ul>
+                        </div>
+                    </div>
 
-<div class="col-span-12">
-    <div class="insight-card">
-        <h3>Opportunity Triggers</h3>
-        <ul>
-            <li>Target <strong>${data.expiringCount || 0} expiring contracts (${data.expiringValueFormatted || '$0'})</strong> for near-term pursuits.</li>
-            <li>Explore teaming with/competing against <strong>${data.topPrimeName || 'N/A'}</strong>.</li>
-            <li>Investigate needs within <strong>${data.mostUsedNaicsCode || 'N/A'}</strong>.</li>
-        </ul>
-    </div>
-</div>
+                    <div class="col-span-12">
+                        <div class="insight-card">
+                            <h3>Opportunity Triggers</h3>
+                            <ul>
+                                <li>Target <strong>${data.expiringCount || 0} expiring contracts (${data.expiringValueFormatted || '$0'})</strong> for near-term pursuits.</li>
+                                <li>Explore teaming with/competing against <strong>${data.topPrimeName || 'N/A'}</strong>.</li>
+                                <li>Investigate needs within <strong>${data.mostUsedNaicsCode || 'N/A'}</strong>.</li>
+                            </ul>
+                        </div>
+                    </div>
 
-<div class="col-span-12">
-    <div class="stats-grid">
-        <div class="stat-card">
-            <div class="stat-value">${data.topPrimeName || 'N/A'}</div>
-            <div class="stat-label">Top Prime</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-value">${data.topSubName || 'N/A'}</div>
-            <div class="stat-label">Top Sub</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-value">${data.mostUsedNaicsCode || 'N/A'}</div>
-            <div class="stat-label">Top NAICS</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-value">${data.totalAwardedFY || '$0'}</div>
-            <div class="stat-label">Total Obligated</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-value">${data.expiringCount || 0}</div>
-            <div class="stat-label">Expiring Soon</div>
-        </div>
-    </div>
-</div>
+                    <div class="col-span-12">
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-value">${data.topPrimeName || 'N/A'}</div>
+                                <div class="stat-label">Top Prime</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value">${data.topSubName || 'N/A'}</div>
+                                <div class="stat-label">Top Sub</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value">${data.mostUsedNaicsCode || 'N/A'}</div>
+                                <div class="stat-label">Top NAICS</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value">${data.totalAwardedFY || '$0'}</div>
+                                <div class="stat-label">Total Obligated</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value">${data.expiringCount || 0}</div>
+                                <div class="stat-label">Expiring Soon</div>
+                            </div>
+                        </div>
+                    </div>
 
-<div class="col-span-6">
-    <div class="card">
-        <div class="chart-header">
-            <h3 class="chart-title">Top Primes</h3>
-        </div>
-        <div class="chart-container">
-            <canvas id="main-contractors-chart"></canvas>
-        </div>
-    </div>
-</div>
+                    <div class="col-span-6">
+                        <div class="card">
+                            <div class="chart-header">
+                                <h3 class="chart-title">Top Primes</h3>
+                            </div>
+                            <div class="chart-container">
+                                <canvas id="main-contractors-chart"></canvas>
+                            </div>
+                        </div>
+                    </div>
 
-<div class="col-span-6">
-    <div class="card">
-        <div class="chart-header">
-            <h3 class="chart-title">NAICS Distribution</h3>
-        </div>
-        <div class="chart-container">
-            <canvas id="main-naics-chart"></canvas>
-        </div>
-    </div>
-</div>
+                    <div class="col-span-6">
+                        <div class="card">
+                            <div class="chart-header">
+                                <h3 class="chart-title">NAICS Distribution</h3>
+                            </div>
+                            <div class="chart-container">
+                                <canvas id="main-naics-chart"></canvas>
+                            </div>
+                        </div>
+                    </div>
 
-<div class="col-span-12">
-    <div class="card">
-        <div class="chart-header">
-            <h3 class="chart-title">Top Contracts: TAV vs TCV</h3>
-        </div>
-        <div class="chart-container">
-            <canvas id="main-tav-tcv-chart"></canvas>
-        </div>
-    </div>
-</div>
+                    <div class="col-span-12">
+                        <div class="card">
+                            <div class="chart-header">
+                                <h3 class="chart-title">Top Contracts: TAV vs TCV</h3>
+                            </div>
+                            <div class="chart-container">
+                                <canvas id="main-tav-tcv-chart"></canvas>
+                            </div>
+                        </div>
+                    </div>
 
-<div class="col-span-8">
-    <div class="card">
-        <div class="chart-header">
-            <h3 class="chart-title">Geographic Distribution (PoP)</h3>
-        </div>
-        <div id="main-map-viz" class="d3-container">
-            <div class="loading-placeholder">Initializing Map...</div>
-        </div>
-    </div>
-</div>
+                    <div class="col-span-8">
+                        <div class="card">
+                            <div class="chart-header">
+                                <h3 class="chart-title">Geographic Distribution (PoP)</h3>
+                            </div>
+                            <div id="main-map-viz" class="d3-container">
+                                <div class="loading-placeholder">Initializing Map...</div>
+                            </div>
+                        </div>
+                    </div>
 
-<div class="col-span-4">
-    <div class="card">
-        <div class="chart-header">
-            <h3 class="chart-title">ARR Estimator</h3>
-        </div>
-        <div class="arr-estimator">
-            <div class="arr-value">${data.arrEstimatorData?.arrFormatted || '$0'}</div>
-            <div class="arr-details">
-                <div class="arr-naics">For NAICS ${data.arrEstimatorData?.naicsCode || 'N/A'}</div>
-                <div class="arr-naics">${data.arrEstimatorData?.naicsDescription || 'N/A'}</div>
-                <div class="arr-metrics">Avg. Contract: ${data.arrEstimatorData?.avgContractSizeFormatted || '$0'} over ${data.arrEstimatorData?.avgDurationText || 'N/A'}</div>
-            </div>
-        </div>
-    </div>
-</div>
+                    <div class="col-span-4">
+                        <div class="card">
+                            <div class="chart-header">
+                                <h3 class="chart-title">ARR Estimator</h3>
+                            </div>
+                            <div class="arr-estimator">
+                                <div class="arr-value">${data.arrEstimatorData?.arrFormatted || '$0'}</div>
+                                <div class="arr-details">
+                                    <div class="arr-naics">For NAICS ${data.arrEstimatorData?.naicsCode || 'N/A'}</div>
+                                    <div class="arr-naics">${data.arrEstimatorData?.naicsDescription || 'N/A'}</div>
+                                    <div class="arr-metrics">Avg. Contract: ${data.arrEstimatorData?.avgContractSizeFormatted || '$0'} over ${data.arrEstimatorData?.avgDurationText || 'N/A'}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
-<div class="col-span-12">
-    <div class="card">
-        <div class="chart-header">
-            <h3 class="chart-title">Key Relationships</h3>
-        </div>
-        <div id="main-dendrogram-viz" class="d3-container d3-container-large">
-            <div class="loading-placeholder">Initializing Relationships...</div>
-        </div>
-    </div>
-</div>
+                    <div class="col-span-12">
+                        <div class="card">
+                            <div class="chart-header">
+                                <h3 class="chart-title">Key Relationships</h3>
+                            </div>
+                            <div id="main-dendrogram-viz" class="d3-container d3-container-large">
+                                <div class="loading-placeholder">Initializing Relationships...</div>
+                            </div>
+                        </div>
+                    </div>
 
-<div class="col-span-12">
-    <div class="card">
-        <div class="chart-header">
-            <h3 class="chart-title">Top 10 Primes</h3>
-        </div>
-        <div class="table-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Contractor</th>
-                        <th>Total Value</th>
-                        <th>Awards</th>
-                        <th>Avg Duration</th>
-                        <th>Primary NAICS</th>
-                    </tr>
-                </thead>
-                <tbody>${primeRowsHtml}</tbody>
-            </table>
-        </div>
-    </div>
-</div>
+                    <div class="col-span-12">
+                        <div class="card">
+                            <div class="chart-header">
+                                <h3 class="chart-title">Top 10 Primes</h3>
+                            </div>
+                            <div class="table-container">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Contractor</th>
+                                            <th>Total Value</th>
+                                            <th>Awards</th>
+                                            <th>Avg Duration</th>
+                                            <th>Primary NAICS</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>${primeRowsHtml}</tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
 
-<div class="col-span-12">
-    <div class="card">
-        <div class="chart-header">
-            <h3 class="chart-title">Expiring Contracts (Next 6 Months)</h3>
-        </div>
-        <div class="table-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Contractor</th>
-                        <th>Description</th>
-                        <th>End Date</th>
-                        <th>Value</th>
-                    </tr>
-                </thead>
-                <tbody>${expiringRowsHtml}</tbody>
-            </table>
-        </div>
-    </div>
-</div>
+                    <div class="col-span-12">
+                        <div class="card">
+                            <div class="chart-header">
+                                <h3 class="chart-title">Expiring Contracts (Next 6 Months)</h3>
+                            </div>
+                            <div class="table-container">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Contractor</th>
+                                            <th>Description</th>
+                                            <th>End Date</th>
+                                            <th>Value</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>${expiringRowsHtml}</tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
 
-<div class="col-span-12">
-    <div class="card">
-        <div class="chart-header">
-            <h3 class="chart-title">Relationship Insights</h3>
-        </div>
-        <div class="relationship-insights">
-            ${data.relationshipSummary || '<p>No specific relationship insights available.</p>'}
-        </div>
-    </div>
-</div>
-`;
+                    <div class="col-span-12">
+                        <div class="card">
+                            <div class="chart-header">
+                                <h3 class="chart-title">Relationship Insights</h3>
+                            </div>
+                            <div class="relationship-insights">
+                                ${data.relationshipSummary || '<p>No specific relationship insights available.</p>'}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
 
-dashboardContainer.innerHTML = html; 
-console.log("renderMainDashboard: HTML injected.");
-dashboardContainer.classList.remove('dashboard-loading'); 
+            dashboardContainer.innerHTML = html; 
+            console.log("renderMainDashboard: HTML injected.");
+            dashboardContainer.classList.remove('dashboard-loading'); 
 
-// Initialize Chart.js charts
-Chart.defaults.color = getCssVar('--color-text-secondary') || '#555555';
-Chart.defaults.borderColor = getCssVar('--color-border') || '#e1e4e8';
+            // Initialize Chart.js charts
+            const chartTextColor = getCssVar('--text-secondary');
+            const chartBorderColor = getCssVar('--border-default');
+            
+            Chart.defaults.color = chartTextColor || '#4d5560';
+            Chart.defaults.borderColor = chartBorderColor || '#e1e4e8';
 
-// Contractors Chart
-const contractorsChartData = data.primeContractorsChart || { labels: [], values: [] };
-if (document.getElementById('main-contractors-chart')) {
-    chartInstances.primes = new Chart(
-        document.getElementById('main-contractors-chart').getContext('2d'), 
-        { 
-            type: 'bar', 
-            data: { 
-                labels: contractorsChartData.labels, 
-                datasets: [{
-                    label: 'Value',
-                    data: contractorsChartData.values, 
-                    backgroundColor: contractorsChartData.labels.map((_, i) => CHART_COLORS[i % CHART_COLORS.length])
-                }]
-            }, 
-            options: {
-                indexAxis: 'y',
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        callbacks: {
-                            label: c => formatCurrencyShort(c.raw)
-                        }
-                    }
-                },
-                scales: {
-                    x: {
-                        grid: {
-                            color: getCssVar('--color-border') || '#e1e4e8'
-                        },
-                        ticks: {
-                            callback: v => formatCurrencyShort(v)
-                        }
-                    },
-                    y: {
-                        grid: {
-                            display: false
-                        },
-                        ticks: {
-                            font: { size: 11 }
-                        }
-                    }
-                }
-            }
-        }
-    );
-}
-
-// NAICS Distribution Chart
-const naicsChartData = data.naicsDistributionChart || { labels: [], values: [] };
-if (document.getElementById('main-naics-chart')) {
-    chartInstances.naics = new Chart(
-        document.getElementById('main-naics-chart').getContext('2d'), 
-        { 
-            type: 'doughnut', 
-            data: { 
-                labels: naicsChartData.labels, 
-                datasets: [{
-                    data: naicsChartData.values, 
-                    backgroundColor: naicsChartData.labels.map((_, i) => CHART_COLORS[i % CHART_COLORS.length]),
-                    borderColor: getCssVar('--color-surface') || 'white',
-                    borderWidth: 1
-                }]
-            }, 
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'right',
-                        labels: {
-                            boxWidth: 12,
-                            font: { size: 11 },
-                            generateLabels: c => c.data.labels.map((l, i) => ({
-                                text: `${l} (${c.data.datasets[0].data[i]}%)`,
-                                fillStyle: CHART_COLORS[i % CHART_COLORS.length]
-                            }))
-                        }
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: c => `${c.label}: ${c.raw}%`
-                        }
-                    }
-                }
-            }
-        }
-    );
-}
-
-// TAV-TCV Chart
-if (document.getElementById('main-tav-tcv-chart')) {
-    const tavTcvData = JSON.parse(tavTcvChartDataForScript); 
-    chartInstances.tavTcv = new Chart(
-        document.getElementById('main-tav-tcv-chart').getContext('2d'), 
-        {
-            type: 'bar', 
-            data: { 
-                labels: tavTcvData.map(d => d.name), 
-                datasets: [
-                    {
-                        label: 'TAV',
-                        data: tavTcvData.map(d => d.tav),
-                        backgroundColor: getCssVar('--chart-color-4') || '#f72585',
-                        stack: 's0'
-                    },
-                    {
-                        label: 'TCV Remainder',
-                        data: tavTcvData.map(d => d.tcvRemainder),
-                        backgroundColor: getCssVar('--chart-color-1') || '#4361ee',
-                        stack: 's0'
-                    }
-                ]
-            },
-            options: {
-                indexAxis: 'y',
-                responsive: true,
-                maintainAspectRatio: false, 
-                onClick: (e, els) => {
-                    if (els.length > 0) {
-                        const idx = els[0].index; 
-                        const link = tavTcvData[idx].link; 
-                        if (link) window.open(link, '_blank');
-                    }
-                }, 
-                onHover: (e, el) => {
-                    if (e.native && e.native.target) {
-                        e.native.target.style.cursor = el[0] && tavTcvData[el[0].index].link ? 'pointer' : 'default';
-                    }
-                }, 
-                plugins: {
-                    legend: { 
-                        position: 'bottom',
-                        labels: {
-                            boxWidth: 12,
-                            font: { size: 11 }
-                        }
-                    },
-                    tooltip: {
-                        mode: 'index',
-                        callbacks: {
-                            label: c => `${c.dataset.label}: ${formatCurrencyShort(c.raw)}`, 
-                            footer: items => {
-                                let total = 0; 
-                                if (items[0]) {
-                                    const dIdx = items[0].dataIndex; 
-                                    total = tavTcvData[dIdx].totalTcv;
-                                } 
-                                return `Total TCV: ${formatCurrencyShort(total)}`;
+            // Contractors Chart
+            const contractorsChartData = data.primeContractorsChart || { labels: [], values: [] };
+            if (document.getElementById('main-contractors-chart')) {
+                chartInstances.primes = new Chart(
+                    document.getElementById('main-contractors-chart').getContext('2d'), 
+                    { 
+                        type: 'bar', 
+                        data: { 
+                            labels: contractorsChartData.labels, 
+                            datasets: [{
+                                label: 'Value',
+                                data: contractorsChartData.values, 
+                                backgroundColor: getChartColors(contractorsChartData.labels.length)
+                            }]
+                        }, 
+                        options: {
+                            indexAxis: 'y',
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                    backgroundColor: getCssVar('--surface-card') || 'rgba(255, 255, 255, 0.9)',
+                                    borderColor: getCssVar('--border-default'),
+                                    borderWidth: 1,
+                                    titleColor: getCssVar('--text-primary'),
+                                    bodyColor: getCssVar('--text-secondary'),
+                                    titleFont: { size: 12 },
+                                    bodyFont: { size: 11 },
+                                    padding: 10,
+                                    callbacks: {
+                                        label: c => formatCurrencyShort(c.raw)
+                                    }
+                                }
+                            },
+                            scales: {
+                                x: {
+                                    grid: {
+                                        color: getCssVar('--border-default') || '#e1e4e8',
+                                        lineWidth: 0.5
+                                    },
+                                    ticks: {
+                                        callback: v => formatCurrencyShort(v)
+                                    }
+                                },
+                                y: {
+                                    grid: {
+                                        display: false
+                                    },
+                                    ticks: {
+                                        font: { size: 11 }
+                                    }
+                                }
                             }
                         }
                     }
-                },
-                scales: {
-                    x: {
-                        stacked: true,
-                        grid: {
-                            color: getCssVar('--color-border') || '#e1e4e8'
-                        },
-                        ticks: {
-                            callback: v => formatCurrencyShort(v)
-                        }
-                    },
-                    y: {
-                        stacked: true,
-                        grid: {
-                            display: false
-                        },
-                        ticks: {
-                            font: { size: 11 }
+                );
+            }
+
+            // NAICS Distribution Chart
+            const naicsChartData = data.naicsDistributionChart || { labels: [], values: [] };
+            if (document.getElementById('main-naics-chart')) {
+                chartInstances.naics = new Chart(
+                    document.getElementById('main-naics-chart').getContext('2d'), 
+                    { 
+                        type: 'doughnut', 
+                        data: { 
+                            labels: naicsChartData.labels, 
+                            datasets: [{
+                                data: naicsChartData.values, 
+                                backgroundColor: getChartColors(naicsChartData.labels.length),
+                                borderColor: getCssVar('--surface-card') || 'white',
+                                borderWidth: 1
+                            }]
+                        }, 
+                        options: {
+                            cutout: '65%',  // Slightly thinner doughnut
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'right',
+                                    labels: {
+                                        boxWidth: 12,
+                                        padding: 15,
+                                        font: { size: 11 },
+                                        generateLabels: c => c.data.labels.map((l, i) => ({
+                                            text: `${l} (${c.data.datasets[0].data[i]}%)`,
+                                            fillStyle: getChartColors(c.data.labels.length)[i]
+                                        }))
+                                    }
+                                },
+                                tooltip: {
+                                    backgroundColor: getCssVar('--surface-card') || 'rgba(255, 255, 255, 0.9)',
+                                    borderColor: getCssVar('--border-default'),
+                                    borderWidth: 1,
+                                    titleColor: getCssVar('--text-primary'),
+                                    bodyColor: getCssVar('--text-secondary'),
+                                    titleFont: { size: 12 },
+                                    bodyFont: { size: 11 },
+                                    padding: 10,
+                                    callbacks: {
+                                        label: c => `${c.label}: ${c.raw}%`
+                                    }
+                                }
+                            }
                         }
                     }
+                );
+            }
+
+            // TAV-TCV Chart
+            if (document.getElementById('main-tav-tcv-chart')) {
+                const tavTcvData = JSON.parse(tavTcvChartDataForScript); 
+                chartInstances.tavTcv = new Chart(
+                    document.getElementById('main-tav-tcv-chart').getContext('2d'), 
+                    {
+                        type: 'bar', 
+                        data: { 
+                            labels: tavTcvData.map(d => d.name), 
+                            datasets: [
+                                {
+                                    label: 'TAV',
+                                    data: tavTcvData.map(d => d.tav),
+                                    backgroundColor: getCssVar('--viz-category-1') || '#8ecae6',
+                                    stack: 's0'
+                                },
+                                {
+                                    label: 'TCV Remainder',
+                                    data: tavTcvData.map(d => d.tcvRemainder),
+                                    backgroundColor: getCssVar('--viz-category-2') || '#aad8d3',
+                                    stack: 's0'
+                                }
+                            ]
+                        },
+                        options: {
+                            indexAxis: 'y',
+                            responsive: true,
+                            maintainAspectRatio: false, 
+                            onClick: (e, els) => {
+                                if (els.length > 0) {
+                                    const idx = els[0].index; 
+                                    const link = tavTcvData[idx].link; 
+                                    if (link) window.open(link, '_blank');
+                                }
+                            }, 
+                            onHover: (e, el) => {
+                                if (e.native && e.native.target) {
+                                    e.native.target.style.cursor = el[0] && tavTcvData[el[0].index].link ? 'pointer' : 'default';
+                                }
+                            }, 
+                            plugins: {
+                                legend: { 
+                                    position: 'bottom',
+                                    labels: {
+                                        boxWidth: 12,
+                                        padding: 15,
+                                        font: { size: 11 }
+                                    }
+                                },
+                                tooltip: {
+                                    backgroundColor: getCssVar('--surface-card') || 'rgba(255, 255, 255, 0.9)',
+                                    borderColor: getCssVar('--border-default'),
+                                    borderWidth: 1,
+                                    titleColor: getCssVar('--text-primary'),
+                                    bodyColor: getCssVar('--text-secondary'),
+                                    titleFont: { size: 12 },
+                                    bodyFont: { size: 11 },
+                                    padding: 10,
+                                    mode: 'index',
+                                    callbacks: {
+                                        label: c => `${c.dataset.label}: ${formatCurrencyShort(c.raw)}`, 
+                                        footer: items => {
+                                            let total = 0; 
+                                            if (items[0]) {
+                                                const dIdx = items[0].dataIndex; 
+                                                total = tavTcvData[dIdx].totalTcv;
+                                            } 
+                                            return `Total TCV: ${formatCurrencyShort(total)}`;
+                                        }
+                                    }
+                                }
+                            },
+                            scales: {
+                                x: {
+                                    stacked: true,
+                                    grid: {
+                                        color: getCssVar('--border-default') || '#e1e4e8',
+                                        lineWidth: 0.5
+                                    },
+                                    ticks: {
+                                        font: { size: 10 },
+                                        callback: v => formatCurrencyShort(v)
+                                    }
+                                },
+                                y: {
+                                    stacked: true,
+                                    grid: {
+                                        display: false
+                                    },
+                                    ticks: {
+                                        font: { size: 11 }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                );
+            }
+
+            console.log("renderMainDashboard: Chart.js charts initialized.");
+
+            // Call D3 rendering functions for map and dendrogram
+            if (data.mapChartData && Object.keys(data.mapChartData).length > 0) {
+                renderMap(data.mapChartData, 'main-map-viz');
+            } else {
+                const mapVizContainer = document.getElementById('main-map-viz');
+                if (mapVizContainer) {
+                    mapVizContainer.innerHTML = '<div class="loading-placeholder">Map data not available for this selection.</div>';
                 }
             }
-        }
-    );
-}
 
-console.log("renderMainDashboard: Chart.js charts initialized.");
+            if (data.dendrogramChartData && data.dendrogramChartData.children && 
+                data.dendrogramChartData.children.length > 0 && 
+                (data.dendrogramChartData.children[0].name !== "No detailed prime/sub data available in this view." && 
+                 data.dendrogramChartData.children[0].name !== "No Agency Data")) {
+                renderDendrogram(data.dendrogramChartData, 'main-dendrogram-viz');
+            } else {
+                const dendroVizContainer = document.getElementById('main-dendrogram-viz');
+                if (dendroVizContainer) {
+                    dendroVizContainer.innerHTML = '<div class="loading-placeholder">Relationship data not available for this selection.</div>';
+                }
+            }
 
-// Call D3 rendering functions for map and dendrogram
-if (data.mapChartData && Object.keys(data.mapChartData).length > 0) {
-    renderMap(data.mapChartData, 'main-map-viz');
-} else {
-    const mapVizContainer = document.getElementById('main-map-viz');
-    if (mapVizContainer) {
-        mapVizContainer.innerHTML = '<div class="loading-placeholder">Map data not available for this selection.</div>';
-    }
-}
-
-if (data.dendrogramChartData && data.dendrogramChartData.children && 
-    data.dendrogramChartData.children.length > 0 && 
-    (data.dendrogramChartData.children[0].name !== "No detailed prime/sub data available in this view." && 
-     data.dendrogramChartData.children[0].name !== "No Agency Data")) {
-    renderDendrogram(data.dendrogramChartData, 'main-dendrogram-viz');
-} else {
-    const dendroVizContainer = document.getElementById('main-dendrogram-viz');
-    if (dendroVizContainer) {
-        dendroVizContainer.innerHTML = '<div class="loading-placeholder">Relationship data not available for this selection.</div>';
-    }
-}
-
-console.log("renderMainDashboard: D3 visualizations attempted.");
+            console.log("renderMainDashboard: D3 visualizations attempted.");
 
         } catch (renderError) {
             console.error("Error during renderMainDashboard:", renderError);
@@ -1597,343 +1645,354 @@ console.log("renderMainDashboard: D3 visualizations attempted.");
             updateStatus('Error rendering dashboard.', 'error');
         }
     }
-function renderMap(mapData, targetDivId) {
-    const container = document.getElementById(targetDivId);
-    if (!container) { 
-        console.error(`Map container #${targetDivId} not found.`); 
-        return; 
-    }
-    
-    container.innerHTML = ''; // Clear previous
-
-    const width = container.clientWidth || 600;
-    const height = container.clientHeight || 400;
-    
-    if (width <= 0 || height <= 0 || !mapData || Object.keys(mapData).length === 0) {
-        container.innerHTML = '<div class="loading-placeholder">No geographic data to display.</div>';
-        return;
-    }
-
-    const svg = d3.select(container)
-        .append("svg")
-        .attr("width", width)
-        .attr("height", height)
-        .attr("viewBox", `0 0 ${width} ${height}`);
-    
-    const values = Object.values(mapData).map(d => d.value);
-    
-    // Create a consistent color scale using our gradient colors
-    const colorScale = d3.scaleSequential()
-        .domain([0, d3.max(values) || 1])
-        .interpolator(d3.interpolateRgbBasis([
-            getCssVar('--map-color-1') || '#caf0f8',
-            getCssVar('--map-color-2') || '#90e0ef',
-            getCssVar('--map-color-3') || '#48b5c4',
-            getCssVar('--map-color-4') || '#0096c7',
-            getCssVar('--map-color-5') || '#0077b6',
-            getCssVar('--map-color-6') || '#023e8a'
-        ]));
-    
-    const path = d3.geoPath();
-
-    // Tooltip
-    const tooltip = d3.select("body")
-        .append("div")
-        .attr("class", "d3-tooltip")
-        .style("visibility", "hidden");
-
-    d3.json("https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json").then(us => {
-        const states = topojson.feature(us, us.objects.states);
-        const projection = d3.geoAlbersUsa().fitSize([width, height], states);
-        path.projection(projection);
-
-        svg.append("g")
-            .selectAll("path")
-            .data(states.features)
-            .join("path")
-            .attr("fill", d => { 
-                const fips = d.id.padStart(2, '0'); 
-                return mapData[fips] ? colorScale(mapData[fips].value) : getCssVar('--color-border') || '#e1e4e8'; 
-            })
-            .attr("d", path)
-            .attr("stroke", getCssVar('--color-surface') || "white")
-            .attr("stroke-width", 0.5)
-            .on("mouseover", function(event, d) {
-                d3.select(this).attr("fill-opacity", 0.7);
-                const fips = d.id.padStart(2, '0');
-                const stateInfo = mapData[fips];
-                tooltip.style("visibility", "visible")
-                       .html(`${d.properties.name}<br>Value: ${stateInfo ? formatCurrencyShort(stateInfo.value) : 'N/A'}<br>Contracts: ${stateInfo ? stateInfo.count : 'N/A'}`);
-            })
-            .on("mousemove", (event) => tooltip
-                .style("top", (event.pageY - 10) + "px")
-                .style("left", (event.pageX + 10) + "px"))
-            .on("mouseout", function() { 
-                d3.select(this).attr("fill-opacity", 1); 
-                tooltip.style("visibility", "hidden"); 
-            });
-    }).catch(error => {
-        console.error("Error loading map topojson:", error);
-        container.innerHTML = '<div class="loading-placeholder">Error loading map data.</div>';
-    });
-    
-    // Add a better legend with the new color palette
-    const legendData = d3.range(6).map(i => ({
-        color: GRADIENT_COLORS[i],
-        value: i === 0 ? 0 : d3.max(values) * (i / 5)
-    }));
-    
-    const legend = svg.append("g")
-        .attr("transform", `translate(${width - 120}, ${height - 120})`);
-    
-    legend.append("rect")
-        .attr("width", 100)
-        .attr("height", 100)
-        .attr("fill", "white")
-        .attr("opacity", 0.7)
-        .attr("rx", 4)
-        .attr("ry", 4);
-    
-    legend.append("text")
-        .attr("x", 10)
-        .attr("y", 20)
-        .text("Contract Value")
-        .attr("font-size", "10px")
-        .attr("font-weight", "bold")
-        .attr("fill", getCssVar('--color-text-primary') || '#333333');
-    
-    legendData.forEach((d, i) => {
-        legend.append("rect")
-            .attr("x", 10)
-            .attr("y", 30 + i * 12)
-            .attr("width", 12)
-            .attr("height", 8)
-            .attr("fill", d.color);
-        
-        legend.append("text")
-            .attr("x", 26)
-            .attr("y", 37 + i * 12)
-            .text(formatCurrencyShort(d.value))
-            .attr("font-size", "9px")
-            .attr("fill", getCssVar('--color-text-secondary') || '#555555');
-    });
-}
-function renderDendrogram(hierarchyData, targetDivId) {
-    const container = document.getElementById(targetDivId);
-    if (!container) { 
-        console.error(`Dendrogram container #${targetDivId} not found.`); 
-        return; 
-    }
-    
-    container.innerHTML = ''; // Clear previous content
-
-    const { width, height } = container.getBoundingClientRect();
-
-    if (width <= 0 || height <= 0 || !hierarchyData || hierarchyData.children.length === 0 ||
-        (hierarchyData.children.length === 1 && hierarchyData.children[0].id === 'placeholder-h')) {
-        container.innerHTML = '<div class="loading-placeholder">No hierarchical relationship data to display for this selection.</div>';
-        return;
-    }
-
-    const margin = { top: 20, right: 120, bottom: 20, left: 120 };
-    const innerWidth = width - margin.left - margin.right;
-    const innerHeight = height - margin.top - margin.bottom;
-
-    const svg = d3.select(container)
-        .append("svg")
-        .attr("width", width)
-        .attr("height", height)
-        .attr("viewBox", [0, 0, width, height])
-        .append("g")
-        .attr("transform", `translate(${margin.left},${margin.top})`);
-
-    const root = d3.hierarchy(hierarchyData, d => d.children);
-    root.sum(d => Math.max(1, d.value || 0));
-    root.sort((a, b) => (b.height - a.height) || (b.value - a.value));
-
-    // Tree layout for a hierarchical view
-    const treeLayout = d3.tree().size([innerHeight, innerWidth]);
-    treeLayout(root);
-
-    // Links between nodes with gradient effect
-    const linkGradient = svg.append("defs").selectAll("linearGradient")
-        .data(root.links())
-        .join("linearGradient")
-        .attr("id", (d, i) => `link-gradient-${i}`)
-        .attr("gradientUnits", "userSpaceOnUse")
-        .attr("x1", d => d.source.y)
-        .attr("y1", d => d.source.x)
-        .attr("x2", d => d.target.y)
-        .attr("y2", d => d.target.x);
-
-    // Update node colors using our new color palette
-    const nodeColors = {
-        root: getCssVar('--chart-color-1') || '#4361ee',
-        agency: getCssVar('--chart-color-2') || '#3a0ca3',
-        subagency: getCssVar('--chart-color-3') || '#7209b7',
-        prime: getCssVar('--chart-color-4') || '#f72585',
-        sub: getCssVar('--chart-color-5') || '#4cc9f0',
-        placeholder: getCssVar('--color-text-tertiary') || '#777777'
-    };
-
-    linkGradient.append("stop")
-        .attr("offset", "0%")
-        .attr("stop-color", d => nodeColors[d.source.data.type] || nodeColors.root);
-
-    linkGradient.append("stop")
-        .attr("offset", "100%")
-        .attr("stop-color", d => nodeColors[d.target.data.type] || nodeColors.sub);
-
-    // Links between nodes
-    svg.append("g")
-        .attr("fill", "none")
-        .attr("stroke-opacity", 0.6)
-        .attr("stroke-width", 1.5)
-        .selectAll("path")
-        .data(root.links())
-        .join("path")
-        .attr("stroke", (d, i) => `url(#link-gradient-${i})`)
-        .attr("d", d3.linkHorizontal()
-            .x(d => d.y)
-            .y(d => d.x));
-
-    // Nodes (circles)
-    const node = svg.append("g")
-        .attr("stroke-linejoin", "round")
-        .attr("stroke-width", 3)
-        .selectAll("g")
-        .data(root.descendants())
-        .join("g")
-        .attr("transform", d => `translate(${d.y},${d.x})`);
-
-    // Add glow effect for nodes
-    const defs = svg.append("defs");
-    
-    Object.entries(nodeColors).forEach(([type, color]) => {
-        const filter = defs.append("filter")
-            .attr("id", `glow-${type}`)
-            .attr("x", "-50%")
-            .attr("y", "-50%")
-            .attr("width", "200%")
-            .attr("height", "200%");
-            
-        filter.append("feGaussianBlur")
-            .attr("stdDeviation", "2")
-            .attr("result", "coloredBlur");
-            
-        const feMerge = filter.append("feMerge");
-        feMerge.append("feMergeNode")
-            .attr("in", "coloredBlur");
-        feMerge.append("feMergeNode")
-            .attr("in", "SourceGraphic");
-    });
-
-    node.append("circle")
-        .attr("fill", d => nodeColors[d.data.type] || nodeColors.placeholder)
-        .attr("r", d => d.depth === 0 ? 7 : d.children ? 5 : 4)
-        .attr("filter", d => d.depth === 0 ? `url(#glow-${d.data.type || 'root'})` : null);
-
-    // Node labels
-    node.append("text")
-        .attr("dy", "0.31em")
-        .attr("x", d => d.children ? -8 : 8)
-        .attr("text-anchor", d => d.children ? "end" : "start")
-        .text(d => d.data.name)
-        .style("font-size", d => d.depth === 0 ? "12px" : d.depth <= 2 ? "10px" : "9px")
-        .style("fill", getCssVar('--color-text-secondary') || '#555555')
-        .clone(true)
-        .lower()
-        .attr("stroke", getCssVar('--color-surface') || "white")
-        .attr("stroke-width", 3); // Text outline for better readability
-
-    // Enhanced tooltip for more information
-    const tooltip = d3.select("body")
-        .selectAll(".d3-tooltip")
-        .data([null])
-        .join("div")
-        .attr("class", "d3-tooltip")
-        .style("visibility", "hidden");
-
-    node.on("mouseover", (event, d) => {
-        tooltip.style("visibility", "visible")
-            .html(`
-                <div style="font-weight:bold;color:${nodeColors[d.data.type] || '#333'}">
-                    ${d.data.name}
-                </div>
-                <div>Type: ${d.data.type}</div>
-                <div>Value: ${formatCurrencyShort(d.data.value || d.value)}</div>
-                ${d.children ? `<div>Child nodes: ${d.children.length}</div>` : ''}
-            `)
-            .style("top", (event.pageY - 10) + "px")
-            .style("left", (event.pageX + 10) + "px");
-        
-        d3.select(event.currentTarget).select("circle")
-            .attr("r", (d.children ? 5 : 4) + 2)
-            .attr("filter", `url(#glow-${d.data.type || 'placeholder'})`);
-    })
-    .on("mouseout", (event, d) => {
-        tooltip.style("visibility", "hidden");
-        d3.select(event.currentTarget).select("circle")
-            .attr("r", d.depth === 0 ? 7 : d.children ? 5 : 4)
-            .attr("filter", d.depth === 0 ? `url(#glow-${d.data.type || 'root'})` : null);
-    });
-}
-function populateDatasetSelector() {
-    // Group datasets by agency name (part before ' (')
-    const agencyGroups = {};
-    DATASETS_CONFIG.forEach(dataset => {
-        const agencyName = dataset.name.split(' (')[0];
-        if (!agencyGroups[agencyName]) {
-            agencyGroups[agencyName] = { name: agencyName, datasets: [] };
+	// --- D3 Map Visualization ---
+    function renderMap(mapData, targetDivId) {
+        const container = document.getElementById(targetDivId);
+        if (!container) { 
+            console.error(`Map container #${targetDivId} not found.`); 
+            return; 
         }
-        agencyGroups[agencyName].datasets.push(dataset);
-    });
+        
+        container.innerHTML = ''; // Clear previous
 
-    datasetSelect.innerHTML = '<option value="">Choose an agency...</option>';
-    
-    let socomCombinedValue = null; // Store the SOCOM combined value
-    
-    Object.values(agencyGroups)
-        .sort((a, b) => a.name.localeCompare(b.name))
-        .forEach(group => {
-            const optGroup = document.createElement('optgroup');
-            optGroup.label = group.name;
-            
-            const primeDataset = group.datasets.find(d => d.type === 'primes');
-            const subDataset = group.datasets.find(d => d.type === 'subs');
+        const width = container.clientWidth || 600;
+        const height = container.clientHeight || 400;
+        
+        if (width <= 0 || height <= 0 || !mapData || Object.keys(mapData).length === 0) {
+            container.innerHTML = '<div class="loading-placeholder">No geographic data to display.</div>';
+            return;
+        }
 
-            // Offer combined option if both prime and sub datasets exist
-            if (primeDataset && subDataset) {
-                const combinedOpt = document.createElement('option');
-                const combinedValue = `combined:${primeDataset.id},${subDataset.id}`;
-                combinedOpt.value = combinedValue;
-                combinedOpt.textContent = `${group.name} (Primes & Subs)`;
-                optGroup.appendChild(combinedOpt);
-                
-                // Check if this is SOCOM combined and store its value
-                if (group.name === 'SOCOM') {
-                    socomCombinedValue = combinedValue;
-                }
-            }
-            
-            // Add individual dataset options
-            group.datasets.forEach(ds => {
-                const option = document.createElement('option');
-                option.value = ds.id;
-                option.textContent = ds.name;
-                optGroup.appendChild(option);
-            });
-            
-            datasetSelect.appendChild(optGroup);
+        const svg = d3.select(container)
+            .append("svg")
+            .attr("width", width)
+            .attr("height", height)
+            .attr("viewBox", `0 0 ${width} ${height}`);
+        
+        const values = Object.values(mapData).map(d => d.value);
+        
+        // Use CSS variables for map colors through getMapColors() helper
+        const mapColors = getMapColors();
+        
+        const colorScale = d3.scaleSequential()
+            .domain([0, d3.max(values) || 1])
+            .interpolator(d3.interpolateRgbBasis(mapColors));
+        
+        const path = d3.geoPath();
+
+        // Tooltip
+        const tooltip = d3.select("body")
+            .append("div")
+            .attr("class", "d3-tooltip")
+            .style("visibility", "hidden");
+
+        d3.json("https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json").then(us => {
+            const states = topojson.feature(us, us.objects.states);
+            const projection = d3.geoAlbersUsa().fitSize([width, height], states);
+            path.projection(projection);
+
+            svg.append("g")
+                .selectAll("path")
+                .data(states.features)
+                .join("path")
+                .attr("fill", d => { 
+                    const fips = d.id.padStart(2, '0'); 
+                    return mapData[fips] ? colorScale(mapData[fips].value) : getCssVar('--border-default') || '#e1e4e8'; 
+                })
+                .attr("d", path)
+                .attr("stroke", getCssVar('--surface-card') || "white")
+                .attr("stroke-width", 0.5)
+                .on("mouseover", function(event, d) {
+                    d3.select(this).attr("fill-opacity", 0.7);
+                    const fips = d.id.padStart(2, '0');
+                    const stateInfo = mapData[fips];
+                    tooltip.style("visibility", "visible")
+                           .html(`
+                               <div style="font-weight:600;">${d.properties.name}</div>
+                               <div>Value: ${stateInfo ? formatCurrencyShort(stateInfo.value) : 'N/A'}</div>
+                               <div>Contracts: ${stateInfo ? stateInfo.count : 'N/A'}</div>
+                           `);
+                })
+                .on("mousemove", (event) => tooltip
+                    .style("top", (event.pageY - 10) + "px")
+                    .style("left", (event.pageX + 10) + "px"))
+                .on("mouseout", function() { 
+                    d3.select(this).attr("fill-opacity", 1); 
+                    tooltip.style("visibility", "hidden"); 
+                });
+        }).catch(error => {
+            console.error("Error loading map topojson:", error);
+            container.innerHTML = '<div class="loading-placeholder">Error loading map data.</div>';
         });
         
-    // If SOCOM combined value was found, preselect it and trigger loading
-    if (socomCombinedValue) {
-        datasetSelect.value = socomCombinedValue;
-        // Trigger the loading after a short delay to ensure the UI is ready
-        setTimeout(() => handleDatasetSelection(), 100);
+        // Add a legend
+        const legendWidth = 130;
+        const legendHeight = 130;
+        const legend = svg.append("g")
+            .attr("transform", `translate(${width - legendWidth - 10}, ${height - legendHeight - 10})`);
+        
+        // Semi-transparent background
+        legend.append("rect")
+            .attr("width", legendWidth)
+            .attr("height", legendHeight)
+            .attr("fill", getCssVar('--surface-card') || "white")
+            .attr("opacity", 0.85)
+            .attr("rx", 6)
+            .attr("ry", 6)
+            .attr("stroke", getCssVar('--border-default') || "#e1e4e8")
+            .attr("stroke-width", 1);
+        
+        legend.append("text")
+            .attr("x", 10)
+            .attr("y", 20)
+            .text("Contract Value")
+            .attr("font-size", "11px")
+            .attr("font-weight", "500")
+            .attr("fill", getCssVar('--text-primary') || '#333333');
+        
+        const legendSteps = mapColors.length;
+        const stepHeight = 10;
+        const maxValue = d3.max(values) || 1;
+        
+        for (let i = 0; i < legendSteps; i++) {
+            const value = i === 0 ? 0 : (maxValue * i / (legendSteps - 1));
+            
+            legend.append("rect")
+                .attr("x", 10)
+                .attr("y", 30 + i * (stepHeight + 2))
+                .attr("width", 14)
+                .attr("height", stepHeight)
+                .attr("fill", mapColors[i]);
+            
+            legend.append("text")
+                .attr("x", 30)
+                .attr("y", 30 + i * (stepHeight + 2) + (stepHeight * 0.75))
+                .text(formatCurrencyShort(value))
+                .attr("font-size", "9px")
+                .attr("fill", getCssVar('--text-secondary') || '#555555');
+        }
     }
-}
+
+    // --- D3 Dendrogram Visualization ---
+    function renderDendrogram(hierarchyData, targetDivId) {
+        const container = document.getElementById(targetDivId);
+        if (!container) { 
+            console.error(`Dendrogram container #${targetDivId} not found.`); 
+            return; 
+        }
+        
+        container.innerHTML = ''; // Clear previous content
+
+        const { width, height } = container.getBoundingClientRect();
+
+        if (width <= 0 || height <= 0 || !hierarchyData || hierarchyData.children.length === 0 ||
+            (hierarchyData.children.length === 1 && hierarchyData.children[0].id === 'placeholder-h')) {
+            container.innerHTML = '<div class="loading-placeholder">No hierarchical relationship data to display for this selection.</div>';
+            return;
+        }
+
+        const margin = { top: 20, right: 120, bottom: 20, left: 120 };
+        const innerWidth = width - margin.left - margin.right;
+        const innerHeight = height - margin.top - margin.bottom;
+
+        const svg = d3.select(container)
+            .append("svg")
+            .attr("width", width)
+            .attr("height", height)
+            .attr("viewBox", [0, 0, width, height])
+            .append("g")
+            .attr("transform", `translate(${margin.left},${margin.top})`);
+
+        const root = d3.hierarchy(hierarchyData, d => d.children);
+        root.sum(d => Math.max(1, d.value || 0));
+        root.sort((a, b) => (b.height - a.height) || (b.value - a.value));
+
+        // Tree layout for a hierarchical view
+        const treeLayout = d3.tree().size([innerHeight, innerWidth]);
+        treeLayout(root);
+
+        // Links between nodes with gradient effect
+        const linkGradient = svg.append("defs").selectAll("linearGradient")
+            .data(root.links())
+            .join("linearGradient")
+            .attr("id", (d, i) => `link-gradient-${i}`)
+            .attr("gradientUnits", "userSpaceOnUse")
+            .attr("x1", d => d.source.y)
+            .attr("y1", d => d.source.x)
+            .attr("x2", d => d.target.y)
+            .attr("y2", d => d.target.x);
+
+        // Get node colors from CSS variables
+        const nodeColors = {
+            root: getNodeColor('root'),
+            agency: getNodeColor('agency'),
+            subagency: getNodeColor('subagency'),
+            prime: getNodeColor('prime'),
+            sub: getNodeColor('sub'),
+            placeholder: getNodeColor('placeholder')
+        };
+
+        linkGradient.append("stop")
+            .attr("offset", "0%")
+            .attr("stop-color", d => nodeColors[d.source.data.type] || nodeColors.root);
+
+        linkGradient.append("stop")
+            .attr("offset", "100%")
+            .attr("stop-color", d => nodeColors[d.target.data.type] || nodeColors.sub);
+
+        // Links between nodes
+        svg.append("g")
+            .attr("fill", "none")
+            .attr("stroke-opacity", 0.6)
+            .attr("stroke-width", 1.5)
+            .selectAll("path")
+            .data(root.links())
+            .join("path")
+            .attr("stroke", (d, i) => `url(#link-gradient-${i})`)
+            .attr("d", d3.linkHorizontal()
+                .x(d => d.y)
+                .y(d => d.x));
+
+        // Nodes (circles)
+        const node = svg.append("g")
+            .attr("stroke-linejoin", "round")
+            .attr("stroke-width", 3)
+            .selectAll("g")
+            .data(root.descendants())
+            .join("g")
+            .attr("transform", d => `translate(${d.y},${d.x})`);
+
+        // Add glow effect for nodes
+        const defs = svg.append("defs");
+        
+        Object.entries(nodeColors).forEach(([type, color]) => {
+            const filter = defs.append("filter")
+                .attr("id", `glow-${type}`)
+                .attr("x", "-50%")
+                .attr("y", "-50%")
+                .attr("width", "200%")
+                .attr("height", "200%");
+                
+            filter.append("feGaussianBlur")
+                .attr("stdDeviation", "1.5")  // Subtler blur
+                .attr("result", "coloredBlur");
+                
+            const feMerge = filter.append("feMerge");
+            feMerge.append("feMergeNode")
+                .attr("in", "coloredBlur");
+            feMerge.append("feMergeNode")
+                .attr("in", "SourceGraphic");
+        });
+
+        node.append("circle")
+            .attr("fill", d => nodeColors[d.data.type] || nodeColors.placeholder)
+            .attr("r", d => d.depth === 0 ? 7 : d.children ? 5 : 4)
+            .attr("filter", d => d.depth === 0 ? `url(#glow-${d.data.type || 'root'})` : null);
+
+        // Node labels
+        node.append("text")
+            .attr("dy", "0.31em")
+            .attr("x", d => d.children ? -8 : 8)
+            .attr("text-anchor", d => d.children ? "end" : "start")
+            .text(d => d.data.name)
+            .style("font-size", d => d.depth === 0 ? "12px" : d.depth <= 2 ? "10px" : "9px")
+            .style("fill", getCssVar('--text-secondary') || '#555555')
+            .clone(true)
+            .lower()
+            .attr("stroke", getCssVar('--surface-card') || "white")
+            .attr("stroke-width", 3); // Text outline for better readability
+
+        // Enhanced tooltip
+        const tooltip = d3.select("body")
+            .selectAll(".d3-tooltip")
+            .data([null])
+            .join("div")
+            .attr("class", "d3-tooltip")
+            .style("visibility", "hidden");
+
+        node.on("mouseover", (event, d) => {
+            tooltip.style("visibility", "visible")
+                .html(`
+                    <div style="font-weight:600;color:${nodeColors[d.data.type] || '#333'}">
+                        ${d.data.name}
+                    </div>
+                    <div>Type: ${d.data.type}</div>
+                    <div>Value: ${formatCurrencyShort(d.data.value || d.value)}</div>
+                    ${d.children ? `<div>Child nodes: ${d.children.length}</div>` : ''}
+                `)
+                .style("top", (event.pageY - 10) + "px")
+                .style("left", (event.pageX + 10) + "px");
+            
+            d3.select(event.currentTarget).select("circle")
+                .attr("r", (d.children ? 5 : 4) + 2)
+                .attr("filter", `url(#glow-${d.data.type || 'placeholder'})`);
+        })
+        .on("mouseout", (event, d) => {
+            tooltip.style("visibility", "hidden");
+            d3.select(event.currentTarget).select("circle")
+                .attr("r", d.depth === 0 ? 7 : d.children ? 5 : 4)
+                .attr("filter", d.depth === 0 ? `url(#glow-${d.data.type || 'root'})` : null);
+        });
+    }
+
+    // --- Dataset selector and filtering functions ---
+    function populateDatasetSelector() {
+        // Group datasets by agency name (part before ' (')
+        const agencyGroups = {};
+        DATASETS_CONFIG.forEach(dataset => {
+            const agencyName = dataset.name.split(' (')[0];
+            if (!agencyGroups[agencyName]) {
+                agencyGroups[agencyName] = { name: agencyName, datasets: [] };
+            }
+            agencyGroups[agencyName].datasets.push(dataset);
+        });
+
+        datasetSelect.innerHTML = '<option value="">Choose an agency...</option>';
+        
+        let socomCombinedValue = null; // Store SOCOM combined value for auto-selection
+        
+        Object.values(agencyGroups)
+            .sort((a, b) => a.name.localeCompare(b.name))
+            .forEach(group => {
+                const optGroup = document.createElement('optgroup');
+                optGroup.label = group.name;
+                
+                const primeDataset = group.datasets.find(d => d.type === 'primes');
+                const subDataset = group.datasets.find(d => d.type === 'subs');
+
+                // Offer combined option if both prime and sub datasets exist
+                if (primeDataset && subDataset) {
+                    const combinedOpt = document.createElement('option');
+                    const combinedValue = `combined:${primeDataset.id},${subDataset.id}`;
+                    combinedOpt.value = combinedValue;
+                    combinedOpt.textContent = `${group.name} (Primes & Subs)`;
+                    optGroup.appendChild(combinedOpt);
+                    
+                    // Set SOCOM combined value if this is SOCOM
+                    if (group.name === 'SOCOM') {
+                        socomCombinedValue = combinedValue;
+                    }
+                }
+                
+                // Add individual dataset options
+                group.datasets.forEach(ds => {
+                    const option = document.createElement('option');
+                    option.value = ds.id;
+                    option.textContent = ds.name;
+                    optGroup.appendChild(option);
+                });
+                
+                datasetSelect.appendChild(optGroup);
+            });
+            
+        // Auto-select SOCOM combined and trigger loading
+        if (socomCombinedValue) {
+            datasetSelect.value = socomCombinedValue;
+            // Trigger the loading after a short delay to ensure the UI is ready
+            setTimeout(() => handleDatasetSelection(), 100);
+        }
+    }
+
     function populateFilterDropdowns(model) {
         // NAICS Filter
         naicsFilterEl.innerHTML = '<option value="">All NAICS</option>';
@@ -1968,64 +2027,158 @@ function populateDatasetSelector() {
         }
     }
 
-    async function fetchDataset(datasetConfig) {
-    const csvUrl = `${S3_BASE_URL}${datasetConfig.id}.csv`;
-    updateStatus(`Loading ${datasetConfig.name}...`, 'info');
-    console.log(`Attempting to fetch data from: ${csvUrl}`);
-    
-    try {
-        const response = await fetch(csvUrl, { 
-            mode: 'cors', 
-            cache: 'no-cache',
-            headers: {
-                'Accept': 'text/csv,text/plain,*/*'
+    async function handleDatasetSelection() {
+        const selectedValue = datasetSelect.value;
+        
+        if (!selectedValue) {
+            updateStatus('Please select an agency.', 'info');
+            return;
+        }
+        
+        if (isLoading) {
+            updateStatus('Operation in progress, please wait...', 'info');
+            return; // Prevent concurrent operations
+        }
+
+        isLoading = true;
+        applyFiltersBtn.disabled = true;
+        console.log(`handleDatasetSelection: Initiating load for ${selectedValue}`);
+        
+        dashboardContainer.innerHTML = `
+            <div class="loader">
+                <div class="spinner"></div>
+                <p>Loading data for selected dataset...</p>
+                <p class="small" id="loading-detail">Initializing...</p>
+            </div>
+        `;
+        
+        const loadingDetail = document.getElementById('loading-detail');
+        
+        rawData = { primes: [], subs: [] };
+        unifiedModel = null;
+        
+        // Clear filter options before repopulating
+        naicsFilterEl.innerHTML = '<option value="">All NAICS</option>';
+        subAgencyFilterEl.innerHTML = '<option value="">All Sub-Agencies</option>';
+
+        let datasetsToLoadConfigs = [];
+        
+        if (selectedValue.startsWith('combined:')) {
+            const ids = selectedValue.split(':')[1].split(',');
+            datasetsToLoadConfigs = ids
+                .map(id => DATASETS_CONFIG.find(ds => ds.id === id))
+                .filter(Boolean);
+        } else {
+            const singleConfig = DATASETS_CONFIG.find(ds => ds.id === selectedValue);
+            if (singleConfig) datasetsToLoadConfigs.push(singleConfig);
+        }
+
+        if (datasetsToLoadConfigs.length === 0) {
+            updateStatus('Invalid dataset selection.', 'error');
+            dashboardContainer.innerHTML = `
+                <div class="loader">
+                    <p>Invalid dataset selected. Please choose another.</p>
+                </div>
+            `;
+            isLoading = false;
+            applyFiltersBtn.disabled = false;
+            return;
+        }
+
+        try {
+            const agencyDisplayNamesText = datasetsToLoadConfigs.map(d => d.name).join(' & ');
+            updateStatus(`Loading ${agencyDisplayNamesText}...`, 'info');
+            
+            if (loadingDetail) {
+                loadingDetail.textContent = `Preparing to load ${datasetsToLoadConfigs.length} dataset(s)...`;
             }
-        });
-        
-        if (!response.ok) {
-            const errorMsg = `HTTP error ${response.status} (${response.statusText})`;
-            console.error(`${errorMsg} for ${datasetConfig.name}`);
-            throw new Error(errorMsg);
+
+            for (const [index, config] of datasetsToLoadConfigs.entries()) {
+                if (loadingDetail) {
+                    loadingDetail.textContent = `Loading dataset ${index + 1}/${datasetsToLoadConfigs.length}: ${config.name}...`;
+                }
+                
+                try {
+                    const fetchedData = await fetchDataset(config);
+                    
+                    if (loadingDetail) {
+                        loadingDetail.textContent = `Processing dataset: ${config.name}...`;
+                    }
+                    
+                    const processed = processRawDataset(fetchedData, config.type);
+                    
+                    if (config.type === 'primes') {
+                        rawData.primes = rawData.primes.concat(processed);
+                    } else if (config.type === 'subs') {
+                        rawData.subs = rawData.subs.concat(processed);
+                    }
+                    
+                    if (loadingDetail) {
+                        loadingDetail.textContent = `Successfully loaded ${config.name} (${processed.length} records)`;
+                    }
+                } catch (fetchError) {
+                    console.error(`Error loading dataset ${config.name}:`, fetchError);
+                    if (loadingDetail) {
+                        loadingDetail.textContent = `Error loading ${config.name}: ${fetchError.message}`;
+                    }
+                    // Continue with other datasets instead of failing completely
+                }
+            }
+            
+            if ((rawData.primes.length === 0 && rawData.subs.length === 0)) {
+                throw new Error("No data was successfully loaded from any dataset.");
+            }
+            
+            console.log("handleDatasetSelection: Raw data fetched and processed.");
+            if (loadingDetail) {
+                loadingDetail.textContent = "Building data model...";
+            }
+
+            unifiedModel = buildUnifiedModelFromProcessed(rawData.primes, rawData.subs);
+            console.log("handleDatasetSelection: Unified model built.");
+
+            if (unifiedModel) {
+                if (loadingDetail) {
+                    loadingDetail.textContent = "Populating filters...";
+                }
+                
+                populateFilterDropdowns(unifiedModel);
+                console.log("handleDatasetSelection: Filters populated.");
+                
+                if (loadingDetail) {
+                    loadingDetail.textContent = "Rendering dashboard...";
+                }
+                
+                applyFiltersAndRedraw(); // This will render the dashboard
+                // Status update will be handled by applyFiltersAndRedraw or its catch block
+            } else {
+                throw new Error("Failed to build the unified model.");
+            }
+
+        } catch (error) {
+            console.error("Error during handleDatasetSelection:", error);
+            updateStatus(`Failed to load data: ${error.message}`, 'error');
+            dashboardContainer.innerHTML = `
+                <div class="loader">
+                    <p>Error loading data: ${error.message}</p>
+                    <p class="small">Please check console for details or try another dataset</p>
+                    <div class="error-details">
+                        <p>Possible issues:</p>
+                        <ul>
+                            <li>Network connectivity problems</li>
+                            <li>S3 bucket access restrictions</li>
+                            <li>CORS configuration issues</li>
+                            <li>CSV format problems</li>
+                        </ul>
+                    </div>
+                </div>
+            `;
+        } finally {
+            isLoading = false;
+            applyFiltersBtn.disabled = false;
+            console.log("handleDatasetSelection: Operation finished.");
         }
-        
-        const csvText = await response.text();
-        
-        if (!csvText || csvText.trim() === '') {
-            throw new Error('Empty response received');
-        }
-        
-        console.log(`Successfully fetched ${csvText.length} bytes for ${datasetConfig.name}`);
-        
-        const parseResult = Papa.parse(csvText, { 
-            header: true, 
-            dynamicTyping: false, 
-            skipEmptyLines: 'greedy', 
-            transformHeader: h => h.trim() 
-        });
-        
-        if (parseResult.errors.length > 0) {
-            console.warn(`Parsing errors in ${datasetConfig.name}:`, parseResult.errors);
-        }
-        
-        if (!parseResult.data || parseResult.data.length === 0) {
-            throw new Error('No data rows found after parsing CSV');
-        }
-        
-        console.log(`Successfully parsed ${parseResult.data.length} rows for ${datasetConfig.name}`);
-        return parseResult.data;
-    } catch (error) {
-        console.error(`Failed to fetch or parse data for ${datasetConfig.name}:`, error);
-        
-        // Check for common CORS issues
-        if (error instanceof TypeError && 
-            (error.message.includes('Failed to fetch') || 
-             error.message.includes('NetworkError'))) {
-            throw new Error(`Network or CORS error - check console and S3 bucket configuration`);
-        }
-        
-        throw new Error(`${error.message} when loading ${datasetConfig.name}`);
     }
-}
 
     function applyFiltersAndRedraw() {
         if (!unifiedModel) {
@@ -2134,46 +2287,68 @@ function populateDatasetSelector() {
 
     // --- Theme Handling ---
     function initTheme() {
-        const savedTheme = localStorage.getItem('dashboard-theme');
+        // Check for system preference and stored preference
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const savedTheme = localStorage.getItem('theme-preference');
         
-        // Apply saved theme or system preference
-        if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        // Set initial theme
+        if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
             document.documentElement.classList.add('dark-theme');
-            themeIcon.innerHTML = `
-                <circle cx="12" cy="12" r="5"></circle>
-                <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"></path>
-            `;
+            updateThemeIcon(true);
         } else {
-            themeIcon.innerHTML = `
-                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
-            `;
+            updateThemeIcon(false);
         }
         
         // Set up theme toggle event
         themeToggleBtn.addEventListener('click', () => {
-            document.documentElement.classList.toggle('dark-theme');
-            const isDarkMode = document.documentElement.classList.contains('dark-theme');
-            
-            // Update theme icon
-            if (isDarkMode) {
-                themeIcon.innerHTML = `
-                    <circle cx="12" cy="12" r="5"></circle>
-                    <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"></path>
-                `;
-            } else {
-                themeIcon.innerHTML = `
-                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
-                `;
-            }
-            
-            // Save preference
-            localStorage.setItem('dashboard-theme', isDarkMode ? 'dark' : 'light');
+            const isDarkMode = document.documentElement.classList.toggle('dark-theme');
+            localStorage.setItem('theme-preference', isDarkMode ? 'dark' : 'light');
+            updateThemeIcon(isDarkMode);
             
             // Re-render charts if model exists (as colors might change)
             if (unifiedModel) {
                 applyFiltersAndRedraw();
             }
         });
+        
+        // Listen for system theme changes
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+            if (localStorage.getItem('theme-preference') === null) {
+                // Only auto-switch if user hasn't set a preference
+                if (e.matches) {
+                    document.documentElement.classList.add('dark-theme');
+                    updateThemeIcon(true);
+                } else {
+                    document.documentElement.classList.remove('dark-theme');
+                    updateThemeIcon(false);
+                }
+                
+                // Re-render if needed
+                if (unifiedModel) {
+                    applyFiltersAndRedraw();
+                }
+            }
+        });
+    }
+
+    function updateThemeIcon(isDark) {
+        if (isDark) {
+            themeIcon.innerHTML = `
+                <circle cx="12" cy="12" r="5"></circle>
+                <line x1="12" y1="1" x2="12" y2="3"></line>
+                <line x1="12" y1="21" x2="12" y2="23"></line>
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                <line x1="1" y1="12" x2="3" y2="12"></line>
+                <line x1="21" y1="12" x2="23" y2="12"></line>
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+            `;
+        } else {
+            themeIcon.innerHTML = `
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+            `;
+        }
     }
 
     // --- Mobile Menu Handling ---
@@ -2205,158 +2380,34 @@ function populateDatasetSelector() {
             }
         });
     }
-async function handleDatasetSelection() {
-    const selectedValue = datasetSelect.value;
-    
-    if (!selectedValue) {
-        updateStatus('Please select an agency.', 'info');
-        return;
-    }
-    
-    if (isLoading) {
-        updateStatus('Operation in progress, please wait...', 'info');
-        return; // Prevent concurrent operations
-    }
 
-    isLoading = true;
-    applyFiltersBtn.disabled = true;
-    console.log(`handleDatasetSelection: Initiating load for ${selectedValue}`);
-    
-    dashboardContainer.innerHTML = `
-        <div class="loader">
-            <div class="spinner"></div>
-            <p>Loading data for selected dataset...</p>
-            <p class="small" id="loading-detail">Initializing...</p>
-        </div>
-    `;
-    
-    const loadingDetail = document.getElementById('loading-detail');
-    
-    rawData = { primes: [], subs: [] };
-    unifiedModel = null;
-    
-    // Clear filter options before repopulating
-    naicsFilterEl.innerHTML = '<option value="">All NAICS</option>';
-    subAgencyFilterEl.innerHTML = '<option value="">All Sub-Agencies</option>';
-
-    let datasetsToLoadConfigs = [];
-    
-    if (selectedValue.startsWith('combined:')) {
-        const ids = selectedValue.split(':')[1].split(',');
-        datasetsToLoadConfigs = ids
-            .map(id => DATASETS_CONFIG.find(ds => ds.id === id))
-            .filter(Boolean);
-    } else {
-        const singleConfig = DATASETS_CONFIG.find(ds => ds.id === selectedValue);
-        if (singleConfig) datasetsToLoadConfigs.push(singleConfig);
-    }
-
-    if (datasetsToLoadConfigs.length === 0) {
-        updateStatus('Invalid dataset selection.', 'error');
-        dashboardContainer.innerHTML = `
-            <div class="loader">
-                <p>Invalid dataset selected. Please choose another.</p>
-            </div>
-        `;
-        isLoading = false;
-        applyFiltersBtn.disabled = false;
-        return;
-    }
-
-    try {
-        const agencyDisplayNamesText = datasetsToLoadConfigs.map(d => d.name).join(' & ');
-        updateStatus(`Loading ${agencyDisplayNamesText}...`, 'info');
+    // Test S3 connectivity to help troubleshoot
+    function testS3Connectivity() {
+        console.log("Testing connectivity to S3 bucket...");
         
-        if (loadingDetail) {
-            loadingDetail.textContent = `Preparing to load ${datasetsToLoadConfigs.length} dataset(s)...`;
-        }
-
-        for (const [index, config] of datasetsToLoadConfigs.entries()) {
-            if (loadingDetail) {
-                loadingDetail.textContent = `Loading dataset ${index + 1}/${datasetsToLoadConfigs.length}: ${config.name}...`;
-            }
-            
-            try {
-                const fetchedData = await fetchDataset(config);
-                
-                if (loadingDetail) {
-                    loadingDetail.textContent = `Processing dataset: ${config.name}...`;
-                }
-                
-                const processed = processRawDataset(fetchedData, config.type);
-                
-                if (config.type === 'primes') {
-                    rawData.primes = rawData.primes.concat(processed);
-                } else if (config.type === 'subs') {
-                    rawData.subs = rawData.subs.concat(processed);
-                }
-                
-                if (loadingDetail) {
-                    loadingDetail.textContent = `Successfully loaded ${config.name} (${processed.length} records)`;
-                }
-            } catch (fetchError) {
-                console.error(`Error loading dataset ${config.name}:`, fetchError);
-                if (loadingDetail) {
-                    loadingDetail.textContent = `Error loading ${config.name}: ${fetchError.message}`;
-                }
-                // Try to continue with other datasets if any
-            }
-        }
+        // Try to get a small test file or the first dataset
+        const testUrl = `${S3_BASE_URL}${DATASETS_CONFIG[0].id}.csv`;
         
-        if ((rawData.primes.length === 0 && rawData.subs.length === 0)) {
-            throw new Error("No data was successfully loaded from any dataset.");
-        }
-        
-        console.log("handleDatasetSelection: Raw data fetched and processed.");
-        if (loadingDetail) {
-            loadingDetail.textContent = "Building data model...";
-        }
-
-        unifiedModel = buildUnifiedModelFromProcessed(rawData.primes, rawData.subs);
-        console.log("handleDatasetSelection: Unified model built.");
-
-        if (unifiedModel) {
-            if (loadingDetail) {
-                loadingDetail.textContent = "Populating filters...";
+        fetch(testUrl, { 
+            mode: 'cors', 
+            method: 'HEAD', // Just check if the file exists without downloading
+            cache: 'no-cache' 
+        })
+        .then(response => {
+            if (response.ok) {
+                console.log("S3 bucket connectivity test: SUCCESS");
+            } else {
+                console.warn(`S3 bucket connectivity test: FAILED (${response.status} ${response.statusText})`);
+                updateStatus('Warning: S3 connectivity issues detected.', 'warning');
             }
-            
-            populateFilterDropdowns(unifiedModel);
-            console.log("handleDatasetSelection: Filters populated.");
-            
-            if (loadingDetail) {
-                loadingDetail.textContent = "Rendering dashboard...";
-            }
-            
-            applyFiltersAndRedraw(); // This will render the dashboard
-        } else {
-            throw new Error("Failed to build the unified model.");
-        }
-
-    } catch (error) {
-        console.error("Error during handleDatasetSelection:", error);
-        updateStatus(`Failed to load data: ${error.message}`, 'error');
-        dashboardContainer.innerHTML = `
-            <div class="loader">
-                <p>Error loading data: ${error.message}</p>
-                <p class="small">Please check console for details or try another dataset</p>
-                <div class="error-details">
-                    <p>Possible issues:</p>
-                    <ul>
-                        <li>Network connectivity problems</li>
-                        <li>S3 bucket access restrictions</li>
-                        <li>CORS configuration issues</li>
-                        <li>CSV format problems</li>
-                    </ul>
-                </div>
-            </div>
-        `;
-    } finally {
-        isLoading = false;
-        applyFiltersBtn.disabled = false;
-        console.log("handleDatasetSelection: Operation finished.");
+        })
+        .catch(error => {
+            console.error("S3 bucket connectivity test: ERROR", error);
+            updateStatus('Warning: S3 connectivity failed.', 'warning');
+        });
     }
-}
- // --- Initialization ---
+
+    // --- Initialization ---
     function init() {
         // Initialize theme handling
         initTheme();
@@ -2364,7 +2415,10 @@ async function handleDatasetSelection() {
         // Initialize mobile menu
         initMobileMenu();
         
-        // Populate dataset selector
+        // Test S3 connectivity
+        testS3Connectivity();
+        
+        // Populate dataset selector (which now preselects SOCOM combined)
         populateDatasetSelector();
         
         // Set up event listeners
