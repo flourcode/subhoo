@@ -715,101 +715,217 @@ function renderMainDashboard(data) {
             .attr("x", 20).attr("y", (d,i)=> i * 15 + 12).text(d=>formatCurrencyShort(d.value)).attr("font-size","10px").attr("fill", getCssVar('--color-text-secondary'));
     }
 
-    function prepareHierarchyDataForD3(model) { // This is your 'createHierarchyData'
-         // Simplified version focusing on agency -> prime -> sub
-        if (!model || !model.agencies) return { name: "No Data", children: [] };
-        let rootName = "Agency Ecosystem";
-        const agencyArray = Object.values(model.agencies);
-        if (agencyArray.length === 1) rootName = agencyArray[0].name;
-        else if (agencyArray.length > 1) rootName = "Multiple Agencies";
+// In app.js, replace the previous prepareHierarchyDataForD3
 
+function prepareHierarchyDataForD3(model) {
+    if (!model || !model.agencies || Object.keys(model.agencies).length === 0) {
+        console.warn("Hierarchy data: Model or agencies are missing.");
+        return { name: "No Agency Data",id:"root", children: [] };
+    }
+    console.log("Preparing D3 Hierarchy: Agency -> SubAgency -> Prime -> Subcontractor");
 
-        const root = { name: rootName, children: [] };
-        const topAgencies = Object.values(model.agencies).sort((a,b)=>(b.value||0)-(a.value||0)).slice(0,1); // Focus on top 1 agency for simplicity
+    const rootNode = {
+        name: "Federal Ecosystem", // Root name
+        id: "root-hierarchy",
+        type: "root",
+        children: []
+    };
 
-        topAgencies.forEach(agency => {
-            const agencyNode = { name: agency.name, children: [], value: agency.value };
-            const agencyPrimes = Object.values(model.primes)
-                .filter(p => p.contracts && Array.from(p.contracts).some(cId => model.contracts[cId]?.agencyId === agency.id))
-                .sort((a,b)=>(b.value||0)-(a.value||0)).slice(0, 5); // Top 5 primes for this agency
+    // Consider the top N agencies by value, or a selected one if filtering is implemented later
+    const topAgencies = Object.values(model.agencies)
+        .sort((a, b) => (b.value || 0) - (a.value || 0))
+        .slice(0, 2); // Limit to top 2 agencies for broader view, or 1 for focused
 
-            agencyPrimes.forEach(prime => {
-                const primeNode = { name: truncateText(prime.name,25), children: [], value: prime.value };
-                const primeSubs = Array.from(prime.subs || [])
-                    .map(subId => model.subs[subId]).filter(Boolean)
-                    .sort((a,b)=>(b.value||0)-(a.value||0)).slice(0, 3); // Top 3 subs for this prime
+    topAgencies.forEach(agency => {
+        const agencyNode = {
+            name: truncateText(agency.name, 30),
+            id: agency.id,
+            value: agency.value || 0,
+            type: 'agency',
+            children: []
+        };
 
-                primeSubs.forEach(sub => {
-                    primeNode.children.push({ name: truncateText(sub.name,20), value: sub.value });
-                });
-                if (primeNode.value > 0) agencyNode.children.push(primeNode);
-            });
-             if (agencyNode.value > 0) root.children.push(agencyNode);
+        // Find SubAgencies for this Agency:
+        // Method 1: If subAgencies have parentId linking to agency.id
+        // Method 2: Infer from contracts (contract.agencyId === agency.id, then collect unique contract.subAgencyName)
+        const subAgenciesForThisAgency = {}; // Store as { name: { value: X, primeIds: Set() } }
+
+        Object.values(model.contracts || {}).forEach(contract => {
+            if (contract.agencyId === agency.id && contract.subAgencyName && contract.primeId) {
+                if (!subAgenciesForThisAgency[contract.subAgencyName]) {
+                    subAgenciesForThisAgency[contract.subAgencyName] = {
+                        name: contract.subAgencyName,
+                        value: 0,
+                        primeIds: new Set() // Store prime IDs associated with this SubAgency under this Agency
+                    };
+                }
+                subAgenciesForThisAgency[contract.subAgencyName].value += (contract.value || 0);
+                subAgenciesForThisAgency[contract.subAgencyName].primeIds.add(contract.primeId);
+            }
         });
-        return root;
+        
+        const topSubAgencies = Object.values(subAgenciesForThisAgency)
+            .sort((a,b) => b.value - a.value)
+            .slice(0, 3); // Top 3 SubAgencies per Agency
+
+        topSubAgencies.forEach(subAgencyData => {
+            const subAgencyNode = {
+                name: truncateText(subAgencyData.name, 28),
+                id: `subagency-${sanitizeId(agency.name)}-${sanitizeId(subAgencyData.name)}`,
+                value: subAgencyData.value,
+                type: 'subagency',
+                children: []
+            };
+
+            const primesForThisSubAgency = Array.from(subAgencyData.primeIds)
+                .map(primeId => model.primes[primeId])
+                .filter(Boolean) // Ensure prime exists
+                .sort((a,b) => (b.value || 0) - (a.value || 0))
+                .slice(0, 5); // Top 5 Primes for this SubAgency
+
+            primesForThisSubAgency.forEach(prime => {
+                const primeNode = {
+                    name: truncateText(prime.name, 25),
+                    id: prime.id,
+                    value: prime.value || 0,
+                    type: 'prime',
+                    children: []
+                };
+
+                const subIds = prime.subs instanceof Set ? Array.from(prime.subs) : (prime.subs || []);
+                const topSubsForThisPrime = subIds
+                    .map(subId => model.subs[subId])
+                    .filter(Boolean)
+                    .sort((a, b) => (b.value || 0) - (a.value || 0))
+                    .slice(0, 3); // Top 3 Subs for this Prime
+
+                topSubsForThisPrime.forEach(sub => {
+                    primeNode.children.push({
+                        name: truncateText(sub.name, 20),
+                        id: sub.id,
+                        value: sub.value || 0,
+                        type: 'sub'
+                    });
+                });
+
+                if (primeNode.value > 0 || primeNode.children.length > 0) {
+                    subAgencyNode.children.push(primeNode);
+                }
+            });
+            
+            if (subAgencyNode.value > 0 || subAgencyNode.children.length > 0) {
+                 agencyNode.children.push(subAgencyNode);
+            }
+        });
+
+        if (agencyNode.value > 0 || agencyNode.children.length > 0) {
+            rootNode.children.push(agencyNode);
+        }
+    });
+    
+    if (rootNode.children.length === 0) {
+        rootNode.children.push({ name: "No hierarchical data to display.", id:"placeholder-h", value: 1, type: 'placeholder' });
+    }
+    return rootNode;
+}
+function renderDendrogram(hierarchyData, targetDivId) {
+    const container = document.getElementById(targetDivId);
+    if (!container) { console.error(`Dendrogram container #${targetDivId} not found.`); return; }
+    container.innerHTML = ''; // Clear previous content
+
+    const { width, height } = container.getBoundingClientRect();
+
+    if (width <= 0 || height <= 0 || !hierarchyData || hierarchyData.children.length === 0 ||
+        (hierarchyData.children.length === 1 && hierarchyData.children[0].id === 'placeholder-h')) {
+        container.innerHTML = '<p class="loading-placeholder">No hierarchical relationship data to display for this selection.</p>';
+        return;
     }
 
-    function renderDendrogram(hierarchyData, targetDivId) { // This is your 'displayForceDirectedRadial'
-        const container = document.getElementById(targetDivId);
-        if (!container) { console.error(`Dendrogram container #${targetDivId} not found.`); return; }
-        container.innerHTML = '';
+    const margin = { top: 20, right: 120, bottom: 20, left: 120 }; // Adjust left margin for root labels
+    const innerWidth = width - margin.left - margin.right;
+    const innerHeight = height - margin.top - margin.bottom;
 
-        const width = container.clientWidth || 800;
-        let height = container.clientHeight || 600;
-         if (width <= 0 || height <=0 || !hierarchyData || hierarchyData.children.length === 0) {
-            container.innerHTML = '<p class="loading-placeholder">No relationship data to display.</p>'; return;
-        }
+    const svg = d3.select(container).append("svg")
+        .attr("width", width)
+        .attr("height", height)
+        .attr("viewBox", [0, 0, width, height]) // Standard viewBox
+        .append("g")
+        .attr("transform", `translate(${margin.left},${margin.top})`);
 
-        const radius = Math.min(width, height) / 2 - 60; // Adjusted radius for labels
-        if (radius <=0) { // If radius is too small, container is likely not visible or too small
-            height = Math.max(height, 400); // Ensure a minimum height
-             // radius = Math.min(width, height) / 2 - 60;
-        }
+    const root = d3.hierarchy(hierarchyData, d => d.children);
+    root.sum(d => Math.max(1, d.value || 0)); // Ensure nodes have a value
+    root.sort((a,b) => (b.height - a.height) || (b.value - a.value)); // Sort by depth then value
 
 
-        const svg = d3.select(container).append("svg")
-            .attr("width", width).attr("height", height)
-            .attr("viewBox", `${-width/2} ${-height/2} ${width} ${height}`);
+    // Use d3.tree for a tidier layout, d3.cluster for a more compact one
+    const treeLayout = d3.tree().size([innerHeight, innerWidth]); // [height, width] for horizontal
+    treeLayout(root);
 
-        const root = d3.hierarchy(hierarchyData).sum(d => Math.max(1, d.value || 0)); // Ensure value for sum
-        root.sort((a,b) => b.value - a.value);
+    // Links
+    svg.append("g")
+        .attr("fill", "none")
+        .attr("stroke", getCssVar('--color-border'))
+        .attr("stroke-opacity", 0.6)
+        .attr("stroke-width", 1.5)
+        .selectAll("path")
+        .data(root.links())
+        .join("path")
+        .attr("d", d3.linkHorizontal() // Use linkHorizontal
+            .x(d => d.y) // Depth is y in horizontal
+            .y(d => d.x)); // Position along height is x
 
+    // Nodes
+    const node = svg.append("g")
+        .attr("stroke-linejoin", "round")
+        .attr("stroke-width", 3)
+        .selectAll("g")
+        .data(root.descendants())
+        .join("g")
+        .attr("transform", d => `translate(${d.y},${d.x})`); // Swap x and y for horizontal
 
-        const tree = d3.cluster().size([2 * Math.PI, radius]).separation((a, b) => (a.parent == b.parent ? 1 : 2) / a.depth);
-        tree(root);
+    const nodeColors = {
+        root: getCssVar('--color-text-primary'),
+        agency: getCssVar('--color-primary'),
+        subagency: getCssVar('--color-accent'),
+        prime: getCssVar('--color-secondary'),
+        sub: getCssVar('--color-tertiary'),
+        placeholder: getCssVar('--color-text-tertiary')
+    };
 
-        // Links
-        svg.append("g")
-            .attr("fill", "none").attr("stroke", getCssVar('--color-border')).attr("stroke-opacity", 0.6).attr("stroke-width", 1.5)
-            .selectAll("path")
-            .data(root.links())
-            .join("path")
-            .attr("d", d3.linkRadial().angle(d => d.x).radius(d => d.y));
+    node.append("circle")
+        .attr("fill", d => nodeColors[d.data.type] || getCssVar('--color-text-tertiary'))
+        .attr("r", d => d.depth === 0 ? 6 : d.children ? 4.5 : 3.5);
 
-        // Nodes
-        const node = svg.append("g")
-            .selectAll("g")
-            .data(root.descendants())
-            .join("g")
-            .attr("transform", d => `rotate(${d.x * 180 / Math.PI - 90}) translate(${d.y},0)`);
+    node.append("text")
+        .attr("dy", "0.31em")
+        .attr("x", d => d.children ? -8 : 8) // Position text based on whether it has children
+        .attr("text-anchor", d => d.children ? "end" : "start")
+        .text(d => d.data.name)
+        .style("font-size", d => d.depth === 0 ? "12px" : d.depth <= 2 ? "10px" : "9px")
+        .style("fill", getCssVar('--color-text-secondary'))
+        .clone(true).lower()
+        .attr("stroke", "white"); // Halo for better readability
 
-        node.append("circle")
-            .attr("fill", d => d.children ? getCssVar('--color-secondary') : getCssVar('--color-primary'))
-            .attr("r", d => d.depth === 0 ? 6 : d.children ? 4.5 : 3.5);
+    // Add simple tooltip (optional enhancement)
+    const tooltip = d3.select("body").selectAll(".d3-tooltip").data([null]).join("div") // Ensure only one tooltip
+        .attr("class", "d3-tooltip")
+        .style("position", "absolute").style("visibility", "hidden")
+        .style("background", "rgba(0,0,0,0.8)").style("color", "white")
+        .style("padding", "5px 8px").style("border-radius", "4px")
+        .style("font-size", "12px").style("pointer-events", "none").style("z-index", "100");
 
-        node.append("text")
-            .attr("dy", "0.31em")
-            .attr("x", d => d.x < Math.PI === !d.children ? 6 : -6)
-            .attr("text-anchor", d => d.x < Math.PI === !d.children ? "start" : "end")
-            .attr("transform", d => d.x >= Math.PI ? "rotate(180)" : null)
-            .text(d => d.data.name)
-            .style("font-size", d => d.depth === 0 ? "12px" : d.depth === 1? "10px" : "9px")
-            .style("fill", getCssVar('--color-text-secondary'))
-            .clone(true).lower()
-            .attr("stroke", getCssVar('--color-surface'));
-    }
-
-
+    node.on("mouseover", (event, d) => {
+        tooltip.style("visibility", "visible")
+            .html(`<strong>${d.data.name}</strong><br>Type: ${d.data.type}<br>Value: ${formatCurrencyShort(d.data.value || d.value)}`)
+            .style("top", (event.pageY - 10) + "px")
+            .style("left", (event.pageX + 10) + "px");
+        d3.select(event.currentTarget).select("circle").attr("r", (d.children ? 4.5 : 3.5) + 2);
+    })
+    .on("mouseout", (event, d) => {
+        tooltip.style("visibility", "hidden");
+        d3.select(event.currentTarget).select("circle").attr("r", d.children ? 4.5 : 3.5);
+    });
+}
     // --- APP INITIALIZATION & EVENT LISTENERS ---
     function populateDatasetSelector() {
         // Group datasets by agency name (part before ' (')
