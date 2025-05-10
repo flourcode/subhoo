@@ -216,7 +216,6 @@ const FIPS_TO_STATE_NAME = {
     "45": "South Carolina", "46": "South Dakota", "47": "Tennessee", "48": "Texas", 
     "49": "Utah", "50": "Vermont", "51": "Virginia", "53": "Washington", 
     "54": "West Virginia", "55": "Wisconsin", "56": "Wyoming",
-    // Territories (optional, include if your data might have them)
     "60": "American Samoa", "66": "Guam", "69": "Northern Mariana Islands",
     "72": "Puerto Rico", "78": "U.S. Virgin Islands"
 };
@@ -306,79 +305,101 @@ const FIPS_TO_STATE_NAME = {
             throw error; // Re-throw to be caught by caller
         }
     }
+// In app.js (replace your existing getGeoDistributionInfo function)
 
 function getGeoDistributionInfo(model) {
+    console.log("getGeoDistributionInfo: Starting to process geographic data...");
     if (!model || !model.contracts || Object.keys(model.contracts).length === 0) {
+        console.log("getGeoDistributionInfo: No model or contracts data found.");
         return "Place of Performance data not available.";
     }
-    
-    const stateValues = {}; // Changed name from stateCounts to reflect it stores values
 
-    Object.values(model.contracts).forEach(contract => {
-        if (!contract || !contract.raw) return;
+    const stateValues = {}; // Stores aggregated contract values per FIPS code
+
+    Object.values(model.contracts).forEach((contract, index) => {
+        if (!contract || !contract.raw) {
+            // console.log(`Contract ${index} missing raw data.`);
+            return;
+        }
 
         // Try to get a state identifier from various possible fields
-        let stateIdentifier = contract.raw.popStateCode || // Often a FIPS code or 2-letter abbreviation
-                              contract.raw.prime_award_transaction_place_of_performance_state_fips_code ||
-                              contract.raw.place_of_performance_state_code ||
-                              contract.raw.subaward_primary_place_of_performance_state_code; // If checking subs later
+        let stateIdentifierRaw = contract.raw.popStateCode || // Primary field from your FIELD_MAP
+                               contract.raw.prime_award_transaction_place_of_performance_state_fips_code ||
+                               contract.raw.place_of_performance_state_code;
 
-        if (!stateIdentifier) return;
-        
+        if (!stateIdentifierRaw) {
+            // console.log(`Contract ${contract.id || 'ID missing'} (raw index ${index}): No state identifier found in raw data.`);
+            return;
+        }
+
         let fipsCode = null;
-        const identifierStr = String(stateIdentifier).trim().toUpperCase();
+        const identifierStr = String(stateIdentifierRaw).trim().toUpperCase();
+        // console.log(`Contract ${contract.id || 'ID missing'} (raw index ${index}): Raw State ID='${stateIdentifierRaw}', Processed ID='${identifierStr}'`);
 
-        // Attempt to normalize identifierStr to a FIPS code
-        if (/^\d{1,2}$/.test(identifierStr)) { // If it's 1 or 2 digits, assume FIPS
+        // Attempt to normalize identifierStr to a 2-digit FIPS code
+        if (/^\d{1,2}$/.test(identifierStr)) { // If it's 1 or 2 digits (e.g., "6", "12")
             fipsCode = identifierStr.padStart(2, '0');
-        } else if (FIPS_TO_STATE_NAME[identifierStr.padStart(2,'0')]) { // Check if it's already a valid FIPS key like "06"
-             fipsCode = identifierStr.padStart(2,'0');
-        } else if (identifierStr.length === 2) { // Is it a 2-letter state abbreviation?
+            // console.log(`  Normalized as direct FIPS: '${fipsCode}'`);
+        } else if (identifierStr.length === 2 && FIPS_TO_STATE_NAME[identifierStr]) { // If it's already a valid 2-char FIPS key (e.g. "06")
+             fipsCode = identifierStr;
+             // console.log(`  Recognized as existing FIPS key: '${fipsCode}'`);
+        }
+        // Add more normalization if needed based on your data, e.g. for 2-letter state codes to FIPS
+        // For example, if you often have "VA" instead of "51":
+        else if (identifierStr.length === 2 && !/^\d+$/.test(identifierStr)) { // Is it a 2-letter state abbreviation (e.g. "VA")?
             const foundEntry = Object.entries(FIPS_TO_STATE_NAME).find(
-                ([key, name]) => name.toUpperCase().startsWith(identifierStr) || // Match full name start
-                                name.split(' ').some(part => part.toUpperCase() === identifierStr) // Match abbreviation in multi-word names
+                ([key, name]) => name.toUpperCase().split(' ').some(part => part.length === 2 && part === identifierStr) || // Exact match for an abbreviation part
+                                name.match(new RegExp(`\\b${identifierStr}\\b`, 'i')) || // Try to match as an abbreviation
+                                (key.length === 2 && FIPS_TO_STATE_NAME[key].toUpperCase().substring(0,2) === identifierStr) // Match first two letters of full name
             );
-            if (foundEntry) {
+             if (foundEntry) {
                 fipsCode = foundEntry[0];
+                // console.log(`  Normalized 2-letter abbr '${identifierStr}' to FIPS: '${fipsCode}'`);
             } else {
-                 // Try to find based on common non-standard abbreviations if necessary
-                 // This part can be expanded if you have other common codes in your data.
-            }
-        } else { // Is it a full state name?
-             const foundEntry = Object.entries(FIPS_TO_STATE_NAME).find(
-                ([key, name]) => name.toUpperCase() === identifierStr
-            );
-            if (foundEntry) {
-                fipsCode = foundEntry[0];
+                // console.log(`  Could not normalize 2-letter abbr: '${identifierStr}'`);
             }
         }
 
-        if (fipsCode && FIPS_TO_STATE_NAME[fipsCode]) { // Check if we successfully got a valid FIPS code
+
+        if (fipsCode && FIPS_TO_STATE_NAME[fipsCode]) {
             if (!stateValues[fipsCode]) {
                 stateValues[fipsCode] = 0;
             }
             stateValues[fipsCode] += (contract.value || 0);
+            // console.log(`  Added value for FIPS '${fipsCode}' (${FIPS_TO_STATE_NAME[fipsCode]}). Total now: ${stateValues[fipsCode]}`);
+        } else if (fipsCode) {
+            // console.warn(`  FIPS code '${fipsCode}' (from raw '${stateIdentifierRaw}') not found in FIPS_TO_STATE_NAME map.`);
         } else {
-            // console.warn(`Could not map state identifier to FIPS: '${stateIdentifier}'`); // Optional: for debugging
+            // console.warn(`  Could not derive a valid FIPS code from raw state identifier: '${stateIdentifierRaw}'`);
         }
     });
 
     if (Object.keys(stateValues).length === 0) {
+        console.log("getGeoDistributionInfo: No state values aggregated.");
         return "No specific geographic concentration identified from available contract data.";
     }
 
     const sortedStateNames = Object.entries(stateValues)
         .sort(([, valueA], [, valueB]) => valueB - valueA)
-        .slice(0, 3)
-        .map(([fipsCode]) => FIPS_TO_STATE_NAME[fipsCode] || `Unknown Code (${fipsCode})`); // Map to name, provide fallback
+        .slice(0, 3) // Top 3 states by aggregated value
+        .map(([fipsCode]) => {
+            const stateName = FIPS_TO_STATE_NAME[fipsCode];
+            if (!stateName) {
+                console.warn(`getGeoDistributionInfo - Final Mapping: FIPS code '${fipsCode}' could not be mapped to a state name!`);
+                return `Code ${fipsCode}`; // Fallback if still not found
+            }
+            return stateName;
+        });
 
-    if (sortedStateNames.length === 0) { // Should be caught by previous check, but as a safeguard
+    console.log("getGeoDistributionInfo: Top states by value:", sortedStateNames);
+
+    if (sortedStateNames.length === 0) {
         return "No specific geographic concentration identified.";
     }
     
     return `Key Places of Performance include: ${sortedStateNames.join(', ')}.`;
 }
-   // --- DATA PROCESSOR ---
+ // --- DATA PROCESSOR ---
     function processRawDataset(rawRows, datasetType) { // datasetType is 'primes' or 'subs'
         return rawRows.map(row => {
             const cleanRow = { _sourceType: datasetType };
