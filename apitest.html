@@ -108,13 +108,21 @@
                     </ul>
                  <p id="object-class-none" class="hidden">No spending by object class data found for this selection.</p>
             </div>
+
+            <div id="award-category-spending-section"> <h3>Spending by Award Category for FY <span id="award-category-fy"></span></h3>
+                <ul id="award-category-list" class="item-list">
+                    </ul>
+                 <p id="award-category-none" class="hidden">No spending by award category data found for this selection.</p>
+            </div>
         </div>
     </div>
 
     <script>
         const BASE_URL = 'https://api.usaspending.gov';
-        const REFERENCE_YEAR_FOR_FY_CALC = new Date().getFullYear() + 1;
-        const FISCAL_YEARS = Array.from({ length: 10 }, (_, i) => REFERENCE_YEAR_FOR_FY_CALC - 1 - i);
+        // Use current year to make fiscal year list dynamic. FY2025 means period from Oct 1, 2024 to Sep 30, 2025.
+        // The API usually refers to the year the fiscal period ENDS in. So for data available now (May 2025), FY2025 is current/ongoing.
+        const CURRENT_CALENDAR_YEAR = new Date().getFullYear(); // 2025
+        const FISCAL_YEARS = Array.from({ length: 10 }, (_, i) => CURRENT_CALENDAR_YEAR - i); // e.g., 2025 down to 2016
 
         const loadAgenciesButton = document.getElementById('load-agencies-button');
         const agencySelect = document.getElementById('agency-select');
@@ -137,6 +145,11 @@
         const objectClassList = document.getElementById('object-class-list');
         const objectClassNoneMsg = document.getElementById('object-class-none');
 
+        // New elements for Award Category
+        const awardCategoryFySpan = document.getElementById('award-category-fy');
+        const awardCategoryList = document.getElementById('award-category-list');
+        const awardCategoryNoneMsg = document.getElementById('award-category-none');
+
         const errorMessageDiv = document.getElementById('error-message');
         const loader = document.getElementById('loader');
 
@@ -150,7 +163,7 @@
                 yearSelect.appendChild(option);
             });
             if (FISCAL_YEARS.length > 0) {
-                 yearSelect.value = FISCAL_YEARS[0];
+                 yearSelect.value = FISCAL_YEARS[0]; // Default to the most recent available FY in our list
             }
         }
         populateFiscalYears();
@@ -158,6 +171,11 @@
         function formatCurrency(amount) {
             if (amount === null || amount === undefined || isNaN(parseFloat(amount))) return "N/A";
             return '$' + Number(amount).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+        }
+        
+        function formatCategoryDisplay(categoryString) {
+            if (!categoryString) return 'Unknown Category';
+            return categoryString.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
         }
 
         function handleErrorDisplay(message, consoleError) {
@@ -245,7 +263,7 @@
             yearSelect.disabled = true;
             fetchSnapshotButton.disabled = true;
 
-            // Clear previous results before new fetch
+            // Clear previous results
             ['agency-mission', 'results-budget-authority', 'results-obligations'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.textContent = "N/A";
@@ -253,22 +271,27 @@
             agencyWebsite.textContent = "N/A"; agencyWebsite.href = "#";
             agencyCGJ.textContent = "N/A"; agencyCGJ.href = "#";
             agencyIconImg.classList.add('hidden');
-            objectClassList.innerHTML = "";
-            objectClassNoneMsg.classList.add('hidden');
+            objectClassList.innerHTML = ""; objectClassNoneMsg.classList.add('hidden');
+            awardCategoryList.innerHTML = ""; awardCategoryNoneMsg.classList.add('hidden');
+
 
             snapshotAgencyTitle.textContent = `${agencyDisplayName} - Snapshot for FY ${fiscalYear}`;
             selectedFySpan.textContent = fiscalYear;
             objectClassFySpan.textContent = fiscalYear;
+            awardCategoryFySpan.textContent = fiscalYear; // New
+
 
             const agencyOverviewEndpoint = `${BASE_URL}/api/v2/agency/${agencyCode}/`;
             const budgetaryResourcesEndpoint = `${BASE_URL}/api/v2/agency/${agencyCode}/budgetary_resources/?fiscal_year=${fiscalYear}`;
             const objectClassEndpoint = `${BASE_URL}/api/v2/agency/${agencyCode}/object_class/?fiscal_year=${fiscalYear}`;
+            const awardCategoryEndpoint = `${BASE_URL}/api/v2/agency/${agencyCode}/obligations_by_award_category/?fiscal_year=${fiscalYear}`; // New endpoint
 
             try {
-                const [overviewData, budgetDataResponse, objectClassData] = await Promise.all([
+                const [overviewData, budgetDataResponse, objectClassData, awardCategoryData] = await Promise.all([
                     makeApiCall(agencyOverviewEndpoint, null, true).catch(e => ({error: e, source: 'Overview'})),
                     makeApiCall(budgetaryResourcesEndpoint, null, true).catch(e => ({error: e, source: 'Budgetary Resources'})),
-                    makeApiCall(objectClassEndpoint, null, true).catch(e => ({error: e, source: 'Object Class'}))
+                    makeApiCall(objectClassEndpoint, null, true).catch(e => ({error: e, source: 'Object Class'})),
+                    makeApiCall(awardCategoryEndpoint, null, true).catch(e => ({error: e, source: 'Award Category'})) // New call
                 ]);
 
                 let hasErrors = false;
@@ -318,11 +341,9 @@
                 // Process Object Class Data
                 if (objectClassData && !objectClassData.error && objectClassData.results && objectClassData.results.length > 0) {
                     objectClassList.innerHTML = '';
-                     // **** CONSOLE LOG TO DEBUG OBJECT CLASS ITEM STRUCTURE ****
-                    console.log("First item from object_class results:", objectClassData.results[0]);
+                    console.log("First item from object_class results (for debugging field name):", objectClassData.results[0]);
                     objectClassData.results.forEach(item => {
                         const li = document.createElement('li');
-                        // Attempt to find the name, trying 'name' first, then 'object_class_name'
                         const objectClassName = item.name || item.object_class_name || 'Unknown Object Class';
                         li.innerHTML = `<strong>${objectClassName}:</strong> <span class="value">${formatCurrency(item.obligated_amount)}</span>`;
                         objectClassList.appendChild(li);
@@ -334,6 +355,28 @@
                 } else {
                     objectClassList.innerHTML = '';
                     objectClassNoneMsg.classList.remove('hidden');
+                }
+                
+                // Process Award Category Data (New)
+                if (awardCategoryData && !awardCategoryData.error && awardCategoryData.results && awardCategoryData.results.length > 0) {
+                    awardCategoryList.innerHTML = ''; 
+                    console.log("First item from award_category results (for debugging field names):", awardCategoryData.results[0]);
+                    awardCategoryData.results.forEach(item => {
+                        const li = document.createElement('li');
+                        const categoryName = formatCategoryDisplay(item.category); // Using field from your .tsx
+                        const obligatedAmount = item.aggregated_amount; // Using field from your .tsx
+                        
+                        li.innerHTML = `<strong>${categoryName}:</strong> <span class="value">${formatCurrency(obligatedAmount)}</span>`;
+                        awardCategoryList.appendChild(li);
+                    });
+                    awardCategoryNoneMsg.classList.add('hidden');
+                } else if (awardCategoryData && awardCategoryData.error) {
+                     console.error("Award Category Error:", awardCategoryData.error.message);
+                     awardCategoryList.innerHTML = '<li>Error loading award category data.</li>'; 
+                     hasErrors = true;
+                } else {
+                    awardCategoryList.innerHTML = '';
+                    awardCategoryNoneMsg.classList.remove('hidden');
                 }
                 
                 snapshotResultsDiv.classList.remove('hidden');
