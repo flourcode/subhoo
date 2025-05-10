@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Subhoo.com - Federal Prime-to-Sub Contractor Relationships</title>
+    
+    <!-- SEO Meta Tags (Preserved from original) -->
+    <meta name="description" content="Subhoo provides 100% free teaming intelligence for federal sales and BD professionals. Explore active subcontracting relationships and total deal flow data from USASpending.gov.">
+    <meta name="keywords" content="federal contracting, subcontractor intelligence, USASpending, government contracts, prime contractors, federal sales, business development">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://subhoo.com/">
+    
+    <!-- Preconnect to External Domains -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://www.googletagmanager.com">
+    <link rel="preconnect" href="https://d3js.org">
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link rel="preconnect" href="https://unpkg.com">
+    
+    <!-- Preload Critical Resources -->
+    <link rel="preload" href="newstyle.css" as="style">
+    
+    <!-- Favicon -->
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <meta name="theme-color" content="#6d28d9" class="theme-color">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://subhoo.com/" />
+    <meta property="og:title" content="Subhoo - Federal SubContractor Intelligence" />
+    <meta property="og:description" content="100% free teaming intelligence for federal sales and BD professionals. Explore active subcontracting relationships and total deal flow data from USASpending.gov." />
+    <meta property="og:image" content="https://subhoo.com/subhoo.png">
+    <meta property="og:locale" content="en_US">
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Subhoo - Federal SubContractor Intelligence" />
+    <meta name="twitter:description" content="100% free teaming intelligence for federal sales and BD professionals. Explore active subcontracting relationships and total deal flow." />
+    <meta name="twitter:image" content="https://subhoo.com/subhoo.png" />
+    
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="newstyle.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-2W258XTWJG"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-2W258XTWJG');
+    </script>
+    
+    <!-- JavaScript Libraries (Deferred) -->
+    <script src="https://d3js.org/d3.v7.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3-sankey@0.12.3/dist/d3-sankey.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js" defer></script>
+    <script src="https://unpkg.com/topojson@3" defer></script>
+    <script src="script.js" defer></script>
+</head>
+<body>
+    <!-- Loading Overlay -->
+    <div id="loading" class="loading-overlay">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Main Layout -->
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside id="sidebar" class="sidebar">
+            <div class="sidebar-header">
+                <h2>Filters</h2>
+                <button id="sidebar-close" class="icon-button" aria-label="Close sidebar">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="filter-section">
+                <h3>Visualization</h3>
+                <div class="viz-toggle-container">
+                    <button class="viz-toggle-btn active" data-viz="sankey" aria-pressed="true">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M5 8H19M5 12H19M5 16H19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                        Contract Flow
+                    </button>
+                    <button class="viz-toggle-btn" data-viz="network" aria-pressed="false">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="12" cy="12" r="2" stroke="currentColor" stroke-width="2"/>
+                            <path d="M16.24 7.76C17.9 9.42 17.9 12.09 16.24 13.75M7.76 13.75C6.1 12.09 6.1 9.42 7.76 7.76M19.07 4.93C22.02 7.88 22.02 12.6 19.07 15.54M4.93 15.54C1.98 12.6 1.98 7.88 4.93 4.93" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                        Network
+                    </button>
+                    <button class="viz-toggle-btn" data-viz="choropleth" aria-pressed="false">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1 6V22L8 18L16 22L23 18V2L16 6L8 2L1 6Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M8 2V18" stroke="currentColor" stroke-width="2"/>
+                            <path d="M16 6V22" stroke="currentColor" stroke-width="2"/>
+                        </svg>
+                        Map
+                    </button>
+                </div>
+            </div>
+            
+            <div class="filter-section" data-section="agency">
+                <h3>Select Agency</h3>
+                <div class="filter-item">
+                    <select id="agency-selector" class="filter-select" aria-label="Select funding agency">
+                        <option value="">Select Agency</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="filter-section" data-section="office">
+                <h3>Funding Office</h3>
+                <div class="filter-item">
+                    <select id="office-filter" class="filter-select" aria-label="Filter by office">
+                        <option value="">All Offices</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="filter-section hidden-filter" data-section="subagency">
+                <h3>Sub Agency</h3>
+                <div class="filter-item">
+                    <select id="subagency-filter" class="filter-select" aria-label="Filter by subagency">
+                        <option value="">All SubAgencies</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="filter-section" data-section="search">
+                <h3>Search</h3>
+                <div class="search-container">
+                    <input type="search" id="data-search" class="filter-search" placeholder="Search name, NAICS..." aria-label="Search contracts">
+                    <button id="search-clear-btn" class="search-clear-btn" aria-label="Clear search">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="filter-section" data-section="levels">
+                <h3>Visible Node Levels</h3>
+                <div class="node-level-filter" id="level-filters">
+                    <button class="level-btn active" data-level="agency" aria-pressed="true">Agency</button>
+                    <button class="level-btn active" data-level="subagency" aria-pressed="true">Dept</button>
+                    <button class="level-btn active" data-level="office" aria-pressed="true">Office</button>
+                    <button class="level-btn active" data-level="prime" aria-pressed="true">Prime</button>
+                    <button class="level-btn active" data-level="sub" aria-pressed="true">Sub</button>
+                </div>
+            </div>
+            
+            <div class="filter-section" data-section="min-value">
+                <h3>Minimum Contract Value</h3>
+                <div class="slider-container">
+                    <input type="range" id="min-value" min="0" max="100000000" step="100000" value="2000000" class="filter-slider" aria-labelledby="min-value-display">
+                    <div class="slider-labels">
+                        <span id="min-value-display">$2,000,000</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="filter-section" data-section="top-n">
+                <h3>Top Contracts</h3>
+                <div class="filter-item">
+                    <select id="top-n-selector" class="filter-select" aria-label="Show only top contracts">
+                        <option value="0">Show All</option>
+                        <option value="10">Top 10</option>
+                        <option value="25">Top 25</option>
+                        <option value="50">Top 50</option>
+                        <option value="100">Top 100</option>
+                    </select>
+                </div>
+            </div>
+            
+            <button id="reset-filters" class="reset-btn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M3 12C3 16.97 7.03 21 12 21C16.97 21 21 16.97 21 12C21 7.03 16.97 3 12 3C9.46 3 7.18 4.01 5.5 5.67L3 3V9H9L6.62 6.62C7.88 5.37 9.83 4.5 12 4.5C16.14 4.5 19.5 7.86 19.5 12C19.5 16.14 16.14 19.5 12 19.5C7.86 19.5 4.5 16.14 4.5 12H3Z" fill="currentColor"/>
+                </svg>
+                Reset All Filters
+            </button>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="app-header">
+                <div class="header-left">
+                    <button id="sidebar-toggle" class="toggle-sidebar-btn" aria-label="Toggle sidebar">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M4 6H20M4 12H20M4 18H20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                    <div class="title-section">
+                        <h1><a href="https://subhoo.com">Subhoo.</a></h1>
+                        <p>Subcontractor Intelligence</p>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <button id="share-button" class="icon-button" aria-label="Share this page" title="Share">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="18" cy="5" r="3" stroke="currentColor" stroke-width="2"/>
+                            <circle cx="6" cy="12" r="3" stroke="currentColor" stroke-width="2"/>
+                            <circle cx="18" cy="19" r="3" stroke="currentColor" stroke-width="2"/>
+                            <line x1="15.3" y1="6.85" x2="8.7" y2="10.15" stroke="currentColor" stroke-width="2"/>
+                            <line x1="15.3" y1="17.15" x2="8.7" y2="13.85" stroke="currentColor" stroke-width="2"/>
+                        </svg>
+                    </button>
+                    <button id="theme-toggle" class="icon-button" aria-label="Switch to Light Mode" aria-pressed="false" title="Switch Theme">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                </div>
+            </header>
+
+            <section class="active-filters-display" id="active-filters" aria-labelledby="active-filters-heading" aria-live="polite">
+                <h2 id="active-filters-heading" class="visually-hidden">Currently Applied Filters</h2>
+                <h2 class="agency-filter-title">Loading Agency...</h2>
+                <div class="filter-chips">
+                    <div class="filter-chip">
+                        <span class="filter-label">Min Value:</span>
+                        <span class="filter-value">$2M</span>
+                    </div>
+                </div>
+            </section>
+
+            <nav id="breadcrumb" class="breadcrumb">
+                <a href="#" data-action="reset">All Data</a>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span>Current Focus</span>
+            </nav>
+
+            <section class="stats-cards">
+                <div class="stats-card">
+                    <h3>Contract Value</h3>
+                    <p id="total-value" class="value-large">$0</p>
+                </div>
+                <div class="stats-card">
+                    <h3 id="prime-chart-title">Top Prime Contractors</h3>
+                    <div id="top-primes-bar-chart" class="chart-container"></div>
+                </div>
+                <div class="stats-card">
+                    <h3 id="sub-chart-title">Top Subcontractors</h3>
+                    <div id="top-subs-bar-chart" class="chart-container"></div>
+                </div>
+                <div class="stats-card">
+                    <h3>NAICS Distribution</h3>
+                    <div id="naics-donut-chart" class="chart-container"></div>
+                </div>
+            </section>
+
+            <section class="visualization-container">
+                <div class="visualization">
+                    <div id="chart" class="viz-panel active" data-viz="sankey"></div>
+                    <div id="network-chart" class="viz-panel" data-viz="network"></div>
+                    <div id="map-chart" class="viz-panel" data-viz="choropleth"></div>
+                </div>
+
+                <div class="legend" id="legend"></div>
+                
+                <div class="insights-container">
+                    <h3>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 22C12 22 20 18 20 12V5L12 2L4 5V12C4 18 12 22 12 22Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        Quick Insights
+                    </h3>
+                    <ul id="insights-list">
+                        <li class="placeholder">Generating insights...</li>
+                    </ul>
+                </div>
+            </section>
+
+            <section class="guide-section">
+                <div class="how-to-guide">
+                    <h2>Quickstart Guide</h2>
+                    <div class="guide-steps">
+                        <div class="guide-step">
+                            <div class="step-icon">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M19 3H5C3.89543 3 3 3.89543 3 5V19C3 20.1046 3.89543 21 5 21H19C20.1046 21 21 20.1046 21 19V5C21 3.89543 20.1046 3 19 3Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                    <path d="M8 21V10" stroke="currentColor" stroke-width="2"/>
+                                    <path d="M16 21V3" stroke="currentColor" stroke-width="2"/>
+                                    <path d="M12 21V14" stroke="currentColor" stroke-width="2"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h4>1. Select Agency</h4>
+                                <p>Choose your target agency from the sidebar dropdown.</p>
+                            </div>
+                        </div>
+                        <div class="guide-step">
+                            <div class="step-icon">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M1 12C1 12 5 4 12 4C19 4 23 12 23 12C23 12 19 20 12 20C5 20 1 12 1 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                    <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h4>2. Choose View</h4>
+                                <p>Pick a chart type (Flow, Network, Map) to visualize data.</p>
+                            </div>
+                        </div>
+                        <div class="guide-step">
+                            <div class="step-icon">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M22 3L2 3L10 12.46V19L14 21V12.46L22 3Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h4>3. Filter Data</h4>
+                                <p>Use sliders & dropdowns to refine your view.</p>
+                            </div>
+                        </div>
+                        <div class="guide-step">
+                            <div class="step-icon">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                                    <path d="M9.09 9C9.3251 8.33167 9.78915 7.76811 10.4 7.40913C11.0108 7.05016 11.7289 6.91894 12.4272 7.03871C13.1255 7.15849 13.7588 7.52152 14.2151 8.06353C14.6713 8.60553 14.9211 9.29152 14.92 10C14.92 12 11.92 13 11.92 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <circle cx="12" cy="17" r="1" fill="currentColor"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h4>4. Explore & Export</h4>
+                                <p>Click nodes/states to focus. Export via CSV buttons.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="data-section">
+                <div id="data-table-container" class="data-table-container">
+                    <div class="data-table-header">
+                        <h3>Detailed Award Data</h3>
+                        <div class="data-table-controls">
+                            <span id="data-count">Loading...</span>
+                            <button id="export-csv" class="btn">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M21 15V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M7 10L12 15L17 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M12 15V3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                                Download CSV
+                            </button>
+                        </div>
+                    </div>
+                    <div class="data-table-wrapper">
+                        <!-- Table content will be dynamically generated -->
+                    </div>
+                </div>
+            </section>
+
+            <section class="expiring-contracts-section">
+                <div class="expiring-contracts">
+                    <div class="section-header">
+                        <h3>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M10.29 3.86L1.82 18C1.64537 18.3305 1.55296 18.7022 1.55899 19.0779C1.56503 19.4537 1.66934 19.8218 1.86828 20.1448C2.06722 20.4678 2.35427 20.7326 2.69576 20.9101C3.03725 21.0875 3.42261 21.1702 3.81 21.15H20.19C20.5774 21.1702 20.9627 21.0875 21.3042 20.9101C21.6457 20.7326 21.9328 20.4678 22.1317 20.1448C22.3307 19.8218 22.435 19.4537 22.441 19.0779C22.447 18.7022 22.3546 18.3305 22.18 18L13.71 3.86C13.5217 3.54169 13.2585 3.27709 12.9442 3.08723C12.6299 2.89737 12.2745 2.79072 11.91 2.78C11.5455 2.76928 11.1867 2.85477 10.8648 3.03001C10.5428 3.20526 10.2674 3.46174 10.064 3.772" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M12 9V13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <circle cx="12" cy="17" r="1" fill="currentColor"/>
+                            </svg>
+                            Expiring Contracts
+                        </h3>
+                        <button id="export-expiring-csv" class="btn">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M21 15V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M7 10L12 15L17 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M12 15V3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            Download CSV
+                        </button>
+                    </div>
+                    
+                    <div id="expiring-value-by-month-chart" class="chart-container"></div>
+                    
+                    <p class="expiring-note">
+                        Note: Since we update monthly and dates may change, we've provided the link to the contract on USAspending for verification.
+                    </p>
+                    
+                    <div class="expiring-table-wrapper">
+                        <div id="expiring-table-content">
+                            <p class="loading-placeholder">Checking for expiring contracts...</p>
+                        </div>
+                    </div>
+                    
+                    <div class="load-more-container">
+                        <button id="load-more-expiring" class="btn">Load More</button>
+                    </div>
+                </div>
+            </section>
+
+            <section class="analysis-section">
+                <div class="analysis-tables">
+                    <div class="analysis-table-container" id="top-primes-container">
+                        <h3>Top Prime Contractors</h3>
+                        <div class="analysis-table-content">
+                            <p class="loading-placeholder">Loading top primes...</p>
+                        </div>
+                    </div>
+                    <div class="analysis-table-container" id="top-subs-container">
+                        <h3>Top Subcontractors</h3>
+                        <div class="analysis-table-content">
+                            <p class="loading-placeholder">Loading top subs...</p>
+                        </div>
+                    </div>
+                    <div class="analysis-table-container" id="naics-container">
+                        <h3>Top NAICS Codes</h3>
+                        <div class="analysis-table-content">
+                            <p class="loading-placeholder">Loading NAICS codes...</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Info Panel -->
+    <div id="info-panel" class="info-panel">
+        <button id="info-panel-close" class="close-btn" aria-label="Close panel">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </button>
+        <h3 id="info-panel-title">Entity Details</h3>
+        <dl id="info-panel-content">
+            <!-- Dynamic content will be inserted here -->
+        </dl>
+        <a href="#" class="external-link" id="info-panel-link" target="_blank" rel="noopener noreferrer">
+            View on USAspending.gov
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M18 13V19C18 19.5304 17.7893 20.0391 17.4142 20.4142C17.0391 20.7893 16.5304 21 16 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V8C3 7.46957 3.21071 6.96086 3.58579 6.58579C3.96086 6.21071 4.46957 6 5 6H11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M15 3H21V9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M10 14L21 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </a>
+    </div>
+
+    <!-- Tooltip -->
+    <div id="tooltip" class="tooltip" role="tooltip" aria-hidden="true"></div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="connect-card">
+                <div class="connect-card-content">
+                    <img src="markgs.jpg" alt="Mark Profile Picture" class="profile-pic">
+                    <div class="user-info">
+                        <h3 class="user-name">Hi, I'm Mark. Let's Connect!</h3>
+                        <p class="user-skills">Let me hear your suggestions and great ideas.</p>
+                    </div>
+                </div>
+                <div class="action-buttons">
+                    <a href="mailto:mark@subhoo.com" class="btn-primary">Get in touch</a>
+                    <a href="https://www.linkedin.com/in/markflournoy/" class="btn-secondary" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+                </div>
+            </div>
+
+            <div class="footer-columns">
+                <div class="footer-column">
+                    <h3>About Subhoo</h3>
+                    <p>Subhoo shows hidden partnerships between Federal Primes and Subs. Follow the money, find partners, or track competitors.</p>
+                    
+                    <h4>Who it's for:</h4>
+                    <ul class="who-list">
+                        <li>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M17 21V19C17 17.9391 16.5786 16.9217 15.8284 16.1716C15.0783 15.4214 14.0609 15 13 15H5C3.93913 15 2.92172 15.4214 2.17157 16.1716C1.42143 16.9217 1 17.9391 1 19V21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M23 21V19C22.9993 18.1137 22.7044 17.2528 22.1614 16.5523C21.6184 15.8519 20.8581 15.3516 20 15.13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M16 3.13C16.8604 3.3503 17.623 3.8507 18.1676 4.55231C18.7122 5.25392 19.0078 6.11683 19.0078 7.005C19.0078 7.89317 18.7122 8.75608 18.1676 9.45769C17.623 10.1593 16.8604 10.6597 16 10.88" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            Sales & BD Teams <span class="detail">(Find Opportunities)</span>
+                        </li>
+                        <li>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M20.59 13.41L13.42 20.58C13.2343 20.766 13.0137 20.9135 12.7709 21.0141C12.5281 21.1148 12.2678 21.1666 12.005 21.1666C11.7422 21.1666 11.4819 21.1148 11.2391 21.0141C10.9963 20.9135 10.7757 20.766 10.59 20.58L2 12V2H12L20.59 10.59C20.9625 10.9647 21.1716 11.4716 21.1716 12C21.1716 12.5284 20.9625 13.0353 20.59 13.41Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <circle cx="7" cy="7" r="1" fill="currentColor"/>
+                            </svg>
+                            Small Biz <span class="detail">(Target Primes)</span>
+                        </li>
+                        <li>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M9 22V12H15V22" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            Primes <span class="detail">(Analyze Competition)</span>
+                        </li>
+                        <li>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <rect x="2" y="3" width="20" height="18" rx="2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M12 8H17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M12 12H17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M12 16H17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <circle cx="7" cy="8" r="1" fill="currentColor"/>
+                                <circle cx="7" cy="12" r="1" fill="currentColor"/>
+                                <circle cx="7" cy="16" r="1" fill="currentColor"/>
+                            </svg>
+                            Feds <span class="detail">(Track Goals)</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="footer-column">
+                    <h3>Resources</h3>
+                    <ul>
+                        <li><a href="https://www.usaspending.gov/explorer" target="_blank" rel="noopener noreferrer">USAspending Explorer</a></li>
+                        <li><a href="https://sam.gov/content/home" target="_blank" rel="noopener noreferrer">SAM.gov</a></li>
+                        <li><a href="https://www.sba.gov/" target="_blank" rel="noopener noreferrer">SBA.gov</a></li>
+                        <li><a href="https://orangeslices.ai/" target="_blank" rel="noopener noreferrer">Orange Slices AI</a></li>
+                    </ul>
+
+                    <h3>On the Shelf</h3>
+                    <ul>
+                        <li><a href="https://www.amazon.com/s?k=Fanatical+Prospecting+Jeb+Blount" target="_blank" rel="noopener noreferrer">Fanatical Prospecting</a></li>
+                        <li><a href="https://www.amazon.com/s?k=Little+Red+Book+of+Selling+Jeffrey+Gitomer" target="_blank" rel="noopener noreferrer">Little Red Book of Selling</a></li>
+                        <li><a href="https://a.co/d/6FJ4gz9" target="_blank" rel="noopener noreferrer">Storytelling with Data</a></li>
+                    </ul>
+                    
+                    <div class="aws-badge">
+                        <a href="https://aws.amazon.com/what-is-cloud-computing" target="_blank" rel="noopener noreferrer">
+                            <img src="https://d0.awsstatic.com/logos/powered-by-aws-white.png" alt="Powered by AWS Cloud Computing">
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer-bottom">
+            <p>&copy; 2025 Subhoo | Built on AWS | Data from USAspending.gov</p>
+            <nav class="footer-nav">
+                <a href="https://subhoo.com">Home</a>
+                <a href="https://subhoo.com/howto.html">How To Subhoo</a>
+                <a href="https://subhoo.com/privacy.html">Privacy</a>
+                <a href="https://subhoo.com/about.html">About</a>
+                <a href="https://subhoo.com/terms.html">Terms</a>
+            </nav>
+            
+            <div class="shoutouts">
+                <h4>A few Shoutouts</h4>
+                <div class="shoutouts-grid">
+                    <div class="shoutout-item">
+                        <span class="shoutout-topic">Dark Mode</span>
+                        <span class="shoutout-attribution"><a href="#">@dongkyup</a></span> 
+                    </div>
+                    <div class="shoutout-item">
+                        <span class="shoutout-topic">So What?!</span>
+                        <span class="shoutout-attribution"><a href="#">@rodstedt</a></span>
+                    </div>
+                    <div class="shoutout-item">
+                        <span class="shoutout-topic">Why?</span>
+                        <span class="shoutout-attribution"><a href="#">@mpben</a></span>
+                    </div>
+                    <div class="shoutout-item">
+                        <span class="shoutout-topic">Think Big</span>
+                        <span class="shoutout-attribution"><a href="#">@ecbrown</a></span>
+                    </div>
+                    <div class="shoutout-item">
+                        <span class="shoutout-topic">Dive Deep</span>
+                        <span class="shoutout-attribution"><a href="#">@datkd</a></span>
+                    </div>
+                    <div class="shoutout-item">
+                        <span class="shoutout-topic">True Believer</span>
+                        <span class="shoutout-attribution"><a href="#">@dave</a></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <div id="viz-announcer" class="sr-only" aria-live="polite"></div>
+</body>
+</html>
