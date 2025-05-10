@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agency Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-sankey/0.12.3/d3-sankey.min.js"></script> <!-- Keep for now, though not explicitly in new design -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/date-fns/2.30.0/date-fns.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <script src="https://unpkg.com/topojson@3"></script>
+    <link rel="stylesheet" href="satstyle.css"> <!-- New CSS file -->
+</head>
+<body>
+    <div class="app-layout">
+        <aside class="side-panel">
+            <div class="panel-header">
+                <h1>Agency Dashboard</h1>
+                <button id="theme-toggle-btn" title="Toggle Theme">🌓</button>
+            </div>
+            <div class="controls-group">
+                <label for="dataset-select">Select Agency:</label>
+                <select id="dataset-select" class="input-select"></select>
+            </div>
+            <div class="controls-group">
+                <label for="search-input">Search:</label>
+                <input type="search" id="search-input" class="input-text" placeholder="Keywords, contractors...">
+            </div>
+            <div class="controls-group">
+                <label for="sub-agency-filter">Sub-Agency:</label>
+                <select id="sub-agency-filter" class="input-select">
+                    <option value="">All Sub-Agencies</option>
+                </select>
+            </div>
+            <div class="controls-group">
+                <label for="naics-filter">NAICS Code:</label>
+                <select id="naics-filter" class="input-select">
+                    <option value="">All NAICS</option>
+                </select>
+            </div>
+             <div class="controls-group">
+                <button id="apply-filters-btn" class="button primary-button">Apply Filters / Refresh</button>
+            </div>
+            <div id="status-banner" class="status-info">Select an agency to start.</div>
+            <div class="app-footer">
+                <p>&copy; <span id="current-year"></span> Subhoo Insights</p>
+            </div>
+        </aside>
+        <main class="main-content-area">
+            <!-- Dashboard content will be rendered here by JavaScript -->
+            <div id="dashboard-container" class="dashboard-loading">
+                <p>Loading data...</p>
+            </div>
+        </main>
+    </div>
+    <script src="satscript.js"></script> <!-- New main JS file -->
+</body>
+</html>
