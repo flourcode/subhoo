@@ -92,7 +92,46 @@
     /* Typography */
     --font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
+:root {
+    /* Add a consistent chart color palette */
+    --chart-color-1: #4361ee; /* Primary blue */
+    --chart-color-2: #3a0ca3; /* Deep purple */
+    --chart-color-3: #7209b7; /* Vibrant purple */
+    --chart-color-4: #f72585; /* Hot pink */
+    --chart-color-5: #4cc9f0; /* Light blue */
+    --chart-color-6: #4895ef; /* Sky blue */
+    --chart-color-7: #560bad; /* Deep violet */
+    --chart-color-8: #b5179e; /* Magenta */
+    
+    /* Sequential/gradient palette for maps */
+    --map-color-1: #caf0f8; /* Lightest */
+    --map-color-2: #90e0ef;
+    --map-color-3: #48b5c4;
+    --map-color-4: #0096c7;
+    --map-color-5: #0077b6;
+    --map-color-6: #023e8a; /* Darkest */
+}
 
+/* Dark mode overrides */
+:root.dark-theme {
+    /* Brighter versions for dark mode */
+    --chart-color-1: #4cc9f0; /* Light blue */
+    --chart-color-2: #4895ef; /* Sky blue */
+    --chart-color-3: #4361ee; /* Primary blue */
+    --chart-color-4: #3f37c9; /* Royal blue */
+    --chart-color-5: #f72585; /* Hot pink */
+    --chart-color-6: #b5179e; /* Magenta */
+    --chart-color-7: #7209b7; /* Vibrant purple */
+    --chart-color-8: #560bad; /* Deep violet */
+    
+    /* Darker base but brighter highlights for maps in dark mode */
+    --map-color-1: #023e8a; /* Darkest */
+    --map-color-2: #0077b6;
+    --map-color-3: #0096c7;
+    --map-color-4: #00b4d8;
+    --map-color-5: #48cae4;
+    --map-color-6: #90e0ef; /* Lightest */
+}
 /* Dark mode color overrides */
 :root.dark-theme {
     --primary-500: #8a63d2; /* Lighter shade for better contrast on dark */
@@ -828,4 +867,41 @@ select:focus-visible {
     .chart-container {
         break-inside: avoid;
     }
+}
+.d3-tooltip {
+    position: absolute;
+    padding: 8px 12px;
+    background-color: rgba(0, 0, 0, 0.8);
+    color: white;
+    border-radius: 4px;
+    font-size: 12px;
+    pointer-events: none;
+    z-index: 100;
+    max-width: 200px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.d3-tooltip div {
+    margin-bottom: 4px;
+}
+/* Add this to your CSS */
+.stat-value {
+    color: var(--chart-color-1); /* Match the primary chart color */
+}
+
+.dashboard-agency {
+    color: var(--chart-color-2); /* Match the secondary chart color */
+}
+
+.arr-value {
+    color: var(--chart-color-3); /* Match the tertiary chart color */
+}
+
+.primary-button {
+    background-color: var(--chart-color-1); /* Match the primary chart color */
+}
+
+.primary-button:hover {
+    background-color: var(--chart-color-2); /* Match the secondary chart color */
 }

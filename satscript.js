@@ -123,16 +123,27 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const S3_BASE_URL = 'https://subhoodata.s3.us-east-1.amazonaws.com/data/';
-    const CHART_COLORS = [
-        'var(--chart-color-1)',
-        'var(--chart-color-2)',
-        'var(--chart-color-3)',
-        'var(--chart-color-4)',
-        'var(--chart-color-5)',
-        'var(--chart-color-6)',
-        'var(--chart-color-7)',
-        'var(--chart-color-8)',
-    ];
+// Update the CHART_COLORS array to use our new palette
+const CHART_COLORS = [
+    'var(--chart-color-1)',
+    'var(--chart-color-2)',
+    'var(--chart-color-3)',
+    'var(--chart-color-4)',
+    'var(--chart-color-5)',
+    'var(--chart-color-6)',
+    'var(--chart-color-7)',
+    'var(--chart-color-8)',
+];
+
+// Create a consistent gradient palette for maps and heatmaps
+const GRADIENT_COLORS = [
+    'var(--map-color-1)',
+    'var(--map-color-2)',
+    'var(--map-color-3)',
+    'var(--map-color-4)',
+    'var(--map-color-5)',
+    'var(--map-color-6)',
+];
 
     // --- DOM Elements ---
     const datasetSelect = document.getElementById('dataset-select');
@@ -1381,7 +1392,7 @@ if (document.getElementById('main-contractors-chart')) {
                 datasets: [{
                     label: 'Value',
                     data: contractorsChartData.values, 
-                    backgroundColor: CHART_COLORS
+                    backgroundColor: contractorsChartData.labels.map((_, i) => CHART_COLORS[i % CHART_COLORS.length])
                 }]
             }, 
             options: {
@@ -1398,11 +1409,17 @@ if (document.getElementById('main-contractors-chart')) {
                 },
                 scales: {
                     x: {
+                        grid: {
+                            color: getCssVar('--color-border') || '#e1e4e8'
+                        },
                         ticks: {
                             callback: v => formatCurrencyShort(v)
                         }
                     },
                     y: {
+                        grid: {
+                            display: false
+                        },
                         ticks: {
                             font: { size: 11 }
                         }
@@ -1424,7 +1441,9 @@ if (document.getElementById('main-naics-chart')) {
                 labels: naicsChartData.labels, 
                 datasets: [{
                     data: naicsChartData.values, 
-                    backgroundColor: CHART_COLORS
+                    backgroundColor: naicsChartData.labels.map((_, i) => CHART_COLORS[i % CHART_COLORS.length]),
+                    borderColor: getCssVar('--color-surface') || 'white',
+                    borderWidth: 1
                 }]
             }, 
             options: {
@@ -1438,7 +1457,7 @@ if (document.getElementById('main-naics-chart')) {
                             font: { size: 11 },
                             generateLabels: c => c.data.labels.map((l, i) => ({
                                 text: `${l} (${c.data.datasets[0].data[i]}%)`,
-                                fillStyle: c.data.datasets[0].backgroundColor[i % CHART_COLORS.length]
+                                fillStyle: CHART_COLORS[i % CHART_COLORS.length]
                             }))
                         }
                     },
@@ -1466,13 +1485,13 @@ if (document.getElementById('main-tav-tcv-chart')) {
                     {
                         label: 'TAV',
                         data: tavTcvData.map(d => d.tav),
-                        backgroundColor: CHART_COLORS[0],
+                        backgroundColor: getCssVar('--chart-color-4') || '#f72585',
                         stack: 's0'
                     },
                     {
                         label: 'TCV Remainder',
                         data: tavTcvData.map(d => d.tcvRemainder),
-                        backgroundColor: CHART_COLORS[4],
+                        backgroundColor: getCssVar('--chart-color-1') || '#4361ee',
                         stack: 's0'
                     }
                 ]
@@ -1494,7 +1513,13 @@ if (document.getElementById('main-tav-tcv-chart')) {
                     }
                 }, 
                 plugins: {
-                    legend: { position: 'bottom' },
+                    legend: { 
+                        position: 'bottom',
+                        labels: {
+                            boxWidth: 12,
+                            font: { size: 11 }
+                        }
+                    },
                     tooltip: {
                         mode: 'index',
                         callbacks: {
@@ -1513,12 +1538,18 @@ if (document.getElementById('main-tav-tcv-chart')) {
                 scales: {
                     x: {
                         stacked: true,
+                        grid: {
+                            color: getCssVar('--color-border') || '#e1e4e8'
+                        },
                         ticks: {
                             callback: v => formatCurrencyShort(v)
                         }
                     },
                     y: {
                         stacked: true,
+                        grid: {
+                            display: false
+                        },
                         ticks: {
                             font: { size: 11 }
                         }
@@ -1566,214 +1597,287 @@ console.log("renderMainDashboard: D3 visualizations attempted.");
             updateStatus('Error rendering dashboard.', 'error');
         }
     }
+function renderMap(mapData, targetDivId) {
+    const container = document.getElementById(targetDivId);
+    if (!container) { 
+        console.error(`Map container #${targetDivId} not found.`); 
+        return; 
+    }
+    
+    container.innerHTML = ''; // Clear previous
 
-    // --- D3 Map Visualization ---
-    function renderMap(mapData, targetDivId) {
-        const container = document.getElementById(targetDivId);
-        if (!container) { 
-            console.error(`Map container #${targetDivId} not found.`); 
-            return; 
-        }
-        
-        container.innerHTML = ''; // Clear previous
-
-        const width = container.clientWidth || 600;
-        const height = container.clientHeight || 400;
-        
-        if (width <= 0 || height <= 0 || !mapData || Object.keys(mapData).length === 0) {
-            container.innerHTML = '<div class="loading-placeholder">No geographic data to display.</div>';
-            return;
-        }
-
-        const svg = d3.select(container)
-            .append("svg")
-            .attr("width", width)
-            .attr("height", height)
-            .attr("viewBox", `0 0 ${width} ${height}`);
-        
-        const values = Object.values(mapData).map(d => d.value);
-        const colorScale = d3.scaleSequential(d3.interpolateBlues)
-            .domain([0, d3.max(values) || 1]);
-        
-        const path = d3.geoPath();
-
-        // Tooltip
-        const tooltip = d3.select("body")
-            .append("div")
-            .attr("class", "d3-tooltip")
-            .style("visibility", "hidden");
-
-        d3.json("https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json").then(us => {
-            const states = topojson.feature(us, us.objects.states);
-            const projection = d3.geoAlbersUsa().fitSize([width, height], states);
-            path.projection(projection);
-
-            svg.append("g")
-                .selectAll("path")
-                .data(states.features)
-                .join("path")
-                .attr("fill", d => { 
-                    const fips = d.id.padStart(2, '0'); 
-                    return mapData[fips] ? colorScale(mapData[fips].value) : '#e1e4e8'; 
-                })
-                .attr("d", path)
-                .attr("stroke", "white")
-                .attr("stroke-width", 0.5)
-                .on("mouseover", function(event, d) {
-                    d3.select(this).attr("fill-opacity", 0.7);
-                    const fips = d.id.padStart(2, '0');
-                    const stateInfo = mapData[fips];
-                    tooltip.style("visibility", "visible")
-                           .html(`${d.properties.name}<br>Value: ${stateInfo ? formatCurrencyShort(stateInfo.value) : 'N/A'}<br>Contracts: ${stateInfo ? stateInfo.count : 'N/A'}`);
-                })
-                .on("mousemove", (event) => tooltip
-                    .style("top", (event.pageY - 10) + "px")
-                    .style("left", (event.pageX + 10) + "px"))
-                .on("mouseout", function() { 
-                    d3.select(this).attr("fill-opacity", 1); 
-                    tooltip.style("visibility", "hidden"); 
-                });
-        }).catch(error => {
-            console.error("Error loading map topojson:", error);
-            container.innerHTML = '<div class="loading-placeholder">Error loading map data.</div>';
-        });
-        
-        // Add a simple legend
-        const legendData = colorScale.ticks(5)
-            .map(tick => ({color: colorScale(tick), value: tick}));
-        
-        const legend = svg.append("g")
-            .attr("transform", `translate(${width - 120}, ${height - 100})`);
-        
-        legend.selectAll("rect")
-            .data(legendData)
-            .enter()
-            .append("rect")
-            .attr("y", (d, i) => i * 15)
-            .attr("width", 15)
-            .attr("height", 15)
-            .attr("fill", d => d.color);
-        
-        legend.selectAll("text")
-            .data(legendData)
-            .enter()
-            .append("text")
-            .attr("x", 20)
-            .attr("y", (d, i) => i * 15 + 12)
-            .text(d => formatCurrencyShort(d.value))
-            .attr("font-size", "10px")
-            .attr("fill", getCssVar('--color-text-secondary') || '#555555');
+    const width = container.clientWidth || 600;
+    const height = container.clientHeight || 400;
+    
+    if (width <= 0 || height <= 0 || !mapData || Object.keys(mapData).length === 0) {
+        container.innerHTML = '<div class="loading-placeholder">No geographic data to display.</div>';
+        return;
     }
 
-    // --- D3 Dendrogram Visualization ---
-    function renderDendrogram(hierarchyData, targetDivId) {
-        const container = document.getElementById(targetDivId);
-        if (!container) { 
-            console.error(`Dendrogram container #${targetDivId} not found.`); 
-            return; 
-        }
-        
-        container.innerHTML = ''; // Clear previous content
+    const svg = d3.select(container)
+        .append("svg")
+        .attr("width", width)
+        .attr("height", height)
+        .attr("viewBox", `0 0 ${width} ${height}`);
+    
+    const values = Object.values(mapData).map(d => d.value);
+    
+    // Create a consistent color scale using our gradient colors
+    const colorScale = d3.scaleSequential()
+        .domain([0, d3.max(values) || 1])
+        .interpolator(d3.interpolateRgbBasis([
+            getCssVar('--map-color-1') || '#caf0f8',
+            getCssVar('--map-color-2') || '#90e0ef',
+            getCssVar('--map-color-3') || '#48b5c4',
+            getCssVar('--map-color-4') || '#0096c7',
+            getCssVar('--map-color-5') || '#0077b6',
+            getCssVar('--map-color-6') || '#023e8a'
+        ]));
+    
+    const path = d3.geoPath();
 
-        const { width, height } = container.getBoundingClientRect();
+    // Tooltip
+    const tooltip = d3.select("body")
+        .append("div")
+        .attr("class", "d3-tooltip")
+        .style("visibility", "hidden");
 
-        if (width <= 0 || height <= 0 || !hierarchyData || hierarchyData.children.length === 0 ||
-            (hierarchyData.children.length === 1 && hierarchyData.children[0].id === 'placeholder-h')) {
-            container.innerHTML = '<div class="loading-placeholder">No hierarchical relationship data to display for this selection.</div>';
-            return;
-        }
+    d3.json("https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json").then(us => {
+        const states = topojson.feature(us, us.objects.states);
+        const projection = d3.geoAlbersUsa().fitSize([width, height], states);
+        path.projection(projection);
 
-        const margin = { top: 20, right: 120, bottom: 20, left: 120 };
-        const innerWidth = width - margin.left - margin.right;
-        const innerHeight = height - margin.top - margin.bottom;
-
-        const svg = d3.select(container)
-            .append("svg")
-            .attr("width", width)
-            .attr("height", height)
-            .attr("viewBox", [0, 0, width, height])
-            .append("g")
-            .attr("transform", `translate(${margin.left},${margin.top})`);
-
-        const root = d3.hierarchy(hierarchyData, d => d.children);
-        root.sum(d => Math.max(1, d.value || 0));
-        root.sort((a, b) => (b.height - a.height) || (b.value - a.value));
-
-        // Tree layout for a hierarchical view
-        const treeLayout = d3.tree().size([innerHeight, innerWidth]);
-        treeLayout(root);
-
-        // Links between nodes
         svg.append("g")
-            .attr("fill", "none")
-            .attr("stroke", getCssVar('--color-border') || '#e1e4e8')
-            .attr("stroke-opacity", 0.6)
-            .attr("stroke-width", 1.5)
             .selectAll("path")
-            .data(root.links())
+            .data(states.features)
             .join("path")
-            .attr("d", d3.linkHorizontal()
-                .x(d => d.y)
-                .y(d => d.x));
-
-        // Node type color mapping
-        const nodeColors = {
-            root: getCssVar('--color-text-primary') || '#333333',
-            agency: getCssVar('--chart-color-1') || '#6A5ACD',
-            subagency: getCssVar('--chart-color-4') || '#9576f2',
-            prime: getCssVar('--chart-color-2') || '#5f4fb7',
-            sub: getCssVar('--chart-color-5') || '#c3aadf',
-            placeholder: getCssVar('--color-text-tertiary') || '#777777'
-        };
-
-        // Nodes (circles)
-        const node = svg.append("g")
-            .attr("stroke-linejoin", "round")
-            .attr("stroke-width", 3)
-            .selectAll("g")
-            .data(root.descendants())
-            .join("g")
-            .attr("transform", d => `translate(${d.y},${d.x})`);
-
-        node.append("circle")
-            .attr("fill", d => nodeColors[d.data.type] || getCssVar('--color-text-tertiary') || '#777777')
-            .attr("r", d => d.depth === 0 ? 6 : d.children ? 4.5 : 3.5);
-
-        // Node labels
-        node.append("text")
-            .attr("dy", "0.31em")
-            .attr("x", d => d.children ? -8 : 8)
-            .attr("text-anchor", d => d.children ? "end" : "start")
-            .text(d => d.data.name)
-            .style("font-size", d => d.depth === 0 ? "12px" : d.depth <= 2 ? "10px" : "9px")
-            .style("fill", getCssVar('--color-text-secondary') || '#555555')
-            .clone(true)
-            .lower()
-            .attr("stroke", "white"); // Text outline for better readability
-
-        // Tooltip for more information
-        const tooltip = d3.select("body")
-            .selectAll(".d3-tooltip")
-            .data([null])
-            .join("div")
-            .attr("class", "d3-tooltip")
-            .style("visibility", "hidden");
-
-        node.on("mouseover", (event, d) => {
-            tooltip.style("visibility", "visible")
-                .html(`<strong>${d.data.name}</strong><br>Type: ${d.data.type}<br>Value: ${formatCurrencyShort(d.data.value || d.value)}`)
+            .attr("fill", d => { 
+                const fips = d.id.padStart(2, '0'); 
+                return mapData[fips] ? colorScale(mapData[fips].value) : getCssVar('--color-border') || '#e1e4e8'; 
+            })
+            .attr("d", path)
+            .attr("stroke", getCssVar('--color-surface') || "white")
+            .attr("stroke-width", 0.5)
+            .on("mouseover", function(event, d) {
+                d3.select(this).attr("fill-opacity", 0.7);
+                const fips = d.id.padStart(2, '0');
+                const stateInfo = mapData[fips];
+                tooltip.style("visibility", "visible")
+                       .html(`${d.properties.name}<br>Value: ${stateInfo ? formatCurrencyShort(stateInfo.value) : 'N/A'}<br>Contracts: ${stateInfo ? stateInfo.count : 'N/A'}`);
+            })
+            .on("mousemove", (event) => tooltip
                 .style("top", (event.pageY - 10) + "px")
-                .style("left", (event.pageX + 10) + "px");
-            d3.select(event.currentTarget).select("circle")
-                .attr("r", (d.children ? 4.5 : 3.5) + 2);
-        })
-        .on("mouseout", (event, d) => {
-            tooltip.style("visibility", "hidden");
-            d3.select(event.currentTarget).select("circle")
-                .attr("r", d.children ? 4.5 : 3.5);
-        });
+                .style("left", (event.pageX + 10) + "px"))
+            .on("mouseout", function() { 
+                d3.select(this).attr("fill-opacity", 1); 
+                tooltip.style("visibility", "hidden"); 
+            });
+    }).catch(error => {
+        console.error("Error loading map topojson:", error);
+        container.innerHTML = '<div class="loading-placeholder">Error loading map data.</div>';
+    });
+    
+    // Add a better legend with the new color palette
+    const legendData = d3.range(6).map(i => ({
+        color: GRADIENT_COLORS[i],
+        value: i === 0 ? 0 : d3.max(values) * (i / 5)
+    }));
+    
+    const legend = svg.append("g")
+        .attr("transform", `translate(${width - 120}, ${height - 120})`);
+    
+    legend.append("rect")
+        .attr("width", 100)
+        .attr("height", 100)
+        .attr("fill", "white")
+        .attr("opacity", 0.7)
+        .attr("rx", 4)
+        .attr("ry", 4);
+    
+    legend.append("text")
+        .attr("x", 10)
+        .attr("y", 20)
+        .text("Contract Value")
+        .attr("font-size", "10px")
+        .attr("font-weight", "bold")
+        .attr("fill", getCssVar('--color-text-primary') || '#333333');
+    
+    legendData.forEach((d, i) => {
+        legend.append("rect")
+            .attr("x", 10)
+            .attr("y", 30 + i * 12)
+            .attr("width", 12)
+            .attr("height", 8)
+            .attr("fill", d.color);
+        
+        legend.append("text")
+            .attr("x", 26)
+            .attr("y", 37 + i * 12)
+            .text(formatCurrencyShort(d.value))
+            .attr("font-size", "9px")
+            .attr("fill", getCssVar('--color-text-secondary') || '#555555');
+    });
+}
+function renderDendrogram(hierarchyData, targetDivId) {
+    const container = document.getElementById(targetDivId);
+    if (!container) { 
+        console.error(`Dendrogram container #${targetDivId} not found.`); 
+        return; 
+    }
+    
+    container.innerHTML = ''; // Clear previous content
+
+    const { width, height } = container.getBoundingClientRect();
+
+    if (width <= 0 || height <= 0 || !hierarchyData || hierarchyData.children.length === 0 ||
+        (hierarchyData.children.length === 1 && hierarchyData.children[0].id === 'placeholder-h')) {
+        container.innerHTML = '<div class="loading-placeholder">No hierarchical relationship data to display for this selection.</div>';
+        return;
     }
 
+    const margin = { top: 20, right: 120, bottom: 20, left: 120 };
+    const innerWidth = width - margin.left - margin.right;
+    const innerHeight = height - margin.top - margin.bottom;
+
+    const svg = d3.select(container)
+        .append("svg")
+        .attr("width", width)
+        .attr("height", height)
+        .attr("viewBox", [0, 0, width, height])
+        .append("g")
+        .attr("transform", `translate(${margin.left},${margin.top})`);
+
+    const root = d3.hierarchy(hierarchyData, d => d.children);
+    root.sum(d => Math.max(1, d.value || 0));
+    root.sort((a, b) => (b.height - a.height) || (b.value - a.value));
+
+    // Tree layout for a hierarchical view
+    const treeLayout = d3.tree().size([innerHeight, innerWidth]);
+    treeLayout(root);
+
+    // Links between nodes with gradient effect
+    const linkGradient = svg.append("defs").selectAll("linearGradient")
+        .data(root.links())
+        .join("linearGradient")
+        .attr("id", (d, i) => `link-gradient-${i}`)
+        .attr("gradientUnits", "userSpaceOnUse")
+        .attr("x1", d => d.source.y)
+        .attr("y1", d => d.source.x)
+        .attr("x2", d => d.target.y)
+        .attr("y2", d => d.target.x);
+
+    // Update node colors using our new color palette
+    const nodeColors = {
+        root: getCssVar('--chart-color-1') || '#4361ee',
+        agency: getCssVar('--chart-color-2') || '#3a0ca3',
+        subagency: getCssVar('--chart-color-3') || '#7209b7',
+        prime: getCssVar('--chart-color-4') || '#f72585',
+        sub: getCssVar('--chart-color-5') || '#4cc9f0',
+        placeholder: getCssVar('--color-text-tertiary') || '#777777'
+    };
+
+    linkGradient.append("stop")
+        .attr("offset", "0%")
+        .attr("stop-color", d => nodeColors[d.source.data.type] || nodeColors.root);
+
+    linkGradient.append("stop")
+        .attr("offset", "100%")
+        .attr("stop-color", d => nodeColors[d.target.data.type] || nodeColors.sub);
+
+    // Links between nodes
+    svg.append("g")
+        .attr("fill", "none")
+        .attr("stroke-opacity", 0.6)
+        .attr("stroke-width", 1.5)
+        .selectAll("path")
+        .data(root.links())
+        .join("path")
+        .attr("stroke", (d, i) => `url(#link-gradient-${i})`)
+        .attr("d", d3.linkHorizontal()
+            .x(d => d.y)
+            .y(d => d.x));
+
+    // Nodes (circles)
+    const node = svg.append("g")
+        .attr("stroke-linejoin", "round")
+        .attr("stroke-width", 3)
+        .selectAll("g")
+        .data(root.descendants())
+        .join("g")
+        .attr("transform", d => `translate(${d.y},${d.x})`);
+
+    // Add glow effect for nodes
+    const defs = svg.append("defs");
+    
+    Object.entries(nodeColors).forEach(([type, color]) => {
+        const filter = defs.append("filter")
+            .attr("id", `glow-${type}`)
+            .attr("x", "-50%")
+            .attr("y", "-50%")
+            .attr("width", "200%")
+            .attr("height", "200%");
+            
+        filter.append("feGaussianBlur")
+            .attr("stdDeviation", "2")
+            .attr("result", "coloredBlur");
+            
+        const feMerge = filter.append("feMerge");
+        feMerge.append("feMergeNode")
+            .attr("in", "coloredBlur");
+        feMerge.append("feMergeNode")
+            .attr("in", "SourceGraphic");
+    });
+
+    node.append("circle")
+        .attr("fill", d => nodeColors[d.data.type] || nodeColors.placeholder)
+        .attr("r", d => d.depth === 0 ? 7 : d.children ? 5 : 4)
+        .attr("filter", d => d.depth === 0 ? `url(#glow-${d.data.type || 'root'})` : null);
+
+    // Node labels
+    node.append("text")
+        .attr("dy", "0.31em")
+        .attr("x", d => d.children ? -8 : 8)
+        .attr("text-anchor", d => d.children ? "end" : "start")
+        .text(d => d.data.name)
+        .style("font-size", d => d.depth === 0 ? "12px" : d.depth <= 2 ? "10px" : "9px")
+        .style("fill", getCssVar('--color-text-secondary') || '#555555')
+        .clone(true)
+        .lower()
+        .attr("stroke", getCssVar('--color-surface') || "white")
+        .attr("stroke-width", 3); // Text outline for better readability
+
+    // Enhanced tooltip for more information
+    const tooltip = d3.select("body")
+        .selectAll(".d3-tooltip")
+        .data([null])
+        .join("div")
+        .attr("class", "d3-tooltip")
+        .style("visibility", "hidden");
+
+    node.on("mouseover", (event, d) => {
+        tooltip.style("visibility", "visible")
+            .html(`
+                <div style="font-weight:bold;color:${nodeColors[d.data.type] || '#333'}">
+                    ${d.data.name}
+                </div>
+                <div>Type: ${d.data.type}</div>
+                <div>Value: ${formatCurrencyShort(d.data.value || d.value)}</div>
+                ${d.children ? `<div>Child nodes: ${d.children.length}</div>` : ''}
+            `)
+            .style("top", (event.pageY - 10) + "px")
+            .style("left", (event.pageX + 10) + "px");
+        
+        d3.select(event.currentTarget).select("circle")
+            .attr("r", (d.children ? 5 : 4) + 2)
+            .attr("filter", `url(#glow-${d.data.type || 'placeholder'})`);
+    })
+    .on("mouseout", (event, d) => {
+        tooltip.style("visibility", "hidden");
+        d3.select(event.currentTarget).select("circle")
+            .attr("r", d.depth === 0 ? 7 : d.children ? 5 : 4)
+            .attr("filter", d.depth === 0 ? `url(#glow-${d.data.type || 'root'})` : null);
+    });
+}
 function populateDatasetSelector() {
     // Group datasets by agency name (part before ' (')
     const agencyGroups = {};
