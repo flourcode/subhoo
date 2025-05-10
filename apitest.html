@@ -76,19 +76,16 @@
         <div id="budget-results-div" class="hidden">
             <h3 id="results-agency-name"></h3>
             <p><strong>Fiscal Year:</strong> <span id="results-fiscal-year" class="value"></span></p>
-            <p><strong>Total Budget Authority:</strong> <span id="results-budget-authority" class="value"></span></p>
-            <p><strong>Total Obligations:</strong> <span id="results-obligations" class="value"></span></p>
+            <p><strong>Total Budget Authority (Agency):</strong> <span id="results-budget-authority" class="value"></span></p>
+            <p><strong>Total Obligations (Agency):</strong> <span id="results-obligations" class="value"></span></p>
         </div>
         <div id="error-message" class="error hidden"></div>
     </div>
 
     <script>
         const BASE_URL = 'https://api.usaspending.gov';
-
-        // For fiscal year calculation - using 2025 as current year based on previous context
-        // The API generally expects the start year of the fiscal period. FY2025 runs from Oct 1, 2024 to Sep 30, 2025.
-        const REFERENCE_YEAR_FOR_FY_CALC = 2025;
-        const FISCAL_YEARS = Array.from({ length: 10 }, (_, i) => REFERENCE_YEAR_FOR_FY_CALC - i); // e.g., 2025 down to 2016
+        const REFERENCE_YEAR_FOR_FY_CALC = 2025; // Year for calculating fiscal year list
+        const FISCAL_YEARS = Array.from({ length: 10 }, (_, i) => REFERENCE_YEAR_FOR_FY_CALC - i);
 
         const loadAgenciesButton = document.getElementById('load-agencies-button');
         const agencySelect = document.getElementById('agency-select');
@@ -104,47 +101,66 @@
         const errorMessageDiv = document.getElementById('error-message');
         const loader = document.getElementById('loader');
 
-        let loadedAgencies = []; // To store agency details
+        let loadedAgenciesData = [];
 
-        // Populate Fiscal Year dropdown
-        FISCAL_YEARS.forEach(year => {
-            const option = document.createElement('option');
-            option.value = year;
-            option.textContent = year;
-            yearSelect.appendChild(option);
-        });
-        if (FISCAL_YEARS.length > 0) {
-             yearSelect.value = FISCAL_YEARS[0]; // Default to most recent in the list
+        function populateFiscalYears() {
+            FISCAL_YEARS.forEach(year => {
+                const option = document.createElement('option');
+                option.value = year;
+                option.textContent = year;
+                yearSelect.appendChild(option);
+            });
+            if (FISCAL_YEARS.length > 0) {
+                 yearSelect.value = FISCAL_YEARS[0];
+            }
         }
+        populateFiscalYears();
 
-
-        // Format currency
         function formatCurrency(amount) {
             if (amount === null || amount === undefined) return "N/A";
             return '$' + Number(amount).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
         }
 
-        // --- Step 1: Load Agencies ---
-        loadAgenciesButton.addEventListener('click', async () => {
-            const endpoint = `${BASE_URL}/api/v2/references/toptier_agencies/`;
-
-            errorMessageDiv.classList.add('hidden');
-            errorMessageDiv.textContent = '';
+        function handleErrorDisplay(message, consoleError) {
+            if (consoleError) console.error(consoleError);
+            errorMessageDiv.textContent = message;
+            errorMessageDiv.classList.remove('hidden');
+            budgetResultsDiv.classList.add('hidden');
+        }
+        
+        async function makeApiCall(endpoint, buttonToDisable) {
+            errorMessageDiv.classList.add('hidden'); // Clear previous errors
             loader.style.display = 'block';
-            loadAgenciesButton.disabled = true;
-            agencySelect.innerHTML = '<option value="">-- Loading agencies... --</option>'; // Clear old options
+            if(buttonToDisable) buttonToDisable.disabled = true;
 
             try {
                 const response = await fetch(endpoint);
-                if (!response.ok) throwError(response, 'Failed to load agencies');
-                const data = await response.json();
+                if (!response.ok) {
+                    let errorDetailMessage = `HTTP error! Status: ${response.status}`;
+                    try {
+                        const errorData = await response.json();
+                        errorDetailMessage += ` - ${errorData.detail || JSON.stringify(errorData)}`;
+                    } catch (e) { /* Ignore if response body is not JSON */ }
+                    throw new Error(errorDetailMessage);
+                }
+                return await response.json();
+            } finally {
+                loader.style.display = 'none';
+                if(buttonToDisable) buttonToDisable.disabled = false;
+            }
+        }
 
-                loadedAgencies = data.results || [];
-                agencySelect.innerHTML = '<option value="">-- Select an Agency --</option>'; // Clear loading message
+        loadAgenciesButton.addEventListener('click', async () => {
+            agencySelect.innerHTML = '<option value="">-- Loading agencies... --</option>';
+            budgetResultsDiv.classList.add('hidden'); // Hide previous budget results
+            try {
+                const data = await makeApiCall(`${BASE_URL}/api/v2/references/toptier_agencies/`, loadAgenciesButton);
+                loadedAgenciesData = data.results || [];
+                agencySelect.innerHTML = '<option value="">-- Select an Agency --</option>';
 
-                if (loadedAgencies.length > 0) {
-                    loadedAgencies.sort((a, b) => a.agency_name.localeCompare(b.agency_name)); // Sort agencies by name
-                    loadedAgencies.forEach(agency => {
+                if (loadedAgenciesData.length > 0) {
+                    loadedAgenciesData.sort((a, b) => a.agency_name.localeCompare(b.agency_name));
+                    loadedAgenciesData.forEach(agency => {
                         const option = document.createElement('option');
                         option.value = agency.toptier_code;
                         option.textContent = `${agency.agency_name} (${agency.abbreviation || agency.toptier_code})`;
@@ -154,95 +170,71 @@
                     yearSelect.disabled = false;
                     fetchBudgetButton.disabled = false;
                     controlsStep2Div.classList.remove('hidden');
-                    loadAgenciesButton.textContent = 'Reload Agencies'; // Change button text
+                    loadAgenciesButton.textContent = 'Reload Agencies';
                 } else {
                     agencySelect.innerHTML = '<option value="">-- No agencies found --</option>';
                     handleErrorDisplay('No agencies found or unexpected API response.');
                 }
-
             } catch (error) {
-                console.error('Load agencies error:', error);
                 agencySelect.innerHTML = '<option value="">-- Error loading agencies --</option>';
-                handleErrorDisplay(`Error loading agencies: ${error.message}`);
-            } finally {
-                loader.style.display = 'none';
-                loadAgenciesButton.disabled = false;
+                handleErrorDisplay(`Error loading agencies: ${error.message}`, error);
             }
         });
 
-
-        // --- Step 2: Fetch Budgetary Resources ---
         fetchBudgetButton.addEventListener('click', async () => {
             const agencyCode = agencySelect.value;
-            const fiscalYear = yearSelect.value;
+            const fiscalYearString = yearSelect.value; // User's selected fiscal year as a string
             const selectedAgencyOption = agencySelect.options[agencySelect.selectedIndex];
             const agencyDisplayName = selectedAgencyOption ? selectedAgencyOption.textContent : `Agency Code: ${agencyCode}`;
-
 
             if (!agencyCode) {
                 alert('Please select an agency.');
                 return;
             }
-            if (!fiscalYear) {
-                alert('Please select a fiscal year.');
-                return;
-            }
-
-            const endpoint = `${BASE_URL}/api/v2/agency/${agencyCode}/budgetary_resources/?fiscal_year=${fiscalYear}`;
-
+            
             budgetResultsDiv.classList.add('hidden');
-            errorMessageDiv.classList.add('hidden');
-            errorMessageDiv.textContent = '';
-            loader.style.display = 'block';
-            fetchBudgetButton.disabled = true;
             agencySelect.disabled = true;
             yearSelect.disabled = true;
 
+            // We'll include the fiscal_year parameter as the API docs suggest it should filter.
+            const endpoint = `${BASE_URL}/api/v2/agency/${agencyCode}/budgetary_resources/?fiscal_year=${fiscalYearString}`;
 
             try {
-                const response = await fetch(endpoint);
-                if (!response.ok) throwError(response, `Failed to get budgetary resources for ${agencyDisplayName}`);
-                const data = await response.json();
+                const data = await makeApiCall(endpoint, fetchBudgetButton);
+                let budgetDataForSelectedYear = null;
 
-                if (data.results && data.results.length > 0) {
-                    // The API returns an array, usually with one item for the specified fiscal year for this endpoint
-                    const budgetData = data.results[0];
+                // Scenario 1: The API returns a single object for the requested fiscal year
+                // (as implied by `?fiscal_year=` parameter).
+                // The top-level 'data' object would itself contain fiscal_year, agency_budgetary_resources, etc.
+                if (data && data.fiscal_year && data.fiscal_year.toString() === fiscalYearString) {
+                    budgetDataForSelectedYear = data;
+                }
+                // Scenario 2: The API ignored `?fiscal_year=` and returned all years for the agency (like your sample for the base URL).
+                // In this case, 'data' would contain 'agency_data_by_year' array.
+                else if (data && data.agency_data_by_year && Array.isArray(data.agency_data_by_year)) {
+                    budgetDataForSelectedYear = data.agency_data_by_year.find(
+                        item => item.fiscal_year.toString() === fiscalYearString
+                    );
+                }
 
+                if (budgetDataForSelectedYear) {
                     resultsAgencyName.textContent = agencyDisplayName;
-                    resultsFiscalYear.textContent = budgetData.fiscal_year || fiscalYear; // Use data from response if available
-                    resultsBudgetAuthority.textContent = formatCurrency(budgetData.total_budgetary_resources);
-                    resultsObligations.textContent = formatCurrency(budgetData.obligated_amount);
-
+                    resultsFiscalYear.textContent = budgetDataForSelectedYear.fiscal_year;
+                    // ** Using field names based on your provided sample **
+                    resultsBudgetAuthority.textContent = formatCurrency(budgetDataForSelectedYear.agency_budgetary_resources);
+                    resultsObligations.textContent = formatCurrency(budgetDataForSelectedYear.agency_total_obligated);
                     budgetResultsDiv.classList.remove('hidden');
                 } else {
-                     handleErrorDisplay(`No budgetary resource data found for ${agencyDisplayName} for FY ${fiscalYear}. The agency might not have reported data for this period or via this specific API view.`);
+                    handleErrorDisplay(`No budgetary resource data found for ${agencyDisplayName} for FY ${fiscalYearString}. The API might not have data for this specific selection or the response structure was unexpected.`);
                 }
 
             } catch (error) {
-                console.error('Fetch budget error:', error);
-                handleErrorDisplay(`Error fetching budgetary resources: ${error.message}`);
+                handleErrorDisplay(`Error fetching budgetary resources: ${error.message}`, error);
             } finally {
-                loader.style.display = 'none';
-                fetchBudgetButton.disabled = false;
                 agencySelect.disabled = false;
                 yearSelect.disabled = false;
             }
         });
-
-        async function throwError(response, defaultMessage) {
-            let errorDetail = defaultMessage || `HTTP error! Status: ${response.status}`;
-            try {
-                const errorData = await response.json();
-                errorDetail += ` - ${errorData.detail || JSON.stringify(errorData)}`;
-            } catch (e) { /* Ignore if response is not JSON */ }
-            throw new Error(errorDetail);
-        }
-
-        function handleErrorDisplay(message) {
-            errorMessageDiv.textContent = message;
-            errorMessageDiv.classList.remove('hidden');
-        }
-
     </script>
 </body>
 </html>
