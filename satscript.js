@@ -1774,49 +1774,62 @@ console.log("renderMainDashboard: D3 visualizations attempted.");
         });
     }
 
-    // --- Dataset selector and filtering functions ---
-    function populateDatasetSelector() {
-        // Group datasets by agency name (part before ' (')
-        const agencyGroups = {};
-        DATASETS_CONFIG.forEach(dataset => {
-            const agencyName = dataset.name.split(' (')[0];
-            if (!agencyGroups[agencyName]) {
-                agencyGroups[agencyName] = { name: agencyName, datasets: [] };
-            }
-            agencyGroups[agencyName].datasets.push(dataset);
-        });
+function populateDatasetSelector() {
+    // Group datasets by agency name (part before ' (')
+    const agencyGroups = {};
+    DATASETS_CONFIG.forEach(dataset => {
+        const agencyName = dataset.name.split(' (')[0];
+        if (!agencyGroups[agencyName]) {
+            agencyGroups[agencyName] = { name: agencyName, datasets: [] };
+        }
+        agencyGroups[agencyName].datasets.push(dataset);
+    });
 
-        datasetSelect.innerHTML = '<option value="">Choose an agency...</option>';
-        
-        Object.values(agencyGroups)
-            .sort((a, b) => a.name.localeCompare(b.name))
-            .forEach(group => {
-                const optGroup = document.createElement('optgroup');
-                optGroup.label = group.name;
+    datasetSelect.innerHTML = '<option value="">Choose an agency...</option>';
+    
+    let socomCombinedValue = null; // Store the SOCOM combined value
+    
+    Object.values(agencyGroups)
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .forEach(group => {
+            const optGroup = document.createElement('optgroup');
+            optGroup.label = group.name;
+            
+            const primeDataset = group.datasets.find(d => d.type === 'primes');
+            const subDataset = group.datasets.find(d => d.type === 'subs');
+
+            // Offer combined option if both prime and sub datasets exist
+            if (primeDataset && subDataset) {
+                const combinedOpt = document.createElement('option');
+                const combinedValue = `combined:${primeDataset.id},${subDataset.id}`;
+                combinedOpt.value = combinedValue;
+                combinedOpt.textContent = `${group.name} (Primes & Subs)`;
+                optGroup.appendChild(combinedOpt);
                 
-                const primeDataset = group.datasets.find(d => d.type === 'primes');
-                const subDataset = group.datasets.find(d => d.type === 'subs');
-
-                // Offer combined option if both prime and sub datasets exist
-                if (primeDataset && subDataset) {
-                    const combinedOpt = document.createElement('option');
-                    combinedOpt.value = `combined:${primeDataset.id},${subDataset.id}`;
-                    combinedOpt.textContent = `${group.name} (Primes & Subs)`;
-                    optGroup.appendChild(combinedOpt);
+                // Check if this is SOCOM combined and store its value
+                if (group.name === 'SOCOM') {
+                    socomCombinedValue = combinedValue;
                 }
-                
-                // Add individual dataset options
-                group.datasets.forEach(ds => {
-                    const option = document.createElement('option');
-                    option.value = ds.id;
-                    option.textContent = ds.name;
-                    optGroup.appendChild(option);
-                });
-                
-                datasetSelect.appendChild(optGroup);
+            }
+            
+            // Add individual dataset options
+            group.datasets.forEach(ds => {
+                const option = document.createElement('option');
+                option.value = ds.id;
+                option.textContent = ds.name;
+                optGroup.appendChild(option);
             });
+            
+            datasetSelect.appendChild(optGroup);
+        });
+        
+    // If SOCOM combined value was found, preselect it and trigger loading
+    if (socomCombinedValue) {
+        datasetSelect.value = socomCombinedValue;
+        // Trigger the loading after a short delay to ensure the UI is ready
+        setTimeout(() => handleDatasetSelection(), 100);
     }
-
+}
     function populateFilterDropdowns(model) {
         // NAICS Filter
         naicsFilterEl.innerHTML = '<option value="">All NAICS</option>';
@@ -1851,108 +1864,64 @@ console.log("renderMainDashboard: D3 visualizations attempted.");
         }
     }
 
-    async function handleDatasetSelection() {
-        const selectedValue = datasetSelect.value;
-        
-        if (!selectedValue) {
-            updateStatus('Please select an agency.', 'info');
-            return;
-        }
-        
-        if (isLoading) {
-            updateStatus('Operation in progress, please wait...', 'info');
-            return; // Prevent concurrent operations
-        }
-
-        isLoading = true;
-        applyFiltersBtn.disabled = true;
-        console.log(`handleDatasetSelection: Initiating load for ${selectedValue}`);
-        
-        dashboardContainer.innerHTML = `
-    <div class="loader">
-        <div class="spinner"></div>
-        <p>Loading data for ${agencyDisplayNames}...</p>
-        <p class="small">Connecting to S3 bucket</p>
-        <div id="loading-status" class="loading-status">Initializing...</div>
-    </div>
-`;
-        
-        rawData = { primes: [], subs: [] };
-        unifiedModel = null;
-        
-        // Clear filter options before repopulating
-        naicsFilterEl.innerHTML = '<option value="">All NAICS</option>';
-        subAgencyFilterEl.innerHTML = '<option value="">All Sub-Agencies</option>';
-
-        let datasetsToLoadConfigs = [];
-        
-        if (selectedValue.startsWith('combined:')) {
-            const ids = selectedValue.split(':')[1].split(',');
-            datasetsToLoadConfigs = ids
-                .map(id => DATASETS_CONFIG.find(ds => ds.id === id))
-                .filter(Boolean);
-        } else {
-            const singleConfig = DATASETS_CONFIG.find(ds => ds.id === selectedValue);
-            if (singleConfig) datasetsToLoadConfigs.push(singleConfig);
-        }
-
-        if (datasetsToLoadConfigs.length === 0) {
-            updateStatus('Invalid dataset selection.', 'error');
-            dashboardContainer.innerHTML = `
-                <div class="loader">
-                    <p>Invalid dataset selected. Please choose another.</p>
-                </div>
-            `;
-            isLoading = false;
-            applyFiltersBtn.disabled = false;
-            return;
-        }
-
-        try {
-            const agencyDisplayNames = datasetsToLoadConfigs.map(d => d.name).join(' & ');
-            updateStatus(`Loading ${agencyDisplayNames}...`, 'info');
-
-            for (const config of datasetsToLoadConfigs) {
-                const fetchedData = await fetchDataset(config);
-                const processed = processRawDataset(fetchedData, config.type);
-                
-                if (config.type === 'primes') {
-                    rawData.primes = rawData.primes.concat(processed);
-                } else if (config.type === 'subs') {
-                    rawData.subs = rawData.subs.concat(processed);
-                }
+    async function fetchDataset(datasetConfig) {
+    const csvUrl = `${S3_BASE_URL}${datasetConfig.id}.csv`;
+    updateStatus(`Loading ${datasetConfig.name}...`, 'info');
+    console.log(`Attempting to fetch data from: ${csvUrl}`);
+    
+    try {
+        const response = await fetch(csvUrl, { 
+            mode: 'cors', 
+            cache: 'no-cache',
+            headers: {
+                'Accept': 'text/csv,text/plain,*/*'
             }
-            
-            console.log("handleDatasetSelection: Raw data fetched and processed.");
-
-            unifiedModel = buildUnifiedModelFromProcessed(rawData.primes, rawData.subs);
-            console.log("handleDatasetSelection: Unified model built.");
-
-            if (unifiedModel) {
-                populateFilterDropdowns(unifiedModel);
-                console.log("handleDatasetSelection: Filters populated.");
-                
-                applyFiltersAndRedraw(); // This will render the dashboard
-                // Status update will be handled by applyFiltersAndRedraw or its catch block
-            } else {
-                throw new Error("Failed to build the unified model.");
-            }
-
-        } catch (error) {
-            console.error("Error during handleDatasetSelection:", error);
-            updateStatus(`Failed to load data: ${error.message}`, 'error');
-            dashboardContainer.innerHTML = `
-                <div class="loader">
-                    <p>Error loading data: ${error.message}</p>
-                    <p class="small">Please check console and try again</p>
-                </div>
-            `;
-        } finally {
-            isLoading = false;
-            applyFiltersBtn.disabled = false;
-            console.log("handleDatasetSelection: Operation finished.");
+        });
+        
+        if (!response.ok) {
+            const errorMsg = `HTTP error ${response.status} (${response.statusText})`;
+            console.error(`${errorMsg} for ${datasetConfig.name}`);
+            throw new Error(errorMsg);
         }
+        
+        const csvText = await response.text();
+        
+        if (!csvText || csvText.trim() === '') {
+            throw new Error('Empty response received');
+        }
+        
+        console.log(`Successfully fetched ${csvText.length} bytes for ${datasetConfig.name}`);
+        
+        const parseResult = Papa.parse(csvText, { 
+            header: true, 
+            dynamicTyping: false, 
+            skipEmptyLines: 'greedy', 
+            transformHeader: h => h.trim() 
+        });
+        
+        if (parseResult.errors.length > 0) {
+            console.warn(`Parsing errors in ${datasetConfig.name}:`, parseResult.errors);
+        }
+        
+        if (!parseResult.data || parseResult.data.length === 0) {
+            throw new Error('No data rows found after parsing CSV');
+        }
+        
+        console.log(`Successfully parsed ${parseResult.data.length} rows for ${datasetConfig.name}`);
+        return parseResult.data;
+    } catch (error) {
+        console.error(`Failed to fetch or parse data for ${datasetConfig.name}:`, error);
+        
+        // Check for common CORS issues
+        if (error instanceof TypeError && 
+            (error.message.includes('Failed to fetch') || 
+             error.message.includes('NetworkError'))) {
+            throw new Error(`Network or CORS error - check console and S3 bucket configuration`);
+        }
+        
+        throw new Error(`${error.message} when loading ${datasetConfig.name}`);
     }
+}
 
     function applyFiltersAndRedraw() {
         if (!unifiedModel) {
@@ -2132,8 +2101,158 @@ console.log("renderMainDashboard: D3 visualizations attempted.");
             }
         });
     }
+async function handleDatasetSelection() {
+    const selectedValue = datasetSelect.value;
+    
+    if (!selectedValue) {
+        updateStatus('Please select an agency.', 'info');
+        return;
+    }
+    
+    if (isLoading) {
+        updateStatus('Operation in progress, please wait...', 'info');
+        return; // Prevent concurrent operations
+    }
 
-    // --- Initialization ---
+    isLoading = true;
+    applyFiltersBtn.disabled = true;
+    console.log(`handleDatasetSelection: Initiating load for ${selectedValue}`);
+    
+    dashboardContainer.innerHTML = `
+        <div class="loader">
+            <div class="spinner"></div>
+            <p>Loading data for selected dataset...</p>
+            <p class="small" id="loading-detail">Initializing...</p>
+        </div>
+    `;
+    
+    const loadingDetail = document.getElementById('loading-detail');
+    
+    rawData = { primes: [], subs: [] };
+    unifiedModel = null;
+    
+    // Clear filter options before repopulating
+    naicsFilterEl.innerHTML = '<option value="">All NAICS</option>';
+    subAgencyFilterEl.innerHTML = '<option value="">All Sub-Agencies</option>';
+
+    let datasetsToLoadConfigs = [];
+    
+    if (selectedValue.startsWith('combined:')) {
+        const ids = selectedValue.split(':')[1].split(',');
+        datasetsToLoadConfigs = ids
+            .map(id => DATASETS_CONFIG.find(ds => ds.id === id))
+            .filter(Boolean);
+    } else {
+        const singleConfig = DATASETS_CONFIG.find(ds => ds.id === selectedValue);
+        if (singleConfig) datasetsToLoadConfigs.push(singleConfig);
+    }
+
+    if (datasetsToLoadConfigs.length === 0) {
+        updateStatus('Invalid dataset selection.', 'error');
+        dashboardContainer.innerHTML = `
+            <div class="loader">
+                <p>Invalid dataset selected. Please choose another.</p>
+            </div>
+        `;
+        isLoading = false;
+        applyFiltersBtn.disabled = false;
+        return;
+    }
+
+    try {
+        const agencyDisplayNamesText = datasetsToLoadConfigs.map(d => d.name).join(' & ');
+        updateStatus(`Loading ${agencyDisplayNamesText}...`, 'info');
+        
+        if (loadingDetail) {
+            loadingDetail.textContent = `Preparing to load ${datasetsToLoadConfigs.length} dataset(s)...`;
+        }
+
+        for (const [index, config] of datasetsToLoadConfigs.entries()) {
+            if (loadingDetail) {
+                loadingDetail.textContent = `Loading dataset ${index + 1}/${datasetsToLoadConfigs.length}: ${config.name}...`;
+            }
+            
+            try {
+                const fetchedData = await fetchDataset(config);
+                
+                if (loadingDetail) {
+                    loadingDetail.textContent = `Processing dataset: ${config.name}...`;
+                }
+                
+                const processed = processRawDataset(fetchedData, config.type);
+                
+                if (config.type === 'primes') {
+                    rawData.primes = rawData.primes.concat(processed);
+                } else if (config.type === 'subs') {
+                    rawData.subs = rawData.subs.concat(processed);
+                }
+                
+                if (loadingDetail) {
+                    loadingDetail.textContent = `Successfully loaded ${config.name} (${processed.length} records)`;
+                }
+            } catch (fetchError) {
+                console.error(`Error loading dataset ${config.name}:`, fetchError);
+                if (loadingDetail) {
+                    loadingDetail.textContent = `Error loading ${config.name}: ${fetchError.message}`;
+                }
+                // Try to continue with other datasets if any
+            }
+        }
+        
+        if ((rawData.primes.length === 0 && rawData.subs.length === 0)) {
+            throw new Error("No data was successfully loaded from any dataset.");
+        }
+        
+        console.log("handleDatasetSelection: Raw data fetched and processed.");
+        if (loadingDetail) {
+            loadingDetail.textContent = "Building data model...";
+        }
+
+        unifiedModel = buildUnifiedModelFromProcessed(rawData.primes, rawData.subs);
+        console.log("handleDatasetSelection: Unified model built.");
+
+        if (unifiedModel) {
+            if (loadingDetail) {
+                loadingDetail.textContent = "Populating filters...";
+            }
+            
+            populateFilterDropdowns(unifiedModel);
+            console.log("handleDatasetSelection: Filters populated.");
+            
+            if (loadingDetail) {
+                loadingDetail.textContent = "Rendering dashboard...";
+            }
+            
+            applyFiltersAndRedraw(); // This will render the dashboard
+        } else {
+            throw new Error("Failed to build the unified model.");
+        }
+
+    } catch (error) {
+        console.error("Error during handleDatasetSelection:", error);
+        updateStatus(`Failed to load data: ${error.message}`, 'error');
+        dashboardContainer.innerHTML = `
+            <div class="loader">
+                <p>Error loading data: ${error.message}</p>
+                <p class="small">Please check console for details or try another dataset</p>
+                <div class="error-details">
+                    <p>Possible issues:</p>
+                    <ul>
+                        <li>Network connectivity problems</li>
+                        <li>S3 bucket access restrictions</li>
+                        <li>CORS configuration issues</li>
+                        <li>CSV format problems</li>
+                    </ul>
+                </div>
+            </div>
+        `;
+    } finally {
+        isLoading = false;
+        applyFiltersBtn.disabled = false;
+        console.log("handleDatasetSelection: Operation finished.");
+    }
+}
+ // --- Initialization ---
     function init() {
         // Initialize theme handling
         initTheme();
