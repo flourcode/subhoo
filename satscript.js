@@ -201,6 +201,25 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+
+const FIPS_TO_STATE_NAME = {
+    "01": "Alabama", "02": "Alaska", "04": "Arizona", "05": "Arkansas", 
+    "06": "California", "08": "Colorado", "09": "Connecticut", "10": "Delaware", 
+    "11": "District of Columbia", "12": "Florida", "13": "Georgia", "15": "Hawaii", 
+    "16": "Idaho", "17": "Illinois", "18": "Indiana", "19": "Iowa", 
+    "20": "Kansas", "21": "Kentucky", "22": "Louisiana", "23": "Maine", 
+    "24": "Maryland", "25": "Massachusetts", "26": "Michigan", "27": "Minnesota", 
+    "28": "Mississippi", "29": "Missouri", "30": "Montana", "31": "Nebraska", 
+    "32": "Nevada", "33": "New Hampshire", "34": "New Jersey", "35": "New Mexico", 
+    "36": "New York", "37": "North Carolina", "38": "North Dakota", "39": "Ohio", 
+    "40": "Oklahoma", "41": "Oregon", "42": "Pennsylvania", "44": "Rhode Island", 
+    "45": "South Carolina", "46": "South Dakota", "47": "Tennessee", "48": "Texas", 
+    "49": "Utah", "50": "Vermont", "51": "Virginia", "53": "Washington", 
+    "54": "West Virginia", "55": "Wisconsin", "56": "Wyoming",
+    // Territories (optional, include if your data might have them)
+    "60": "American Samoa", "66": "Guam", "69": "Northern Mariana Islands",
+    "72": "Puerto Rico", "78": "U.S. Virgin Islands"
+};
     function calculateDurationDays(startDateStr, endDateStr) {
         const start = parseDate(startDateStr);
         const end = parseDate(endDateStr);
@@ -287,7 +306,51 @@ document.addEventListener('DOMContentLoaded', () => {
             throw error; // Re-throw to be caught by caller
         }
     }
+// In app.js, replace the existing getGeoDistributionInfo
 
+function getGeoDistributionInfo(model) {
+    if (!model || !model.contracts) return "Place of Performance data not available.";
+    
+    const stateCounts = {};
+    Object.values(model.contracts).forEach(contract => {
+        // Prioritize popStateCode from raw, but also check other common fields
+        const stateCodeRaw = contract.raw?.popStateCode || 
+                             contract.raw?.prime_award_transaction_place_of_performance_state_fips_code ||
+                             contract.raw?.place_of_performance_state_code; // From original processMapDataFromModel
+        
+        if (stateCodeRaw) {
+            // Normalize to 2 digits, ensure it's a string
+            let normalizedStateCode = String(stateCodeRaw).trim().padStart(2, '0');
+            if (normalizedStateCode.length > 2) { // Handles cases like "VA " or if it's not a FIPS
+                 // Attempt to match common state abbreviations if not a FIPS
+                const upperStateCode = normalizedStateCode.toUpperCase();
+                const fipsEntry = Object.entries(FIPS_TO_STATE_NAME).find(([, name]) => name.toUpperCase() === upperStateCode || upperStateCode.startsWith(name.substring(0,2).toUpperCase()));
+                if (fipsEntry) {
+                    normalizedStateCode = fipsEntry[0];
+                } else if (/^[A-Z]{2}$/.test(upperStateCode)) { // If it's a 2-letter code, try finding its FIPS
+                     const foundFips = Object.keys(FIPS_TO_STATE_NAME).find(key => FIPS_TO_STATE_NAME[key].toUpperCase().startsWith(upperStateCode)) || null;
+                     if(foundFips) normalizedStateCode = foundFips;
+                     else { /* console.warn("Unrecognized state code:", stateCodeRaw); */ return; }
+                } else {
+                    // console.warn("Could not normalize state code:", stateCodeRaw);
+                    return; // Skip if cannot normalize to a FIPS-like code
+                }
+            }
+
+
+            stateCounts[normalizedStateCode] = (stateCounts[normalizedStateCode] || 0) + (contract.value || 0); // Aggregate by value
+        }
+    });
+
+    const sortedStates = Object.entries(stateCounts)
+        .sort(([, valueA], [, valueB]) => valueB - valueA) // Sort by aggregated value
+        .slice(0, 3) // Top 3 states
+        .map(([fipsCode]) => FIPS_TO_STATE_NAME[fipsCode] || fipsCode); // Map to name, fallback to code
+
+    if (sortedStates.length === 0) return "No specific geographic concentration identified.";
+    
+    return `Key Places of Performance include: ${sortedStates.join(', ')}.`;
+}
     // --- DATA PROCESSOR ---
     function processRawDataset(rawRows, datasetType) { // datasetType is 'primes' or 'subs'
         return rawRows.map(row => {
@@ -553,7 +616,7 @@ function renderMainDashboard(data) {
                 <ul>
                     <li>Top Prime: ${data.topPrimeName || 'N/A'}</li><li>Top Sub: ${data.topSubName || 'N/A'}</li>
                     <li>Dominant Services: ${data.dominantNaicsTextShort || 'N/A'}</li><li>ARR for ${data.arrNaicsCode || 'N/A'}: ~${data.arrForTopNaics || '$0'}</li>
-                    <li>Geo Focus: ${data.geoDistributionText || 'N/A'}</li>
+                    <li>Place of Performance: ${data.geoDistributionText || 'N/A'}</li>
                 </ul>
             </section>
             <section class="opportunity-snapshot">
