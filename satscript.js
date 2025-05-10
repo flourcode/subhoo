@@ -298,34 +298,82 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!text) return 'unknown';
         return String(text).toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, '').replace(/--+/g, '-');
     }
-
-    // --- Data Service (Fetching) ---
-    async function fetchDataset(datasetConfig) {
-        const csvUrl = `${S3_BASE_URL}${datasetConfig.id}.csv`;
-        updateStatus(`Loading ${datasetConfig.name}...`, 'info');
-        try {
-            const response = await fetch(csvUrl, { mode: 'cors', cache: 'no-cache' });
-            if (!response.ok) throw new Error(`HTTP error ${response.status} for ${datasetConfig.name}`);
-            const csvText = await response.text();
-            const parseResult = Papa.parse(csvText, { 
-                header: true, 
-                dynamicTyping: false, 
-                skipEmptyLines: 'greedy', 
-                transformHeader: h => h.trim() 
-            });
-            
-            if (parseResult.errors.length > 0) {
-                console.warn(`Parsing errors in ${datasetConfig.name}:`, parseResult.errors);
+// Update to the fetchDataset function
+async function fetchDataset(datasetConfig) {
+    const csvUrl = `${S3_BASE_URL}${datasetConfig.id}.csv`;
+    updateStatus(`Loading ${datasetConfig.name}...`, 'info');
+    
+    try {
+        console.log(`Attempting to fetch data from: ${csvUrl}`);
+        
+        const response = await fetch(csvUrl, { 
+            mode: 'cors', 
+            cache: 'no-cache',
+            headers: {
+                'Accept': 'text/csv,text/plain,*/*'
             }
-            
-            return parseResult.data;
-        } catch (error) {
-            console.error(`Error fetching ${datasetConfig.name}:`, error);
-            updateStatus(`Error fetching ${datasetConfig.name}: ${error.message}`, 'error');
-            throw error;
+        });
+        
+        if (!response.ok) {
+            console.error(`HTTP error ${response.status} for ${datasetConfig.name}`);
+            throw new Error(`HTTP error ${response.status}: ${response.statusText}`);
         }
+        
+        const csvText = await response.text();
+        
+        if (!csvText || csvText.trim() === '') {
+            console.error(`Empty response received for ${datasetConfig.name}`);
+            throw new Error('Empty data received');
+        }
+        
+        console.log(`Successfully fetched ${csvText.length} bytes for ${datasetConfig.name}`);
+        console.log(`CSV sample: ${csvText.substring(0, 100)}...`);
+        
+        const parseResult = Papa.parse(csvText, { 
+            header: true, 
+            dynamicTyping: false, 
+            skipEmptyLines: 'greedy', 
+            transformHeader: h => h.trim() 
+        });
+        
+        if (parseResult.errors.length > 0) {
+            console.warn(`Parsing errors in ${datasetConfig.name}:`, parseResult.errors);
+        }
+        
+        if (!parseResult.data || parseResult.data.length === 0) {
+            console.error(`No data rows found in ${datasetConfig.name}`);
+            throw new Error('No data rows found after parsing');
+        }
+        
+        console.log(`Successfully parsed ${parseResult.data.length} rows for ${datasetConfig.name}`);
+        return parseResult.data;
+    } catch (error) {
+        console.error(`Error fetching ${datasetConfig.name}:`, error);
+        
+        // Check for CORS errors (they often appear as TypeError or NetworkError)
+        if (error instanceof TypeError && error.message.includes('Network') ||
+            error.message.includes('CORS') || 
+            error.message.includes('Failed to fetch')) {
+            updateStatus(`CORS error fetching ${datasetConfig.name}. Check console for details.`, 'error');
+            console.error('This appears to be a CORS issue. Make sure your S3 bucket has proper CORS configuration.');
+        } else {
+            updateStatus(`Error fetching ${datasetConfig.name}: ${error.message}`, 'error');
+        }
+        
+        // For debugging - attempt to fetch with no-cors mode to see if resource exists
+        try {
+            const testResponse = await fetch(csvUrl, { mode: 'no-cors' });
+            console.log('Resource exists but might have CORS issues:', testResponse);
+        } catch (e) {
+            console.error('Resource appears to be completely unavailable:', e);
+        }
+        
+        // You could implement a fallback here to demo data if needed
+        // return getDemoData(datasetConfig.type);
+        
+        throw error;
     }
-
+}
     // --- Data Processor ---
     function processRawDataset(rawRows, datasetType) {
         return rawRows.map(row => {
@@ -1821,12 +1869,13 @@ console.log("renderMainDashboard: D3 visualizations attempted.");
         console.log(`handleDatasetSelection: Initiating load for ${selectedValue}`);
         
         dashboardContainer.innerHTML = `
-            <div class="loader">
-                <div class="spinner"></div>
-                <p>Loading data for selected agency...</p>
-                <p class="small">This may take a moment</p>
-            </div>
-        `;
+    <div class="loader">
+        <div class="spinner"></div>
+        <p>Loading data for ${agencyDisplayNames}...</p>
+        <p class="small">Connecting to S3 bucket</p>
+        <div id="loading-status" class="loading-status">Initializing...</div>
+    </div>
+`;
         
         rawData = { primes: [], subs: [] };
         unifiedModel = null;
