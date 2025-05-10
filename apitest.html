@@ -3,101 +3,140 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>USAspending.gov - Agency Budget Viewer</title>
+    <title>USAspending.gov - Agency Snapshot</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { font-family: sans-serif; }
-        .container { max-width: 800px; margin: 2rem auto; padding: 1.5rem; background-color: #f9fafb; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        label { display: block; margin-bottom: 0.5rem; font-weight: 500; color: #374151; }
+        body { font-family: sans-serif; background-color: #f0f2f5; }
+        .container { max-width: 900px; margin: 2rem auto; }
+        .control-panel, .results-panel {
+            padding: 1.5rem; background-color: #ffffff;
+            border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); margin-bottom: 1.5rem;
+        }
+        label { display: block; margin-bottom: 0.5rem; font-weight: 500; color: #4a5568; }
         select, button {
             width: 100%;
             padding: 0.75rem;
             margin-bottom: 1rem;
-            border: 1px solid #d1d5db;
+            border: 1px solid #cbd5e0;
             border-radius: 0.375rem;
             box-sizing: border-box;
             background-color: white;
-            color: #1f2937;
+            color: #2d3748;
         }
         button {
-            background-color: #2563eb;
+            background-color: #4299e1; /* Tailwind blue-500 */
             color: white;
             font-weight: 600;
             cursor: pointer;
             transition: background-color 0.2s;
         }
-        button:hover:not(:disabled) { background-color: #1d4ed8; }
-        button:disabled { background-color: #9ca3af; cursor: not-allowed; }
-        #budget-results-div { margin-top: 1.5rem; padding: 1rem; background-color: white; border: 1px solid #e5e7eb; border-radius: 0.375rem; }
-        #budget-results-div h3 { font-size: 1.25rem; font-weight: 600; color: #111827; margin-bottom: 0.75rem; }
-        #budget-results-div p { margin-bottom: 0.5rem; color: #4b5563; }
-        #budget-results-div .value { font-weight: 600; color: #1f2937; }
-        .error { color: #dc2626; font-weight: 500; margin-top:1rem; padding: 0.75rem; background-color: #fee2e2; border: 1px solid #fca5a5; border-radius: 0.375rem;}
+        button:hover:not(:disabled) { background-color: #2b6cb0; /* Tailwind blue-700 */ }
+        button:disabled { background-color: #a0aec0; /* Tailwind gray-500 */ cursor: not-allowed; }
+
+        .results-panel h2 { font-size: 1.5rem; font-weight: 700; color: #2c5282; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid #e2e8f0; }
+        .results-panel h3 { font-size: 1.25rem; font-weight: 600; color: #2d3748; margin-top: 1.5rem; margin-bottom: 0.75rem; }
+        .results-panel p, .results-panel li { margin-bottom: 0.5rem; color: #4a5568; line-height: 1.6; }
+        .results-panel .value { font-weight: 600; color: #1a202c; }
+        .results-panel .item-list { list-style: none; padding-left: 0; }
+        .results-panel .item-list li { background-color: #f7fafc; padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 0.25rem; margin-bottom: 0.5rem; }
+        .results-panel .item-list li strong { color: #2c5282; }
+
+        .error { color: #c53030; font-weight: 500; margin-top:1rem; padding: 0.75rem; background-color: #fed7d7; border: 1px solid #f56565; border-radius: 0.375rem;}
         .loader {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #3498db;
+            border: 4px solid #e2e8f0; /* Tailwind gray-300 */
+            border-top: 4px solid #4299e1; /* Tailwind blue-500 */
             border-radius: 50%;
             width: 30px;
             height: 30px;
             animation: spin 1s linear infinite;
-            margin: 1rem auto;
+            margin: 1.5rem auto;
             display: none;
         }
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        .agency-icon { max-width: 50px; max-height: 50px; margin-right: 10px; vertical-align: middle; }
     </style>
 </head>
 <body class="bg-gray-100">
-    <div class="container mx-auto p-6 bg-white shadow-lg rounded-lg mt-10">
-        <h1 class="text-2xl font-bold text-center text-gray-700 mb-6">USAspending.gov - Agency Budgetary Resources</h1>
+    <div class="container mx-auto p-4">
+        <div class="control-panel">
+            <h1 class="text-3xl font-bold text-center text-gray-700 mb-6">Agency Snapshot</h1>
+            <button id="load-agencies-button" class="bg-indigo-600 hover:bg-indigo-700">1. Load Agencies</button>
 
-        <button id="load-agencies-button">1. Load Agencies</button>
-
-        <div id="controls-step-2" class="hidden mt-4">
-            <div>
-                <label for="agency-select">Select Agency:</label>
-                <select id="agency-select" disabled>
-                    <option value="">-- Please load agencies first --</option>
-                </select>
-            </div>
-
-            <div>
-                <label for="year-select">Select Fiscal Year:</label>
-                <select id="year-select" disabled>
+            <div id="controls-step-2" class="hidden mt-4">
+                <div>
+                    <label for="agency-select">Select Agency:</label>
+                    <select id="agency-select" disabled>
+                        <option value="">-- Please load agencies first --</option>
                     </select>
-            </div>
+                </div>
 
-            <button id="fetch-budget-button" disabled>2. Fetch Budgetary Resources</button>
+                <div>
+                    <label for="year-select">Select Fiscal Year:</label>
+                    <select id="year-select" disabled>
+                        </select>
+                </div>
+
+                <button id="fetch-snapshot-button" class="bg-green-600 hover:bg-green-700" disabled>2. Fetch Agency Snapshot Details</button>
+            </div>
         </div>
 
         <div id="loader" class="loader"></div>
-        <div id="budget-results-div" class="hidden">
-            <h3 id="results-agency-name"></h3>
-            <p><strong>Fiscal Year:</strong> <span id="results-fiscal-year" class="value"></span></p>
-            <p><strong>Total Budget Authority (Agency):</strong> <span id="results-budget-authority" class="value"></span></p>
-            <p><strong>Total Obligations (Agency):</strong> <span id="results-obligations" class="value"></span></p>
-        </div>
         <div id="error-message" class="error hidden"></div>
+
+        <div id="snapshot-results-div" class="results-panel hidden">
+            <h2 id="snapshot-agency-title">Agency Details</h2>
+
+            <div id="agency-overview-section">
+                <h3><img id="agency-icon-img" src="#" alt="icon" class="agency-icon hidden"/>Agency Overview</h3>
+                <p><strong>Mission:</strong> <span id="agency-mission" class="value">N/A</span></p>
+                <p><strong>Website:</strong> <a id="agency-website" href="#" target="_blank" rel="noopener noreferrer" class="value text-blue-600 hover:underline">N/A</a></p>
+                <p><strong>Congressional Justification:</strong> <a id="agency-cgj" href="#" target="_blank" rel="noopener noreferrer" class="value text-blue-600 hover:underline">N/A</a></p>
+            </div>
+
+            <div id="financial-totals-section">
+                <h3>Financial Totals for FY <span id="selected-fy"></span></h3>
+                <p><strong>Total Budget Authority (Agency):</strong> <span id="results-budget-authority" class="value">N/A</span></p>
+                <p><strong>Total Obligations (Agency):</strong> <span id="results-obligations" class="value">N/A</span></p>
+            </div>
+
+            <div id="object-class-spending-section">
+                <h3>Spending by Object Class for FY <span id="object-class-fy"></span></h3>
+                <ul id="object-class-list" class="item-list">
+                    </ul>
+                 <p id="object-class-none" class="hidden">No spending by object class data found for this selection.</p>
+            </div>
+        </div>
     </div>
 
     <script>
         const BASE_URL = 'https://api.usaspending.gov';
-        const REFERENCE_YEAR_FOR_FY_CALC = 2025; // Year for calculating fiscal year list
-        const FISCAL_YEARS = Array.from({ length: 10 }, (_, i) => REFERENCE_YEAR_FOR_FY_CALC - i);
+        const REFERENCE_YEAR_FOR_FY_CALC = new Date().getFullYear() + 1; // For upcoming fiscal year, e.g. if 2025, it's for FY26
+        const FISCAL_YEARS = Array.from({ length: 10 }, (_, i) => REFERENCE_YEAR_FOR_FY_CALC - 1 - i); // FYs: 2025 down to 2016
 
         const loadAgenciesButton = document.getElementById('load-agencies-button');
         const agencySelect = document.getElementById('agency-select');
         const yearSelect = document.getElementById('year-select');
-        const fetchBudgetButton = document.getElementById('fetch-budget-button');
+        const fetchSnapshotButton = document.getElementById('fetch-snapshot-button');
         const controlsStep2Div = document.getElementById('controls-step-2');
 
-        const budgetResultsDiv = document.getElementById('budget-results-div');
-        const resultsAgencyName = document.getElementById('results-agency-name');
-        const resultsFiscalYear = document.getElementById('results-fiscal-year');
+        const snapshotResultsDiv = document.getElementById('snapshot-results-div');
+        const snapshotAgencyTitle = document.getElementById('snapshot-agency-title');
+        const agencyMission = document.getElementById('agency-mission');
+        const agencyWebsite = document.getElementById('agency-website');
+        const agencyCGJ = document.getElementById('agency-cgj');
+        const agencyIconImg = document.getElementById('agency-icon-img');
+
+        const selectedFySpan = document.getElementById('selected-fy');
         const resultsBudgetAuthority = document.getElementById('results-budget-authority');
         const resultsObligations = document.getElementById('results-obligations');
+
+        const objectClassFySpan = document.getElementById('object-class-fy');
+        const objectClassList = document.getElementById('object-class-list');
+        const objectClassNoneMsg = document.getElementById('object-class-none');
+
         const errorMessageDiv = document.getElementById('error-message');
         const loader = document.getElementById('loader');
 
@@ -107,7 +146,7 @@
             FISCAL_YEARS.forEach(year => {
                 const option = document.createElement('option');
                 option.value = year;
-                option.textContent = year;
+                option.textContent = `FY ${year}`;
                 yearSelect.appendChild(option);
             });
             if (FISCAL_YEARS.length > 0) {
@@ -117,7 +156,7 @@
         populateFiscalYears();
 
         function formatCurrency(amount) {
-            if (amount === null || amount === undefined) return "N/A";
+            if (amount === null || amount === undefined || isNaN(parseFloat(amount))) return "N/A";
             return '$' + Number(amount).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
         }
 
@@ -125,36 +164,40 @@
             if (consoleError) console.error(consoleError);
             errorMessageDiv.textContent = message;
             errorMessageDiv.classList.remove('hidden');
-            budgetResultsDiv.classList.add('hidden');
+            snapshotResultsDiv.classList.add('hidden'); // Hide results panel on error
         }
         
-        async function makeApiCall(endpoint, buttonToDisable) {
-            errorMessageDiv.classList.add('hidden'); // Clear previous errors
-            loader.style.display = 'block';
-            if(buttonToDisable) buttonToDisable.disabled = true;
+        async function makeApiCall(endpoint, buttonToDisable, isPartOfAll) {
+            if (!isPartOfAll) { // Only show main loader if not part of Promise.all
+                errorMessageDiv.classList.add('hidden');
+                loader.style.display = 'block';
+            }
+            if(buttonToDisable && !isPartOfAll) buttonToDisable.disabled = true;
 
             try {
                 const response = await fetch(endpoint);
                 if (!response.ok) {
-                    let errorDetailMessage = `HTTP error! Status: ${response.status}`;
+                    let errorDetailMessage = `Request to ${endpoint} failed. Status: ${response.status}`;
                     try {
                         const errorData = await response.json();
                         errorDetailMessage += ` - ${errorData.detail || JSON.stringify(errorData)}`;
-                    } catch (e) { /* Ignore if response body is not JSON */ }
+                    } catch (e) { /* Ignore */ }
                     throw new Error(errorDetailMessage);
                 }
                 return await response.json();
             } finally {
-                loader.style.display = 'none';
-                if(buttonToDisable) buttonToDisable.disabled = false;
+                 if (!isPartOfAll) {
+                    loader.style.display = 'none';
+                    if(buttonToDisable) buttonToDisable.disabled = false;
+                }
             }
         }
 
         loadAgenciesButton.addEventListener('click', async () => {
             agencySelect.innerHTML = '<option value="">-- Loading agencies... --</option>';
-            budgetResultsDiv.classList.add('hidden'); // Hide previous budget results
+            snapshotResultsDiv.classList.add('hidden');
             try {
-                const data = await makeApiCall(`${BASE_URL}/api/v2/references/toptier_agencies/`, loadAgenciesButton);
+                const data = await makeApiCall(`${BASE_URL}/api/v2/references/toptier_agencies/`, loadAgenciesButton, false);
                 loadedAgenciesData = data.results || [];
                 agencySelect.innerHTML = '<option value="">-- Select an Agency --</option>';
 
@@ -164,16 +207,17 @@
                         const option = document.createElement('option');
                         option.value = agency.toptier_code;
                         option.textContent = `${agency.agency_name} (${agency.abbreviation || agency.toptier_code})`;
+                        option.dataset.icon = agency.icon_filename; // Store icon filename
                         agencySelect.appendChild(option);
                     });
                     agencySelect.disabled = false;
                     yearSelect.disabled = false;
-                    fetchBudgetButton.disabled = false;
+                    fetchSnapshotButton.disabled = false;
                     controlsStep2Div.classList.remove('hidden');
                     loadAgenciesButton.textContent = 'Reload Agencies';
                 } else {
                     agencySelect.innerHTML = '<option value="">-- No agencies found --</option>';
-                    handleErrorDisplay('No agencies found or unexpected API response.');
+                    handleErrorDisplay('No agencies found from API.');
                 }
             } catch (error) {
                 agencySelect.innerHTML = '<option value="">-- Error loading agencies --</option>';
@@ -181,58 +225,155 @@
             }
         });
 
-        fetchBudgetButton.addEventListener('click', async () => {
+        fetchSnapshotButton.addEventListener('click', async () => {
             const agencyCode = agencySelect.value;
-            const fiscalYearString = yearSelect.value; // User's selected fiscal year as a string
+            const fiscalYear = yearSelect.value;
             const selectedAgencyOption = agencySelect.options[agencySelect.selectedIndex];
-            const agencyDisplayName = selectedAgencyOption ? selectedAgencyOption.textContent : `Agency Code: ${agencyCode}`;
+            const agencyDisplayName = selectedAgencyOption ? selectedAgencyOption.text : `Agency Code: ${agencyCode}`;
+            const agencyIconFile = selectedAgencyOption ? selectedAgencyOption.dataset.icon : null;
 
             if (!agencyCode) {
                 alert('Please select an agency.');
                 return;
             }
             
-            budgetResultsDiv.classList.add('hidden');
+            snapshotResultsDiv.classList.add('hidden'); // Hide previous results
+            errorMessageDiv.classList.add('hidden');
+            loader.style.display = 'block'; // Show main loader for all calls
+
+            // Disable controls during fetch
+            loadAgenciesButton.disabled = true;
             agencySelect.disabled = true;
             yearSelect.disabled = true;
+            fetchSnapshotButton.disabled = true;
 
-            // We'll include the fiscal_year parameter as the API docs suggest it should filter.
-            const endpoint = `${BASE_URL}/api/v2/agency/${agencyCode}/budgetary_resources/?fiscal_year=${fiscalYearString}`;
+            // Clear previous results
+            agencyMission.textContent = "N/A";
+            agencyWebsite.textContent = "N/A";
+            agencyWebsite.href = "#";
+            agencyCGJ.textContent = "N/A";
+            agencyCGJ.href = "#";
+            agencyIconImg.classList.add('hidden');
+            resultsBudgetAuthority.textContent = "N/A";
+            resultsObligations.textContent = "N/A";
+            objectClassList.innerHTML = "";
+            objectClassNoneMsg.classList.add('hidden');
+
+
+            snapshotAgencyTitle.textContent = `${agencyDisplayName} - Snapshot for FY ${fiscalYear}`;
+            selectedFySpan.textContent = fiscalYear;
+            objectClassFySpan.textContent = fiscalYear;
+
+
+            const agencyOverviewEndpoint = `${BASE_URL}/api/v2/agency/${agencyCode}/`;
+            const budgetaryResourcesEndpoint = `${BASE_URL}/api/v2/agency/${agencyCode}/budgetary_resources/?fiscal_year=${fiscalYear}`;
+            const objectClassEndpoint = `${BASE_URL}/api/v2/agency/${agencyCode}/object_class/?fiscal_year=${fiscalYear}`;
 
             try {
-                const data = await makeApiCall(endpoint, fetchBudgetButton);
-                let budgetDataForSelectedYear = null;
+                const [overviewData, budgetDataResponse, objectClassData] = await Promise.all([
+                    makeApiCall(agencyOverviewEndpoint, null, true).catch(e => ({error: e, source: 'Overview'})),
+                    makeApiCall(budgetaryResourcesEndpoint, null, true).catch(e => ({error: e, source: 'Budgetary Resources'})),
+                    makeApiCall(objectClassEndpoint, null, true).catch(e => ({error: e, source: 'Object Class'}))
+                ]);
 
-                // Scenario 1: The API returns a single object for the requested fiscal year
-                // (as implied by `?fiscal_year=` parameter).
-                // The top-level 'data' object would itself contain fiscal_year, agency_budgetary_resources, etc.
-                if (data && data.fiscal_year && data.fiscal_year.toString() === fiscalYearString) {
-                    budgetDataForSelectedYear = data;
-                }
-                // Scenario 2: The API ignored `?fiscal_year=` and returned all years for the agency (like your sample for the base URL).
-                // In this case, 'data' would contain 'agency_data_by_year' array.
-                else if (data && data.agency_data_by_year && Array.isArray(data.agency_data_by_year)) {
-                    budgetDataForSelectedYear = data.agency_data_by_year.find(
-                        item => item.fiscal_year.toString() === fiscalYearString
-                    );
+                let hasErrors = false;
+
+                // Process Overview Data
+                if (overviewData && !overviewData.error) {
+                    agencyMission.textContent = overviewData.mission || "Not Available";
+                    if (overviewData.website) {
+                        agencyWebsite.textContent = overviewData.website;
+                        agencyWebsite.href = overviewData.website.startsWith('http') ? overviewData.website : `https://${overviewData.website}`;
+                    } else {
+                        agencyWebsite.textContent = "Not Available";
+                        agencyWebsite.href = "#";
+                    }
+                    if (overviewData.congressional_justification_url) {
+                        agencyCGJ.textContent = "View Justification";
+                        agencyCGJ.href = overviewData.congressional_justification_url;
+                    } else {
+                        agencyCGJ.textContent = "Not Available";
+                        agencyCGJ.href = "#";
+                    }
+                    if (agencyIconFile) {
+                        // Note: The icon_filename might just be a name, not a full URL.
+                        // USAspending.gov usually serves them from a path like /img/agency_icons/
+                        // For simplicity, this example won't try to resolve the full path.
+                        // You might need to adjust this if you host icons or find their base URL.
+                        agencyIconImg.alt = `${agencyDisplayName} icon`;
+                        // agencyIconImg.src = `https://www.usaspending.gov/img/agency/${agencyIconFile}`; // Example, might not be correct
+                        // For now, we'll just acknowledge it:
+                        // console.log("Agency icon filename:", agencyIconFile);
+                        // If you have a way to display it or a placeholder:
+                        // agencyIconImg.classList.remove('hidden');
+                    }
+
+                } else if (overviewData && overviewData.error) {
+                    console.error("Overview Error:", overviewData.error);
+                    agencyMission.textContent = "Error loading overview.";
+                    hasErrors = true;
                 }
 
-                if (budgetDataForSelectedYear) {
-                    resultsAgencyName.textContent = agencyDisplayName;
-                    resultsFiscalYear.textContent = budgetDataForSelectedYear.fiscal_year;
-                    // ** Using field names based on your provided sample **
-                    resultsBudgetAuthority.textContent = formatCurrency(budgetDataForSelectedYear.agency_budgetary_resources);
-                    resultsObligations.textContent = formatCurrency(budgetDataForSelectedYear.agency_total_obligated);
-                    budgetResultsDiv.classList.remove('hidden');
-                } else {
-                    handleErrorDisplay(`No budgetary resource data found for ${agencyDisplayName} for FY ${fiscalYearString}. The API might not have data for this specific selection or the response structure was unexpected.`);
+
+                // Process Budgetary Resources Data
+                if (budgetDataResponse && !budgetDataResponse.error) {
+                    let budgetDataForSelectedYear = null;
+                    if (budgetDataResponse.fiscal_year && budgetDataResponse.fiscal_year.toString() === fiscalYear) {
+                        budgetDataForSelectedYear = budgetDataResponse;
+                    } else if (budgetDataResponse.agency_data_by_year && Array.isArray(budgetDataResponse.agency_data_by_year)) {
+                        budgetDataForSelectedYear = budgetDataResponse.agency_data_by_year.find(
+                            item => item.fiscal_year.toString() === fiscalYear
+                        );
+                    }
+
+                    if (budgetDataForSelectedYear) {
+                        resultsBudgetAuthority.textContent = formatCurrency(budgetDataForSelectedYear.agency_budgetary_resources);
+                        resultsObligations.textContent = formatCurrency(budgetDataForSelectedYear.agency_total_obligated);
+                    } else {
+                        resultsBudgetAuthority.textContent = "N/A";
+                        resultsObligations.textContent = "N/A";
+                        console.warn(`No specific budgetary data for FY ${fiscalYear} in response.`);
+                    }
+                } else if (budgetDataResponse && budgetDataResponse.error) {
+                    console.error("Budgetary Resources Error:", budgetDataResponse.error);
+                    resultsBudgetAuthority.textContent = "Error";
+                    resultsObligations.textContent = "Error";
+                    hasErrors = true;
                 }
 
-            } catch (error) {
-                handleErrorDisplay(`Error fetching budgetary resources: ${error.message}`, error);
+
+                // Process Object Class Data
+                if (objectClassData && !objectClassData.error && objectClassData.results && objectClassData.results.length > 0) {
+                    objectClassList.innerHTML = ''; // Clear previous
+                    objectClassData.results.forEach(item => {
+                        const li = document.createElement('li');
+                        li.innerHTML = `<strong>${item.object_class_name || 'Unknown Object Class'}:</strong> <span class="value">${formatCurrency(item.obligated_amount)}</span>`;
+                        objectClassList.appendChild(li);
+                    });
+                    objectClassNoneMsg.classList.add('hidden');
+                } else if (objectClassData && objectClassData.error) {
+                     console.error("Object Class Error:", objectClassData.error);
+                     objectClassList.innerHTML = '<li>Error loading object class data.</li>';
+                     hasErrors = true;
+                }
+                else {
+                    objectClassList.innerHTML = '';
+                    objectClassNoneMsg.classList.remove('hidden');
+                }
+                
+                snapshotResultsDiv.classList.remove('hidden');
+                if (hasErrors) {
+                    handleErrorDisplay("Some data could not be loaded. See console for details.");
+                }
+
+            } catch (error) { // Catch errors from Promise.all or other general errors
+                handleErrorDisplay(`Error fetching agency snapshot details: ${error.message}`, error);
             } finally {
+                loader.style.display = 'none';
+                loadAgenciesButton.disabled = false;
                 agencySelect.disabled = false;
                 yearSelect.disabled = false;
+                fetchSnapshotButton.disabled = false;
             }
         });
     </script>
