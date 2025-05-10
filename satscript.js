@@ -513,63 +513,65 @@ document.addEventListener('DOMContentLoaded', () => {
             dendrogramChartData: prepareHierarchyDataForD3(model) // You'll need to define this
         };
     }
+function renderMainDashboard(data) {
+    if (!dashboardContainer) {
+        console.error("FATAL: dashboardContainer DOM element not found in renderMainDashboard.");
+        return;
+    }
+    if (!data) {
+        console.error("renderMainDashboard: No display data provided.");
+        dashboardContainer.innerHTML = `<p class="dashboard-loading">Error: Missing data for dashboard rendering.</p>`;
+        return;
+    }
 
-    // --- UI RENDERER ---
-    function renderMainDashboard(data) {
-        if (!data) {
-            dashboardContainer.innerHTML = `<p class="dashboard-loading">No data to display.</p>`;
-            return;
+    console.log("renderMainDashboard: Starting to generate HTML...");
+    // Destroy existing Chart.js instances
+    Object.values(chartInstances).forEach(chart => {
+        if (chart && typeof chart.destroy === 'function') {
+            chart.destroy();
         }
-        // Destroy existing Chart.js instances
-        Object.values(chartInstances).forEach(chart => chart.destroy());
-        chartInstances = {};
+    });
+    chartInstances = {};
 
-        const primeRowsHtml = data.topPrimesTableData.map(p => `
-            <tr>
-                <td>${p.usaspendingLink ? `<a href="${p.usaspendingLink}" target="_blank">${truncateText(p.name,30)}</a>` : truncateText(p.name,30)}</td>
-                <td class="number-cell">${formatCurrencyShort(p.value)}</td><td class="number-cell">${p.awards}</td>
-                <td class="number-cell">${p.avgDuration} days</td><td>${truncateText(p.primaryNaics, 40)}</td>
-            </tr>`).join('');
-        const expiringRowsHtml = data.expiringContractsTableData.map(c => `
-            <tr>
-                <td>${c.id !== "N/A" ? `<a href="https://www.usaspending.gov/award/${c.id}" target="_blank">${c.id}</a>` : 'N/A'}</td>
-                <td>${truncateText(c.contractor,30)}</td><td>${truncateText(c.description,40)}</td>
-                <td>${c.endDate}</td><td class="number-cell">${formatCurrencyShort(c.value)}</td>
-            </tr>`).join('');
-        const tavTcvChartDataForScript = JSON.stringify(data.tavTcvChart.map(d => ({...d, link: d.id !== "N/A" ? `https://www.usaspending.gov/award/${d.id}` : null })));
+    try {
+        // ... (The rest of your HTML generation logic for primeRowsHtml, expiringRowsHtml, etc.)
+        const primeRowsHtml = (data.topPrimesTableData || []).map(p => `<tr><td>${p.usaspendingLink ? `<a href="${p.usaspendingLink}" target="_blank">${truncateText(p.name,30)}</a>` : truncateText(p.name,30)}</td><td class="number-cell">${formatCurrencyShort(p.value)}</td><td class="number-cell">${p.awards}</td><td class="number-cell">${p.avgDuration} days</td><td>${truncateText(p.primaryNaics, 40)}</td></tr>`).join('');
+        const expiringRowsHtml = (data.expiringContractsTableData || []).map(c => `<tr><td>${c.id !== "N/A" ? `<a href="https://www.usaspending.gov/award/${c.id}" target="_blank">${c.id}</a>` : 'N/A'}</td><td>${truncateText(c.contractor,30)}</td><td>${truncateText(c.description,40)}</td><td>${c.endDate}</td><td class="number-cell">${formatCurrencyShort(c.value)}</td></tr>`).join('');
+        const tavTcvChartDataForScript = JSON.stringify((data.tavTcvChart || []).map(d => ({...d, link: d.id !== "N/A" ? `https://www.usaspending.gov/award/${d.id}` : null })));
 
-
+        // Ensure all parts of 'data' are checked for existence before being used in template literals
         const html = `
             <div class="snapshot-header">
-                <div><h2>${data.agencyName} Dashboard</h2><p>Data as of: ${data.updateDateMonthYear}</p></div>
-                <div class="snapshot-date">Generated: ${data.currentDateFormatted}</div>
+                <div><h2>${data.agencyName || 'Agency'} Dashboard</h2><p>Data as of: ${data.updateDateMonthYear || 'N/A'}</p></div>
+                <div class="snapshot-date">Generated: ${data.currentDateFormatted || 'N/A'}</div>
             </div>
             <section class="insights">
                 <h3>Executive Summary</h3>
-                <p>Approx. recent obligations: <strong>${data.totalAwardedFY}</strong>. Key NAICS: <strong>${data.mostUsedNaicsFullText}</strong>.
-                   Expiring soon: <strong>${data.expiringCount}</strong> awards (<strong>${data.expiringValueFormatted}</strong>) in next 6 months.</p>
+                <p>Approx. recent obligations: <strong>${data.totalAwardedFY || '$0'}</strong>. Key NAICS: <strong>${data.mostUsedNaicsFullText || 'N/A'}</strong>.
+                   Expiring soon: <strong>${data.expiringCount || 0}</strong> awards (<strong>${data.expiringValueFormatted || '$0'}</strong>) in next 6 months.</p>
                 <h4>Key Intelligence:</h4>
                 <ul>
-                    <li>Top Prime: ${data.topPrimeName}</li><li>Top Sub: ${data.topSubName}</li>
-                    <li>Dominant Services: ${data.dominantNaicsTextShort}</li><li>ARR for ${data.arrNaicsCode}: ~${data.arrForTopNaics}</li>
-                    <li>Geo Focus: ${data.geoDistributionText}</li>
+                    <li>Top Prime: ${data.topPrimeName || 'N/A'}</li><li>Top Sub: ${data.topSubName || 'N/A'}</li>
+                    <li>Dominant Services: ${data.dominantNaicsTextShort || 'N/A'}</li><li>ARR for ${data.arrNaicsCode || 'N/A'}: ~${data.arrForTopNaics || '$0'}</li>
+                    <li>Geo Focus: ${data.geoDistributionText || 'N/A'}</li>
                 </ul>
             </section>
             <section class="opportunity-snapshot">
                  <h3>Opportunity Triggers</h3>
                  <ul>
-                    <li>Target <strong>${data.expiringCount} expiring contracts (${data.expiringValueFormatted})</strong> for near-term pursuits.</li>
-                    <li>Explore teaming with/competing against <strong>${data.topPrimeName}</strong>.</li>
-                    <li>Investigate needs within <strong>${data.mostUsedNaicsCode}</strong>.</li>
+                    <li>Target <strong>${data.expiringCount || 0} expiring contracts (${data.expiringValueFormatted || '$0'})</strong> for near-term pursuits.</li>
+                    <li>Explore teaming with/competing against <strong>${data.topPrimeName || 'N/A'}</strong>.</li>
+                    <li>Investigate needs within <strong>${data.mostUsedNaicsCode || 'N/A'}</strong>.</li>
                  </ul>
             </section>
             <section class="quick-intel">
-                <div class="stat-card"><div class="stat-label">Top Prime</div><div class="stat-value">${data.topPrimeName}</div></div>
-                <div class="stat-card"><div class="stat-label">Top Sub</div><div class="stat-value">${data.topSubName}</div></div>
-                <div class="stat-card"><div class="stat-label">Top NAICS</div><div class="stat-value">${data.mostUsedNaicsCode}</div></div>
-                <div class="stat-card"><div class="stat-label">Total Obligated</div><div class="stat-value">${data.totalAwardedFY}</div></div>
-                <div class="stat-card"><div class="stat-label">Expiring Soon</div><div class="stat-value">${data.expiringCount} | ${data.expiringValueFormatted}</div></div>
+                <div class="stat-card"><div class="stat-label">Top Prime</div><div class="stat-value">${data.topPrimeName || 'N/A'}</div></div>
+                <div class="stat-card"><div class="stat-label">Top Sub</div><div class="stat-value">${data.topSubName || 'N/A'}</div></div>
+                <div class="stat-card"><div class="stat-label">Top NAICS</div><div class="stat-value">${data.mostUsedNaicsCode || 'N/A'}</div></div>
+                <div class="stat-card"><div class="stat-label">Total Obligated</div><div class="stat-value">${data.totalAwardedFY || '$0'}</div></div>
+                <div class="stat-card"><div class="stat-label">Expiring Soon</div><div class="stat-value">${data.expiringCount || 0} | ${data.expiringValueFormatted || '$0'}</div></div>
             </section>
+            
             <div class="layout-grid">
                 <div class="col-span-6 content-section"><h3 class="chart-title">Top 7 Primes</h3><div class="chart-wrapper"><canvas id="main-contractors-chart"></canvas></div></div>
                 <div class="col-span-6 content-section"><h3 class="chart-title">NAICS Distribution (%)</h3><div class="chart-wrapper"><canvas id="main-naics-chart"></canvas></div></div>
@@ -581,9 +583,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="col-span-8 content-section"><h3 class="chart-title">Geographic Distribution (PoP)</h3><div id="main-map-viz" class="d3-chart-wrapper"><div class="loading-placeholder">Initializing Map...</div></div></div>
                 <div class="col-span-4 content-section"><h3 class="chart-title">ARR Estimator</h3>
                     <div style="text-align:center; padding:10px; height:300px; display:flex; flex-direction:column; justify-content:center;">
-                        <div style="font-size:26px; font-weight:700; color:var(--color-primary); margin-bottom:10px;">${data.arrEstimatorData.arrFormatted}</div>
-                        <p style="font-size:13px; color:var(--color-text-secondary);">For NAICS ${data.arrEstimatorData.naicsCode} (${data.arrEstimatorData.naicsDescription})</p>
-                        <p style="font-size:13px; color:var(--color-text-secondary); margin-top:5px;">Avg. Contract: ${data.arrEstimatorData.avgContractSizeFormatted} over ${data.arrEstimatorData.avgDurationText}</p>
+                        <div style="font-size:26px; font-weight:700; color:var(--color-primary); margin-bottom:10px;">${data.arrEstimatorData?.arrFormatted || '$0'}</div>
+                        <p style="font-size:13px; color:var(--color-text-secondary);">For NAICS ${data.arrEstimatorData?.naicsCode || 'N/A'} (${data.arrEstimatorData?.naicsDescription || 'N/A'})</p>
+                        <p style="font-size:13px; color:var(--color-text-secondary); margin-top:5px;">Avg. Contract: ${data.arrEstimatorData?.avgContractSizeFormatted || '$0'} over ${data.arrEstimatorData?.avgDurationText || 'N/A'}</p>
                     </div>
                 </div>
             </div>
@@ -592,32 +594,54 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
             <div class="content-section table-wrapper"><h3>Top 10 Primes</h3><table><thead><tr><th>Contractor</th><th>Total Value</th><th>Awards</th><th>Avg Duration</th><th>Primary NAICS</th></tr></thead><tbody>${primeRowsHtml}</tbody></table></div>
             <div class="content-section table-wrapper"><h3>Expiring Contracts (Next 6 Months)</h3><table><thead><tr><th>ID</th><th>Contractor</th><th>Description</th><th>End Date</th><th>Value</th></tr></thead><tbody>${expiringRowsHtml}</tbody></table></div>
-            <section class="insights"><h3>Relationship Insights</h3>${data.relationshipSummary}</section>
+            <section class="insights"><h3>Relationship Insights</h3>${data.relationshipSummary || '<p>No specific relationship insights available.</p>'}</section>
         `;
-        dashboardContainer.innerHTML = html;
-        dashboardContainer.classList.remove('dashboard-loading');
+
+        dashboardContainer.innerHTML = html; // This is the critical line to replace loading message
+        console.log("renderMainDashboard: HTML injected.");
+        dashboardContainer.classList.remove('dashboard-loading'); // Explicitly remove if class was used
 
         // Initialize Chart.js charts
         const chartFontColor = getCssVar('--color-text-secondary'); Chart.defaults.color = chartFontColor; Chart.defaults.borderColor = getCssVar('--color-border');
-        if(document.getElementById('main-contractors-chart')) chartInstances.primes = new Chart(document.getElementById('main-contractors-chart').getContext('2d'), { type: 'bar', data: { labels: data.primeContractorsChart.labels, datasets: [{label:'Value',data:data.primeContractorsChart.values, backgroundColor:getCssVar('--color-primary')}]}, options: {indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>formatCurrencyShort(c.raw)}}},scales:{x:{ticks:{callback:v=>formatCurrencyShort(v)}},y:{ticks:{font:{size:10}}}}}});
-        if(document.getElementById('main-naics-chart')) chartInstances.naics = new Chart(document.getElementById('main-naics-chart').getContext('2d'), { type: 'doughnut', data: { labels: data.naicsDistributionChart.labels, datasets: [{data:data.naicsDistributionChart.values, backgroundColor:['#6A5ACD','#483D8B','#7B68EE','#9370DB','#8A2BE2','#BA55D3']}]}, options: {responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{boxWidth:10,font:{size:10},generateLabels:c=>c.data.labels.map((l,i)=>({text:`${l} (${c.data.datasets[0].data[i]}%)`,fillStyle:c.data.datasets[0].backgroundColor[i]}))}},tooltip:{callbacks:{label:c=>`${c.label}: ${c.raw}%`}}}}});
+        
+        const contractorsChartData = data.primeContractorsChart || { labels: [], values: [] };
+        if(document.getElementById('main-contractors-chart')) chartInstances.primes = new Chart(document.getElementById('main-contractors-chart').getContext('2d'), { type: 'bar', data: { labels: contractorsChartData.labels, datasets: [{label:'Value',data:contractorsChartData.values, backgroundColor:getCssVar('--color-primary')}]}, options: {indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>formatCurrencyShort(c.raw)}}},scales:{x:{ticks:{callback:v=>formatCurrencyShort(v)}},y:{ticks:{font:{size:10}}}}}});
+        
+        const naicsChartData = data.naicsDistributionChart || { labels: [], values: [] };
+        if(document.getElementById('main-naics-chart')) chartInstances.naics = new Chart(document.getElementById('main-naics-chart').getContext('2d'), { type: 'doughnut', data: { labels: naicsChartData.labels, datasets: [{data:naicsChartData.values, backgroundColor:['#6A5ACD','#483D8B','#7B68EE','#9370DB','#8A2BE2','#BA55D3']}]}, options: {responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{boxWidth:10,font:{size:10},generateLabels:c=>c.data.labels.map((l,i)=>({text:`${l} (${c.data.datasets[0].data[i]}%)`,fillStyle:c.data.datasets[0].backgroundColor[i]}))}},tooltip:{callbacks:{label:c=>`${c.label}: ${c.raw}%`}}}}});
+        
         if(document.getElementById('main-tav-tcv-chart')) {
-            const tavTcvData = JSON.parse(tavTcvChartDataForScript); // Use the data prepared for script
+            const tavTcvData = JSON.parse(tavTcvChartDataForScript); 
             chartInstances.tavTcv = new Chart(document.getElementById('main-tav-tcv-chart').getContext('2d'), {
                 type: 'bar', data: { labels: tavTcvData.map(d=>d.name), datasets: [{label:'TAV',data:tavTcvData.map(d=>d.tav),backgroundColor:getCssVar('--color-primary'),stack:'s0'},{label:'TCV Remainder',data:tavTcvData.map(d=>d.tcvRemainder),backgroundColor:getCssVar('--color-accent'),stack:'s0'}]},
-                options: {indexAxis:'y',responsive:true,maintainAspectRatio:false, onClick:(e,els)=>{if(els.length>0){const idx=els[0].index; const link=tavTcvData[idx].link; if(link)window.open(link,'_blank');}}, onHover:(e,el)=>{e.native.target.style.cursor = el[0] && tavTcvData[el[0].index].link ? 'pointer':'default';}, plugins:{legend:{position:'bottom'},tooltip:{mode:'index',callbacks:{label:c=>`${c.dataset.label}: ${formatCurrencyShort(c.raw)}`, footer:items=>{let total=0; if(items[0]){const dIdx=items[0].dataIndex; total=tavTcvData[dIdx].totalTcv;} return `Total TCV: ${formatCurrencyShort(total)}`;}}}},scales:{x:{stacked:true,ticks:{callback:v=>formatCurrencyShort(v)}},y:{stacked:true,ticks:{font:{size:10}}}}}
+                options: {indexAxis:'y',responsive:true,maintainAspectRatio:false, onClick:(e,els)=>{if(els.length>0){const idx=els[0].index; const link=tavTcvData[idx].link; if(link)window.open(link,'_blank');}}, onHover:(e,el)=>{if(e.native && e.native.target) e.native.target.style.cursor = el[0] && tavTcvData[el[0].index].link ? 'pointer':'default';}, plugins:{legend:{position:'bottom'},tooltip:{mode:'index',callbacks:{label:c=>`${c.dataset.label}: ${formatCurrencyShort(c.raw)}`, footer:items=>{let total=0; if(items[0]){const dIdx=items[0].dataIndex; total=tavTcvData[dIdx].totalTcv;} return `Total TCV: ${formatCurrencyShort(total)}`;}}}},scales:{x:{stacked:true,ticks:{callback:v=>formatCurrencyShort(v)}},y:{stacked:true,ticks:{font:{size:10}}}}}
             });
         }
+        console.log("renderMainDashboard: Chart.js charts initialized.");
 
         // Call D3 rendering functions
-        if(data.mapChartData) renderMap(data.mapChartData, 'main-map-viz');
-        else document.getElementById('main-map-viz').innerHTML = '<p class="loading-placeholder">Map data not available for this selection.</p>';
+        if(data.mapChartData && Object.keys(data.mapChartData).length > 0) {
+            renderMap(data.mapChartData, 'main-map-viz');
+        } else {
+             const mapVizContainer = document.getElementById('main-map-viz');
+             if(mapVizContainer) mapVizContainer.innerHTML = '<p class="loading-placeholder">Map data not available for this selection.</p>';
+        }
+        console.log("renderMainDashboard: Map rendering attempted.");
 
-        if(data.dendrogramChartData) renderDendrogram(data.dendrogramChartData, 'main-dendrogram-viz');
-        else document.getElementById('main-dendrogram-viz').innerHTML = '<p class="loading-placeholder">Relationship data not available for this selection.</p>';
+        if(data.dendrogramChartData && data.dendrogramChartData.children && data.dendrogramChartData.children.length > 0 && (data.dendrogramChartData.children[0].name !== "No detailed prime/sub data available in this view." && data.dendrogramChartData.children[0].name !== "No Agency Data")) {
+            renderDendrogram(data.dendrogramChartData, 'main-dendrogram-viz');
+        } else {
+            const dendroVizContainer = document.getElementById('main-dendrogram-viz');
+            if(dendroVizContainer) dendroVizContainer.innerHTML = '<p class="loading-placeholder">Relationship data not available for this selection.</p>';
+        }
+        console.log("renderMainDashboard: Dendrogram rendering attempted.");
 
+    } catch (renderError) {
+        console.error("Error during renderMainDashboard HTML generation or chart/D3 init:", renderError);
+        dashboardContainer.innerHTML = `<p class="dashboard-loading">Critical error rendering dashboard: ${renderError.message}. Please check console.</p>`;
+        updateStatus('Error rendering dashboard.', 'error');
     }
-
+}
 
     // --- D3 VISUALS (Adapted from wednesday.js, ensure they target specific div IDs) ---
     function processMapDataForD3(model) { // This is your 'processMapDataFromModel'
@@ -849,103 +873,165 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
     }
-
-
-    async function handleDatasetSelection() {
-        const selectedValue = datasetSelect.value;
-        if (!selectedValue || isLoading) return;
-        isLoading = true;
-        dashboardContainer.innerHTML = `<div class="dashboard-loading"><div class="spinner"></div><p>Loading data for selected agency...</p></div>`;
-        rawData = { primes: [], subs: [] }; // Reset raw data
-        unifiedModel = null; // Reset model
-
-        let datasetsToLoadConfigs = [];
-        if (selectedValue.startsWith('combined:')) {
-            const ids = selectedValue.split(':')[1].split(',');
-            datasetsToLoadConfigs = ids.map(id => DATASETS_CONFIG.find(ds => ds.id === id)).filter(Boolean);
-        } else {
-            const singleConfig = DATASETS_CONFIG.find(ds => ds.id === selectedValue);
-            if (singleConfig) datasetsToLoadConfigs.push(singleConfig);
-        }
-
-        if (datasetsToLoadConfigs.length === 0) {
-            updateStatus('Invalid dataset selection.', 'error');
-            isLoading = false;
-            return;
-        }
-
-        try {
-            for (const config of datasetsToLoadConfigs) {
-                const fetchedData = await fetchDataset(config);
-                const processed = processRawDataset(fetchedData, config.type);
-                if (config.type === 'primes') rawData.primes = rawData.primes.concat(processed);
-                else if (config.type === 'subs') rawData.subs = rawData.subs.concat(processed);
-            }
-            unifiedModel = buildUnifiedModelFromProcessed(rawData.primes, rawData.subs);
-            populateFilterDropdowns(unifiedModel); // Populate filters with data from the new model
-            applyFiltersAndRedraw(); // Initial render with no filters
-            updateStatus(`Successfully loaded ${datasetsToLoadConfigs.map(d=>d.name).join(' & ')}.`, 'success');
-        } catch (error) {
-            updateStatus('Failed to load dataset(s).', 'error');
-            dashboardContainer.innerHTML = `<p class="dashboard-loading">Error loading data. Please try again.</p>`;
-        } finally {
-            isLoading = false;
-        }
+// Refined handleDatasetSelection
+async function handleDatasetSelection() {
+    const selectedValue = datasetSelect.value;
+    if (!selectedValue) {
+        updateStatus('Please select an agency.', 'info');
+        return;
+    }
+    if (isLoading) {
+        updateStatus('Operation in progress, please wait...', 'info');
+        return; // Prevent concurrent operations
     }
 
-    function applyFiltersAndRedraw() {
-        if (!unifiedModel) {
-            updateStatus('No data loaded to apply filters.', 'info');
-            dashboardContainer.innerHTML = `<p class="dashboard-loading">Please select an agency to view data.</p>`;
-            return;
+    isLoading = true;
+    applyFiltersBtn.disabled = true;
+    console.log(`handleDatasetSelection: Initiating load for ${selectedValue}`);
+    dashboardContainer.innerHTML = `<div class="dashboard-loading"><div class="spinner"></div><p>Loading data for selected agency...</p></div>`;
+    rawData = { primes: [], subs: [] };
+    unifiedModel = null;
+    // Clear filter options before repopulating
+    naicsFilterEl.innerHTML = '<option value="">All NAICS</option>';
+    subAgencyFilterEl.innerHTML = '<option value="">All Sub-Agencies</option>';
+
+    let datasetsToLoadConfigs = [];
+    if (selectedValue.startsWith('combined:')) {
+        const ids = selectedValue.split(':')[1].split(',');
+        datasetsToLoadConfigs = ids.map(id => DATASETS_CONFIG.find(ds => ds.id === id)).filter(Boolean);
+    } else {
+        const singleConfig = DATASETS_CONFIG.find(ds => ds.id === selectedValue);
+        if (singleConfig) datasetsToLoadConfigs.push(singleConfig);
+    }
+
+    if (datasetsToLoadConfigs.length === 0) {
+        updateStatus('Invalid dataset selection.', 'error');
+        dashboardContainer.innerHTML = `<p class="dashboard-loading">Invalid dataset selected. Please choose another.</p>`;
+        isLoading = false;
+        applyFiltersBtn.disabled = false;
+        return;
+    }
+
+    try {
+        const agencyDisplayNames = datasetsToLoadConfigs.map(d => d.name).join(' & ');
+        updateStatus(`Workspaceing ${agencyDisplayNames}...`, 'info');
+
+        for (const config of datasetsToLoadConfigs) {
+            const fetchedData = await fetchDataset(config);
+            const processed = processRawDataset(fetchedData, config.type);
+            if (config.type === 'primes') rawData.primes = rawData.primes.concat(processed);
+            else if (config.type === 'subs') rawData.subs = rawData.subs.concat(processed);
         }
-        if (isLoading) return; // Don't redraw if already loading
-        isLoading = true; // Prevent concurrent redraws
+        console.log("handleDatasetSelection: Raw data fetched and processed.");
 
-        dashboardContainer.innerHTML = `<div class="dashboard-loading"><div class="spinner"></div><p>Applying filters and updating view...</p></div>`;
+        unifiedModel = buildUnifiedModelFromProcessed(rawData.primes, rawData.subs);
+        console.log("handleDatasetSelection: Unified model built.");
+
+        if (unifiedModel) {
+            populateFilterDropdowns(unifiedModel);
+            console.log("handleDatasetSelection: Filters populated.");
+            applyFiltersAndRedraw(); // This will render the dashboard
+            // Status update will be handled by applyFiltersAndRedraw or its catch block
+        } else {
+            throw new Error("Failed to build the unified model.");
+        }
+
+    } catch (error) {
+        console.error("Error during handleDatasetSelection:", error);
+        updateStatus(`Failed to load data: ${error.message}`, 'error');
+        dashboardContainer.innerHTML = `<p class="dashboard-loading">Error loading data: ${error.message}. Please check console and try again.</p>`;
+    } finally {
+        isLoading = false;
+        applyFiltersBtn.disabled = false;
+        console.log("handleDatasetSelection: Operation finished.");
+    }
+}
+
+// Refined applyFiltersAndRedraw
+function applyFiltersAndRedraw() {
+    if (!unifiedModel) {
+        updateStatus('No data available to apply filters. Please select an agency.', 'info');
+        dashboardContainer.innerHTML = `<p class="dashboard-loading">No data loaded. Please select an agency.</p>`;
+        return;
+    }
+
+    console.log("applyFiltersAndRedraw: Preparing to filter and redraw dashboard...");
+    // Don't set dashboardContainer.innerHTML to a loading message here,
+    // as handleDatasetSelection already does for the initial load.
+    // For subsequent filter applications, the UI will just update.
+    // If filtering is slow, a more subtle indicator or statusBanner update is better.
+    updateStatus('Applying filters and updating view...', 'info');
 
 
-        // Get current filter values
+    try {
         const searchTerm = searchInput.value.toLowerCase().trim();
         const selectedSubAgency = subAgencyFilterEl.value;
         const selectedNaics = naicsFilterEl.value;
 
-        // Create a filtered version of the model
-        // This is a simplified filter. Your original `filterUnifiedModel` is more comprehensive.
-        let filteredPrimes = rawData.primes;
-        let filteredSubs = rawData.subs;
+        let filteredPrimesList = rawData.primes; // Start with full raw data for filtering
+        let filteredSubsList = rawData.subs;
 
-        if(searchTerm){
-            filteredPrimes = filteredPrimes.filter(c => Object.values(c).some(val => String(val).toLowerCase().includes(searchTerm)));
-            filteredSubs = filteredSubs.filter(c => Object.values(c).some(val => String(val).toLowerCase().includes(searchTerm)));
+        if (searchTerm) {
+            const st = searchTerm;
+            filteredPrimesList = rawData.primes.filter(c =>
+                Object.values(c).some(val => String(val).toLowerCase().includes(st))
+            );
+            filteredSubsList = rawData.subs.filter(c =>
+                Object.values(c).some(val => String(val).toLowerCase().includes(st))
+            );
         }
-        if(selectedSubAgency){
-            // Assuming subAgencyName is a direct property after processing
-            filteredPrimes = filteredPrimes.filter(c => c.subAgencyName === selectedSubAgency);
-            // Subs might also have subAgencyName from their prime award context
-            filteredSubs = filteredSubs.filter(c => c.subAgencyName === selectedSubAgency);
+        if (selectedSubAgency) {
+            filteredPrimesList = filteredPrimesList.filter(c => c.subAgencyName === selectedSubAgency);
+            filteredSubsList = filteredSubsList.filter(c => c.subAgencyName === selectedSubAgency);
         }
-        if(selectedNaics){
-            filteredPrimes = filteredPrimes.filter(c => c.naicsCode === selectedNaics);
-            filteredSubs = filteredSubs.filter(c => c.naicsCode === selectedNaics); // If subs have reliable NAICS
+        if (selectedNaics) {
+            filteredPrimesList = filteredPrimesList.filter(c => c.naicsCode === selectedNaics);
+            filteredSubsList = filteredSubsList.filter(c => c.naicsCode === selectedNaics);
         }
+        
+        console.log(`applyFiltersAndRedraw: Filtered to ${filteredPrimesList.length} primes, ${filteredSubsList.length} subs.`);
+        const filteredDisplayModel = buildUnifiedModelFromProcessed(filteredPrimesList, filteredSubsList);
+        console.log("applyFiltersAndRedraw: Built filteredDisplayModel.");
 
-        const filteredDisplayModel = buildUnifiedModelFromProcessed(filteredPrimes, filteredSubs);
-        const displayData = aggregateDataForDashboardView(filteredDisplayModel);
-        renderMainDashboard(displayData);
-        updateStatus('Dashboard updated with filters.', 'success', true);
-        isLoading = false;
+        const displayData = aggregateDataForDashboardView(filteredDisplayModel); // aggregateDataForDashboardView MUST be robust
+        console.log("applyFiltersAndRedraw: Aggregated displayData.");
+
+        if (displayData) {
+            renderMainDashboard(displayData); // This function updates dashboardContainer.innerHTML
+            updateStatus('Dashboard updated successfully.', 'success', true);
+        } else {
+            throw new Error("Could not prepare data for display after filtering.");
+        }
+    } catch (error) {
+        console.error("Error during applyFiltersAndRedraw:", error);
+        // If renderMainDashboard fails, the dashboardContainer might be left in an inconsistent state
+        // or with the old loading message if this is the first load.
+        dashboardContainer.innerHTML = `<p class="dashboard-loading">An error occurred while updating the view: ${error.message}. Check console.</p>`;
+        updateStatus(`Error updating view: ${error.message}`, 'error');
     }
+    // isLoading is managed by the orchestrating function (handleDatasetSelection for full load)
+    // For direct filter clicks, if applyFiltersAndRedraw were async, it would manage its own isLoading.
+    // Since it's synchronous after data is loaded, the main isLoading is sufficient.
+}  
+function updateStatus(message, type = 'info', autoDismiss = false) {
+    if (!statusBanner) return; // Ensure statusBanner exists
+    statusBanner.textContent = message;
+    statusBanner.className = `status-${type}`; // e.g., status-info, status-success, status-error
     
-    function updateStatus(message, type = 'info', autoDismiss = false) {
-        statusBanner.textContent = message;
-        statusBanner.className = `status-${type}`; // status-info, status-success, status-error
-        if(autoDismiss){
-            setTimeout(() => {
-                if(statusBanner.textContent === message) statusBanner.className = 'status-info'; statusBanner.textContent = 'Ready.';
-            }, 3000);
-        }
+    // Clear any existing auto-dismiss timer
+    if (statusBanner.dismissTimer) {
+        clearTimeout(statusBanner.dismissTimer);
     }
+
+    if (autoDismiss) {
+        statusBanner.dismissTimer = setTimeout(() => {
+            if (statusBanner.textContent === message) { // Only clear if it's still the same message
+                statusBanner.textContent = 'Ready.';
+                statusBanner.className = 'status-info';
+            }
+        }, 3000);
+    }
+}
 
     function initTheme() {
         const savedTheme = localStorage.getItem('dashboard-theme');
