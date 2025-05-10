@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>USAspending.gov - Simple Agency Budget Viewer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: sans-serif; }
+        .container { max-width: 800px; margin: 2rem auto; padding: 1.5rem; background-color: #f9fafb; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        label { display: block; margin-bottom: 0.5rem; font-weight: 500; color: #374151; }
+        select, button {
+            width: 100%;
+            padding: 0.75rem;
+            margin-bottom: 1rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            box-sizing: border-box;
+            background-color: white;
+            color: #1f2937;
+        }
+        button {
+            background-color: #2563eb;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        button:hover { background-color: #1d4ed8; }
+        button:disabled { background-color: #9ca3af; cursor: not-allowed; }
+        #results { margin-top: 1.5rem; padding: 1rem; background-color: white; border: 1px solid #e5e7eb; border-radius: 0.375rem; }
+        #results h3 { font-size: 1.25rem; font-weight: 600; color: #111827; margin-bottom: 0.75rem; }
+        #results p { margin-bottom: 0.5rem; color: #4b5563; }
+        #results .value { font-weight: 600; color: #1f2937; }
+        .error { color: #dc2626; font-weight: 500; margin-top:1rem; padding: 0.75rem; background-color: #fee2e2; border: 1px solid #fca5a5; border-radius: 0.375rem;}
+        .loader {
+            border: 4px solid #f3f3f3; /* Light grey */
+            border-top: 4px solid #3498db; /* Blue */
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 1rem auto;
+            display: none; /* Hidden by default */
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto p-6 bg-white shadow-lg rounded-lg mt-10">
+        <h1 class="text-2xl font-bold text-center text-gray-700 mb-6">USAspending.gov API - Agency Budgetary Resources</h1>
+
+        <div>
+            <label for="agency-select">Select Agency:</label>
+            <select id="agency-select">
+                </select>
+        </div>
+
+        <div>
+            <label for="year-select">Select Fiscal Year:</label>
+            <select id="year-select">
+                </select>
+        </div>
+
+        <button id="fetch-button">Fetch Data</button>
+
+        <div id="loader" class="loader"></div>
+        <div id="results" class="hidden">
+            <h3 id="results-agency-name"></h3>
+            <p><strong>Fiscal Year:</strong> <span id="results-fiscal-year" class="value"></span></p>
+            <p><strong>Total Budget Authority:</strong> <span id="results-budget-authority" class="value"></span></p>
+            <p><strong>Total Obligations:</strong> <span id="results-obligations" class="value"></span></p>
+        </div>
+        <div id="error-message" class="error hidden"></div>
+    </div>
+
+    <script>
+        const BASE_URL = 'https://api.usaspending.gov';
+
+        // Data from your usaspending-app.tsx
+        const AGENCIES = [
+            { name: 'Department of Defense', code: '097' },
+            { name: 'Department of Health and Human Services', code: '075' },
+            { name: 'Department of Education', code: '091' },
+            { name: 'Department of Veterans Affairs', code: '036' },
+            { name: 'Department of Energy', code: '089' },
+            { name: 'Department of Homeland Security', code: '070' },
+            { name: 'Department of Agriculture', code: '012' },
+            { name: 'Department of Transportation', code: '069' },
+            { name: 'Department of Justice', code: '015' },
+            { name: 'Department of the Treasury', code: '020' },
+            // Add more agencies if needed
+        ];
+
+        const CURRENT_YEAR = new Date().getFullYear(); // For fiscal year calculation
+        const FISCAL_YEARS = Array.from({ length: 10 }, (_, i) => CURRENT_YEAR + 1 - i); // e.g., if 2025, then 2026 (for FY26) down to 2017
+
+        const agencySelect = document.getElementById('agency-select');
+        const yearSelect = document.getElementById('year-select');
+        const fetchButton = document.getElementById('fetch-button');
+        const resultsDiv = document.getElementById('results');
+        const resultsAgencyName = document.getElementById('results-agency-name');
+        const resultsFiscalYear = document.getElementById('results-fiscal-year');
+        const resultsBudgetAuthority = document.getElementById('results-budget-authority');
+        const resultsObligations = document.getElementById('results-obligations');
+        const errorMessageDiv = document.getElementById('error-message');
+        const loader = document.getElementById('loader');
+
+        // Populate dropdowns
+        AGENCIES.forEach(agency => {
+            const option = document.createElement('option');
+            option.value = agency.code;
+            option.textContent = agency.name;
+            agencySelect.appendChild(option);
+        });
+
+        FISCAL_YEARS.forEach(year => {
+            const option = document.createElement('option');
+            option.value = year;
+            option.textContent = year;
+            yearSelect.appendChild(option);
+        });
+        // Select the most recent fiscal year by default
+        yearSelect.value = FISCAL_YEARS[0];
+
+
+        // Format currency
+        function formatCurrency(amount) {
+            if (amount === null || amount === undefined) return "N/A";
+            return '$' + Number(amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        // Fetch data
+        fetchButton.addEventListener('click', async () => {
+            const agencyCode = agencySelect.value;
+            const selectedAgency = AGENCIES.find(a => a.code === agencyCode);
+            const fiscalYear = yearSelect.value;
+
+            if (!agencyCode || !fiscalYear) {
+                alert('Please select an agency and a fiscal year.');
+                return;
+            }
+
+            const endpoint = `${BASE_URL}/api/v2/agency/${agencyCode}/budgetary_resources/?fiscal_year=${fiscalYear}`;
+
+            resultsDiv.classList.add('hidden');
+            errorMessageDiv.classList.add('hidden');
+            errorMessageDiv.textContent = '';
+            loader.style.display = 'block';
+            fetchButton.disabled = true;
+
+            try {
+                const response = await fetch(endpoint);
+                if (!response.ok) {
+                    let errorDetail = `HTTP error! Status: ${response.status}`;
+                    try {
+                        const errorData = await response.json();
+                        errorDetail += ` - ${errorData.detail || JSON.stringify(errorData)}`;
+                    } catch (e) {
+                        // Ignore if response is not JSON
+                    }
+                    throw new Error(errorDetail);
+                }
+                const data = await response.json();
+
+                if (data.results && data.results.length > 0) {
+                    const budgetData = data.results[0]; // Assuming the first result is the relevant one
+
+                    resultsAgencyName.textContent = selectedAgency ? selectedAgency.name : `Agency Code: ${agencyCode}`;
+                    resultsFiscalYear.textContent = budgetData.fiscal_year || fiscalYear;
+                    resultsBudgetAuthority.textContent = formatCurrency(budgetData.total_budgetary_resources);
+                    resultsObligations.textContent = formatCurrency(budgetData.obligated_amount);
+
+                    resultsDiv.classList.remove('hidden');
+                } else {
+                    errorMessageDiv.textContent = 'No results found for the selected criteria.';
+                    errorMessageDiv.classList.remove('hidden');
+                }
+
+            } catch (error) {
+                console.error('Fetch error:', error);
+                errorMessageDiv.textContent = `Error fetching data: ${error.message}`;
+                errorMessageDiv.classList.remove('hidden');
+            } finally {
+                loader.style.display = 'none';
+                fetchButton.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
