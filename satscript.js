@@ -306,52 +306,79 @@ const FIPS_TO_STATE_NAME = {
             throw error; // Re-throw to be caught by caller
         }
     }
-// In app.js, replace the existing getGeoDistributionInfo
 
 function getGeoDistributionInfo(model) {
-    if (!model || !model.contracts) return "Place of Performance data not available.";
+    if (!model || !model.contracts || Object.keys(model.contracts).length === 0) {
+        return "Place of Performance data not available.";
+    }
     
-    const stateCounts = {};
+    const stateValues = {}; // Changed name from stateCounts to reflect it stores values
+
     Object.values(model.contracts).forEach(contract => {
-        // Prioritize popStateCode from raw, but also check other common fields
-        const stateCodeRaw = contract.raw?.popStateCode || 
-                             contract.raw?.prime_award_transaction_place_of_performance_state_fips_code ||
-                             contract.raw?.place_of_performance_state_code; // From original processMapDataFromModel
+        if (!contract || !contract.raw) return;
+
+        // Try to get a state identifier from various possible fields
+        let stateIdentifier = contract.raw.popStateCode || // Often a FIPS code or 2-letter abbreviation
+                              contract.raw.prime_award_transaction_place_of_performance_state_fips_code ||
+                              contract.raw.place_of_performance_state_code ||
+                              contract.raw.subaward_primary_place_of_performance_state_code; // If checking subs later
+
+        if (!stateIdentifier) return;
         
-        if (stateCodeRaw) {
-            // Normalize to 2 digits, ensure it's a string
-            let normalizedStateCode = String(stateCodeRaw).trim().padStart(2, '0');
-            if (normalizedStateCode.length > 2) { // Handles cases like "VA " or if it's not a FIPS
-                 // Attempt to match common state abbreviations if not a FIPS
-                const upperStateCode = normalizedStateCode.toUpperCase();
-                const fipsEntry = Object.entries(FIPS_TO_STATE_NAME).find(([, name]) => name.toUpperCase() === upperStateCode || upperStateCode.startsWith(name.substring(0,2).toUpperCase()));
-                if (fipsEntry) {
-                    normalizedStateCode = fipsEntry[0];
-                } else if (/^[A-Z]{2}$/.test(upperStateCode)) { // If it's a 2-letter code, try finding its FIPS
-                     const foundFips = Object.keys(FIPS_TO_STATE_NAME).find(key => FIPS_TO_STATE_NAME[key].toUpperCase().startsWith(upperStateCode)) || null;
-                     if(foundFips) normalizedStateCode = foundFips;
-                     else { /* console.warn("Unrecognized state code:", stateCodeRaw); */ return; }
-                } else {
-                    // console.warn("Could not normalize state code:", stateCodeRaw);
-                    return; // Skip if cannot normalize to a FIPS-like code
-                }
+        let fipsCode = null;
+        const identifierStr = String(stateIdentifier).trim().toUpperCase();
+
+        // Attempt to normalize identifierStr to a FIPS code
+        if (/^\d{1,2}$/.test(identifierStr)) { // If it's 1 or 2 digits, assume FIPS
+            fipsCode = identifierStr.padStart(2, '0');
+        } else if (FIPS_TO_STATE_NAME[identifierStr.padStart(2,'0')]) { // Check if it's already a valid FIPS key like "06"
+             fipsCode = identifierStr.padStart(2,'0');
+        } else if (identifierStr.length === 2) { // Is it a 2-letter state abbreviation?
+            const foundEntry = Object.entries(FIPS_TO_STATE_NAME).find(
+                ([key, name]) => name.toUpperCase().startsWith(identifierStr) || // Match full name start
+                                name.split(' ').some(part => part.toUpperCase() === identifierStr) // Match abbreviation in multi-word names
+            );
+            if (foundEntry) {
+                fipsCode = foundEntry[0];
+            } else {
+                 // Try to find based on common non-standard abbreviations if necessary
+                 // This part can be expanded if you have other common codes in your data.
             }
+        } else { // Is it a full state name?
+             const foundEntry = Object.entries(FIPS_TO_STATE_NAME).find(
+                ([key, name]) => name.toUpperCase() === identifierStr
+            );
+            if (foundEntry) {
+                fipsCode = foundEntry[0];
+            }
+        }
 
-
-            stateCounts[normalizedStateCode] = (stateCounts[normalizedStateCode] || 0) + (contract.value || 0); // Aggregate by value
+        if (fipsCode && FIPS_TO_STATE_NAME[fipsCode]) { // Check if we successfully got a valid FIPS code
+            if (!stateValues[fipsCode]) {
+                stateValues[fipsCode] = 0;
+            }
+            stateValues[fipsCode] += (contract.value || 0);
+        } else {
+            // console.warn(`Could not map state identifier to FIPS: '${stateIdentifier}'`); // Optional: for debugging
         }
     });
 
-    const sortedStates = Object.entries(stateCounts)
-        .sort(([, valueA], [, valueB]) => valueB - valueA) // Sort by aggregated value
-        .slice(0, 3) // Top 3 states
-        .map(([fipsCode]) => FIPS_TO_STATE_NAME[fipsCode] || fipsCode); // Map to name, fallback to code
+    if (Object.keys(stateValues).length === 0) {
+        return "No specific geographic concentration identified from available contract data.";
+    }
 
-    if (sortedStates.length === 0) return "No specific geographic concentration identified.";
+    const sortedStateNames = Object.entries(stateValues)
+        .sort(([, valueA], [, valueB]) => valueB - valueA)
+        .slice(0, 3)
+        .map(([fipsCode]) => FIPS_TO_STATE_NAME[fipsCode] || `Unknown Code (${fipsCode})`); // Map to name, provide fallback
+
+    if (sortedStateNames.length === 0) { // Should be caught by previous check, but as a safeguard
+        return "No specific geographic concentration identified.";
+    }
     
-    return `Key Places of Performance include: ${sortedStates.join(', ')}.`;
+    return `Key Places of Performance include: ${sortedStateNames.join(', ')}.`;
 }
-    // --- DATA PROCESSOR ---
+   // --- DATA PROCESSOR ---
     function processRawDataset(rawRows, datasetType) { // datasetType is 'primes' or 'subs'
         return rawRows.map(row => {
             const cleanRow = { _sourceType: datasetType };
