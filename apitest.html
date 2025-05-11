@@ -6,75 +6,304 @@
     <title>USAspending.gov - Agency Snapshot</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
     <style>
-        body { font-family: sans-serif; background-color: #f0f2f5; }
-        .container { max-width: 900px; margin: 2rem auto; }
+        /* --- Base & Typography --- */
+        body {
+            font-family: 'Inter', sans-serif; /* Modern sans-serif font */
+            background-color: #f4f7f9; /* Slightly softer background */
+            color: #333e48; /* Darker primary text for better readability */
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 960px; /* Slightly wider for more content */
+            margin: 2rem auto;
+            padding: 1rem; /* Add padding to container for smaller screens */
+        }
+
+        /* --- Control and Results Panels (Cards) --- */
         .control-panel, .results-panel {
-            padding: 1.5rem; background-color: #ffffff;
-            border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); margin-bottom: 1.5rem;
+            padding: 1.75rem; /* Increased padding */
+            background-color: #ffffff;
+            border-radius: 12px; /* Softer, larger border radius */
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.07); /* More subtle shadow */
+            margin-bottom: 2rem; /* Increased spacing between panels */
         }
-        label { display: block; margin-bottom: 0.5rem; font-weight: 500; color: #4a5568; }
-        select, button {
+
+        /* --- Form Elements --- */
+        label {
+            display: block;
+            margin-bottom: 0.6rem;
+            font-weight: 500; /* Medium weight */
+            color: #556270; /* Softer label color */
+            font-size: 0.875rem; /* 14px */
+        }
+
+        select, input[type="text"], input[type="number"] { /* Added input types for future use */
             width: 100%;
-            padding: 0.75rem;
-            margin-bottom: 1rem;
-            border: 1px solid #cbd5e0;
-            border-radius: 0.375rem;
+            padding: 0.8rem 1rem; /* More padding */
+            margin-bottom: 1.25rem; /* More spacing */
+            border: 1px solid #d1d9e0; /* Softer border */
+            border-radius: 6px; /* Softer radius */
             box-sizing: border-box;
-            background-color: white;
-            color: #2d3748;
+            background-color: #ffffff;
+            color: #333e48;
+            font-size: 0.9375rem; /* 15px */
+            transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
         }
+        select:focus, input:focus {
+            outline: none;
+            border-color: #3b82f6; /* Tailwind blue-500 */
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+
+        /* --- Buttons --- */
         button {
-            background-color: #4299e1; /* Tailwind blue-500 */
-            color: white;
+            width: 100%;
+            padding: 0.85rem 1.5rem;
+            margin-bottom: 1rem;
+            border: none; /* Remove border for solid buttons */
+            border-radius: 6px;
+            box-sizing: border-box;
             font-weight: 600;
+            font-size: 0.9375rem;
             cursor: pointer;
-            transition: background-color 0.2s;
+            transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
+            text-transform: capitalize; /* e.g., "Load Agencies" */
         }
-        button:hover:not(:disabled) { background-color: #2b6cb0; /* Tailwind blue-700 */ }
-        button:disabled { background-color: #a0aec0; /* Tailwind gray-500 */ cursor: not-allowed; }
+        button:hover:not(:disabled) {
+            transform: translateY(-1px); /* Slight lift on hover */
+        }
+        button:active:not(:disabled) {
+            transform: translateY(0px);
+        }
 
-        .results-panel h2 { font-size: 1.5rem; font-weight: 700; color: #2c5282; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid #e2e8f0; }
-        .results-panel h3 { font-size: 1.25rem; font-weight: 600; color: #2d3748; margin-top: 1.5rem; margin-bottom: 0.75rem; }
-        .results-panel p, .results-panel li { margin-bottom: 0.5rem; color: #4a5568; line-height: 1.6; }
-        .results-panel .value { font-weight: 600; color: #1a202c; }
-        .results-panel .item-list { list-style: none; padding-left: 0; }
-        .results-panel .item-list li { background-color: #f7fafc; padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 0.25rem; margin-bottom: 0.5rem; }
-        .results-panel .item-list li strong { color: #2c5282; }
+        /* Primary Button Styles */
+        #load-agencies-button { /* Example for primary action */
+            background-color: #2563eb; /* Tailwind blue-600 */
+            color: white;
+        }
+        #load-agencies-button:hover:not(:disabled) {
+            background-color: #1d4ed8; /* Tailwind blue-700 */
+        }
+
+        #fetch-snapshot-button { /* Example for secondary action */
+            background-color: #10b981; /* Tailwind green-500 */
+            color: white;
+        }
+        #fetch-snapshot-button:hover:not(:disabled) {
+            background-color: #059669; /* Tailwind green-600 */
+        }
         
-        table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
-        th, td { text-align: left; padding: 0.75rem; border-bottom: 1px solid #e2e8f0; }
-        th { background-color: #edf2f7; color: #4a5568; font-weight: 600; }
-        tbody tr:hover { background-color: #f7fafc; }
-        .number-cell { text-align: right; }
+        button:disabled {
+            background-color: #9ca3af; /* Tailwind gray-400 */
+            color: #e5e7eb; /* Lighter text for disabled */
+            cursor: not-allowed;
+        }
 
+        /* --- Results Panel Typography & Structure --- */
+        .results-panel h2 { /* Main panel title */
+            font-size: 1.75rem; /* 28px */
+            font-weight: 700;
+            color: #1a202c; /* Darker heading */
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid #e2e8f0; /* Slightly lighter border */
+        }
+
+        .results-panel h3 { /* Section sub-titles */
+            font-size: 1.125rem; /* 18px */
+            font-weight: 600;
+            color: #2d3748; /* Slightly softer than h2 */
+            margin-top: 2rem; /* More spacing above section titles */
+            margin-bottom: 1rem;
+            border-bottom: 1px dashed #e2e8f0; /* Dashed line for subtitles */
+            padding-bottom: 0.5rem;
+        }
+        .results-panel div[id$="-section"]:first-of-type h3 { /* Remove top margin for the very first h3 */
+             margin-top: 0;
+        }
+
+
+        .results-panel p, .results-panel li {
+            margin-bottom: 0.6rem;
+            color: #4a5568;
+            font-size: 0.9375rem; /* 15px */
+        }
+
+        .results-panel .value {
+            font-weight: 500; /* Normal weight for values, strong tag makes label part bold */
+            color: #1f2937;
+        }
+        .results-panel p > strong { /* For labels like "Mission:" */
+            color: #374151; 
+            font-weight: 600;
+        }
+
+
+        .results-panel .item-list {
+            list-style: none;
+            padding-left: 0;
+        }
+        .results-panel .item-list li {
+            background-color: #f8fafc; /* Slightly different background for list items */
+            padding: 0.85rem 1rem;
+            border: 1px solid #eef2f7;
+            border-radius: 6px;
+            margin-bottom: 0.6rem;
+            display: flex; /* For better alignment if needed */
+            justify-content: space-between; /* Example alignment */
+        }
+        .results-panel .item-list li strong { /* Category name */
+            color: #3b82f6; /* Blue for emphasis */
+            font-weight: 500;
+        }
+         .results-panel .item-list li .value { /* Value part of the list item */
+            font-weight: 600;
+        }
+
+
+        /* --- Table Styling --- */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1.25rem;
+            font-size: 0.875rem; /* 14px */
+        }
+        th, td {
+            text-align: left;
+            padding: 0.85rem 1rem; /* Consistent padding */
+            border-bottom: 1px solid #e9edf0; /* Lighter border */
+        }
+        th {
+            background-color: #f8f9fa; /* Very light gray for headers */
+            color: #556270;
+            font-weight: 600;
+            text-transform: uppercase; /* Uppercase headers */
+            font-size: 0.75rem; /* 12px */
+            letter-spacing: 0.05em;
+        }
+        tbody tr:nth-child(even) { /* Subtle striping for readability */
+            background-color: #fcfdff;
+        }
+        tbody tr:hover {
+            background-color: #f0f4f8; /* Hover effect */
+        }
+        .number-cell {
+            text-align: right;
+            font-variant-numeric: tabular-nums; /* For aligning numbers */
+        }
+
+        /* --- Chart Container --- */
         .chart-container { 
             height: 350px; 
-            position: relative; margin-top: 1rem; padding: 1rem; 
-            border: 1px solid #e2e8f0; border-radius: 0.375rem; background-color: #f7fafc; 
+            position: relative; 
+            margin-top: 1.5rem; 
+            padding: 1.5rem; 
+            border: 1px solid #e9edf0; 
+            border-radius: 8px; 
+            background-color: #ffffff; /* White background for charts */
+            box-shadow: 0 2px 4px rgba(0,0,0,0.04);
         }
-        .sub-agency-chart-container { /* Specific height for horizontal bar chart */
-            height: 500px; 
+        .sub-agency-chart-container {
+            height: 500px; /* Or adjust as needed based on content */
         }
 
-        .error { color: #c53030; font-weight: 500; margin-top:1rem; padding: 0.75rem; background-color: #fed7d7; border: 1px solid #f56565; border-radius: 0.375rem;}
+        /* --- Utility & Feedback --- */
+        .error {
+            color: #c53030;
+            font-weight: 500;
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background-color: #fff5f5; /* Softer error background */
+            border: 1px solid #f56565;
+            border-left: 4px solid #c53030; /* Accent border */
+            border-radius: 6px;
+        }
+
         .loader {
-            border: 4px solid #e2e8f0; /* Tailwind gray-300 */
-            border-top: 4px solid #4299e1; /* Tailwind blue-500 */
+            border: 4px solid #e2e8f0; 
+            border-top: 4px solid #3b82f6; /* Tailwind blue-500 */
             border-radius: 50%;
-            width: 30px;
-            height: 30px;
+            width: 36px; /* Slightly larger loader */
+            height: 36px;
             animation: spin 1s linear infinite;
-            margin: 1.5rem auto;
+            margin: 2rem auto;
             display: none;
         }
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        .hidden {
+            display: none !important; /* Ensure hidden class works */
+        }
+
+        /* Choropleth Map Styles */
+        #state-map-container {
+            width: 100%;
+            height: 400px;
+            margin-top: 1.5rem;
+            margin-bottom: 1.5rem;
+            position: relative;
+            border: 1px solid #e9edf0;
+            border-radius: 8px;
+            background-color: #ffffff;
+            padding: 1rem;
+        }
+        .state {
+            fill: #e2e8f0;
+            stroke: #ffffff;
+            stroke-width: 0.5;
+        }
+        .state:hover {
+            stroke: #000000;
+            stroke-width: 1;
+            cursor: pointer;
+        }
+        .tooltip {
+            position: absolute;
+            padding: 8px 12px;
+            background: rgba(0, 0, 0, 0.8);
+            color: #fff;
+            border-radius: 4px;
+            font-size: 12px;
+            pointer-events: none;
+            opacity: 0;
+            z-index: 1000;
+        }
+        .legend {
+            margin-top: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            font-size: 12px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-right: 15px;
+            margin-bottom: 5px;
+        }
+        .legend-color {
+            width: 15px;
+            height: 15px;
+            margin-right: 5px;
+            border: 1px solid #ccc;
+        }
     </style>
 </head>
-<body class="bg-gray-100">
+<body>
     <div class="container mx-auto p-4">
         <div class="control-panel">
             <h1 class="text-3xl font-bold text-center text-gray-700 mb-6">Agency Snapshot</h1>
@@ -112,6 +341,28 @@
                 <p><strong>Total Budget Authority (Agency):</strong> <span id="results-budget-authority" class="value">N/A</span></p>
                 <p><strong>Total Obligations (Agency):</strong> <span id="results-obligations" class="value">N/A</span></p>
             </div>
+            
+            <div id="spending-by-state-section">
+                <h3>Spending by State (Place of Performance) for FY <span id="spending-by-state-fy"></span></h3>
+                
+                <!-- New choropleth map container -->
+                <div id="state-map-container" class="hidden">
+                    <div id="tooltip" class="tooltip"></div>
+                    <svg id="state-map" width="100%" height="100%"></svg>
+                    <div class="legend" id="map-legend"></div>
+                </div>
+                
+                <table id="spending-by-state-table">
+                    <thead>
+                        <tr>
+                            <th>State</th>
+                            <th class="number-cell">Total Obligated Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody id="spending-by-state-list"></tbody>
+                </table>
+                <p id="spending-by-state-none" class="hidden">No spending by state data found for this selection.</p>
+            </div>
 
             <div id="sub-agency-spending-section">
                 <h3>Top Sub-Component Spending for FY <span id="sub-agency-fy"></span></h3>
@@ -128,7 +379,7 @@
             <div id="award-category-spending-section">
                 <h3>Spending by Award Category for FY <span id="award-category-fy"></span></h3>
                 <div id="award-category-chart-container" class="chart-container hidden"><canvas id="awardCategoryChart"></canvas></div>
-                <ul id="award-category-list" class="item-list mt-4 hidden"></ul>
+                <ul id="award-category-list" class="item-list mt-4 hidden"></ul> 
                 <p id="award-category-none" class="hidden">No spending by award category data found.</p>
             </div>
             
@@ -139,7 +390,7 @@
             </div>
         </div>
     </div>
-
+    
     <script>
         const BASE_URL = 'https://api.usaspending.gov';
         const CURRENT_CALENDAR_YEAR = new Date().getFullYear();
@@ -162,19 +413,24 @@
         const objectClassList = document.getElementById('object-class-list');
         const objectClassNoneMsg = document.getElementById('object-class-none');
         const awardCategoryFySpan = document.getElementById('award-category-fy');
-        const awardCategoryList = document.getElementById('award-category-list');
+        const awardCategoryListEl = document.getElementById('award-category-list');
         const awardCategoryNoneMsg = document.getElementById('award-category-none');
         const awardCategoryChartContainer = document.getElementById('award-category-chart-container');
         const subAgencyFySpan = document.getElementById('sub-agency-fy');
         const subAgencyTableBody = document.getElementById('sub-agency-list');
         const subAgencyNoneMsg = document.getElementById('sub-agency-none');
         const subAgencyChartContainer = document.getElementById('sub-agency-chart-container');
+        const spendingByStateFySpan = document.getElementById('spending-by-state-fy');
+        const spendingByStateTableBody = document.getElementById('spending-by-state-list');
+        const spendingByStateNoneMsg = document.getElementById('spending-by-state-none');
+        const stateMapContainer = document.getElementById('state-map-container');
         const errorMessageDiv = document.getElementById('error-message');
         const loader = document.getElementById('loader');
 
         let loadedAgenciesData = []; 
         let awardCategoryChartInstance = null;
         let subAgencyChartInstance = null;
+        let usTopoJson = null;
 
         function populateFiscalYears() {
             FISCAL_YEARS.forEach(year => {
@@ -228,6 +484,172 @@
                     if(buttonToDisable) buttonToDisable.disabled = false;
                 }
             }
+        }
+
+        // Fetch US TopoJSON once at the beginning
+        async function fetchUSMap() {
+            try {
+                const response = await fetch('https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json');
+                if (!response.ok) {
+                    throw new Error(`Failed to load US map: ${response.statusText}`);
+                }
+                usTopoJson = await response.json();
+                console.log("US TopoJSON loaded successfully");
+            } catch (error) {
+                console.error("Error loading US map:", error);
+            }
+        }
+        
+        // Initialize by loading the US map data
+        fetchUSMap();
+
+        function createChoroplethMap(stateData) {
+            if (!usTopoJson) {
+                console.error("US TopoJSON not loaded yet");
+                return;
+            }
+
+            // Clear any existing map
+            const svgElement = document.getElementById('state-map');
+            svgElement.innerHTML = '';
+            
+            const tooltip = d3.select('#tooltip');
+            const width = svgElement.clientWidth;
+            const height = svgElement.clientHeight;
+            
+            // Create a map of state codes to spending amounts
+            const spendingByStateCode = {};
+            stateData.forEach(item => {
+                spendingByStateCode[item.shape_code] = item.aggregated_amount;
+            });
+            
+            // Find the min and max values for the color scale
+            const amounts = stateData.map(item => item.aggregated_amount);
+            const minAmount = Math.min(...amounts);
+            const maxAmount = Math.max(...amounts);
+            
+            // Create a color scale
+            const colorScale = d3.scaleSequential(d3.interpolateBlues)
+                .domain([0, maxAmount]);
+            
+            // Create the projection and path
+            const projection = d3.geoAlbersUsa()
+                .fitSize([width, height], topojson.feature(usTopoJson, usTopoJson.objects.states));
+            
+            const path = d3.geoPath()
+                .projection(projection);
+            
+            // Draw the states
+            const states = topojson.feature(usTopoJson, usTopoJson.objects.states).features;
+            
+            // Get state name mapping
+            const stateNames = {};
+            stateData.forEach(item => {
+                stateNames[item.shape_code] = item.display_name;
+            });
+            
+            // Draw the map
+            const svg = d3.select(svgElement);
+            
+            svg.selectAll('path')
+                .data(states)
+                .enter()
+                .append('path')
+                .attr('class', 'state')
+                .attr('d', path)
+                .attr('fill', d => {
+                    // Find the state code from feature properties
+                    const stateId = d.id;
+                    // Convert numeric ID to state code
+                    const stateInfo = stateData.find(s => s.shape_code && s.shape_code.toUpperCase() === getStateCodeFromId(stateId));
+                    return stateInfo ? colorScale(stateInfo.aggregated_amount) : '#e2e8f0';
+                })
+                .on('mouseover', function(event, d) {
+                    const stateCode = getStateCodeFromId(d.id);
+                    const stateName = stateNames[stateCode] || getStateNameFromCode(stateCode);
+                    const amount = spendingByStateCode[stateCode];
+                    
+                    d3.select(this)
+                        .style('stroke', '#000')
+                        .style('stroke-width', 1.5);
+                    
+                    tooltip.transition()
+                        .duration(200)
+                        .style('opacity', 0.9);
+                    
+                    tooltip.html(`
+                        <strong>${stateName}</strong><br/>
+                        ${amount ? formatCurrency(amount) : 'No data'}
+                    `)
+                    .style('left', (event.pageX + 10) + 'px')
+                    .style('top', (event.pageY - 28) + 'px');
+                })
+                .on('mouseout', function() {
+                    d3.select(this)
+                        .style('stroke', '#ffffff')
+                        .style('stroke-width', 0.5);
+                    
+                    tooltip.transition()
+                        .duration(500)
+                        .style('opacity', 0);
+                });
+            
+            // Create a legend
+            const legendContainer = document.getElementById('map-legend');
+            legendContainer.innerHTML = '';
+            
+            // Create legend items
+            const legendValues = [0, maxAmount * 0.25, maxAmount * 0.5, maxAmount * 0.75, maxAmount];
+            
+            legendValues.forEach((value, i) => {
+                const legendItem = document.createElement('div');
+                legendItem.className = 'legend-item';
+                
+                const colorBox = document.createElement('div');
+                colorBox.className = 'legend-color';
+                colorBox.style.backgroundColor = colorScale(value);
+                
+                const label = document.createElement('span');
+                label.textContent = formatCurrency(value);
+                
+                legendItem.appendChild(colorBox);
+                legendItem.appendChild(label);
+                legendContainer.appendChild(legendItem);
+            });
+            
+            // Show the map container
+            stateMapContainer.classList.remove('hidden');
+        }
+        
+        function getStateCodeFromId(id) {
+            // This is a mapping of state IDs to state codes
+            const stateMapping = {
+                "1": "AL", "2": "AK", "4": "AZ", "5": "AR", "6": "CA", "8": "CO", "9": "CT", "10": "DE",
+                "11": "DC", "12": "FL", "13": "GA", "15": "HI", "16": "ID", "17": "IL", "18": "IN", "19": "IA",
+                "20": "KS", "21": "KY", "22": "LA", "23": "ME", "24": "MD", "25": "MA", "26": "MI", "27": "MN",
+                "28": "MS", "29": "MO", "30": "MT", "31": "NE", "32": "NV", "33": "NH", "34": "NJ", "35": "NM",
+                "36": "NY", "37": "NC", "38": "ND", "39": "OH", "40": "OK", "41": "OR", "42": "PA", "44": "RI",
+                "45": "SC", "46": "SD", "47": "TN", "48": "TX", "49": "UT", "50": "VT", "51": "VA", "53": "WA",
+                "54": "WV", "55": "WI", "56": "WY"
+            };
+            return stateMapping[id] || "Unknown";
+        }
+        
+        function getStateNameFromCode(code) {
+            const stateNames = {
+                "AL": "Alabama", "AK": "Alaska", "AZ": "Arizona", "AR": "Arkansas", "CA": "California",
+                "CO": "Colorado", "CT": "Connecticut", "DE": "Delaware", "DC": "District of Columbia",
+                "FL": "Florida", "GA": "Georgia", "HI": "Hawaii", "ID": "Idaho", "IL": "Illinois",
+                "IN": "Indiana", "IA": "Iowa", "KS": "Kansas", "KY": "Kentucky", "LA": "Louisiana",
+                "ME": "Maine", "MD": "Maryland", "MA": "Massachusetts", "MI": "Michigan", "MN": "Minnesota",
+                "MS": "Mississippi", "MO": "Missouri", "MT": "Montana", "NE": "Nebraska", "NV": "Nevada",
+                "NH": "New Hampshire", "NJ": "New Jersey", "NM": "New Mexico", "NY": "New York",
+                "NC": "North Carolina", "ND": "North Dakota", "OH": "Ohio", "OK": "Oklahoma", "OR": "Oregon",
+                "PA": "Pennsylvania", "RI": "Rhode Island", "SC": "South Carolina", "SD": "South Dakota",
+                "TN": "Tennessee", "TX": "Texas", "UT": "Utah", "VT": "Vermont", "VA": "Virginia",
+                "WA": "Washington", "WV": "West Virginia", "WI": "Wisconsin", "WY": "Wyoming"
+            };
+            return stateNames[code] || code;
         }
 
         loadAgenciesButton.addEventListener('click', async () => {
@@ -284,71 +706,31 @@
 
         function createOrUpdateSubAgencyBarChart(subAgencyResults) {
             const ctx = document.getElementById('subAgencyChart').getContext('2d');
-            
             const labels = subAgencyResults.map(item => item.name || 'Unknown Sub-Component');
             const dataValues = subAgencyResults.map(item => item.total_obligations);
-            const barColor = '#3498DB'; // Example color for bars
+            const barColor = '#3498DB'; 
 
-            if (subAgencyChartInstance) {
-                subAgencyChartInstance.destroy(); 
-            }
-
+            if (subAgencyChartInstance) subAgencyChartInstance.destroy(); 
             subAgencyChartInstance = new Chart(ctx, {
                 type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Total Obligations',
-                        data: dataValues,
-                        backgroundColor: barColor,
-                        borderColor: '#2980B9',
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    indexAxis: 'y', 
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        title: { display: true, text: 'Top Sub-Component Obligations', font: { size: 16 }, padding: { top: 10, bottom: 20 }},
-                        tooltip: { callbacks: { label: chartCtx => formatCurrency(chartCtx.raw) }}
-                    },
-                    scales: {
-                        x: { 
-                            beginAtZero: true,
-                            ticks: {
-                                callback: function(value) { 
-                                    if (Math.abs(value) >= 1.0e+9) return '$' + (value / 1.0e+9).toFixed(1) + 'B';
-                                    if (Math.abs(value) >= 1.0e+6) return '$' + (value / 1.0e+6).toFixed(1) + 'M';
-                                    if (Math.abs(value) >= 1.0e+3) return '$' + (value / 1.0e+3).toFixed(1) + 'K';
-                                    return formatCurrency(value);
-                                }
-                            }
-                        },
-                        y: { 
-                            ticks: {
-                                autoSkip: false,
-                                callback: function(value) {
-                                    const label = this.getLabelForValue(value);
-                                    return label.length > 35 ? label.substring(0, 32) + '...' : label; // Truncate long labels
-                                }
-                            }
-                        }
+                data: { labels, datasets: [{ label: 'Total Obligations', data: dataValues, backgroundColor: barColor, borderColor: '#2980B9', borderWidth: 1 }] },
+                options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, title: { display: true, text: 'Top Sub-Component Obligations', font: { size: 16 }, padding: { top: 10, bottom: 20 }}, tooltip: { callbacks: { label: chartCtx => formatCurrency(chartCtx.raw) }}},
+                    scales: { x: { beginAtZero: true, ticks: { callback: function(value) { if (Math.abs(value) >= 1.0e+9) return '$' + (value / 1.0e+9).toFixed(1) + 'B'; if (Math.abs(value) >= 1.0e+6) return '$' + (value / 1.0e+6).toFixed(1) + 'M'; if (Math.abs(value) >= 1.0e+3) return '$' + (value / 1.0e+3).toFixed(1) + 'K'; return formatCurrency(value); }}},
+                              y: { ticks: { autoSkip: false, callback: function(value) { const label = this.getLabelForValue(value); return label.length > 35 ? label.substring(0, 32) + '...' : label; }}}
                     }
                 }
             });
             subAgencyChartContainer.classList.remove('hidden');
         }
 
-
         fetchSnapshotButton.addEventListener('click', async () => {
             const selectedAgencyOption = agencySelect.options[agencySelect.selectedIndex];
             const agencyCode = selectedAgencyOption.value; 
+            const toptierAgencyId = parseInt(selectedAgencyOption.dataset.agencyId); 
             const fiscalYear = yearSelect.value;
             const agencyDisplayName = selectedAgencyOption.text;
             
-            if (!agencyCode) { alert('Please select an agency.'); return; }
+            if (!agencyCode || !toptierAgencyId) { alert('Please select an agency.'); return; }
             
             snapshotResultsDiv.classList.add('hidden'); 
             errorMessageDiv.classList.add('hidden'); 
@@ -361,22 +743,39 @@
             resultsBudgetAuthority.textContent = "N/A";
             resultsObligations.textContent = "N/A";
             objectClassList.innerHTML = ""; objectClassNoneMsg.classList.add('hidden');
-            awardCategoryList.innerHTML = ""; awardCategoryNoneMsg.classList.add('hidden');
+            awardCategoryListEl.innerHTML = ""; awardCategoryNoneMsg.classList.add('hidden');
             awardCategoryChartContainer.classList.add('hidden');
             if (awardCategoryChartInstance) { awardCategoryChartInstance.destroy(); awardCategoryChartInstance = null; }
             subAgencyTableBody.innerHTML = ""; subAgencyNoneMsg.classList.add('hidden');
             subAgencyChartContainer.classList.add('hidden');
             if (subAgencyChartInstance) { subAgencyChartInstance.destroy(); subAgencyChartInstance = null; }
-
+            spendingByStateTableBody.innerHTML = ""; spendingByStateNoneMsg.classList.add('hidden');
+            stateMapContainer.classList.add('hidden');
 
             snapshotAgencyTitle.textContent = `${agencyDisplayName} - Snapshot for FY ${fiscalYear}`;
-            [selectedFySpan, objectClassFySpan, awardCategoryFySpan, subAgencyFySpan].forEach(span => span.textContent = fiscalYear);
+            [selectedFySpan, objectClassFySpan, awardCategoryFySpan, subAgencyFySpan, spendingByStateFySpan].forEach(span => span.textContent = fiscalYear);
 
             const agencyOverviewEndpoint = `${BASE_URL}/api/v2/agency/${agencyCode}/`;
             const budgetaryResourcesEndpoint = `${BASE_URL}/api/v2/agency/${agencyCode}/budgetary_resources/?fiscal_year=${fiscalYear}`;
             const objectClassEndpoint = `${BASE_URL}/api/v2/agency/${agencyCode}/object_class/?fiscal_year=${fiscalYear}`;
             const awardCategoryEndpoint = `${BASE_URL}/api/v2/agency/${agencyCode}/obligations_by_award_category/?fiscal_year=${fiscalYear}`;
             const subAgencyEndpoint = `${BASE_URL}/api/v2/agency/${agencyCode}/sub_agency/?fiscal_year=${fiscalYear}&limit=15&page=1&sort=total_obligations&order=desc`;
+            
+            const spendingByGeoEndpoint = `${BASE_URL}/api/v2/search/spending_by_geography/`;
+            const spendingByGeoPayload = {
+                scope: "place_of_performance",
+                geo_layer: "state",
+                filters: {
+                    time_period: [{ "start_date": `${parseInt(fiscalYear) - 1}-10-01`, "end_date": `${fiscalYear}-09-30` }],
+                    agencies: [{"type": "awarding", "tier": "toptier", "name": agencyDisplayName.split(' (')[0] }]
+                },
+                subawards: false
+            };
+            const spendingByGeoOptions = {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(spendingByGeoPayload)
+            };
 
             try {
                 const results = await Promise.allSettled([
@@ -384,10 +783,15 @@
                     makeApiCall(budgetaryResourcesEndpoint, {}, null, true),
                     makeApiCall(objectClassEndpoint, {}, null, true),
                     makeApiCall(awardCategoryEndpoint, {}, null, true),
-                    makeApiCall(subAgencyEndpoint, {}, null, true)
+                    makeApiCall(subAgencyEndpoint, {}, null, true),
+                    makeApiCall(spendingByGeoEndpoint, spendingByGeoOptions, null, true)
                 ]);
 
-                const [overviewData, budgetDataResponse, objectClassData, awardCategoryData, subAgencyDataResponse] = results.map(res => res.status === 'fulfilled' ? res.value : { error: res.reason });
+                const [
+                    overviewData, budgetDataResponse, objectClassData, 
+                    awardCategoryData, subAgencyDataResponse, spendingByGeoData
+                ] = results.map(res => res.status === 'fulfilled' ? res.value : { error: res.reason });
+                
                 let hasErrors = results.some(res => res.status === 'rejected' || (res.value && res.value.error));
 
                 // Process Overview Data
@@ -400,7 +804,7 @@
                         agencyWebsite.textContent = "Not Available"; 
                         agencyWebsite.href = "#"; 
                     }
-                } else { console.error("Overview Error:", overviewData?.error); agencyMission.textContent = "Error loading overview."; hasErrors = true; }
+                } else { console.error("Overview Error:", overviewData?.error); agencyMission.textContent = "Error."; hasErrors = true; }
 
                 // Process Budgetary Resources
                 if (budgetDataResponse && !budgetDataResponse.error) {
@@ -415,7 +819,7 @@
                         resultsObligations.textContent = formatCurrency(budgetDataForSelectedYear.agency_total_obligated);
                     } else { 
                         resultsBudgetAuthority.textContent = "N/A"; resultsObligations.textContent = "N/A";
-                        console.warn(`No specific budgetary data for FY ${fiscalYear} in response for ${agencyDisplayName}.`); 
+                        console.warn(`No specific budgetary data for FY ${fiscalYear} for ${agencyDisplayName}.`); 
                     }
                 } else { 
                     console.error("Budgetary Resources Error:", budgetDataResponse?.error); 
@@ -426,7 +830,7 @@
                 // Process Object Class
                 objectClassList.innerHTML = '';
                 if (objectClassData && !objectClassData.error && objectClassData.results?.length > 0) {
-                    console.log("First item object_class:", objectClassData.results[0]);
+                    console.log("First item object_class:", objectClassData.results[0]); // For debugging field name
                     objectClassData.results.forEach(item => {
                         const li = document.createElement('li');
                         const name = item.name || item.object_class_name || 'Unknown Object Class';
@@ -440,16 +844,16 @@
                 }
                 
                 // Process Award Category & Chart
-                awardCategoryList.innerHTML = ''; 
+                awardCategoryListEl.innerHTML = ''; 
                 if (awardCategoryData && !awardCategoryData.error && awardCategoryData.results?.length > 0) {
                     awardCategoryData.results.forEach(item => { 
                         const li = document.createElement('li');
                         li.innerHTML = `<strong>${formatCategoryDisplay(item.category)}:</strong> <span class="value">${formatCurrency(item.aggregated_amount)}</span>`;
-                        awardCategoryList.appendChild(li);
+                        awardCategoryListEl.appendChild(li);
                     }); 
                     createOrUpdateAwardCategoryChart(awardCategoryData.results);
                     awardCategoryNoneMsg.classList.add('hidden');
-                    // awardCategoryList.classList.add('hidden'); // Optionally hide list if chart is primary
+                    awardCategoryListEl.classList.remove('hidden');
                 } else { 
                     awardCategoryNoneMsg.classList.remove('hidden'); 
                     awardCategoryChartContainer.classList.add('hidden');
@@ -457,7 +861,7 @@
                     if(awardCategoryData?.error) {console.error("Award Category Error:", awardCategoryData.error); hasErrors=true;}
                 }
 
-                // Process Sub-Agency Data & Create Bar Chart
+                // Process Sub-Agency Data & Chart
                 subAgencyTableBody.innerHTML = '';
                 if (subAgencyDataResponse && !subAgencyDataResponse.error && subAgencyDataResponse.results && subAgencyDataResponse.results.length > 0) {
                     subAgencyDataResponse.results.forEach(item => {
@@ -474,8 +878,35 @@
                     subAgencyChartContainer.classList.add('hidden');
                      if (subAgencyChartInstance) { subAgencyChartInstance.destroy(); subAgencyChartInstance = null; }
                     if (subAgencyDataResponse && subAgencyDataResponse.error) {
-                        console.error("Sub-Agency Data Error:", subAgencyDataResponse.error.message);
+                        console.error("Sub-Agency Data Error:", subAgencyDataResponse.error);
                         subAgencyTableBody.innerHTML = '<tr><td colspan="2">Error loading sub-agency data.</td></tr>';
+                        hasErrors = true;
+                    }
+                }
+                
+                // Process Spending by State Data and create the choropleth map
+                spendingByStateTableBody.innerHTML = ''; 
+                if (spendingByGeoData && !spendingByGeoData.error && spendingByGeoData.results && spendingByGeoData.results.length > 0) {
+                    console.log("First item from spending_by_geography results:", spendingByGeoData.results[0]);
+                    const sortedStates = spendingByGeoData.results.sort((a, b) => b.aggregated_amount - a.aggregated_amount);
+
+                    sortedStates.forEach(item => {
+                        const tr = document.createElement('tr');
+                        const stateName = item.display_name || 'Unknown State';
+                        const obligatedAmount = item.aggregated_amount;
+                        tr.innerHTML = `<td>${stateName} (${item.shape_code || 'N/A'})</td><td class="number-cell">${formatCurrency(obligatedAmount)}</td>`;
+                        spendingByStateTableBody.appendChild(tr);
+                    });
+                    spendingByStateNoneMsg.classList.add('hidden');
+                    
+                    // Create the choropleth map
+                    createChoroplethMap(spendingByGeoData.results);
+                } else {
+                    spendingByStateNoneMsg.classList.remove('hidden');
+                    stateMapContainer.classList.add('hidden');
+                    if (spendingByGeoData && spendingByGeoData.error) {
+                        console.error("Spending by Geography Error:", spendingByGeoData.error);
+                        spendingByStateTableBody.innerHTML = '<tr><td colspan="2">Error loading spending by state data.</td></tr>';
                         hasErrors = true;
                     }
                 }
