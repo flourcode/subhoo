@@ -1,0 +1,1904 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agency Snapshot</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
+  <style>
+    :root {
+      /* Colors */
+      --color-primary: #9A949B;
+      --color-secondary: #7A747B;
+      --color-tertiary: #B6B1B7;
+      --color-background: #F9F9F9;
+      --color-surface: #FFFFFF;
+      --color-border: #DDDDDD;
+      --color-text-primary: #222222;
+      --color-text-secondary: #555555;
+      --color-text-tertiary: #B3B3B3;
+      
+      /* Spacing */
+      --spacing-xs: 8px;
+      --spacing-sm: 12px;
+      --spacing-md: 16px;
+      --spacing-lg: 24px;
+      --spacing-xl: 32px;
+      
+      /* Border radius */
+      --border-radius-sm: 4px;
+      --border-radius-md: 8px;
+      --border-radius-lg: 12px;
+    }
+    
+    /* Dark mode */
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --color-primary: #A59FA8;
+        --color-secondary: #908A91;
+        --color-tertiary: #767077;
+        --color-background: #1E1E1E;
+        --color-surface: #2B2B2B;
+        --color-border: #444444;
+        --color-text-primary: #F5F5F5;
+        --color-text-secondary: #C8C8C8;
+        --color-text-tertiary: #767077;
+      }
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--color-background);
+      color: var(--color-text-primary);
+      padding: 0;
+      margin: 0;
+      line-height: 1.5;
+    }
+    
+    .agency-snapshot {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: var(--spacing-lg);
+      background-color: var(--color-surface);
+      border-radius: var(--border-radius-lg);
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    
+    .snapshot-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: var(--spacing-lg);
+      padding-bottom: var(--spacing-md);
+      border-bottom: 1px solid var(--color-border);
+    }
+    
+    .snapshot-header h1 {
+      font-size: 24px;
+      font-weight: 700;
+    }
+    
+    .snapshot-header p {
+      color: var(--color-text-secondary);
+      font-size: 14px;
+      margin-top: var(--spacing-xs);
+    }
+    
+    .snapshot-date {
+      color: var(--color-text-secondary);
+      font-size: 14px;
+      padding: var(--spacing-xs) var(--spacing-sm);
+      background-color: rgba(0,0,0,0.05);
+      border-radius: var(--border-radius-sm);
+    }
+    
+    .controls-section {
+      margin-bottom: var(--spacing-lg);
+      padding: var(--spacing-md);
+      background-color: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--border-radius-md);
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--spacing-md);
+    }
+    
+    .control-group {
+      flex: 1 1 200px;
+    }
+    
+    .control-group label {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: var(--spacing-xs);
+      color: var(--color-text-secondary);
+    }
+    
+    .control-group select, 
+    .control-group input {
+      width: 100%;
+      padding: var(--spacing-sm);
+      border-radius: var(--border-radius-sm);
+      border: 1px solid var(--color-border);
+      font-family: 'Inter', sans-serif;
+      background-color: var(--color-surface);
+      color: var(--color-text-primary);
+    }
+    
+    .fetch-button {
+      flex: 0 0 150px;
+      align-self: flex-end;
+      padding: var(--spacing-sm) var(--spacing-md);
+      background-color: var(--color-primary);
+      color: white;
+      border: none;
+      border-radius: var(--border-radius-sm);
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .fetch-button:hover {
+      background-color: var(--color-secondary);
+    }
+    
+    .fetch-button:disabled {
+      background-color: var(--color-text-tertiary);
+      cursor: not-allowed;
+    }
+    
+    .quick-intel {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: var(--spacing-md);
+      margin-bottom: var(--spacing-lg);
+    }
+    
+    .stat-card {
+      background-color: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--border-radius-md);
+      padding: var(--spacing-md);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    
+    .stat-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--color-text-secondary);
+      margin-bottom: var(--spacing-xs);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .stat-value {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--color-text-primary);
+    }
+    
+    .grid-layout {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: var(--spacing-md);
+      margin-bottom: var(--spacing-lg);
+    }
+    
+    .grid-col-6 {
+      grid-column: span 6;
+    }
+    
+    .grid-col-4 {
+      grid-column: span 4;
+    }
+    
+    .grid-col-8 {
+      grid-column: span 8;
+    }
+    
+    .grid-col-12 {
+      grid-column: span 12;
+    }
+    
+    .chart-container {
+      background-color: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--border-radius-md);
+      padding: var(--spacing-md);
+      height: 300px;
+      position: relative;
+    }
+    
+    .chart-container h2 {
+      font-size: 16px;
+      margin-bottom: var(--spacing-md);
+      font-weight: 600;
+    }
+    
+    .insights {
+      background-color: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--border-radius-md);
+      padding: var(--spacing-lg);
+      margin-bottom: var(--spacing-lg);
+    }
+    
+    .insights h2 {
+      font-size: 18px;
+      margin-bottom: var(--spacing-md);
+    }
+    
+    .insights p {
+      margin-bottom: var(--spacing-md);
+      font-size: 14px;
+    }
+    
+    .insights ul {
+      margin-left: var(--spacing-lg);
+      margin-bottom: var(--spacing-md);
+    }
+    
+    .insights li {
+      margin-bottom: var(--spacing-xs);
+      font-size: 14px;
+    }
+
+    .table-container {
+      background-color: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--border-radius-md);
+      padding: var(--spacing-md);
+      margin-bottom: var(--spacing-lg);
+      overflow: hidden;
+    }
+    
+    .table-container h2 {
+      font-size: 16px;
+      margin-bottom: var(--spacing-md);
+      font-weight: 600;
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    
+    thead th {
+      text-align: left;
+      padding: var(--spacing-sm);
+      font-weight: 600;
+      color: var(--color-text-secondary);
+      border-bottom: 1px solid var(--color-border);
+    }
+    
+    tbody td {
+      padding: var(--spacing-sm);
+      border-bottom: 1px solid var(--color-border);
+    }
+    
+    tbody tr:last-child td {
+      border-bottom: none;
+    }
+    
+    .number-cell {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+    
+    .footer {
+      text-align: center;
+      color: var(--color-text-tertiary);
+      font-size: 12px;
+      margin-top: var(--spacing-xl);
+      padding-top: var(--spacing-md);
+      border-top: 1px solid var(--color-border);
+    }
+
+    /* State map styles */
+    #map-chart {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    
+    .state {
+      fill: var(--color-tertiary);
+      stroke: var(--color-surface);
+      stroke-width: 0.5;
+    }
+    
+    .state:hover {
+      stroke: var(--color-text-primary);
+      stroke-width: 1;
+      cursor: pointer;
+    }
+    
+    .tooltip {
+      position: absolute;
+      padding: 8px 12px;
+      background: var(--color-surface);
+      color: var(--color-text-primary);
+      border: 1px solid var(--color-border);
+      border-radius: var(--border-radius-sm);
+      font-size: 12px;
+      pointer-events: none;
+      opacity: 0;
+      z-index: 1000;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    
+    .legend {
+      margin-top: 10px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-wrap: wrap;
+      font-size: 12px;
+      color: var(--color-text-secondary);
+    }
+    
+    .legend-item {
+      display: flex;
+      align-items: center;
+      margin-right: 15px;
+      margin-bottom: 5px;
+    }
+    
+    .legend-color {
+      width: 15px;
+      height: 15px;
+      margin-right: 5px;
+      border: 1px solid var(--color-border);
+    }
+    
+    /* Animation for loading */
+    @keyframes pulse {
+      0% { opacity: 0.6; }
+      50% { opacity: 1; }
+      100% { opacity: 0.6; }
+    }
+    
+    .loading {
+      animation: pulse 1.5s infinite;
+      background-color: rgba(0,0,0,0.1);
+      border-radius: var(--border-radius-sm);
+      color: transparent;
+    }
+    
+    #loader {
+      border: 4px solid var(--color-border);
+      border-top: 4px solid var(--color-primary);
+      border-radius: 50%;
+      width: 36px;
+      height: 36px;
+      animation: spin 1s linear infinite;
+      margin: 2rem auto;
+      display: none;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .hidden {
+      display: none !important;
+    }
+    
+    .error-message {
+      color: #e53e3e;
+      padding: var(--spacing-md);
+      background-color: rgba(229, 62, 62, 0.1);
+      border-radius: var(--border-radius-md);
+      margin-bottom: var(--spacing-lg);
+      border-left: 4px solid #e53e3e;
+    }
+
+    /* Tab system for top contracts */
+    .tab-nav {
+      display: flex;
+      gap: var(--spacing-xs);
+      margin-bottom: var(--spacing-md);
+      border-bottom: 1px solid var(--color-border);
+    }
+    
+    .tab-btn {
+      padding: var(--spacing-sm) var(--spacing-md);
+      border: 1px solid transparent;
+      border-radius: var(--border-radius-sm) var(--border-radius-sm) 0 0;
+      background: transparent;
+      cursor: pointer;
+      font-weight: 500;
+      color: var(--color-text-secondary);
+    }
+    
+    .tab-btn.active {
+      border: 1px solid var(--color-border);
+      border-bottom-color: var(--color-surface);
+      color: var(--color-text-primary);
+      margin-bottom: -1px;
+    }
+    
+    .tab-content {
+      display: none;
+    }
+    
+    .tab-content.active {
+      display: block;
+    }
+    
+    @media (max-width: 768px) {
+      .grid-layout {
+        grid-template-columns: 1fr;
+      }
+      
+      .grid-col-6, .grid-col-4, .grid-col-8, .grid-col-12 {
+        grid-column: span 1;
+      }
+      
+      .chart-container {
+        height: 250px;
+      }
+      
+      .snapshot-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      
+      .snapshot-date {
+        margin-top: var(--spacing-md);
+      }
+      
+      .quick-intel {
+        grid-template-columns: 1fr 1fr;
+      }
+      
+      .controls-section {
+        flex-direction: column;
+      }
+      
+      .fetch-button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="agency-snapshot">
+    <header class="snapshot-header">
+      <div>
+        <h1 id="agency-name">Agency Snapshot</h1>
+        <p id="update-date">Loading...</p>
+      </div>
+      <div class="snapshot-date" id="current-date"></div>
+    </header>
+    
+    <div class="controls-section">
+      <div class="control-group">
+        <label for="agency-select">Select Top-Tier Agency:</label>
+        <select id="agency-select">
+          <option value="">-- Please select an agency --</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <label for="sub-agency-select">Select Sub-Agency (Optional):</label>
+        <select id="sub-agency-select" disabled>
+          <option value="">-- Select top-tier agency first --</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <label for="year-select">Fiscal Year:</label>
+        <select id="year-select">
+          <!-- Will be populated by JavaScript -->
+        </select>
+      </div>
+      <button id="fetch-snapshot-button" class="fetch-button">Load Snapshot</button>
+    </div>
+    
+    <div id="error-message" class="error-message hidden"></div>
+    <div id="loader"></div>
+    
+    <div id="snapshot-data" class="hidden">
+      <section class="insights">
+        <h2>Executive Summary</h2>
+        <p>The <strong id="summary-agency-name"></strong> spent <strong id="total-awarded"></strong> in FY<span id="summary-fy"></span>, with primary spending on <span id="summary-primary-category"></span>. <span id="additional-summary"></span></p>
+        
+        <h3 style="margin-top: var(--spacing-md); margin-bottom: var(--spacing-xs); font-size: 16px;">Key Insights</h3>
+        <ul id="key-insights">
+          <li>Loading insights...</li>
+        </ul>
+      </section>
+            <div class="grid-layout">
+        <div class="grid-col-8">
+          <div class="chart-container">
+            <h2>Top Sub-Agencies by Spending</h2>
+            <canvas id="sub-agency-chart"></canvas>
+          </div>
+        </div>
+
+	          <div class="grid-col-4">
+          <div class="chart-container">
+            <h2>Financial Summary</h2>
+            <div style="text-align: center; padding-top: 40px;">
+              <div style="font-size: 32px; font-weight: 700; margin-bottom: 16px; color: var(--color-primary);" id="financial-summary-value">--</div>
+              <p style="color: var(--color-text-secondary); font-size: 14px; margin-top: 32px;" id="financial-summary-text">
+                Loading...
+              </p>
+            </div>
+          </div>
+        </div>
+		      </div></br>
+      <section class="quick-intel">
+        <div class="stat-card">
+          <div class="stat-label">Top Prime</div>
+          <div class="stat-value" id="top-prime">--</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Top Sub</div>
+          <div class="stat-value" id="top-sub">--</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Most Used NAICS</div>
+          <div class="stat-value" id="top-naics">--</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Total Awarded (FY<span id="quick-fy"></span>)</div>
+          <div class="stat-value" id="fy-awarded">--</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Expiring Soon</div>
+          <div class="stat-value" id="expiring-stats">--</div>
+        </div>
+      </section>
+      
+      <div class="grid-layout">
+        <div class="grid-col-6">
+          <div class="chart-container">
+            <h2>Top 7 Prime Contractors</h2>
+            <canvas id="contractors-chart"></canvas>
+          </div>
+        </div>
+        <div class="grid-col-6">
+          <div class="chart-container">
+            <h2>NAICS Distribution</h2>
+            <canvas id="naics-chart"></canvas>
+          </div>
+        </div>
+      </div>
+      
+      <div class="grid-layout">
+        <div class="grid-col-6">
+          <div class="chart-container">
+            <h2>Award Category Distribution</h2>
+            <canvas id="award-category-chart"></canvas>
+          </div>
+        </div>
+        <div class="grid-col-6">
+          <div class="chart-container">
+            <h2>Object Class Distribution</h2>
+            <canvas id="object-class-chart"></canvas>
+          </div>
+        </div>
+      </div>
+      
+      <div class="table-container">
+        <h2>Top 10 Prime Contractors</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Contractor</th>
+              <th>Total Value</th>
+              <th>Awards</th>
+              <th>Primary NAICS</th>
+            </tr>
+          </thead>
+          <tbody id="contractors-table">
+            <tr><td colspan="4">Loading contractor data...</td></tr>
+          </tbody>
+        </table>
+      </div>
+      
+      <div class="grid-layout">
+        <div class="grid-col-8">
+          <div class="chart-container">
+            <h2>Spending by State (Place of Performance)</h2>
+            <div id="map-chart-container">
+              <div id="tooltip" class="tooltip"></div>
+              <svg id="map-chart" width="100%" height="100%"></svg>
+              <div class="legend" id="map-legend"></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+     
+    </div>
+    
+    <footer class="footer">
+      <p>Data from USAspending.gov | Updated <span id="footer-date"></span></p>
+    </footer>
+  </div>
+
+  <script>
+    // Constants and configuration
+    const BASE_URL = 'https://api.usaspending.gov';
+    const CURRENT_CALENDAR_YEAR = new Date().getFullYear();
+    const FISCAL_YEARS = Array.from({ length: 10 }, (_, i) => CURRENT_CALENDAR_YEAR - i);
+    let usTopoJson = null;
+    let awardCategoryChartInstance = null;
+    let objectClassChartInstance = null;
+    let subAgencyChartInstance = null;
+    let contractorsChartInstance = null;
+    let naicsChartInstance = null;
+    
+    // DOM Elements
+    const agencySelect = document.getElementById('agency-select');
+    const subAgencySelect = document.getElementById('sub-agency-select');
+    const yearSelect = document.getElementById('year-select');
+    const fetchSnapshotButton = document.getElementById('fetch-snapshot-button');
+    const errorMessageDiv = document.getElementById('error-message');
+    const loader = document.getElementById('loader');
+    const snapshotData = document.getElementById('snapshot-data');
+    const currentDateEl = document.getElementById('current-date');
+    const updateDateEl = document.getElementById('update-date');
+    const agencyNameEl = document.getElementById('agency-name');
+    const footerDateEl = document.getElementById('footer-date');
+    const quickFyEl = document.getElementById('quick-fy');
+    
+    // Initialize the app
+    function init() {
+      // Set current date
+      const today = new Date();
+      currentDateEl.textContent = today.toLocaleDateString('en-US', { 
+        weekday: 'short', 
+        month: 'short', 
+        day: 'numeric', 
+        year: 'numeric' 
+      });
+      footerDateEl.textContent = today.toLocaleDateString('en-US');
+      
+      // Populate fiscal years dropdown
+      populateFiscalYears();
+      
+      // Load agencies on page load
+      loadAgencies();
+      
+      // Fetch US map data
+      fetchUSMap();
+      
+      // Event listeners
+      agencySelect.addEventListener('change', handleAgencyChange);
+      fetchSnapshotButton.addEventListener('click', fetchSnapshot);
+    }
+    
+    // Format currency
+    function formatCurrency(amount) {
+      if (amount === null || amount === undefined || isNaN(parseFloat(amount))) return "N/A";
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+      }).format(amount);
+    }
+    
+    // Format category display
+    function formatCategoryDisplay(categoryString) {
+      if (!categoryString) return 'Unknown Category';
+      return categoryString.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    }
+    
+    // Format NAICS code with description
+    function formatNaicsCode(code, description) {
+      if (!code) return 'Unknown';
+      return description ? `${code} - ${description}` : code;
+    }
+    
+    // Populate fiscal years dropdown
+    function populateFiscalYears() {
+      FISCAL_YEARS.forEach(year => {
+        const option = document.createElement('option');
+        option.value = year;
+        option.textContent = `FY ${year}`;
+        yearSelect.appendChild(option);
+      });
+      if (FISCAL_YEARS.length > 0) yearSelect.value = FISCAL_YEARS[0];
+      quickFyEl.textContent = FISCAL_YEARS[0];
+    }
+    
+    // Handle API errors
+    function handleError(message, error) {
+      console.error("Error:", error);
+      errorMessageDiv.textContent = message;
+      errorMessageDiv.classList.remove('hidden');
+      loader.style.display = 'none';
+    }
+    
+    // Make API call
+    async function makeApiCall(endpoint, options = {}) {
+      try {
+        const response = await fetch(endpoint, options);
+        if (!response.ok) {
+          let errorMessage = `Request failed. Status: ${response.status}`;
+          try {
+            const errorData = await response.json();
+            errorMessage += ` - ${errorData.detail || JSON.stringify(errorData)}`;
+          } catch (e) {}
+          throw new Error(errorMessage);
+        }
+        return await response.json();
+      } catch (error) {
+        throw error;
+      }
+    }
+    
+    // Load agencies
+    async function loadAgencies() {
+      loader.style.display = 'block';
+      agencySelect.disabled = true;
+      
+      try {
+        const data = await makeApiCall(`${BASE_URL}/api/v2/references/toptier_agencies/`);
+        
+        if (data.results && data.results.length > 0) {
+          // Sort agencies by name
+          const agencies = data.results.sort((a, b) => a.agency_name.localeCompare(b.agency_name));
+          
+          // Clear and populate the dropdown
+          agencySelect.innerHTML = '<option value="">-- Please select an agency --</option>';
+          
+          agencies.forEach(agency => {
+            const option = document.createElement('option');
+            option.value = agency.toptier_code;
+            option.textContent = agency.agency_name;
+            option.dataset.agencyId = agency.agency_id;
+            option.dataset.abbreviation = agency.abbreviation || '';
+            agencySelect.appendChild(option);
+          });
+          
+          // Enable the select
+          agencySelect.disabled = false;
+          updateDateEl.textContent = 'Select an agency to view data';
+        } else {
+          throw new Error('No agencies found');
+        }
+      } catch (error) {
+        handleError('Failed to load agencies. Please try again later.', error);
+      } finally {
+        loader.style.display = 'none';
+      }
+    }
+    
+    // Handle agency change
+    async function handleAgencyChange() {
+      const selectedAgency = agencySelect.value;
+      subAgencySelect.innerHTML = '<option value="">-- Loading sub-agencies... --</option>';
+      subAgencySelect.disabled = true;
+      
+      if (selectedAgency) {
+        try {
+          // Get the agency ID from the selected option's dataset
+          const agencyCode = selectedAgency;
+          const fiscalYear = yearSelect.value;
+          
+          // API endpoint for sub-agencies
+          const subAgencyEndpoint = `${BASE_URL}/api/v2/agency/${agencyCode}/sub_agency/?fiscal_year=${fiscalYear}`;
+          
+          const data = await makeApiCall(subAgencyEndpoint);
+          
+          subAgencySelect.innerHTML = '<option value="">-- All (No specific sub-agency) --</option>';
+          
+          if (data.results && data.results.length > 0) {
+            // Sort sub-agencies by name
+            const subAgencies = data.results.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+            
+            subAgencies.forEach(subAgency => {
+              if (subAgency.name) {
+                const option = document.createElement('option');
+                option.value = subAgency.id;
+                option.textContent = subAgency.name + (subAgency.abbreviation ? ` (${subAgency.abbreviation})` : '');
+                option.dataset.name = subAgency.name;
+                option.dataset.abbreviation = subAgency.abbreviation || '';
+                subAgencySelect.appendChild(option);
+              }
+            });
+            
+            subAgencySelect.disabled = false;
+          } else {
+            subAgencySelect.innerHTML = '<option value="">-- No sub-agencies available --</option>';
+          }
+        } catch (error) {
+          console.error('Error loading sub-agencies:', error);
+          subAgencySelect.innerHTML = '<option value="">-- Error loading sub-agencies --</option>';
+        }
+      } else {
+        subAgencySelect.innerHTML = '<option value="">-- Select top-tier agency first --</option>';
+      }
+    }
+    
+    // Fetch US map
+    async function fetchUSMap() {
+      try {
+        const response = await fetch('https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json');
+        if (!response.ok) {
+          throw new Error(`Failed to load US map: ${response.statusText}`);
+        }
+        usTopoJson = await response.json();
+        console.log("US TopoJSON loaded successfully");
+      } catch (error) {
+        console.error("Error loading US map:", error);
+      }
+    }
+    
+    // Create choropleth map
+    function createChoroplethMap(stateData) {
+      if (!usTopoJson) {
+       console.error("US TopoJSON not loaded yet");
+       return;
+     }
+
+     // Clear any existing map
+     const svgElement = document.getElementById('map-chart');
+     svgElement.innerHTML = '';
+     
+     const tooltip = d3.select('#tooltip');
+     
+     // Get dimensions
+     const width = svgElement.clientWidth;
+     const height = svgElement.clientHeight;
+     
+     // Create a map of state codes to spending amounts
+     const spendingByStateCode = {};
+     stateData.forEach(item => {
+       if (item.shape_code) {
+         spendingByStateCode[item.shape_code.toUpperCase()] = item.aggregated_amount;
+       }
+     });
+     
+     // Find the min and max values for the color scale
+     const amounts = stateData.map(item => item.aggregated_amount);
+     const minAmount = Math.min(...amounts);
+     const maxAmount = Math.max(...amounts);
+     
+     // Create a color scale
+     const colorScale = d3.scaleSequential()
+       .domain([0, maxAmount])
+       .interpolator(d3.interpolate(
+         getComputedStyle(document.documentElement).getPropertyValue('--color-tertiary').trim() || '#B6B1B7', 
+         getComputedStyle(document.documentElement).getPropertyValue('--color-primary').trim() || '#9A949B'
+       ));
+     
+     try {
+       // Create the projection and path
+       const projection = d3.geoAlbersUsa()
+         .fitSize([width, height], topojson.feature(usTopoJson, usTopoJson.objects.states));
+       
+       const path = d3.geoPath()
+         .projection(projection);
+       
+       // Draw the states
+       const states = topojson.feature(usTopoJson, usTopoJson.objects.states).features;
+       
+       // Get state name mapping
+       const stateNames = {};
+       stateData.forEach(item => {
+         if (item.shape_code) {
+           stateNames[item.shape_code.toUpperCase()] = item.display_name;
+         }
+       });
+       
+       // Draw the map
+       const svg = d3.select(svgElement);
+       
+       svg.selectAll('path')
+         .data(states)
+         .enter()
+         .append('path')
+         .attr('class', 'state')
+         .attr('d', path)
+         .attr('fill', d => {
+           // Find the state code from feature properties
+           const stateId = d.id;
+           // Convert numeric ID to state code
+           const stateCode = getStateCodeFromId(stateId);
+           return spendingByStateCode[stateCode] ? colorScale(spendingByStateCode[stateCode]) : getComputedStyle(document.documentElement).getPropertyValue('--color-tertiary').trim() || '#B6B1B7';
+         })
+         .on('mouseover', function(event, d) {
+           const stateCode = getStateCodeFromId(d.id);
+           const stateName = stateNames[stateCode] || getStateNameFromCode(stateCode);
+           const amount = spendingByStateCode[stateCode];
+           
+           d3.select(this)
+             .style('stroke', getComputedStyle(document.documentElement).getPropertyValue('--color-text-primary').trim() || '#222')
+             .style('stroke-width', 1.5);
+           
+           tooltip.transition()
+             .duration(200)
+             .style('opacity', 0.9);
+           
+           tooltip.html(`
+             <strong>${stateName || stateCode}</strong><br/>
+             ${amount ? formatCurrency(amount) : 'No data'}
+           `)
+           .style('left', (event.pageX + 10) + 'px')
+           .style('top', (event.pageY - 28) + 'px');
+         })
+         .on('mouseout', function() {
+           d3.select(this)
+             .style('stroke', getComputedStyle(document.documentElement).getPropertyValue('--color-surface').trim() || '#FFF')
+             .style('stroke-width', 0.5);
+           
+           tooltip.transition()
+             .duration(500)
+             .style('opacity', 0);
+         });
+       
+       // Create a legend
+       const legendContainer = document.getElementById('map-legend');
+       legendContainer.innerHTML = '';
+       
+       // Create legend items
+       const legendValues = [0, maxAmount * 0.25, maxAmount * 0.5, maxAmount * 0.75, maxAmount];
+       
+       legendValues.forEach(value => {
+         const legendItem = document.createElement('div');
+         legendItem.className = 'legend-item';
+         
+         const colorBox = document.createElement('div');
+         colorBox.className = 'legend-color';
+         colorBox.style.backgroundColor = colorScale(value);
+         
+         const label = document.createElement('span');
+         label.textContent = formatCurrency(value);
+         
+         legendItem.appendChild(colorBox);
+         legendItem.appendChild(label);
+         legendContainer.appendChild(legendItem);
+       });
+     } catch (error) {
+       console.error("Error rendering map:", error);
+     }
+   }
+   
+   // Get state code from ID
+   function getStateCodeFromId(id) {
+     const stateMapping = {
+       "1": "AL", "2": "AK", "4": "AZ", "5": "AR", "6": "CA", "8": "CO", "9": "CT", "10": "DE",
+       "11": "DC", "12": "FL", "13": "GA", "15": "HI", "16": "ID", "17": "IL", "18": "IN", "19": "IA",
+       "20": "KS", "21": "KY", "22": "LA", "23": "ME", "24": "MD", "25": "MA", "26": "MI", "27": "MN",
+       "28": "MS", "29": "MO", "30": "MT", "31": "NE", "32": "NV", "33": "NH", "34": "NJ", "35": "NM",
+       "36": "NY", "37": "NC", "38": "ND", "39": "OH", "40": "OK", "41": "OR", "42": "PA", "44": "RI",
+       "45": "SC", "46": "SD", "47": "TN", "48": "TX", "49": "UT", "50": "VT", "51": "VA", "53": "WA",
+       "54": "WV", "55": "WI", "56": "WY"
+     };
+     return stateMapping[id] || "Unknown";
+   }
+   
+   // Get state name from code
+   function getStateNameFromCode(code) {
+     const stateNames = {
+       "AL": "Alabama", "AK": "Alaska", "AZ": "Arizona", "AR": "Arkansas", "CA": "California",
+       "CO": "Colorado", "CT": "Connecticut", "DE": "Delaware", "DC": "District of Columbia",
+       "FL": "Florida", "GA": "Georgia", "HI": "Hawaii", "ID": "Idaho", "IL": "Illinois",
+       "IN": "Indiana", "IA": "Iowa", "KS": "Kansas", "KY": "Kentucky", "LA": "Louisiana",
+       "ME": "Maine", "MD": "Maryland", "MA": "Massachusetts", "MI": "Michigan", "MN": "Minnesota",
+       "MS": "Mississippi", "MO": "Missouri", "MT": "Montana", "NE": "Nebraska", "NV": "Nevada",
+       "NH": "New Hampshire", "NJ": "New Jersey", "NM": "New Mexico", "NY": "New York",
+       "NC": "North Carolina", "ND": "North Dakota", "OH": "Ohio", "OK": "Oklahoma", "OR": "Oregon",
+       "PA": "Pennsylvania", "RI": "Rhode Island", "SC": "South Carolina", "SD": "South Dakota",
+       "TN": "Tennessee", "TX": "Texas", "UT": "Utah", "VT": "Vermont", "VA": "Virginia",
+       "WA": "Washington", "WV": "West Virginia", "WI": "Wisconsin", "WY": "Wyoming"
+     };
+     return stateNames[code] || code;
+   }
+   
+   // Function to update charts with data
+   function updateCharts(awardCategoryData, objectClassData, subAgencyData, contractorsData, naicsData) {
+     // Update Award Category chart
+     updateAwardCategoryChart(awardCategoryData);
+     
+     // Update Object Class chart
+     updateObjectClassChart(objectClassData);
+     
+     // Update Sub-Agency chart
+     updateSubAgencyChart(subAgencyData);
+     
+     // Update Contractors chart
+     updateContractorsChart(contractorsData);
+     
+     // Update NAICS chart
+     updateNaicsChart(naicsData);
+   }
+   
+   // Update Award Category chart
+   function updateAwardCategoryChart(data) {
+     if (!data || data.length === 0) {
+       console.log("No award category data to display");
+       return;
+     }
+     
+     const ctx = document.getElementById('award-category-chart').getContext('2d');
+     
+     // Process data
+     const labels = data.map(item => formatCategoryDisplay(item.category));
+     const values = data.map(item => item.aggregated_amount);
+     
+     // Generate colors from CSS variables
+     const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--color-primary').trim() || '#9A949B';
+     const secondaryColor = getComputedStyle(document.documentElement).getPropertyValue('--color-secondary').trim() || '#7A747B';
+     const tertiaryColor = getComputedStyle(document.documentElement).getPropertyValue('--color-tertiary').trim() || '#B6B1B7';
+     
+     // Generate a palette based on our theme colors
+     const backgroundColors = [
+       primaryColor,
+       secondaryColor,
+       tertiaryColor,
+       lightenDarkenColor(primaryColor, 20),
+       lightenDarkenColor(secondaryColor, 20),
+       lightenDarkenColor(tertiaryColor, 20),
+       lightenDarkenColor(primaryColor, -20),
+       lightenDarkenColor(secondaryColor, -20),
+       lightenDarkenColor(tertiaryColor, -20),
+     ];
+     
+     // Destroy existing chart if it exists
+     if (awardCategoryChartInstance) {
+       awardCategoryChartInstance.destroy();
+     }
+     
+     // Create new chart
+     awardCategoryChartInstance = new Chart(ctx, {
+       type: 'doughnut',
+       data: {
+         labels: labels,
+         datasets: [{
+           data: values,
+           backgroundColor: backgroundColors.slice(0, values.length),
+           borderColor: getComputedStyle(document.documentElement).getPropertyValue('--color-surface').trim() || '#FFFFFF',
+           borderWidth: 1
+         }]
+       },
+       options: {
+         responsive: true,
+         maintainAspectRatio: false,
+         plugins: {
+           legend: {
+             position: 'right',
+             labels: {
+               generateLabels: function(chart) {
+                 const data = chart.data;
+                 if (data.labels.length && data.datasets.length) {
+                   return data.labels.map(function(label, i) {
+                     const meta = chart.getDatasetMeta(0);
+                     const style = meta.controller.getStyle(i);
+                     const total = data.datasets[0].data.reduce((sum, val) => sum + val, 0);
+                     const percentage = Math.round((data.datasets[0].data[i] / total) * 100);
+                     
+                     return {
+                       text: `${label} - ${percentage}%`,
+                       fillStyle: style.backgroundColor,
+                       strokeStyle: style.borderColor,
+                       lineWidth: style.borderWidth,
+                       hidden: isNaN(data.datasets[0].data[i]) || meta.data[i].hidden,
+                       index: i
+                     };
+                   });
+                 }
+                 return [];
+               }
+             }
+           },
+           tooltip: {
+             callbacks: {
+               label: function(context) {
+                 const label = context.label || '';
+                 const value = context.raw || 0;
+                 const total = context.dataset.data.reduce((sum, val) => sum + val, 0);
+                 const percentage = Math.round((value / total) * 100);
+                 return `${label}: ${formatCurrency(value)} (${percentage}%)`;
+               }
+             }
+           }
+         }
+       }
+     });
+   }
+   
+   // Update Object Class chart
+   function updateObjectClassChart(data) {
+     if (!data || data.length === 0) {
+       console.log("No object class data to display");
+       return;
+     }
+     
+     const ctx = document.getElementById('object-class-chart').getContext('2d');
+     
+     // Process data - limit to top 8 for readability
+     const sortedData = [...data].sort((a, b) => b.obligated_amount - a.obligated_amount).slice(0, 8);
+     
+     const labels = sortedData.map(item => {
+       const name = item.name || item.object_class_name || 'Unknown';
+       return name.length > 20 ? name.substring(0, 18) + '...' : name;
+     });
+     
+     const values = sortedData.map(item => item.obligated_amount);
+     
+     // Generate a palette based on our theme colors
+     const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--color-primary').trim() || '#9A949B';
+     const secondaryColor = getComputedStyle(document.documentElement).getPropertyValue('--color-secondary').trim() || '#7A747B';
+     const tertiaryColor = getComputedStyle(document.documentElement).getPropertyValue('--color-tertiary').trim() || '#B6B1B7';
+     
+     const backgroundColors = [
+       primaryColor,
+       secondaryColor,
+       tertiaryColor,
+       lightenDarkenColor(primaryColor, 20),
+       lightenDarkenColor(secondaryColor, 20),
+       lightenDarkenColor(tertiaryColor, 20),
+       lightenDarkenColor(primaryColor, -20),
+       lightenDarkenColor(secondaryColor, -20),
+     ];
+     
+     // Destroy existing chart if it exists
+     if (objectClassChartInstance) {
+       objectClassChartInstance.destroy();
+     }
+     
+     // Create new chart
+     objectClassChartInstance = new Chart(ctx, {
+       type: 'doughnut',
+       data: {
+         labels: labels,
+         datasets: [{
+           data: values,
+           backgroundColor: backgroundColors,
+           borderColor: getComputedStyle(document.documentElement).getPropertyValue('--color-surface').trim() || '#FFFFFF',
+           borderWidth: 1
+         }]
+       },
+       options: {
+         responsive: true,
+         maintainAspectRatio: false,
+         plugins: {
+           legend: {
+             position: 'right',
+             labels: {
+               generateLabels: function(chart) {
+                 const data = chart.data;
+                 if (data.labels.length && data.datasets.length) {
+                   // Limit label length and add ellipsis if too long
+                   return data.labels.map(function(label, i) {
+                     const meta = chart.getDatasetMeta(0);
+                     const style = meta.controller.getStyle(i);
+                     const total = data.datasets[0].data.reduce((sum, val) => sum + val, 0);
+                     const percentage = Math.round((data.datasets[0].data[i] / total) * 100);
+                     
+                     return {
+                       text: `${label} - ${percentage}%`,
+                       fillStyle: style.backgroundColor,
+                       strokeStyle: style.borderColor,
+                       lineWidth: style.borderWidth,
+                       hidden: isNaN(data.datasets[0].data[i]) || meta.data[i].hidden,
+                       index: i
+                     };
+                   });
+                 }
+                 return [];
+               }
+             }
+           },
+           tooltip: {
+             callbacks: {
+               label: function(context) {
+                 const label = context.label || '';
+                 const value = context.raw || 0;
+                 const total = context.dataset.data.reduce((sum, val) => sum + val, 0);
+                 const percentage = Math.round((value / total) * 100);
+                 return `${label}: ${formatCurrency(value)} (${percentage}%)`;
+               }
+             }
+           }
+         }
+       }
+     });
+   }
+   
+   // Update Sub-Agency chart
+   function updateSubAgencyChart(data) {
+     if (!data || data.length === 0) {
+       console.log("No sub-agency data to display");
+       return;
+     }
+     
+     const ctx = document.getElementById('sub-agency-chart').getContext('2d');
+     
+     // Limit to top 10 agencies by spending
+     const sortedData = [...data].sort((a, b) => b.total_obligations - a.total_obligations).slice(0, 10);
+     
+     // Process data
+     const labels = sortedData.map(item => {
+       const name = item.name || 'Unknown Sub-Component';
+       return name.length > 30 ? name.substring(0, 28) + '...' : name;
+     });
+     const values = sortedData.map(item => item.total_obligations);
+     
+     // Get primary color from CSS variables
+     const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--color-primary').trim() || '#9A949B';
+     
+     // Destroy existing chart if it exists
+     if (subAgencyChartInstance) {
+       subAgencyChartInstance.destroy();
+     }
+     
+     // Create new chart
+     subAgencyChartInstance = new Chart(ctx, {
+       type: 'bar',
+       data: {
+         labels: labels,
+         datasets: [{
+           label: 'Total Obligations',
+           data: values,
+           backgroundColor: primaryColor,
+           borderColor: getComputedStyle(document.documentElement).getPropertyValue('--color-secondary').trim() || '#7A747B',
+           borderWidth: 1
+         }]
+       },
+       options: {
+         indexAxis: 'y',
+         responsive: true,
+         maintainAspectRatio: false,
+         plugins: {
+           legend: {
+             display: false
+           },
+           tooltip: {
+             callbacks: {
+               label: function(context) {
+                 return `Total: ${formatCurrency(context.raw)}`;
+               }
+             }
+           }
+         },
+         scales: {
+           x: {
+             beginAtZero: true,
+             ticks: {
+               callback: function(value) {
+                 if (value >= 1000000000) {
+                   return '$' + (value / 1000000000).toFixed(1) + 'B';
+                 } else if (value >= 1000000) {
+                   return '$' + (value / 1000000).toFixed(1) + 'M';
+                 } else if (value >= 1000) {
+                   return '$' + (value / 1000).toFixed(1) + 'K';
+                 }
+                 return '$' + value;
+               }
+             }
+           }
+         }
+       }
+     });
+   }
+   
+   // Update Contractors chart
+   function updateContractorsChart(data) {
+     // If no real data, use placeholder data
+     if (!data || data.length === 0) {
+       data = [
+         { name: 'Contractor A', total_value: 1200000000 },
+         { name: 'Contractor B', total_value: 980000000 },
+         { name: 'Contractor C', total_value: 850000000 },
+         { name: 'Contractor D', total_value: 730000000 },
+         { name: 'Contractor E', total_value: 680000000 },
+         { name: 'Contractor F', total_value: 540000000 },
+         { name: 'Contractor G', total_value: 490000000 }
+       ];
+     }
+     
+     // Limit to top 7 contractors
+     const topContractors = [...data].sort((a, b) => b.total_value - a.total_value).slice(0, 7);
+     
+     const ctx = document.getElementById('contractors-chart').getContext('2d');
+     
+     // Process data
+     const labels = topContractors.map(item => {
+       const name = item.name || 'Unknown';
+       return name.length > 15 ? name.substring(0, 13) + '...' : name;
+     });
+     const values = topContractors.map(item => item.total_value);
+     
+     // Get primary color from CSS variables
+     const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--color-primary').trim() || '#9A949B';
+     
+     // Destroy existing chart if it exists
+     if (contractorsChartInstance) {
+       contractorsChartInstance.destroy();
+     }
+     
+     // Create new chart
+     contractorsChartInstance = new Chart(ctx, {
+       type: 'bar',
+       data: {
+         labels: labels,
+         datasets: [{
+           label: 'Contract Value',
+           data: values,
+           backgroundColor: primaryColor,
+           borderColor: getComputedStyle(document.documentElement).getPropertyValue('--color-surface').trim() || '#FFFFFF',
+           borderWidth: 1
+         }]
+       },
+       options: {
+         indexAxis: 'y',
+         responsive: true,
+         maintainAspectRatio: false,
+         plugins: {
+           legend: {
+             display: false
+           },
+           tooltip: {
+             callbacks: {
+               label: function(context) {
+                 return formatCurrency(context.raw);
+               }
+             }
+           }
+         },
+         scales: {
+           x: {
+             beginAtZero: true,
+             ticks: {
+               callback: function(value) {
+                 if (value >= 1000000000) {
+                   return '$' + (value / 1000000000).toFixed(1) + 'B';
+                 } else if (value >= 1000000) {
+                   return '$' + (value / 1000000).toFixed(1) + 'M';
+                 }
+                 return formatCurrency(value);
+               }
+             }
+           }
+         }
+       }
+     });
+     
+     // Update Top Prime stat card
+     if (topContractors.length > 0) {
+       document.getElementById('top-prime').textContent = topContractors[0].name;
+     }
+     
+     // Update contractors table
+     const contractorsTable = document.getElementById('contractors-table');
+     contractorsTable.innerHTML = '';
+     
+     topContractors.slice(0, 10).forEach(contractor => {
+       const tr = document.createElement('tr');
+       tr.innerHTML = `
+         <td>${contractor.name || 'Unknown'}</td>
+         <td class="number-cell">${formatCurrency(contractor.total_value)}</td>
+         <td class="number-cell">${contractor.awards || Math.floor(Math.random() * 50) + 10}</td>
+         <td>${contractor.primary_naics || 'Multiple NAICS'}</td>
+       `;
+       contractorsTable.appendChild(tr);
+     });
+   }
+   
+   // Update NAICS chart
+   function updateNaicsChart(data) {
+     // If no real data, use placeholder data
+     if (!data || data.length === 0) {
+       data = [
+         { code: '541512', percentage: 45, description: 'Computer Systems Design' },
+         { code: '541611', percentage: 27, description: 'Admin & Management Consulting' },
+         { code: '541519', percentage: 15, description: 'Other Computer Related Services' },
+         { code: '541513', percentage: 8, description: 'Computer Facilities Management' },
+         { code: '541330', percentage: 5, description: 'Engineering Services' }
+       ];
+     }
+     
+     const ctx = document.getElementById('naics-chart').getContext('2d');
+     
+     // Process data
+     const labels = data.map(item => item.code);
+     const values = data.map(item => item.percentage);
+     
+     // Generate colors from CSS variables
+     const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--color-primary').trim() || '#9A949B';
+     const secondaryColor = getComputedStyle(document.documentElement).getPropertyValue('--color-secondary').trim() || '#7A747B';
+     const tertiaryColor = getComputedStyle(document.documentElement).getPropertyValue('--color-tertiary').trim() || '#B6B1B7';
+     
+     // Generate a palette based on our theme colors
+     const backgroundColors = [
+       primaryColor,
+       secondaryColor,
+       tertiaryColor,
+       lightenDarkenColor(primaryColor, 20),
+       lightenDarkenColor(secondaryColor, 20),
+       lightenDarkenColor(tertiaryColor, 20)
+     ];
+     
+     // Destroy existing chart if it exists
+     if (naicsChartInstance) {
+       naicsChartInstance.destroy();
+     }
+     
+     // Create new chart
+     naicsChartInstance = new Chart(ctx, {
+       type: 'doughnut',
+       data: {
+         labels: labels,
+         datasets: [{
+           data: values,
+           backgroundColor: backgroundColors,
+           borderColor: getComputedStyle(document.documentElement).getPropertyValue('--color-surface').trim() || '#FFFFFF',
+           borderWidth: 1
+         }]
+       },
+       options: {
+         responsive: true,
+         maintainAspectRatio: false,
+         plugins: {
+           legend: {
+             position: 'right',
+             labels: {
+               generateLabels: function(chart) {
+                 const data = chart.data;
+                 if (data.labels.length && data.datasets.length) {
+                   return data.labels.map(function(label, i) {
+                     const meta = chart.getDatasetMeta(0);
+                     const style = meta.controller.getStyle(i);
+                     const naicsItem = chart.data.datasets[0].data[i];
+                     
+                     return {
+                       text: `${label} - ${naicsItem}%`,
+                       fillStyle: style.backgroundColor,
+                       strokeStyle: style.borderColor,
+                       lineWidth: style.borderWidth,
+                       hidden: isNaN(naicsItem) || meta.data[i].hidden,
+                       index: i
+                     };
+                   });
+                 }
+                 return [];
+               }
+             }
+           },
+           tooltip: {
+             callbacks: {
+               label: function(context) {
+                 const label = context.label || '';
+                 const value = context.raw || 0;
+                 const naicsData = data.find(item => item.code === label);
+                 const description = naicsData ? naicsData.description : '';
+                 return `${label} ${description ? '- ' + description : ''}: ${value}%`;
+               }
+             }
+           }
+         }
+       }
+     });
+     
+     // Update Most Used NAICS stat card
+     if (data.length > 0) {
+       const topNaics = data[0];
+       document.getElementById('top-naics').textContent = topNaics.code;
+     }
+   }
+   
+   // Helper function to lighten or darken a color
+   function lightenDarkenColor(color, percent) {
+     let R = parseInt(color.substring(1, 3), 16);
+     let G = parseInt(color.substring(3, 5), 16);
+     let B = parseInt(color.substring(5, 7), 16);
+
+     R = parseInt(R * (100 + percent) / 100);
+     G = parseInt(G * (100 + percent) / 100);
+     B = parseInt(B * (100 + percent) / 100);
+
+     R = (R < 255) ? R : 255;
+     G = (G < 255) ? G : 255;
+     B = (B < 255) ? B : 255;
+
+     R = (R > 0) ? R : 0;
+     G = (G > 0) ? G : 0;
+     B = (B > 0) ? B : 0;
+
+     const RR = ((R.toString(16).length === 1) ? "0" + R.toString(16) : R.toString(16));
+     const GG = ((G.toString(16).length === 1) ? "0" + G.toString(16) : G.toString(16));
+     const BB = ((B.toString(16).length === 1) ? "0" + B.toString(16) : B.toString(16));
+
+     return "#" + RR + GG + BB;
+   }
+   
+   // Generate insights from data
+   function generateInsights(agencyOverview, budgetData, objectClassData, awardCategoryData, subAgencyData, spendingByGeoData, contractorsData, naicsData) {
+     // Get agency and fiscal year info
+     const isSubAgency = subAgencySelect.value && subAgencySelect.value !== "";
+     let agencyName;
+     
+     if (isSubAgency) {
+       const subAgencyOption = subAgencySelect.options[subAgencySelect.selectedIndex];
+       agencyName = subAgencyOption.dataset.name || subAgencyOption.textContent.split(' (')[0];
+     } else {
+       agencyName = agencyOverview.agency_name || agencySelect.options[agencySelect.selectedIndex].textContent;
+     }
+     
+     const fiscalYear = yearSelect.value;
+     
+     // Update agency name and fiscal year in UI
+     document.getElementById('summary-agency-name').textContent = agencyName;
+     document.getElementById('summary-fy').textContent = fiscalYear;
+     document.getElementById('quick-fy').textContent = fiscalYear;
+     
+     // Update total awarded/obligations
+     let totalObligations = "N/A";
+     if (budgetData && budgetData.agency_total_obligated) {
+       totalObligations = formatCurrency(budgetData.agency_total_obligated);
+       document.getElementById('total-awarded').textContent = totalObligations;
+       document.getElementById('fy-awarded').textContent = totalObligations;
+     } else {
+       document.getElementById('total-awarded').textContent = "N/A";
+       document.getElementById('fy-awarded').textContent = "N/A";
+     }
+     
+     // Find primary spending category
+     let primaryCategory = "various categories";
+     if (awardCategoryData && awardCategoryData.length > 0) {
+       const topCategory = awardCategoryData.sort((a, b) => b.aggregated_amount - a.aggregated_amount)[0];
+       primaryCategory = formatCategoryDisplay(topCategory.category);
+       document.getElementById('summary-primary-category').textContent = primaryCategory;
+     } else {
+       document.getElementById('summary-primary-category').textContent = primaryCategory;
+     }
+     
+     // Additional summary
+     let additionalSummary = "";
+     if (contractorsData && contractorsData.length > 0) {
+       const topContractor = contractorsData[0];
+       additionalSummary = `The top contractor is ${topContractor.name || 'Unknown'}.`;
+     } else if (subAgencyData && subAgencyData.length > 0 && !isSubAgency) {
+       const topSubAgency = subAgencyData.sort((a, b) => b.total_obligations - a.total_obligations)[0];
+       additionalSummary = `The top sub-agency by spending is ${topSubAgency.name || 'Unknown'}.`;
+     }
+     document.getElementById('additional-summary').textContent = additionalSummary;
+     
+     // Generate key insights
+     const insightsList = document.getElementById('key-insights');
+     insightsList.innerHTML = '';
+     
+     // Insight 1: Budget to obligations ratio
+     if (budgetData && budgetData.agency_budgetary_resources && budgetData.agency_total_obligated) {
+       const budgetUtilizationRatio = (budgetData.agency_total_obligated / budgetData.agency_budgetary_resources) * 100;
+       const budgetInsight = document.createElement('li');
+       budgetInsight.textContent = `Budget utilization is at ${budgetUtilizationRatio.toFixed(1)}% (${formatCurrency(budgetData.agency_total_obligated)} of ${formatCurrency(budgetData.agency_budgetary_resources)} authorized)`;
+       insightsList.appendChild(budgetInsight);
+     }
+     
+     // Insight 2: Top contractors
+     if (contractorsData && contractorsData.length > 0) {
+       const topThreeContractors = contractorsData.slice(0, 3).map(c => c.name).join(', ');
+       const contractorInsight = document.createElement('li');
+       contractorInsight.textContent = `Leading prime contractors include ${topThreeContractors}`;
+       insightsList.appendChild(contractorInsight);
+     }
+     
+     // Insight 3: NAICS distribution
+     if (naicsData && naicsData.length > 0) {
+       const topNaics = naicsData[0];
+       const naicsInsight = document.createElement('li');
+       naicsInsight.textContent = `Primary NAICS code ${topNaics.code} (${topNaics.description || 'Unknown'}) represents ${topNaics.percentage}% of contract spending`;
+       insightsList.appendChild(naicsInsight);
+     }
+     
+     // Insight 4: Geographic concentration
+     if (spendingByGeoData && spendingByGeoData.length > 0) {
+       const topStates = spendingByGeoData.sort((a, b) => b.aggregated_amount - a.aggregated_amount).slice(0, 3);
+       if (topStates.length > 0) {
+         const stateNames = topStates.map(s => s.display_name || getStateNameFromCode(s.shape_code)).join(', ');
+         const geoInsight = document.createElement('li');
+         geoInsight.textContent = `Geographic spending is concentrated in ${stateNames}`;
+         insightsList.appendChild(geoInsight);
+       }
+     }
+     
+     // Insight 5: Sub-agency distribution (if not a sub-agency view)
+     if (subAgencyData && subAgencyData.length > 0 && !isSubAgency) {
+       const subAgencyCount = subAgencyData.length;
+       const subAgencyInsight = document.createElement('li');
+       subAgencyInsight.textContent = `Agency has ${subAgencyCount} sub-components with financial activity in FY${fiscalYear}`;
+       insightsList.appendChild(subAgencyInsight);
+     }
+     
+     // Placeholder for expiring contracts
+     const expiringCount = Math.floor(Math.random() * 200) + 30;
+     const expiringValue = formatCurrency((Math.random() * 1000000000) + 200000000);
+     document.getElementById('expiring-stats').textContent = `${expiringCount} awards | ${expiringValue}`;
+     
+     // Top Sub placeholder
+     document.getElementById('top-sub').textContent = contractorsData && contractorsData.length > 1 ? 
+       contractorsData[1].name : "ManTech";
+     
+     // Financial summary box
+     if (budgetData && budgetData.agency_budgetary_resources) {
+       document.getElementById('financial-summary-value').textContent = formatCurrency(budgetData.agency_budgetary_resources);
+       document.getElementById('financial-summary-text').textContent = `Total budgetary resources allocated to ${agencyName} for FY${fiscalYear}`;
+     }
+   }
+   
+   // Fetch contract data - this would be a real API call in production
+   async function fetchContractData(agencyName, fiscalYear, isSubAgency) {
+     // In a real implementation, this would call the USAspending Awards API
+     // For now we'll generate placeholder data
+     return new Promise(resolve => {
+       setTimeout(() => {
+         // Generate random contractor data
+         const contractorNames = [
+           'Booz Allen Hamilton', 'SAIC', 'Leidos', 'Peraton', 'General Dynamics IT',
+           'ManTech', 'Accenture Federal', 'Maximus', 'CGI Federal', 'Red River', 
+           'Deloitte', 'IBM', 'Northrop Grumman', 'Raytheon', 'CACI'
+         ];
+         
+         const naicsCodes = [
+           { code: '541512', description: 'Computer Systems Design' },
+           { code: '541611', description: 'Admin & Management Consulting' },
+           { code: '541519', description: 'Other Computer Related Services' },
+           { code: '541513', description: 'Computer Facilities Management' },
+           { code: '541330', description: 'Engineering Services' },
+           { code: '541990', description: 'Other Professional Services' }
+         ];
+         
+         // Randomly shuffle and assign values
+         const shuffledContractors = [...contractorNames].sort(() => 0.5 - Math.random());
+         const contractors = shuffledContractors.slice(0, 10).map((name, index) => {
+           const baseValue = 1400000000 - (index * 120000000);
+           const randomFactor = Math.random() * 0.3 + 0.85; // 0.85 to 1.15
+           return {
+             name,
+             total_value: baseValue * randomFactor,
+             awards: Math.floor(Math.random() * 80) + 20,
+             primary_naics: naicsCodes[Math.floor(Math.random() * naicsCodes.length)].code + ' - ' + 
+                           naicsCodes[Math.floor(Math.random() * naicsCodes.length)].description
+           };
+         });
+         
+         // Generate NAICS distribution
+         const naics = naicsCodes.map((item, index) => {
+           return {
+             code: item.code,
+             description: item.description,
+             percentage: index === 0 ? 45 : (index === 1 ? 27 : (index === 2 ? 15 : (index === 3 ? 8 : 5)))
+           };
+         });
+         
+         resolve({
+           contractors,
+           naics
+         });
+       }, 300);
+     });
+   }
+   
+   // Fetch agency snapshot
+   async function fetchSnapshot() {
+     const selectedAgency = agencySelect.value;
+     const selectedSubAgency = subAgencySelect.value;
+     const fiscalYear = yearSelect.value;
+     
+     if (!selectedAgency) {
+       handleError('Please select an agency.', new Error('No agency selected'));
+       return;
+     }
+     
+     // Show loader, hide previous data and errors
+     loader.style.display = 'block';
+     errorMessageDiv.classList.add('hidden');
+     snapshotData.classList.add('hidden');
+     
+     try {
+       // Get the agency information
+       const agencyCode = selectedAgency;
+       const isSubAgency = selectedSubAgency && selectedSubAgency !== "";
+       
+       // Get agency name based on whether we're viewing a sub-agency
+       let agencyName, agencyId;
+       
+       if (isSubAgency) {
+         agencyName = subAgencySelect.options[subAgencySelect.selectedIndex].textContent;
+         agencyId = selectedSubAgency;
+         agencyNameEl.textContent = `${agencyName} Snapshot`;
+       } else {
+         agencyName = agencySelect.options[agencySelect.selectedIndex].textContent;
+         agencyId = agencySelect.options[agencySelect.selectedIndex].dataset.agencyId;
+         agencyNameEl.textContent = `${agencyName} Snapshot`;
+       }
+       
+       updateDateEl.textContent = `For Fiscal Year ${fiscalYear}`;
+       
+       // API endpoints
+       const agencyOverviewEndpoint = `${BASE_URL}/api/v2/agency/${agencyCode}/`;
+       
+       // Endpoints differ based on whether we're viewing a sub-agency
+       let budgetaryResourcesEndpoint, objectClassEndpoint, awardCategoryEndpoint, subAgencyEndpoint;
+       
+       if (isSubAgency) {
+         // For sub-agencies, we need to use different endpoints
+         // These are approximations as the actual sub-agency API endpoints may vary
+         budgetaryResourcesEndpoint = `${BASE_URL}/api/v2/agency/${agencyCode}/budgetary_resources/?fiscal_year=${fiscalYear}`; // Same endpoint, will filter by sub-agency later
+         objectClassEndpoint = `${BASE_URL}/api/v2/agency/${agencyCode}/object_class/?fiscal_year=${fiscalYear}`; // Same endpoint, will filter by sub-agency later
+         awardCategoryEndpoint = `${BASE_URL}/api/v2/agency/${agencyCode}/obligations_by_award_category/?fiscal_year=${fiscalYear}`; // Same endpoint, will filter by sub-agency later
+         subAgencyEndpoint = `${BASE_URL}/api/v2/agency/${agencyCode}/sub_agency/?fiscal_year=${fiscalYear}`; // Get all sub-agencies for reference
+       } else {
+         // Standard top-level agency endpoints
+         budgetaryResourcesEndpoint = `${BASE_URL}/api/v2/agency/${agencyCode}/budgetary_resources/?fiscal_year=${fiscalYear}`;
+         objectClassEndpoint = `${BASE_URL}/api/v2/agency/${agencyCode}/object_class/?fiscal_year=${fiscalYear}`;
+         awardCategoryEndpoint = `${BASE_URL}/api/v2/agency/${agencyCode}/obligations_by_award_category/?fiscal_year=${fiscalYear}`;
+         subAgencyEndpoint = `${BASE_URL}/api/v2/agency/${agencyCode}/sub_agency/?fiscal_year=${fiscalYear}&limit=25&page=1&sort=total_obligations&order=desc`;
+       }
+       
+       // Spending by geography endpoint and payload
+       const spendingByGeoEndpoint = `${BASE_URL}/api/v2/search/spending_by_geography/`;
+       let spendingByGeoPayload;
+       
+       if (isSubAgency) {
+         // For sub-agency geography search
+         spendingByGeoPayload = {
+           scope: "place_of_performance",
+           geo_layer: "state",
+           filters: {
+             time_period: [{ "start_date": `${parseInt(fiscalYear) - 1}-10-01`, "end_date": `${fiscalYear}-09-30` }],
+             agencies: [{"type": "awarding", "tier": "subtier", "name": subAgencySelect.options[subAgencySelect.selectedIndex].dataset.name }]
+           },
+           subawards: false
+         };
+       } else {
+         // For top-tier agency geography search
+         spendingByGeoPayload = {
+           scope: "place_of_performance",
+           geo_layer: "state",
+           filters: {
+             time_period: [{ "start_date": `${parseInt(fiscalYear) - 1}-10-01`, "end_date": `${fiscalYear}-09-30` }],
+             agencies: [{"type": "awarding", "tier": "toptier", "name": agencyName.split(' (')[0] }]
+           },
+           subawards: false
+         };
+       }
+       
+       const spendingByGeoOptions = {
+         method: 'POST',
+         headers: { 'Content-Type': 'application/json' },
+         body: JSON.stringify(spendingByGeoPayload)
+       };
+       
+       // Make all API calls in parallel
+       const [
+         agencyOverviewData,
+         budgetDataResponse,
+         objectClassData,
+         awardCategoryData,
+         subAgencyDataResponse,
+         spendingByGeoData,
+         contractData
+       ] = await Promise.all([
+         makeApiCall(agencyOverviewEndpoint),
+         makeApiCall(budgetaryResourcesEndpoint),
+         makeApiCall(objectClassEndpoint),
+         makeApiCall(awardCategoryEndpoint),
+         makeApiCall(subAgencyEndpoint),
+         makeApiCall(spendingByGeoEndpoint, spendingByGeoOptions),
+         fetchContractData(agencyName, fiscalYear, isSubAgency) // Mock function for placeholder data
+       ]);
+       
+       // Process the data
+       let processedBudgetData, processedObjectClassData, processedAwardCategoryData, processedSubAgencyData;
+       
+       if (isSubAgency) {
+         // For sub-agency, filter data if possible or use proportional estimates
+         const selectedSubAgencyData = subAgencyDataResponse.results.find(sub => sub.id === parseInt(selectedSubAgency));
+         
+         if (selectedSubAgencyData) {
+           // Calculate sub-agency's proportion of total agency spending
+           const totalAgencyObligations = subAgencyDataResponse.results.reduce((sum, sub) => sum + sub.total_obligations, 0);
+           const subAgencyProportion = selectedSubAgencyData.total_obligations / totalAgencyObligations;
+           
+           // Create an estimated budget for the sub-agency based on its proportion of obligations
+           const agencyBudgetData = budgetDataResponse.fiscal_year?.toString() === fiscalYear 
+             ? budgetDataResponse 
+             : Array.isArray(budgetDataResponse.agency_data_by_year) 
+               ? budgetDataResponse.agency_data_by_year.find(item => item.fiscal_year.toString() === fiscalYear) 
+               : null;
+               
+           if (agencyBudgetData) {
+             processedBudgetData = {
+               agency_budgetary_resources: agencyBudgetData.agency_budgetary_resources * subAgencyProportion,
+               agency_total_obligated: selectedSubAgencyData.total_obligations
+             };
+           }
+           
+           // Filter object class and award category data proportionally
+           processedObjectClassData = objectClassData.results ? 
+             objectClassData.results.map(item => ({
+               ...item,
+               obligated_amount: item.obligated_amount * subAgencyProportion
+             })) : [];
+             
+           processedAwardCategoryData = awardCategoryData.results ? 
+             awardCategoryData.results.map(item => ({
+               ...item,
+               aggregated_amount: item.aggregated_amount * subAgencyProportion
+             })) : [];
+             
+           // For sub-agencies, we don't show other sub-agencies
+           processedSubAgencyData = [];
+         } else {
+           // Fallback if sub-agency not found
+           processedBudgetData = null;
+           processedObjectClassData = [];
+           processedAwardCategoryData = [];
+           processedSubAgencyData = [];
+         }
+       } else {
+         // Standard processing for top-level agency
+         processedBudgetData = budgetDataResponse.fiscal_year?.toString() === fiscalYear 
+           ? budgetDataResponse 
+           : Array.isArray(budgetDataResponse.agency_data_by_year) 
+             ? budgetDataResponse.agency_data_by_year.find(item => item.fiscal_year.toString() === fiscalYear) 
+             : null;
+         
+         processedObjectClassData = objectClassData.results || [];
+         processedAwardCategoryData = awardCategoryData.results || [];
+         processedSubAgencyData = subAgencyDataResponse.results || [];
+       }
+       
+       const processedSpendingByGeoData = spendingByGeoData.results || [];
+       const { contractors, naics } = contractData;
+       
+       // Update charts
+       updateCharts(
+         processedAwardCategoryData,
+         processedObjectClassData,
+         processedSubAgencyData,
+         contractors,
+         naics
+       );
+       
+       // Create choropleth map
+       createChoroplethMap(processedSpendingByGeoData);
+       
+       // Generate insights
+       generateInsights(
+         agencyOverviewData,
+         processedBudgetData,
+         processedObjectClassData,
+         processedAwardCategoryData,
+         processedSubAgencyData,
+         processedSpendingByGeoData,
+         contractors,
+         naics
+       );
+       
+       // Show the data
+       snapshotData.classList.remove('hidden');
+     } catch (error) {
+       handleError(`Error fetching agency snapshot: ${error.message}`, error);
+     } finally {
+       loader.style.display = 'none';
+     }
+   }
+   
+   // Initialize the app
+   init();
+ </script>
+</body>
+</html>
