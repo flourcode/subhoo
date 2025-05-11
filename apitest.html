@@ -112,20 +112,6 @@
                 <p><strong>Total Budget Authority (Agency):</strong> <span id="results-budget-authority" class="value">N/A</span></p>
                 <p><strong>Total Obligations (Agency):</strong> <span id="results-obligations" class="value">N/A</span></p>
             </div>
-            
-            <div id="spending-by-state-section">
-                <h3>Spending by State (Place of Performance) for FY <span id="spending-by-state-fy"></span></h3>
-                <table id="spending-by-state-table">
-                    <thead>
-                        <tr>
-                            <th>State</th>
-                            <th class="number-cell">Total Obligated Amount</th>
-                        </tr>
-                    </thead>
-                    <tbody id="spending-by-state-list"></tbody>
-                </table>
-                <p id="spending-by-state-none" class="hidden">No spending by state data found for this selection.</p>
-            </div>
 
             <div id="sub-agency-spending-section">
                 <h3>Top Sub-Component Spending for FY <span id="sub-agency-fy"></span></h3>
@@ -142,7 +128,7 @@
             <div id="award-category-spending-section">
                 <h3>Spending by Award Category for FY <span id="award-category-fy"></span></h3>
                 <div id="award-category-chart-container" class="chart-container hidden"><canvas id="awardCategoryChart"></canvas></div>
-                <ul id="award-category-list" class="item-list mt-4 hidden"></ul> 
+                <ul id="award-category-list" class="item-list mt-4 hidden"></ul>
                 <p id="award-category-none" class="hidden">No spending by award category data found.</p>
             </div>
             
@@ -176,16 +162,13 @@
         const objectClassList = document.getElementById('object-class-list');
         const objectClassNoneMsg = document.getElementById('object-class-none');
         const awardCategoryFySpan = document.getElementById('award-category-fy');
-        const awardCategoryListEl = document.getElementById('award-category-list');
+        const awardCategoryList = document.getElementById('award-category-list');
         const awardCategoryNoneMsg = document.getElementById('award-category-none');
         const awardCategoryChartContainer = document.getElementById('award-category-chart-container');
         const subAgencyFySpan = document.getElementById('sub-agency-fy');
         const subAgencyTableBody = document.getElementById('sub-agency-list');
         const subAgencyNoneMsg = document.getElementById('sub-agency-none');
         const subAgencyChartContainer = document.getElementById('sub-agency-chart-container');
-        const spendingByStateFySpan = document.getElementById('spending-by-state-fy');
-        const spendingByStateTableBody = document.getElementById('spending-by-state-list');
-        const spendingByStateNoneMsg = document.getElementById('spending-by-state-none');
         const errorMessageDiv = document.getElementById('error-message');
         const loader = document.getElementById('loader');
 
@@ -301,31 +284,71 @@
 
         function createOrUpdateSubAgencyBarChart(subAgencyResults) {
             const ctx = document.getElementById('subAgencyChart').getContext('2d');
+            
             const labels = subAgencyResults.map(item => item.name || 'Unknown Sub-Component');
             const dataValues = subAgencyResults.map(item => item.total_obligations);
-            const barColor = '#3498DB'; 
+            const barColor = '#3498DB'; // Example color for bars
 
-            if (subAgencyChartInstance) subAgencyChartInstance.destroy(); 
+            if (subAgencyChartInstance) {
+                subAgencyChartInstance.destroy(); 
+            }
+
             subAgencyChartInstance = new Chart(ctx, {
                 type: 'bar',
-                data: { labels, datasets: [{ label: 'Total Obligations', data: dataValues, backgroundColor: barColor, borderColor: '#2980B9', borderWidth: 1 }] },
-                options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, title: { display: true, text: 'Top Sub-Component Obligations', font: { size: 16 }, padding: { top: 10, bottom: 20 }}, tooltip: { callbacks: { label: chartCtx => formatCurrency(chartCtx.raw) }}},
-                    scales: { x: { beginAtZero: true, ticks: { callback: function(value) { if (Math.abs(value) >= 1.0e+9) return '$' + (value / 1.0e+9).toFixed(1) + 'B'; if (Math.abs(value) >= 1.0e+6) return '$' + (value / 1.0e+6).toFixed(1) + 'M'; if (Math.abs(value) >= 1.0e+3) return '$' + (value / 1.0e+3).toFixed(1) + 'K'; return formatCurrency(value); }}},
-                              y: { ticks: { autoSkip: false, callback: function(value) { const label = this.getLabelForValue(value); return label.length > 35 ? label.substring(0, 32) + '...' : label; }}}
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Total Obligations',
+                        data: dataValues,
+                        backgroundColor: barColor,
+                        borderColor: '#2980B9',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    indexAxis: 'y', 
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        title: { display: true, text: 'Top Sub-Component Obligations', font: { size: 16 }, padding: { top: 10, bottom: 20 }},
+                        tooltip: { callbacks: { label: chartCtx => formatCurrency(chartCtx.raw) }}
+                    },
+                    scales: {
+                        x: { 
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) { 
+                                    if (Math.abs(value) >= 1.0e+9) return '$' + (value / 1.0e+9).toFixed(1) + 'B';
+                                    if (Math.abs(value) >= 1.0e+6) return '$' + (value / 1.0e+6).toFixed(1) + 'M';
+                                    if (Math.abs(value) >= 1.0e+3) return '$' + (value / 1.0e+3).toFixed(1) + 'K';
+                                    return formatCurrency(value);
+                                }
+                            }
+                        },
+                        y: { 
+                            ticks: {
+                                autoSkip: false,
+                                callback: function(value) {
+                                    const label = this.getLabelForValue(value);
+                                    return label.length > 35 ? label.substring(0, 32) + '...' : label; // Truncate long labels
+                                }
+                            }
+                        }
                     }
                 }
             });
             subAgencyChartContainer.classList.remove('hidden');
         }
 
+
         fetchSnapshotButton.addEventListener('click', async () => {
             const selectedAgencyOption = agencySelect.options[agencySelect.selectedIndex];
             const agencyCode = selectedAgencyOption.value; 
-            const toptierAgencyId = parseInt(selectedAgencyOption.dataset.agencyId); 
             const fiscalYear = yearSelect.value;
             const agencyDisplayName = selectedAgencyOption.text;
             
-            if (!agencyCode || !toptierAgencyId) { alert('Please select an agency.'); return; }
+            if (!agencyCode) { alert('Please select an agency.'); return; }
             
             snapshotResultsDiv.classList.add('hidden'); 
             errorMessageDiv.classList.add('hidden'); 
@@ -338,38 +361,22 @@
             resultsBudgetAuthority.textContent = "N/A";
             resultsObligations.textContent = "N/A";
             objectClassList.innerHTML = ""; objectClassNoneMsg.classList.add('hidden');
-            awardCategoryListEl.innerHTML = ""; awardCategoryNoneMsg.classList.add('hidden');
+            awardCategoryList.innerHTML = ""; awardCategoryNoneMsg.classList.add('hidden');
             awardCategoryChartContainer.classList.add('hidden');
             if (awardCategoryChartInstance) { awardCategoryChartInstance.destroy(); awardCategoryChartInstance = null; }
             subAgencyTableBody.innerHTML = ""; subAgencyNoneMsg.classList.add('hidden');
             subAgencyChartContainer.classList.add('hidden');
             if (subAgencyChartInstance) { subAgencyChartInstance.destroy(); subAgencyChartInstance = null; }
-            spendingByStateTableBody.innerHTML = ""; spendingByStateNoneMsg.classList.add('hidden');
+
 
             snapshotAgencyTitle.textContent = `${agencyDisplayName} - Snapshot for FY ${fiscalYear}`;
-            [selectedFySpan, objectClassFySpan, awardCategoryFySpan, subAgencyFySpan, spendingByStateFySpan].forEach(span => span.textContent = fiscalYear);
+            [selectedFySpan, objectClassFySpan, awardCategoryFySpan, subAgencyFySpan].forEach(span => span.textContent = fiscalYear);
 
             const agencyOverviewEndpoint = `${BASE_URL}/api/v2/agency/${agencyCode}/`;
             const budgetaryResourcesEndpoint = `${BASE_URL}/api/v2/agency/${agencyCode}/budgetary_resources/?fiscal_year=${fiscalYear}`;
             const objectClassEndpoint = `${BASE_URL}/api/v2/agency/${agencyCode}/object_class/?fiscal_year=${fiscalYear}`;
             const awardCategoryEndpoint = `${BASE_URL}/api/v2/agency/${agencyCode}/obligations_by_award_category/?fiscal_year=${fiscalYear}`;
             const subAgencyEndpoint = `${BASE_URL}/api/v2/agency/${agencyCode}/sub_agency/?fiscal_year=${fiscalYear}&limit=15&page=1&sort=total_obligations&order=desc`;
-            
-            const spendingByGeoEndpoint = `${BASE_URL}/api/v2/search/spending_by_geography/`;
-            const spendingByGeoPayload = {
-                scope: "place_of_performance",
-                geo_layer: "state",
-                filters: {
-                    time_period: [{ "start_date": `${parseInt(fiscalYear) - 1}-10-01`, "end_date": `${fiscalYear}-09-30` }],
-                    agencies: [{"type": "awarding", "tier": "toptier", "toptier_agency_id": toptierAgencyId }]
-                },
-                subawards: false
-            };
-            const spendingByGeoOptions = {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(spendingByGeoPayload)
-            };
 
             try {
                 const results = await Promise.allSettled([
@@ -377,15 +384,10 @@
                     makeApiCall(budgetaryResourcesEndpoint, {}, null, true),
                     makeApiCall(objectClassEndpoint, {}, null, true),
                     makeApiCall(awardCategoryEndpoint, {}, null, true),
-                    makeApiCall(subAgencyEndpoint, {}, null, true),
-                    makeApiCall(spendingByGeoEndpoint, spendingByGeoOptions, null, true)
+                    makeApiCall(subAgencyEndpoint, {}, null, true)
                 ]);
 
-                const [
-                    overviewData, budgetDataResponse, objectClassData, 
-                    awardCategoryData, subAgencyDataResponse, spendingByGeoData
-                ] = results.map(res => res.status === 'fulfilled' ? res.value : { error: res.reason });
-                
+                const [overviewData, budgetDataResponse, objectClassData, awardCategoryData, subAgencyDataResponse] = results.map(res => res.status === 'fulfilled' ? res.value : { error: res.reason });
                 let hasErrors = results.some(res => res.status === 'rejected' || (res.value && res.value.error));
 
                 // Process Overview Data
@@ -398,7 +400,7 @@
                         agencyWebsite.textContent = "Not Available"; 
                         agencyWebsite.href = "#"; 
                     }
-                } else { console.error("Overview Error:", overviewData?.error); agencyMission.textContent = "Error."; hasErrors = true; }
+                } else { console.error("Overview Error:", overviewData?.error); agencyMission.textContent = "Error loading overview."; hasErrors = true; }
 
                 // Process Budgetary Resources
                 if (budgetDataResponse && !budgetDataResponse.error) {
@@ -413,7 +415,7 @@
                         resultsObligations.textContent = formatCurrency(budgetDataForSelectedYear.agency_total_obligated);
                     } else { 
                         resultsBudgetAuthority.textContent = "N/A"; resultsObligations.textContent = "N/A";
-                        console.warn(`No specific budgetary data for FY ${fiscalYear} for ${agencyDisplayName}.`); 
+                        console.warn(`No specific budgetary data for FY ${fiscalYear} in response for ${agencyDisplayName}.`); 
                     }
                 } else { 
                     console.error("Budgetary Resources Error:", budgetDataResponse?.error); 
@@ -438,15 +440,16 @@
                 }
                 
                 // Process Award Category & Chart
-                awardCategoryListEl.innerHTML = ''; 
+                awardCategoryList.innerHTML = ''; 
                 if (awardCategoryData && !awardCategoryData.error && awardCategoryData.results?.length > 0) {
                     awardCategoryData.results.forEach(item => { 
                         const li = document.createElement('li');
                         li.innerHTML = `<strong>${formatCategoryDisplay(item.category)}:</strong> <span class="value">${formatCurrency(item.aggregated_amount)}</span>`;
-                        awardCategoryListEl.appendChild(li);
+                        awardCategoryList.appendChild(li);
                     }); 
                     createOrUpdateAwardCategoryChart(awardCategoryData.results);
                     awardCategoryNoneMsg.classList.add('hidden');
+                    // awardCategoryList.classList.add('hidden'); // Optionally hide list if chart is primary
                 } else { 
                     awardCategoryNoneMsg.classList.remove('hidden'); 
                     awardCategoryChartContainer.classList.add('hidden');
@@ -454,7 +457,7 @@
                     if(awardCategoryData?.error) {console.error("Award Category Error:", awardCategoryData.error); hasErrors=true;}
                 }
 
-                // Process Sub-Agency Data & Chart
+                // Process Sub-Agency Data & Create Bar Chart
                 subAgencyTableBody.innerHTML = '';
                 if (subAgencyDataResponse && !subAgencyDataResponse.error && subAgencyDataResponse.results && subAgencyDataResponse.results.length > 0) {
                     subAgencyDataResponse.results.forEach(item => {
@@ -471,31 +474,8 @@
                     subAgencyChartContainer.classList.add('hidden');
                      if (subAgencyChartInstance) { subAgencyChartInstance.destroy(); subAgencyChartInstance = null; }
                     if (subAgencyDataResponse && subAgencyDataResponse.error) {
-                        console.error("Sub-Agency Data Error:", subAgencyDataResponse.error);
+                        console.error("Sub-Agency Data Error:", subAgencyDataResponse.error.message);
                         subAgencyTableBody.innerHTML = '<tr><td colspan="2">Error loading sub-agency data.</td></tr>';
-                        hasErrors = true;
-                    }
-                }
-                
-                // Process Spending by State Data
-                spendingByStateTableBody.innerHTML = ''; 
-                if (spendingByGeoData && !spendingByGeoData.error && spendingByGeoData.results && spendingByGeoData.results.length > 0) {
-                    console.log("First item from spending_by_geography results:", spendingByGeoData.results[0]);
-                    const sortedStates = spendingByGeoData.results.sort((a, b) => b.aggregated_amount - a.aggregated_amount);
-
-                    sortedStates.forEach(item => {
-                        const tr = document.createElement('tr');
-                        const stateName = item.display_name || 'Unknown State';
-                        const obligatedAmount = item.aggregated_amount;
-                        tr.innerHTML = `<td>${stateName} (${item.shape_code || 'N/A'})</td><td class="number-cell">${formatCurrency(obligatedAmount)}</td>`;
-                        spendingByStateTableBody.appendChild(tr);
-                    });
-                    spendingByStateNoneMsg.classList.add('hidden');
-                } else {
-                    spendingByStateNoneMsg.classList.remove('hidden');
-                    if (spendingByGeoData && spendingByGeoData.error) {
-                        console.error("Spending by Geography Error:", spendingByGeoData.error);
-                        spendingByStateTableBody.innerHTML = '<tr><td colspan="2">Error loading spending by state data.</td></tr>';
                         hasErrors = true;
                     }
                 }
