@@ -578,21 +578,6 @@
         </div>
       </div>
       
-      <div class="grid-layout">
-        <div class="grid-col-6">
-          <div class="chart-container">
-            <h2>Award Category Distribution</h2>
-            <canvas id="award-category-chart"></canvas>
-          </div>
-        </div>
-        <div class="grid-col-6">
-          <div class="chart-container">
-            <h2>Object Class Distribution</h2>
-            <canvas id="object-class-chart"></canvas>
-          </div>
-        </div>
-      </div>
-      
       <div class="table-container">
         <h2>Top 10 Prime Contractors</h2>
         <table>
@@ -1022,199 +1007,212 @@
      updateNaicsChart(naicsData);
    }
    
-   // Update Award Category chart
-   function updateAwardCategoryChart(data) {
-     if (!data || data.length === 0) {
-       console.log("No award category data to display");
-       return;
-     }
-     
-     const ctx = document.getElementById('award-category-chart').getContext('2d');
-     
-     // Process data
-     const labels = data.map(item => formatCategoryDisplay(item.category));
-     const values = data.map(item => item.aggregated_amount);
-     
-     // Generate colors from CSS variables
-     const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--color-primary').trim() || '#9A949B';
-     const secondaryColor = getComputedStyle(document.documentElement).getPropertyValue('--color-secondary').trim() || '#7A747B';
-     const tertiaryColor = getComputedStyle(document.documentElement).getPropertyValue('--color-tertiary').trim() || '#B6B1B7';
-     
-     // Generate a palette based on our theme colors
-     const backgroundColors = [
-       primaryColor,
-       secondaryColor,
-       tertiaryColor,
-       lightenDarkenColor(primaryColor, 20),
-       lightenDarkenColor(secondaryColor, 20),
-       lightenDarkenColor(tertiaryColor, 20),
-       lightenDarkenColor(primaryColor, -20),
-       lightenDarkenColor(secondaryColor, -20),
-       lightenDarkenColor(tertiaryColor, -20),
-     ];
-     
-     // Destroy existing chart if it exists
-     if (awardCategoryChartInstance) {
-       awardCategoryChartInstance.destroy();
-     }
-     
-     // Create new chart
-     awardCategoryChartInstance = new Chart(ctx, {
-       type: 'doughnut',
-       data: {
-         labels: labels,
-         datasets: [{
-           data: values,
-           backgroundColor: backgroundColors.slice(0, values.length),
-           borderColor: getComputedStyle(document.documentElement).getPropertyValue('--color-surface').trim() || '#FFFFFF',
-           borderWidth: 1
-         }]
-       },
-       options: {
-         responsive: true,
-         maintainAspectRatio: false,
-         plugins: {
-           legend: {
-             position: 'right',
-             labels: {
-               generateLabels: function(chart) {
-                 const data = chart.data;
-                 if (data.labels.length && data.datasets.length) {
-                   return data.labels.map(function(label, i) {
-                     const meta = chart.getDatasetMeta(0);
-                     const style = meta.controller.getStyle(i);
-                     const total = data.datasets[0].data.reduce((sum, val) => sum + val, 0);
-                     const percentage = Math.round((data.datasets[0].data[i] / total) * 100);
-                     
-                     return {
-                       text: `${label} - ${percentage}%`,
-                       fillStyle: style.backgroundColor,
-                       strokeStyle: style.borderColor,
-                       lineWidth: style.borderWidth,
-                       hidden: isNaN(data.datasets[0].data[i]) || meta.data[i].hidden,
-                       index: i
-                     };
-                   });
-                 }
-                 return [];
-               }
-             }
-           },
-           tooltip: {
-             callbacks: {
-               label: function(context) {
-                 const label = context.label || '';
-                 const value = context.raw || 0;
-                 const total = context.dataset.data.reduce((sum, val) => sum + val, 0);
-                 const percentage = Math.round((value / total) * 100);
-                 return `${label}: ${formatCurrency(value)} (${percentage}%)`;
-               }
-             }
-           }
-         }
-       }
-     });
-   }
-   
-   // Update Object Class chart
-   function updateObjectClassChart(data) {
-     if (!data || data.length === 0) {
-       console.log("No object class data to display");
-       return;
-     }
-     
-     const ctx = document.getElementById('object-class-chart').getContext('2d');
-     
-     // Process data - limit to top 8 for readability
-     const sortedData = [...data].sort((a, b) => b.obligated_amount - a.obligated_amount).slice(0, 8);
-     
-     const labels = sortedData.map(item => {
-       const name = item.name || item.object_class_name || 'Unknown';
-       return name.length > 20 ? name.substring(0, 18) + '...' : name;
-     });
-     
-     const values = sortedData.map(item => item.obligated_amount);
-     
-     // Generate a palette based on our theme colors
-     const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--color-primary').trim() || '#9A949B';
-     const secondaryColor = getComputedStyle(document.documentElement).getPropertyValue('--color-secondary').trim() || '#7A747B';
-     const tertiaryColor = getComputedStyle(document.documentElement).getPropertyValue('--color-tertiary').trim() || '#B6B1B7';
-     
-     const backgroundColors = [
-       primaryColor,
-       secondaryColor,
-       tertiaryColor,
-       lightenDarkenColor(primaryColor, 20),
-       lightenDarkenColor(secondaryColor, 20),
-       lightenDarkenColor(tertiaryColor, 20),
-       lightenDarkenColor(primaryColor, -20),
-       lightenDarkenColor(secondaryColor, -20),
-     ];
-     
-     // Destroy existing chart if it exists
-     if (objectClassChartInstance) {
-       objectClassChartInstance.destroy();
-     }
-     
-     // Create new chart
-     objectClassChartInstance = new Chart(ctx, {
-       type: 'doughnut',
-       data: {
-         labels: labels,
-         datasets: [{
-           data: values,
-           backgroundColor: backgroundColors,
-           borderColor: getComputedStyle(document.documentElement).getPropertyValue('--color-surface').trim() || '#FFFFFF',
-           borderWidth: 1
-         }]
-       },
-       options: {
-         responsive: true,
-         maintainAspectRatio: false,
-         plugins: {
-           legend: {
-             position: 'right',
-             labels: {
-               generateLabels: function(chart) {
-                 const data = chart.data;
-                 if (data.labels.length && data.datasets.length) {
-                   // Limit label length and add ellipsis if too long
-                   return data.labels.map(function(label, i) {
-                     const meta = chart.getDatasetMeta(0);
-                     const style = meta.controller.getStyle(i);
-                     const total = data.datasets[0].data.reduce((sum, val) => sum + val, 0);
-                     const percentage = Math.round((data.datasets[0].data[i] / total) * 100);
-                     
-                     return {
-                       text: `${label} - ${percentage}%`,
-                       fillStyle: style.backgroundColor,
-                       strokeStyle: style.borderColor,
-                       lineWidth: style.borderWidth,
-                       hidden: isNaN(data.datasets[0].data[i]) || meta.data[i].hidden,
-                       index: i
-                     };
-                   });
-                 }
-                 return [];
-               }
-             }
-           },
-           tooltip: {
-             callbacks: {
-               label: function(context) {
-                 const label = context.label || '';
-                 const value = context.raw || 0;
-                 const total = context.dataset.data.reduce((sum, val) => sum + val, 0);
-                 const percentage = Math.round((value / total) * 100);
-                 return `${label}: ${formatCurrency(value)} (${percentage}%)`;
-               }
-             }
-           }
-         }
-       }
-     });
-   }
-   
+// Update Award Category chart
+function updateAwardCategoryChart(data) {
+  if (!data || data.length === 0) {
+    console.log("No award category data to display");
+    return;
+  }
+  
+  // Check if the element exists in the DOM
+  const chartElement = document.getElementById('award-category-chart');
+  if (!chartElement) {
+    console.log("Award category chart element not found - skipping chart update");
+    return;
+  }
+  
+  const ctx = chartElement.getContext('2d');
+  
+  // Process data
+  const labels = data.map(item => formatCategoryDisplay(item.category));
+  const values = data.map(item => item.aggregated_amount);
+  
+  // Generate colors from CSS variables
+  const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--color-primary').trim() || '#9A949B';
+  const secondaryColor = getComputedStyle(document.documentElement).getPropertyValue('--color-secondary').trim() || '#7A747B';
+  const tertiaryColor = getComputedStyle(document.documentElement).getPropertyValue('--color-tertiary').trim() || '#B6B1B7';
+  
+  // Generate a palette based on our theme colors
+  const backgroundColors = [
+    primaryColor,
+    secondaryColor,
+    tertiaryColor,
+    lightenDarkenColor(primaryColor, 20),
+    lightenDarkenColor(secondaryColor, 20),
+    lightenDarkenColor(tertiaryColor, 20),
+    lightenDarkenColor(primaryColor, -20),
+    lightenDarkenColor(secondaryColor, -20),
+    lightenDarkenColor(tertiaryColor, -20),
+  ];
+  
+  // Destroy existing chart if it exists
+  if (awardCategoryChartInstance) {
+    awardCategoryChartInstance.destroy();
+  }
+  
+  // Create new chart
+  awardCategoryChartInstance = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: labels,
+      datasets: [{
+        data: values,
+        backgroundColor: backgroundColors.slice(0, values.length),
+        borderColor: getComputedStyle(document.documentElement).getPropertyValue('--color-surface').trim() || '#FFFFFF',
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'right',
+          labels: {
+            generateLabels: function(chart) {
+              const data = chart.data;
+              if (data.labels.length && data.datasets.length) {
+                return data.labels.map(function(label, i) {
+                  const meta = chart.getDatasetMeta(0);
+                  const style = meta.controller.getStyle(i);
+                  const total = data.datasets[0].data.reduce((sum, val) => sum + val, 0);
+                  const percentage = Math.round((data.datasets[0].data[i] / total) * 100);
+                  
+                  return {
+                    text: `${label} - ${percentage}%`,
+                    fillStyle: style.backgroundColor,
+                    strokeStyle: style.borderColor,
+                    lineWidth: style.borderWidth,
+                    hidden: isNaN(data.datasets[0].data[i]) || meta.data[i].hidden,
+                    index: i
+                  };
+                });
+              }
+              return [];
+            }
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              const label = context.label || '';
+              const value = context.raw || 0;
+              const total = context.dataset.data.reduce((sum, val) => sum + val, 0);
+              const percentage = Math.round((value / total) * 100);
+              return `${label}: ${formatCurrency(value)} (${percentage}%)`;
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
+// Update Object Class chart
+function updateObjectClassChart(data) {
+  if (!data || data.length === 0) {
+    console.log("No object class data to display");
+    return;
+  }
+  
+  // Check if the element exists in the DOM
+  const chartElement = document.getElementById('object-class-chart');
+  if (!chartElement) {
+    console.log("Object class chart element not found - skipping chart update");
+    return;
+  }
+  
+  const ctx = chartElement.getContext('2d');
+  
+  // Process data - limit to top 8 for readability
+  const sortedData = [...data].sort((a, b) => b.obligated_amount - a.obligated_amount).slice(0, 8);
+  
+  const labels = sortedData.map(item => {
+    const name = item.name || item.object_class_name || 'Unknown';
+    return name.length > 20 ? name.substring(0, 18) + '...' : name;
+  });
+  
+  const values = sortedData.map(item => item.obligated_amount);
+  
+  // Generate a palette based on our theme colors
+  const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--color-primary').trim() || '#9A949B';
+  const secondaryColor = getComputedStyle(document.documentElement).getPropertyValue('--color-secondary').trim() || '#7A747B';
+  const tertiaryColor = getComputedStyle(document.documentElement).getPropertyValue('--color-tertiary').trim() || '#B6B1B7';
+  
+  const backgroundColors = [
+    primaryColor,
+    secondaryColor,
+    tertiaryColor,
+    lightenDarkenColor(primaryColor, 20),
+    lightenDarkenColor(secondaryColor, 20),
+    lightenDarkenColor(tertiaryColor, 20),
+    lightenDarkenColor(primaryColor, -20),
+    lightenDarkenColor(secondaryColor, -20),
+  ];
+  
+  // Destroy existing chart if it exists
+  if (objectClassChartInstance) {
+    objectClassChartInstance.destroy();
+  }
+  
+  // Create new chart
+  objectClassChartInstance = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: labels,
+      datasets: [{
+        data: values,
+        backgroundColor: backgroundColors,
+        borderColor: getComputedStyle(document.documentElement).getPropertyValue('--color-surface').trim() || '#FFFFFF',
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'right',
+          labels: {
+            generateLabels: function(chart) {
+              const data = chart.data;
+              if (data.labels.length && data.datasets.length) {
+                // Limit label length and add ellipsis if too long
+                return data.labels.map(function(label, i) {
+                  const meta = chart.getDatasetMeta(0);
+                  const style = meta.controller.getStyle(i);
+                  const total = data.datasets[0].data.reduce((sum, val) => sum + val, 0);
+                  const percentage = Math.round((data.datasets[0].data[i] / total) * 100);
+                  
+                  return {
+                    text: `${label} - ${percentage}%`,
+                    fillStyle: style.backgroundColor,
+                    strokeStyle: style.borderColor,
+                    lineWidth: style.borderWidth,
+                    hidden: isNaN(data.datasets[0].data[i]) || meta.data[i].hidden,
+                    index: i
+                  };
+                });
+              }
+              return [];
+            }
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              const label = context.label || '';
+              const value = context.raw || 0;
+              const total = context.dataset.data.reduce((sum, val) => sum + val, 0);
+              const percentage = Math.round((value / total) * 100);
+              return `${label}: ${formatCurrency(value)} (${percentage}%)`;
+            }
+          }
+        }
+      }
+    }
+  });
+}
    // Update Sub-Agency chart
    function updateSubAgencyChart(data) {
      if (!data || data.length === 0) {
