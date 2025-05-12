@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>DHS Snapshot Generator</title>
+  <style>
+    body { font-family: sans-serif; padding: 2rem; max-width: 900px; margin: auto; background: #f9f9f9; }
+    h2, h3 { color: #2b3e50; }
+    .section { margin-bottom: 2rem; background: #fff; padding: 1.5rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    ul { padding-left: 1.2rem; }
+    li { margin-bottom: 0.5rem; }
+    .loading { color: #555; font-style: italic; }
+    .error { color: #d9534f; }
+    .api-info { font-size: 0.85rem; color: #666; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #eee; }
+    .date-info { font-size: 0.9rem; color: #666; margin-bottom: 1rem; }
+    .header { display: flex; justify-content: space-between; align-items: center; }
+    .status-indicator { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; }
+    .status-indicator.loading { background-color: #f0ad4e; }
+    .status-indicator.success { background-color: #5cb85c; }
+    .status-indicator.error { background-color: #d9534f; }
+    .status-text { font-size: 0.8rem; color: #777; }
+    .header-right { text-align: right; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h2>📊 DHS Agency Snapshot (FY24–FY25)</h2>
+    <div class="header-right">
+      <div class="status">
+        <span class="status-indicator loading" id="status-indicator"></span>
+        <span class="status-text" id="status-text">Loading data...</span>
+      </div>
+      <div class="date-info" id="date-info">As of: Loading...</div>
+    </div>
+  </div>
+
+  <div id="summary" class="section">
+    <h3>Total Obligations</h3>
+    <p id="total" class="loading">Loading data from USAspending.gov API...</p>
+  </div>
+
+  <div class="section">
+    <h3>Top 5 Prime Recipients</h3>
+    <ul id="top-recipients" class="loading">
+      <li>Loading data from USAspending.gov API...</li>
+    </ul>
+  </div>
+
+  <div class="section">
+    <h3>Top 5 NAICS Codes</h3>
+    <ul id="top-naics" class="loading">
+      <li>Loading data from USAspending.gov API...</li>
+    </ul>
+  </div>
+
+  <div class="section">
+    <h3>Top 5 Awarding Offices</h3>
+    <ul id="top-offices" class="loading">
+      <li>Loading data from USAspending.gov API...</li>
+    </ul>
+  </div>
+
+  <div class="api-info">
+    <p>Data provided by the <a href="https://api.usaspending.gov/docs/endpoints" target="_blank">USAspending.gov API</a>.</p>
+  </div>
+
+  <script>
+    // Agency code for Department of Homeland Security
+    const DHS_CODE = "086";
+    // Date range for FY24-FY25
+    const TIME_PERIOD = [{ start_date: "2023-10-01", end_date: "2025-09-30" }];
+    
+    // Update status indicators
+    function updateStatus(status, message) {
+      const indicator = document.getElementById('status-indicator');
+      const text = document.getElementById('status-text');
+      
+      indicator.className = 'status-indicator ' + status;
+      text.textContent = message;
+      
+      // Update date info
+      if (status === 'success') {
+        const now = new Date();
+        document.getElementById('date-info').textContent = 'As of: ' + now.toLocaleDateString() + ' ' + now.toLocaleTimeString();
+      }
+    }
+    
+    // Handle API errors
+    function handleError(section, error) {
+      console.error(`Error in ${section}:`, error);
+      const element = document.getElementById(section === 'total' ? 'total' : `top-${section}`);
+      element.className = 'error';
+      element.innerHTML = `Error loading data: ${error.message || 'API request failed'}`;
+      updateStatus('error', 'Some data failed to load');
+    }
+
+    // Fetch total obligations
+    async function fetchTotals() {
+      try {
+        const res = await fetch("https://api.usaspending.gov/api/v2/search/spending_by_award/", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            filters: {
+              agencies: [{
+                type: "awarding",
+                tier: "toptier",
+                toptier_code: DHS_CODE
+              }],
+              time_period: TIME_PERIOD,
+              award_type_codes: ["A", "B", "C", "D"]
+            },
+            fields: ["Award ID", "Recipient Name", "Award Amount", "Action Date"],
+            limit: 1,
+            page: 1,
+            sort: "Award Amount",
+            order: "desc"
+          })
+        });
+        
+        if (!res.ok) {
+          throw new Error(`HTTP error! Status: ${res.status}`);
+        }
+        
+        const result = await res.json();
+        const element = document.getElementById("total");
+        
+        if (result.page_metadata?.total) {
+          const totalAmount = parseFloat(result.page_metadata.total);
+          element.textContent = `$${totalAmount.toLocaleString()}`;
+          element.className = '';
+        } else {
+          element.textContent = "No data available";
+          element.className = '';
+        }
+        
+        updateStatus('success', 'Data loaded successfully');
+        return true;
+      } catch (error) {
+        handleError('total', error);
+        return false;
+      }
+    }
+
+    // Fetch data for specific category (recipients, naics, offices)
+    async function fetchCategory(category, labelField, valueField = "aggregated_amount") {
+      try {
+        const endpoint = category === 'offices' 
+          ? 'awarding_office' 
+          : (category === 'naics' ? 'naics' : 'recipient');
+        
+        const res = await fetch(`https://api.usaspending.gov/api/v2/search/spending_by_category/${endpoint}/`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            filters: {
+              agencies: [{
+                type: "awarding",
+                tier: "toptier",
+                toptier_code: DHS_CODE
+              }],
+              time_period: TIME_PERIOD,
+              award_type_codes: ["A", "B", "C", "D"]
+            },
+            limit: 5
+          })
+        });
+        
+        if (!res.ok) {
+          throw new Error(`HTTP error! Status: ${res.status}`);
+        }
+
+        const json = await res.json();
+        const ul = document.getElementById(`top-${category}`);
+        ul.innerHTML = "";
+        ul.className = '';
+
+        if (!json?.results?.length) {
+          ul.innerHTML = "<li>No data available</li>";
+          return false;
+        }
+
+        json.results.forEach(item => {
+          const li = document.createElement("li");
+          const label = item[labelField] || 'Unnamed';
+          const value = parseFloat(item[valueField] || 0);
+          li.textContent = `${label} – $${value.toLocaleString()}`;
+          ul.appendChild(li);
+        });
+        
+        return true;
+      } catch (error) {
+        handleError(category, error);
+        return false;
+      }
+    }
+
+    // Initialize all data fetching
+    async function initData() {
+      updateStatus('loading', 'Loading data...');
+      
+      try {
+        // Start all fetches in parallel
+        const results = await Promise.all([
+          fetchTotals(),
+          fetchCategory('recipients', 'name'),
+          fetchCategory('naics', 'name'),
+          fetchCategory('offices', 'name')
+        ]);
+        
+        // Check if all requests were successful
+        if (results.every(result => result)) {
+          updateStatus('success', 'All data loaded successfully');
+        } else {
+          updateStatus('error', 'Some data failed to load');
+        }
+      } catch (error) {
+        console.error('Error initializing data:', error);
+        updateStatus('error', 'Failed to load data');
+      }
+    }
+
+    // Start loading data when page loads
+    window.addEventListener('load', initData);
+  </script>
+</body>
+</html>
