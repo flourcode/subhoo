@@ -8138,8 +8138,24 @@ function addAnnotationCapability() {
     }
 }
 
-// Initialize on page load
-document.addEventListener('DOMContentLoaded', function() {
-    // Original initialization code will run first
-    // Then our enhanced features will be initialized with a delay
-});
+// At the very end of your wednesday.js file, replace the last bit with:
+
+// Initialize enhanced dashboard features after standard init
+(function() {
+    console.log("Setting up enhanced BI dashboard initialization...");
+    
+    // Check if document is already loaded
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function() {
+            // Wait for the original initialization to complete
+            setTimeout(function() {
+                initializeEnhancedDashboard();
+            }, 800);
+        });
+    } else {
+        // Document already loaded, run with a delay
+        setTimeout(function() {
+            initializeEnhancedDashboard();
+        }, 800);
+    }
+})();
