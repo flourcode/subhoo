@@ -827,19 +827,21 @@ async function loadSingleDataset(dataset) {
     document.getElementById('naics-filter').value = '';
     document.getElementById('search-input').value = '';
 
-    try {
-        await fetchDataFromS3(dataset); // Await the promise
+        try {
+        await fetchDataFromS3(dataset);
 
         console.log(`Single dataset ${dataset.name} fetched and processed, building unified model...`);
-        buildUnifiedModel(); // This function populates the global 'unifiedModel'
+        buildUnifiedModel();
 
-        // Make the model globally available
         window.unifiedModel = unifiedModel;
         console.log("window.unifiedModel updated after single load. Content length: " + (window.unifiedModel ? JSON.stringify(window.unifiedModel).length : "null"));
         
         updateStatusBanner(`Successfully loaded ${dataset.name}.`, 'success');
         populateFiltersFromUnifiedModel();
         applyFiltersAndUpdateVisuals();
+        
+        // Add this line:
+        ensureAllVisualizationsLoaded();
 
     } catch (error) {
         console.error(`Error in loadSingleDataset for ${dataset.name}:`, error);
@@ -931,7 +933,6 @@ async function fetchDataSequentially(datasets) {
             await fetchAndProcessDataset(dataset);
         }
         
-        // After all datasets are loaded, build unified model and update UI
         console.log("All datasets loaded, building unified model...");
         buildUnifiedModel();
         window.unifiedModel = unifiedModel; 
@@ -939,9 +940,11 @@ async function fetchDataSequentially(datasets) {
         
         updateStatusBanner(`Successfully loaded combined data.`, 'success');
         
-        // Update filters and visualizations
         populateFiltersFromUnifiedModel();
         applyFiltersAndUpdateVisuals();
+        
+        // Add this line:
+        ensureAllVisualizationsLoaded();
         
     } catch (error) {
         console.error("Error loading combined datasets:", error);
@@ -2861,7 +2864,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// Handle window resize events
+// In your resize handler, add this call
 window.addEventListener('resize', function() {
     clearTimeout(window.resizeTimer);
     window.resizeTimer = setTimeout(function() {
@@ -2878,8 +2881,10 @@ window.addEventListener('resize', function() {
        // Redraw visualizations if data is available
        if (unifiedModel) {
            applyFiltersAndUpdateVisuals();
+           ensureAllVisualizationsLoaded(); // Add this line
        } else if (rawData.primes.length > 0 || rawData.subs.length > 0) {
            applyFiltersAndUpdateVisuals();
+           ensureAllVisualizationsLoaded(); // Add this line
        }
    }, 250); // Debounce for 250ms
 });
@@ -4469,4 +4474,68 @@ function ensureShareOfWalletContainer() {
     }
     
     return container;
+}
+function ensureAllVisualizationsLoaded() {
+    console.log("Ensuring all visualizations are properly loaded and displayed...");
+    
+    // Get the current filter values
+    const subAgencyFilter = document.getElementById('sub-agency-filter')?.value || '';
+    const naicsFilter = document.getElementById('naics-filter')?.value || '';
+    const searchTerm = document.getElementById('search-input')?.value.trim().toLowerCase() || '';
+    
+    // Force re-application of filters with a slight delay to ensure containers are ready
+    setTimeout(() => {
+        if (unifiedModel) {
+            // First, make sure all containers are visible
+            ensureContainersVisible();
+            
+            // Then apply filters and update visuals
+            updateVisualsFromUnifiedModel(subAgencyFilter, naicsFilter, searchTerm);
+            
+            // Try to render Share of Wallet chart separately with a delay
+            setTimeout(() => {
+                try {
+                    displayShareOfWalletChart(unifiedModel);
+                } catch (e) {
+                    console.error("Error displaying Share of Wallet chart:", e);
+                }
+            }, 500);
+        }
+    }, 300);
+}
+
+function ensureContainersVisible() {
+    // List of all visualization containers
+    const containerIds = [
+        'contract-leaders-table-container',
+        'tav-tcv-chart-container',
+        'expiring-contracts-table-container', 
+        'sankey-chart-container',
+        'map-container',
+        'circular-dendrogram-container',
+        'bento-naics-distribution'
+    ];
+    
+    // Ensure all containers are visible and initialized
+    containerIds.forEach(id => {
+        const container = document.getElementById(id);
+        if (container) {
+            // Make sure the container is visible
+            container.style.display = 'block';
+            
+            // If container has no height, try to give it a default height
+            if (container.clientHeight < 10) {
+                container.style.minHeight = '250px';
+            }
+            
+            // Make sure parent bento box is visible
+            const bentoBox = container.closest('.bento-box');
+            if (bentoBox) {
+                bentoBox.style.display = 'block';
+            }
+        }
+    });
+    
+    // Ensure Share of Wallet container exists
+    ensureShareOfWalletContainer();
 }
