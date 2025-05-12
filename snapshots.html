@@ -93,16 +93,15 @@
     <div class="control-group">
       <label for="agency-select">Select Agency:</label>
       <select id="agency-select">
-        <option value="" selected disabled>Loading agencies...</option>
+        <option value="" selected disabled>Please select</option>
+        <option value="070">Department of Homeland Security</option>
+        <option value="097">Department of Defense</option>
+        <option value="075">Department of Health and Human Services</option>
+        <option value="020">Department of Treasury</option>
+        <option value="012">Department of Agriculture</option>
       </select>
     </div>
-    <div class="control-group" id="subagency-container" style="display: none;">
-      <label for="subagency-select">Select Sub-Agency:</label>
-      <select id="subagency-select">
-        <option value="" selected disabled>Select an agency first</option>
-      </select>
-    </div>
-    <button id="load-data-btn" class="btn" disabled>Load Data</button>
+    <button id="load-data-btn" class="btn">Load Data</button>
   </div>
 
   <div class="title-area">
@@ -144,40 +143,22 @@
     // Date range for FY24-FY25
     const TIME_PERIOD = [{ start_date: "2023-10-01", end_date: "2025-09-30" }];
     
-    // Common major agencies with their toptier codes
-    const COMMON_AGENCIES = [
-      { name: "Department of Defense", code: "097" },
-      { name: "Department of Health and Human Services", code: "075" },
-      { name: "Department of Homeland Security", code: "070" },
-      { name: "Department of Veterans Affairs", code: "036" },
-      { name: "Department of Treasury", code: "020" },
-      { name: "Department of Education", code: "091" },
-      { name: "Department of Transportation", code: "069" },
-      { name: "Department of Justice", code: "015" },
-      { name: "Department of Agriculture", code: "012" },
-      { name: "Department of Energy", code: "089" },
-      { name: "Department of State", code: "019" },
-      { name: "Department of Housing and Urban Development", code: "086" },
-      { name: "Department of Labor", code: "016" },
-      { name: "Department of Commerce", code: "013" },
-      { name: "Department of the Interior", code: "014" },
-      { name: "Environmental Protection Agency", code: "068" },
-      { name: "National Aeronautics and Space Administration", code: "080" },
-      { name: "Small Business Administration", code: "073" },
-      { name: "Social Security Administration", code: "028" },
-      { name: "General Services Administration", code: "047" }
-    ];
+    // Agency names mapping
+    const AGENCY_NAMES = {
+      "070": "Department of Homeland Security",
+      "097": "Department of Defense",
+      "075": "Department of Health and Human Services",
+      "020": "Department of Treasury",
+      "012": "Department of Agriculture"
+    };
     
     // UI Elements
     const agencySelect = document.getElementById('agency-select');
-    const subagencySelect = document.getElementById('subagency-select');
-    const subagencyContainer = document.getElementById('subagency-container');
     const loadDataBtn = document.getElementById('load-data-btn');
     const agencyTitle = document.getElementById('agency-title');
     
     // Current selection
     let selectedAgency = null;
-    let selectedSubagency = null;
     
     // Update status indicators
     function updateStatus(status, message) {
@@ -202,110 +183,24 @@
       element.innerHTML = `Error loading data: ${error.message || 'API request failed'}`;
       updateStatus('error', 'Some data failed to load');
     }
-    
-    // Initialize agency dropdown
-    function initAgencyDropdown() {
-      // Clear existing options
-      agencySelect.innerHTML = '';
-      
-      // Add default option
-      const defaultOption = document.createElement('option');
-      defaultOption.value = '';
-      defaultOption.disabled = true;
-      defaultOption.selected = true;
-      defaultOption.textContent = 'Select an agency';
-      agencySelect.appendChild(defaultOption);
-      
-      // Add agency options
-      COMMON_AGENCIES.forEach(agency => {
-        const option = document.createElement('option');
-        option.value = agency.code;
-        option.textContent = agency.name;
-        agencySelect.appendChild(option);
-      });
-      
-      // Enable the select
-      agencySelect.disabled = false;
-    }
-    
-    // Fetch sub-agencies for a top-tier agency
-    async function fetchSubagencies(toptierCode) {
-      try {
-        updateStatus('loading', 'Loading sub-agencies...');
-        
-        const res = await fetch(`https://api.usaspending.gov/api/v2/agency/${toptierCode}/sub_agency/`, {
-          method: "GET",
-          headers: { "Content-Type": "application/json" }
-        });
-        
-        if (!res.ok) {
-          throw new Error(`HTTP error! Status: ${res.status}`);
-        }
-        
-        const data = await res.json();
-        
-        // Clear existing options
-        subagencySelect.innerHTML = '';
-        
-        // Add default option
-        const defaultOption = document.createElement('option');
-        defaultOption.value = '';
-        defaultOption.textContent = 'View entire agency';
-        subagencySelect.appendChild(defaultOption);
-        
-        if (data && data.results && data.results.length > 0) {
-          // Add all sub-agencies
-          data.results.forEach(subagency => {
-            const option = document.createElement('option');
-            option.value = subagency.name; // Using name as the subagency identifier
-            option.textContent = subagency.name;
-            subagencySelect.appendChild(option);
-          });
-          
-          // Show the subagency dropdown
-          subagencyContainer.style.display = 'flex';
-        } else {
-          // Hide the dropdown if no subagencies
-          subagencyContainer.style.display = 'none';
-        }
-        
-        updateStatus('success', 'Ready to load data');
-        loadDataBtn.disabled = false;
-        
-      } catch (error) {
-        console.error('Error fetching subagencies:', error);
-        updateStatus('error', 'Failed to load sub-agencies');
-        subagencyContainer.style.display = 'none';
-        loadDataBtn.disabled = false; // Still allow data loading for main agency
-      }
-    }
 
     // Fetch total obligations
     async function fetchTotals() {
       try {
-        const requestBody = {
-          filters: {
-            time_period: TIME_PERIOD,
-            award_type_codes: ["A", "B", "C", "D"]
-          },
-          fields: ["Award ID", "Recipient Name", "Award Amount", "Action Date"],
-          limit: 1,
-          page: 1
-        };
-        
-        // Add agency filter
-        if (selectedAgency) {
-          requestBody.filters.agencies = [{
-            type: "awarding",
-            tier: "toptier",
-            toptier_code: selectedAgency
-          }];
-        }
-        
+        // Use the original format that worked for DHS
         const res = await fetch("https://api.usaspending.gov/api/v2/search/spending_by_award/", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(requestBody)
+          body: JSON.stringify({
+            filters: {
+              time_period: TIME_PERIOD,
+              award_type_codes: ["A", "B", "C", "D"],
+              awarding_agency_codes: [selectedAgency]
+            },
+            fields: ["Award ID", "Recipient Name", "Award Amount", "Action Date"],
+            limit: 1,
+            page: 1
+          })
         });
         
         if (!res.ok) {
@@ -334,28 +229,18 @@
     // Fetch recipient data
     async function fetchRecipients() {
       try {
-        const requestBody = {
-          category: "recipient",
-          filters: {
-            time_period: TIME_PERIOD,
-            award_type_codes: ["A", "B", "C", "D"]
-          },
-          limit: 5
-        };
-        
-        // Add agency filter
-        if (selectedAgency) {
-          requestBody.filters.agencies = [{
-            type: "awarding",
-            tier: "toptier",
-            toptier_code: selectedAgency
-          }];
-        }
-        
-        const res = await fetch("https://api.usaspending.gov/api/v2/search/spending_by_category/", {
+        // Use the original format that worked for DHS
+        const res = await fetch("https://api.usaspending.gov/api/v2/search/spending_by_recipient/", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(requestBody)
+          body: JSON.stringify({
+            filters: {
+              time_period: TIME_PERIOD,
+              award_type_codes: ["A", "B", "C", "D"],
+              awarding_agency_codes: [selectedAgency]
+            },
+            limit: 5
+          })
         });
         
         if (!res.ok) {
@@ -374,7 +259,7 @@
 
         json.results.forEach(item => {
           const li = document.createElement("li");
-          li.textContent = `${item.name || 'Unnamed'} – $${parseFloat(item.amount || 0).toLocaleString()}`;
+          li.textContent = `${item.recipient_name || 'Unnamed'} – $${parseFloat(item.aggregated_amount || 0).toLocaleString()}`;
           ul.appendChild(li);
         });
         
@@ -388,28 +273,18 @@
     // Fetch NAICS data
     async function fetchNaics() {
       try {
-        const requestBody = {
-          category: "naics",
-          filters: {
-            time_period: TIME_PERIOD,
-            award_type_codes: ["A", "B", "C", "D"]
-          },
-          limit: 5
-        };
-        
-        // Add agency filter
-        if (selectedAgency) {
-          requestBody.filters.agencies = [{
-            type: "awarding",
-            tier: "toptier",
-            toptier_code: selectedAgency
-          }];
-        }
-        
-        const res = await fetch("https://api.usaspending.gov/api/v2/search/spending_by_category/", {
+        // Use the original format that worked for DHS
+        const res = await fetch("https://api.usaspending.gov/api/v2/search/spending_by_naics/", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(requestBody)
+          body: JSON.stringify({
+            filters: {
+              time_period: TIME_PERIOD,
+              award_type_codes: ["A", "B", "C", "D"],
+              awarding_agency_codes: [selectedAgency]
+            },
+            limit: 5
+          })
         });
         
         if (!res.ok) {
@@ -428,10 +303,10 @@
 
         json.results.forEach(item => {
           const li = document.createElement("li");
-          const name = item.name || 'Unnamed NAICS';
-          const code = item.code || '';
+          const name = item.naics_description || 'Unnamed NAICS';
+          const code = item.naics || '';
           const displayName = code ? `${code} - ${name}` : name;
-          li.textContent = `${displayName} – $${parseFloat(item.amount || 0).toLocaleString()}`;
+          li.textContent = `${displayName} – $${parseFloat(item.aggregated_amount || 0).toLocaleString()}`;
           ul.appendChild(li);
         });
         
@@ -445,28 +320,18 @@
     // Fetch awarding offices
     async function fetchOffices() {
       try {
-        const requestBody = {
-          category: "awarding_subagency",
-          filters: {
-            time_period: TIME_PERIOD,
-            award_type_codes: ["A", "B", "C", "D"]
-          },
-          limit: 5
-        };
-        
-        // Add agency filter
-        if (selectedAgency) {
-          requestBody.filters.agencies = [{
-            type: "awarding",
-            tier: "toptier",
-            toptier_code: selectedAgency
-          }];
-        }
-        
-        const res = await fetch("https://api.usaspending.gov/api/v2/search/spending_by_category/", {
+        // Use the original format that worked for DHS
+        const res = await fetch("https://api.usaspending.gov/api/v2/search/spending_by_awarding_office/", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(requestBody)
+          body: JSON.stringify({
+            filters: {
+              time_period: TIME_PERIOD,
+              award_type_codes: ["A", "B", "C", "D"],
+              awarding_agency_codes: [selectedAgency]
+            },
+            limit: 5
+          })
         });
         
         if (!res.ok) {
@@ -485,7 +350,7 @@
 
         json.results.forEach(item => {
           const li = document.createElement("li");
-          li.textContent = `${item.name || 'Unnamed Office'} – $${parseFloat(item.amount || 0).toLocaleString()}`;
+          li.textContent = `${item.awarding_office_name || 'Unnamed Office'} – $${parseFloat(item.aggregated_amount || 0).toLocaleString()}`;
           ul.appendChild(li);
         });
         
@@ -498,15 +363,14 @@
 
     // Load data based on current selection
     async function loadData() {
-      // Update title
-      const agencyName = agencySelect.options[agencySelect.selectedIndex].textContent;
-      let titleText = agencyName;
-      
-      if (selectedSubagency) {
-        titleText += ` - ${selectedSubagency}`;
+      if (!selectedAgency) {
+        alert("Please select an agency first");
+        return;
       }
       
-      agencyTitle.textContent = titleText;
+      // Update title
+      const agencyName = AGENCY_NAMES[selectedAgency] || 'Selected Agency';
+      agencyTitle.textContent = agencyName;
       
       // Reset data sections
       document.getElementById("total").textContent = "Loading...";
@@ -550,26 +414,12 @@
     // Set up event listeners
     agencySelect.addEventListener('change', function() {
       selectedAgency = this.value;
-      selectedSubagency = null;
-      
-      if (selectedAgency) {
-        // Try to fetch subagencies
-        fetchSubagencies(selectedAgency);
-      } else {
-        subagencyContainer.style.display = 'none';
-        loadDataBtn.disabled = true;
-      }
-    });
-    
-    subagencySelect.addEventListener('change', function() {
-      selectedSubagency = this.value || null;
     });
     
     loadDataBtn.addEventListener('click', loadData);
 
-    // Initialize the agency dropdown when page loads
+    // Initialize page
     window.addEventListener('load', function() {
-      initAgencyDropdown();
       updateStatus('', 'Select an agency to view data');
     });
   </script>
