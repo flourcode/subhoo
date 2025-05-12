@@ -15,8 +15,40 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="wednesday.css">
+
 </head>
 <body>
+	<div class="presentation-controls">
+    <button class="presentation-mode-button">
+        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+            <path d="M2 3h20v14H2z"></path>
+            <path d="M12 21H8"></path>
+            <path d="M10 17v4"></path>
+        </svg>
+        Presentation Mode
+    </button>
+    <div class="zoom-controls">
+        <button class="zoom-button zoom-out" title="Zoom Out">
+            <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+        </button>
+        <span class="zoom-level">100%</span>
+        <button class="zoom-button zoom-in" title="Zoom In">
+            <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+        </button>
+        <button class="zoom-button zoom-reset" title="Reset Zoom">
+            <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+                <polyline points="23 4 23 10 17 10"></polyline>
+                <polyline points="1 20 1 14 7 14"></polyline>
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+            </svg>
+        </button>
+    </div>
+</div>
 <!-- <div class="app-container"> -->
     <div class="dashboard-layout">
         <!-- Side Panel -->
@@ -296,5 +328,19 @@
 <script src="wednesday.js"></script>
 <script src="agency-snapshot-generator.js"></script>
 <!-- 		</div> -->
+<div class="visualization-fullscreen-overlay">
+    <div class="visualization-fullscreen-container">
+        <div class="visualization-fullscreen-header">
+            <div class="visualization-fullscreen-title">Visualization Detail</div>
+            <button class="visualization-fullscreen-close">
+                <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+        <div class="visualization-fullscreen-content"></div>
+    </div>
+</div>
 </body>
 </html>

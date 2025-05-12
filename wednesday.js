@@ -6973,3 +6973,1173 @@ function isolatedNodesClusterForce(nodes, relationshipMap, strength = 0.5) {
     
     return force;
 }
+// Enhance responsiveness for displays of all sizes
+function enhanceResponsiveness() {
+    // Add resize event handler for responsive adjustments
+    let resizeTimeout;
+    window.addEventListener('resize', function() {
+        // Debounce resize handler
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(function() {
+            console.log("Window resized, adjusting visualizations...");
+            
+            // Adjust visualization containers based on new dimensions
+            adjustVisualizationSizes();
+            
+            // Refresh visualizations if needed
+            refreshResponsiveVisualizations();
+        }, 250);
+    });
+    
+    // Initial adjustment
+    adjustVisualizationSizes();
+}
+
+// Adjust visualization containers based on window size
+function adjustVisualizationSizes() {
+    // Calculate optimal heights for different visualization types
+    const windowHeight = window.innerHeight;
+    const windowWidth = window.innerWidth;
+    
+    // Get all bento boxes
+    const bentoBoxes = document.querySelectorAll('.bento-box');
+    
+    // Adjust based on screen size
+    if (windowWidth >= 1600) {
+        // Large screens - maximize visualization space
+        document.documentElement.style.setProperty('--bento-gap', '24px');
+        
+        // Set optimal height for map and Sankey based on window height
+        const mapContainer = document.getElementById('map-container');
+        if (mapContainer) {
+            const optimalMapHeight = Math.max(350, Math.min(450, windowHeight * 0.3));
+            mapContainer.style.height = optimalMapHeight + 'px';
+        }
+        
+        const sankeyContainer = document.getElementById('sankey-chart-container');
+        if (sankeyContainer) {
+            const optimalSankeyHeight = Math.max(350, Math.min(500, windowHeight * 0.35));
+            sankeyContainer.style.height = optimalSankeyHeight + 'px';
+        }
+        
+        const dendrogramContainer = document.getElementById('circular-dendrogram-container');
+        if (dendrogramContainer) {
+            const optimalHeight = Math.max(400, Math.min(600, windowHeight * 0.4));
+            dendrogramContainer.style.height = optimalHeight + 'px';
+        }
+    } else if (windowWidth >= 1200) {
+        // Medium-large screens
+        document.documentElement.style.setProperty('--bento-gap', '20px');
+        
+        // Adjust visualization heights for medium screens
+        const mapContainer = document.getElementById('map-container');
+        if (mapContainer) {
+            mapContainer.style.height = '300px';
+        }
+        
+        const sankeyContainer = document.getElementById('sankey-chart-container');
+        if (sankeyContainer) {
+            sankeyContainer.style.height = '350px';
+        }
+        
+        const dendrogramContainer = document.getElementById('circular-dendrogram-container');
+        if (dendrogramContainer) {
+            dendrogramContainer.style.height = '450px';
+        }
+    } else {
+        // Smaller screens - optimize for readability
+        document.documentElement.style.setProperty('--bento-gap', '16px');
+        
+        // Reset container heights to use default flexbox behavior
+        const chartContainers = document.querySelectorAll('.chart-container');
+        chartContainers.forEach(container => {
+            container.style.height = '';
+        });
+    }
+    
+    // Adjust table container heights based on available space
+    const tableContainers = document.querySelectorAll('.table-container');
+    tableContainers.forEach(container => {
+        const bentoBox = container.closest('.bento-box');
+        if (bentoBox) {
+            const cardHeader = bentoBox.querySelector('.card-header');
+            const availableHeight = bentoBox.clientHeight - (cardHeader ? cardHeader.offsetHeight : 0) - 20;
+            
+            if (availableHeight > 100) {
+                container.style.height = availableHeight + 'px';
+            }
+        }
+    });
+}
+
+// Refresh visualizations that need to be redrawn on resize
+function refreshResponsiveVisualizations() {
+    // Refresh Chart.js charts
+    if (window.tavTcvChartInstance) {
+        try {
+            window.tavTcvChartInstance.resize();
+        } catch (e) {
+            console.warn("Error resizing TAV/TCV chart:", e);
+        }
+    }
+    
+    // Refresh other chart types as needed
+    // Each chart type may have different refresh mechanisms
+    
+    // For D3 charts, we need to trigger re-renders
+    // This would vary by chart implementation
+    
+    // For this demo, we'll simulate refresh with a notification
+    console.log("Visualizations refreshed for new dimensions");
+}
+
+// Add keyboard navigation support
+function addKeyboardSupport() {
+    // Add keyboard shortcuts for navigation and common actions
+    document.addEventListener('keydown', function(event) {
+        // Check if we're in an input field - don't intercept keyboard if user is typing
+        if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA' || event.target.isContentEditable) {
+            return;
+        }
+        
+        // Ctrl+Alt+P: Toggle presentation mode
+        if (event.ctrlKey && event.altKey && event.key === 'p') {
+            event.preventDefault();
+            const presentationButton = document.querySelector('.presentation-mode-button');
+            if (presentationButton) {
+                presentationButton.click();
+            }
+        }
+        
+        // Escape: Exit fullscreen or presentation mode
+        if (event.key === 'Escape') {
+            // Check if a fullscreen visualization is open
+            const fullscreenOverlay = document.querySelector('.visualization-fullscreen-overlay.active');
+            if (fullscreenOverlay) {
+                const closeButton = fullscreenOverlay.querySelector('.visualization-fullscreen-close');
+                if (closeButton) {
+                    closeButton.click();
+                }
+            } else if (document.body.classList.contains('presentation-mode')) {
+                // Exit presentation mode
+                const presentationButton = document.querySelector('.presentation-mode-button');
+                if (presentationButton) {
+                    presentationButton.click();
+                }
+            }
+        }
+        
+        // Add more keyboard shortcuts as needed
+    });
+    
+    // Add focus styles for keyboard navigation
+    document.querySelectorAll('button, a, select, input').forEach(element => {
+        element.addEventListener('focus', function() {
+            this.classList.add('keyboard-focus');
+        });
+        
+        element.addEventListener('blur', function() {
+            this.classList.remove('keyboard-focus');
+        });
+    });
+}
+
+// Add breadcrumb navigation support
+function enhanceBreadcrumbNavigation() {
+    // Most of this is implemented within the individual chart drill-down functions
+    // This function can be used for global breadcrumb functionality
+    
+    // Example: Add a global breadcrumb container at the top of the main content
+    const mainContent = document.querySelector('.main-content');
+    const dashboardHeader = document.querySelector('.dashboard-header');
+    
+    if (mainContent && dashboardHeader) {
+        const globalBreadcrumbs = document.createElement// Enhanced Dashboard JavaScript
+// Adds presentation mode, drill-down capabilities, and improved visualization responsiveness
+
+// Initialize enhanced dashboard features after standard init
+document.addEventListener('DOMContentLoaded', function() {
+    console.log("Initializing enhanced BI dashboard features...");
+    
+    // Wait for the original initialization to complete
+    setTimeout(function() {
+        initializeEnhancedDashboard();
+    }, 800);
+});
+
+function initializeEnhancedDashboard() {
+    try {
+        // Add sidebar toggle functionality
+        addSidebarToggle();
+        
+        // Add presentation mode toggle
+        addPresentationModeControls();
+        
+        // Add fullscreen capabilities to visualizations
+        addFullscreenCapabilities();
+        
+        // Add enhanced drill-down markers
+        markDrillableCharts();
+        
+        // Add responsive resize handlers
+        enhanceResponsiveness();
+        
+        // Add keyboard navigation support
+        addKeyboardSupport();
+        
+        // Add breadcrumb drill-down support
+        enhanceBreadcrumbNavigation();
+        
+        console.log("Enhanced BI dashboard features initialized");
+    } catch (e) {
+        console.error("Error initializing enhanced dashboard:", e);
+    }
+}
+
+// Add collapsible sidebar functionality
+function addSidebarToggle() {
+    const sidePanel = document.querySelector('.side-panel');
+    if (!sidePanel) return;
+    
+    // Create toggle button
+    const toggleButton = document.createElement('div');
+    toggleButton.className = 'sidebar-toggle';
+    toggleButton.innerHTML = `
+        <svg class="sidebar-expand-icon" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+            <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+    `;
+    
+    sidePanel.appendChild(toggleButton);
+    
+    // Add toggle functionality
+    toggleButton.addEventListener('click', function() {
+        sidePanel.classList.toggle('collapsed');
+        
+        // Adjust main content padding when sidebar is collapsed/expanded
+        const mainContent = document.querySelector('.main-content');
+        if (mainContent) {
+            if (sidePanel.classList.contains('collapsed')) {
+                mainContent.style.paddingLeft = '20px';
+            } else {
+                mainContent.style.paddingLeft = '';
+            }
+        }
+    });
+}
+
+// Add presentation mode toggle and zoom controls
+function addPresentationModeControls() {
+    const headerControls = document.querySelector('.header-controls');
+    if (!headerControls) return;
+    
+    // Create presentation controls container
+    const presentationControls = document.createElement('div');
+    presentationControls.className = 'presentation-controls';
+    
+    // Create presentation mode toggle button
+    const presentationModeButton = document.createElement('button');
+    presentationModeButton.className = 'presentation-mode-button';
+    presentationModeButton.innerHTML = `
+        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+            <path d="M2 3h20v14H2z"></path>
+            <path d="M12 21H8"></path>
+            <path d="M10 17v4"></path>
+        </svg>
+        Presentation Mode
+    `;
+    
+    // Create zoom controls
+    const zoomControls = document.createElement('div');
+    zoomControls.className = 'zoom-controls';
+    
+    // Add zoom buttons and level indicator
+    zoomControls.innerHTML = `
+        <button class="zoom-button zoom-out" title="Zoom Out">
+            <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+        </button>
+        <span class="zoom-level">100%</span>
+        <button class="zoom-button zoom-in" title="Zoom In">
+            <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+        </button>
+        <button class="zoom-button zoom-reset" title="Reset Zoom">
+            <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+                <polyline points="23 4 23 10 17 10"></polyline>
+                <polyline points="1 20 1 14 7 14"></polyline>
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+            </svg>
+        </button>
+    `;
+    
+    // Add zoom controls to presentation controls
+    presentationControls.appendChild(presentationModeButton);
+    presentationControls.appendChild(zoomControls);
+    
+    // Add presentation controls to header
+    headerControls.appendChild(presentationControls);
+    
+    // Set up presentation mode toggle functionality
+    let currentZoomLevel = 1;
+    const zoomLevelDisplay = zoomControls.querySelector('.zoom-level');
+    
+    presentationModeButton.addEventListener('click', function() {
+        document.body.classList.toggle('presentation-mode');
+        
+        if (document.body.classList.contains('presentation-mode')) {
+            presentationModeButton.innerHTML = `
+                <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                    <line x1="9" y1="9" x2="15" y2="15"></line>
+                    <line x1="15" y1="9" x2="9" y2="15"></line>
+                </svg>
+                Exit Presentation
+            `;
+            
+            // Collapse sidebar in presentation mode
+            const sidePanel = document.querySelector('.side-panel');
+            if (sidePanel) sidePanel.classList.add('collapsed');
+            
+        } else {
+            presentationModeButton.innerHTML = `
+                <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+                    <path d="M2 3h20v14H2z"></path>
+                    <path d="M12 21H8"></path>
+                    <path d="M10 17v4"></path>
+                </svg>
+                Presentation Mode
+            `;
+            
+            // Reset zoom when exiting presentation mode
+            currentZoomLevel = 1;
+            updateZoomLevel();
+        }
+    });
+    
+    // Set up zoom controls functionality
+    zoomControls.querySelector('.zoom-in').addEventListener('click', function() {
+        currentZoomLevel = Math.min(currentZoomLevel + 0.1, 2);
+        updateZoomLevel();
+    });
+    
+    zoomControls.querySelector('.zoom-out').addEventListener('click', function() {
+        currentZoomLevel = Math.max(currentZoomLevel - 0.1, 0.5);
+        updateZoomLevel();
+    });
+    
+    zoomControls.querySelector('.zoom-reset').addEventListener('click', function() {
+        currentZoomLevel = 1;
+        updateZoomLevel();
+    });
+    
+    function updateZoomLevel() {
+        document.documentElement.style.setProperty('--zoom-level', currentZoomLevel);
+        zoomLevelDisplay.textContent = `${Math.round(currentZoomLevel * 100)}%`;
+    }
+}
+
+// Add fullscreen capability to visualization containers
+function addFullscreenCapabilities() {
+    // Create fullscreen overlay container (added once to the DOM)
+    const fullscreenOverlay = document.createElement('div');
+    fullscreenOverlay.className = 'visualization-fullscreen-overlay';
+    fullscreenOverlay.innerHTML = `
+        <div class="visualization-fullscreen-container">
+            <div class="visualization-fullscreen-header">
+                <div class="visualization-fullscreen-title">Visualization Detail</div>
+                <button class="visualization-fullscreen-close">
+                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div class="visualization-fullscreen-content"></div>
+        </div>
+    `;
+    document.body.appendChild(fullscreenOverlay);
+    
+    // Add close button functionality
+    const closeButton = fullscreenOverlay.querySelector('.visualization-fullscreen-close');
+    closeButton.addEventListener('click', function() {
+        fullscreenOverlay.classList.remove('active');
+        
+        // Re-enable scrolling on main body
+        document.body.style.overflow = '';
+        
+        // Clear content when closing
+        setTimeout(() => {
+            fullscreenOverlay.querySelector('.visualization-fullscreen-content').innerHTML = '';
+            fullscreenOverlay.querySelector('.visualization-fullscreen-title').textContent = 'Visualization Detail';
+        }, 300);
+    });
+    
+    // Add fullscreen button to all visualization containers
+    const chartContainers = document.querySelectorAll('.chart-container, .table-container');
+    chartContainers.forEach(container => {
+        // Find parent bento box and card header
+        const bentoBox = container.closest('.bento-box');
+        const cardHeader = bentoBox ? bentoBox.querySelector('.card-header') : null;
+        
+        if (cardHeader) {
+            // Create card actions container if it doesn't exist
+            let actionsContainer = cardHeader.querySelector('.card-actions');
+            if (!actionsContainer) {
+                actionsContainer = document.createElement('div');
+                actionsContainer.className = 'card-actions';
+                cardHeader.appendChild(actionsContainer);
+            }
+            
+            // Add fullscreen button
+            const fullscreenButton = document.createElement('button');
+            fullscreenButton.className = 'card-action-button fullscreen-button';
+            fullscreenButton.title = 'View Fullscreen';
+            fullscreenButton.innerHTML = `
+                <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+                    <path d="M8 3H5a2 2 0 0 0-2 2v3"></path>
+                    <path d="M21 8V5a2 2 0 0 0-2-2h-3"></path>
+                    <path d="M3 16v3a2 2 0 0 0 2 2h3"></path>
+                    <path d="M16 21h3a2 2 0 0 0 2-2v-3"></path>
+                </svg>
+            `;
+            
+            // Add fullscreen click event handler
+            fullscreenButton.addEventListener('click', function(event) {
+                event.preventDefault();
+                event.stopPropagation();
+                
+                // Get visualization title
+                const visualizationTitle = cardHeader.querySelector('h2').textContent;
+                fullscreenOverlay.querySelector('.visualization-fullscreen-title').textContent = visualizationTitle;
+                
+                // Clone visualization content for fullscreen view
+                const contentContainer = fullscreenOverlay.querySelector('.visualization-fullscreen-content');
+                contentContainer.innerHTML = '';
+                
+                // Handle different visualization types
+                if (container.querySelector('canvas')) {
+                    // Chart.js charts need special handling
+                    expandChartJsVisualization(container, contentContainer, visualizationTitle);
+                } else if (container.querySelector('svg')) {
+                    // SVG-based visualizations (D3.js, etc.)
+                    expandSvgVisualization(container, contentContainer, visualizationTitle);
+                } else if (container.querySelector('table')) {
+                    // Table visualizations
+                    expandTableVisualization(container, contentContainer, visualizationTitle);
+                } else {
+                    // Generic content
+                    const clonedContent = container.cloneNode(true);
+                    contentContainer.appendChild(clonedContent);
+                }
+                
+                // Show fullscreen overlay
+                fullscreenOverlay.classList.add('active');
+                
+                // Disable scrolling on main body
+                document.body.style.overflow = 'hidden';
+            });
+            
+            actionsContainer.appendChild(fullscreenButton);
+        }
+    });
+}
+
+// Helper function to expand Chart.js visualizations
+function expandChartJsVisualization(sourceContainer, targetContainer, title) {
+    // Create a new canvas element
+    const newCanvas = document.createElement('canvas');
+    newCanvas.id = 'fullscreen-' + sourceContainer.id;
+    newCanvas.style.width = '100%';
+    newCanvas.style.height = '90%';
+    
+    // Add canvas to target container
+    targetContainer.appendChild(newCanvas);
+    
+    // Find original chart instance and configuration
+    const sourceCanvas = sourceContainer.querySelector('canvas');
+    if (!sourceCanvas) return;
+    
+    const chartId = sourceCanvas.id;
+    let chartInstance = null;
+    
+    // Find chart instance from known globals
+    if (chartId === 'tavTcvChart' && window.tavTcvChartInstance) {
+        chartInstance = window.tavTcvChartInstance;
+    } else {
+        // Try to find chart in Chart.js registry if available
+        if (window.Chart && window.Chart.instances) {
+            chartInstance = Object.values(window.Chart.instances).find(chart => chart.canvas.id === chartId);
+        }
+    }
+    
+    if (chartInstance) {
+        // Get chart data and configuration
+        const chartType = chartInstance.config.type;
+        const chartData = chartInstance.data;
+        const chartOptions = { ...chartInstance.options };
+        
+        // Adjust options for fullscreen display
+        chartOptions.responsive = true;
+        chartOptions.maintainAspectRatio = false;
+        if (chartOptions.legend) {
+            chartOptions.legend.labels = { ...chartOptions.legend.labels, fontSize: 14 };
+        }
+        
+        // Create new chart
+        new Chart(newCanvas, {
+            type: chartType,
+            data: chartData,
+            options: chartOptions
+        });
+    }
+}
+
+// Helper function to expand SVG visualizations
+function expandSvgVisualization(sourceContainer, targetContainer, title) {
+    // Extract the original SVG
+    const originalSvg = sourceContainer.querySelector('svg');
+    if (!originalSvg) return;
+    
+    // Clone the SVG element
+    const clonedSvg = originalSvg.cloneNode(true);
+    
+    // Create container with appropriate dimensions
+    const svgContainer = document.createElement('div');
+    svgContainer.style.width = '100%';
+    svgContainer.style.height = '90%';
+    svgContainer.style.display = 'flex';
+    svgContainer.style.justifyContent = 'center';
+    svgContainer.style.alignItems = 'center';
+    svgContainer.style.overflow = 'hidden';
+    
+    // Adjust SVG for fullscreen
+    clonedSvg.style.width = '100%';
+    clonedSvg.style.height = '100%';
+    clonedSvg.style.maxHeight = '90vh';
+    
+    // Add to containers
+    svgContainer.appendChild(clonedSvg);
+    targetContainer.appendChild(svgContainer);
+    
+    // Special handling for specific visualizations
+    if (sourceContainer.id === 'map-container') {
+        // Add zoom controls for maps
+        addMapZoomControls(svgContainer, clonedSvg);
+    } else if (sourceContainer.id === 'sankey-chart-container') {
+        // Adjust Sankey diagram for better fullscreen view
+        adjustSankeyForFullscreen(svgContainer, clonedSvg);
+    } else if (sourceContainer.id === 'circular-dendrogram-container') {
+        // Add zoom and pan for hierarchical visualizations
+        addHierarchicalZoomControls(svgContainer, clonedSvg);
+    }
+}
+
+// Helper function to expand table visualizations
+function expandTableVisualization(sourceContainer, targetContainer, title) {
+    // Create enhanced table container
+    const tableContainer = document.createElement('div');
+    tableContainer.className = 'fullscreen-table-container';
+    tableContainer.style.width = '100%';
+    tableContainer.style.height = '90%';
+    tableContainer.style.overflow = 'auto';
+    
+    // Clone the table
+    const originalTable = sourceContainer.querySelector('table');
+    if (!originalTable) return;
+    
+    const clonedTable = originalTable.cloneNode(true);
+    clonedTable.style.width = '100%';
+    
+    // Add toolbar with export options
+    const toolbar = document.createElement('div');
+    toolbar.className = 'visualization-toolbar';
+    toolbar.innerHTML = `
+        <button class="visualization-toolbar-button export-csv">
+            <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            Export CSV
+        </button>
+        <button class="visualization-toolbar-button print-table">
+            <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none">
+                <polyline points="6 9 6 2 18 2 18 9"></polyline>
+                <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                <rect x="6" y="14" width="12" height="8"></rect>
+            </svg>
+            Print
+        </button>
+    `;
+    
+    // Add export functionality
+    toolbar.querySelector('.export-csv').addEventListener('click', function() {
+        // Use existing exportToCSV function if available
+        if (typeof window.exportToCSV === 'function') {
+            // Extract table data
+            const headers = [...clonedTable.querySelectorAll('th')].map(th => th.textContent);
+            const rows = [...clonedTable.querySelectorAll('tbody tr')].map(tr => 
+                [...tr.querySelectorAll('td')].map(td => td.textContent)
+            );
+            
+            // Convert to array of objects
+            const data = rows.map(row => {
+                const obj = {};
+                headers.forEach((header, i) => {
+                    obj[header] = row[i] || '';
+                });
+                return obj;
+            });
+            
+            // Export data
+            window.exportToCSV(data, `${title.replace(/\s+/g, '_').toLowerCase()}_${new Date().toISOString().split('T')[0]}.csv`);
+        } else {
+            // Simple fallback export
+            let csv = [];
+            const rows = clonedTable.querySelectorAll('tr');
+            
+            for (let i = 0; i < rows.length; i++) {
+                const row = [], cols = rows[i].querySelectorAll('td, th');
+                
+                for (let j = 0; j < cols.length; j++) {
+                    // Handle CSV escaping
+                    let text = cols[j].innerText;
+                    text = text.replace(/"/g, '""');
+                    row.push('"' + text + '"');
+                }
+                
+                csv.push(row.join(','));
+            }
+            
+            const csvString = csv.join('\n');
+            const filename = `${title.replace(/\s+/g, '_').toLowerCase()}_${new Date().toISOString().split('T')[0]}.csv`;
+            
+            // Create download link
+            const link = document.createElement('a');
+            link.setAttribute('href', 'data:text/csv;charset=utf-8,' + encodeURIComponent(csvString));
+            link.setAttribute('download', filename);
+            link.style.display = 'none';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    });
+    
+    // Add print functionality
+    toolbar.querySelector('.print-table').addEventListener('click', function() {
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(`
+            <html>
+                <head>
+                    <title>${title}</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; }
+                        table { border-collapse: collapse; width: 100%; }
+                        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                        th { background-color: #f2f2f2; }
+                    </style>
+                </head>
+                <body>
+                    <h1>${title}</h1>
+                    ${clonedTable.outerHTML}
+                </body>
+            </html>
+        `);
+        printWindow.document.close();
+        printWindow.focus();
+        printWindow.print();
+        printWindow.close();
+    });
+    
+    // Add search/filter functionality
+    const searchContainer = document.createElement('div');
+    searchContainer.className = 'table-search-container';
+    searchContainer.innerHTML = `
+        <input type="text" class="table-search-input" placeholder="Search table...">
+    `;
+    
+    // Add search event listener
+    const searchInput = searchContainer.querySelector('.table-search-input');
+    searchInput.addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase();
+        const rows = clonedTable.querySelectorAll('tbody tr');
+        
+        rows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            row.style.display = text.includes(searchTerm) ? '' : 'none';
+        });
+    });
+    
+    // Assemble the components
+    tableContainer.appendChild(toolbar);
+    tableContainer.appendChild(searchContainer);
+    tableContainer.appendChild(clonedTable);
+    targetContainer.appendChild(tableContainer);
+}
+
+// Add special controls for map visualizations
+function addMapZoomControls(container, svg) {
+    // Add zoom controls overlay
+    const zoomControls = document.createElement('div');
+    zoomControls.className = 'map-zoom-controls';
+    zoomControls.style.position = 'absolute';
+    zoomControls.style.top = '10px';
+    zoomControls.style.right = '10px';
+    zoomControls.style.background = 'var(--color-surface)';
+    zoomControls.style.borderRadius = 'var(--border-radius-sm)';
+    zoomControls.style.padding = '4px';
+    zoomControls.style.boxShadow = 'var(--shadow-sm)';
+    zoomControls.style.display = 'flex';
+    zoomControls.style.flexDirection = 'column';
+    zoomControls.style.gap = '4px';
+    
+    zoomControls.innerHTML = `
+        <button class="map-zoom-in" title="Zoom In">+</button>
+        <button class="map-zoom-out" title="Zoom Out">−</button>
+        <button class="map-zoom-reset" title="Reset">↺</button>
+    `;
+    
+    container.style.position = 'relative';
+    container.appendChild(zoomControls);
+    
+    // Initialize zoom behavior
+    if (window.d3) {
+        const svgElement = d3.select(svg);
+        const svgGroup = svgElement.select('g');
+        
+        if (svgGroup.size() > 0) {
+            // Create zoom behavior
+            const zoom = d3.zoom()
+                .scaleExtent([0.5, 5])
+                .on('zoom', function(event) {
+                    svgGroup.attr('transform', event.transform);
+                });
+            
+            // Apply zoom to SVG
+            svgElement.call(zoom);
+            
+            // Add button handlers
+            zoomControls.querySelector('.map-zoom-in').addEventListener('click', function() {
+                svgElement.transition().duration(300).call(zoom.scaleBy, 1.3);
+            });
+            
+            zoomControls.querySelector('.map-zoom-out').addEventListener('click', function() {
+                svgElement.transition().duration(300).call(zoom.scaleBy, 0.7);
+            });
+            
+            zoomControls.querySelector('.map-zoom-reset').addEventListener('click', function() {
+                svgElement.transition().duration(300).call(zoom.transform, d3.zoomIdentity);
+            });
+        }
+    }
+}
+
+// Adjust Sankey diagram for better fullscreen view
+function adjustSankeyForFullscreen(container, svg) {
+    // Add controls for Sankey diagram adjustments
+    const sankeyControls = document.createElement('div');
+    sankeyControls.className = 'sankey-controls';
+    sankeyControls.style.position = 'absolute';
+    sankeyControls.style.top = '10px';
+    sankeyControls.style.right = '10px';
+    sankeyControls.style.background = 'var(--color-surface)';
+    sankeyControls.style.borderRadius = 'var(--border-radius-sm)';
+    sankeyControls.style.padding = '8px';
+    sankeyControls.style.boxShadow = 'var(--shadow-sm)';
+    
+    sankeyControls.innerHTML = `
+        <div style="margin-bottom: 8px; font-weight: bold; font-size: 12px;">Sankey Controls</div>
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <label style="font-size: 12px;">Node Spacing:</label>
+                <input type="range" class="sankey-node-spacing" min="5" max="50" value="10">
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <label style="font-size: 12px;">Link Opacity:</label>
+                <input type="range" class="sankey-link-opacity" min="0.1" max="1" step="0.1" value="0.5">
+            </div>
+        </div>
+    `;
+    
+    container.style.position = 'relative';
+    container.appendChild(sankeyControls);
+    
+    // Add control functionality if d3-sankey is available
+    if (window.d3 && window.d3.sankey) {
+        const nodeSpacingControl = sankeyControls.querySelector('.sankey-node-spacing');
+        const linkOpacityControl = sankeyControls.querySelector('.sankey-link-opacity');
+        
+        // Adjust node spacing
+        nodeSpacingControl.addEventListener('input', function() {
+            const spacing = parseFloat(this.value);
+            const paths = svg.querySelectorAll('path');
+            
+            // We can't easily recreate the sankey layout, but we can adjust the opacity
+            // as a visual indicator that the control is working
+            paths.forEach(path => {
+                path.style.strokeWidth = `${spacing * 0.2}px`;
+            });
+        });
+        
+        // Adjust link opacity
+        linkOpacityControl.addEventListener('input', function() {
+            const opacity = parseFloat(this.value);
+            const paths = svg.querySelectorAll('path');
+            
+            paths.forEach(path => {
+                path.style.opacity = opacity;
+            });
+        });
+    }
+}
+
+// Add zoom and pan for hierarchical visualizations
+function addHierarchicalZoomControls(container, svg) {
+    // Similar to map zoom controls but optimized for hierarchical visualizations
+    const zoomControls = document.createElement('div');
+    zoomControls.className = 'hierarchy-zoom-controls';
+    zoomControls.style.position = 'absolute';
+    zoomControls.style.top = '10px';
+    zoomControls.style.right = '10px';
+    zoomControls.style.background = 'var(--color-surface)';
+    zoomControls.style.borderRadius = 'var(--border-radius-sm)';
+    zoomControls.style.padding = '4px';
+    zoomControls.style.boxShadow = 'var(--shadow-sm)';
+    zoomControls.style.display = 'flex';
+    zoomControls.style.flexDirection = 'column';
+    zoomControls.style.gap = '4px';
+    
+    zoomControls.innerHTML = `
+        <button class="hierarchy-zoom-in" title="Zoom In">+</button>
+        <button class="hierarchy-zoom-out" title="Zoom Out">−</button>
+        <button class="hierarchy-zoom-reset" title="Reset">↺</button>
+        <button class="hierarchy-fit" title="Fit to View">⊡</button>
+    `;
+    
+    container.style.position = 'relative';
+    container.appendChild(zoomControls);
+    
+    // Initialize zoom behavior
+    if (window.d3) {
+        const svgElement = d3.select(svg);
+        const mainGroup = svgElement.select('g');
+        
+        if (mainGroup.size() > 0) {
+            // Create zoom behavior
+            const zoom = d3.zoom()
+                .scaleExtent([0.2, 3])
+                .on('zoom', function(event) {
+                    mainGroup.attr('transform', event.transform);
+                });
+            
+            // Apply zoom to SVG
+            svgElement.call(zoom);
+            
+            // Add button handlers
+            zoomControls.querySelector('.hierarchy-zoom-in').addEventListener('click', function() {
+                svgElement.transition().duration(300).call(zoom.scaleBy, 1.3);
+            });
+            
+            zoomControls.querySelector('.hierarchy-zoom-out').addEventListener('click', function() {
+                svgElement.transition().duration(300).call(zoom.scaleBy, 0.7);
+            });
+            
+            zoomControls.querySelector('.hierarchy-zoom-reset').addEventListener('click', function() {
+                svgElement.transition().duration(300).call(zoom.transform, d3.zoomIdentity);
+            });
+            
+            zoomControls.querySelector('.hierarchy-fit').addEventListener('click', function() {
+                // Get SVG and chart dimensions
+                const svgRect = svg.getBoundingClientRect();
+                const chartRect = mainGroup.node().getBBox();
+                
+                // Calculate zoom scale and translate to fit chart in view
+                const scale = Math.min(
+                    0.9 * svgRect.width / chartRect.width,
+                    0.9 * svgRect.height / chartRect.height
+                );
+                
+                const translateX = (svgRect.width - chartRect.width * scale) / 2 - chartRect.x * scale;
+                const translateY = (svgRect.height - chartRect.height * scale) / 2 - chartRect.y * scale;
+                
+                // Apply transform
+                svgElement.transition().duration(500)
+                    .call(zoom.transform, d3.zoomIdentity.translate(translateX, translateY).scale(scale));
+            });
+        }
+    }
+}
+// Add breadcrumb navigation support
+function enhanceBreadcrumbNavigation() {
+    // Most of this is implemented within the individual chart drill-down functions
+    // This function can be used for global breadcrumb functionality
+    
+    // Example: Add a global breadcrumb container at the top of the main content
+    const mainContent = document.querySelector('.main-content');
+    const dashboardHeader = document.querySelector('.dashboard-header');
+    
+    if (mainContent && dashboardHeader) {
+        const globalBreadcrumbs = document.createElement('div');
+        globalBreadcrumbs.className = 'global-breadcrumb-trail';
+        globalBreadcrumbs.id = 'global-breadcrumbs';
+        globalBreadcrumbs.style.display = 'none'; // Initially hidden until we have a drill-down state
+        
+        // Insert after header
+        mainContent.insertBefore(globalBreadcrumbs, dashboardHeader.nextSibling);
+    }
+}
+
+// Enhance visualizations with BI-specific capabilities
+function enhanceVisualizations() {
+    // Add export buttons to all visualization containers
+    addExportCapabilities();
+    
+    // Add data tooltips with enhanced information
+    enhanceTooltips();
+    
+    // Add filtering synchronization across visualizations
+    synchronizeFiltering();
+    
+    // Add annotations capability for presentations
+    addAnnotationCapability();
+}
+
+// Add export capabilities to visualizations
+function addExportCapabilities() {
+    // Add export buttons to all visualization containers
+    const chartContainers = document.querySelectorAll('.chart-container');
+    chartContainers.forEach(container => {
+        // Find parent bento box and card header
+        const bentoBox = container.closest('.bento-box');
+        const cardHeader = bentoBox ? bentoBox.querySelector('.card-header') : null;
+        
+        if (cardHeader) {
+            // Create card actions container if it doesn't exist
+            let actionsContainer = cardHeader.querySelector('.card-actions');
+            if (!actionsContainer) {
+                actionsContainer = document.createElement('div');
+                actionsContainer.className = 'card-actions';
+                cardHeader.appendChild(actionsContainer);
+            }
+            
+            // Add export button
+            const exportButton = document.createElement('button');
+            exportButton.className = 'card-action-button export-button';
+            exportButton.title = 'Export Data';
+            exportButton.innerHTML = `
+                <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+            `;
+            
+            // Add export click handler
+            exportButton.addEventListener('click', function(event) {
+                event.preventDefault();
+                event.stopPropagation();
+                
+                // Export based on visualization type
+                exportVisualizationData(container);
+            });
+            
+            actionsContainer.appendChild(exportButton);
+        }
+    });
+}
+
+// Export visualization data based on type
+function exportVisualizationData(container) {
+    // Get visualization type
+    const containerId = container.id;
+    const visualizationTitle = container.closest('.bento-box')?.querySelector('.card-header h2')?.textContent || 'Visualization';
+    
+    // Handle different visualization types
+    if (containerId === 'tav-tcv-chart-container' && window.tavTcvChartInstance) {
+        // Export Chart.js data
+        exportChartJsData(window.tavTcvChartInstance, visualizationTitle);
+    } else if (containerId === 'map-container') {
+        // Export map data
+        exportMapData(container, visualizationTitle);
+    } else if (containerId === 'sankey-chart-container') {
+        // Export Sankey data
+        exportSankeyData(container, visualizationTitle);
+    } else if (containerId === 'circular-dendrogram-container') {
+        // Export dendrogram data
+        exportDendrogramData(container, visualizationTitle);
+    } else if (containerId === 'naics-donut-chart-container' || containerId === 'share-of-wallet-container') {
+        // Export donut chart data
+        exportDonutData(container, visualizationTitle);
+    } else {
+        // Generic export
+        alert(`Export functionality for ${visualizationTitle} is not implemented yet.`);
+    }
+}
+
+// Export Chart.js data
+function exportChartJsData(chartInstance, title) {
+    if (!chartInstance || !chartInstance.data) {
+        alert("No chart data available to export");
+        return;
+    }
+    
+    // Extract data from Chart.js instance
+    const datasets = chartInstance.data.datasets || [];
+    const labels = chartInstance.data.labels || [];
+    
+    // Prepare CSV data
+    let csvContent = 'data:text/csv;charset=utf-8,';
+    
+    // Add header row
+    let headerRow = ['Category'];
+    datasets.forEach(dataset => {
+        headerRow.push(dataset.label || 'Value');
+    });
+    csvContent += headerRow.join(',') + '\n';
+    
+    // Add data rows
+    labels.forEach((label, index) => {
+        let row = [label];
+        
+        datasets.forEach(dataset => {
+            row.push(dataset.data[index] || '');
+        });
+        
+        csvContent += row.join(',') + '\n';
+    });
+    
+    // Create and trigger download
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `${title.replace(/\s+/g, '_').toLowerCase()}_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+// Export map data
+function exportMapData(container, title) {
+    // For this demo, we'll simulate exporting map data
+    alert(`The map data would be exported as a CSV with state-level statistics.`);
+}
+
+// Export Sankey data
+function exportSankeyData(container, title) {
+    // For this demo, we'll simulate exporting Sankey data
+    alert(`The Sankey data would be exported as a CSV with source, target, and value columns.`);
+}
+
+// Export dendrogram data
+function exportDendrogramData(container, title) {
+    // For this demo, we'll simulate exporting dendrogram data
+    alert(`The hierarchical data would be exported as a CSV with parent-child relationships.`);
+}
+
+// Export donut chart data
+function exportDonutData(container, title) {
+    // For this demo, we'll simulate exporting donut chart data
+    alert(`The donut chart data would be exported as a CSV with category and value columns.`);
+}
+
+// Enhance tooltips with additional data
+function enhanceTooltips() {
+    // This would require specific implementations for each chart type
+    // For this demo, we'll add an observer to enhance tooltips as they're created
+    
+    // Create a mutation observer to watch for tooltip creation
+    const tooltipObserver = new MutationObserver(mutations => {
+        mutations.forEach(mutation => {
+            mutation.addedNodes.forEach(node => {
+                if (node.nodeType === 1 && 
+                    (node.classList.contains('chart-tooltip') || 
+                     node.classList.contains('tooltip') ||
+                     node.id === 'chartjs-tooltip')) {
+                    
+                    // Enhance this tooltip
+                    enhanceTooltipElement(node);
+                }
+            });
+        });
+    });
+    
+    // Start observing the document body for tooltip additions
+    tooltipObserver.observe(document.body, { childList: true, subtree: true });
+}
+
+// Enhance a tooltip element
+function enhanceTooltipElement(tooltip) {
+    // Add a subtle shadow
+    tooltip.style.boxShadow = 'var(--shadow-md)';
+    
+    // Add a border
+    tooltip.style.border = '1px solid var(--color-border)';
+    
+    // Ensure good contrast
+    tooltip.style.backgroundColor = 'var(--color-surface)';
+    tooltip.style.color = 'var(--color-text-primary)';
+    
+    // Add rounded corners
+    tooltip.style.borderRadius = 'var(--border-radius-md)';
+    
+    // Ensure good padding
+    tooltip.style.padding = '10px';
+    
+    // Check if this is a Chart.js tooltip
+    if (tooltip.id === 'chartjs-tooltip') {
+        // Enhance Chart.js tooltip
+        tooltip.style.fontFamily = 'var(--font-body)';
+        tooltip.style.fontSize = '12px';
+    }
+}
+
+// Synchronize filtering across visualizations
+function synchronizeFiltering() {
+    // This would implement cross-filtering where selection in one visualization
+    // affects the data shown in others
+    // For this demo implementation, we'll just use the existing filter mechanisms
+    
+    // The actual implementation would require event listeners for each visualization's
+    // selection events and then updating the global filter state
+}
+
+// Add annotation capability for presentations
+function addAnnotationCapability() {
+    // This would add the ability to annotate visualizations during presentations
+    // For a full implementation, this would require significant canvas manipulation
+    
+    // For this demo, we'll just add a toggle button to the presentation controls
+    
+    const presentationControls = document.querySelector('.presentation-controls');
+    if (presentationControls) {
+        const annotateButton = document.createElement('button');
+        annotateButton.className = 'presentation-mode-button annotation-button';
+        annotateButton.innerHTML = `
+            <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+                <path d="M12 19l7-7 3 3-7 7-3-3z"></path>
+                <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path>
+                <path d="M2 2l7.586 7.586"></path>
+                <circle cx="11" cy="11" r="2"></circle>
+            </svg>
+            Annotate
+        `;
+        
+        // Add click handler
+        annotateButton.addEventListener('click', function() {
+            alert("Annotation mode would allow drawing on the dashboard during presentations. This feature is not implemented in the demo.");
+        });
+        
+        // Add button to controls
+        presentationControls.appendChild(annotateButton);
+    }
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    // Original initialization code will run first
+    // Then our enhanced features will be initialized with a delay
+});
