@@ -520,26 +520,7 @@
           <li>Loading insights...</li>
         </ul>
       </section>
-            <div class="grid-layout">
-        <div class="grid-col-8">
-          <div class="chart-container">
-            <h2>Top Sub-Agencies by Spending</h2>
-            <canvas id="sub-agency-chart"></canvas>
-          </div>
-        </div>
-
-	          <div class="grid-col-4">
-          <div class="chart-container">
-            <h2>Financial Summary</h2>
-            <div style="text-align: center; padding-top: 40px;">
-              <div style="font-size: 32px; font-weight: 700; margin-bottom: 16px; color: var(--color-primary);" id="financial-summary-value">--</div>
-              <p style="color: var(--color-text-secondary); font-size: 14px; margin-top: 32px;" id="financial-summary-text">
-                Loading...
-              </p>
-            </div>
-          </div>
-        </div>
-		      </div></br>
+      
       <section class="quick-intel">
         <div class="stat-card">
           <div class="stat-label">Top Prime</div>
@@ -578,6 +559,21 @@
         </div>
       </div>
       
+      <div class="grid-layout">
+        <div class="grid-col-6">
+          <div class="chart-container">
+            <h2>Award Category Distribution</h2>
+            <canvas id="award-category-chart"></canvas>
+          </div>
+        </div>
+        <div class="grid-col-6">
+          <div class="chart-container">
+            <h2>Object Class Distribution</h2>
+            <canvas id="object-class-chart"></canvas>
+          </div>
+        </div>
+      </div>
+      
       <div class="table-container">
         <h2>Top 10 Prime Contractors</h2>
         <table>
@@ -606,9 +602,27 @@
             </div>
           </div>
         </div>
-
+        <div class="grid-col-4">
+          <div class="chart-container">
+            <h2>Financial Summary</h2>
+            <div style="text-align: center; padding-top: 40px;">
+              <div style="font-size: 32px; font-weight: 700; margin-bottom: 16px; color: var(--color-primary);" id="financial-summary-value">--</div>
+              <p style="color: var(--color-text-secondary); font-size: 14px; margin-top: 32px;" id="financial-summary-text">
+                Loading...
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
-     
+      
+      <div class="grid-layout">
+        <div class="grid-col-12">
+          <div class="chart-container">
+            <h2>Top Sub-Agencies by Spending</h2>
+            <canvas id="sub-agency-chart"></canvas>
+          </div>
+        </div>
+      </div>
     </div>
     
     <footer class="footer">
@@ -1007,212 +1021,199 @@
      updateNaicsChart(naicsData);
    }
    
-// Update Award Category chart
-function updateAwardCategoryChart(data) {
-  if (!data || data.length === 0) {
-    console.log("No award category data to display");
-    return;
-  }
-  
-  // Check if the element exists in the DOM
-  const chartElement = document.getElementById('award-category-chart');
-  if (!chartElement) {
-    console.log("Award category chart element not found - skipping chart update");
-    return;
-  }
-  
-  const ctx = chartElement.getContext('2d');
-  
-  // Process data
-  const labels = data.map(item => formatCategoryDisplay(item.category));
-  const values = data.map(item => item.aggregated_amount);
-  
-  // Generate colors from CSS variables
-  const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--color-primary').trim() || '#9A949B';
-  const secondaryColor = getComputedStyle(document.documentElement).getPropertyValue('--color-secondary').trim() || '#7A747B';
-  const tertiaryColor = getComputedStyle(document.documentElement).getPropertyValue('--color-tertiary').trim() || '#B6B1B7';
-  
-  // Generate a palette based on our theme colors
-  const backgroundColors = [
-    primaryColor,
-    secondaryColor,
-    tertiaryColor,
-    lightenDarkenColor(primaryColor, 20),
-    lightenDarkenColor(secondaryColor, 20),
-    lightenDarkenColor(tertiaryColor, 20),
-    lightenDarkenColor(primaryColor, -20),
-    lightenDarkenColor(secondaryColor, -20),
-    lightenDarkenColor(tertiaryColor, -20),
-  ];
-  
-  // Destroy existing chart if it exists
-  if (awardCategoryChartInstance) {
-    awardCategoryChartInstance.destroy();
-  }
-  
-  // Create new chart
-  awardCategoryChartInstance = new Chart(ctx, {
-    type: 'doughnut',
-    data: {
-      labels: labels,
-      datasets: [{
-        data: values,
-        backgroundColor: backgroundColors.slice(0, values.length),
-        borderColor: getComputedStyle(document.documentElement).getPropertyValue('--color-surface').trim() || '#FFFFFF',
-        borderWidth: 1
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          position: 'right',
-          labels: {
-            generateLabels: function(chart) {
-              const data = chart.data;
-              if (data.labels.length && data.datasets.length) {
-                return data.labels.map(function(label, i) {
-                  const meta = chart.getDatasetMeta(0);
-                  const style = meta.controller.getStyle(i);
-                  const total = data.datasets[0].data.reduce((sum, val) => sum + val, 0);
-                  const percentage = Math.round((data.datasets[0].data[i] / total) * 100);
-                  
-                  return {
-                    text: `${label} - ${percentage}%`,
-                    fillStyle: style.backgroundColor,
-                    strokeStyle: style.borderColor,
-                    lineWidth: style.borderWidth,
-                    hidden: isNaN(data.datasets[0].data[i]) || meta.data[i].hidden,
-                    index: i
-                  };
-                });
-              }
-              return [];
-            }
-          }
-        },
-        tooltip: {
-          callbacks: {
-            label: function(context) {
-              const label = context.label || '';
-              const value = context.raw || 0;
-              const total = context.dataset.data.reduce((sum, val) => sum + val, 0);
-              const percentage = Math.round((value / total) * 100);
-              return `${label}: ${formatCurrency(value)} (${percentage}%)`;
-            }
-          }
-        }
-      }
-    }
-  });
-}
-
-// Update Object Class chart
-function updateObjectClassChart(data) {
-  if (!data || data.length === 0) {
-    console.log("No object class data to display");
-    return;
-  }
-  
-  // Check if the element exists in the DOM
-  const chartElement = document.getElementById('object-class-chart');
-  if (!chartElement) {
-    console.log("Object class chart element not found - skipping chart update");
-    return;
-  }
-  
-  const ctx = chartElement.getContext('2d');
-  
-  // Process data - limit to top 8 for readability
-  const sortedData = [...data].sort((a, b) => b.obligated_amount - a.obligated_amount).slice(0, 8);
-  
-  const labels = sortedData.map(item => {
-    const name = item.name || item.object_class_name || 'Unknown';
-    return name.length > 20 ? name.substring(0, 18) + '...' : name;
-  });
-  
-  const values = sortedData.map(item => item.obligated_amount);
-  
-  // Generate a palette based on our theme colors
-  const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--color-primary').trim() || '#9A949B';
-  const secondaryColor = getComputedStyle(document.documentElement).getPropertyValue('--color-secondary').trim() || '#7A747B';
-  const tertiaryColor = getComputedStyle(document.documentElement).getPropertyValue('--color-tertiary').trim() || '#B6B1B7';
-  
-  const backgroundColors = [
-    primaryColor,
-    secondaryColor,
-    tertiaryColor,
-    lightenDarkenColor(primaryColor, 20),
-    lightenDarkenColor(secondaryColor, 20),
-    lightenDarkenColor(tertiaryColor, 20),
-    lightenDarkenColor(primaryColor, -20),
-    lightenDarkenColor(secondaryColor, -20),
-  ];
-  
-  // Destroy existing chart if it exists
-  if (objectClassChartInstance) {
-    objectClassChartInstance.destroy();
-  }
-  
-  // Create new chart
-  objectClassChartInstance = new Chart(ctx, {
-    type: 'doughnut',
-    data: {
-      labels: labels,
-      datasets: [{
-        data: values,
-        backgroundColor: backgroundColors,
-        borderColor: getComputedStyle(document.documentElement).getPropertyValue('--color-surface').trim() || '#FFFFFF',
-        borderWidth: 1
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          position: 'right',
-          labels: {
-            generateLabels: function(chart) {
-              const data = chart.data;
-              if (data.labels.length && data.datasets.length) {
-                // Limit label length and add ellipsis if too long
-                return data.labels.map(function(label, i) {
-                  const meta = chart.getDatasetMeta(0);
-                  const style = meta.controller.getStyle(i);
-                  const total = data.datasets[0].data.reduce((sum, val) => sum + val, 0);
-                  const percentage = Math.round((data.datasets[0].data[i] / total) * 100);
-                  
-                  return {
-                    text: `${label} - ${percentage}%`,
-                    fillStyle: style.backgroundColor,
-                    strokeStyle: style.borderColor,
-                    lineWidth: style.borderWidth,
-                    hidden: isNaN(data.datasets[0].data[i]) || meta.data[i].hidden,
-                    index: i
-                  };
-                });
-              }
-              return [];
-            }
-          }
-        },
-        tooltip: {
-          callbacks: {
-            label: function(context) {
-              const label = context.label || '';
-              const value = context.raw || 0;
-              const total = context.dataset.data.reduce((sum, val) => sum + val, 0);
-              const percentage = Math.round((value / total) * 100);
-              return `${label}: ${formatCurrency(value)} (${percentage}%)`;
-            }
-          }
-        }
-      }
-    }
-  });
-}
+   // Update Award Category chart
+   function updateAwardCategoryChart(data) {
+     if (!data || data.length === 0) {
+       console.log("No award category data to display");
+       return;
+     }
+     
+     const ctx = document.getElementById('award-category-chart').getContext('2d');
+     
+     // Process data
+     const labels = data.map(item => formatCategoryDisplay(item.category));
+     const values = data.map(item => item.aggregated_amount);
+     
+     // Generate colors from CSS variables
+     const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--color-primary').trim() || '#9A949B';
+     const secondaryColor = getComputedStyle(document.documentElement).getPropertyValue('--color-secondary').trim() || '#7A747B';
+     const tertiaryColor = getComputedStyle(document.documentElement).getPropertyValue('--color-tertiary').trim() || '#B6B1B7';
+     
+     // Generate a palette based on our theme colors
+     const backgroundColors = [
+       primaryColor,
+       secondaryColor,
+       tertiaryColor,
+       lightenDarkenColor(primaryColor, 20),
+       lightenDarkenColor(secondaryColor, 20),
+       lightenDarkenColor(tertiaryColor, 20),
+       lightenDarkenColor(primaryColor, -20),
+       lightenDarkenColor(secondaryColor, -20),
+       lightenDarkenColor(tertiaryColor, -20),
+     ];
+     
+     // Destroy existing chart if it exists
+     if (awardCategoryChartInstance) {
+       awardCategoryChartInstance.destroy();
+     }
+     
+     // Create new chart
+     awardCategoryChartInstance = new Chart(ctx, {
+       type: 'doughnut',
+       data: {
+         labels: labels,
+         datasets: [{
+           data: values,
+           backgroundColor: backgroundColors.slice(0, values.length),
+           borderColor: getComputedStyle(document.documentElement).getPropertyValue('--color-surface').trim() || '#FFFFFF',
+           borderWidth: 1
+         }]
+       },
+       options: {
+         responsive: true,
+         maintainAspectRatio: false,
+         plugins: {
+           legend: {
+             position: 'right',
+             labels: {
+               generateLabels: function(chart) {
+                 const data = chart.data;
+                 if (data.labels.length && data.datasets.length) {
+                   return data.labels.map(function(label, i) {
+                     const meta = chart.getDatasetMeta(0);
+                     const style = meta.controller.getStyle(i);
+                     const total = data.datasets[0].data.reduce((sum, val) => sum + val, 0);
+                     const percentage = Math.round((data.datasets[0].data[i] / total) * 100);
+                     
+                     return {
+                       text: `${label} - ${percentage}%`,
+                       fillStyle: style.backgroundColor,
+                       strokeStyle: style.borderColor,
+                       lineWidth: style.borderWidth,
+                       hidden: isNaN(data.datasets[0].data[i]) || meta.data[i].hidden,
+                       index: i
+                     };
+                   });
+                 }
+                 return [];
+               }
+             }
+           },
+           tooltip: {
+             callbacks: {
+               label: function(context) {
+                 const label = context.label || '';
+                 const value = context.raw || 0;
+                 const total = context.dataset.data.reduce((sum, val) => sum + val, 0);
+                 const percentage = Math.round((value / total) * 100);
+                 return `${label}: ${formatCurrency(value)} (${percentage}%)`;
+               }
+             }
+           }
+         }
+       }
+     });
+   }
+   
+   // Update Object Class chart
+   function updateObjectClassChart(data) {
+     if (!data || data.length === 0) {
+       console.log("No object class data to display");
+       return;
+     }
+     
+     const ctx = document.getElementById('object-class-chart').getContext('2d');
+     
+     // Process data - limit to top 8 for readability
+     const sortedData = [...data].sort((a, b) => b.obligated_amount - a.obligated_amount).slice(0, 8);
+     
+     const labels = sortedData.map(item => {
+       const name = item.name || item.object_class_name || 'Unknown';
+       return name.length > 20 ? name.substring(0, 18) + '...' : name;
+     });
+     
+     const values = sortedData.map(item => item.obligated_amount);
+     
+     // Generate a palette based on our theme colors
+     const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--color-primary').trim() || '#9A949B';
+     const secondaryColor = getComputedStyle(document.documentElement).getPropertyValue('--color-secondary').trim() || '#7A747B';
+     const tertiaryColor = getComputedStyle(document.documentElement).getPropertyValue('--color-tertiary').trim() || '#B6B1B7';
+     
+     const backgroundColors = [
+       primaryColor,
+       secondaryColor,
+       tertiaryColor,
+       lightenDarkenColor(primaryColor, 20),
+       lightenDarkenColor(secondaryColor, 20),
+       lightenDarkenColor(tertiaryColor, 20),
+       lightenDarkenColor(primaryColor, -20),
+       lightenDarkenColor(secondaryColor, -20),
+     ];
+     
+     // Destroy existing chart if it exists
+     if (objectClassChartInstance) {
+       objectClassChartInstance.destroy();
+     }
+     
+     // Create new chart
+     objectClassChartInstance = new Chart(ctx, {
+       type: 'doughnut',
+       data: {
+         labels: labels,
+         datasets: [{
+           data: values,
+           backgroundColor: backgroundColors,
+           borderColor: getComputedStyle(document.documentElement).getPropertyValue('--color-surface').trim() || '#FFFFFF',
+           borderWidth: 1
+         }]
+       },
+       options: {
+         responsive: true,
+         maintainAspectRatio: false,
+         plugins: {
+           legend: {
+             position: 'right',
+             labels: {
+               generateLabels: function(chart) {
+                 const data = chart.data;
+                 if (data.labels.length && data.datasets.length) {
+                   // Limit label length and add ellipsis if too long
+                   return data.labels.map(function(label, i) {
+                     const meta = chart.getDatasetMeta(0);
+                     const style = meta.controller.getStyle(i);
+                     const total = data.datasets[0].data.reduce((sum, val) => sum + val, 0);
+                     const percentage = Math.round((data.datasets[0].data[i] / total) * 100);
+                     
+                     return {
+                       text: `${label} - ${percentage}%`,
+                       fillStyle: style.backgroundColor,
+                       strokeStyle: style.borderColor,
+                       lineWidth: style.borderWidth,
+                       hidden: isNaN(data.datasets[0].data[i]) || meta.data[i].hidden,
+                       index: i
+                     };
+                   });
+                 }
+                 return [];
+               }
+             }
+           },
+           tooltip: {
+             callbacks: {
+               label: function(context) {
+                 const label = context.label || '';
+                 const value = context.raw || 0;
+                 const total = context.dataset.data.reduce((sum, val) => sum + val, 0);
+                 const percentage = Math.round((value / total) * 100);
+                 return `${label}: ${formatCurrency(value)} (${percentage}%)`;
+               }
+             }
+           }
+         }
+       }
+     });
+   }
+   
    // Update Sub-Agency chart
    function updateSubAgencyChart(data) {
      if (!data || data.length === 0) {
@@ -1292,17 +1293,9 @@ function updateObjectClassChart(data) {
    
    // Update Contractors chart
    function updateContractorsChart(data) {
-     // If no real data, use placeholder data
      if (!data || data.length === 0) {
-       data = [
-         { name: 'Contractor A', total_value: 1200000000 },
-         { name: 'Contractor B', total_value: 980000000 },
-         { name: 'Contractor C', total_value: 850000000 },
-         { name: 'Contractor D', total_value: 730000000 },
-         { name: 'Contractor E', total_value: 680000000 },
-         { name: 'Contractor F', total_value: 540000000 },
-         { name: 'Contractor G', total_value: 490000000 }
-       ];
+       console.log("No contractor data to display");
+       return;
      }
      
      // Limit to top 7 contractors
@@ -1386,31 +1379,30 @@ function updateObjectClassChart(data) {
        tr.innerHTML = `
          <td>${contractor.name || 'Unknown'}</td>
          <td class="number-cell">${formatCurrency(contractor.total_value)}</td>
-         <td class="number-cell">${contractor.awards || Math.floor(Math.random() * 50) + 10}</td>
-         <td>${contractor.primary_naics || 'Multiple NAICS'}</td>
+         <td class="number-cell">${contractor.awards || 'N/A'}</td>
+         <td>${contractor.primary_naics || 'N/A'}</td>
        `;
        contractorsTable.appendChild(tr);
      });
    }
    
-   // Update NAICS chart
-   function updateNaicsChart(data) {
-     // If no real data, use placeholder data
-     if (!data || data.length === 0) {
-       data = [
-         { code: '541512', percentage: 45, description: 'Computer Systems Design' },
-         { code: '541611', percentage: 27, description: 'Admin & Management Consulting' },
-         { code: '541519', percentage: 15, description: 'Other Computer Related Services' },
-         { code: '541513', percentage: 8, description: 'Computer Facilities Management' },
-         { code: '541330', percentage: 5, description: 'Engineering Services' }
-       ];
-     }
-     
-     const ctx = document.getElementById('naics-chart').getContext('2d');
-     
-     // Process data
-     const labels = data.map(item => item.code);
-     const values = data.map(item => item.percentage);
+function updateNaicsChart(data) {
+  if (!data || data.length === 0) {
+    console.log("No NAICS data to display");
+    // Clear the chart
+    if (naicsChartInstance) {
+      naicsChartInstance.destroy();
+    }
+    // Update the NAICS stat card to show no data
+    document.getElementById('top-naics').textContent = 'No data';
+    return;
+  }
+  
+  const ctx = document.getElementById('naics-chart').getContext('2d');
+  
+  // Process data
+  const labels = data.map(item => item.code);
+  const values = data.map(item => item.percentage);
      
      // Generate colors from CSS variables
      const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--color-primary').trim() || '#9A949B';
@@ -1521,7 +1513,7 @@ function updateObjectClassChart(data) {
    }
    
    // Generate insights from data
-   function generateInsights(agencyOverview, budgetData, objectClassData, awardCategoryData, subAgencyData, spendingByGeoData, contractorsData, naicsData) {
+   function generateInsights(agencyOverview, budgetData, objectClassData, awardCategoryData, subAgencyData, spendingByGeoData, contractorsData, naicsData, expiringContracts, topSubcontractor) {
      // Get agency and fiscal year info
      const isSubAgency = subAgencySelect.value && subAgencySelect.value !== "";
      let agencyName;
@@ -1619,14 +1611,13 @@ function updateObjectClassChart(data) {
        insightsList.appendChild(subAgencyInsight);
      }
      
-     // Placeholder for expiring contracts
-     const expiringCount = Math.floor(Math.random() * 200) + 30;
-     const expiringValue = formatCurrency((Math.random() * 1000000000) + 200000000);
-     document.getElementById('expiring-stats').textContent = `${expiringCount} awards | ${expiringValue}`;
+     // Update expiring contracts with real data
+     document.getElementById('expiring-stats').textContent = expiringContracts ? 
+       `${expiringContracts.count} awards | ${formatCurrency(expiringContracts.value)}` : 
+       'No data';
      
-     // Top Sub placeholder
-     document.getElementById('top-sub').textContent = contractorsData && contractorsData.length > 1 ? 
-       contractorsData[1].name : "ManTech";
+     // Update top subcontractor with real data
+     document.getElementById('top-sub').textContent = topSubcontractor || 'No data';
      
      // Financial summary box
      if (budgetData && budgetData.agency_budgetary_resources) {
@@ -1635,57 +1626,219 @@ function updateObjectClassChart(data) {
      }
    }
    
-   // Fetch contract data - this would be a real API call in production
+   // Real API call for contract data
    async function fetchContractData(agencyName, fiscalYear, isSubAgency) {
-     // In a real implementation, this would call the USAspending Awards API
-     // For now we'll generate placeholder data
-     return new Promise(resolve => {
-       setTimeout(() => {
-         // Generate random contractor data
-         const contractorNames = [
-           'Booz Allen Hamilton', 'SAIC', 'Leidos', 'Peraton', 'General Dynamics IT',
-           'ManTech', 'Accenture Federal', 'Maximus', 'CGI Federal', 'Red River', 
-           'Deloitte', 'IBM', 'Northrop Grumman', 'Raytheon', 'CACI'
-         ];
-         
-         const naicsCodes = [
-           { code: '541512', description: 'Computer Systems Design' },
-           { code: '541611', description: 'Admin & Management Consulting' },
-           { code: '541519', description: 'Other Computer Related Services' },
-           { code: '541513', description: 'Computer Facilities Management' },
-           { code: '541330', description: 'Engineering Services' },
-           { code: '541990', description: 'Other Professional Services' }
-         ];
-         
-         // Randomly shuffle and assign values
-         const shuffledContractors = [...contractorNames].sort(() => 0.5 - Math.random());
-         const contractors = shuffledContractors.slice(0, 10).map((name, index) => {
-           const baseValue = 1400000000 - (index * 120000000);
-           const randomFactor = Math.random() * 0.3 + 0.85; // 0.85 to 1.15
-           return {
-             name,
-             total_value: baseValue * randomFactor,
-             awards: Math.floor(Math.random() * 80) + 20,
-             primary_naics: naicsCodes[Math.floor(Math.random() * naicsCodes.length)].code + ' - ' + 
-                           naicsCodes[Math.floor(Math.random() * naicsCodes.length)].description
-           };
-         });
-         
-         // Generate NAICS distribution
-         const naics = naicsCodes.map((item, index) => {
-           return {
-             code: item.code,
-             description: item.description,
-             percentage: index === 0 ? 45 : (index === 1 ? 27 : (index === 2 ? 15 : (index === 3 ? 8 : 5)))
-           };
-         });
-         
-         resolve({
-           contractors,
-           naics
-         });
-       }, 300);
-     });
+     try {
+       // Determine the appropriate agency identifier to use
+       let agencyIdentifier, agencyType;
+       
+       if (isSubAgency) {
+         agencyIdentifier = subAgencySelect.options[subAgencySelect.selectedIndex].dataset.name;
+         agencyType = "subtier";
+       } else {
+         agencyIdentifier = agencySelect.options[agencySelect.selectedIndex].textContent.split(' (')[0];
+         agencyType = "toptier";
+       }
+       
+       // Create payload for the prime awards search (to get contractors)
+       const contractorsPayload = {
+         filters: {
+           time_period: [{ 
+             "start_date": `${parseInt(fiscalYear) - 1}-10-01`, 
+             "end_date": `${fiscalYear}-09-30` 
+           }],
+           agencies: [{"type": "awarding", "tier": agencyType, "name": agencyIdentifier}],
+           award_type_codes: ["A", "B", "C", "D"] // Contract award types
+         },
+         fields: [
+           "Award ID", 
+           "Recipient Name", 
+           "Description", 
+           "Total Obligation", 
+           "NAICS Code", 
+           "NAICS Description",
+           "Number of Offers Received"
+         ],
+         page: 1,
+         limit: 100,
+         sort: "Total Obligation",
+         order: "desc",
+         subawards: false
+       };
+       
+       // Get prime contractors data
+       const contractorsResponse = await makeApiCall(
+         `${BASE_URL}/api/v2/search/spending_by_award/`, 
+         {
+           method: 'POST',
+           headers: { 'Content-Type': 'application/json' },
+           body: JSON.stringify(contractorsPayload)
+         }
+       );
+       
+       // Process contractors data
+       const contractors = contractorsResponse.results.map(award => {
+         return {
+           name: award["Recipient Name"] || "Unknown",
+           total_value: award["Total Obligation"] || 0,
+           awards: award["Number of Offers Received"] || 1,
+           primary_naics: (award["NAICS Code"] ? 
+             `${award["NAICS Code"]} - ${award["NAICS Description"] || ""}` : 
+             "Not Specified")
+         };
+       });
+       
+// Create payload for NAICS distribution 
+const naicsPayload = {
+  filters: {
+    time_period: [{ 
+      "start_date": `${parseInt(fiscalYear) - 1}-10-01`, 
+      "end_date": `${fiscalYear}-09-30` 
+    }],
+    agencies: [{"type": "awarding", "tier": agencyType, "name": agencyIdentifier}],
+    award_type_codes: ["A", "B", "C", "D"] // Contract award types
+  },
+  category: "naics",
+  page: 1,
+  limit: 10,
+  subawards: false
+};
+
+// Get NAICS distribution data
+const naicsResponse = await makeApiCall(
+  `${BASE_URL}/api/v2/search/spending_by_category/`, 
+  {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(naicsPayload)
+  }
+);
+
+// Process NAICS data
+let naicsData = [];
+if (naicsResponse.results && naicsResponse.results.length > 0) {
+  // Calculate total for percentage
+  const totalNaicsAmount = naicsResponse.results.reduce((sum, item) => sum + (item.amount || 0), 0);
+  
+  naicsData = naicsResponse.results.map(item => {
+    const percentage = totalNaicsAmount > 0 ? 
+      Math.round((item.amount / totalNaicsAmount) * 100) : 0;
+    
+    return {
+      code: item.code || item.naics_code || item.id || "Unknown",
+      description: item.name || "",
+      percentage: percentage
+    };
+  });
+}
+       
+       // Create payload for expiring contracts
+       const expiringContractsPayload = {
+         filters: {
+           time_period: [{ 
+             "start_date": `${parseInt(fiscalYear) - 1}-10-01`, 
+             "end_date": `${fiscalYear}-09-30` 
+           }],
+           agencies: [{"type": "awarding", "tier": agencyType, "name": agencyIdentifier}],
+           award_type_codes: ["A", "B", "C", "D"], // Contract award types
+           period_of_performance_end_date: {
+             start_date: new Date().toISOString().split('T')[0],
+             end_date: new Date(new Date().setMonth(new Date().getMonth() + 6)).toISOString().split('T')[0]
+           }
+         },
+         page: 1,
+         limit: 1,
+         sort: "Award Amount",
+         order: "desc",
+         subawards: false
+       };
+       
+       // Get expiring contracts count and value
+       const expiringContractsResponse = await makeApiCall(
+         `${BASE_URL}/api/v2/search/spending_by_award/`, 
+         {
+           method: 'POST',
+           headers: { 'Content-Type': 'application/json' },
+           body: JSON.stringify(expiringContractsPayload)
+         }
+       );
+       
+       const expiringContracts = {
+         count: expiringContractsResponse.page_metadata?.total || 0,
+         value: expiringContractsResponse.results.reduce((sum, award) => sum + (award["Award Amount"] || 0), 0)
+       };
+       
+       return {
+         contractors,
+         naics: naicsData,
+         expiringContracts
+       };
+     } catch (error) {
+       console.error("Error fetching contract data:", error);
+       return {
+         contractors: [],
+         naics: [],
+         expiringContracts: { count: 0, value: 0 }
+       };
+     }
+   }
+   
+   // Fetch subcontractor data from real API
+   async function fetchSubcontractorData(agencyName, fiscalYear, isSubAgency) {
+     try {
+       // Determine the appropriate agency identifier to use
+       let agencyIdentifier, agencyType;
+       
+       if (isSubAgency) {
+         agencyIdentifier = subAgencySelect.options[subAgencySelect.selectedIndex].dataset.name;
+         agencyType = "subtier";
+       } else {
+         agencyIdentifier = agencySelect.options[agencySelect.selectedIndex].textContent.split(' (')[0];
+         agencyType = "toptier";
+       }
+       
+       // Create payload for the subawards search
+       const subcontractorsPayload = {
+         filters: {
+           time_period: [{ 
+             "start_date": `${parseInt(fiscalYear) - 1}-10-01`, 
+             "end_date": `${fiscalYear}-09-30` 
+           }],
+           agencies: [{"type": "awarding", "tier": agencyType, "name": agencyIdentifier}],
+           award_type_codes: ["A", "B", "C", "D"] // Contract award types
+         },
+         fields: [
+           "Sub-Award ID", 
+           "Sub-Awardee Name", 
+           "Sub-Award Amount"
+         ],
+         page: 1,
+         limit: 10,
+         sort: "Sub-Award Amount",
+         order: "desc",
+         subawards: true
+       };
+       
+       // Get subcontractors data
+       const subcontractorsResponse = await makeApiCall(
+         `${BASE_URL}/api/v2/search/spending_by_award/`, 
+         {
+           method: 'POST',
+           headers: { 'Content-Type': 'application/json' },
+           body: JSON.stringify(subcontractorsPayload)
+         }
+       );
+       
+       // Return the top subcontractor
+       if (subcontractorsResponse.results && subcontractorsResponse.results.length > 0) {
+         return subcontractorsResponse.results[0]["Sub-Awardee Name"] || "No data";
+       }
+       
+       return "No data";
+     } catch (error) {
+       console.error("Error fetching subcontractor data:", error);
+       return "No data";
+     }
    }
    
    // Fetch agency snapshot
@@ -1787,7 +1940,8 @@ function updateObjectClassChart(data) {
          awardCategoryData,
          subAgencyDataResponse,
          spendingByGeoData,
-         contractData
+         contractData,
+         topSubcontractor
        ] = await Promise.all([
          makeApiCall(agencyOverviewEndpoint),
          makeApiCall(budgetaryResourcesEndpoint),
@@ -1795,7 +1949,8 @@ function updateObjectClassChart(data) {
          makeApiCall(awardCategoryEndpoint),
          makeApiCall(subAgencyEndpoint),
          makeApiCall(spendingByGeoEndpoint, spendingByGeoOptions),
-         fetchContractData(agencyName, fiscalYear, isSubAgency) // Mock function for placeholder data
+         fetchContractData(agencyName, fiscalYear, isSubAgency),
+         fetchSubcontractorData(agencyName, fiscalYear, isSubAgency)
        ]);
        
        // Process the data
@@ -1860,7 +2015,7 @@ function updateObjectClassChart(data) {
        }
        
        const processedSpendingByGeoData = spendingByGeoData.results || [];
-       const { contractors, naics } = contractData;
+       const { contractors, naics, expiringContracts } = contractData;
        
        // Update charts
        updateCharts(
@@ -1883,7 +2038,9 @@ function updateObjectClassChart(data) {
          processedSubAgencyData,
          processedSpendingByGeoData,
          contractors,
-         naics
+         naics,
+         expiringContracts,
+         topSubcontractor
        );
        
        // Show the data
