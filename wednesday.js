@@ -55,8 +55,7 @@ let tavTcvChartInstance = null; // Store chart instance
 let isLoading = false;
 let selectedAgencies = []; // List of selected agency IDs
 let chartData = []; // Store chart data globally
-let currentSearchTerm = ''
-
+let currentSearchTerm = '';
 // Field mapping to normalize field names between data sources
 const fieldMap = {
     // Agency fields
@@ -162,6 +161,7 @@ function parseSafeFloat(value) {
      const num = parseFloat(cleanedString);
      return isNaN(num) ? 0 : num;
 }
+
 function parseDate(dateString) {
     if (!dateString || typeof dateString !== 'string') return null;
     
@@ -210,6 +210,7 @@ function parseDate(dateString) {
         return null;
     }
 }
+
 function calculateDurationDays(startDateStr, endDateStr) {
     const start = parseDate(startDateStr);
     const end = parseDate(endDateStr);
@@ -227,6 +228,7 @@ function calculateDurationDays(startDateStr, endDateStr) {
         return diffDays > 0 ? diffDays : 0; // Ensure non-negative result
     }
 }
+
 function truncateText(text, maxLength) {
     if (!text) return '';
     const stringText = String(text);
@@ -249,7 +251,7 @@ function cleanupTooltips() {
     
     // Also clean up any Chart.js tooltips that might be created
     d3.select("body").selectAll(".chartjs-tooltip").remove();
-	d3.select("body").selectAll(".chart-tooltip").remove(); // Specifically for your enhanced donut charts
+    d3.select("body").selectAll(".chart-tooltip").remove(); // Specifically for your enhanced donut charts
         
     const chartjsTooltip = document.getElementById('chartjs-tooltip');
     if (chartjsTooltip && chartjsTooltip.parentNode) {
@@ -267,6 +269,7 @@ function cleanupTooltips() {
         }
     });
 }
+
 function updateStatusBanner(message, type = 'info') {
     const banner = document.getElementById('status-banner');
     const statusMessage = document.getElementById('status-message');
@@ -331,6 +334,7 @@ function updateStatusBanner(message, type = 'info') {
         refreshButton.disabled = isLoading;
     }
 }
+
 function getCssVar(varName) {
   try {
     const value = getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
@@ -363,6 +367,7 @@ function getCssVar(varName) {
     return '#cccccc'; // Generic fallback
   }
 }
+
 function setLoading(containerId, isLoading, message = 'Loading...') {
     const container = document.getElementById(containerId);
     if (!container) return;
@@ -473,10 +478,8 @@ function displayNoData(containerId, message = "No data available for this view."
         tavTcvChartInstance = null;
     }
 }
-// In wednesday.js
-
 function fetchDataFromS3(dataset) {
-    return new Promise((resolve, reject) => { // MODIFICATION: Wrap in a Promise
+    return new Promise((resolve, reject) => {
         const csvUrl = `${S3_BASE_URL}${dataset.id}.csv`;
         console.log(`Loading data from URL: ${csvUrl}`);
 
@@ -491,15 +494,14 @@ function fetchDataFromS3(dataset) {
         .then(response => {
             if (!response.ok) {
                 const statusText = response.statusText || 'Unknown Error';
-                // MODIFICATION: Reject promise on error
                 reject(new Error(`Failed to fetch data: ${response.status} ${statusText}`)); 
-                return; // Important to return here after reject
+                return; 
             }
             return response.text();
         })
         .then(csvText => {
-            if (csvText === undefined) { // Check if response.text() resolved with undefined (e.g. from reject above)
-                 return; // Already handled by reject
+            if (csvText === undefined) {
+                 return; 
             }
             // Process the CSV data
             processDataset(dataset, Papa.parse(csvText, {
@@ -508,17 +510,15 @@ function fetchDataFromS3(dataset) {
                 skipEmptyLines: 'greedy',
                 transformHeader: header => header.trim()
             }).data);
-            resolve(); // MODIFICATION: Resolve the promise when done
+            resolve(); 
         })
         .catch(error => {
             console.error(`Error fetching dataset ${dataset.name}:`, error);
-            // updateStatusBanner is good, but also reject for the caller
-            // updateStatusBanner(`Error loading dataset: ${error.message}`, 'error'); 
-            // isLoading and refreshButton should be handled by the caller (loadSingleDataset)
-            reject(error); // MODIFICATION: Reject the promise on catch
+            reject(error); 
         });
     });
 }
+
 function updateDateDisplay() {
     // Get the elements
     const dateText = document.getElementById('date-text');
@@ -554,8 +554,6 @@ function updateDateDisplay() {
     
     timeText.textContent = timeString;
 }
-
-// --- Dropdown Population Functions ---
 function populateDropdown(selectElement, itemsSet, defaultOptionText = "All") {
     if (!selectElement) return;
     
@@ -614,7 +612,6 @@ function populateNaicsDropdown(selectElement, naicsMap) {
     }
 }
 
-// --- Initialize Dataset Selector ---
 function initializeDatasetSelector() {
     const agencySelect = document.getElementById('dataset-select');
     if (!agencySelect) {
@@ -730,9 +727,8 @@ function resetUIForNoDataset() {
     displayNoData('expiring-contracts-table-container', 'Select a dataset to view expiring contracts.');
     displayNoData('sankey-chart-container', 'Select a dataset to view award flow.');
     displayNoData('map-container', 'Select a dataset to view performance map.');
-	displayNoData('circular-dendrogram-container', 'Select a dataset to view nodes.');
-	displayNoData('bento-naics-distribution', 'Select a dataset to view NAICS distribution.'); // Or the inner chart container
-    
+    displayNoData('circular-dendrogram-container', 'Select a dataset to view nodes.');
+    displayNoData('bento-naics-distribution', 'Select a dataset to view NAICS distribution.'); 
 
     // Reset ARR estimator
     document.getElementById('arr-result').textContent = '$0 / yr';
@@ -784,8 +780,7 @@ function resetUIForNoDataset() {
         }
     }
 }
-// --- Enhanced Data Loading Functions ---
-async function loadSingleDataset(dataset) { // MODIFICATION: Make async
+async function loadSingleDataset(dataset) {
     if (!dataset || !dataset.id || isLoading) {
         console.warn("Load dataset cancelled. Already loading or invalid dataset provided.");
         if (!dataset) updateStatusBanner('Invalid dataset specified.', 'error');
@@ -800,14 +795,14 @@ async function loadSingleDataset(dataset) { // MODIFICATION: Make async
     updateStatusBanner(`Loading ${dataset.name} data...`, 'info');
     document.getElementById('refresh-button').disabled = true;
 
-    // Set loading states for containers (existing code)
+    // Set loading states for containers
     setLoading('contract-leaders-table-container', true, `Loading ${dataset.name} leader data...`);
     setLoading('tav-tcv-chart-container', true, `Loading ${dataset.name} TAV/TCV data...`);
     setLoading('expiring-contracts-table-container', true, `Loading ${dataset.name} expiring contracts...`);
     setLoading('sankey-chart-container', true, `Loading ${dataset.name} award flow...`);
     setLoading('map-container', true, `Loading ${dataset.name} performance data...`);
 
-    // Reset data based on dataset type (existing code)
+    // Reset data based on dataset type
     if (dataset.type === 'primes') {
         rawData.primes = [];
     } else {
@@ -819,7 +814,7 @@ async function loadSingleDataset(dataset) { // MODIFICATION: Make async
         tavTcvChartInstance = null;
     }
 
-    // Clear ARR result and reset filters (existing code)
+    // Clear ARR result and reset filters
     document.getElementById('arr-result').textContent = '$0 / yr';
     document.getElementById('arr-loading').style.display = 'none';
     document.getElementById('arr-error').style.display = 'none';
@@ -832,19 +827,16 @@ async function loadSingleDataset(dataset) { // MODIFICATION: Make async
     document.getElementById('naics-filter').value = '';
     document.getElementById('search-input').value = '';
 
-    // Fetch the data from S3
-    fetchDataFromS3(dataset);
-	try {
-        await fetchDataFromS3(dataset); // MODIFICATION: Await the promise
+    try {
+        await fetchDataFromS3(dataset); // Await the promise
 
         console.log(`Single dataset ${dataset.name} fetched and processed, building unified model...`);
         buildUnifiedModel(); // This function populates the global 'unifiedModel'
 
-        // === ADD THIS LINE HERE (for single loads) ===
+        // Make the model globally available
         window.unifiedModel = unifiedModel;
         console.log("window.unifiedModel updated after single load. Content length: " + (window.unifiedModel ? JSON.stringify(window.unifiedModel).length : "null"));
-        // ===========================================
-
+        
         updateStatusBanner(`Successfully loaded ${dataset.name}.`, 'success');
         populateFiltersFromUnifiedModel();
         applyFiltersAndUpdateVisuals();
@@ -852,14 +844,14 @@ async function loadSingleDataset(dataset) { // MODIFICATION: Make async
     } catch (error) {
         console.error(`Error in loadSingleDataset for ${dataset.name}:`, error);
         updateStatusBanner(`Error loading dataset ${dataset.name}: ${error.message}`, 'error');
-        resetUIForNoDataset(); // Or a more specific error display
+        resetUIForNoDataset(); 
     } finally {
         isLoading = false; // Ensure isLoading is reset
         document.getElementById('refresh-button').disabled = false; // Ensure button is re-enabled
     }
 }
 
-function loadCombinedDatasets(datasetIds) {
+async function loadCombinedDatasets(datasetIds) {
     if (!datasetIds || datasetIds.length === 0 || isLoading) {
         console.warn("Load combined datasets cancelled. Already loading or invalid dataset IDs provided.");
         updateStatusBanner('Invalid datasets specified.', 'error');
@@ -916,15 +908,24 @@ function loadCombinedDatasets(datasetIds) {
     document.getElementById('search-input').value = '';
 
     // Fetch each dataset sequentially
-    fetchDataSequentially(datasets);
+    try {
+        await fetchDataSequentially(datasets);
+        
+        isLoading = false;
+        document.getElementById('refresh-button').disabled = false;
+    } catch (error) {
+        console.error("Error loading combined datasets:", error);
+        updateStatusBanner(`Error loading datasets: ${error.message}`, 'error');
+        isLoading = false;
+        document.getElementById('refresh-button').disabled = false;
+    }
 }
 
 async function fetchDataSequentially(datasets) {
     try {
         for (let i = 0; i < datasets.length; i++) {
             const dataset = datasets[i];
-            console.log(`Loading dataset ${i + 1}/${datasets.length}: ${dataset.name}`
-			);
+            console.log(`Loading dataset ${i + 1}/${datasets.length}: ${dataset.name}`);
             updateStatusBanner(`Loading ${dataset.name} data (${i + 1}/${datasets.length})...`);
             
             await fetchAndProcessDataset(dataset);
@@ -933,10 +934,10 @@ async function fetchDataSequentially(datasets) {
         // After all datasets are loaded, build unified model and update UI
         console.log("All datasets loaded, building unified model...");
         buildUnifiedModel();
-         window.unifiedModel = unifiedModel; 
+        window.unifiedModel = unifiedModel; 
         console.log("window.unifiedModel updated after combined load. Content length: " + (window.unifiedModel ? JSON.stringify(window.unifiedModel).length : "null"));
         
-		updateStatusBanner(`Successfully loaded combined data.`, 'success');
+        updateStatusBanner(`Successfully loaded combined data.`, 'success');
         
         // Update filters and visualizations
         populateFiltersFromUnifiedModel();
@@ -945,9 +946,7 @@ async function fetchDataSequentially(datasets) {
     } catch (error) {
         console.error("Error loading combined datasets:", error);
         updateStatusBanner(`Error loading datasets: ${error.message}`, 'error');
-    } finally {
-        isLoading = false;
-        document.getElementById('refresh-button').disabled = false;
+        throw error; // Rethrow to handle in the calling function
     }
 }
 
@@ -1019,7 +1018,6 @@ function fetchAndProcessDataset(dataset) {
         });
     });
 }
-
 function processDataset(dataset, data) {
     console.log(`Processing ${data.length} rows for ${dataset.name}...`);
     
@@ -1342,7 +1340,6 @@ function sanitizeId(text) {
         .replace(/\-\-+/g, '-')
         .trim();
 }
-
 function populateFiltersFromUnifiedModel() {
     if (!unifiedModel) return;
     
@@ -1386,7 +1383,7 @@ function applyFiltersAndUpdateVisuals() {
     setLoading('expiring-contracts-table-container', true);
     setLoading('sankey-chart-container', true);
     setLoading('map-container', true);
-    setLoading('bento-naics-distribution', true); // Add new chart's bento box ID here
+    setLoading('bento-naics-distribution', true); 
    
     // Check if we're using unified model or direct raw data
     if (unifiedModel) {
@@ -1405,21 +1402,6 @@ function applyFiltersAndUpdateVisuals() {
         updateVisualsFromRawData(subAgencyFilter, naicsFilter, searchTerm);
     }
 }
-
-function initializeEnhancedFeatures() {
-    console.log("Initializing enhanced UI features...");
-    
-    try {
-        // Initialize preset views to replace complex filtering
-        initializePresetViews();
-        console.log("Preset views initialized");
-    } catch (e) {
-        console.error("Error initializing preset views:", e);
-    }
-    
-    console.log("Enhanced UI features initialization complete");
-}
-
 
 function updateVisualsFromUnifiedModel(subAgencyFilter, naicsFilter, searchTerm) {
     // Apply filters to get filtered data
@@ -1448,14 +1430,15 @@ function updateVisualsFromUnifiedModel(subAgencyFilter, naicsFilter, searchTerm)
     const mapData = processMapDataFromModel(filteredModel);
     displayChoroplethMap(mapData);
     
-	displayForceDirectedRadial(filteredModel);
+    displayForceDirectedRadial(filteredModel);
     
     // Calculate ARR
     calculateAverageARRFromModel(filteredModel);
-	// --- NEW: NAICS Donut Chart ---
+    
+    // NAICS Donut Chart
     const naicsDistributionData = processNaicsDistributionData(filteredModel);
-    const naicsDonutChartContainerId = 'naics-donut-chart-container'; // The div D3 will select
-    const naicsBentoBoxId = 'bento-naics-distribution'; // The parent bento box for overall loading
+    const naicsDonutChartContainerId = 'naics-donut-chart-container'; 
+    const naicsBentoBoxId = 'bento-naics-distribution'; 
 
     // Set loading state for the bento box just before trying to draw
     setLoading(naicsBentoBoxId, true, 'Loading NAICS distribution...');
@@ -1465,8 +1448,9 @@ function updateVisualsFromUnifiedModel(subAgencyFilter, naicsFilter, searchTerm)
         displayNaicsDonutChart(naicsDistributionData, naicsDonutChartContainerId, 5);
         // Turn off loading for the bento box AFTER the chart attempts to draw or shows a no-data message
         setLoading(naicsBentoBoxId, false);
-    }, 100); // Increased timeout slightly, adjust if needed
+    }, 100);
 }
+
 function filterUnifiedModel(subAgencyFilter, naicsFilter, searchTerm) {
     // Create a deep copy of the model structure but with empty collections
     const filtered = {
@@ -1700,38 +1684,27 @@ function filterUnifiedModel(subAgencyFilter, naicsFilter, searchTerm) {
     filtered.stats.totalSubContracts = Object.keys(filtered.subcontracts).length;
     filtered.stats.totalContractValue = Object.values(filtered.contracts)
         .reduce((sum, contract) => sum + contract.value, 0);
-    // --- BEGIN INSERTED CODE ---
 
-// Refine primeToSub relationships to ensure they link through filtered contracts
-// Create a set of Prime IDs that are definitely included due to contracts passing ALL filters
-const validPrimeIdsFromFilteredContracts = new Set();
-Object.values(filtered.contracts).forEach(contract => {
-    validPrimeIdsFromFilteredContracts.add(contract.primeId);
-});
+    // Refine primeToSub relationships to ensure they link through filtered contracts
+    // Create a set of Prime IDs that are definitely included due to contracts passing ALL filters
+    const validPrimeIdsFromFilteredContracts = new Set();
+    Object.values(filtered.contracts).forEach(contract => {
+        validPrimeIdsFromFilteredContracts.add(contract.primeId);
+    });
 
-console.log(`Refining Prime-Sub relationships. Primes linked to filtered contracts: ${validPrimeIdsFromFilteredContracts.size}`);
+    // Filter the primeToSub relationships:
+    // Keep only those where the source (prime) is in our valid set
+    // AND the target (sub) exists in the already filtered subs list.
+    const fullyFilteredPrimeToSub = filtered.relationships.primeToSub.filter(rel =>
+        validPrimeIdsFromFilteredContracts.has(rel.source) && // Prime MUST be linked to a contract that passed filters
+        filtered.subs[rel.target]                             // Sub must also exist after its own filtering
+    );
 
-// Filter the primeToSub relationships:
-// Keep only those where the source (prime) is in our valid set
-// AND the target (sub) exists in the already filtered subs list.
-const fullyFilteredPrimeToSub = filtered.relationships.primeToSub.filter(rel =>
-    validPrimeIdsFromFilteredContracts.has(rel.source) && // Prime MUST be linked to a contract that passed filters
-    filtered.subs[rel.target]                             // Sub must also exist after its own filtering
-);
-
-console.log(`Original primeToSub count: ${filtered.relationships.primeToSub.length}, Fully filtered count: ${fullyFilteredPrimeToSub.length}`);
-
-// Replace the potentially over-inclusive relationships in the model being returned
-filtered.relationships.primeToSub = fullyFilteredPrimeToSub;
-
-// Optional: Recalculate prime/sub values based only on these filtered relationships if needed downstream.
-// Currently, Sankey likely uses the relationship value directly, so this might not be necessary.
-
-// --- END INSERTED CODE ---
-
+    // Replace the potentially over-inclusive relationships in the model being returned
+    filtered.relationships.primeToSub = fullyFilteredPrimeToSub;
+    
     return filtered;
 }
-
 function processContractLeadersFromModel(model) {
     console.log("Processing Contract Leaders from unified model...");
     
@@ -1798,8 +1771,7 @@ function processContractLeadersFromModel(model) {
             };
         })
         .filter(leader => leader.numAwards > 0 && leader.totalValue > 0)
-        .sort((a, b) => b.totalValue - a.totalValue
-		);
+        .sort((a, b) => b.totalValue - a.totalValue);
 
     console.log(`Processed ${primeLeaders.length} leader entries.`);
     return primeLeaders;
@@ -1948,532 +1920,51 @@ function processMapDataFromModel(model) {
     console.log(`Processed map data for ${Object.keys(stateData).length} states.`);
     return stateData;
 }
-function displayTavTcvChart(chartData) {
-    const containerId = 'tav-tcv-chart-container';
-    const container = document.getElementById(containerId);
 
-    if (!container) {
-        console.error("TAV/TCV chart container element not found.");
-        return;
+function processNaicsDistributionData(filteredModel) {
+    if (!filteredModel || !filteredModel.contracts) {
+        return [];
     }
 
-    setLoading(containerId, false);
+    console.log("Processing NAICS distribution data from model");
 
-    // --- Remove old custom label/tooltip elements ---
-    container.innerHTML = ''; // Clear previous content
-    cleanupTooltips(); // Ensure old tooltips are gone
-
-    // --- Create Canvas ---
-    const canvas = document.createElement('canvas');
-    canvas.id = 'tavTcvChart';
-    container.appendChild(canvas);
-
-    if (!chartData || chartData.length === 0) {
-        displayNoData(containerId, 'No contracts found for TAV/TCV comparison.');
-        return;
-    }
-
-    // --- Prepare Data for Stacked Chart ---
-    const labels = chartData.map(d => d.primeName);
-    const tavValues = chartData.map(d => d.tav || 0);
-    const remainingTcvValues = chartData.map(d => Math.max(0, (d.tcv || 0) - (d.tav || 0)));
-    const totalTcvValues = chartData.map(d => d.tcv || 0);
-
-    // --- Get Theme Colors from CSS Variables ---
-    const tavColor = getCssVar('--chart-color-primary');
-    const remainderColor = getCssVar('--chart-color-tertiary');
-    const textColor = getCssVar('--color-text-secondary');
-    const gridColor = getCssVar('--color-border');
-    const legendColor = getCssVar('--color-text-secondary');
-    const barBorderColor = getCssVar('--color-surface');
-
-    // --- Destroy previous chart instance if it exists ---
-    if (tavTcvChartInstance) {
-        try { tavTcvChartInstance.destroy(); } catch (e) { console.warn("Error destroying chart:", e); }
-        tavTcvChartInstance = null;
-    }
-
-    // --- Create New Stacked Chart ---
-    const ctx = canvas.getContext('2d');
-    if (!ctx) { return; }
-
-    tavTcvChartInstance = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: labels,
-            datasets: [
-                {
-                    label: 'TAV (Obligated)',
-                    data: tavValues,
-                    backgroundColor: tavColor,
-                    borderColor: barBorderColor,
-                    borderWidth: 1,
-                    borderRadius: { topLeft: 4, bottomLeft: 4, topRight: 0, bottomRight: 0 },
-                    borderSkipped: false,
-                },
-                {
-                    label: 'TCV Remainder',
-                    data: remainingTcvValues,
-                    backgroundColor: remainderColor,
-                    borderColor: barBorderColor,
-                    borderWidth: 1,
-                    borderRadius: { topRight: 4, bottomRight: 4, topLeft: 0, bottomLeft: 0 },
-                    borderSkipped: false,
-                }
-            ]
-        },
-        options: {
-            indexAxis: 'y',
-            responsive: true,
-            maintainAspectRatio: false,
-            layout: {
-                padding: { left: 5, right: 10, top: 5, bottom: 5 }
-            },
-            plugins: {
-                legend: {
-                    position: 'bottom',
-                    labels: {
-                        color: legendColor,
-                        boxWidth: 12,
-                        padding: 20,
-                        font: { size: 12 }
-                    }
-                },
-                tooltip: {
-                    mode: 'index',
-                    intersect: false,
-                    backgroundColor: getCssVar('--color-surface'),
-                    titleColor: getCssVar('--color-text-secondary'),
-                    bodyColor: getCssVar('--color-text-primary'),
-                    footerColor: getCssVar('--color-text-primary'),
-                    borderColor: getCssVar('--color-border'),
-                    borderWidth: 1,
-                    padding: 10,
-                    boxPadding: 3,
-                    callbacks: {
-                        label: function(context) {
-                            const datasetLabel = context.dataset.label || '';
-                            const value = context.parsed.x;
-                            return `${datasetLabel}: ${formatConciseCurrency(value)}`;
-                        },
-                        footer: function(tooltipItems) {
-                            const dataIndex = tooltipItems[0]?.dataIndex;
-                            if (dataIndex === undefined) return '';
-                            const totalTCV = totalTcvValues[dataIndex];
-                            return `Total TCV: ${formatConciseCurrency(totalTCV)}`;
-                        }
-                    }
-                }
-            },
-            scales: {
-                x: {
-                    stacked: true,
-                    beginAtZero: true,
-                    grid: {
-                        display: true,
-                        color: gridColor,
-                        drawBorder: false,
-                        lineWidth: 0.5
-                    },
-                    ticks: {
-                        color: textColor,
-                        font: { size: 10 },
-                        callback: function(value) {
-                            return formatConciseCurrency(value).replace('~','');
-                        },
-                        maxTicksLimit: 6
-                    }
-                },
-                y: {
-                    stacked: true,
-                    grid: {
-                        display: false
-                    },
-                    ticks: {
-                        display: true,
-                        color: textColor,
-                        font: { size: 11 },
-                        callback: function(value, index) {
-                            const label = labels[index] || '';
-                            return label.length > 30 ? label.substring(0, 27) + '...' : label;
-                        }
-                    }
-                }
-            },
-            onClick: (event, elements) => {
-                if (elements.length > 0) {
-                    const dataIndex = elements[0].index;
-                    const contractId = chartData[dataIndex]?.id;
-                    if (contractId) {
-                        window.open(`https://www.usaspending.gov/award/${contractId}`, '_blank');
-                    }
-                }
-            },
-            onHover: (event, chartElement) => {
-                event.native.target.style.cursor = chartElement[0] ? 'pointer' : 'default';
-            }
-        }
-    });
-}
-// Add this function to your JavaScript file
-
-/**
- * Exports data to a CSV file and triggers a download
- * @param {Array} data - Array of objects to convert to CSV
- * @param {String} filename - Name of the file to download
- */
-function exportToCSV(data, filename) {
-    // Return if no data
-    if (!data || !data.length) {
-        console.warn('No data to export');
-        return;
-    }
-
-    // Get headers from the first data object
-    const headers = Object.keys(data[0]);
+    const naicsAggregates = {};
     
-    // Create CSV header row
-    let csvContent = headers.join(',') + '\n';
-    
-    // Add data rows
-    data.forEach(item => {
-        const row = headers.map(header => {
-            // Get the value for this header
-            let value = item[header] || '';
-            
-            // Format dates if needed
-            if (header.includes('date') && value instanceof Date) {
-                value = value.toISOString().split('T')[0]; // YYYY-MM-DD format
-            }
-            
-            // Handle commas and quotes in the value (CSV escape)
-            const cellValue = String(value).replace(/"/g, '""');
-            
-            // Wrap in quotes if the value contains commas, quotes, or newlines
-            return /[",\n\r]/.test(cellValue) ? `"${cellValue}"` : cellValue;
-        }).join(',');
+    // Process all contracts
+    Object.values(filteredModel.contracts || {}).forEach(contract => {
+        // Skip if no NAICS code or no value
+        if (!contract.naicsCode || contract.value <= 0) return;
+
+        // Add to aggregates
+        const code = contract.naicsCode;
+        const desc = contract.naicsDesc || "N/A";
         
-        csvContent += row + '\n';
+        if (!naicsAggregates[code]) {
+            naicsAggregates[code] = { 
+                code: code, 
+                desc: desc, 
+                name: code, // For color mapping
+                value: 0 
+            };
+        }
+        
+        naicsAggregates[code].value += contract.value;
     });
     
-    // Create a Blob containing the CSV data
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    // Convert to array and sort
+    const sortedNaicsData = Object.values(naicsAggregates)
+        .sort((a, b) => b.value - a.value);
     
-    // Create a download link
-    const link = document.createElement('a');
-    
-    // Create a URL for the blob
-    const url = URL.createObjectURL(blob);
-    
-    // Set link properties
-    link.setAttribute('href', url);
-    link.setAttribute('download', filename);
-    link.style.visibility = 'hidden';
-    
-    // Add link to document, click it, then remove it
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    // Calculate percentages
+    const totalValue = sortedNaicsData.reduce((sum, item) => sum + item.value, 0);
+    sortedNaicsData.forEach(item => {
+        item.percentage = totalValue > 0 ? (item.value / totalValue) * 100 : 0;
+    });
+
+    console.log(`Processed ${sortedNaicsData.length} NAICS codes for distribution chart`);
+    return sortedNaicsData;
 }
 
-function getCssVar(varName) {
-  try {
-    const value = getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
-    if (!value) throw new Error(`Variable ${varName} returned empty`);
-    return value;
-  } catch (e) {
-    console.warn(`Could not get CSS variable ${varName}: ${e.message}`);
-    // Fallbacks for Monocle/Print theme
-    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-     if (varName === '--color-text-secondary') return isDark ? '#B6B1B7' : '#625C61';
-     if (varName === '--color-border') return isDark ? '#312d2a' : '#D8D4D7';
-     if (varName === '--chart-color-primary') return isDark ? '#A59FA8' : '#9A949B';
-     if (varName === '--chart-color-secondary') return isDark ? '#908A91' : '#7A747B';
-     if (varName === '--chart-color-tertiary') return isDark ? '#767077' : '#B6B1B7';
-     if (varName === '--color-surface') return isDark ? '#262321' : '#F5F3F5';
-     if (varName === '--color-text-primary') return isDark ? '#FDFBF5' : '#312d2a';
-     if (varName === '--shadow-md') return isDark ? '0 2px 4px rgba(0, 0, 0, 0.25)' : '0 2px 4px rgba(0, 0, 0, 0.08)';
-     if (varName === '--border-radius-sm') return '8px'; // Or 6px if you used tighter radii
-     if (varName === '--color-primary') return isDark ? '#A59FA8' : '#9A949B';
-    console.error(`Fallback used for CSS variable ${varName}. Check definition.`);
-    return '#cccccc';
-  }
-}
-function displayChoroplethMap(mapData) {
-    const containerId = 'map-container';
-    const container = document.getElementById(containerId);
-    
-    if (!container) {
-        console.error("Map container not found.");
-        return;
-    }
-
-    // Clean up any existing tooltips
-    cleanupTooltips();
-    
-    // Clear any previous content and create a new div
-    container.innerHTML = '';
-    const mapDiv = document.createElement('div');
-    mapDiv.id = 'choroplethMap';
-    mapDiv.style.width = '100%';
-    mapDiv.style.height = '100%';
-    container.appendChild(mapDiv);
-    
-    setLoading(containerId, false);
-
-    if (!mapData || Object.keys(mapData).length === 0) {
-        displayNoData(containerId, 'No geographic data available for mapping.');
-        return;
-    }
-
-    try {
-        // Set up map dimensions based on the container div
-        const width = container.clientWidth;
-        const height = container.clientHeight || 400;
-
-        // Check if dimensions are valid
-        if (width <= 0 || height <= 0) {
-            console.warn(`Map container has invalid dimensions: ${width}x${height}. Map rendering skipped.`);
-            displayError(containerId, 'Map container has zero size. Cannot render map.');
-            return;
-        }
-
-        // Check if we're in dark mode
-        const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
-        const textColor = getCssVar('--color-text-secondary');
-
-        // Create SVG element inside the map div
-        const svg = d3.select(mapDiv)
-            .append('svg')
-            .attr('width', width)
-            .attr('height', height)
-            .attr('viewBox', `0 0 ${width} ${height}`)
-            .style('max-width', '100%')
-            .style('height', 'auto');
-
-        // Define color scale for the map
-        const stateValues = Object.values(mapData).map(d => d.value);
-        const maxValue = d3.max(stateValues) || 0;
-        
-        // DEBUG: Let's verify the values we're using for coloring
-        console.log('State values range:', d3.min(stateValues), 'to', maxValue);
-        
-        // Get color values directly rather than using CSS vars for the interpolation
-        const baseColor = isDarkMode ? 
-            d3.rgb(getCssVar('--color-surface-variant')).toString() : 
-            d3.rgb(getCssVar('--color-surface-variant')).toString();
-            
-        const highlightColor = isDarkMode ?
-            d3.rgb(getCssVar('--chart-color-primary')).toString() :
-            d3.rgb(getCssVar('--chart-color-primary')).toString();
-        
-        console.log('Color scale range:', baseColor, 'to', highlightColor);
-
-        // Create explicit color scale using the extracted RGB values
-        const colorScale = d3.scaleSequential()
-            .domain([0, maxValue === 0 ? 1 : maxValue])
-            .interpolator(d3.interpolate(baseColor, highlightColor));
-
-        // Test the color scale with a few values
-        if (maxValue > 0) {
-            console.log('Color at 0:', colorScale(0));
-            console.log('Color at max/2:', colorScale(maxValue/2));
-            console.log('Color at max:', colorScale(maxValue));
-        }
-
-        // Remove existing tooltips first
-        d3.select("body").selectAll(".map-tooltip").remove();
-        
-        // Create tooltip - attach to body for better positioning
-        const tooltip = d3.select("body")
-            .append("div")
-            .attr("class", "map-tooltip")
-            .style("position", "absolute")
-            .style("visibility", "hidden")
-            .style("opacity", 0)
-            .style("background-color", getCssVar('--color-surface'))
-            .style("color", getCssVar('--color-text-primary'))
-            .style("padding", "10px")
-            .style("border-radius", "4px")
-            .style("font-size", "12px")
-            .style("pointer-events", "none")
-            .style("border", `1px solid ${getCssVar('--color-border')}`)
-            .style("z-index", "9999");
-
-        // State name mapping
-        const fipsToStateName = {
-            "01": "Alabama", "02": "Alaska", "04": "Arizona", "05": "Arkansas",
-            "06": "California", "08": "Colorado", "09": "Connecticut", "10": "Delaware",
-            "11": "District of Columbia", "12": "Florida", "13": "Georgia", "15": "Hawaii",
-            "16": "Idaho", "17": "Illinois", "18": "Indiana", "19": "Iowa", "20": "Kansas",
-            "21": "Kentucky", "22": "Louisiana", "23": "Maine", "24": "Maryland",
-            "25": "Massachusetts", "26": "Michigan", "27": "Minnesota", "28": "Mississippi",
-            "29": "Missouri", "30": "Montana", "31": "Nebraska", "32": "Nevada",
-            "33": "New Hampshire", "34": "New Jersey", "35": "New Mexico", "36": "New York",
-            "37": "North Carolina", "38": "North Dakota", "39": "Ohio", "40": "Oklahoma",
-            "41": "Oregon", "42": "Pennsylvania", "44": "Rhode Island", "45": "South Carolina",
-            "46": "South Dakota", "47": "Tennessee", "48": "Texas", "49": "Utah",
-            "50": "Vermont", "51": "Virginia", "53": "Washington", "54": "West Virginia",
-            "55": "Wisconsin", "56": "Wyoming", "72": "Puerto Rico"
-        };
-
-        // Load US state boundaries GeoJSON
-        d3.json('https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json')
-            .then(us => {
-                if (!us || !us.objects || !us.objects.states) {
-                    throw new Error("Invalid GeoJSON data");
-                }
-
-                // Convert TopoJSON to GeoJSON features
-                const states = topojson.feature(us, us.objects.states);
-                
-                // DEBUG: Create a mapping of IDs to verify correct state matching
-                const stateIdMap = {};
-                states.features.forEach(feature => {
-                    stateIdMap[feature.id] = feature.id.toString().padStart(2, '0');
-                });
-                console.log('Available state IDs in GeoJSON:', stateIdMap);
-                console.log('Sample of our data state codes:', Object.keys(mapData).slice(0, 5));
-
-                // Create projection
-                const projection = d3.geoAlbersUsa()
-                    .fitSize([width, height], states);
-
-                // Create the path generator
-                const path = d3.geoPath().projection(projection);
-
-                // Draw state boundaries
-                svg.append('g')
-                   .selectAll('path')
-                   .data(states.features)
-                   .enter()
-                   .append('path')
-                   .attr('d', path)
-                   .attr('fill', d => {
-                       // Use the state FIPS code to lookup data
-                       const fipsCode = d.id.toString().padStart(2, '0');
-                       const stateData = mapData[fipsCode];
-                       
-                       // DEBUG: Show what color is being assigned
-                       if (stateData) {
-                           console.log(`State ${fipsCode}: value=${stateData.value}, color=${colorScale(stateData.value)}`);
-                       }
-                       
-                       return stateData ? colorScale(stateData.value) : getCssVar('--color-surface-variant');
-                   })
-                   .attr('stroke', getCssVar('--color-border'))
-                   .attr('stroke-width', 0.5)
-                   .style('cursor', 'pointer')
-                   .on('mouseover', function(event, d) {
-                       tooltip
-                            .style("visibility", "visible")
-                            .style("opacity", 1);
-                            
-                       tooltip.html(() => {
-                           const fipsCode = d.id.toString().padStart(2, '0');
-                           const stateData = mapData[fipsCode];
-                           const stateName = fipsToStateName[fipsCode] || "Unknown";
-                           if (stateData) {
-                               return `
-                                   <strong>${stateName}</strong>
-                                   <div>Total Value: ${formatCurrency(stateData.value)}</div>
-                                   <div>Contracts: ${stateData.count.toLocaleString()}</div>
-                               `;
-                           } else {
-                               return `<strong>${stateName}</strong><br>No data`;
-                           }
-                       })
-                       .style("left", (event.pageX + 10) + "px")
-                       .style("top", (event.pageY - 28) + "px");
-
-                       // Highlight the state
-                       d3.select(this)
-                           .attr("stroke", getCssVar('--color-primary'))
-                           .attr("stroke-width", 1.5)
-                           .raise();
-                   })
-                   .on('mousemove', function(event) {
-                       tooltip
-                          .style("left", (event.pageX + 10) + "px")
-                          .style("top", (event.pageY - 28) + "px");
-                   })
-                   .on('mouseout', function() {
-                       tooltip
-                          .style("visibility", "hidden")
-                          .style("opacity", 0);
-                              
-                       d3.select(this)
-                           .attr("stroke", getCssVar('--color-border'))
-                           .attr("stroke-width", 0.5);
-                   });
-
-                // Add legend
-                const legendWidth = Math.min(width * 0.4, 200);
-                const legendHeight = 10;
-                const legendX = width - legendWidth - 20;
-                const legendY = height - 35;
-
-                const legendGroup = svg.append("g")
-                    .attr("transform", `translate(${legendX}, ${legendY})`);
-
-                // Create discrete color bins
-                const numBins = 5;
-                const binMaxValue = maxValue === 0 ? 1 : maxValue;
-                const bins = Array.from({length: numBins}, (_, i) => binMaxValue * i / (numBins - 1));
-                const binWidth = legendWidth / numBins;
-
-                // Add legend title
-                legendGroup.append('text')
-                    .attr('x', legendWidth / 2)
-                    .attr('y', -6)
-                    .attr('text-anchor', 'middle')
-                    .attr('font-size', '10px')
-                    .attr('fill', textColor)
-                    .text('Contract Value');
-
-                // Create discrete color blocks
-                legendGroup.selectAll('rect')
-                    .data(bins)
-                    .enter()
-                    .append('rect')
-                    .attr('x', (d, i) => i * binWidth)
-                    .attr('y', 0)
-                    .attr('width', binWidth)
-                    .attr('height', legendHeight)
-                    .attr('fill', d => colorScale(d))
-                    .attr('stroke', getCssVar('--color-border'))
-                    .attr('stroke-width', 0.5);
-
-                // Add min/max labels
-                legendGroup.append('text')
-                    .attr('x', 0)
-                    .attr('y', legendHeight + 10)
-                    .attr('text-anchor', 'start')
-                    .attr('font-size', '10px')
-                    .attr('fill', textColor)
-                    .text('Low');
-
-                legendGroup.append('text')
-                    .attr('x', legendWidth)
-                    .attr('y', legendHeight + 10)
-                    .attr('text-anchor', 'end')
-                    .attr('font-size', '10px')
-                    .attr('fill', textColor)
-                    .text('High');
-            })
-            .catch(error => {
-                console.error("Error loading or processing GeoJSON for map:", error);
-                displayError(containerId, `Error rendering map: ${error.message}`);
-                // Clean up tooltip if it exists
-                d3.select("body").selectAll(".map-tooltip").remove();
-            });
-    } catch (error) {
-        console.error("Error creating choropleth map:", error);
-        displayError(containerId, "Failed to render map: " + error.message);
-        // Clean up tooltip if it exists
-        d3.select("body").selectAll(".map-tooltip").remove();
-    }
-}
 function calculateAverageARRFromModel(model) {
     const resultDiv = document.getElementById('arr-result');
     const loadingDiv = document.getElementById('arr-loading');
@@ -2553,927 +2044,60 @@ function calculateAverageARRFromModel(model) {
         loadingDiv.style.display = 'none';
     }
 }
-// --- Legacy Functions for Raw Data Processing ---
-function updateVisualsFromRawData(subAgencyFilter, naicsFilter, searchTerm) {
-    // --- Check for Raw Data ---
-    if ((!rawData.primes || rawData.primes.length === 0) && 
-        (!rawData.subs || rawData.subs.length === 0)) {
-        console.warn("No raw data available to filter.");
-        resetUIForNoDataset();
-        return [];
+function exportToCSV(data, filename) {
+    // Return if no data
+    if (!data || !data.length) {
+        console.warn('No data to export');
+        return;
     }
 
-    // --- Apply Search & Filters for Prime data ---
-    let filteredPrimes = rawData.primes;
-    if (filteredPrimes.length > 0) {
-        // Apply search
-        if (searchTerm) {
-            filteredPrimes = filteredPrimes.filter(row => {
-                return [
-                    row.primeName,
-                    row.agencyName,
-                    row.subAgencyName,
-                    row.officeName,
-                    row.description,
-                    row.naicsCode,
-                    row.naicsDesc
-                ].some(field => field && field.toString().toLowerCase().includes(searchTerm));
-            });
-        }
-
-        // Apply sub-agency filter
-        if (subAgencyFilter) {
-            filteredPrimes = filteredPrimes.filter(row => row.subAgencyName === subAgencyFilter);
-        }
-
-        // Apply NAICS filter
-        if (naicsFilter) {
-            filteredPrimes = filteredPrimes.filter(row => row.naicsCode === naicsFilter);
-        }
-    }
-
-    // --- Apply Search & Filters for Sub data ---
-    let filteredSubs = rawData.subs;
-    if (filteredSubs.length > 0) {
-        // Apply search
-        if (searchTerm) {
-            filteredSubs = filteredSubs.filter(row => {
-                return [
-                    row.primeName,
-                    row.subName,
-                    row.agencyName,
-                    row.subAgencyName,
-                    row.officeName,
-                    row.description,
-                    row.naicsCode,
-                    row.naicsDesc
-                ].some(field => field && field.toString().toLowerCase().includes(searchTerm));
-            });
-        }
-
-        // Apply sub-agency filter
-        if (subAgencyFilter) {
-            filteredSubs = filteredSubs.filter(row => row.subAgencyName === subAgencyFilter);
-        }
-
-        // Apply NAICS filter
-        if (naicsFilter) {
-            filteredSubs = filteredSubs.filter(row => row.naicsCode === naicsFilter);
-        }
-    }
-
-    // Clean up tooltips before redrawing
-    cleanupTooltips();
-
-    console.log(`Filtered data: ${filteredPrimes.length} primes, ${filteredSubs.length} subs`);
-
-    // --- Process and Update Visuals ---
-    const hasSubsOnly = filteredPrimes.length === 0 && filteredSubs.length > 0;
-    const hasPrimesOnly = filteredPrimes.length > 0 && filteredSubs.length === 0;
-    const hasBoth = filteredPrimes.length > 0 && filteredSubs.length > 0;
-
-    // Choose which data to use for each visualization
-    if (hasPrimesOnly) {
-        // Use prime contract data only
-        const leaderData = processContractLeaders(filteredPrimes);
-        displayContractLeadersTable(leaderData);
-
-        const tavTcvData = processTavTcvData(filteredPrimes);
-        displayTavTcvChart(tavTcvData);
-
-        const expiringData = processExpiringData(filteredPrimes);
-        displayExpiringTable(expiringData);
-
-        const sankeyData = processSankeyData(filteredPrimes);
-        displaySankeyChart(sankeyData);
-
-        const mapData = processMapData(filteredPrimes);
-        displayChoroplethMap(mapData);
-        
-        calculateAverageARR(filteredPrimes);
-    } 
-    else if (hasSubsOnly) {
-        // Use subcontract data only
-        // Adapt subcontract data for leader visualization
-        const adaptedSubs = filteredSubs.map(row => ({
-            recipient_name: row.primeName,
-            current_total_value_of_award: row.contractValue,
-            period_of_performance_start_date: row.startDate,
-            period_of_performance_current_end_date: row.endDate,
-            transaction_description: row.description,
-            naics_code: row.naicsCode,
-            naics_description: row.naicsDesc,
-            prime_award_unique_key: row.contractId
-        }));
-        
-        const leaderData = processContractLeaders(adaptedSubs);
-        displayContractLeadersTable(leaderData);
-
-        // Other visualizations will be specific to subcontract data
-        displayNoData('tav-tcv-chart-container', 'TAV/TCV chart available for prime contract data only.');
-        
-        const expiringData = processExpiringDataLegacy(filteredSubs);
-        displayExpiringTable(expiringData);
-        
-        const sankeyData = processSankeyDataLegacy(filteredSubs);
-        displaySankeyChart(sankeyData);
-        
-        const mapData = processMapDataLegacy(filteredSubs);
-        displayChoroplethMap(mapData);
-        
-        calculateAverageARRLegacy(filteredSubs);
-    }
-    else if (hasBoth) {
-        // Both types available, build combined visualizations
-        // For leader table, combine prime data first, then add unique subs
-        const leaderData = processContractLeaders(filteredPrimes);
-        displayContractLeadersTable(leaderData);
-        
-        // Use prime contracts for TAV/TCV which requires obligated values
-        const tavTcvData = processTavTcvData(filteredPrimes);
-        displayTavTcvChart(tavTcvData);
-        
-        // Combine expiring contracts
-        const primeExpiring = processExpiringData(filteredPrimes);
-        const subExpiring = processExpiringDataLegacy(filteredSubs);
-        displayExpiringTable([...primeExpiring, ...subExpiring]);
-        
-        // Try to build combined Sankey
-        const combinedSankeyData = buildCombinedSankeyData(filteredPrimes, filteredSubs);
-        displaySankeyChart(combinedSankeyData);
-        
-        // Combine map data by adding up values for each state
-        const primeMapData = processMapData(filteredPrimes);
-        const subMapData = processMapDataLegacy(filteredSubs);
-        const combinedMapData = combineMapData(primeMapData, subMapData);
-        displayChoroplethMap(combinedMapData);
-        
-        // Use all contracts for ARR calculation
-        calculateAverageARRCombined(filteredPrimes, filteredSubs);
-    }
-    else {
-        // No data for either type after filtering
-        displayNoData('contract-leaders-table-container', 'No matching contracts found with current filters.');
-        displayNoData('tav-tcv-chart-container', 'No matching contracts found with current filters.');
-        displayNoData('expiring-contracts-table-container', 'No matching contracts found with current filters.');
-        displayNoData('sankey-chart-container', 'No matching contracts found with current filters.');
-        displayNoData('map-container', 'No matching contracts found with current filters.');
-        
-        // Reset ARR display
-        document.getElementById('arr-result').textContent = '$0 / yr';
-        document.getElementById('arr-loading').style.display = 'none';
-        document.getElementById('arr-error').style.display = 'none';
-        document.getElementById('arr-no-data').style.display = 'block';
-    }
-}
-
-// --- Utility functions for combined visualizations ---
-function processExpiringDataLegacy(data) {
-    console.log("Processing legacy data for expiring contracts...");
-    if (!data || data.length === 0) return [];
-
-    const sixMonthsFromNow = new Date();
-    sixMonthsFromNow.setMonth(sixMonthsFromNow.getMonth() + 6);
-    const today = new Date();
-
-    const expiringContracts = data.filter(row => {
-        const endDate = row.parsedEndDate;
-        if (!endDate || !(endDate instanceof Date) || isNaN(endDate.getTime())) {
-            return false;
-        }
-        return endDate >= today && endDate <= sixMonthsFromNow;
-    }).map(row => ({
-        award_id_piid: row.contractId || 'Unknown',
-        recipient_name: row.primeName || 'Unknown',
-        transaction_description: row.description || 'No description',
-        period_of_performance_current_end_date: row.endDate,
-        period_of_performance_current_end_date_parsed: row.parsedEndDate,
-        current_total_value_of_award: row.contractValue,
-        contract_award_unique_key: row.contractId,
-        // Add extra fields for display
-        subawardee_name: row.subName || 'Unknown Sub'
-    }));
-
-    console.log(`Found ${expiringContracts.length} contracts expiring in the next 6 months.`);
-    return expiringContracts;
-}
-
-function processSankeyDataLegacy(data) {
-    console.log("Processing legacy data for Sankey chart...");
-    if (!data || data.length === 0) return { nodes: [], links: [] };
-
-    // Get unique sub-agencies
-    const subAgencies = new Set();
-    data.forEach(row => {
-        const agency = row.subAgencyName;
-        if (agency && agency.toLowerCase() !== 'unknown sub-agency' && agency.toLowerCase() !== 'unknown') {
-            subAgencies.add(agency);
-        }
-    });
-
-    // Get unique primes and subs
-    const primes = new Set();
-    const subs = new Set();
-    data.forEach(row => {
-        if (row.primeName) primes.add(row.primeName);
-        if (row.subName) subs.add(row.subName);
-    });
-
-    // Take top prime contractors by value
-    const primeValues = {};
-    data.forEach(row => {
-        const prime = row.primeName;
-        if (!prime) return;
-        primeValues[prime] = (primeValues[prime] || 0) + (row.contractValue || 0);
-    });
-
-    // Sort primes by value and take top 10
-    const topPrimes = Object.entries(primeValues)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 10)
-        .map(([name]) => name);
-
-    // Take top subcontractors by value
-    const subValues = {};
-    data.forEach(row => {
-        const sub = row.subName;
-        if (!sub) return;
-        subValues[sub] = (subValues[sub] || 0) + (row.contractValue || 0);
-    });
-
-    // Sort subs by value and take top 10
-    const topSubs = Object.entries(subValues)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 10)
-        .map(([name]) => name);
-
-    // Create nodes array
-    const nodes = [];
+    // Get headers from the first data object
+    const headers = Object.keys(data[0]);
     
-    // Add agency nodes
-    Array.from(subAgencies).forEach(agency => {
-        nodes.push({ name: truncateText(agency, 30), type: 'agency' });
-    });
+    // Create CSV header row
+    let csvContent = headers.join(',') + '\n';
     
-    // Add prime nodes
-    topPrimes.forEach(prime => {
-        nodes.push({ name: truncateText(prime, 30), type: 'prime' });
-    });
-    
-    // Add sub nodes
-    topSubs.forEach(sub => {
-        nodes.push({ name: truncateText(sub, 30), type: 'sub' });
-    });
-
-    // Create links array
-    const links = [];
-    const agencyIndices = {};
-    const primeIndices = {};
-    const subIndices = {};
-    
-    // Map names to indices
-    let indexCounter = 0;
-    Array.from(subAgencies).forEach(agency => {
-        agencyIndices[agency] = indexCounter++;
-    });
-    
-    topPrimes.forEach(prime => {
-        primeIndices[prime] = indexCounter++;
-    });
-    
-    topSubs.forEach(sub => {
-        subIndices[sub] = indexCounter++;
-    });
-
-    // Create links from agencies to primes
-    data.forEach(row => {
-        const agency = row.subAgencyName;
-        const prime = row.primeName;
-        
-        if (!agency || !prime || !agencyIndices.hasOwnProperty(agency) || !primeIndices.hasOwnProperty(prime)) {
-            return;
-        }
-        
-        const value = row.contractValue || 0;
-        if (value <= 0) return;
-        
-        // Check if a link already exists between these nodes
-        const existingLinkIndex = links.findIndex(link => 
-            link.source === agencyIndices[agency] && link.target === primeIndices[prime]
-        );
-        
-        if (existingLinkIndex >= 0) {
-            // Add to existing link
-            links[existingLinkIndex].value += value;
-        } else {
-            // Create new link
-            links.push({
-                source: agencyIndices[agency],
-                target: primeIndices[prime],
-                value: value
-            });
-        }
-    });
-
-    // Create links from primes to subs
-    data.forEach(row => {
-        const prime = row.primeName;
-        const sub = row.subName;
-        
-        if (!prime || !sub || !primeIndices.hasOwnProperty(prime) || !subIndices.hasOwnProperty(sub)) {
-            return;
-        }
-        
-        const value = row.contractValue || 0;
-        if (value <= 0) return;
-        
-        // Check if a link already exists between these nodes
-        const existingLinkIndex = links.findIndex(link => 
-            link.source === primeIndices[prime] && link.target === subIndices[sub]
-        );
-        
-        if (existingLinkIndex >= 0) {
-            // Add to existing link
-            links[existingLinkIndex].value += value;
-        } else {
-            // Create new link
-            links.push({
-                source: primeIndices[prime],
-                target: subIndices[sub],
-                value: value
-            });
-        }
-    });
-
-    return { nodes, links };
-}
-
-function processMapDataLegacy(data) {
-    console.log("Processing legacy data for map...");
-    if (!data || data.length === 0) return {};
-
-    // Create a map to store state-level aggregates
-    const stateData = {};
-    
-    // Find the state code field
-    let stateCodeField = null;
-    if (data.length > 0) {
-        const row = data[0];
-        if (row.popStateCode) stateCodeField = 'popStateCode';
-        else if (row.prime_award_pop_state_code) stateCodeField = 'prime_award_pop_state_code';
-        else if (row.place_of_performance_state_code) stateCodeField = 'place_of_performance_state_code';
-    }
-    
-    if (!stateCodeField) {
-        console.warn("Could not determine state code field for map data");
-        return {};
-    }
-
-    data.forEach(row => {
-        const stateCode = row[stateCodeField];
-        if (!stateCode) return;
-        
-        // Normalize state code
-        let normalizedCode = stateCode.trim().toUpperCase();
-        
-        // Ensure code is 2 characters
-        if (normalizedCode.length > 2) {
-            normalizedCode = normalizedCode.substring(0, 2);
-        } else if (normalizedCode.length === 1) {
-            normalizedCode = '0' + normalizedCode;
-        }
-        
-        const value = row.contractValue || 0;
-        
-        if (!stateData[normalizedCode]) {
-            stateData[normalizedCode] = {
-                value: 0,
-                count: 0
-            };
-        }
-        
-        stateData[normalizedCode].value += value;
-        stateData[normalizedCode].count += 1;
-    });
-    
-    return stateData;
-}
-
-function calculateAverageARRLegacy(data) {
-    const resultDiv = document.getElementById('arr-result');
-    const loadingDiv = document.getElementById('arr-loading');
-    const errorDiv = document.getElementById('arr-error');
-    const noDataDiv = document.getElementById('arr-no-data');
-
-    // Reset UI elements
-    resultDiv.style.display = 'none';
-    loadingDiv.style.display = 'block';
-    errorDiv.style.display = 'none';
-    noDataDiv.style.display = 'none';
-
-    try {
-        console.log(`Calculating ARR based on ${data.length} contracts.`);
-
-        if (data.length === 0) {
-            loadingDiv.style.display = 'none';
-            noDataDiv.style.display = 'block';
-            resultDiv.textContent = '$0 / yr';
-            resultDiv.style.display = 'block';
-            return;
-        }
-
-        // Group contracts by duration for weighted ARR calculation
-        const shortTermContracts = []; // Less than 90 days
-        const mediumTermContracts = []; // 90 days to 270 days
-        const longTermContracts = []; // More than 270 days
-        let validContractsCount = 0;
-        
-        data.forEach(row => {
-            if (!row.parsedStartDate || !row.parsedEndDate) return;
+    // Add data rows
+    data.forEach(item => {
+        const row = headers.map(header => {
+            // Get the value for this header
+            let value = item[header] || '';
             
-            const value = row.contractValue || 0;
-            const durationDays = calculateDurationDays(row.parsedStartDate, row.parsedEndDate);
-            
-            if (value > 0 && durationDays > 0) {
-                // Categorize by duration
-                if (durationDays < 90) {
-                    shortTermContracts.push({ value, durationDays });
-                } else if (durationDays < 270) {
-                    mediumTermContracts.push({ value, durationDays });
-                } else {
-                    longTermContracts.push({ value, durationDays });
-                }
-                validContractsCount++;
-            }
-        });
-        
-        // Calculate weighted ARR
-        let weightedARR = 0;
-        
-        // Each duration category gets weighted differently
-        if (shortTermContracts.length > 0) {
-            const shortTermARR = shortTermContracts.reduce((sum, contract) => {
-                return sum + (contract.value / contract.durationDays) * 365.25 * 0.5; // 50% weight
-            }, 0) / shortTermContracts.length;
-            
-            weightedARR += shortTermARR * (shortTermContracts.length / validContractsCount);
-        }
-        
-        if (mediumTermContracts.length > 0) {
-            const mediumTermARR = mediumTermContracts.reduce((sum, contract) => {
-                return sum + (contract.value / contract.durationDays) * 365.25 * 0.8; // 80% weight
-            }, 0) / mediumTermContracts.length;
-            
-            weightedARR += mediumTermARR * (mediumTermContracts.length / validContractsCount);
-        }
-        
-        if (longTermContracts.length > 0) {
-            const longTermARR = longTermContracts.reduce((sum, contract) => {
-                return sum + (contract.value / contract.durationDays) * 365.25; // 100% weight
-            }, 0) / longTermContracts.length;
-            
-            weightedARR += longTermARR * (longTermContracts.length / validContractsCount);
-        }
-
-        if (validContractsCount > 0) {
-            resultDiv.textContent = formatConciseCurrency(weightedARR) + " / yr";
-            resultDiv.style.display = 'block';
-            console.log(`Weighted Average ARR: ${weightedARR.toFixed(0)} (from ${validContractsCount} valid contracts)`);
-            noDataDiv.style.display = 'none';
-        } else {
-            noDataDiv.textContent = 'No contracts suitable for ARR calculation found.';
-            noDataDiv.style.display = 'block';
-            resultDiv.textContent = formatConciseCurrency(0) + " / yr";
-            resultDiv.style.display = 'block';
-            console.log("No valid contracts found for ARR calculation.");
-        }
-    } catch (error) {
-        console.error("Error calculating ARR:", error);
-        errorDiv.textContent = `Error calculating ARR: ${error.message}`;
-        errorDiv.style.display = 'block';
-        resultDiv.style.display = 'none';
-    } finally {
-        loadingDiv.style.display = 'none';
-    }
-}
-
-function buildCombinedSankeyData(primeData, subData) {
-    // Create a merged Sankey visualization
-    console.log("Building combined Sankey data...");
-    
-    // Get top agencies
-    const agencies = new Set();
-    primeData.forEach(row => {
-        const agency = row.subAgencyName;
-        if (agency) agencies.add(agency);
-    });
-    subData.forEach(row => {
-        const agency = row.subAgencyName;
-        if (agency) agencies.add(agency);
-    });
-    
-    // Get top prime contractors
-    const primeValues = {};
-    primeData.forEach(row => {
-        const prime = row.primeName;
-        if (!prime) return;
-        primeValues[prime] = (primeValues[prime] || 0) + (row.contractValue || 0);
-    });
-    subData.forEach(row => {
-        const prime = row.primeName;
-        if (!prime) return;
-        primeValues[prime] = (primeValues[prime] || 0) + (row.contractValue || 0);
-    });
-    
-    // Get top subcontractors
-    const subValues = {};
-    subData.forEach(row => {
-        const sub = row.subName;
-        if (!sub) return;
-        subValues[sub] = (subValues[sub] || 0) + (row.contractValue || 0);
-    });
-    
-    // Sort and take top 10 of each
-    const topAgencies = Array.from(agencies).slice(0, 10);
-    const topPrimes = Object.entries(primeValues)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 15)
-        .map(([name]) => name);
-    const topSubs = Object.entries(subValues)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 10)
-        .map(([name]) => name);
-    
-    // Create nodes array
-    const nodes = [];
-    
-    // Add agency nodes
-    topAgencies.forEach(agency => {
-        nodes.push({ name: truncateText(agency, 30), type: 'agency' });
-    });
-    
-    // Add prime nodes
-    topPrimes.forEach(prime => {
-        nodes.push({ name: truncateText(prime, 30), type: 'prime' });
-    });
-    
-    // Add sub nodes
-    topSubs.forEach(sub => {
-        nodes.push({ name: truncateText(sub, 30), type: 'sub' });
-    });
-    
-    // Create links array
-    const links = [];
-    const nodeMap = {};
-    
-    // Create node index map
-    nodes.forEach((node, i) => {
-        nodeMap[node.name] = i;
-    });
-    
-    // Create links from agencies to primes
-    const agencyPrimeLinks = {};
-    
-    // Process agency to prime links from both datasets
-    const processAgencyPrimeLink = (agency, prime, value) => {
-        if (!agency || !prime || 
-            !nodeMap.hasOwnProperty(truncateText(agency, 30)) || 
-            !nodeMap.hasOwnProperty(truncateText(prime, 30))) {
-            return;
-        }
-        
-        const linkKey = `${agency}|${prime}`;
-        
-        if (!agencyPrimeLinks[linkKey]) {
-            agencyPrimeLinks[linkKey] = {
-                source: nodeMap[truncateText(agency, 30)],
-                target: nodeMap[truncateText(prime, 30)],
-                value: 0
-            };
-        }
-        
-        agencyPrimeLinks[linkKey].value += value;
-    };
-    
-    primeData.forEach(row => {
-        processAgencyPrimeLink(row.subAgencyName, row.primeName, row.contractValue || 0);
-    });
-    
-    subData.forEach(row => {
-        processAgencyPrimeLink(row.subAgencyName, row.primeName, row.contractValue || 0);
-    });
-    
-    // Add agency-prime links to the links array
-    Object.values(agencyPrimeLinks).forEach(link => {
-        if (link.value > 0) {
-            links.push(link);
-        }
-    });
-    
-    // Create links from primes to subs
-    const primeSubLinks = {};
-    
-    subData.forEach(row => {
-        const prime = row.primeName;
-        const sub = row.subName;
-        
-        if (!prime || !sub || 
-            !nodeMap.hasOwnProperty(truncateText(prime, 30)) || 
-            !nodeMap.hasOwnProperty(truncateText(sub, 30))) {
-            return;
-        }
-        
-        const linkKey = `${prime}|${sub}`;
-        
-        if (!primeSubLinks[linkKey]) {
-            primeSubLinks[linkKey] = {
-                source: nodeMap[truncateText(prime, 30)],
-                target: nodeMap[truncateText(sub, 30)],
-                value: 0
-            };
-        }
-        
-        primeSubLinks[linkKey].value += (row.contractValue || 0);
-    });
-    
-    // Add prime-sub links to the links array
-    Object.values(primeSubLinks).forEach(link => {
-        if (link.value > 0) {
-            links.push(link);
-        }
-    });
-    
-    return { nodes, links };
-}
-
-function combineMapData(primeData, subData) {
-    // Combine map data by adding up values for each state
-    const combinedData = {};
-    
-    // Process prime data
-    Object.entries(primeData).forEach(([state, data]) => {
-        if (!combinedData[state]) {
-            combinedData[state] = { value: 0, count: 0 };
-        }
-        combinedData[state].value += data.value;
-        combinedData[state].count += data.count;
-    });
-    
-    // Process sub data
-    Object.entries(subData).forEach(([state, data]) => {
-        if (!combinedData[state]) {
-            combinedData[state] = { value: 0, count: 0 };
-        }
-        combinedData[state].value += data.value;
-        combinedData[state].count += data.count;
-    });
-    
-    return combinedData;
-}
-
-function calculateAverageARRCombined(primeData, subData) {
-    const resultDiv = document.getElementById('arr-result');
-    const loadingDiv = document.getElementById('arr-loading');
-    const errorDiv = document.getElementById('arr-error');
-    const noDataDiv = document.getElementById('arr-no-data');
-
-    // Reset UI elements
-    resultDiv.style.display = 'none';
-    loadingDiv.style.display = 'block';
-    errorDiv.style.display = 'none';
-    noDataDiv.style.display = 'none';
-
-    try {
-        // Combine contract data
-        const allContracts = [];
-        
-        // Process prime contracts
-        primeData.forEach(row => {
-            if (!row.parsedStartDate || !row.parsedEndDate) return;
-            
-            allContracts.push({
-                value: row.contractValue || 0,
-                durationDays: calculateDurationDays(row.parsedStartDate, row.parsedEndDate)
-            });
-        });
-        
-        // Process subcontracts
-        subData.forEach(row => {
-            if (!row.parsedStartDate || !row.parsedEndDate) return;
-            
-            allContracts.push({
-                value: row.contractValue || 0,
-                durationDays: calculateDurationDays(row.parsedStartDate, row.parsedEndDate)
-            });
-        });
-        
-        console.log(`Calculating ARR based on ${allContracts.length} combined contracts.`);
-
-        if (allContracts.length === 0) {
-            loadingDiv.style.display = 'none';
-            noDataDiv.style.display = 'block';
-            resultDiv.textContent = '$0 / yr';
-            resultDiv.style.display = 'block';
-            return;
-        }
-
-        // Filter valid contracts
-        const validContracts = allContracts.filter(contract => 
-            contract.value > 0 && contract.durationDays > 0
-        );
-        
-        // Group by duration
-        const shortTermContracts = validContracts.filter(c => c.durationDays < 90);
-        const mediumTermContracts = validContracts.filter(c => c.durationDays >= 90 && c.durationDays < 270);
-        const longTermContracts = validContracts.filter(c => c.durationDays >= 270);
-        
-        // Calculate weighted ARR
-        let weightedARR = 0;
-        const validContractsCount = validContracts.length;
-        
-        if (shortTermContracts.length > 0) {
-            const shortTermARR = shortTermContracts.reduce((sum, contract) => {
-                return sum + (contract.value / contract.durationDays) * 365.25 * 0.5; // 50% weight
-            }, 0) / shortTermContracts.length;
-            
-            weightedARR += shortTermARR * (shortTermContracts.length / validContractsCount);
-        }
-        
-        if (mediumTermContracts.length > 0) {
-            const mediumTermARR = mediumTermContracts.reduce((sum, contract) => {
-                return sum + (contract.value / contract.durationDays) * 365.25 * 0.8; // 80% weight
-            }, 0) / mediumTermContracts.length;
-            
-            weightedARR += mediumTermARR * (mediumTermContracts.length / validContractsCount);
-        }
-        
-        if (longTermContracts.length > 0) {
-            const longTermARR = longTermContracts.reduce((sum, contract) => {
-                return sum + (contract.value / contract.durationDays) * 365.25; // 100% weight
-            }, 0) / longTermContracts.length;
-            
-            weightedARR += longTermARR * (longTermContracts.length / validContractsCount);
-        }
-
-        if (validContractsCount > 0) {
-            resultDiv.textContent = formatConciseCurrency(weightedARR) + " / yr";
-            resultDiv.style.display = 'block';
-            console.log(`Weighted Average ARR: ${weightedARR.toFixed(0)} (from ${validContractsCount} valid contracts)`);
-            noDataDiv.style.display = 'none';
-        } else {
-            noDataDiv.textContent = 'No contracts suitable for ARR calculation found.';
-            noDataDiv.style.display = 'block';
-            resultDiv.textContent = formatConciseCurrency(0) + " / yr";
-            resultDiv.style.display = 'block';
-            console.log("No valid contracts found for ARR calculation.");
-        }
-    } catch (error) {
-        console.error("Error calculating combined ARR:", error);
-        errorDiv.textContent = `Error calculating ARR: ${error.message}`;
-        errorDiv.style.display = 'block';
-        resultDiv.style.display = 'none';
-    } finally {
-        loadingDiv.style.display = 'none';
-    }
-}
-
-// --- Events and initialize the page ---
-function setupEventListeners() {
-// Refresh button
-const refreshButton = document.getElementById('refresh-button');
-if (refreshButton) {
-    refreshButton.addEventListener('click', function() {
-        // Clear search input
-        const searchInput = document.getElementById('search-input');
-        if (searchInput) {
-            searchInput.value = '';
-            currentSearchTerm = ''; // Reset tracking variable
-            
-            // Trigger input event to ensure listeners are notified
-            const inputEvent = new Event('input', {
-                bubbles: true,
-                cancelable: true
-            });
-            searchInput.dispatchEvent(inputEvent);
-            
-            // Also try to trigger clear button if it exists
-            const clearBtn = document.querySelector('#search-clear-btn, .search-clear-btn');
-            if (clearBtn) {
-                clearBtn.style.display = 'none'; // Hide the clear button
-            }
-        }
-        
-        // Get the currently selected dataset from the dropdown
-        const datasetSelect = document.getElementById('dataset-select');
-        if (datasetSelect && datasetSelect.value) {
-            const selectedValue = datasetSelect.value;
-            
-            if (selectedValue.startsWith('combined:')) {
-                // Handle combined dataset selection
-                const datasetIds = selectedValue.split(':')[1].split(',');
-                loadCombinedDatasets(datasetIds);
-            } else {
-                // Handle single dataset selection
-                const selectedDataset = DATASETS.find(d => d.id === selectedValue);
-                if (selectedDataset) {
-                    loadSingleDataset(selectedDataset);
-                } else {
-                    updateStatusBanner(`Invalid dataset selected: ${selectedValue}`, 'error');
-                }
-            }
-        } else {
-            updateStatusBanner("Please select a dataset first", "info");
-        }
-    });
-}
-    
-    // Search input with debounce
-    const searchInput = document.getElementById('search-input');
-    if (searchInput) {
-        let debounceTimer;
-        searchInput.addEventListener('input', () => {
-            clearTimeout(debounceTimer);
-            debounceTimer = setTimeout(() => {
-                console.log("Search input changed, triggering filter update...");
-                applyFiltersAndUpdateVisuals();
-            }, 500); // 500ms delay
-        });
-    }
-    
-    // Filters that trigger visual updates
-    const subAgencyFilter = document.getElementById('sub-agency-filter');
-    const naicsFilter = document.getElementById('naics-filter');
-
-    if (subAgencyFilter) subAgencyFilter.addEventListener('change', applyFiltersAndUpdateVisuals);
-    if (naicsFilter) naicsFilter.addEventListener('change', applyFiltersAndUpdateVisuals);
-}
-function initializeThemeToggle() {
-    const toggleBtn = document.getElementById('theme-toggle-btn');
-    const moonIcon = document.getElementById('moon-icon');
-    const sunIcon = document.getElementById('sun-icon');
-    
-    // Check for saved theme preference or use device preference
-    const savedTheme = localStorage.getItem('theme');
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    
-    // Apply the theme on page load
-    if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
-        document.documentElement.setAttribute('data-theme', 'dark');
-        moonIcon.style.display = 'none';
-        sunIcon.style.display = 'block';
-    }
-    
-    // Toggle theme when button is clicked
-    if (toggleBtn) {
-        toggleBtn.addEventListener('click', function() {
-            const currentTheme = document.documentElement.getAttribute('data-theme');
-            
-            if (currentTheme === 'dark') {
-                document.documentElement.removeAttribute('data-theme');
-                localStorage.setItem('theme', 'light');
-                moonIcon.style.display = 'block';
-                sunIcon.style.display = 'none';
-            } else {
-                document.documentElement.setAttribute('data-theme', 'dark');
-                localStorage.setItem('theme', 'dark');
-                moonIcon.style.display = 'none';
-                sunIcon.style.display = 'block';
+            // Format dates if needed
+            if (header.includes('date') && value instanceof Date) {
+                value = value.toISOString().split('T')[0]; // YYYY-MM-DD format
             }
             
-            // Force immediate update of all charts with theme-aware colors
-            setTimeout(updateChartsForTheme, 50);
-        });
-    }
-}
-function updateTooltipThemes(isDarkMode) {
-    // Update tooltips for the current theme using CSS variables
-    const tooltipSelectors = [
-        '#sankey-tooltip', 
-        '.sankey-tooltip', 
-        '#tav-tcv-tooltip', 
-        '.map-tooltip'
-    ];
-    
-    tooltipSelectors.forEach(selector => {
-        const tooltips = document.querySelectorAll(selector);
-        tooltips.forEach(tooltip => {
-            tooltip.style.backgroundColor = getCssVar('--color-surface');
-            tooltip.style.color = getCssVar('--color-text-primary');
-            tooltip.style.border = `1px solid ${getCssVar('--color-border')}`;
-        });
+            // Handle commas and quotes in the value (CSV escape)
+            const cellValue = String(value).replace(/"/g, '""');
+            
+            // Wrap in quotes if the value contains commas, quotes, or newlines
+            return /[",\n\r]/.test(cellValue) ? `"${cellValue}"` : cellValue;
+        }).join(',');
+        
+        csvContent += row + '\n';
     });
-}
-function updateChartsForTheme() {
-    // Clean up tooltips first
-    cleanupTooltips();
     
-    // Update visualizations if data is available
-    if (unifiedModel) {
-        applyFiltersAndUpdateVisuals();
-    } else if (rawData.primes.length > 0 || rawData.subs.length > 0) {
-        applyFiltersAndUpdateVisuals();
-    }
+    // Create a Blob containing the CSV data
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    
+    // Create a download link
+    const link = document.createElement('a');
+    
+    // Create a URL for the blob
+    const url = URL.createObjectURL(blob);
+    
+    // Set link properties
+    link.setAttribute('href', url);
+    link.setAttribute('download', filename);
+    link.style.visibility = 'hidden';
+    
+    // Add link to document, click it, then remove it
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 }
+
 function updateDashboardTitle(datasets) {
     const dashboardTitle = document.getElementById('dashboard-title');
     const dashboardSubtitle = document.getElementById('dashboard-subtitle');
@@ -3516,13 +2140,65 @@ function updateDashboardTitle(datasets) {
         dashboardSubtitle.textContent = `Analyzing ${datasets.type} data from USAspending.gov`;
     }
 }
-// wednesday.js
 
-// --- Add global variables to store sort state ---
+function initializeThemeToggle() {
+    const toggleBtn = document.getElementById('theme-toggle-btn');
+    const moonIcon = document.getElementById('moon-icon');
+    const sunIcon = document.getElementById('sun-icon');
+    
+    if (!toggleBtn || !moonIcon || !sunIcon) {
+        console.warn("Theme toggle elements not found");
+        return;
+    }
+    
+    // Check for saved theme preference or use device preference
+    const savedTheme = localStorage.getItem('theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    
+    // Apply the theme on page load
+    if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        moonIcon.style.display = 'none';
+        sunIcon.style.display = 'block';
+    }
+    
+    // Toggle theme when button is clicked
+    toggleBtn.addEventListener('click', function() {
+        const currentTheme = document.documentElement.getAttribute('data-theme');
+        
+        if (currentTheme === 'dark') {
+            document.documentElement.removeAttribute('data-theme');
+            localStorage.setItem('theme', 'light');
+            moonIcon.style.display = 'block';
+            sunIcon.style.display = 'none';
+        } else {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            localStorage.setItem('theme', 'dark');
+            moonIcon.style.display = 'none';
+            sunIcon.style.display = 'block';
+        }
+        
+        // Force immediate update of all charts with theme-aware colors
+        setTimeout(updateChartsForTheme, 50);
+    });
+}
+
+function updateChartsForTheme() {
+    // Clean up tooltips first
+    cleanupTooltips();
+    
+    // Update visualizations if data is available
+    if (unifiedModel) {
+        applyFiltersAndUpdateVisuals();
+    } else if (rawData.primes.length > 0 || rawData.subs.length > 0) {
+        applyFiltersAndUpdateVisuals();
+    }
+}
+// Add global variables to store sort state
 let leadersTableSort = { key: 'totalValue', dir: 'desc' }; // Default sort for leaders
 let expiringTableSort = { key: 'period_of_performance_current_end_date', dir: 'asc' }; // Default sort for expiring
 
-// --- Utility function to add sort icons ---
+// Utility function to add sort icons
 function updateSortIcons(tableId, sortKey, sortDir) {
     const table = document.getElementById(tableId);
     if (!table) return;
@@ -3539,7 +2215,6 @@ function updateSortIcons(tableId, sortKey, sortDir) {
     });
 }
 
-// --- Modify displayContractLeadersTable ---
 function displayContractLeadersTable(leaderData) {
     const containerId = 'contract-leaders-table-container';
     const tableId = 'leaders-table'; // Give the table an ID
@@ -3550,7 +2225,7 @@ function displayContractLeadersTable(leaderData) {
     }
     setLoading(containerId, false);
 
-    // --- Keep existing setup for export button etc. ---
+    // Keep existing setup for export button etc.
     container.innerHTML = ''; // Clear previous
 
     if (!leaderData || leaderData.length === 0) {
@@ -3558,7 +2233,7 @@ function displayContractLeadersTable(leaderData) {
         return;
     }
 
-    // Create header section with export button (Keep existing code)
+    // Create header section with export button
     const headerSection = document.createElement('div');
     headerSection.style.display = 'flex';
     headerSection.style.justifyContent = 'flex-end';
@@ -3578,7 +2253,16 @@ function displayContractLeadersTable(leaderData) {
     exportButton.style.alignItems = 'center';
     exportButton.style.gap = '6px';
     exportButton.addEventListener('click', () => {
-        const exportData = leaderData.map(leader => ({ /* ... existing export mapping ... */ }));
+        const exportData = leaderData.map(leader => ({ 
+            contractor_name: leader.siName,
+            contracts: leader.numAwards,
+            subcontractors: leader.numSubs,
+            total_value: leader.totalValue,
+            average_value: leader.avgValue,
+            average_duration_days: leader.avgDurationDays,
+            naics_code: leader.dominantNaics?.code || '',
+            naics_description: leader.dominantNaics?.desc || ''
+        }));
         const today = new Date();
         const dateStr = today.toISOString().split('T')[0];
         exportToCSV(exportData, `top-contractors-${dateStr}.csv`);
@@ -3586,7 +2270,7 @@ function displayContractLeadersTable(leaderData) {
     headerSection.appendChild(exportButton);
     container.appendChild(headerSection);
 
-    // Create a table wrapper div (Keep existing code)
+    // Create a table wrapper div
     const tableWrapper = document.createElement('div');
     tableWrapper.className = 'table-wrapper';
     tableWrapper.style.overflow = 'auto';
@@ -3600,7 +2284,7 @@ function displayContractLeadersTable(leaderData) {
     const thead = table.createTHead();
     const headerRow = thead.insertRow();
 
-    // --- Define headers with sort keys ---
+    // Define headers with sort keys
     const headers = [
         { text: 'Recipient', scope: 'col', key: 'siName', sortable: false },
         { text: 'Total Value', scope: 'col', class: 'number', key: 'totalValue', sortable: true }, // Sortable
@@ -3625,7 +2309,7 @@ function displayContractLeadersTable(leaderData) {
             iconSpan.textContent = ' ↕'; // Initial icon
             th.appendChild(iconSpan);
 
-            // --- Add click listener for sorting ---
+            // Add click listener for sorting
             th.addEventListener('click', () => {
                 const newKey = headerInfo.key;
                 let newDir = 'desc';
@@ -3641,7 +2325,7 @@ function displayContractLeadersTable(leaderData) {
         headerRow.appendChild(th);
     });
 
-    // --- Sort the data based on current state BEFORE slicing ---
+    // Sort the data based on current state BEFORE slicing
     const sortKey = leadersTableSort.key;
     const sortDir = leadersTableSort.dir;
     const sortedData = [...leaderData].sort((a, b) => {
@@ -3668,13 +2352,12 @@ function displayContractLeadersTable(leaderData) {
     const tbody = table.createTBody();
     tbody.className = 'divide-y';
 
-    // --- Populate table body (Keep existing logic, use displayData) ---
+    // Populate table body (use displayData)
     displayData.forEach(leader => {
         const row = tbody.insertRow();
         // Recipient Name (clickable)
         let cell = row.insertCell();
         cell.className = 'font-medium';
-        // ... (rest of nameLink creation) ...
         const nameLink = document.createElement('a');
         nameLink.href = '#';
         nameLink.style.color = getCssVar('--color-primary');
@@ -3684,7 +2367,7 @@ function displayContractLeadersTable(leaderData) {
         nameLink.title = `View profile for ${leader.siName}`;
         nameLink.addEventListener('click', (e) => {
             e.preventDefault();
-            // showContractorProfile(leader.siName); // Ensure this function exists
+            // Future functionality: showContractorProfile(leader.siName);
         });
         cell.appendChild(nameLink);
 
@@ -3741,12 +2424,11 @@ function displayContractLeadersTable(leaderData) {
             cell.style.color = getCssVar('--color-text-tertiary');
         }
     });
-    // --- END of body population ---
 
     tableWrapper.appendChild(table);
     container.appendChild(tableWrapper);
 
-    // Add summary text (Keep existing code)
+    // Add summary text
     if (leaderData.length > 10) {
         const summaryPara = document.createElement('p');
         summaryPara.className = 'summary-text';
@@ -3755,12 +2437,10 @@ function displayContractLeadersTable(leaderData) {
         container.appendChild(summaryPara);
     }
 
-    // --- Update sort icons AFTER table is built ---
+    // Update sort icons AFTER table is built
     updateSortIcons(tableId, sortKey, sortDir);
 }
 
-
-// --- Modify displayExpiringTable ---
 function displayExpiringTable(expiringData) {
     const containerId = 'expiring-contracts-table-container';
     const tableId = 'expiring-table'; // Give the table an ID
@@ -3771,7 +2451,7 @@ function displayExpiringTable(expiringData) {
     }
     setLoading(containerId, false);
 
-    // --- Keep existing setup for export button etc. ---
+    // Keep existing setup for export button etc.
     container.innerHTML = ''; // Clear previous
 
     if (!expiringData || expiringData.length === 0) {
@@ -3779,7 +2459,7 @@ function displayExpiringTable(expiringData) {
         return;
     }
 
-    // Create header section with export button (Keep existing code)
+    // Create header section with export button
     const headerSection = document.createElement('div');
     headerSection.style.display = 'flex';
     headerSection.style.justifyContent = 'flex-end';
@@ -3795,24 +2475,23 @@ function displayExpiringTable(expiringData) {
         </svg>
         Export CSV
     `;
-     exportButton.style.display = 'flex';
+    exportButton.style.display = 'flex';
     exportButton.style.alignItems = 'center';
     exportButton.style.gap = '6px';
     exportButton.addEventListener('click', () => {
         const exportData = expiringData.map(contract => ({
-            // ... existing export mapping ...
-             contract_id: contract.award_id_piid || contract.contract_award_unique_key || '',
-             contractor_name: contract.recipient_name || '',
-             description: contract.transaction_description || '',
-             end_date: contract.formatted_end_date ||
+            contract_id: contract.award_id_piid || contract.contract_award_unique_key || '',
+            contractor_name: contract.recipient_name || '',
+            description: contract.transaction_description || '',
+            end_date: contract.formatted_end_date ||
                     (contract.period_of_performance_current_end_date_parsed instanceof Date ?
                      contract.period_of_performance_current_end_date_parsed.toISOString().split('T')[0] :
                      contract.period_of_performance_current_end_date || ''),
-             value: typeof contract.current_total_value_of_award === 'number' ?
+            value: typeof contract.current_total_value_of_award === 'number' ?
                        contract.current_total_value_of_award :
                        parseSafeFloat(contract.current_total_value_of_award || 0), // Use parseSafeFloat
-             naics_code: contract.naics_code || '',
-             naics_description: contract.naics_description || ''
+            naics_code: contract.naics_code || '',
+            naics_description: contract.naics_description || ''
         }));
         const today = new Date();
         const dateStr = today.toISOString().split('T')[0];
@@ -3834,7 +2513,7 @@ function displayExpiringTable(expiringData) {
     const thead = table.createTHead();
     const headerRow = thead.insertRow();
 
-    // --- Define headers with sort keys ---
+    // Define headers with sort keys
     const headers = [
         { text: 'Contract ID / PIID', key: 'award_id_piid', sortable: false },
         { text: 'Recipient Name', key: 'recipient_name', sortable: false },
@@ -3862,7 +2541,7 @@ function displayExpiringTable(expiringData) {
             iconSpan.textContent = ' ↕'; // Initial icon
             th.appendChild(iconSpan);
 
-            // --- Add click listener for sorting ---
+            // Add click listener for sorting
             th.addEventListener('click', () => {
                 const newKey = headerInfo.key;
                 let newDir = 'desc'; // Default to desc for value, asc for date
@@ -3886,7 +2565,7 @@ function displayExpiringTable(expiringData) {
         headerRow.appendChild(th);
     });
 
-    // --- Sort the data based on current state ---
+    // Sort the data based on current state
     const sortKey = expiringTableSort.key;
     const sortDir = expiringTableSort.dir;
     const sortedData = [...expiringData].sort((a, b) => {
@@ -3914,17 +2593,15 @@ function displayExpiringTable(expiringData) {
         return 0;
     });
 
-
     const tbody = table.createTBody();
     tbody.className = 'divide-y';
 
-    // --- Populate table body (use sortedData) ---
-    sortedData.forEach(contract => { // Use sortedData here
+    // Populate table body (use sortedData here)
+    sortedData.forEach(contract => {
         const row = tbody.insertRow();
         headers.forEach(headerInfo => {
             let cell = row.insertCell();
-            // ... (Keep existing cell population logic) ...
-             // Special handling for USA Spending column
+            // Special handling for USA Spending column
             if (headerInfo.key === 'usa_spending') {
                 cell.className = 'text-center';
                 const contractId = contract.contract_award_unique_key || contract.award_id_piid;
@@ -3989,7 +2666,6 @@ function displayExpiringTable(expiringData) {
             }
         });
     });
-    // --- END of body population ---
 
     tableWrapper.appendChild(table);
     container.appendChild(tableWrapper);
@@ -4001,9 +2677,127 @@ function displayExpiringTable(expiringData) {
     summaryPara.textContent = `Showing ${sortedData.length} expiring contracts. Sorted by ${sortKey} (${sortDir}).`;
     container.appendChild(summaryPara);
 
-    // --- Update sort icons AFTER table is built ---
+    // Update sort icons AFTER table is built
     updateSortIcons(tableId, sortKey, sortDir);
 }
+function setupEventListeners() {
+    // Refresh button
+    const refreshButton = document.getElementById('refresh-button');
+    if (refreshButton) {
+        refreshButton.addEventListener('click', function() {
+            // Clear search input
+            const searchInput = document.getElementById('search-input');
+            if (searchInput) {
+                searchInput.value = '';
+                currentSearchTerm = ''; // Reset tracking variable
+                
+                // Trigger input event to ensure listeners are notified
+                const inputEvent = new Event('input', {
+                    bubbles: true,
+                    cancelable: true
+                });
+                searchInput.dispatchEvent(inputEvent);
+                
+                // Also try to trigger clear button if it exists
+                const clearBtn = document.querySelector('#search-clear-btn, .search-clear-btn');
+                if (clearBtn) {
+                    clearBtn.style.display = 'none'; // Hide the clear button
+                }
+            }
+            
+            // Get the currently selected dataset from the dropdown
+            const datasetSelect = document.getElementById('dataset-select');
+            if (datasetSelect && datasetSelect.value) {
+                const selectedValue = datasetSelect.value;
+                
+                if (selectedValue.startsWith('combined:')) {
+                    // Handle combined dataset selection
+                    const datasetIds = selectedValue.split(':')[1].split(',');
+                    loadCombinedDatasets(datasetIds);
+                } else {
+                    // Handle single dataset selection
+                    const selectedDataset = DATASETS.find(d => d.id === selectedValue);
+                    if (selectedDataset) {
+                        loadSingleDataset(selectedDataset);
+                    } else {
+                        updateStatusBanner(`Invalid dataset selected: ${selectedValue}`, 'error');
+                    }
+                }
+            } else {
+                updateStatusBanner("Please select a dataset first", "info");
+            }
+        });
+    }
+    
+    // Search input with debounce
+    const searchInput = document.getElementById('search-input');
+    if (searchInput) {
+        let debounceTimer;
+        searchInput.addEventListener('input', () => {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                console.log("Search input changed, triggering filter update...");
+                applyFiltersAndUpdateVisuals();
+            }, 500); // 500ms delay
+        });
+    }
+    
+    // Filters that trigger visual updates
+    const subAgencyFilter = document.getElementById('sub-agency-filter');
+    const naicsFilter = document.getElementById('naics-filter');
+
+    if (subAgencyFilter) subAgencyFilter.addEventListener('change', applyFiltersAndUpdateVisuals);
+    if (naicsFilter) naicsFilter.addEventListener('change', applyFiltersAndUpdateVisuals);
+}
+
+// Initialize processNaicsDistributionData function for NAICS donut chart
+if (typeof window.processNaicsDistributionData !== 'function') {
+    window.processNaicsDistributionData = function(model) {
+        if (!model || !model.contracts) {
+            return [];
+        }
+
+        console.log("Processing NAICS distribution data from model");
+
+        const naicsAggregates = {};
+        
+        // Process all contracts
+        Object.values(model.contracts || {}).forEach(contract => {
+            // Skip if no NAICS code or no value
+            if (!contract.naicsCode || contract.value <= 0) return;
+
+            // Add to aggregates
+            const code = contract.naicsCode;
+            const desc = contract.naicsDesc || "N/A";
+            
+            if (!naicsAggregates[code]) {
+                naicsAggregates[code] = { 
+                    code: code, 
+                    desc: desc, 
+                    name: code, // For color mapping
+                    value: 0 
+                };
+            }
+            
+            naicsAggregates[code].value += contract.value;
+        });
+        
+        // Convert to array and sort
+        const sortedNaicsData = Object.values(naicsAggregates)
+            .sort((a, b) => b.value - a.value);
+        
+        // Calculate percentages
+        const totalValue = sortedNaicsData.reduce((sum, item) => sum + item.value, 0);
+        sortedNaicsData.forEach(item => {
+            item.percentage = totalValue > 0 ? (item.value / totalValue) * 100 : 0;
+        });
+
+        console.log(`Processed ${sortedNaicsData.length} NAICS codes for distribution chart`);
+        return sortedNaicsData;
+    };
+}
+
+// Main initialization function
 document.addEventListener('DOMContentLoaded', function() {
     console.log("DOM fully loaded and parsed");
     
@@ -4021,16 +2815,6 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Setup all event listeners
         setupEventListeners();
-        
-        // Initialize preset views with timeout
-        setTimeout(function() {
-            try {
-                initializePresetViews();
-                console.log("Preset views initialized successfully");
-            } catch(e) {
-                console.error("Error initializing preset views:", e);
-            }
-        }, 500);
         
         // Auto-load a dataset (SOCOM combined if possible)
         const socomPrimes = DATASETS.find(d => d.id === 'socom_primes');
@@ -4050,8 +2834,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
             }
             
-            // Load combined datasets
-            loadCombinedDatasets([socomPrimes.id, socomSubs.id]);
+            // Load combined datasets with a slight delay to ensure UI is ready
+            setTimeout(() => {
+                loadCombinedDatasets([socomPrimes.id, socomSubs.id]);
+            }, 300);
         } else if (socomPrimes) {
             console.log("Automatically loading SOCOM primes dataset...");
             
@@ -4061,8 +2847,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 datasetSelect.value = 'socom_primes';
             }
             
-            // Load the SOCOM dataset
-            loadSingleDataset(socomPrimes);
+            // Load the SOCOM dataset with a slight delay
+            setTimeout(() => {
+                loadSingleDataset(socomPrimes);
+            }, 300);
         } else {
             console.log("SOCOM dataset not found in the DATASETS array");
         }
@@ -4095,4067 +2883,3 @@ window.addEventListener('resize', function() {
        }
    }, 250); // Debounce for 250ms
 });
-// Helper function to add prime nodes and their subs
-function addPrimeNodes(topPrimes, model, parentNode) {
-    topPrimes.forEach(prime => {
-        const primeData = model.primes[prime.id];
-        if (!primeData) return;
-        
-        const primeNode = {
-            name: primeData.name,
-            id: "prime-" + Math.random().toString(36).substring(2, 9),
-            value: prime.value,
-            children: []
-        };
-        
-        // Find subs for this prime
-        const subsForPrime = {};
-        
-        // Get prime to sub relationships
-        model.relationships.primeToSub.forEach(rel => {
-            if (rel.source === prime.id) {
-                const subId = rel.target;
-                if (!subsForPrime[subId]) {
-                    subsForPrime[subId] = 0;
-                }
-                subsForPrime[subId] += rel.value;
-            }
-        });
-        
-        // Sort subs by value and take top 5
-        const topSubs = Object.entries(subsForPrime)
-            .sort((a, b) => b[1] - a[1])
-            .slice(0, 5)
-            .map(([subId, value]) => ({
-                id: subId,
-                value: value
-            }));
-            
-        // Add sub nodes
-        topSubs.forEach(sub => {
-            const subData = model.subs[sub.id];
-            if (!subData) return;
-            
-            primeNode.children.push({
-                name: subData.name,
-                id: "sub-" + Math.random().toString(36).substring(2, 9),
-                value: sub.value,
-                isSub: true // Explicitly mark as a subcontractor
-            });
-        });
-        
-        // Add prime if it has significant value
-        if (prime.value > 100000) {
-            parentNode.children.push(primeNode);
-        }
-    });
-}
-function initializeSankeyFilters() {
-  // Find the existing filter container - this is where your current filters are located
-  const filtersContainer = document.querySelector('div[style*="display: flex; flex-direction: column"]');
-  
-  if (!filtersContainer) {
-    console.error("Filter container not found, cannot add Sankey visualization options");
-    return;
-  }
-  
-  // Create a heading for Sankey visualization options
-  const sankeyHeading = document.createElement('h2');
-  sankeyHeading.style.fontSize = '14px';
-  sankeyHeading.style.margin = '0';
-  sankeyHeading.textContent = 'Sankey Visualization';
-  
-  // Create the agency field selector
-  const agencyFieldSelect = document.createElement('select');
-  agencyFieldSelect.id = 'sankey-agency-field';
-  agencyFieldSelect.className = 'input-select';
-  agencyFieldSelect.style.width = '100%';
-  
-  // Add options for agency field
-  agencyFieldSelect.innerHTML = `
-    <option value="agencyName">Agency</option>
-    <option value="subAgencyName" selected>Sub-Agency</option>
-    <option value="officeName">Office</option>
-  `;
-  
-  // Create the contractor field selector
-  const contractorFieldSelect = document.createElement('select');
-  contractorFieldSelect.id = 'sankey-contractor-field';
-  contractorFieldSelect.className = 'input-select';
-  contractorFieldSelect.style.width = '100%';
-  
-  // Add options for contractor field
-  contractorFieldSelect.innerHTML = `
-    <option value="primeName" selected>Prime Contractors</option>
-    <option value="subName">Subcontractors</option>
-  `;
-  
-  // Add the refresh button to the container for reference
-  const refreshButton = document.getElementById('refresh-button');
-  
-  // Insert Sankey controls before the refresh button and after the NAICS filter
-  if (refreshButton && refreshButton.parentNode) {
-    // Insert before the status banner
-    const statusBanner = document.getElementById('status-banner');
-    if (statusBanner) {
-      filtersContainer.insertBefore(sankeyHeading, statusBanner);
-      filtersContainer.insertBefore(agencyFieldSelect, statusBanner);
-      filtersContainer.insertBefore(contractorFieldSelect, statusBanner);
-    } else {
-      // Fallback, insert before refresh button
-      filtersContainer.insertBefore(sankeyHeading, refreshButton);
-      filtersContainer.insertBefore(agencyFieldSelect, refreshButton);
-      filtersContainer.insertBefore(contractorFieldSelect, refreshButton);
-    }
-  } else {
-    // If refresh button not found, just append to the end
-    filtersContainer.appendChild(sankeyHeading);
-    filtersContainer.appendChild(agencyFieldSelect);
-    filtersContainer.appendChild(contractorFieldSelect);
-  }
-  
-  // Add event listeners to update visualization when options change
-  agencyFieldSelect.addEventListener('change', applyFiltersAndUpdateVisuals);
-  contractorFieldSelect.addEventListener('change', applyFiltersAndUpdateVisuals);
-}
-
-// Process data for the left Sankey panel based on selection
-function processSankeyDataForLeftPanel(model, selectedField) {
-  // Filter to top relationships by value
-  const topAgencyToPrime = model.relationships.agencyToPrime
-    .sort((a, b) => b.value - a.value)
-    .slice(0, 10);
-      
-  const nodes = [];
-  const links = [];
-  const nodeMap = {};
-  
-  // Field types to entity types mapping
-  const fieldToEntityType = {
-    'agencyName': 'agency',
-    'subAgencyName': 'subagency',
-    'officeName': 'office',
-    'primeName': 'prime'
-  };
-  
-  // Get appropriate field name from the entity based on selection
-  const getEntityName = (entityId, type) => {
-    if (type === 'prime') {
-      return model.primes[entityId]?.name || 'Unknown';
-    }
-    
-    // For agency entities, determine based on selected field
-    switch (selectedField) {
-      case 'agencyName':
-        return model.agencies[entityId]?.name || 'Unknown Agency';
-      case 'subAgencyName':
-        return model.subAgencies[entityId]?.name || 'Unknown Sub-Agency';
-      case 'officeName':
-        return model.offices[entityId]?.name || 'Unknown Office';
-      default:
-        return 'Unknown';
-    }
-  };
-  
-  // Get appropriate source entity ID based on selection
-  const getSourceEntityId = (linkData) => {
-    const contract = model.contracts[linkData.contractId];
-    if (!contract) return null;
-    
-    switch (selectedField) {
-      case 'agencyName':
-        return contract.agencyId;
-      case 'subAgencyName':
-        return contract.subAgencyId;
-      case 'officeName':
-        return contract.officeId;
-      default:
-        return contract.subAgencyId; // Default to sub-agency
-    }
-  };
-  
-  // Process each relationship
-  topAgencyToPrime.forEach(link => {
-    const sourceId = getSourceEntityId(link);
-    const targetId = link.target; // Prime ID
-    
-    if (!sourceId || !targetId) return;
-    
-    // Get entity name based on type and add node if not already added
-    const sourceName = getEntityName(sourceId, fieldToEntityType[selectedField]);
-    const targetName = getEntityName(targetId, 'prime');
-    
-    // Add source node if not yet added
-    if (!nodeMap[sourceId]) {
-      const nodeIndex = nodes.length;
-      nodes.push({
-        name: truncateText(sourceName, 30),
-        id: sourceId,
-        type: fieldToEntityType[selectedField],
-        index: nodeIndex
-      });
-      nodeMap[sourceId] = nodeIndex;
-    }
-    
-    // Add target node if not yet added
-    if (!nodeMap[targetId]) {
-      const nodeIndex = nodes.length;
-      nodes.push({
-        name: truncateText(targetName, 30),
-        id: targetId,
-        type: 'prime',
-        index: nodeIndex
-      });
-      nodeMap[targetId] = nodeIndex;
-    }
-    
-    // Add link
-    links.push({
-      source: nodeMap[sourceId],
-      target: nodeMap[targetId],
-      value: link.value
-    });
-  });
-  
-  return { nodes, links };
-}
-
-// Process data for the right Sankey panel based on selection
-function processSankeyDataForRightPanel(model, selectedField) {
-  // Filter to top relationships by value
-  const topPrimeToSub = model.relationships.primeToSub
-    .sort((a, b) => b.value - a.value)
-    .slice(0, 10);
-      
-  const nodes = [];
-  const links = [];
-  const nodeMap = {};
-  
-  // If no subcontract data, return empty arrays
-  if (topPrimeToSub.length === 0) {
-    return { nodes, links };
-  }
-  
-  // Field types to entity types mapping
-  const fieldToEntityType = {
-    'primeName': 'prime',
-    'subName': 'sub'
-  };
-  
-  // Get entity name based on type
-  const getEntityName = (entityId, type) => {
-    if (type === 'prime') {
-      return model.primes[entityId]?.name || 'Unknown Prime';
-    } else if (type === 'sub') {
-      return model.subs[entityId]?.name || 'Unknown Sub';
-    }
-    return 'Unknown';
-  };
-  
-  // Process each relationship
-  topPrimeToSub.forEach(link => {
-    const sourceId = link.source; // Prime ID
-    const targetId = link.target; // Sub ID
-    
-    // Get entity names
-    const sourceName = getEntityName(sourceId, 'prime');
-    const targetName = getEntityName(targetId, 'sub');
-    
-    // Add source node if not yet added
-    if (!nodeMap[sourceId]) {
-      const nodeIndex = nodes.length;
-      nodes.push({
-        name: truncateText(sourceName, 30),
-        id: sourceId,
-        type: 'prime',
-        index: nodeIndex
-      });
-      nodeMap[sourceId] = nodeIndex;
-    }
-    
-    // Add target node if not yet added
-    if (!nodeMap[targetId]) {
-      const nodeIndex = nodes.length;
-      nodes.push({
-        name: truncateText(targetName, 30),
-        id: targetId,
-        type: 'sub',
-        index: nodeIndex
-      });
-      nodeMap[targetId] = nodeIndex;
-    }
-    
-    // Add link
-    links.push({
-      source: nodeMap[sourceId],
-      target: nodeMap[targetId],
-      value: link.value
-    });
-  });
-  
-  return { nodes, links };
-}
-
-// Helper mapping for panel titles
-const agencyTitleMap = {
-  'agencyName': 'Agency',
-  'subAgencyName': 'Sub-Agency',
-  'officeName': 'Office'
-};
-
-// Create tooltip for Sankey diagram
-function createSankeyTooltip() {
-  // Remove any existing tooltip
-  const oldTooltip = document.getElementById('sankey-tooltip');
-  if (oldTooltip) {
-    document.body.removeChild(oldTooltip);
-  }
-  
-  // Create new tooltip
-  const tooltip = document.createElement('div');
-  tooltip.id = 'sankey-tooltip';
-  tooltip.style.position = 'absolute';
-  tooltip.style.padding = '10px';
-  tooltip.style.backgroundColor = getCssVar('--color-surface');
-  tooltip.style.color = getCssVar('--color-text-primary');
-  tooltip.style.border = `1px solid ${getCssVar('--color-border')}`;
-  tooltip.style.borderRadius = '4px';
-  tooltip.style.pointerEvents = 'none';
-  tooltip.style.zIndex = '99999';
-  tooltip.style.display = 'none';
-  tooltip.style.fontSize = '12px';
-  tooltip.style.boxShadow = '0 2px 4px rgba(0,0,0,0.2)';
-  document.body.appendChild(tooltip);
-  
-  return tooltip;
-}
-
-// Get colors for Sankey nodes based on current theme
-function getSankeyNodeColors() {
-  return {
-    agency: getCssVar('--chart-color-tertiary'),
-    subagency: getCssVar('--chart-color-tertiary'),
-    office: getCssVar('--chart-color-tertiary'),
-    prime: getCssVar('--chart-color-primary'),
-    sub: getCssVar('--chart-color-secondary')
-  };
-}
-
-// Enhanced version of the Sankey chart display function
-function displayEnhancedSankeyChart(model) {
-  console.log("Rendering enhanced Sankey chart with model data");
-  
-  const containerId = 'sankey-chart-container';
-  const container = document.getElementById(containerId);
-  
-  if (!container) {
-    console.error("Sankey chart container not found.");
-    return;
-  }
-
-  // Get selected visualization options from the filter panel
-  const agencyField = document.getElementById('sankey-agency-field')?.value || 'subAgencyName';
-  const contractorField = document.getElementById('sankey-contractor-field')?.value || 'primeName';
-  
-  // Clear previous content
-  container.innerHTML = '';
-  
-  // Set up container layout for split panels
-  const panelsContainer = document.createElement('div');
-  panelsContainer.style.display = 'flex';
-  panelsContainer.style.flexDirection = 'row';
-  panelsContainer.style.gap = '20px';
-  panelsContainer.style.height = 'calc(100% - 40px)';
-  container.appendChild(panelsContainer);
-  
-  // Create container for each panel
-  const leftPanelContainer = document.createElement('div');
-  leftPanelContainer.id = 'agency-prime-panel';
-  leftPanelContainer.style.flex = '1';
-  
-  const rightPanelContainer = document.createElement('div');
-  rightPanelContainer.id = 'prime-sub-panel';
-  rightPanelContainer.style.flex = '1';
-  
-  panelsContainer.appendChild(leftPanelContainer);
-  panelsContainer.appendChild(rightPanelContainer);
-  
-  // Add panel titles with selected field information
-  const leftTitle = document.createElement('div');
-  leftTitle.style.textAlign = 'center';
-  leftTitle.style.marginBottom = '10px';
-  leftTitle.style.fontWeight = 'bold';
-  leftTitle.style.color = getCssVar('--color-text-primary');
-  leftTitle.textContent = `${agencyTitleMap[agencyField] || 'Agency'} to Prime Contractors`;
-  leftPanelContainer.appendChild(leftTitle);
-  
-  const rightTitle = document.createElement('div');
-  rightTitle.style.textAlign = 'center';
-  rightTitle.style.marginBottom = '10px';
-  rightTitle.style.fontWeight = 'bold';
-  rightTitle.style.color = getCssVar('--color-text-primary');
-  rightTitle.textContent = `Prime to ${contractorField === 'subName' ? 'Subcontractors' : 'Projects'}`;
-  rightPanelContainer.appendChild(rightTitle);
-  
-  // Create SVGs for each panel
-  const leftSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-  leftSvg.id = 'agency-prime-sankey';
-  leftSvg.setAttribute('width', '100%');
-  leftSvg.setAttribute('height', '100%');
-  leftPanelContainer.appendChild(leftSvg);
-  
-  const rightSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-  rightSvg.id = 'prime-sub-sankey';
-  rightSvg.setAttribute('width', '100%');
-  rightSvg.setAttribute('height', '100%');
-  rightPanelContainer.appendChild(rightSvg);
-  
-  setLoading(containerId, false);
-  
-  if (!model || 
-     (!model.relationships.agencyToPrime.length && !model.relationships.primeToSub.length)) {
-    displayNoData(containerId, 'No data available for Sankey diagram.');
-    return;
-  }
-  
-  try {
-    // Create tooltip
-    const tooltip = createSankeyTooltip();
-    
-    // Set dimensions for each panel
-    const panelWidth = leftPanelContainer.clientWidth || 300;
-    const panelHeight = leftPanelContainer.clientHeight || 400;
-    const margin = {top: 20, right: 20, bottom: 20, left: 20};
-    
-    // Get colors based on theme
-    const nodeColors = getSankeyNodeColors();
-    const nodeStrokeColor = getCssVar('--color-surface');
-    
-    // Create D3 selections
-    const leftSvgSelection = d3.select(leftSvg)
-      .attr('width', panelWidth)
-      .attr('height', panelHeight);
-        
-    const rightSvgSelection = d3.select(rightSvg)
-      .attr('width', panelWidth)
-      .attr('height', panelHeight);
-    
-    // Process data for both panels based on selected fields
-    const leftSankeyData = processSankeyDataForLeftPanel(model, agencyField);
-    const rightSankeyData = processSankeyDataForRightPanel(model, contractorField);
-    
-    // Draw the Sankey diagrams
-    drawSankeyDiagram(
-      leftSvgSelection,
-      leftSankeyData.nodes,
-      leftSankeyData.links,
-      panelWidth,
-      panelHeight,
-      margin,
-      nodeColors,
-      nodeStrokeColor,
-      tooltip,
-      'left'
-    );
-    
-    if (rightSankeyData.nodes.length > 0 && rightSankeyData.links.length > 0) {
-      drawSankeyDiagram(
-        rightSvgSelection,
-        rightSankeyData.nodes,
-        rightSankeyData.links,
-        panelWidth,
-        panelHeight,
-        margin,
-        nodeColors,
-        nodeStrokeColor,
-        tooltip,
-        'right'
-      );
-    } else {
-      // No data for right panel
-      rightSvgSelection.append("text")
-        .attr("x", panelWidth / 2)
-        .attr("y", panelHeight / 2)
-        .attr("text-anchor", "middle")
-        .attr("font-size", "12px")
-        .attr("fill", getCssVar('--color-text-secondary'))
-        .attr("opacity", 0.7)
-        .text(`No ${contractorField === 'subName' ? 'subcontractor' : 'project'} data available`);
-    }
-  } catch (error) {
-    console.error("Error rendering Sankey charts:", error);
-    displayError(containerId, `Error rendering Sankey charts: ${error.message}`);
-  }
-}
-
-// Draw a Sankey diagram with the provided data
-function drawSankeyDiagram(svgSelection, nodes, links, width, height, margin, nodeColors, nodeStrokeColor, tooltip, panelSide) {
-  // Create Sankey generator
-  const sankey = d3.sankey()
-    .nodeWidth(15)
-    .nodePadding(10)
-    .extent([[margin.left, margin.top], [width - margin.right, height - margin.bottom]]);
-  
-  // Apply Sankey to data
-  const graph = sankey({
-    nodes: nodes.map(d => Object.assign({}, d)),
-    links: links.map(d => Object.assign({}, d))
-  });
-  
-  // Draw links with gradients
-  const defs = svgSelection.append('defs');
-  
-  graph.links.forEach((link, i) => {
-    const gradientId = `${panelSide}-link-gradient-${i}`;
-    const sourceColor = nodeColors[link.source.type] || '#999';
-    const targetColor = nodeColors[link.target.type] || '#999';
-    
-    const gradient = defs.append('linearGradient')
-      .attr('id', gradientId)
-      .attr('gradientUnits', 'userSpaceOnUse')
-      .attr('x1', link.source.x1)
-      .attr('y1', link.source.y0 + (link.source.y1 - link.source.y0) / 2)
-      .attr('x2', link.target.x0)
-      .attr('y2', link.target.y0 + (link.target.y1 - link.target.y0) / 2);
-        
-    gradient.append('stop')
-      .attr('offset', '0%')
-      .attr('stop-color', sourceColor)
-      .attr('stop-opacity', 0.8);
-        
-    gradient.append('stop')
-      .attr('offset', '100%')
-      .attr('stop-color', targetColor)
-      .attr('stop-opacity', 0.8);
-        
-    link.gradientId = gradientId;
-  });
-  
-  // Draw links
-  svgSelection.append('g')
-    .selectAll('path')
-    .data(graph.links)
-    .enter()
-    .append('path')
-    .attr('d', d3.sankeyLinkHorizontal())
-    .attr('stroke', (d) => `url(#${d.gradientId})`)
-    .attr('stroke-width', d => Math.max(1, d.width))
-    .attr('stroke-opacity', 0.5)
-    .attr('fill', 'none')
-    .attr('cursor', 'pointer')
-    .on('mouseover', function(event, d) {
-      // Show tooltip
-      const html = `
-        <div style="font-weight: bold; margin-bottom: 5px;">${d.source.name} → ${d.target.name}</div>
-        <div>Value: ${formatCurrency(d.value)}</div>
-      `;
-      tooltip.innerHTML = html;
-      tooltip.style.display = 'block';
-      tooltip.style.left = (event.pageX + 10) + 'px';
-      tooltip.style.top = (event.pageY - 28) + 'px';
-      
-      // Highlight link
-      d3.select(this).attr('stroke-opacity', 0.8);
-    })
-    .on('mousemove', function(event) {
-      tooltip.style.left = (event.pageX + 10) + 'px';
-      tooltip.style.top = (event.pageY - 28) + 'px';
-    })
-    .on('mouseout', function() {
-      tooltip.style.display = 'none';
-      d3.select(this).attr('stroke-opacity', 0.5);
-    });
-    
-  // Draw nodes
-  svgSelection.append('g')
-    .selectAll('rect')
-    .data(graph.nodes)
-    .enter()
-    .append('rect')
-    .attr('x', d => d.x0)
-    .attr('y', d => d.y0)
-    .attr('height', d => Math.max(1, d.y1 - d.y0))
-    .attr('width', d => Math.max(1, d.x1 - d.x0))
-    .attr('fill', d => nodeColors[d.type] || '#999')
-    .attr('stroke', nodeStrokeColor)
-    .attr('stroke-width', 1)
-    .attr('cursor', 'pointer')
-    .attr('data-id', d => d.id)
-    .attr('data-type', d => d.type)
-    .on('mouseover', function(event, d) {
-      // Show tooltip
-      const html = `
-        <div style="font-weight: bold; margin-bottom: 5px;">${d.name}</div>
-        <div>Type: ${d.type.charAt(0).toUpperCase() + d.type.slice(1)}</div>
-        <div>Total Value: ${formatCurrency(d.value)}</div>
-      `;
-      tooltip.innerHTML = html;
-      tooltip.style.display = 'block';
-      tooltip.style.left = (event.pageX + 10) + 'px';
-      tooltip.style.top = (event.pageY - 28) + 'px';
-      
-      // Highlight node
-      d3.select(this)
-        .attr('stroke', getCssVar('--chart-color-primary'))
-        .attr('stroke-width', 2);
-          
-      // Cross-panel highlighting for prime nodes
-      if (panelSide === 'left' && d.type === 'prime') {
-        d3.select('#prime-sub-sankey')
-          .selectAll('rect')
-          .filter(node => node.type === 'prime' && node.id === d.id)
-          .attr('stroke', getCssVar('--chart-color-primary'))
-          .attr('stroke-width', 2);
-      } else if (panelSide === 'right' && d.type === 'prime') {
-        d3.select('#agency-prime-sankey')
-          .selectAll('rect')
-          .filter(node => node.type === 'prime' && node.id === d.id)
-          .attr('stroke', getCssVar('--chart-color-primary'))
-          .attr('stroke-width', 2);
-      }
-    })
-    .on('mousemove', function(event) {
-      tooltip.style.left = (event.pageX + 10) + 'px';
-      tooltip.style.top = (event.pageY - 28) + 'px';
-    })
-    .on('mouseout', function() {
-      tooltip.style.display = 'none';
-      d3.select(this)
-        .attr('stroke', nodeStrokeColor)
-        .attr('stroke-width', 1);
-          
-      // Remove cross-panel highlighting
-      if (panelSide === 'left') {
-        d3.select('#prime-sub-sankey')
-          .selectAll('rect')
-          .attr('stroke', nodeStrokeColor)
-          .attr('stroke-width', 1);
-      } else {
-        d3.select('#agency-prime-sankey')
-          .selectAll('rect')
-          .attr('stroke', nodeStrokeColor)
-          .attr('stroke-width', 1);
-      }
-    });
-  
-  // Add node labels
-  svgSelection.append('g')
-    .selectAll('text')
-    .data(graph.nodes)
-    .enter()
-    .append('text')
-    .attr('x', d => d.x0 < width / 2 ? d.x1 + 6 : d.x0 - 6)
-    .attr('y', d => (d.y1 + d.y0) / 2)
-    .attr('dy', '0.35em')
-    .attr('text-anchor', d => d.x0 < width / 2 ? 'start' : 'end')
-    .text(d => d.name)
-    .attr('font-size', '11px')
-    .attr('fill', getCssVar('--color-text-primary'))
-    .each(function(d) {
-      // Hide labels for small nodes
-      if ((d.y1 - d.y0) < 5) {
-        d3.select(this).remove();
-      }
-    });
-      
-  // Add note about showing only top connections
-  svgSelection.append("text")
-    .attr("x", width - 10)
-    .attr("y", height - 10)
-    .attr("text-anchor", "end")
-    .attr("font-size", "10px")
-    .attr("fill", getCssVar('--color-text-secondary'))
-    .attr("opacity", 0.7)
-    .text("Showing top 10 flows by value");
-}
-
-// Override the existing displayEnhancedSankeyChart function
-window.displayEnhancedSankeyChart = displayEnhancedSankeyChart;
-
-// Find any existing displaySankeyChart or displayEnhancedSankeyChartWithSelectors functions
-// and replace them with our new implementation
-if (typeof window.displaySankeyChart === 'function') {
-  window.displaySankeyChart = displayEnhancedSankeyChart;
-}
-
-if (typeof window.displayEnhancedSankeyChartWithSelectors === 'function') {
-  window.displayEnhancedSankeyChartWithSelectors = displayEnhancedSankeyChart;
-}
-
-// Initialize during page load if not already done
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initializeSankeyFilters);
-} else {
-  // Document already loaded, run the initialization
-  initializeSankeyFilters();
-}
-
-// Make sure the appropriate function gets called during visualization updates
-const originalApplyFilters = window.applyFiltersAndUpdateVisuals;
-if (typeof originalApplyFilters === 'function') {
-  window.applyFiltersAndUpdateVisuals = function() {
-    // Call the original function first
-    originalApplyFilters.apply(this, arguments);
-    
-    // Make sure our enhanced Sankey display function gets called
-    if (typeof displaySankeyChart === 'function' && 
-        typeof displayEnhancedSankeyChart === 'function' &&
-        displaySankeyChart !== displayEnhancedSankeyChart) {
-      // Replace the old function with our enhanced version
-      window.displaySankeyChart = displayEnhancedSankeyChart;
-    }
-  };
-}
-/**
- * Fix for "processNaicsDistributionData is not defined" error
- * 
- * This ensures the function is available when needed during data loading
- */
-
-// Define the function directly if it doesn't exist yet
-if (typeof window.processNaicsDistributionData !== 'function') {
-  /**
-   * Process data for NAICS distribution visualization with proper filtering
-   * @param {Object} model - The unified data model
-   * @param {string} naicsFilter - Current NAICS filter selection
-   * @param {string} subAgencyFilter - Current sub-agency filter selection
-   * @param {string} searchTerm - Current search term
-   */
-  window.processNaicsDistributionData = function(model, naicsFilter, subAgencyFilter, searchTerm) {
-    if (!model || !model.contracts) {
-      return [];
-    }
-
-    // Handle undefined parameters
-    naicsFilter = naicsFilter || '';
-    subAgencyFilter = subAgencyFilter || '';
-    searchTerm = searchTerm || '';
-
-    console.log(`Processing NAICS data with filters: NAICS=${naicsFilter}, SubAgency=${subAgencyFilter}, Search=${searchTerm}`);
-
-    const naicsAggregates = {};
-    
-    // Process all contracts
-    Object.values(model.contracts || {}).forEach(contract => {
-      // Skip if no NAICS code or no value
-      if (!contract.naicsCode || contract.value <= 0) return;
-
-      // Apply sub-agency filter if set
-      if (subAgencyFilter && contract.subAgencyId) {
-        const subAgency = model.subAgencies[contract.subAgencyId];
-        if (!subAgency || subAgency.name !== subAgencyFilter) return;
-      }
-
-      // Apply search filter if set
-      if (searchTerm) {
-        const searchFields = [
-          contract.description,
-          model.primes[contract.primeId]?.name,
-          model.subAgencies[contract.subAgencyId]?.name,
-          model.offices[contract.officeId]?.name,
-          contract.naicsCode,
-          contract.naicsDesc
-        ];
-        
-        if (!searchFields.some(field => field && field.toLowerCase().includes(searchTerm.toLowerCase()))) {
-          return;
-        }
-      }
-
-      // Add to aggregates
-      const code = contract.naicsCode;
-      const desc = contract.naicsDesc || "N/A";
-      
-      if (!naicsAggregates[code]) {
-        naicsAggregates[code] = { 
-          code: code, 
-          desc: desc, 
-          name: code, // For color mapping
-          value: 0,
-          isSelected: (naicsFilter && code === naicsFilter) 
-        };
-      }
-      
-      naicsAggregates[code].value += contract.value;
-    });
-    
-    // Convert to array and sort
-    const sortedNaicsData = Object.values(naicsAggregates)
-      .sort((a, b) => b.value - a.value);
-    
-    // Calculate percentages
-    const totalValue = sortedNaicsData.reduce((sum, item) => sum + item.value, 0);
-    sortedNaicsData.forEach(item => {
-      item.percentage = totalValue > 0 ? (item.value / totalValue) * 100 : 0;
-    });
-
-    // If we have a NAICS filter, ensure the selected NAICS is included in top N
-    if (naicsFilter && naicsAggregates[naicsFilter]) {
-      // Create a copy to manipulate for display purposes
-      const displayData = [...sortedNaicsData];
-      const selectedData = naicsAggregates[naicsFilter];
-      
-      // If the selected NAICS isn't already in top 5
-      const topN = 5;
-      if (!displayData.slice(0, topN).some(item => item.code === naicsFilter)) {
-        const selectedIndex = displayData.findIndex(item => item.code === naicsFilter);
-        
-        if (selectedIndex >= 0) {
-          // Remove from current position
-          const selected = displayData.splice(selectedIndex, 1)[0];
-          // Add in at position 5 (replacing the last item in top 5)
-          displayData.splice(Math.min(topN - 1, displayData.length), 0, selected);
-        }
-      }
-      
-      return displayData; // Return modified list ensuring selected NAICS is visible
-    }
-    
-    return sortedNaicsData;
-  };
-  console.log("Defined processNaicsDistributionData function");
-}
-
-/**
- * Make sure Share of Wallet data processing is also defined
- */
-if (typeof window.processShareOfWalletData !== 'function') {
-  /**
-   * Process data for Share of Wallet chart with proper filtering
-   * @param {Object} model - The unified data model
-   * @param {string} naicsFilter - Current NAICS filter selection
-   * @param {string} subAgencyFilter - Current sub-agency filter selection
-   * @param {string} searchTerm - Current search term
-   */
-  window.processShareOfWalletData = function(model, naicsFilter, subAgencyFilter, searchTerm) {
-    if (!model || !model.primes) {
-      return [];
-    }
-    
-    // Handle undefined parameters
-    naicsFilter = naicsFilter || '';
-    subAgencyFilter = subAgencyFilter || '';
-    searchTerm = searchTerm || '';
-    
-    // Aggregate by prime
-    const primeValues = {};
-    let totalValue = 0;
-    
-    // Process from contracts, applying all filters
-    Object.values(model.contracts || {}).forEach(contract => {
-      if (!contract.primeId || !contract.value || contract.value <= 0) return;
-      
-      // Apply NAICS filter if set
-      if (naicsFilter && contract.naicsCode !== naicsFilter) return;
-      
-      // Apply sub-agency filter if set
-      if (subAgencyFilter && contract.subAgencyId) {
-        const subAgency = model.subAgencies[contract.subAgencyId];
-        if (!subAgency || subAgency.name !== subAgencyFilter) return;
-      }
-      
-      // Apply search filter if set
-      if (searchTerm) {
-        const searchFields = [
-          contract.description,
-          model.primes[contract.primeId]?.name,
-          model.subAgencies[contract.subAgencyId]?.name,
-          model.offices[contract.officeId]?.name,
-          contract.naicsCode,
-          contract.naicsDesc
-        ];
-        
-        if (!searchFields.some(field => field && field.toLowerCase().includes(searchTerm.toLowerCase()))) {
-          return;
-        }
-      }
-      
-      // Get prime details
-      const prime = model.primes[contract.primeId];
-      if (!prime || !prime.name) return;
-      
-      const primeName = prime.name;
-      if (!primeValues[primeName]) {
-        primeValues[primeName] = 0;
-      }
-      
-      primeValues[primeName] += contract.value;
-      totalValue += contract.value;
-    });
-    
-    // Convert to array and sort
-    const sortedPrimes = Object.entries(primeValues)
-      .map(([name, value]) => ({
-        name: name,
-        value: value,
-        percentage: 0 // Calculate after
-      }))
-      .sort((a, b) => b.value - a.value);
-    
-    // Take top 7 primes
-    const result = sortedPrimes.slice(0, 7);
-    
-    // Add "Other" category if needed
-    if (sortedPrimes.length > 7) {
-      const otherValue = sortedPrimes.slice(7)
-        .reduce((sum, item) => sum + item.value, 0);
-      
-      if (otherValue > 0) {
-        result.push({
-          name: "Other",
-          value: otherValue,
-          isOther: true,
-          count: sortedPrimes.length - 7
-        });
-      }
-    }
-    
-    // Calculate percentages
-    result.forEach(item => {
-      item.percentage = totalValue > 0 ? (item.value / totalValue) * 100 : 0;
-    });
-    
-    return result;
-  };
-  console.log("Defined processShareOfWalletData function");
-}
-
-// Fix for init code to handle cases where data is available but chart isn't rendered
-function loadChartsIfDataExists() {
-  // Check if data already exists
-  if (typeof window.unifiedModel !== 'undefined' && 
-      window.unifiedModel !== null && 
-      typeof window.unifiedModel.contracts !== 'undefined' &&
-      Object.keys(window.unifiedModel.contracts || {}).length > 0) {
-    console.log("Data already exists, rendering charts immediately");
-    
-    try {
-      // Directly try to render charts
-      if (typeof window.updateBothChartsWithConsistentSizing === 'function') {
-        window.updateBothChartsWithConsistentSizing();
-      } else if (typeof window.renderConsistentNaicsChart === 'function') {
-        window.renderConsistentNaicsChart();
-        window.renderConsistentShareOfWalletChart();
-      }
-    } catch (e) {
-      console.error("Error rendering charts with existing data:", e);
-    }
-  }
-}
-
-// Run immediately and also after a short delay to catch any race conditions
-loadChartsIfDataExists();
-setTimeout(loadChartsIfDataExists, 500);
-/**
- * FIXED CHART SIZING FOR DONUT CHARTS
- * 
- * This code specifically addresses the inconsistent scaling of donut charts
- * within bento boxes, ensuring they have consistent sizes regardless of browser window size.
- */
-
-// Common size configuration for both charts
-const CHART_CONFIG = {
-  // Default aspect ratio (width:height)
-  aspectRatio: 1.0,
-  
-  // Minimum dimensions to ensure charts are visible
-  minWidth: 150,
-  minHeight: 150,
-  
-  // Maximum dimensions to prevent charts from growing too large
-  maxWidth: 400,
-  maxHeight: 400,
-  
-  // Standard radius as percentage of container size (when aspectRatio = 1)
-  radiusPercent: 0.38,
-  
-  // Base padding around chart (will be adjusted based on container size)
-  basePadding: {
-    top: 20,
-    right: 40,
-    bottom: 20,
-    left: 40
-  },
-  
-  // Enable debug mode to show container boundaries
-  debug: false
-};
-
-/**
- * Calculate optimal chart dimensions to ensure consistent sizing
- * @param {HTMLElement} container - The chart container element
- * @returns {Object} Dimensions and settings for optimal chart display
- */
-function calculateChartDimensions(container) {
-  if (!container) {
-    console.error("No container provided for dimension calculation");
-    return null;
-  }
-  
-  // Get the actual container dimensions
-  const containerRect = container.getBoundingClientRect();
-  const containerWidth = Math.max(containerRect.width, CHART_CONFIG.minWidth);
-  const containerHeight = Math.max(containerRect.height, CHART_CONFIG.minHeight);
-  
-  // Calculate padding scales based on container size
-  // For smaller containers, reduce padding proportionally
-  const scaleFactor = Math.min(1, Math.max(0.5, containerWidth / 300));
-  const padding = {
-    top: CHART_CONFIG.basePadding.top * scaleFactor,
-    right: CHART_CONFIG.basePadding.right * scaleFactor,
-    bottom: CHART_CONFIG.basePadding.bottom * scaleFactor,
-    left: CHART_CONFIG.basePadding.left * scaleFactor
-  };
-  
-  // Calculate available space for chart
-  const availableWidth = containerWidth - padding.left - padding.right;
-  const availableHeight = containerHeight - padding.top - padding.bottom;
-  
-  // Determine the chart size based on available space
-  // We'll use the smaller dimension to maintain aspect ratio
-  const chartSize = Math.min(
-    availableWidth,
-    availableHeight,
-    Math.min(CHART_CONFIG.maxWidth, CHART_CONFIG.maxHeight)
-  );
-  
-  // Calculate chart dimensions with desired aspect ratio
-  const chartWidth = chartSize;
-  const chartHeight = chartSize / CHART_CONFIG.aspectRatio;
-  
-  // Calculate radius based on the smaller dimension
-  const diameter = Math.min(chartWidth, chartHeight);
-  const radius = diameter * CHART_CONFIG.radiusPercent;
-  
-  // Center position within the container
-  const centerX = padding.left + availableWidth / 2;
-  const centerY = padding.top + availableHeight / 2;
-  
-  return {
-    width: containerWidth,
-    height: containerHeight,
-    chartWidth: chartWidth,
-    chartHeight: chartHeight,
-    padding: padding,
-    radius: radius,
-    innerRadius: radius * 0.6, // Standard inner radius for donut
-    centerX: centerX,
-    centerY: centerY,
-    scaleFactor: scaleFactor
-  };
-}
-
-/**
- * Rebuild a donut chart with correct sizing and dimensions
- * 
- * @param {string} containerId - ID of the container element
- * @param {Function} chartFunction - Function to call for rendering the chart
- * @param {Array} additionalArgs - Any additional arguments for the chart function
- */
-function resizeDonutChart(containerId, chartFunction, ...additionalArgs) {
-  const container = document.getElementById(containerId);
-  if (!container) {
-    console.error(`Container #${containerId} not found`);
-    return;
-  }
-  
-  // Clear the container
-  container.innerHTML = '';
-  
-  if (CHART_CONFIG.debug) {
-    // Add debug outline
-    container.style.border = '1px dashed red';
-  }
-  
-  // Calculate dimensions
-  const dimensions = calculateChartDimensions(container);
-  if (!dimensions) return;
-  
-  // Create an appropriately sized SVG container
-  const svg = d3.select(container)
-    .append('svg')
-    .attr('width', dimensions.width)
-    .attr('height', dimensions.height)
-    .attr('viewBox', `0 0 ${dimensions.width} ${dimensions.height}`)
-    .attr('class', 'donut-chart-svg')
-    .style('overflow', 'visible'); // Allows labels to extend beyond
-  
-  if (CHART_CONFIG.debug) {
-    // Show actual chart area in debug mode
-    svg.append('rect')
-      .attr('x', dimensions.padding.left)
-      .attr('y', dimensions.padding.top)
-      .attr('width', dimensions.chartWidth)
-      .attr('height', dimensions.chartHeight)
-      .attr('fill', 'none')
-      .attr('stroke', 'blue')
-      .attr('stroke-dasharray', '3,3');
-  }
-  
-  // Create the chart container group, centered
-  const chartGroup = svg.append('g')
-    .attr('transform', `translate(${dimensions.centerX}, ${dimensions.centerY})`)
-    .attr('class', 'donut-chart-group');
-  
-  // Call the chart function with the prepared container and dimensions
-  // Chart function should expect (container, dimensions, ...args)
-  chartFunction(chartGroup, dimensions, ...additionalArgs);
-  
-  return dimensions;
-}
-
-/**
- * Render NAICS donut chart with consistent sizing
- */
-function renderConsistentNaicsChart() {
-  const containerId = 'naics-donut-chart-container';
-  
-  // Get current filters directly from UI elements
-  const naicsFilter = document.getElementById('naics-filter')?.value || '';
-  const subAgencyFilter = document.getElementById('sub-agency-filter')?.value || '';
-  const searchTerm = document.getElementById('search-input')?.value?.trim().toLowerCase() || '';
-  
-  // Process data with filters
-  const naicsData = processNaicsDistributionData(unifiedModel, naicsFilter, subAgencyFilter, searchTerm);
-  if (!naicsData || naicsData.length === 0) {
-    displayNoData(containerId, 'No NAICS data available with current filters.');
-    return;
-  }
-  
-  // Resize and create the chart
-  resizeDonutChart(containerId, renderDonutChartCore, {
-    data: naicsData,
-    title: naicsFilter ? `NAICS ${naicsFilter}` : "Top NAICS",
-    centerValue: naicsData[0].code,
-    labelField: "code",
-    descField: "desc",
-    highlightField: naicsFilter ? "code" : null,
-    highlightValue: naicsFilter,
-    topN: 5
-  });
-}
-
-/**
- * Render Share of Wallet donut chart with consistent sizing
- */
-function renderConsistentShareOfWalletChart() {
-  const containerId = 'share-of-wallet-container';
-  
-  // Create container if it doesn't exist
-  ensureShareOfWalletContainer();
-  
-  // Get current filters
-  const naicsFilter = document.getElementById('naics-filter')?.value || '';
-  const subAgencyFilter = document.getElementById('sub-agency-filter')?.value || '';
-  const searchTerm = document.getElementById('search-input')?.value?.trim().toLowerCase() || '';
-  
-  // Process data with filters
-  const shareData = processShareOfWalletData(unifiedModel, naicsFilter, subAgencyFilter, searchTerm);
-  if (!shareData || shareData.length === 0) {
-    displayNoData(containerId, 'No market share data available with current filters.');
-    return;
-  }
-  
-  // Format long names
-  formatPrimeContractorNames(shareData);
-  
-  // Resize and create the chart
-  resizeDonutChart(containerId, renderDonutChartCore, {
-    data: shareData,
-    title: "Leader",
-    centerValue: shareData[0].name,
-    labelField: "name",
-    descField: null,
-    topN: 7
-  });
-}
-
-/**
- * Format contractor names to make them more suitable for display
- */
-function formatPrimeContractorNames(data) {
-  data.forEach(item => {
-    if (item.name && item.name.length > 20 && !item.isOther) {
-      // Store original name
-      item.fullName = item.name;
-      // Create shortened version
-      const parts = item.name.split(' ');
-      if (parts.length > 2) {
-        item.name = parts[0] + ' ' + parts[1];
-      } else {
-        item.name = item.name.substring(0, 18) + '...';
-      }
-    }
-  });
-}
-
-/**
- * Ensure the Share of Wallet container exists
- */
-function ensureShareOfWalletContainer() {
-  const containerId = 'share-of-wallet-container';
-  const bentoId = 'bento-share-of-wallet';
-  let container = document.getElementById(containerId);
-  
-  if (!container) {
-    console.log("Creating Share of Wallet container");
-    const bentoGrid = document.querySelector('.bento-grid');
-    if (!bentoGrid) {
-      console.error("Could not find bento grid for Share of Wallet container");
-      return;
-    }
-    
-    let bentoBox = document.getElementById(bentoId);
-    if (!bentoBox) {
-      bentoBox = document.createElement('div');
-      bentoBox.id = bentoId;
-      bentoBox.className = 'bento-box';
-      bentoBox.style.minHeight = '240px';
-      
-      const header = document.createElement('div');
-      header.className = 'card-header';
-      header.innerHTML = `
-          <div class="card-icon-circle">
-              <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M21.21 15.89A10 10 0 1 1 8.11 2.99"></path>
-                  <path d="M22 12A10 10 0 0 0 12 2v10z"></path>
-              </svg>
-          </div>
-          <h2>Market Share</h2>
-      `;
-      bentoBox.appendChild(header);
-      bentoGrid.appendChild(bentoBox);
-    }
-    
-    // Create chart container
-    container = document.createElement('div');
-    container.id = containerId;
-    container.className = 'chart-container';
-    // Set explicit height to match other chart containers
-    container.style.minHeight = '220px';
-    container.style.height = '100%';
-    bentoBox.appendChild(container);
-  }
-  
-  return container;
-}
-
-/**
- * Core donut chart renderer that works with the resizing framework
- */
-function renderDonutChartCore(container, dimensions, options) {
-  // Default options
-  const defaults = {
-    data: [],
-    title: "Distribution",
-    subtitle: "",
-    centerValue: "",
-    labelField: "name",
-    descField: "desc",
-    valueField: "value",
-    percentageField: "percentage",
-    otherLabel: "Other",
-    topN: 5,
-    highlightField: null,
-    highlightValue: null
-  };
-  
-  const config = { ...defaults, ...options };
-  const data = config.data;
-  
-  if (!data || data.length === 0) {
-    container.append("text")
-      .attr("text-anchor", "middle")
-      .attr("dy", "0.35em")
-      .style("fill", getCssVar('--color-text-secondary'))
-      .text("No data available");
-    return;
-  }
-  
-  // Prepare top N data + Other
-  const sortedData = [...data].sort((a, b) => (b[config.valueField] || 0) - (a[config.valueField] || 0));
-  const topNData = sortedData.slice(0, config.topN);
-  
-  // If highlighting a specific value, ensure it's included in the top data
-  if (config.highlightField && config.highlightValue) {
-    const highlightedItem = sortedData.find(d => d[config.highlightField] === config.highlightValue);
-    if (highlightedItem && !topNData.some(d => d[config.highlightField] === config.highlightValue)) {
-      // Replace the last item
-      topNData.pop();
-      topNData.push(highlightedItem);
-    }
-  }
-  
-  const otherValue = d3.sum(sortedData.slice(config.topN), d => d[config.valueField] || 0);
-  const otherPercentage = d3.sum(sortedData.slice(config.topN), d => d[config.percentageField] || 0);
-  const chartPlotData = [...topNData];
-  
-  if (otherValue > 0 && sortedData.length > config.topN) {
-    const otherCount = sortedData.length - config.topN;
-    const otherItem = {
-      [config.labelField]: config.otherLabel,
-      [config.descField]: `${config.otherLabel} (${otherCount} items)`,
-      [config.valueField]: otherValue,
-      [config.percentageField]: otherPercentage,
-      isOther: true
-    };
-    
-    chartPlotData.push(otherItem);
-  }
-  
-  // Set up colors based on theme
-  const color = getDonutColorScale(chartPlotData, config.labelField, config.highlightField, config.highlightValue);
-  
-  // Set up pie layout with equal spacing
-  const pie = d3.pie()
-    .padAngle(0.01)
-    .value(d => d[config.valueField])
-    .sort(null);
-  
-  // Generate arc paths
-  const arcGenerator = d3.arc()
-    .innerRadius(dimensions.innerRadius)
-    .outerRadius(dimensions.radius)
-    .cornerRadius(1);
-  
-  // Arc generators for lead lines
-  const labelArcStart = d3.arc()
-    .innerRadius(dimensions.radius * 0.98)
-    .outerRadius(dimensions.radius * 0.98);
-  
-  const labelArcMid = d3.arc()
-    .innerRadius(dimensions.radius * 1.10)
-    .outerRadius(dimensions.radius * 1.10);
-  
-  const pieData = pie(chartPlotData);
-  
-  // Create arc segments
-  container.selectAll(".arc-path")
-    .data(pieData)
-    .join("path")
-    .attr("class", "arc-path")
-    .attr("fill", (d, i) => {
-      // Highlight selected item if specified
-      if (config.highlightField && config.highlightValue && 
-          d.data[config.highlightField] === config.highlightValue) {
-        return getCssVar('--color-primary');
-      }
-      return color(d.data[config.labelField]);
-    })
-    .attr("d", arcGenerator)
-    .attr("stroke", getCssVar('--color-surface'))
-    .style("stroke-width", "1.5px")
-    .style("cursor", "pointer")
-    .on("mouseover", function(event, d) {
-      d3.select(this).transition().duration(200)
-        .attr("stroke", getCssVar('--color-primary'))
-        .style("stroke-width", "2px")
-        .attr("transform", "scale(1.03)");
-      
-      // Remove any existing tooltips
-      d3.select("body").selectAll(".chart-tooltip").remove();
-      
-      // Create tooltip
-      const tooltip = d3.select("body").append("div")
-        .attr("class", "chart-tooltip")
-        .style("position", "absolute")
-        .style("background-color", getCssVar('--color-surface'))
-        .style("color", getCssVar('--color-text-primary'))
-        .style("padding", "8px 12px")
-        .style("border-radius", "4px")
-        .style("font-size", "12px")
-        .style("pointer-events", "none")
-        .style("opacity", 0)
-        .style("box-shadow", getCssVar('--shadow-md'))
-        .style("border", `1px solid ${getCssVar('--color-border')}`)
-        .style("z-index", 1000);
-      
-      tooltip.transition().duration(200).style("opacity", 1);
-      
-      // Format tooltip content
-      const name = d.data.fullName || d.data[config.labelField];
-      const desc = d.data[config.descField] || "";
-      const value = formatCurrency(d.data[config.valueField]);
-      const percentage = d.data[config.percentageField].toFixed(1);
-      
-      tooltip.html(
-        `<div style="font-weight: bold; margin-bottom: 4px;">${name}</div>` +
-        `${desc ? `<div style="color: ${getCssVar('--color-text-secondary')}; margin-bottom: 4px;">${desc}</div>` : ""}` +
-        `<div>Value: ${value}</div><div>Share: ${percentage}%</div>`
-      );
-      
-      tooltip.style("left", (event.pageX + 10) + "px")
-             .style("top", (event.pageY - 28) + "px");
-    })
-    .on("mousemove", function(event) {
-      d3.select("body").select(".chart-tooltip")
-        .style("left", (event.pageX + 10) + "px")
-        .style("top", (event.pageY - 28) + "px");
-    })
-    .on("mouseout", function() {
-      d3.select(this).transition().duration(200)
-        .attr("stroke", getCssVar('--color-surface'))
-        .style("stroke-width", "1.5px")
-        .attr("transform", "scale(1)");
-      
-      d3.select("body").select(".chart-tooltip")
-        .transition().duration(200)
-        .style("opacity", 0)
-        .remove();
-    });
-  
-  // Add center text
-  const centerText = container.append("text")
-    .attr("text-anchor", "middle")
-    .style("font-family", "var(--font-body, sans-serif)")
-    .style("fill", getCssVar('--color-text-primary'));
-  
-  // Title text
-  centerText.append("tspan")
-    .attr("x", 0)
-    .attr("dy", "-0.6em")
-    .style("font-size", `${0.75 * dimensions.scaleFactor}em`)
-    .style("fill", getCssVar('--color-text-secondary'))
-    .text(config.title);
-  
-  // Optional subtitle
-  if (config.subtitle) {
-    centerText.append("tspan")
-      .attr("x", 0)
-      .attr("dy", "1.1em")
-      .style("font-size", `${0.7 * dimensions.scaleFactor}em`)
-      .style("fill", getCssVar('--color-text-tertiary'))
-      .text(config.subtitle);
-  }
-  
-  // Center value (typically the top item's label)
-centerText.append("tspan")
-  .attr("x", 0)
-  .attr("dy", config.subtitle ? "1.3em" : "1.5em")
-  .style("font-size", `${0.9 * dimensions.scaleFactor}em`)
-  .style("font-weight", "600")
-  .text(config.centerValue || "");
-
-// Add NAICS description for NAICS chart
-if (config.labelField === "code" && data.length > 0) {
-  const centerItem = data[0]; // Top NAICS code
-  if (centerItem && centerItem.desc) {
-    centerText.append("tspan")
-      .attr("x", 0)
-      .attr("dy", "1.2em")
-      .style("font-size", `${0.7 * dimensions.scaleFactor}em`)
-      .style("fill", getCssVar('--color-text-tertiary'))
-      .text(truncateText(centerItem.desc, 24));
-  }
-}
-  
-  // Add external labels with lead lines
-  // Calculate which segments are large enough for labels
-  const minPercentageForLabel = 4.0; // 4%
-  const labelThresholdPercentage = minPercentageForLabel / 100;
-  
-  const labelData = pieData.filter(d => {
-    const percentage = (d.endAngle - d.startAngle) / (2 * Math.PI);
-    return percentage >= labelThresholdPercentage && d.data[config.valueField] > 0;
-  });
-  
-  if (labelData.length > 0) {
-    // Create lead lines group
-    const lineGroup = container.append("g").attr("class", "label-lines");
-    
-    // Create text labels group
-    const textLabelGroup = container.append("g").attr("class", "text-labels");
-    
-    // Set styling properties
-    const polylineStrokeColor = getCssVar('--color-text-tertiary');
-    const labelTextColor = getCssVar('--color-text-secondary');
-    const labelDescColor = getCssVar('--color-text-tertiary');
-    
-    // Calculate dimensions for lead lines
-    const leaderLineHorizontalPartLength = Math.max(8, Math.min(15, dimensions.radius * 0.2));
-    const textStartOffsetFromLeaderLine = 4;
-    
-    // Add leader lines
-    lineGroup.selectAll('polyline')
-      .data(labelData)
-      .join('polyline')
-      .attr('stroke', polylineStrokeColor)
-      .style('fill', 'none')
-      .attr('stroke-width', 1)
-      .attr('points', d => {
-        const posA = labelArcStart.centroid(d);
-        const posB = labelArcMid.centroid(d);
-        const posC = [posB[0], posB[1]]; // Initialize posC with posB coordinates
-        const midangle = d.startAngle + (d.endAngle - d.startAngle) / 2;
-        
-        // Extend posC horizontally based on angle
-        posC[0] = posB[0] + leaderLineHorizontalPartLength * (midangle < Math.PI ? 1 : -1);
-        
-        return [posA, posB, posC];
-      });
-    
-    // Calculate optimal font size based on container dimensions
-    const baseFontSize = 11;
-    const fontSizeFactor = Math.min(1, Math.max(0.8, dimensions.radius / 80));
-    const labelFontSize = Math.round(baseFontSize * fontSizeFactor);
-    const descFontSize = Math.round(labelFontSize * 0.9);
-    
-    // Add text labels
-    const textLabels = textLabelGroup.selectAll('text')
-      .data(labelData)
-      .join('text')
-      .style('font-family', "var(--font-body, sans-serif)")
-      .attr('dy', '0.35em')
-      .attr('transform', d => {
-        const midangle = d.startAngle + (d.endAngle - d.startAngle) / 2;
-        const posB = labelArcMid.centroid(d);
-        const xPos = posB[0] + (leaderLineHorizontalPartLength + textStartOffsetFromLeaderLine) * (midangle < Math.PI ? 1 : -1);
-        const yPos = posB[1];
-        return `translate(${xPos},${yPos})`;
-      })
-      .style('text-anchor', d => {
-        const midangle = d.startAngle + (d.endAngle - d.startAngle) / 2;
-        return midangle < Math.PI ? 'start' : 'end';
-      });
-    
-    // Add primary label text
-    textLabels.append('tspan')
-      .attr('x', 0)
-      .style('font-size', `${labelFontSize}px`)
-      .style('font-weight', '500')
-      .style('fill', labelTextColor)
-      .text(d => truncateText(d.data[config.labelField], 15));
-    
-    // Add secondary label text (description or percentage)
-    textLabels.filter(d => !d.data.isOther && (config.descField || true))
-      .append('tspan')
-      .attr('x', 0)
-      .attr('dy', '1.2em')
-      .style('font-size', `${descFontSize}px`)
-      .style('fill', labelDescColor)
-      .text(d => {
-        if (config.descField && d.data[config.descField]) {
-          return truncateText(d.data[config.descField], 18);
-        } else {
-          // Always show percentage if no description
-          return `${d.data[config.percentageField].toFixed(1)}%`;
-        }
-      });
-  }
-}
-
-/**
- * Get color scale for donut chart with special handling for highlighted items
- */
-function getDonutColorScale(data, colorField, highlightField, highlightValue) {
-  // Create domain from data
-  const domain = data.map(d => d[colorField]);
-  
-  // Get base colors from CSS
-  const primary = getCssVar('--chart-color-primary');
-  const secondary = getCssVar('--chart-color-secondary');
-  const tertiary = getCssVar('--chart-color-tertiary');
-  
-  // Create color variations
-  const colors = [
-    primary,
-    secondary,
-    tertiary,
-    d3.color(primary).darker(0.3).toString(),
-    d3.color(secondary).darker(0.3).toString(), 
-    d3.color(tertiary).brighter(0.3).toString(),
-    d3.color(primary).brighter(0.5).toString(),
-    d3.color(secondary).brighter(0.5).toString()
-  ];
-  
-  // Make sure we have enough colors
-  while (colors.length < domain.length) {
-    colors.push(d3.color(colors[colors.length % 3]).brighter(0.2 * Math.floor(colors.length / 3)).toString());
-  }
-  
-  // Create the scale
-  const colorScale = d3.scaleOrdinal()
-    .domain(domain)
-    .range(colors.slice(0, domain.length));
-  
-  // Return function that handles special cases
-  return function(value) {
-    // Special handling for highlighted item
-    if (highlightField && highlightValue) {
-      const item = data.find(d => d[colorField] === value);
-      if (item && item[highlightField] === highlightValue) {
-        return getCssVar('--color-primary');
-      }
-    }
-    
-    // Special handling for "Other" category
-    const item = data.find(d => d[colorField] === value);
-    if (item && item.isOther) {
-      return getCssVar('--color-text-tertiary');
-    }
-    
-    return colorScale(value);
-  };
-}
-
-/**
- * Update both charts to ensure consistent sizing
- */
-function updateBothChartsWithConsistentSizing() {
-  try {
-    // Update NAICS chart
-    renderConsistentNaicsChart();
-    
-    // Update Share of Wallet chart
-    renderConsistentShareOfWalletChart();
-    
-  } catch (error) {
-    console.error("Error updating charts with consistent sizing:", error);
-  }
-}
-
-/**
- * Hook this into both the filter system and window resizing
- */
-function setupChartSizingSystem() {
-  // Get current filter values
-  lastFilterState = {
-    naicsCode: document.getElementById('naics-filter')?.value || '',
-    subAgency: document.getElementById('sub-agency-filter')?.value || '',
-    searchTerm: document.getElementById('search-input')?.value?.trim().toLowerCase() || ''
-  };
-  
-  // Hook into filter application
-  if (typeof window.applyFiltersAndUpdateVisuals === 'function') {
-    const originalApplyFilters = window.applyFiltersAndUpdateVisuals;
-    window.applyFiltersAndUpdateVisuals = function() {
-      // Call original function
-      originalApplyFilters.apply(this, arguments);
-      
-      // Update our charts with a delay to let the model filtering complete
-      setTimeout(updateBothChartsWithConsistentSizing, 300);
-    };
-    console.log("Successfully hooked into applyFiltersAndUpdateVisuals");
-  }
-  
-  // Hook into unified model updates
-  if (typeof window.updateVisualsFromUnifiedModel === 'function') {
-    const originalUpdateVisuals = window.updateVisualsFromUnifiedModel;
-    window.updateVisualsFromUnifiedModel = function() {
-      // Call original function
-      originalUpdateVisuals.apply(this, arguments);
-      
-      // Update our charts with a delay
-      setTimeout(updateBothChartsWithConsistentSizing, 300);
-    };
-    console.log("Successfully hooked into updateVisualsFromUnifiedModel");
-  }
-  
-  // Add filter event listeners
-  const filterElements = [
-    { id: 'search-input', event: 'input' },
-    { id: 'sub-agency-filter', event: 'change' },
-    { id: 'naics-filter', event: 'change' },
-    { id: 'refresh-button', event: 'click' }
-  ];
-  
-  filterElements.forEach(item => {
-    const element = document.getElementById(item.id);
-    if (element) {
-      element.addEventListener(item.event, function() {
-        // Use a small delay to let other event handlers complete
-        setTimeout(updateBothChartsWithConsistentSizing, 300);
-      });
-      console.log(`Added ${item.event} listener to ${item.id}`);
-    }
-  });
-  
-  // Handle window resize events
-  window.addEventListener('resize', function() {
-    // Debounce resize handling
-    if (this.resizeTimeout) clearTimeout(this.resizeTimeout);
-    this.resizeTimeout = setTimeout(function() {
-      console.log("Window resized, updating chart sizes");
-      updateBothChartsWithConsistentSizing();
-    }, 250);
-  });
-  
-  // Initial render
-  updateBothChartsWithConsistentSizing();
-}
-
-// Initialize when DOM is ready
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', function() {
-    // Wait for the main code to initialize
-    setTimeout(setupChartSizingSystem, 500);
-  });
-} else {
-  // Document already loaded, initialize with a delay
-  setTimeout(setupChartSizingSystem, 500);
-}
-
-// Make functions available globally
-window.renderConsistentNaicsChart = renderConsistentNaicsChart;
-window.renderConsistentShareOfWalletChart = renderConsistentShareOfWalletChart;
-window.updateBothChartsWithConsistentSizing = updateBothChartsWithConsistentSizing;
-/**
- * This code fixes the initial load of the NAICS chart by hooking into the data loading functions
- */
-
-// Add hooks into the data loading process
-function hookIntoDataLoading() {
-  console.log("Setting up hooks for NAICS chart initial load");
-  
-  // Hook into loadSingleDataset
-  if (typeof window.loadSingleDataset === 'function') {
-    const originalLoadSingleDataset = window.loadSingleDataset;
-    window.loadSingleDataset = function(dataset) {
-      // Call original function
-      originalLoadSingleDataset.apply(this, arguments);
-      
-      // After data loads and processes, render our charts
-      setTimeout(function() {
-        console.log("Dataset loaded, initializing charts");
-        updateBothChartsWithConsistentSizing();
-      }, 1500); // Longer delay to allow data to load and process
-    };
-    console.log("Successfully hooked into loadSingleDataset");
-  }
-  
-  // Hook into loadCombinedDatasets
-  if (typeof window.loadCombinedDatasets === 'function') {
-    const originalLoadCombinedDatasets = window.loadCombinedDatasets;
-    window.loadCombinedDatasets = function(datasetIds) {
-      // Call original function
-      originalLoadCombinedDatasets.apply(this, arguments);
-      
-      // After data loads and processes, render our charts
-      setTimeout(function() {
-        console.log("Combined datasets loaded, initializing charts");
-        updateBothChartsWithConsistentSizing();
-      }, 2000); // Even longer delay for combined datasets
-    };
-    console.log("Successfully hooked into loadCombinedDatasets");
-  }
-  
-  // Hook into processDataset, which is called when data is ready
-  if (typeof window.processDataset === 'function') {
-    const originalProcessDataset = window.processDataset;
-    window.processDataset = function(dataset, data) {
-      // Call original function
-      const result = originalProcessDataset.apply(this, arguments);
-      
-      // After processing completes (which means data is ready)
-      setTimeout(function() {
-        console.log("Dataset processed, initializing charts");
-        updateBothChartsWithConsistentSizing();
-      }, 500);
-      
-      return result;
-    };
-    console.log("Successfully hooked into processDataset");
-  }
-  
-  // Hook into buildUnifiedModel, which is called after all data is loaded
-  if (typeof window.buildUnifiedModel === 'function') {
-    const originalBuildUnifiedModel = window.buildUnifiedModel;
-    window.buildUnifiedModel = function() {
-      // Call original function
-      originalBuildUnifiedModel.apply(this, arguments);
-      
-      // After unified model is built, render our charts
-      console.log("Unified model built, initializing charts");
-      updateBothChartsWithConsistentSizing();
-    };
-    console.log("Successfully hooked into buildUnifiedModel");
-  }
-  
-  // Add manual button to force chart refresh
-  addRefreshChartsButton();
-  
-  // Set up a periodic check for loaded data
-  checkForLoadedDataAndRender();
-}
-
-// Create a temporary button to manually refresh charts (useful for debugging)
-function addRefreshChartsButton() {
-  // Don't add in production
-  const isDebug = false;
-  if (!isDebug) return;
-  
-  const container = document.querySelector('.header-controls');
-  if (!container) return;
-  
-  const button = document.createElement('button');
-  button.textContent = "Refresh Charts";
-  button.style.padding = "6px 10px";
-  button.style.marginLeft = "8px";
-  button.addEventListener('click', function() {
-    updateBothChartsWithConsistentSizing();
-  });
-  
-  container.appendChild(button);
-}
-
-// Function to periodically check if data is loaded and render charts
-function checkForLoadedDataAndRender() {
-  console.log("Setting up periodic check for loaded data");
-  
-  // Initial delay before first check
-  setTimeout(function checkData() {
-    // Check if we have NAICS data available
-    const hasData = typeof unifiedModel !== 'undefined' && 
-                   unifiedModel !== null && 
-                   typeof unifiedModel.contracts !== 'undefined' &&
-                   Object.keys(unifiedModel.contracts || {}).length > 0;
-    
-    if (hasData) {
-      console.log("Data detected, initializing charts");
-      updateBothChartsWithConsistentSizing();
-    } else {
-      console.log("No data yet, checking again soon");
-      // Check again in a moment
-      setTimeout(checkData, 1000);
-    }
-  }, 1000);
-}
-
-// Update your initialization to include the new hooks
-const originalSetupChartSizingSystem = window.setupChartSizingSystem;
-window.setupChartSizingSystem = function() {
-  // Call original setup
-  if (typeof originalSetupChartSizingSystem === 'function') {
-    originalSetupChartSizingSystem();
-  }
-  
-  // Add our data loading hooks
-  hookIntoDataLoading();
-};
-
-// Initialize right away if page is already loaded
-if (document.readyState !== 'loading') {
-  hookIntoDataLoading();
-}
-/**
- * Fix for "Loading NAICS distribution..." text not disappearing
- */
-
-// Update renderConsistentNaicsChart to properly handle loading state
-const originalRenderConsistentNaicsChart = window.renderConsistentNaicsChart;
-window.renderConsistentNaicsChart = function() {
-  const containerId = 'naics-donut-chart-container';
-  const bentoId = 'bento-naics-distribution';
-  
-  // Clear loading state for both container and bento box
-  clearLoadingState(containerId);
-  clearLoadingState(bentoId);
-  
-  // Call the original rendering function
-  if (typeof originalRenderConsistentNaicsChart === 'function') {
-    originalRenderConsistentNaicsChart();
-  }
-  
-  // Make sure loading is cleared after rendering completes
-  setTimeout(function() {
-    clearLoadingState(containerId);
-    clearLoadingState(bentoId);
-  }, 100);
-};
-
-// Update renderConsistentShareOfWalletChart similarly
-const originalRenderConsistentShareOfWalletChart = window.renderConsistentShareOfWalletChart;
-window.renderConsistentShareOfWalletChart = function() {
-  const containerId = 'share-of-wallet-container';
-  const bentoId = 'bento-share-of-wallet';
-  
-  // Clear loading state for both container and bento box
-  clearLoadingState(containerId);
-  clearLoadingState(bentoId);
-  
-  // Call the original rendering function
-  if (typeof originalRenderConsistentShareOfWalletChart === 'function') {
-    originalRenderConsistentShareOfWalletChart();
-  }
-  
-  // Make sure loading is cleared after rendering completes
-  setTimeout(function() {
-    clearLoadingState(containerId);
-    clearLoadingState(bentoId);
-  }, 100);
-};
-
-/**
- * Helper function to clear loading state for a container
- */
-function clearLoadingState(containerId) {
-  if (!containerId) return;
-  
-  const container = document.getElementById(containerId);
-  if (!container) return;
-  
-  // Find and remove loading placeholder
-  const loadingPlaceholder = container.querySelector('.loading-placeholder');
-  if (loadingPlaceholder) {
-    loadingPlaceholder.style.display = 'none';
-  }
-  
-  // Call setLoading if it exists as a function
-  if (typeof window.setLoading === 'function') {
-    try {
-      window.setLoading(containerId, false);
-    } catch (e) {
-      console.warn(`Error calling setLoading for ${containerId}:`, e);
-    }
-  }
-}
-
-// Update the main charts update function
-const originalUpdateBothChartsWithConsistentSizing = window.updateBothChartsWithConsistentSizing;
-window.updateBothChartsWithConsistentSizing = function() {
-  // Clear loading states first
-  clearLoadingState('naics-donut-chart-container');
-  clearLoadingState('bento-naics-distribution');
-  clearLoadingState('share-of-wallet-container');
-  clearLoadingState('bento-share-of-wallet');
-  
-  // Call original function
-  if (typeof originalUpdateBothChartsWithConsistentSizing === 'function') {
-    originalUpdateBothChartsWithConsistentSizing();
-  }
-  
-  // Clear loading states again after rendering completes
-  setTimeout(function() {
-    clearLoadingState('naics-donut-chart-container');
-    clearLoadingState('bento-naics-distribution');
-    clearLoadingState('share-of-wallet-container');
-    clearLoadingState('bento-share-of-wallet');
-  }, 200);
-};
-
-// Run immediately to clear any existing loading states
-clearLoadingState('naics-donut-chart-container');
-clearLoadingState('bento-naics-distribution');
-clearLoadingState('share-of-wallet-container');
-clearLoadingState('bento-share-of-wallet');
-// This function creates hierarchical data using the specified fields
-function createHierarchyData(model, subAgencyFilter) {
-    // Create root node
-    const root = {
-        name: "Root",
-        id: "root",
-        children: []
-    };
-    
-    // Get agencies to display
-    let agenciesToShow = [];
-    
-    // When a sub-agency filter is applied, find the parent agency
-    if (subAgencyFilter) {
-        // Find agencies that have the specified sub-agency
-        Object.values(model.agencies).forEach(agency => {
-            const hasMatchingSubAgency = Array.from(agency.subAgencies || []).some(subAgencyId => {
-                const subAgency = model.subAgencies[subAgencyId];
-                return subAgency && subAgency.name === subAgencyFilter;
-            });
-            
-            if (hasMatchingSubAgency) {
-                agenciesToShow.push(agency);
-            }
-        });
-    } else {
-        // Show top agencies by value
-        agenciesToShow = Object.values(model.agencies)
-            .sort((a, b) => b.value - a.value)
-            .slice(0, 5);
-    }
-    
-    // Add agencies as top-level nodes (awarding_agency_name)
-    agenciesToShow.forEach(agency => {
-        const agencyNode = {
-            name: agency.name, // Use awarding_agency_name
-            id: "agency-" + Math.random().toString(36).substring(2, 9),
-            value: agency.value,
-            children: []
-        };
-        
-        // If a sub-agency filter is applied, add the sub-agency as an intermediate node
-        if (subAgencyFilter) {
-            // Find the matching sub-agencies
-            const matchingSubAgencies = [];
-            
-            Array.from(agency.subAgencies || []).forEach(subAgencyId => {
-                const subAgency = model.subAgencies[subAgencyId];
-                if (subAgency && subAgency.name === subAgencyFilter) {
-                    matchingSubAgencies.push(subAgency);
-                }
-            });
-            
-            // If matching sub-agencies found, add them as intermediate nodes (awarding_sub_agency_name)
-            if (matchingSubAgencies.length > 0) {
-                matchingSubAgencies.forEach(subAgency => {
-                    const subAgencyNode = {
-                        name: subAgency.name, // Use awarding_sub_agency_name
-                        id: "subagency-" + Math.random().toString(36).substring(2, 9),
-                        value: subAgency.value,
-                        isSubAgency: true,
-                        children: []
-                    };
-                    
-                    // Find offices for this sub-agency (awarding_office_name)
-                    const officesForSubAgency = {};
-                    
-                    Array.from(subAgency.offices || []).forEach(officeId => {
-                        const office = model.offices[officeId];
-                        if (office) {
-                            officesForSubAgency[officeId] = {
-                                id: officeId,
-                                name: office.name,
-                                value: office.value
-                            };
-                        }
-                    });
-                    
-                    // Sort offices by value and take top 5
-                    const topOffices = Object.values(officesForSubAgency)
-                        .sort((a, b) => b.value - a.value)
-                        .slice(0, 7);
-                    
-                    // Add office nodes
-                    topOffices.forEach(office => {
-                        const officeNode = {
-                            name: office.name, // Use awarding_office_name
-                            id: "office-" + Math.random().toString(36).substring(2, 9),
-                            value: office.value,
-                            isOffice: true,
-                            children: []
-                        };
-                        
-                        // Find primes for this office (recipient_name)
-                        const primesForOffice = {};
-                        
-                        // Get contracts connected to this office
-                        Object.values(model.contracts).forEach(contract => {
-                            if (contract.officeId === office.id) {
-                                const primeId = contract.primeId;
-                                if (!primesForOffice[primeId]) {
-                                    primesForOffice[primeId] = 0;
-                                }
-                                primesForOffice[primeId] += contract.value;
-                            }
-                        });
-                        
-                        // Sort primes by value and take top 3
-                        const topPrimes = Object.entries(primesForOffice)
-                            .sort((a, b) => b[1] - a[1])
-                            .slice(0, 7)
-                            .map(([primeId, value]) => ({
-                                id: primeId,
-                                value: value
-                            }));
-                        
-                        // Add prime contractor nodes
-                        topPrimes.forEach(prime => {
-                            const primeData = model.primes[prime.id];
-                            if (!primeData) return;
-                            
-                            const primeNode = {
-                                name: primeData.name, // Use recipient_name
-                                id: "prime-" + Math.random().toString(36).substring(2, 9),
-                                value: prime.value,
-                                isPrime: true,
-                                children: []
-                            };
-                            
-                            // Find subs for this prime (subawardee_name)
-                            const subsForPrime = {};
-                            
-                            // Get prime to sub relationships
-                            model.relationships.primeToSub.forEach(rel => {
-                                if (rel.source === prime.id) {
-                                    const subId = rel.target;
-                                    if (!subsForPrime[subId]) {
-                                        subsForPrime[subId] = 0;
-                                    }
-                                    subsForPrime[subId] += rel.value;
-                                }
-                            });
-                            
-                            // Sort subs by value and take top 2
-                            const topSubs = Object.entries(subsForPrime)
-                                .sort((a, b) => b[1] - a[1])
-                                .slice(0, 7)
-                                .map(([subId, value]) => ({
-                                    id: subId,
-                                    value: value
-                                }));
-                            
-                            // Add sub nodes
-                            topSubs.forEach(sub => {
-                                const subData = model.subs[sub.id];
-                                if (!subData) return;
-                                
-                                primeNode.children.push({
-                                    name: subData.name, // Use subawardee_name
-                                    id: "sub-" + Math.random().toString(36).substring(2, 9),
-                                    value: sub.value,
-                                    isSub: true
-                                });
-                            });
-                            
-                            // Add prime if it has children or significant value
-                            if (primeNode.children.length > 0 || prime.value > 100000) {
-                                officeNode.children.push(primeNode);
-                            }
-                        });
-                        
-                        // Add office if it has children
-                        if (officeNode.children.length > 0) {
-                            subAgencyNode.children.push(officeNode);
-                        }
-                    });
-                    
-                    // Add sub-agency if it has children
-                    if (subAgencyNode.children.length > 0) {
-                        agencyNode.children.push(subAgencyNode);
-                    }
-                });
-            }
-        } else {
-            // No filter - add sub-agencies directly under agency
-            const subAgenciesForAgency = {};
-            
-            Array.from(agency.subAgencies || []).forEach(subAgencyId => {
-                const subAgency = model.subAgencies[subAgencyId];
-                if (subAgency) {
-                    subAgenciesForAgency[subAgencyId] = {
-                        id: subAgencyId,
-                        name: subAgency.name,
-                        value: subAgency.value
-                    };
-                }
-            });
-            
-            // Sort sub-agencies by value and take top 3
-            const topSubAgencies = Object.values(subAgenciesForAgency)
-                .sort((a, b) => b.value - a.value)
-                .slice(0, 3);
-            
-            // Add sub-agency nodes
-            topSubAgencies.forEach(subAgency => {
-                const subAgencyNode = {
-                    name: subAgency.name, // Use awarding_sub_agency_name
-                    id: "subagency-" + Math.random().toString(36).substring(2, 9),
-                    value: subAgency.value,
-                    isSubAgency: true,
-                    children: []
-                };
-                
-                // Find offices for this sub-agency
-                const officesForSubAgency = {};
-                
-                const subAgencyObj = model.subAgencies[subAgency.id];
-                if (subAgencyObj && subAgencyObj.offices) {
-                    Array.from(subAgencyObj.offices).forEach(officeId => {
-                        const office = model.offices[officeId];
-                        if (office) {
-                            officesForSubAgency[officeId] = {
-                                id: officeId,
-                                name: office.name,
-                                value: office.value
-                            };
-                        }
-                    });
-                }
-                
-                // Sort offices by value and take top 2
-                const topOffices = Object.values(officesForSubAgency)
-                    .sort((a, b) => b.value - a.value)
-                    .slice(0, 2);
-                
-                // Add office nodes
-                topOffices.forEach(office => {
-                    const officeNode = {
-                        name: office.name, // Use awarding_office_name
-                        id: "office-" + Math.random().toString(36).substring(2, 9),
-                        value: office.value,
-                        isOffice: true,
-                        children: []
-                    };
-                    
-                    // Add prime contractors for this office
-                    // This is similar to the code above for filtered sub-agencies
-                    const primesForOffice = {};
-                    
-                    Object.values(model.contracts).forEach(contract => {
-                        if (contract.officeId === office.id) {
-                            const primeId = contract.primeId;
-                            if (!primesForOffice[primeId]) {
-                                primesForOffice[primeId] = 0;
-                            }
-                            primesForOffice[primeId] += contract.value;
-                        }
-                    });
-                    
-                    // Sort primes by value and take top 2
-                    const topPrimes = Object.entries(primesForOffice)
-                        .sort((a, b) => b[1] - a[1])
-                        .slice(0, 2)
-                        .map(([primeId, value]) => ({
-                            id: primeId,
-                            value: value
-                        }));
-                    
-                    // Add prime contractor nodes
-                    topPrimes.forEach(prime => {
-                        const primeData = model.primes[prime.id];
-                        if (!primeData) return;
-                        
-                        const primeNode = {
-                            name: primeData.name, // Use recipient_name
-                            id: "prime-" + Math.random().toString(36).substring(2, 9),
-                            value: prime.value,
-                            isPrime: true,
-                            children: []
-                        };
-                        
-                        // Add subs for this prime
-                        const subsForPrime = {};
-                        
-                        model.relationships.primeToSub.forEach(rel => {
-                            if (rel.source === prime.id) {
-                                const subId = rel.target;
-                                if (!subsForPrime[subId]) {
-                                    subsForPrime[subId] = 0;
-                                }
-                                subsForPrime[subId] += rel.value;
-                            }
-                        });
-                        
-                        // Sort subs by value and take top 1
-                        const topSubs = Object.entries(subsForPrime)
-                            .sort((a, b) => b[1] - a[1])
-                            .slice(0, 1)
-                            .map(([subId, value]) => ({
-                                id: subId,
-                                value: value
-                            }));
-                        
-                        // Add sub nodes
-                        topSubs.forEach(sub => {
-                            const subData = model.subs[sub.id];
-                            if (!subData) return;
-                            
-                            primeNode.children.push({
-                                name: subData.name, // Use subawardee_name
-                                id: "sub-" + Math.random().toString(36).substring(2, 9),
-                                value: sub.value,
-                                isSub: true
-                            });
-                        });
-                        
-                        // Add prime if it has children or significant value
-                        if (primeNode.children.length > 0 || prime.value > 100000) {
-                            officeNode.children.push(primeNode);
-                        }
-                    });
-                    
-                    // Add office if it has children
-                    if (officeNode.children.length > 0) {
-                        subAgencyNode.children.push(officeNode);
-                    }
-                });
-                
-                // Add sub-agency if it has children
-                if (subAgencyNode.children.length > 0) {
-                    agencyNode.children.push(subAgencyNode);
-                }
-            });
-        }
-        
-        // Add agency if it has children
-        if (agencyNode.children.length > 0) {
-            root.children.push(agencyNode);
-        }
-    });
-    
-    // Add a check for empty visualization
-    if (root.children.length === 0) {
-        // Create a dummy agency to ensure something displays
-        root.children.push({
-            name: subAgencyFilter ? `No data for ${subAgencyFilter}` : "Selected Agency",
-            id: "agency-" + Math.random().toString(36).substring(2, 9),
-            value: 1000000,
-            children: [{
-                name: "No Data Found",
-                id: "subagency-" + Math.random().toString(36).substring(2, 9),
-                value: 1000000,
-                isSubAgency: true,
-                children: []
-            }]
-        });
-    }
-    
-    return root;
-}
-// Get theme-aware color scheme for the dendrogram
-function getDendrogramColors() {
-    const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
-    
-    if (isDarkMode) {
-        // Dark mode color palette - more saturated, slightly brighter colors
-        return {
-            agency: '#9580FF',          // Vibrant purple
-            subagency: '#B8A5FF',       // Lighter purple
-            office: '#5EADF2',          // Bright blue
-            prime: '#5CD6B2',           // Teal
-            sub: '#FFA15C',             // Orange
-            background: '#1E1A22',      // Dark background
-            text: '#F4F2F6',            // Light text
-            secondaryText: '#B5B0BD',   // Dimmed text
-            border: '#3A373E'           // Dark border
-        };
-    } else {
-        // Light mode color palette - slightly desaturated, deeper colors
-        return {
-            agency: '#6E56C7',          // Deep purple
-            subagency: '#9984E8',       // Medium purple
-            office: '#3F8CCA',          // Deep blue
-            prime: '#2EB28F',           // Deep teal
-            sub: '#E67A33',             // Deep orange
-            background: '#FFFFFF',      // Light background
-            text: '#36323A',            // Dark text
-            secondaryText: '#615C66',   // Medium text
-            border: '#D7D4DC'           // Light border
-        };
-    }
-}
-function displayForceDirectedRadial(model) {
-    const containerId = 'circular-dendrogram-container';
-    const container = document.getElementById(containerId);
-    
-    if (!container) {
-        console.error("Container not found.");
-        return;
-    }
-
-    // Clear any previous content
-    container.innerHTML = '';
-    
-    setLoading(containerId, false);
-    
-    // Get the current sub-agency filter (if any)
-    const subAgencyFilter = document.getElementById('sub-agency-filter')?.value || '';
-    
-    // Check if we have valid model data
-    if (!model || !Object.keys(model.agencies).length) {
-        displayNoData(containerId, 'No data available for hierarchical visualization.');
-        return;
-    }
-    
-    try {
-        // Create wide-format SVG container
-        const width = 1600;
-        const height = 800;
-        
-        const svg = d3.select(container)
-            .append("svg")
-            .attr("width", "100%")
-            .attr("height", "100%")
-            .attr("viewBox", `0 0 ${width} ${height}`)
-            .attr("preserveAspectRatio", "xMidYMid meet");
-        
-        // Create a single container group for the visualization
-        const vizContainer = svg.append("g")
-            .attr("class", "viz-container");
-            
-        // Create hierarchical data
-        const hierarchyData = createHierarchyData(model, subAgencyFilter);
-        
-        // Convert to d3 hierarchy
-        const originalRoot = d3.hierarchy(hierarchyData);
-        originalRoot.sort((a, b) => (b.data.value || 0) - (a.data.value || 0));
-        
-        // Keep track of current view state
-        let currentRoot = originalRoot;
-        let breadcrumbPath = [];
-        
-        // Initial render
-        renderView();
-        
-        // Main render function
-        function renderView() {
-            // Clear previous content
-            vizContainer.selectAll("*").remove();
-            
-            // Create tree layout for current root
-            const treeLayout = d3.tree()
-                .size([height - 150, width - 300])
-                .separation((a, b) => (a.parent === b.parent ? 1 : 1.2));
-            
-            // Clone the current root to avoid modifying the original
-            const root = d3.hierarchy(currentRoot.data);
-            root.sort((a, b) => (b.data.value || 0) - (a.data.value || 0));
-            
-            // Apply layout
-            treeLayout(root);
-            
-            // Adjust horizontal spacing
-            const levelWidth = (width - 300) / (root.height + 1);
-            root.each(d => {
-                d.y = 100 + (d.depth * levelWidth);
-            });
-            
-            // Create a group for the chart
-            const chart = vizContainer.append("g")
-                .attr("class", "chart")
-                .attr("transform", `translate(30, 75)`);
-            
-            // Create links
-            const link = chart.append("g")
-                .attr("class", "links")
-                .selectAll("path")
-                .data(root.links())
-                .join("path")
-                .attr("fill", "none")
-                .attr("stroke", getCssVar('--color-border'))
-                .attr("stroke-opacity", 0.8)
-                .attr("d", d3.linkHorizontal()
-                    .x(d => d.y)
-                    .y(d => d.x))
-                .attr("stroke-width", d => {
-                    const value = d.target.data.value || 0;
-                    return Math.max(0.5, Math.min(2, Math.log10(value + 1) / 6));
-                });
-            
-            // Get node type function (accounting for breadcrumb depth)
-            function getNodeType(d) {
-                const effectiveDepth = breadcrumbPath.length + d.depth;
-                
-                if (effectiveDepth === 0) return 'root';
-                if (effectiveDepth === 1) return 'agency';
-                if (effectiveDepth === 2) {
-                    return d.data.isSubAgency ? 'subagency' : 'unknown';
-                }
-                if (effectiveDepth === 3) {
-                    return d.data.isOffice ? 'office' : 'prime';
-                }
-                if (effectiveDepth === 4) {
-                    return d.data.isPrime ? 'prime' : 'sub';
-                }
-                return 'sub';
-            }
-            
-            // Calculate node radius based on type
-            function getNodeRadius(d) {
-                const type = getNodeType(d);
-                if (type === 'root') return 0;
-                if (type === 'agency') return 8;
-                if (type === 'subagency') return 7;
-                if (type === 'office') return 6;
-                if (type === 'prime') return 5;
-                return 4;
-            }
-            
-            // Create node groups
-            const nodeGroups = chart.append("g")
-                .attr("class", "nodes")
-                .selectAll("g.node")
-                .data(root.descendants())
-                .join("g")
-                .attr("class", d => `node ${d.children && d.children.length > 0 ? 'has-children' : 'leaf'}`)
-                .attr("transform", d => `translate(${d.y},${d.x})`)
-                .attr("data-type", d => getNodeType(d))
-                .attr("data-name", d => d.data.name)
-                .style("cursor", d => d.children && d.children.length > 0 ? "pointer" : "default");
-            
-            // Get theme-aware colors
-const colors = getDendrogramColors();
-
-// Add circles to nodes
-nodeGroups.append("circle")
-    .attr("r", d => getNodeRadius(d))
-    .attr("fill", d => {
-        const type = getNodeType(d);
-        if (type === 'root') return 'none';
-        if (type === 'agency') return colors.agency;
-        if (type === 'subagency') return colors.subagency;
-        if (type === 'office') return colors.office;
-        if (type === 'prime') return colors.prime;
-        return colors.sub;
-    })
-    .attr("stroke", colors.background)
-    .attr("stroke-width", 1.5);
-
-            
-            // Add plus icon for nodes with children
-            nodeGroups.filter(d => d.children && d.children.length > 0)
-                .append("text")
-                .attr("class", "drill-icon")
-                .attr("dy", "0.3em")
-                .attr("font-size", "10px")
-                .attr("text-anchor", "middle")
-                .attr("fill", getCssVar('--color-surface'))
-                .text("+");
-            
-            // Add labels with inline values
-            nodeGroups.append("text")
-                .attr("class", "node-label")
-                .attr("dy", "0.32em")
-                .attr("x", d => {
-                    const nodeRadius = getNodeRadius(d);
-                    return d.children ? -nodeRadius - 6 : nodeRadius + 6;
-                })
-                .attr("text-anchor", d => d.children ? "end" : "start")
-                .attr("font-size", d => {
-                    const type = getNodeType(d);
-                    if (type === 'agency') return "12px";
-                    if (type === 'subagency') return "11px";
-                    if (type === 'office') return "10px";
-                    return "9px";
-                })
-                .attr("fill", getCssVar('--color-text-primary'))
-                .text(d => {
-                    const name = d.data.name || "";
-                    const type = getNodeType(d);
-                    
-                    // Combine name and value for prime and sub nodes
-                    if (type === 'prime' || type === 'sub') {
-                        const valueStr = d.data.value ? ` (${formatConciseCurrency(d.data.value)})` : '';
-                        
-                        // Adjust max length based on name + value length
-                        const maxNameLength = 45 - valueStr.length;
-                        
-                        if (name.length > maxNameLength) {
-                            return name.substring(0, maxNameLength - 3) + "..." + valueStr;
-                        }
-                        return name + valueStr;
-                    }
-                    
-                    // For other node types, just display name
-                    const maxLength = type === 'agency' ? 30 : 
-                                     type === 'subagency' ? 30 :
-                                     type === 'office' ? 30 : 25;
-                                     
-                    if (name.length > maxLength) {
-                        return name.substring(0, maxLength - 3) + "...";
-                    }
-                    
-                    return name;
-                });
-            
-            // Add separate value labels for agency, subagency, and office nodes
-            nodeGroups.filter(d => {
-                const type = getNodeType(d);
-                return (type === 'agency' || type === 'subagency' || type === 'office') && d.data.value;
-            })
-            .append("text")
-            .attr("class", "value-label")
-            .attr("x", d => {
-                const nodeRadius = getNodeRadius(d);
-                return d.children ? -nodeRadius - 6 : nodeRadius + 6;
-            })
-            .attr("y", 14)
-            .attr("text-anchor", d => d.children ? "end" : "start")
-            .attr("font-size", "9px")
-            .attr("fill", getCssVar('--color-text-secondary'))
-            .text(d => formatConciseCurrency(d.data.value));
-            
-            // Set up tooltip
-            let tooltip = d3.select("body").select("#tree-tooltip");
-            if (tooltip.empty()) {
-                tooltip = d3.select("body").append("div")
-                    .attr("id", "tree-tooltip")
-                    .style("position", "absolute")
-                    .style("visibility", "hidden")
-                    .style("opacity", 0)
-                    .style("background-color", getCssVar('--color-surface'))
-                    .style("border", `1px solid ${getCssVar('--color-border')}`)
-                    .style("border-radius", "4px")
-                    .style("padding", "10px")
-                    .style("color", getCssVar('--color-text-primary'))
-                    .style("font-size", "12px")
-                    .style("pointer-events", "none")
-                    .style("z-index", 1000)
-                    .style("max-width", "350px")
-                    .style("box-shadow", "0 3px 14px rgba(0,0,0,0.15)");
-            }
-            
-            // Tooltip functions
-            function showTooltip(event, d) {
-                const percentage = (100 * d.data.value / originalRoot.data.value).toFixed(1);
-                const type = getNodeType(d);
-                
-                let tooltipContent = `
-                    <div style="font-weight: bold; margin-bottom: 5px;">${d.data.name || 'Unknown'}</div>
-                    <div>Type: ${type.charAt(0).toUpperCase() + type.slice(1)}</div>
-                    <div>Value: ${formatCurrency(d.data.value || 0)}</div>
-                    <div>Share: ${percentage}%</div>
-                `;
-                
-                // Add child count info for clickable nodes
-                if (d.children && d.children.length > 0) {
-                    tooltipContent += `<div>Children: ${d.children.length}</div>`;
-                    tooltipContent += `<div style="color: ${getCssVar('--color-text-tertiary')}; font-style: italic; margin-top: 5px;">Click to drill down</div>`;
-                }
-                
-                tooltip.html(tooltipContent)
-                    .style("visibility", "visible")
-                    .style("opacity", 1)
-                    .style("left", (event.pageX + 15) + "px")
-                    .style("top", (event.pageY - 28) + "px");
-            }
-            
-            function hideTooltip() {
-                tooltip.style("visibility", "hidden").style("opacity", 0);
-            }
-            
-            // Add direct click handler to nodes with children
-            nodeGroups.filter(d => d.children && d.children.length > 0)
-                .on("click", function(event, d) {
-                    event.stopPropagation(); // Stop event propagation
-                    
-                    // Find the node in the original hierarchy by path
-                    const path = [...breadcrumbPath, d.data.name];
-                    const targetNode = findNodeByPath(originalRoot, path);
-                    
-                    if (targetNode) {
-                        // Save current view in breadcrumb
-                        breadcrumbPath.push(d.data.name);
-                        currentRoot = targetNode;
-                        renderView();
-                    }
-                });
-            
-            // Add hover effects
-            nodeGroups.on("mouseover", function(event, d) {
-                d3.select(this).select("circle")
-                    .attr("stroke", getCssVar('--chart-color-primary'))
-                    .attr("stroke-width", 2);
-                
-                showTooltip(event, d);
-            })
-            .on("mousemove", function(event) {
-                tooltip
-                    .style("left", (event.pageX + 15) + "px")
-                    .style("top", (event.pageY - 28) + "px");
-            })
-            .on("mouseout", function() {
-                d3.select(this).select("circle")
-                    .attr("stroke", getCssVar('--color-surface'))
-                    .attr("stroke-width", 1.5);
-                
-                hideTooltip();
-            });
-            
-            // Add breadcrumb navigation if we're not at the root
-            if (breadcrumbPath.length > 0) {
-                const breadcrumb = vizContainer.append("g")
-                    .attr("class", "breadcrumb")
-                    .attr("transform", "translate(30, 30)");
-                
-                // Add "Root" button
-                const rootBtn = breadcrumb.append("g")
-                    .attr("class", "breadcrumb-item")
-                    .attr("transform", "translate(0, 0)")
-                    .style("cursor", "pointer");
-                
-                rootBtn.append("rect")
-                    .attr("width", 70)
-                    .attr("height", 24)
-                    .attr("rx", 4)
-                    .attr("fill", getCssVar('--color-surface-variant'))
-                    .attr("stroke", getCssVar('--color-border'));
-                
-                rootBtn.append("text")
-                    .attr("x", 35)
-                    .attr("y", 16)
-                    .attr("text-anchor", "middle")
-                    .attr("font-size", "11px")
-                    .attr("fill", getCssVar('--color-text-primary'))
-                    .text("Root View");
-                
-                rootBtn.on("click", function() {
-                    // Reset to root
-                    breadcrumbPath = [];
-                    currentRoot = originalRoot;
-                    renderView();
-                });
-                
-                // Add breadcrumb items
-                let xOffset = 80;
-                
-                breadcrumbPath.forEach((name, i) => {
-                    const isLast = i === breadcrumbPath.length - 1;
-                    
-                    // Add separator
-                    breadcrumb.append("text")
-                        .attr("x", xOffset)
-                        .attr("y", 16)
-                        .attr("text-anchor", "middle")
-                        .attr("font-size", "14px")
-                        .attr("fill", getCssVar('--color-text-tertiary'))
-                        .text("›");
-                    
-                    xOffset += 15;
-                    
-                    // Calculate width for item
-                    const displayName = name.length > 20 ? name.substring(0, 17) + "..." : name;
-                    const textWidth = displayName.length * 6 + 20; // Approximate width
-                    
-                    // Create breadcrumb item
-                    const item = breadcrumb.append("g")
-                        .attr("class", "breadcrumb-item")
-                        .attr("transform", `translate(${xOffset}, 0)`)
-                        .style("cursor", isLast ? "default" : "pointer");
-                    
-                    item.append("rect")
-                        .attr("width", textWidth)
-                        .attr("height", 24)
-                        .attr("rx", 4)
-                        .attr("fill", isLast ? getCssVar('--color-primary') : getCssVar('--color-surface-variant'))
-                        .attr("stroke", getCssVar('--color-border'));
-                    
-                    item.append("text")
-                        .attr("x", textWidth / 2)
-                        .attr("y", 16)
-                        .attr("text-anchor", "middle")
-                        .attr("font-size", "11px")
-                        .attr("fill", isLast ? getCssVar('--color-on-primary') : getCssVar('--color-text-primary'))
-                        .text(displayName);
-                    
-                    if (!isLast) {
-                        item.on("click", function() {
-                            // Navigate to this breadcrumb
-                            breadcrumbPath = breadcrumbPath.slice(0, i + 1);
-                            const targetNode = findNodeByPath(originalRoot, breadcrumbPath);
-                            if (targetNode) {
-                                currentRoot = targetNode;
-                                renderView();
-                            }
-                        });
-                    }
-                    
-                    xOffset += textWidth + 5;
-                });
-            }
-            
-            // Add simple legend
-            const legend = vizContainer.append("g")
-                .attr("class", "legend")
-                .attr("transform", breadcrumbPath.length > 0 ? "translate(30, 80)" : "translate(30, 30)");
-                
-            const legendData = [
-    { label: "Agency", color: colors.agency },
-    { label: "Sub-Agency", color: colors.subagency },
-    { label: "Office", color: colors.office },
-    { label: "Prime", color: colors.prime },
-    { label: "Sub", color: colors.sub }
-];
-            
-            legendData.forEach((item, i) => {
-                const g = legend.append("g")
-                    .attr("transform", `translate(0, ${i * 20})`);
-                    
-                g.append("rect")
-                    .attr("width", 12)
-                    .attr("height", 12)
-                    .attr("fill", item.color);
-                    
-                g.append("text")
-                    .attr("x", 18)
-                    .attr("y", 10)
-                    .attr("font-size", "10px")
-                    .attr("fill", getCssVar('--color-text-secondary'))
-                    .text(item.label);
-            });
-            
-            // Add help text
-            vizContainer.append("g")
-                .attr("class", "help-text")
-                .attr("transform", `translate(${width - 20}, ${height - 10})`)
-                .append("text")
-                .attr("text-anchor", "end")
-                .attr("font-size", "9px")
-                .attr("fill", getCssVar('--color-text-tertiary'))
-                .text("Click node to drill down, click breadcrumb to navigate back");
-        }
-        
-        // Helper function to find a node by path from root
-        function findNodeByPath(root, path) {
-            let current = root;
-            
-            // Follow each name in the path
-            for (let i = 0; i < path.length; i++) {
-                const name = path[i];
-                
-                // Find child with this name
-                if (!current.children) return null;
-                
-                let found = false;
-                for (let j = 0; j < current.children.length; j++) {
-                    if (current.children[j].data.name === name) {
-                        current = current.children[j];
-                        found = true;
-                        break;
-                    }
-                }
-                
-                if (!found) return null;
-            }
-            
-            return current;
-        }
-        
-        // Add zoom functionality to the SVG
-        const zoom = d3.zoom()
-            .scaleExtent([0.2, 5])
-            .on("zoom", (event) => {
-                vizContainer.attr("transform", event.transform);
-            });
-            
-        svg.call(zoom)
-           .on("dblclick.zoom", function() {
-                svg.transition().duration(750).call(
-                    zoom.transform,
-                    d3.zoomIdentity.translate(0, 0).scale(1)
-                );
-            });
-            
-    } catch (error) {
-        console.error("Error creating visualization:", error);
-        displayError(containerId, `Failed to render visualization: ${error.message}`);
-    }
-}
-// Custom force function for clustering nodes at different relationship levels
-function isolatedNodesClusterForce(nodes, relationshipMap, strength = 0.5) {
-    function force(alpha) {
-        relationshipMap.forEach((childIds, parentId) => {
-            const parentNode = nodes.find(n => n.id === parentId);
-            if (!parentNode) return;
-
-            const childNodes = nodes.filter(n => childIds.includes(n.id)); 
-            if (childNodes.length === 0) return;
-
-            const parentAngle = Math.atan2(parentNode.y, parentNode.x);
-            const arcRange = Math.PI / 3; // 60 degrees
-
-            childNodes.forEach((childNode, i) => {
-                // Ensure division by zero is avoided and single nodes are centered
-                const angleOffset = childNodes.length > 1 ? 
-                    (arcRange * (i / (childNodes.length - 1))) : arcRange / 2;
-                const childAngle = parentAngle - (arcRange / 2) + angleOffset;
-
-                // Distance depends on the node types
-                const distance = 
-                    (parentNode.type === 'prime' && childNode.type === 'sub') ? 45 :
-                    (parentNode.type === 'office' && childNode.type === 'prime') ? 55 :
-                    (parentNode.type === 'subagency' && childNode.type === 'office') ? 65 : 
-                    75;
-                
-                const targetX = parentNode.x + (distance * Math.cos(childAngle));
-                const targetY = parentNode.y + (distance * Math.sin(childAngle));
-
-                childNode.x += (targetX - childNode.x) * alpha * strength;
-                childNode.y += (targetY - childNode.y) * alpha * strength;
-            });
-        });
-    }
-    
-    // Allow strength to be configured
-    force.strength = function(s) {
-        if (arguments.length) {
-            strength = s;
-            return force;
-        }
-        return strength;
-    };
-    
-    return force;
-}
-// Enhance responsiveness for displays of all sizes
-function enhanceResponsiveness() {
-    // Add resize event handler for responsive adjustments
-    let resizeTimeout;
-    window.addEventListener('resize', function() {
-        // Debounce resize handler
-        clearTimeout(resizeTimeout);
-        resizeTimeout = setTimeout(function() {
-            console.log("Window resized, adjusting visualizations...");
-            
-            // Adjust visualization containers based on new dimensions
-            adjustVisualizationSizes();
-            
-            // Refresh visualizations if needed
-            refreshResponsiveVisualizations();
-        }, 250);
-    });
-    
-    // Initial adjustment
-    adjustVisualizationSizes();
-}
-
-// Adjust visualization containers based on window size
-function adjustVisualizationSizes() {
-    // Calculate optimal heights for different visualization types
-    const windowHeight = window.innerHeight;
-    const windowWidth = window.innerWidth;
-    
-    // Get all bento boxes
-    const bentoBoxes = document.querySelectorAll('.bento-box');
-    
-    // Adjust based on screen size
-    if (windowWidth >= 1600) {
-        // Large screens - maximize visualization space
-        document.documentElement.style.setProperty('--bento-gap', '24px');
-        
-        // Set optimal height for map and Sankey based on window height
-        const mapContainer = document.getElementById('map-container');
-        if (mapContainer) {
-            const optimalMapHeight = Math.max(350, Math.min(450, windowHeight * 0.3));
-            mapContainer.style.height = optimalMapHeight + 'px';
-        }
-        
-        const sankeyContainer = document.getElementById('sankey-chart-container');
-        if (sankeyContainer) {
-            const optimalSankeyHeight = Math.max(350, Math.min(500, windowHeight * 0.35));
-            sankeyContainer.style.height = optimalSankeyHeight + 'px';
-        }
-        
-        const dendrogramContainer = document.getElementById('circular-dendrogram-container');
-        if (dendrogramContainer) {
-            const optimalHeight = Math.max(400, Math.min(600, windowHeight * 0.4));
-            dendrogramContainer.style.height = optimalHeight + 'px';
-        }
-    } else if (windowWidth >= 1200) {
-        // Medium-large screens
-        document.documentElement.style.setProperty('--bento-gap', '20px');
-        
-        // Adjust visualization heights for medium screens
-        const mapContainer = document.getElementById('map-container');
-        if (mapContainer) {
-            mapContainer.style.height = '300px';
-        }
-        
-        const sankeyContainer = document.getElementById('sankey-chart-container');
-        if (sankeyContainer) {
-            sankeyContainer.style.height = '350px';
-        }
-        
-        const dendrogramContainer = document.getElementById('circular-dendrogram-container');
-        if (dendrogramContainer) {
-            dendrogramContainer.style.height = '450px';
-        }
-    } else {
-        // Smaller screens - optimize for readability
-        document.documentElement.style.setProperty('--bento-gap', '16px');
-        
-        // Reset container heights to use default flexbox behavior
-        const chartContainers = document.querySelectorAll('.chart-container');
-        chartContainers.forEach(container => {
-            container.style.height = '';
-        });
-    }
-    
-    // Adjust table container heights based on available space
-    const tableContainers = document.querySelectorAll('.table-container');
-    tableContainers.forEach(container => {
-        const bentoBox = container.closest('.bento-box');
-        if (bentoBox) {
-            const cardHeader = bentoBox.querySelector('.card-header');
-            const availableHeight = bentoBox.clientHeight - (cardHeader ? cardHeader.offsetHeight : 0) - 20;
-            
-            if (availableHeight > 100) {
-                container.style.height = availableHeight + 'px';
-            }
-        }
-    });
-}
-
-// Refresh visualizations that need to be redrawn on resize
-function refreshResponsiveVisualizations() {
-    // Refresh Chart.js charts
-    if (window.tavTcvChartInstance) {
-        try {
-            window.tavTcvChartInstance.resize();
-        } catch (e) {
-            console.warn("Error resizing TAV/TCV chart:", e);
-        }
-    }
-    
-    // Refresh other chart types as needed
-    // Each chart type may have different refresh mechanisms
-    
-    // For D3 charts, we need to trigger re-renders
-    // This would vary by chart implementation
-    
-    // For this demo, we'll simulate refresh with a notification
-    console.log("Visualizations refreshed for new dimensions");
-}
-
-// Add keyboard navigation support
-function addKeyboardSupport() {
-    // Add keyboard shortcuts for navigation and common actions
-    document.addEventListener('keydown', function(event) {
-        // Check if we're in an input field - don't intercept keyboard if user is typing
-        if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA' || event.target.isContentEditable) {
-            return;
-        }
-        
-        // Ctrl+Alt+P: Toggle presentation mode
-        if (event.ctrlKey && event.altKey && event.key === 'p') {
-            event.preventDefault();
-            const presentationButton = document.querySelector('.presentation-mode-button');
-            if (presentationButton) {
-                presentationButton.click();
-            }
-        }
-        
-        // Escape: Exit fullscreen or presentation mode
-        if (event.key === 'Escape') {
-            // Check if a fullscreen visualization is open
-            const fullscreenOverlay = document.querySelector('.visualization-fullscreen-overlay.active');
-            if (fullscreenOverlay) {
-                const closeButton = fullscreenOverlay.querySelector('.visualization-fullscreen-close');
-                if (closeButton) {
-                    closeButton.click();
-                }
-            } else if (document.body.classList.contains('presentation-mode')) {
-                // Exit presentation mode
-                const presentationButton = document.querySelector('.presentation-mode-button');
-                if (presentationButton) {
-                    presentationButton.click();
-                }
-            }
-        }
-        
-        // Add more keyboard shortcuts as needed
-    });
-    
-    // Add focus styles for keyboard navigation
-    document.querySelectorAll('button, a, select, input').forEach(element => {
-        element.addEventListener('focus', function() {
-            this.classList.add('keyboard-focus');
-        });
-        
-        element.addEventListener('blur', function() {
-            this.classList.remove('keyboard-focus');
-        });
-    });
-}
-
-// Add breadcrumb navigation support
-function enhanceBreadcrumbNavigation() {
-    // Most of this is implemented within the individual chart drill-down functions
-    // This function can be used for global breadcrumb functionality
-    
-    // Example: Add a global breadcrumb container at the top of the main content
-    const mainContent = document.querySelector('.main-content');
-    const dashboardHeader = document.querySelector('.dashboard-header');
-    
-    if (mainContent && dashboardHeader) {
-        const globalBreadcrumbs = document.createElement// Enhanced Dashboard JavaScript
-// Adds presentation mode, drill-down capabilities, and improved visualization responsiveness
-
-// Initialize enhanced dashboard features after standard init
-document.addEventListener('DOMContentLoaded', function() {
-    console.log("Initializing enhanced BI dashboard features...");
-    
-    // Wait for the original initialization to complete
-    setTimeout(function() {
-        initializeEnhancedDashboard();
-    }, 800);
-});
-
-function initializeEnhancedDashboard() {
-    try {
-        // Add sidebar toggle functionality
-        addSidebarToggle();
-        
-        // Add presentation mode toggle
-        addPresentationModeControls();
-        
-        // Add fullscreen capabilities to visualizations
-        addFullscreenCapabilities();
-        
-        // Add enhanced drill-down markers
-        markDrillableCharts();
-        
-        // Add responsive resize handlers
-        enhanceResponsiveness();
-        
-        // Add keyboard navigation support
-        addKeyboardSupport();
-        
-        // Add breadcrumb drill-down support
-        enhanceBreadcrumbNavigation();
-        
-        console.log("Enhanced BI dashboard features initialized");
-    } catch (e) {
-        console.error("Error initializing enhanced dashboard:", e);
-    }
-}
-
-// Add collapsible sidebar functionality
-function addSidebarToggle() {
-    const sidePanel = document.querySelector('.side-panel');
-    if (!sidePanel) return;
-    
-    // Create toggle button
-    const toggleButton = document.createElement('div');
-    toggleButton.className = 'sidebar-toggle';
-    toggleButton.innerHTML = `
-        <svg class="sidebar-expand-icon" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
-            <polyline points="15 18 9 12 15 6"></polyline>
-        </svg>
-    `;
-    
-    sidePanel.appendChild(toggleButton);
-    
-    // Add toggle functionality
-    toggleButton.addEventListener('click', function() {
-        sidePanel.classList.toggle('collapsed');
-        
-        // Adjust main content padding when sidebar is collapsed/expanded
-        const mainContent = document.querySelector('.main-content');
-        if (mainContent) {
-            if (sidePanel.classList.contains('collapsed')) {
-                mainContent.style.paddingLeft = '20px';
-            } else {
-                mainContent.style.paddingLeft = '';
-            }
-        }
-    });
-}
-
-// Add presentation mode toggle and zoom controls
-function addPresentationModeControls() {
-    const headerControls = document.querySelector('.header-controls');
-    if (!headerControls) return;
-    
-    // Create presentation controls container
-    const presentationControls = document.createElement('div');
-    presentationControls.className = 'presentation-controls';
-    
-    // Create presentation mode toggle button
-    const presentationModeButton = document.createElement('button');
-    presentationModeButton.className = 'presentation-mode-button';
-    presentationModeButton.innerHTML = `
-        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
-            <path d="M2 3h20v14H2z"></path>
-            <path d="M12 21H8"></path>
-            <path d="M10 17v4"></path>
-        </svg>
-        Presentation Mode
-    `;
-    
-    // Create zoom controls
-    const zoomControls = document.createElement('div');
-    zoomControls.className = 'zoom-controls';
-    
-    // Add zoom buttons and level indicator
-    zoomControls.innerHTML = `
-        <button class="zoom-button zoom-out" title="Zoom Out">
-            <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
-                <line x1="5" y1="12" x2="19" y2="12"></line>
-            </svg>
-        </button>
-        <span class="zoom-level">100%</span>
-        <button class="zoom-button zoom-in" title="Zoom In">
-            <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
-                <line x1="12" y1="5" x2="12" y2="19"></line>
-                <line x1="5" y1="12" x2="19" y2="12"></line>
-            </svg>
-        </button>
-        <button class="zoom-button zoom-reset" title="Reset Zoom">
-            <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
-                <polyline points="23 4 23 10 17 10"></polyline>
-                <polyline points="1 20 1 14 7 14"></polyline>
-                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
-            </svg>
-        </button>
-    `;
-    
-    // Add zoom controls to presentation controls
-    presentationControls.appendChild(presentationModeButton);
-    presentationControls.appendChild(zoomControls);
-    
-    // Add presentation controls to header
-    headerControls.appendChild(presentationControls);
-    
-    // Set up presentation mode toggle functionality
-    let currentZoomLevel = 1;
-    const zoomLevelDisplay = zoomControls.querySelector('.zoom-level');
-    
-    presentationModeButton.addEventListener('click', function() {
-        document.body.classList.toggle('presentation-mode');
-        
-        if (document.body.classList.contains('presentation-mode')) {
-            presentationModeButton.innerHTML = `
-                <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
-                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                    <line x1="9" y1="9" x2="15" y2="15"></line>
-                    <line x1="15" y1="9" x2="9" y2="15"></line>
-                </svg>
-                Exit Presentation
-            `;
-            
-            // Collapse sidebar in presentation mode
-            const sidePanel = document.querySelector('.side-panel');
-            if (sidePanel) sidePanel.classList.add('collapsed');
-            
-        } else {
-            presentationModeButton.innerHTML = `
-                <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
-                    <path d="M2 3h20v14H2z"></path>
-                    <path d="M12 21H8"></path>
-                    <path d="M10 17v4"></path>
-                </svg>
-                Presentation Mode
-            `;
-            
-            // Reset zoom when exiting presentation mode
-            currentZoomLevel = 1;
-            updateZoomLevel();
-        }
-    });
-    
-    // Set up zoom controls functionality
-    zoomControls.querySelector('.zoom-in').addEventListener('click', function() {
-        currentZoomLevel = Math.min(currentZoomLevel + 0.1, 2);
-        updateZoomLevel();
-    });
-    
-    zoomControls.querySelector('.zoom-out').addEventListener('click', function() {
-        currentZoomLevel = Math.max(currentZoomLevel - 0.1, 0.5);
-        updateZoomLevel();
-    });
-    
-    zoomControls.querySelector('.zoom-reset').addEventListener('click', function() {
-        currentZoomLevel = 1;
-        updateZoomLevel();
-    });
-    
-    function updateZoomLevel() {
-        document.documentElement.style.setProperty('--zoom-level', currentZoomLevel);
-        zoomLevelDisplay.textContent = `${Math.round(currentZoomLevel * 100)}%`;
-    }
-}
-
-// Add fullscreen capability to visualization containers
-function addFullscreenCapabilities() {
-    // Create fullscreen overlay container (added once to the DOM)
-    const fullscreenOverlay = document.createElement('div');
-    fullscreenOverlay.className = 'visualization-fullscreen-overlay';
-    fullscreenOverlay.innerHTML = `
-        <div class="visualization-fullscreen-container">
-            <div class="visualization-fullscreen-header">
-                <div class="visualization-fullscreen-title">Visualization Detail</div>
-                <button class="visualization-fullscreen-close">
-                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
-                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                    </svg>
-                </button>
-            </div>
-            <div class="visualization-fullscreen-content"></div>
-        </div>
-    `;
-    document.body.appendChild(fullscreenOverlay);
-    
-    // Add close button functionality
-    const closeButton = fullscreenOverlay.querySelector('.visualization-fullscreen-close');
-    closeButton.addEventListener('click', function() {
-        fullscreenOverlay.classList.remove('active');
-        
-        // Re-enable scrolling on main body
-        document.body.style.overflow = '';
-        
-        // Clear content when closing
-        setTimeout(() => {
-            fullscreenOverlay.querySelector('.visualization-fullscreen-content').innerHTML = '';
-            fullscreenOverlay.querySelector('.visualization-fullscreen-title').textContent = 'Visualization Detail';
-        }, 300);
-    });
-    
-    // Add fullscreen button to all visualization containers
-    const chartContainers = document.querySelectorAll('.chart-container, .table-container');
-    chartContainers.forEach(container => {
-        // Find parent bento box and card header
-        const bentoBox = container.closest('.bento-box');
-        const cardHeader = bentoBox ? bentoBox.querySelector('.card-header') : null;
-        
-        if (cardHeader) {
-            // Create card actions container if it doesn't exist
-            let actionsContainer = cardHeader.querySelector('.card-actions');
-            if (!actionsContainer) {
-                actionsContainer = document.createElement('div');
-                actionsContainer.className = 'card-actions';
-                cardHeader.appendChild(actionsContainer);
-            }
-            
-            // Add fullscreen button
-            const fullscreenButton = document.createElement('button');
-            fullscreenButton.className = 'card-action-button fullscreen-button';
-            fullscreenButton.title = 'View Fullscreen';
-            fullscreenButton.innerHTML = `
-                <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
-                    <path d="M8 3H5a2 2 0 0 0-2 2v3"></path>
-                    <path d="M21 8V5a2 2 0 0 0-2-2h-3"></path>
-                    <path d="M3 16v3a2 2 0 0 0 2 2h3"></path>
-                    <path d="M16 21h3a2 2 0 0 0 2-2v-3"></path>
-                </svg>
-            `;
-            
-            // Add fullscreen click event handler
-            fullscreenButton.addEventListener('click', function(event) {
-                event.preventDefault();
-                event.stopPropagation();
-                
-                // Get visualization title
-                const visualizationTitle = cardHeader.querySelector('h2').textContent;
-                fullscreenOverlay.querySelector('.visualization-fullscreen-title').textContent = visualizationTitle;
-                
-                // Clone visualization content for fullscreen view
-                const contentContainer = fullscreenOverlay.querySelector('.visualization-fullscreen-content');
-                contentContainer.innerHTML = '';
-                
-                // Handle different visualization types
-                if (container.querySelector('canvas')) {
-                    // Chart.js charts need special handling
-                    expandChartJsVisualization(container, contentContainer, visualizationTitle);
-                } else if (container.querySelector('svg')) {
-                    // SVG-based visualizations (D3.js, etc.)
-                    expandSvgVisualization(container, contentContainer, visualizationTitle);
-                } else if (container.querySelector('table')) {
-                    // Table visualizations
-                    expandTableVisualization(container, contentContainer, visualizationTitle);
-                } else {
-                    // Generic content
-                    const clonedContent = container.cloneNode(true);
-                    contentContainer.appendChild(clonedContent);
-                }
-                
-                // Show fullscreen overlay
-                fullscreenOverlay.classList.add('active');
-                
-                // Disable scrolling on main body
-                document.body.style.overflow = 'hidden';
-            });
-            
-            actionsContainer.appendChild(fullscreenButton);
-        }
-    });
-}
-
-// Helper function to expand Chart.js visualizations
-function expandChartJsVisualization(sourceContainer, targetContainer, title) {
-    // Create a new canvas element
-    const newCanvas = document.createElement('canvas');
-    newCanvas.id = 'fullscreen-' + sourceContainer.id;
-    newCanvas.style.width = '100%';
-    newCanvas.style.height = '90%';
-    
-    // Add canvas to target container
-    targetContainer.appendChild(newCanvas);
-    
-    // Find original chart instance and configuration
-    const sourceCanvas = sourceContainer.querySelector('canvas');
-    if (!sourceCanvas) return;
-    
-    const chartId = sourceCanvas.id;
-    let chartInstance = null;
-    
-    // Find chart instance from known globals
-    if (chartId === 'tavTcvChart' && window.tavTcvChartInstance) {
-        chartInstance = window.tavTcvChartInstance;
-    } else {
-        // Try to find chart in Chart.js registry if available
-        if (window.Chart && window.Chart.instances) {
-            chartInstance = Object.values(window.Chart.instances).find(chart => chart.canvas.id === chartId);
-        }
-    }
-    
-    if (chartInstance) {
-        // Get chart data and configuration
-        const chartType = chartInstance.config.type;
-        const chartData = chartInstance.data;
-        const chartOptions = { ...chartInstance.options };
-        
-        // Adjust options for fullscreen display
-        chartOptions.responsive = true;
-        chartOptions.maintainAspectRatio = false;
-        if (chartOptions.legend) {
-            chartOptions.legend.labels = { ...chartOptions.legend.labels, fontSize: 14 };
-        }
-        
-        // Create new chart
-        new Chart(newCanvas, {
-            type: chartType,
-            data: chartData,
-            options: chartOptions
-        });
-    }
-}
-
-// Helper function to expand SVG visualizations
-function expandSvgVisualization(sourceContainer, targetContainer, title) {
-    // Extract the original SVG
-    const originalSvg = sourceContainer.querySelector('svg');
-    if (!originalSvg) return;
-    
-    // Clone the SVG element
-    const clonedSvg = originalSvg.cloneNode(true);
-    
-    // Create container with appropriate dimensions
-    const svgContainer = document.createElement('div');
-    svgContainer.style.width = '100%';
-    svgContainer.style.height = '90%';
-    svgContainer.style.display = 'flex';
-    svgContainer.style.justifyContent = 'center';
-    svgContainer.style.alignItems = 'center';
-    svgContainer.style.overflow = 'hidden';
-    
-    // Adjust SVG for fullscreen
-    clonedSvg.style.width = '100%';
-    clonedSvg.style.height = '100%';
-    clonedSvg.style.maxHeight = '90vh';
-    
-    // Add to containers
-    svgContainer.appendChild(clonedSvg);
-    targetContainer.appendChild(svgContainer);
-    
-    // Special handling for specific visualizations
-    if (sourceContainer.id === 'map-container') {
-        // Add zoom controls for maps
-        addMapZoomControls(svgContainer, clonedSvg);
-    } else if (sourceContainer.id === 'sankey-chart-container') {
-        // Adjust Sankey diagram for better fullscreen view
-        adjustSankeyForFullscreen(svgContainer, clonedSvg);
-    } else if (sourceContainer.id === 'circular-dendrogram-container') {
-        // Add zoom and pan for hierarchical visualizations
-        addHierarchicalZoomControls(svgContainer, clonedSvg);
-    }
-}
-
-// Helper function to expand table visualizations
-function expandTableVisualization(sourceContainer, targetContainer, title) {
-    // Create enhanced table container
-    const tableContainer = document.createElement('div');
-    tableContainer.className = 'fullscreen-table-container';
-    tableContainer.style.width = '100%';
-    tableContainer.style.height = '90%';
-    tableContainer.style.overflow = 'auto';
-    
-    // Clone the table
-    const originalTable = sourceContainer.querySelector('table');
-    if (!originalTable) return;
-    
-    const clonedTable = originalTable.cloneNode(true);
-    clonedTable.style.width = '100%';
-    
-    // Add toolbar with export options
-    const toolbar = document.createElement('div');
-    toolbar.className = 'visualization-toolbar';
-    toolbar.innerHTML = `
-        <button class="visualization-toolbar-button export-csv">
-            <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                <polyline points="7 10 12 15 17 10"></polyline>
-                <line x1="12" y1="15" x2="12" y2="3"></line>
-            </svg>
-            Export CSV
-        </button>
-        <button class="visualization-toolbar-button print-table">
-            <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none">
-                <polyline points="6 9 6 2 18 2 18 9"></polyline>
-                <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
-                <rect x="6" y="14" width="12" height="8"></rect>
-            </svg>
-            Print
-        </button>
-    `;
-    
-    // Add export functionality
-    toolbar.querySelector('.export-csv').addEventListener('click', function() {
-        // Use existing exportToCSV function if available
-        if (typeof window.exportToCSV === 'function') {
-            // Extract table data
-            const headers = [...clonedTable.querySelectorAll('th')].map(th => th.textContent);
-            const rows = [...clonedTable.querySelectorAll('tbody tr')].map(tr => 
-                [...tr.querySelectorAll('td')].map(td => td.textContent)
-            );
-            
-            // Convert to array of objects
-            const data = rows.map(row => {
-                const obj = {};
-                headers.forEach((header, i) => {
-                    obj[header] = row[i] || '';
-                });
-                return obj;
-            });
-            
-            // Export data
-            window.exportToCSV(data, `${title.replace(/\s+/g, '_').toLowerCase()}_${new Date().toISOString().split('T')[0]}.csv`);
-        } else {
-            // Simple fallback export
-            let csv = [];
-            const rows = clonedTable.querySelectorAll('tr');
-            
-            for (let i = 0; i < rows.length; i++) {
-                const row = [], cols = rows[i].querySelectorAll('td, th');
-                
-                for (let j = 0; j < cols.length; j++) {
-                    // Handle CSV escaping
-                    let text = cols[j].innerText;
-                    text = text.replace(/"/g, '""');
-                    row.push('"' + text + '"');
-                }
-                
-                csv.push(row.join(','));
-            }
-            
-            const csvString = csv.join('\n');
-            const filename = `${title.replace(/\s+/g, '_').toLowerCase()}_${new Date().toISOString().split('T')[0]}.csv`;
-            
-            // Create download link
-            const link = document.createElement('a');
-            link.setAttribute('href', 'data:text/csv;charset=utf-8,' + encodeURIComponent(csvString));
-            link.setAttribute('download', filename);
-            link.style.display = 'none';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-    });
-    
-    // Add print functionality
-    toolbar.querySelector('.print-table').addEventListener('click', function() {
-        const printWindow = window.open('', '_blank');
-        printWindow.document.write(`
-            <html>
-                <head>
-                    <title>${title}</title>
-                    <style>
-                        body { font-family: Arial, sans-serif; }
-                        table { border-collapse: collapse; width: 100%; }
-                        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-                        th { background-color: #f2f2f2; }
-                    </style>
-                </head>
-                <body>
-                    <h1>${title}</h1>
-                    ${clonedTable.outerHTML}
-                </body>
-            </html>
-        `);
-        printWindow.document.close();
-        printWindow.focus();
-        printWindow.print();
-        printWindow.close();
-    });
-    
-    // Add search/filter functionality
-    const searchContainer = document.createElement('div');
-    searchContainer.className = 'table-search-container';
-    searchContainer.innerHTML = `
-        <input type="text" class="table-search-input" placeholder="Search table...">
-    `;
-    
-    // Add search event listener
-    const searchInput = searchContainer.querySelector('.table-search-input');
-    searchInput.addEventListener('input', function() {
-        const searchTerm = this.value.toLowerCase();
-        const rows = clonedTable.querySelectorAll('tbody tr');
-        
-        rows.forEach(row => {
-            const text = row.textContent.toLowerCase();
-            row.style.display = text.includes(searchTerm) ? '' : 'none';
-        });
-    });
-    
-    // Assemble the components
-    tableContainer.appendChild(toolbar);
-    tableContainer.appendChild(searchContainer);
-    tableContainer.appendChild(clonedTable);
-    targetContainer.appendChild(tableContainer);
-}
-
-// Add special controls for map visualizations
-function addMapZoomControls(container, svg) {
-    // Add zoom controls overlay
-    const zoomControls = document.createElement('div');
-    zoomControls.className = 'map-zoom-controls';
-    zoomControls.style.position = 'absolute';
-    zoomControls.style.top = '10px';
-    zoomControls.style.right = '10px';
-    zoomControls.style.background = 'var(--color-surface)';
-    zoomControls.style.borderRadius = 'var(--border-radius-sm)';
-    zoomControls.style.padding = '4px';
-    zoomControls.style.boxShadow = 'var(--shadow-sm)';
-    zoomControls.style.display = 'flex';
-    zoomControls.style.flexDirection = 'column';
-    zoomControls.style.gap = '4px';
-    
-    zoomControls.innerHTML = `
-        <button class="map-zoom-in" title="Zoom In">+</button>
-        <button class="map-zoom-out" title="Zoom Out">−</button>
-        <button class="map-zoom-reset" title="Reset">↺</button>
-    `;
-    
-    container.style.position = 'relative';
-    container.appendChild(zoomControls);
-    
-    // Initialize zoom behavior
-    if (window.d3) {
-        const svgElement = d3.select(svg);
-        const svgGroup = svgElement.select('g');
-        
-        if (svgGroup.size() > 0) {
-            // Create zoom behavior
-            const zoom = d3.zoom()
-                .scaleExtent([0.5, 5])
-                .on('zoom', function(event) {
-                    svgGroup.attr('transform', event.transform);
-                });
-            
-            // Apply zoom to SVG
-            svgElement.call(zoom);
-            
-            // Add button handlers
-            zoomControls.querySelector('.map-zoom-in').addEventListener('click', function() {
-                svgElement.transition().duration(300).call(zoom.scaleBy, 1.3);
-            });
-            
-            zoomControls.querySelector('.map-zoom-out').addEventListener('click', function() {
-                svgElement.transition().duration(300).call(zoom.scaleBy, 0.7);
-            });
-            
-            zoomControls.querySelector('.map-zoom-reset').addEventListener('click', function() {
-                svgElement.transition().duration(300).call(zoom.transform, d3.zoomIdentity);
-            });
-        }
-    }
-}
-
-// Adjust Sankey diagram for better fullscreen view
-function adjustSankeyForFullscreen(container, svg) {
-    // Add controls for Sankey diagram adjustments
-    const sankeyControls = document.createElement('div');
-    sankeyControls.className = 'sankey-controls';
-    sankeyControls.style.position = 'absolute';
-    sankeyControls.style.top = '10px';
-    sankeyControls.style.right = '10px';
-    sankeyControls.style.background = 'var(--color-surface)';
-    sankeyControls.style.borderRadius = 'var(--border-radius-sm)';
-    sankeyControls.style.padding = '8px';
-    sankeyControls.style.boxShadow = 'var(--shadow-sm)';
-    
-    sankeyControls.innerHTML = `
-        <div style="margin-bottom: 8px; font-weight: bold; font-size: 12px;">Sankey Controls</div>
-        <div style="display: flex; flex-direction: column; gap: 8px;">
-            <div style="display: flex; align-items: center; gap: 8px;">
-                <label style="font-size: 12px;">Node Spacing:</label>
-                <input type="range" class="sankey-node-spacing" min="5" max="50" value="10">
-            </div>
-            <div style="display: flex; align-items: center; gap: 8px;">
-                <label style="font-size: 12px;">Link Opacity:</label>
-                <input type="range" class="sankey-link-opacity" min="0.1" max="1" step="0.1" value="0.5">
-            </div>
-        </div>
-    `;
-    
-    container.style.position = 'relative';
-    container.appendChild(sankeyControls);
-    
-    // Add control functionality if d3-sankey is available
-    if (window.d3 && window.d3.sankey) {
-        const nodeSpacingControl = sankeyControls.querySelector('.sankey-node-spacing');
-        const linkOpacityControl = sankeyControls.querySelector('.sankey-link-opacity');
-        
-        // Adjust node spacing
-        nodeSpacingControl.addEventListener('input', function() {
-            const spacing = parseFloat(this.value);
-            const paths = svg.querySelectorAll('path');
-            
-            // We can't easily recreate the sankey layout, but we can adjust the opacity
-            // as a visual indicator that the control is working
-            paths.forEach(path => {
-                path.style.strokeWidth = `${spacing * 0.2}px`;
-            });
-        });
-        
-        // Adjust link opacity
-        linkOpacityControl.addEventListener('input', function() {
-            const opacity = parseFloat(this.value);
-            const paths = svg.querySelectorAll('path');
-            
-            paths.forEach(path => {
-                path.style.opacity = opacity;
-            });
-        });
-    }
-}
-
-// Add zoom and pan for hierarchical visualizations
-function addHierarchicalZoomControls(container, svg) {
-    // Similar to map zoom controls but optimized for hierarchical visualizations
-    const zoomControls = document.createElement('div');
-    zoomControls.className = 'hierarchy-zoom-controls';
-    zoomControls.style.position = 'absolute';
-    zoomControls.style.top = '10px';
-    zoomControls.style.right = '10px';
-    zoomControls.style.background = 'var(--color-surface)';
-    zoomControls.style.borderRadius = 'var(--border-radius-sm)';
-    zoomControls.style.padding = '4px';
-    zoomControls.style.boxShadow = 'var(--shadow-sm)';
-    zoomControls.style.display = 'flex';
-    zoomControls.style.flexDirection = 'column';
-    zoomControls.style.gap = '4px';
-    
-    zoomControls.innerHTML = `
-        <button class="hierarchy-zoom-in" title="Zoom In">+</button>
-        <button class="hierarchy-zoom-out" title="Zoom Out">−</button>
-        <button class="hierarchy-zoom-reset" title="Reset">↺</button>
-        <button class="hierarchy-fit" title="Fit to View">⊡</button>
-    `;
-    
-    container.style.position = 'relative';
-    container.appendChild(zoomControls);
-    
-    // Initialize zoom behavior
-    if (window.d3) {
-        const svgElement = d3.select(svg);
-        const mainGroup = svgElement.select('g');
-        
-        if (mainGroup.size() > 0) {
-            // Create zoom behavior
-            const zoom = d3.zoom()
-                .scaleExtent([0.2, 3])
-                .on('zoom', function(event) {
-                    mainGroup.attr('transform', event.transform);
-                });
-            
-            // Apply zoom to SVG
-            svgElement.call(zoom);
-            
-            // Add button handlers
-            zoomControls.querySelector('.hierarchy-zoom-in').addEventListener('click', function() {
-                svgElement.transition().duration(300).call(zoom.scaleBy, 1.3);
-            });
-            
-            zoomControls.querySelector('.hierarchy-zoom-out').addEventListener('click', function() {
-                svgElement.transition().duration(300).call(zoom.scaleBy, 0.7);
-            });
-            
-            zoomControls.querySelector('.hierarchy-zoom-reset').addEventListener('click', function() {
-                svgElement.transition().duration(300).call(zoom.transform, d3.zoomIdentity);
-            });
-            
-            zoomControls.querySelector('.hierarchy-fit').addEventListener('click', function() {
-                // Get SVG and chart dimensions
-                const svgRect = svg.getBoundingClientRect();
-                const chartRect = mainGroup.node().getBBox();
-                
-                // Calculate zoom scale and translate to fit chart in view
-                const scale = Math.min(
-                    0.9 * svgRect.width / chartRect.width,
-                    0.9 * svgRect.height / chartRect.height
-                );
-                
-                const translateX = (svgRect.width - chartRect.width * scale) / 2 - chartRect.x * scale;
-                const translateY = (svgRect.height - chartRect.height * scale) / 2 - chartRect.y * scale;
-                
-                // Apply transform
-                svgElement.transition().duration(500)
-                    .call(zoom.transform, d3.zoomIdentity.translate(translateX, translateY).scale(scale));
-            });
-        }
-    }
-}
-// Add breadcrumb navigation support
-function enhanceBreadcrumbNavigation() {
-    // Most of this is implemented within the individual chart drill-down functions
-    // This function can be used for global breadcrumb functionality
-    
-    // Example: Add a global breadcrumb container at the top of the main content
-    const mainContent = document.querySelector('.main-content');
-    const dashboardHeader = document.querySelector('.dashboard-header');
-    
-    if (mainContent && dashboardHeader) {
-        const globalBreadcrumbs = document.createElement('div');
-        globalBreadcrumbs.className = 'global-breadcrumb-trail';
-        globalBreadcrumbs.id = 'global-breadcrumbs';
-        globalBreadcrumbs.style.display = 'none'; // Initially hidden until we have a drill-down state
-        
-        // Insert after header
-        mainContent.insertBefore(globalBreadcrumbs, dashboardHeader.nextSibling);
-    }
-}
-
-// Enhance visualizations with BI-specific capabilities
-function enhanceVisualizations() {
-    // Add export buttons to all visualization containers
-    addExportCapabilities();
-    
-    // Add data tooltips with enhanced information
-    enhanceTooltips();
-    
-    // Add filtering synchronization across visualizations
-    synchronizeFiltering();
-    
-    // Add annotations capability for presentations
-    addAnnotationCapability();
-}
-
-// Add export capabilities to visualizations
-function addExportCapabilities() {
-    // Add export buttons to all visualization containers
-    const chartContainers = document.querySelectorAll('.chart-container');
-    chartContainers.forEach(container => {
-        // Find parent bento box and card header
-        const bentoBox = container.closest('.bento-box');
-        const cardHeader = bentoBox ? bentoBox.querySelector('.card-header') : null;
-        
-        if (cardHeader) {
-            // Create card actions container if it doesn't exist
-            let actionsContainer = cardHeader.querySelector('.card-actions');
-            if (!actionsContainer) {
-                actionsContainer = document.createElement('div');
-                actionsContainer.className = 'card-actions';
-                cardHeader.appendChild(actionsContainer);
-            }
-            
-            // Add export button
-            const exportButton = document.createElement('button');
-            exportButton.className = 'card-action-button export-button';
-            exportButton.title = 'Export Data';
-            exportButton.innerHTML = `
-                <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                    <polyline points="7 10 12 15 17 10"></polyline>
-                    <line x1="12" y1="15" x2="12" y2="3"></line>
-                </svg>
-            `;
-            
-            // Add export click handler
-            exportButton.addEventListener('click', function(event) {
-                event.preventDefault();
-                event.stopPropagation();
-                
-                // Export based on visualization type
-                exportVisualizationData(container);
-            });
-            
-            actionsContainer.appendChild(exportButton);
-        }
-    });
-}
-
-// Export visualization data based on type
-function exportVisualizationData(container) {
-    // Get visualization type
-    const containerId = container.id;
-    const visualizationTitle = container.closest('.bento-box')?.querySelector('.card-header h2')?.textContent || 'Visualization';
-    
-    // Handle different visualization types
-    if (containerId === 'tav-tcv-chart-container' && window.tavTcvChartInstance) {
-        // Export Chart.js data
-        exportChartJsData(window.tavTcvChartInstance, visualizationTitle);
-    } else if (containerId === 'map-container') {
-        // Export map data
-        exportMapData(container, visualizationTitle);
-    } else if (containerId === 'sankey-chart-container') {
-        // Export Sankey data
-        exportSankeyData(container, visualizationTitle);
-    } else if (containerId === 'circular-dendrogram-container') {
-        // Export dendrogram data
-        exportDendrogramData(container, visualizationTitle);
-    } else if (containerId === 'naics-donut-chart-container' || containerId === 'share-of-wallet-container') {
-        // Export donut chart data
-        exportDonutData(container, visualizationTitle);
-    } else {
-        // Generic export
-        alert(`Export functionality for ${visualizationTitle} is not implemented yet.`);
-    }
-}
-
-// Export Chart.js data
-function exportChartJsData(chartInstance, title) {
-    if (!chartInstance || !chartInstance.data) {
-        alert("No chart data available to export");
-        return;
-    }
-    
-    // Extract data from Chart.js instance
-    const datasets = chartInstance.data.datasets || [];
-    const labels = chartInstance.data.labels || [];
-    
-    // Prepare CSV data
-    let csvContent = 'data:text/csv;charset=utf-8,';
-    
-    // Add header row
-    let headerRow = ['Category'];
-    datasets.forEach(dataset => {
-        headerRow.push(dataset.label || 'Value');
-    });
-    csvContent += headerRow.join(',') + '\n';
-    
-    // Add data rows
-    labels.forEach((label, index) => {
-        let row = [label];
-        
-        datasets.forEach(dataset => {
-            row.push(dataset.data[index] || '');
-        });
-        
-        csvContent += row.join(',') + '\n';
-    });
-    
-    // Create and trigger download
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `${title.replace(/\s+/g, '_').toLowerCase()}_${new Date().toISOString().split('T')[0]}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-}
-
-// Export map data
-function exportMapData(container, title) {
-    // For this demo, we'll simulate exporting map data
-    alert(`The map data would be exported as a CSV with state-level statistics.`);
-}
-
-// Export Sankey data
-function exportSankeyData(container, title) {
-    // For this demo, we'll simulate exporting Sankey data
-    alert(`The Sankey data would be exported as a CSV with source, target, and value columns.`);
-}
-
-// Export dendrogram data
-function exportDendrogramData(container, title) {
-    // For this demo, we'll simulate exporting dendrogram data
-    alert(`The hierarchical data would be exported as a CSV with parent-child relationships.`);
-}
-
-// Export donut chart data
-function exportDonutData(container, title) {
-    // For this demo, we'll simulate exporting donut chart data
-    alert(`The donut chart data would be exported as a CSV with category and value columns.`);
-}
-
-// Enhance tooltips with additional data
-function enhanceTooltips() {
-    // This would require specific implementations for each chart type
-    // For this demo, we'll add an observer to enhance tooltips as they're created
-    
-    // Create a mutation observer to watch for tooltip creation
-    const tooltipObserver = new MutationObserver(mutations => {
-        mutations.forEach(mutation => {
-            mutation.addedNodes.forEach(node => {
-                if (node.nodeType === 1 && 
-                    (node.classList.contains('chart-tooltip') || 
-                     node.classList.contains('tooltip') ||
-                     node.id === 'chartjs-tooltip')) {
-                    
-                    // Enhance this tooltip
-                    enhanceTooltipElement(node);
-                }
-            });
-        });
-    });
-    
-    // Start observing the document body for tooltip additions
-    tooltipObserver.observe(document.body, { childList: true, subtree: true });
-}
-
-// Enhance a tooltip element
-function enhanceTooltipElement(tooltip) {
-    // Add a subtle shadow
-    tooltip.style.boxShadow = 'var(--shadow-md)';
-    
-    // Add a border
-    tooltip.style.border = '1px solid var(--color-border)';
-    
-    // Ensure good contrast
-    tooltip.style.backgroundColor = 'var(--color-surface)';
-    tooltip.style.color = 'var(--color-text-primary)';
-    
-    // Add rounded corners
-    tooltip.style.borderRadius = 'var(--border-radius-md)';
-    
-    // Ensure good padding
-    tooltip.style.padding = '10px';
-    
-    // Check if this is a Chart.js tooltip
-    if (tooltip.id === 'chartjs-tooltip') {
-        // Enhance Chart.js tooltip
-        tooltip.style.fontFamily = 'var(--font-body)';
-        tooltip.style.fontSize = '12px';
-    }
-}
-
-// Synchronize filtering across visualizations
-function synchronizeFiltering() {
-    // This would implement cross-filtering where selection in one visualization
-    // affects the data shown in others
-    // For this demo implementation, we'll just use the existing filter mechanisms
-    
-    // The actual implementation would require event listeners for each visualization's
-    // selection events and then updating the global filter state
-}
-
-// Add annotation capability for presentations
-function addAnnotationCapability() {
-    // This would add the ability to annotate visualizations during presentations
-    // For a full implementation, this would require significant canvas manipulation
-    
-    // For this demo, we'll just add a toggle button to the presentation controls
-    
-    const presentationControls = document.querySelector('.presentation-controls');
-    if (presentationControls) {
-        const annotateButton = document.createElement('button');
-        annotateButton.className = 'presentation-mode-button annotation-button';
-        annotateButton.innerHTML = `
-            <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
-                <path d="M12 19l7-7 3 3-7 7-3-3z"></path>
-                <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path>
-                <path d="M2 2l7.586 7.586"></path>
-                <circle cx="11" cy="11" r="2"></circle>
-            </svg>
-            Annotate
-        `;
-        
-        // Add click handler
-        annotateButton.addEventListener('click', function() {
-            alert("Annotation mode would allow drawing on the dashboard during presentations. This feature is not implemented in the demo.");
-        });
-        
-        // Add button to controls
-        presentationControls.appendChild(annotateButton);
-    }
-}
-
-// At the very end of your wednesday.js file, replace the last bit with:
-
-// Initialize enhanced dashboard features after standard init
-(function() {
-    console.log("Setting up enhanced BI dashboard initialization...");
-    
-    // Check if document is already loaded
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', function() {
-            // Wait for the original initialization to complete
-            setTimeout(function() {
-                initializeEnhancedDashboard();
-            }, 800);
-        });
-    } else {
-        // Document already loaded, run with a delay
-        setTimeout(function() {
-            initializeEnhancedDashboard();
-        }, 800);
-    }
-})();
