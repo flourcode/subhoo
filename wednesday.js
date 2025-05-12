@@ -2883,3 +2883,1590 @@ window.addEventListener('resize', function() {
        }
    }, 250); // Debounce for 250ms
 });
+function displayTavTcvChart(chartData) {
+    const containerId = 'tav-tcv-chart-container';
+    const container = document.getElementById(containerId);
+
+    if (!container) {
+        console.error("TAV/TCV chart container element not found.");
+        return;
+    }
+
+    setLoading(containerId, false);
+
+    // --- Remove old custom label/tooltip elements ---
+    container.innerHTML = ''; // Clear previous content
+    cleanupTooltips(); // Ensure old tooltips are gone
+
+    // --- Create Canvas ---
+    const canvas = document.createElement('canvas');
+    canvas.id = 'tavTcvChart';
+    container.appendChild(canvas);
+
+    if (!chartData || chartData.length === 0) {
+        displayNoData(containerId, 'No contracts found for TAV/TCV comparison.');
+        return;
+    }
+
+    // --- Prepare Data for Stacked Chart ---
+    const labels = chartData.map(d => d.primeName);
+    const tavValues = chartData.map(d => d.tav || 0);
+    const remainingTcvValues = chartData.map(d => Math.max(0, (d.tcv || 0) - (d.tav || 0)));
+    const totalTcvValues = chartData.map(d => d.tcv || 0);
+
+    // --- Get Theme Colors from CSS Variables ---
+    const tavColor = getCssVar('--chart-color-primary');
+    const remainderColor = getCssVar('--chart-color-tertiary');
+    const textColor = getCssVar('--color-text-secondary');
+    const gridColor = getCssVar('--color-border');
+    const legendColor = getCssVar('--color-text-secondary');
+    const barBorderColor = getCssVar('--color-surface');
+
+    // --- Destroy previous chart instance if it exists ---
+    if (tavTcvChartInstance) {
+        try { tavTcvChartInstance.destroy(); } catch (e) { console.warn("Error destroying chart:", e); }
+        tavTcvChartInstance = null;
+    }
+
+    // --- Create New Stacked Chart ---
+    const ctx = canvas.getContext('2d');
+    if (!ctx) { return; }
+
+    tavTcvChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'TAV (Obligated)',
+                    data: tavValues,
+                    backgroundColor: tavColor,
+                    borderColor: barBorderColor,
+                    borderWidth: 1,
+                    borderRadius: { topLeft: 4, bottomLeft: 4, topRight: 0, bottomRight: 0 },
+                    borderSkipped: false,
+                },
+                {
+                    label: 'TCV Remainder',
+                    data: remainingTcvValues,
+                    backgroundColor: remainderColor,
+                    borderColor: barBorderColor,
+                    borderWidth: 1,
+                    borderRadius: { topRight: 4, bottomRight: 4, topLeft: 0, bottomLeft: 0 },
+                    borderSkipped: false,
+                }
+            ]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            layout: {
+                padding: { left: 5, right: 10, top: 5, bottom: 5 }
+            },
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        color: legendColor,
+                        boxWidth: 12,
+                        padding: 20,
+                        font: { size: 12 }
+                    }
+                },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false,
+                    backgroundColor: getCssVar('--color-surface'),
+                    titleColor: getCssVar('--color-text-secondary'),
+                    bodyColor: getCssVar('--color-text-primary'),
+                    footerColor: getCssVar('--color-text-primary'),
+                    borderColor: getCssVar('--color-border'),
+                    borderWidth: 1,
+                    padding: 10,
+                    boxPadding: 3,
+                    callbacks: {
+                        label: function(context) {
+                            const datasetLabel = context.dataset.label || '';
+                            const value = context.parsed.x;
+                            return `${datasetLabel}: ${formatConciseCurrency(value)}`;
+                        },
+                        footer: function(tooltipItems) {
+                            const dataIndex = tooltipItems[0]?.dataIndex;
+                            if (dataIndex === undefined) return '';
+                            const totalTCV = totalTcvValues[dataIndex];
+                            return `Total TCV: ${formatConciseCurrency(totalTCV)}`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    stacked: true,
+                    beginAtZero: true,
+                    grid: {
+                        display: true,
+                        color: gridColor,
+                        drawBorder: false,
+                        lineWidth: 0.5
+                    },
+                    ticks: {
+                        color: textColor,
+                        font: { size: 10 },
+                        callback: function(value) {
+                            return formatConciseCurrency(value).replace('~','');
+                        },
+                        maxTicksLimit: 6
+                    }
+                },
+                y: {
+                    stacked: true,
+                    grid: {
+                        display: false
+                    },
+                    ticks: {
+                        display: true,
+                        color: textColor,
+                        font: { size: 11 },
+                        callback: function(value, index) {
+                            const label = labels[index] || '';
+                            return label.length > 30 ? label.substring(0, 27) + '...' : label;
+                        }
+                    }
+                }
+            },
+            onClick: (event, elements) => {
+                if (elements.length > 0) {
+                    const dataIndex = elements[0].index;
+                    const contractId = chartData[dataIndex]?.id;
+                    if (contractId) {
+                        window.open(`https://www.usaspending.gov/award/${contractId}`, '_blank');
+                    }
+                }
+            },
+            onHover: (event, chartElement) => {
+                event.native.target.style.cursor = chartElement[0] ? 'pointer' : 'default';
+            }
+        }
+    });
+}
+
+function displayChoroplethMap(mapData) {
+    const containerId = 'map-container';
+    const container = document.getElementById(containerId);
+    
+    if (!container) {
+        console.error("Map container not found.");
+        return;
+    }
+
+    // Clean up any existing tooltips
+    cleanupTooltips();
+    
+    // Clear any previous content and create a new div
+    container.innerHTML = '';
+    const mapDiv = document.createElement('div');
+    mapDiv.id = 'choroplethMap';
+    mapDiv.style.width = '100%';
+    mapDiv.style.height = '100%';
+    container.appendChild(mapDiv);
+    
+    setLoading(containerId, false);
+
+    if (!mapData || Object.keys(mapData).length === 0) {
+        displayNoData(containerId, 'No geographic data available for mapping.');
+        return;
+    }
+
+    try {
+        // Set up map dimensions based on the container div
+        const width = container.clientWidth;
+        const height = container.clientHeight || 400;
+
+        // Check if dimensions are valid
+        if (width <= 0 || height <= 0) {
+            console.warn(`Map container has invalid dimensions: ${width}x${height}. Map rendering skipped.`);
+            displayError(containerId, 'Map container has zero size. Cannot render map.');
+            return;
+        }
+
+        // Check if we're in dark mode
+        const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
+        const textColor = getCssVar('--color-text-secondary');
+
+        // Create SVG element inside the map div
+        const svg = d3.select(mapDiv)
+            .append('svg')
+            .attr('width', width)
+            .attr('height', height)
+            .attr('viewBox', `0 0 ${width} ${height}`)
+            .style('max-width', '100%')
+            .style('height', 'auto');
+
+        // Define color scale for the map
+        const stateValues = Object.values(mapData).map(d => d.value);
+        const maxValue = d3.max(stateValues) || 0;
+        
+        // Get color values directly rather than using CSS vars for the interpolation
+        const baseColor = isDarkMode ? 
+            d3.rgb(getCssVar('--color-surface-variant')).toString() : 
+            d3.rgb(getCssVar('--color-surface-variant')).toString();
+            
+        const highlightColor = isDarkMode ?
+            d3.rgb(getCssVar('--chart-color-primary')).toString() :
+            d3.rgb(getCssVar('--chart-color-primary')).toString();
+
+        // Create explicit color scale using the extracted RGB values
+        const colorScale = d3.scaleSequential()
+            .domain([0, maxValue === 0 ? 1 : maxValue])
+            .interpolator(d3.interpolate(baseColor, highlightColor));
+
+        // Remove existing tooltips first
+        d3.select("body").selectAll(".map-tooltip").remove();
+        
+        // Create tooltip - attach to body for better positioning
+        const tooltip = d3.select("body")
+            .append("div")
+            .attr("class", "map-tooltip")
+            .style("position", "absolute")
+            .style("visibility", "hidden")
+            .style("opacity", 0)
+            .style("background-color", getCssVar('--color-surface'))
+            .style("color", getCssVar('--color-text-primary'))
+            .style("padding", "10px")
+            .style("border-radius", "4px")
+            .style("font-size", "12px")
+            .style("pointer-events", "none")
+            .style("border", `1px solid ${getCssVar('--color-border')}`)
+            .style("z-index", "9999");
+
+        // State name mapping
+        const fipsToStateName = {
+            "01": "Alabama", "02": "Alaska", "04": "Arizona", "05": "Arkansas",
+            "06": "California", "08": "Colorado", "09": "Connecticut", "10": "Delaware",
+            "11": "District of Columbia", "12": "Florida", "13": "Georgia", "15": "Hawaii",
+            "16": "Idaho", "17": "Illinois", "18": "Indiana", "19": "Iowa", "20": "Kansas",
+            "21": "Kentucky", "22": "Louisiana", "23": "Maine", "24": "Maryland",
+            "25": "Massachusetts", "26": "Michigan", "27": "Minnesota", "28": "Mississippi",
+            "29": "Missouri", "30": "Montana", "31": "Nebraska", "32": "Nevada",
+            "33": "New Hampshire", "34": "New Jersey", "35": "New Mexico", "36": "New York",
+            "37": "North Carolina", "38": "North Dakota", "39": "Ohio", "40": "Oklahoma",
+            "41": "Oregon", "42": "Pennsylvania", "44": "Rhode Island", "45": "South Carolina",
+            "46": "South Dakota", "47": "Tennessee", "48": "Texas", "49": "Utah",
+            "50": "Vermont", "51": "Virginia", "53": "Washington", "54": "West Virginia",
+            "55": "Wisconsin", "56": "Wyoming", "72": "Puerto Rico"
+        };
+
+        // Load US state boundaries GeoJSON
+        d3.json('https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json')
+            .then(us => {
+                if (!us || !us.objects || !us.objects.states) {
+                    throw new Error("Invalid GeoJSON data");
+                }
+
+                // Convert TopoJSON to GeoJSON features
+                const states = topojson.feature(us, us.objects.states);
+                
+                // Create projection
+                const projection = d3.geoAlbersUsa()
+                    .fitSize([width, height], states);
+
+                // Create the path generator
+                const path = d3.geoPath().projection(projection);
+
+                // Draw state boundaries
+                svg.append('g')
+                   .selectAll('path')
+                   .data(states.features)
+                   .enter()
+                   .append('path')
+                   .attr('d', path)
+                   .attr('fill', d => {
+                       // Use the state FIPS code to lookup data
+                       const fipsCode = d.id.toString().padStart(2, '0');
+                       const stateData = mapData[fipsCode];
+                       
+                       return stateData ? colorScale(stateData.value) : getCssVar('--color-surface-variant');
+                   })
+                   .attr('stroke', getCssVar('--color-border'))
+                   .attr('stroke-width', 0.5)
+                   .style('cursor', 'pointer')
+                   .on('mouseover', function(event, d) {
+                       tooltip
+                            .style("visibility", "visible")
+                            .style("opacity", 1);
+                            
+                       tooltip.html(() => {
+                           const fipsCode = d.id.toString().padStart(2, '0');
+                           const stateData = mapData[fipsCode];
+                           const stateName = fipsToStateName[fipsCode] || "Unknown";
+                           if (stateData) {
+                               return `
+                                   <strong>${stateName}</strong>
+                                   <div>Total Value: ${formatCurrency(stateData.value)}</div>
+                                   <div>Contracts: ${stateData.count.toLocaleString()}</div>
+                               `;
+                           } else {
+                               return `<strong>${stateName}</strong><br>No data`;
+                           }
+                       })
+                       .style("left", (event.pageX + 10) + "px")
+                       .style("top", (event.pageY - 28) + "px");
+
+                       // Highlight the state
+                       d3.select(this)
+                           .attr("stroke", getCssVar('--color-primary'))
+                           .attr("stroke-width", 1.5)
+                           .raise();
+                   })
+                   .on('mousemove', function(event) {
+                       tooltip
+                          .style("left", (event.pageX + 10) + "px")
+                          .style("top", (event.pageY - 28) + "px");
+                   })
+                   .on('mouseout', function() {
+                       tooltip
+                          .style("visibility", "hidden")
+                          .style("opacity", 0);
+                              
+                       d3.select(this)
+                           .attr("stroke", getCssVar('--color-border'))
+                           .attr("stroke-width", 0.5);
+                   });
+
+                // Add legend
+                const legendWidth = Math.min(width * 0.4, 200);
+                const legendHeight = 10;
+                const legendX = width - legendWidth - 20;
+                const legendY = height - 35;
+
+                const legendGroup = svg.append("g")
+                    .attr("transform", `translate(${legendX}, ${legendY})`);
+
+                // Create discrete color bins
+                const numBins = 5;
+                const binMaxValue = maxValue === 0 ? 1 : maxValue;
+                const bins = Array.from({length: numBins}, (_, i) => binMaxValue * i / (numBins - 1));
+                const binWidth = legendWidth / numBins;
+
+                // Add legend title
+                legendGroup.append('text')
+                    .attr('x', legendWidth / 2)
+                    .attr('y', -6)
+                    .attr('text-anchor', 'middle')
+                    .attr('font-size', '10px')
+                    .attr('fill', textColor)
+                    .text('Contract Value');
+
+                // Create discrete color blocks
+                legendGroup.selectAll('rect')
+                    .data(bins)
+                    .enter()
+                    .append('rect')
+                    .attr('x', (d, i) => i * binWidth)
+                    .attr('y', 0)
+                    .attr('width', binWidth)
+                    .attr('height', legendHeight)
+                    .attr('fill', d => colorScale(d))
+                    .attr('stroke', getCssVar('--color-border'))
+                    .attr('stroke-width', 0.5);
+
+                // Add min/max labels
+                legendGroup.append('text')
+                    .attr('x', 0)
+                    .attr('y', legendHeight + 10)
+                    .attr('text-anchor', 'start')
+                    .attr('font-size', '10px')
+                    .attr('fill', textColor)
+                    .text('Low');
+
+                legendGroup.append('text')
+                    .attr('x', legendWidth)
+                    .attr('y', legendHeight + 10)
+                    .attr('text-anchor', 'end')
+                    .attr('font-size', '10px')
+                    .attr('fill', textColor)
+                    .text('High');
+            })
+            .catch(error => {
+                console.error("Error loading or processing GeoJSON for map:", error);
+                displayError(containerId, `Error rendering map: ${error.message}`);
+                // Clean up tooltip if it exists
+                d3.select("body").selectAll(".map-tooltip").remove();
+            });
+    } catch (error) {
+        console.error("Error creating choropleth map:", error);
+        displayError(containerId, "Failed to render map: " + error.message);
+        // Clean up tooltip if it exists
+        d3.select("body").selectAll(".map-tooltip").remove();
+    }
+}
+
+function displayEnhancedSankeyChart(model) {
+    const containerId = 'sankey-chart-container';
+    const container = document.getElementById(containerId);
+    
+    if (!container) {
+        console.error("Sankey chart container not found.");
+        return;
+    }
+
+    // Clear previous content
+    container.innerHTML = '';
+    
+    setLoading(containerId, false);
+    
+    if (!model || 
+       (!model.relationships.agencyToPrime.length && !model.relationships.primeToSub.length)) {
+        displayNoData(containerId, 'No data available for Sankey diagram.');
+        return;
+    }
+    
+    try {
+        // Set up container layout for split panels
+        const panelsContainer = document.createElement('div');
+        panelsContainer.style.display = 'flex';
+        panelsContainer.style.flexDirection = 'row';
+        panelsContainer.style.gap = '20px';
+        panelsContainer.style.height = 'calc(100% - 40px)';
+        container.appendChild(panelsContainer);
+        
+        // Create container for each panel
+        const leftPanelContainer = document.createElement('div');
+        leftPanelContainer.id = 'agency-prime-panel';
+        leftPanelContainer.style.flex = '1';
+        
+        const rightPanelContainer = document.createElement('div');
+        rightPanelContainer.id = 'prime-sub-panel';
+        rightPanelContainer.style.flex = '1';
+        
+        panelsContainer.appendChild(leftPanelContainer);
+        panelsContainer.appendChild(rightPanelContainer);
+        
+        // Add panel titles
+        const leftTitle = document.createElement('div');
+        leftTitle.style.textAlign = 'center';
+        leftTitle.style.marginBottom = '10px';
+        leftTitle.style.fontWeight = 'bold';
+        leftTitle.style.color = getCssVar('--color-text-primary');
+        leftTitle.textContent = 'Agency to Prime Contractors';
+        leftPanelContainer.appendChild(leftTitle);
+        
+        const rightTitle = document.createElement('div');
+        rightTitle.style.textAlign = 'center';
+        rightTitle.style.marginBottom = '10px';
+        rightTitle.style.fontWeight = 'bold';
+        rightTitle.style.color = getCssVar('--color-text-primary');
+        rightTitle.textContent = 'Prime to Subcontractors';
+        rightPanelContainer.appendChild(rightTitle);
+        
+        // Create SVGs for each panel
+        const leftSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        leftSvg.id = 'agency-prime-sankey';
+        leftSvg.setAttribute('width', '100%');
+        leftSvg.setAttribute('height', '100%');
+        leftPanelContainer.appendChild(leftSvg);
+        
+        const rightSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        rightSvg.id = 'prime-sub-sankey';
+        rightSvg.setAttribute('width', '100%');
+        rightSvg.setAttribute('height', '100%');
+        rightPanelContainer.appendChild(rightSvg);
+        
+        // Get data for left panel (agencies to primes)
+        const leftData = processAgencyToPrimeSankeyData(model);
+        
+        // Get data for right panel (primes to subs)
+        const rightData = processPrimeToSubSankeyData(model);
+        
+        // Set up dimensions and colors
+        const panelWidth = leftPanelContainer.clientWidth || 300;
+        const panelHeight = leftPanelContainer.clientHeight || 400;
+        const margin = {top: 20, right: 20, bottom: 20, left: 20};
+        
+        // Create tooltip
+        const tooltip = d3.select("body")
+            .append("div")
+            .attr("class", "sankey-tooltip")
+            .style("position", "absolute")
+            .style("visibility", "hidden")
+            .style("opacity", 0)
+            .style("background-color", getCssVar('--color-surface'))
+            .style("color", getCssVar('--color-text-primary'))
+            .style("padding", "10px")
+            .style("border-radius", "4px")
+            .style("font-size", "12px")
+            .style("pointer-events", "none")
+            .style("border", `1px solid ${getCssVar('--color-border')}`)
+            .style("z-index", "9999");
+            
+        // Draw both Sankey diagrams
+        if (leftData.nodes.length > 0 && leftData.links.length > 0) {
+            drawSankeyDiagram(
+                d3.select(leftSvg),
+                leftData.nodes,
+                leftData.links,
+                panelWidth,
+                panelHeight,
+                margin,
+                tooltip,
+                'left'
+            );
+        } else {
+            // No data for left panel
+            d3.select(leftSvg)
+                .append("text")
+                .attr("x", panelWidth / 2)
+                .attr("y", panelHeight / 2)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "12px")
+                .attr("fill", getCssVar('--color-text-secondary'))
+                .attr("opacity", 0.7)
+                .text("No agency-prime data available");
+        }
+        
+        if (rightData.nodes.length > 0 && rightData.links.length > 0) {
+            drawSankeyDiagram(
+                d3.select(rightSvg),
+                rightData.nodes,
+                rightData.links,
+                panelWidth,
+                panelHeight,
+                margin,
+                tooltip,
+                'right'
+            );
+        } else {
+            // No data for right panel
+            d3.select(rightSvg)
+                .append("text")
+                .attr("x", panelWidth / 2)
+                .attr("y", panelHeight / 2)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "12px")
+                .attr("fill", getCssVar('--color-text-secondary'))
+                .attr("opacity", 0.7)
+                .text("No prime-sub data available");
+        }
+        
+    } catch (error) {
+        console.error("Error rendering Sankey chart:", error);
+        displayError(containerId, `Error rendering Sankey chart: ${error.message}`);
+    }
+}
+
+function processAgencyToPrimeSankeyData(model) {
+    const nodes = [];
+    const links = [];
+    const nodeMap = {};
+    
+    // Get top agency-prime relationships by value
+    const topRelationships = model.relationships.agencyToPrime
+        .sort((a, b) => b.value - a.value)
+        .slice(0, 10);
+    
+    // Exit early if no relationships
+    if (topRelationships.length === 0) {
+        return { nodes, links };
+    }
+    
+    // Build nodes and node map
+    let nodeIndex = 0;
+    
+    // First, add agency nodes
+    const agencyIds = new Set();
+    topRelationships.forEach(rel => agencyIds.add(rel.source));
+    
+    agencyIds.forEach(agencyId => {
+        const agency = model.agencies[agencyId];
+        if (agency) {
+            nodes.push({
+                name: truncateText(agency.name, 30),
+                id: agencyId,
+                type: 'agency',
+                index: nodeIndex
+            });
+            nodeMap[agencyId] = nodeIndex++;
+        }
+    });
+    
+    // Then, add prime nodes
+    const primeIds = new Set();
+    topRelationships.forEach(rel => primeIds.add(rel.target));
+    
+    primeIds.forEach(primeId => {
+        const prime = model.primes[primeId];
+        if (prime) {
+            nodes.push({
+                name: truncateText(prime.name, 30),
+                id: primeId,
+                type: 'prime',
+                index: nodeIndex
+            });
+            nodeMap[primeId] = nodeIndex++;
+        }
+    });
+    
+    // Create links from the top relationships
+    topRelationships.forEach(rel => {
+        if (nodeMap.hasOwnProperty(rel.source) && nodeMap.hasOwnProperty(rel.target)) {
+            links.push({
+                source: nodeMap[rel.source],
+                target: nodeMap[rel.target],
+                value: rel.value
+            });
+        }
+    });
+    
+    return { nodes, links };
+}
+
+function processPrimeToSubSankeyData(model) {
+    const nodes = [];
+    const links = [];
+    const nodeMap = {};
+    
+    // Get top prime-sub relationships by value
+    const topRelationships = model.relationships.primeToSub
+        .sort((a, b) => b.value - a.value)
+        .slice(0, 10);
+    
+    // Exit early if no relationships
+    if (topRelationships.length === 0) {
+        return { nodes, links };
+    }
+    
+    // Build nodes and node map
+    let nodeIndex = 0;
+    
+    // First, add prime nodes
+    const primeIds = new Set();
+    topRelationships.forEach(rel => primeIds.add(rel.source));
+    
+    primeIds.forEach(primeId => {
+        const prime = model.primes[primeId];
+        if (prime) {
+            nodes.push({
+                name: truncateText(prime.name, 30),
+                id: primeId,
+                type: 'prime',
+                index: nodeIndex
+            });
+            nodeMap[primeId] = nodeIndex++;
+        }
+    });
+    
+    // Then, add sub nodes
+    const subIds = new Set();
+    topRelationships.forEach(rel => subIds.add(rel.target));
+    
+    subIds.forEach(subId => {
+        const sub = model.subs[subId];
+        if (sub) {
+            nodes.push({
+                name: truncateText(sub.name, 30),
+                id: subId,
+                type: 'sub',
+                index: nodeIndex
+            });
+            nodeMap[subId] = nodeIndex++;
+        }
+    });
+    
+    // Create links from the top relationships
+    topRelationships.forEach(rel => {
+        if (nodeMap.hasOwnProperty(rel.source) && nodeMap.hasOwnProperty(rel.target)) {
+            links.push({
+                source: nodeMap[rel.source],
+                target: nodeMap[rel.target],
+                value: rel.value
+            });
+        }
+    });
+    
+    return { nodes, links };
+}
+
+function drawSankeyDiagram(svgSelection, nodes, links, width, height, margin, tooltip, panelSide) {
+    // Create Sankey generator
+    const sankey = d3.sankey()
+        .nodeWidth(15)
+        .nodePadding(10)
+        .extent([[margin.left, margin.top], [width - margin.right, height - margin.bottom]]);
+    
+    // Apply Sankey to data
+    const graph = sankey({
+        nodes: nodes.map(d => Object.assign({}, d)),
+        links: links.map(d => Object.assign({}, d))
+    });
+    
+    // Create node colors based on type
+    const nodeColors = {
+        'agency': getCssVar('--chart-color-tertiary'),
+        'subagency': getCssVar('--chart-color-tertiary'),
+        'office': getCssVar('--chart-color-tertiary'),
+        'prime': getCssVar('--chart-color-primary'),
+        'sub': getCssVar('--chart-color-secondary')
+    };
+    
+    // Draw links with gradients
+    const defs = svgSelection.append('defs');
+    
+    graph.links.forEach((link, i) => {
+        const gradientId = `${panelSide}-link-gradient-${i}`;
+        const sourceColor = nodeColors[link.source.type] || '#999';
+        const targetColor = nodeColors[link.target.type] || '#999';
+        
+        const gradient = defs.append('linearGradient')
+            .attr('id', gradientId)
+            .attr('gradientUnits', 'userSpaceOnUse')
+            .attr('x1', link.source.x1)
+            .attr('y1', link.source.y0 + (link.source.y1 - link.source.y0) / 2)
+            .attr('x2', link.target.x0)
+            .attr('y2', link.target.y0 + (link.target.y1 - link.target.y0) / 2);
+            
+        gradient.append('stop')
+            .attr('offset', '0%')
+            .attr('stop-color', sourceColor)
+            .attr('stop-opacity', 0.8);
+            
+        gradient.append('stop')
+            .attr('offset', '100%')
+            .attr('stop-color', targetColor)
+            .attr('stop-opacity', 0.8);
+            
+        link.gradientId = gradientId;
+    });
+    
+    // Draw links
+    svgSelection.append('g')
+        .selectAll('path')
+        .data(graph.links)
+        .enter()
+        .append('path')
+        .attr('d', d3.sankeyLinkHorizontal())
+        .attr('stroke', (d) => `url(#${d.gradientId})`)
+        .attr('stroke-width', d => Math.max(1, d.width))
+        .attr('stroke-opacity', 0.5)
+        .attr('fill', 'none')
+        .attr('cursor', 'pointer')
+        .on('mouseover', function(event, d) {
+            // Show tooltip
+            const html = `
+                <div style="font-weight: bold; margin-bottom: 5px;">${d.source.name} → ${d.target.name}</div>
+                <div>Value: ${formatCurrency(d.value)}</div>
+            `;
+            tooltip.html(html);
+            tooltip.style("visibility", "visible")
+                .style("opacity", 1)
+                .style("left", (event.pageX + 10) + "px")
+                .style("top", (event.pageY - 28) + "px");
+            
+            // Highlight link
+            d3.select(this).attr('stroke-opacity', 0.8);
+        })
+        .on('mousemove', function(event) {
+            tooltip.style("left", (event.pageX + 10) + "px")
+                .style("top", (event.pageY - 28) + "px");
+        })
+        .on('mouseout', function() {
+            tooltip.style("visibility", "hidden")
+                .style("opacity", 0);
+            d3.select(this).attr('stroke-opacity', 0.5);
+        });
+        
+    // Draw nodes
+    svgSelection.append('g')
+        .selectAll('rect')
+        .data(graph.nodes)
+        .enter()
+        .append('rect')
+        .attr('x', d => d.x0)
+        .attr('y', d => d.y0)
+        .attr('height', d => Math.max(1, d.y1 - d.y0))
+        .attr('width', d => d.x1 - d.x0)
+        .attr('fill', d => nodeColors[d.type] || '#999')
+        .attr('stroke', getCssVar('--color-surface'))
+        .attr('stroke-width', 1)
+        .attr('cursor', 'pointer')
+        .on('mouseover', function(event, d) {
+            // Show tooltip
+            const html = `
+                <div style="font-weight: bold; margin-bottom: 5px;">${d.name}</div>
+                <div>Type: ${d.type.charAt(0).toUpperCase() + d.type.slice(1)}</div>
+                <div>Total Value: ${formatCurrency(d.value)}</div>
+            `;
+            tooltip.html(html)
+                .style("visibility", "visible")
+                .style("opacity", 1)
+                .style("left", (event.pageX + 10) + "px")
+                .style("top", (event.pageY - 28) + "px");
+            
+            // Highlight node
+            d3.select(this)
+                .attr('stroke', getCssVar('--color-primary'))
+                .attr('stroke-width', 2);
+        })
+        .on('mousemove', function(event) {
+            tooltip.style("left", (event.pageX + 10) + "px")
+                .style("top", (event.pageY - 28) + "px");
+        })
+        .on('mouseout', function() {
+            tooltip.style("visibility", "hidden")
+                .style("opacity", 0);
+            d3.select(this)
+                .attr('stroke', getCssVar('--color-surface'))
+                .attr('stroke-width', 1);
+        });
+    
+    // Add node labels
+    svgSelection.append('g')
+        .selectAll('text')
+        .data(graph.nodes)
+        .enter()
+        .append('text')
+        .attr('x', d => d.x0 < width / 2 ? d.x1 + 6 : d.x0 - 6)
+        .attr('y', d => (d.y1 + d.y0) / 2)
+        .attr('dy', '0.35em')
+        .attr('text-anchor', d => d.x0 < width / 2 ? 'start' : 'end')
+        .text(d => d.name)
+        .attr('font-size', '10px')
+        .attr('fill', getCssVar('--color-text-primary'))
+        .each(function(d) {
+            // Hide labels for small nodes
+            if ((d.y1 - d.y0) < 5) {
+                d3.select(this).remove();
+            }
+        });
+}
+
+function displayForceDirectedRadial(model) {
+    const containerId = 'circular-dendrogram-container';
+    const container = document.getElementById(containerId);
+    
+    if (!container) {
+        console.error("Container not found.");
+        return;
+    }
+
+    // Clear any previous content
+    container.innerHTML = '';
+    
+    setLoading(containerId, false);
+    
+    // Get the current sub-agency filter (if any)
+    const subAgencyFilter = document.getElementById('sub-agency-filter')?.value || '';
+    
+    // Check if we have valid model data
+    if (!model || !Object.keys(model.agencies).length) {
+        displayNoData(containerId, 'No data available for hierarchical visualization.');
+        return;
+    }
+    
+    try {
+        // Create hierarchical data structure
+        const hierarchyData = createHierarchyData(model, subAgencyFilter);
+        
+        // Create wide-format SVG container
+        const width = container.clientWidth || 800;
+        const height = container.clientHeight || 600;
+        
+        const svg = d3.select(container)
+            .append("svg")
+            .attr("width", "100%")
+            .attr("height", "100%")
+            .attr("viewBox", `0 0 ${width} ${height}`)
+            .attr("preserveAspectRatio", "xMidYMid meet");
+        
+        // Create tree layout
+        const treeLayout = d3.tree()
+            .size([height - 50, width - 200])
+            .separation((a, b) => (a.parent === b.parent ? 1 : 1.2));
+        
+        // Create hierarchy from data
+        const root = d3.hierarchy(hierarchyData);
+        
+        // Apply layout
+        treeLayout(root);
+        
+        // Create container group
+        const g = svg.append("g")
+            .attr("transform", `translate(50, 25)`);
+        
+        // Create links
+        g.selectAll('.link')
+            .data(root.links())
+            .enter()
+            .append('path')
+            .attr('class', 'link')
+            .attr('d', d3.linkHorizontal()
+                .x(d => d.y)
+                .y(d => d.x))
+            .attr('fill', 'none')
+            .attr('stroke', getCssVar('--color-border'))
+            .attr('stroke-width', 1);
+        
+        // Create nodes
+        const nodes = g.selectAll('.node')
+            .data(root.descendants())
+            .enter()
+            .append('g')
+            .attr('class', d => `node ${d.children ? 'node--internal' : 'node--leaf'}`)
+            .attr('transform', d => `translate(${d.y}, ${d.x})`);
+        
+        // Add node circles
+        nodes.append('circle')
+            .attr('r', 5)
+            .attr('fill', d => {
+                if (d.depth === 0) return 'none'; // Hide root
+                if (d.depth === 1) return getCssVar('--chart-color-primary');
+                if (d.depth === 2) return getCssVar('--chart-color-secondary');
+                return getCssVar('--chart-color-tertiary');
+            })
+            .attr('stroke', getCssVar('--color-surface'))
+            .attr('stroke-width', 1.5);
+        
+        // Add node labels
+        nodes.append('text')
+            .attr('dy', '0.31em')
+            .attr('x', d => d.children ? -8 : 8)
+            .attr('text-anchor', d => d.children ? 'end' : 'start')
+            .attr('font-size', d => {
+                if (d.depth === 0) return '0px'; // Hide root
+                if (d.depth === 1) return '12px';
+                if (d.depth === 2) return '11px';
+                return '10px';
+            })
+            .text(d => d.depth === 0 ? '' : d.data.name)
+            .attr('fill', getCssVar('--color-text-primary'))
+            .each(function(d) {
+                const el = d3.select(this);
+                const text = el.text();
+                if (text.length > 30) {
+                    el.text(text.substring(0, 27) + '...');
+                }
+            });
+        
+        // Add tooltip
+        const tooltip = d3.select('body')
+            .append('div')
+            .attr('class', 'hierarchy-tooltip')
+            .style('position', 'absolute')
+            .style('visibility', 'hidden')
+            .style('background-color', getCssVar('--color-surface'))
+            .style('color', getCssVar('--color-text-primary'))
+            .style('padding', '10px')
+            .style('border-radius', '4px')
+            .style('font-size', '12px')
+            .style('pointer-events', 'none')
+            .style('z-index', '1000')
+            .style('border', `1px solid ${getCssVar('--color-border')}`);
+        
+        nodes.on('mouseover', function(event, d) {
+            if (d.depth === 0) return; // Skip root node
+            
+            // Calculate value for non-leaf nodes
+            let value = d.data.value || 0;
+            if (!value && d.children) {
+                value = d.children.reduce((sum, child) => sum + (child.data.value || 0), 0);
+            }
+            
+            // Create tooltip content
+            let content = `<div style="font-weight: bold;">${d.data.name}</div>`;
+            if (value > 0) {
+                content += `<div>Value: ${formatCurrency(value)}</div>`;
+            }
+            if (d.children) {
+                content += `<div>Children: ${d.children.length}</div>`;
+            }
+            
+            tooltip.html(content)
+                .style('visibility', 'visible')
+                .style('left', (event.pageX + 10) + 'px')
+                .style('top', (event.pageY - 28) + 'px');
+            
+            // Highlight node
+            d3.select(this).select('circle')
+                .attr('stroke', getCssVar('--color-primary'))
+                .attr('stroke-width', 2);
+        })
+        .on('mousemove', function(event) {
+            tooltip.style('left', (event.pageX + 10) + 'px')
+                .style('top', (event.pageY - 28) + 'px');
+        })
+        .on('mouseout', function() {
+            tooltip.style('visibility', 'hidden');
+            
+            d3.select(this).select('circle')
+                .attr('stroke', getCssVar('--color-surface'))
+                .attr('stroke-width', 1.5);
+        });
+        
+    } catch (error) {
+        console.error("Error creating visualization:", error);
+        displayError(containerId, `Failed to render visualization: ${error.message}`);
+    }
+}
+
+function createHierarchyData(model, subAgencyFilter) {
+    // Create root node
+    const root = {
+        name: "Root",
+        children: []
+    };
+    
+    // Get agencies to display
+    let agenciesToShow = [];
+    
+    // When a sub-agency filter is applied, find the parent agency
+    if (subAgencyFilter) {
+        // Find agencies that have the specified sub-agency
+        Object.values(model.agencies).forEach(agency => {
+            const hasMatchingSubAgency = Array.from(agency.subAgencies || []).some(subAgencyId => {
+                const subAgency = model.subAgencies[subAgencyId];
+                return subAgency && subAgency.name === subAgencyFilter;
+            });
+            
+            if (hasMatchingSubAgency) {
+                agenciesToShow.push(agency);
+            }
+        });
+    } else {
+        // Show top agencies by value
+        agenciesToShow = Object.values(model.agencies)
+            .sort((a, b) => b.value - a.value)
+            .slice(0, 5);
+    }
+    
+    // Add agencies as top-level nodes
+    agenciesToShow.forEach(agency => {
+        const agencyNode = {
+            name: agency.name,
+            value: agency.value,
+            children: []
+        };
+        
+        // If a sub-agency filter is applied, add the sub-agency as an intermediate node
+        if (subAgencyFilter) {
+            // Find the matching sub-agencies
+            const matchingSubAgencies = [];
+            
+            Array.from(agency.subAgencies || []).forEach(subAgencyId => {
+                const subAgency = model.subAgencies[subAgencyId];
+                if (subAgency && subAgency.name === subAgencyFilter) {
+                    matchingSubAgencies.push(subAgency);
+                }
+            });
+            
+            // Add filtered sub-agencies
+            matchingSubAgencies.forEach(subAgency => {
+                const subAgencyNode = {
+                    name: subAgency.name,
+                    value: subAgency.value,
+                    children: []
+                };
+                
+                // Add top offices for this sub-agency
+                const officesForSubAgency = {};
+                
+                Array.from(subAgency.offices || []).forEach(officeId => {
+                    const office = model.offices[officeId];
+                    if (office) {
+                        officesForSubAgency[officeId] = {
+                            id: officeId,
+                            name: office.name,
+                            value: office.value
+                        };
+                    }
+                });
+                
+                // Sort offices by value and take top 5
+                const topOffices = Object.values(officesForSubAgency)
+                    .sort((a, b) => b.value - a.value)
+                    .slice(0, 5);
+                
+                // Add office nodes
+                topOffices.forEach(office => {
+                    const officeNode = {
+                        name: office.name,
+                        value: office.value,
+                        children: []
+                    };
+                    
+                    subAgencyNode.children.push(officeNode);
+                });
+                
+                agencyNode.children.push(subAgencyNode);
+            });
+        } else {
+            // No filter - add top sub-agencies
+            const subAgenciesForAgency = {};
+            
+            Array.from(agency.subAgencies || []).forEach(subAgencyId => {
+                const subAgency = model.subAgencies[subAgencyId];
+                if (subAgency) {
+                    subAgenciesForAgency[subAgencyId] = {
+                        id: subAgencyId,
+                        name: subAgency.name,
+                        value: subAgency.value
+                    };
+                }
+            });
+            
+            // Sort and take top 3
+            const topSubAgencies = Object.values(subAgenciesForAgency)
+                .sort((a, b) => b.value - a.value)
+                .slice(0, 3);
+            
+            // Add sub-agency nodes
+            topSubAgencies.forEach(subAgency => {
+                const subAgencyNode = {
+                    name: subAgency.name,
+                    value: subAgency.value,
+                    children: []
+                };
+                
+                agencyNode.children.push(subAgencyNode);
+            });
+        }
+        
+        // Add agency if it has children
+        if (agencyNode.children.length > 0) {
+            root.children.push(agencyNode);
+        }
+    });
+    
+    // Ensure we have some data
+    if (root.children.length === 0) {
+        root.children.push({
+            name: "No Data Available",
+            value: 0,
+            children: []
+        });
+    }
+    
+    return root;
+}
+
+function displayNaicsDonutChart(data, containerId, topN = 5) {
+    const container = document.getElementById(containerId);
+    if (!container) {
+        console.error(`Container #${containerId} not found`);
+        return;
+    }
+    
+    // Clear the container
+    container.innerHTML = '';
+    
+    if (!data || data.length === 0) {
+        displayNoData(containerId, 'No NAICS data available for distribution.');
+        return;
+    }
+    
+    try {
+        // Set up dimensions and colors
+        const width = container.clientWidth || 300;
+        const height = container.clientHeight || 300;
+        const radius = Math.min(width, height) / 2 * 0.8;
+        const innerRadius = radius * 0.6;
+        
+        // Take top N codes plus "Other"
+        const topItems = data.slice(0, topN);
+        const otherValue = data.slice(topN).reduce((sum, item) => sum + item.value, 0);
+        
+        const chartData = [...topItems];
+        if (otherValue > 0) {
+            chartData.push({
+                code: 'Other',
+                desc: `Other NAICS (${data.length - topN} codes)`,
+                value: otherValue,
+                percentage: 100 - topItems.reduce((sum, item) => sum + item.percentage, 0)
+            });
+        }
+        
+        // Create SVG
+        const svg = d3.select(container)
+            .append('svg')
+            .attr('width', width)
+            .attr('height', height)
+            .append('g')
+            .attr('transform', `translate(${width / 2}, ${height / 2})`);
+        
+        // Create color scale
+        const colors = [
+            getCssVar('--chart-color-primary'),
+            getCssVar('--chart-color-secondary'),
+            getCssVar('--chart-color-tertiary'),
+            d3.color(getCssVar('--chart-color-primary')).darker(0.5),
+            d3.color(getCssVar('--chart-color-secondary')).darker(0.5),
+            d3.color(getCssVar('--chart-color-tertiary')).darker(0.5)
+        ];
+        
+        const color = d3.scaleOrdinal()
+            .domain(chartData.map(d => d.code))
+            .range(colors);
+        
+        // Create donut chart
+        const pie = d3.pie()
+            .sort(null)
+            .value(d => d.value);
+        
+        const arc = d3.arc()
+            .innerRadius(innerRadius)
+            .outerRadius(radius)
+            .cornerRadius(1);
+        
+        // Add arcs
+        const arcs = svg.selectAll('.arc')
+            .data(pie(chartData))
+            .enter()
+            .append('g')
+            .attr('class', 'arc');
+        
+        arcs.append('path')
+            .attr('d', arc)
+            .attr('fill', d => d.data.code === 'Other' ? getCssVar('--color-text-tertiary') : color(d.data.code))
+            .attr('stroke', getCssVar('--color-surface'))
+            .attr('stroke-width', 1);
+        
+        // Add tooltip
+        const tooltip = d3.select('body')
+            .append('div')
+            .attr('class', 'donut-tooltip')
+            .style('position', 'absolute')
+            .style('visibility', 'hidden')
+            .style('background-color', getCssVar('--color-surface'))
+            .style('color', getCssVar('--color-text-primary'))
+            .style('padding', '10px')
+            .style('border-radius', '4px')
+            .style('font-size', '12px')
+            .style('pointer-events', 'none')
+            .style('z-index', '1000')
+            .style('border', `1px solid ${getCssVar('--color-border')}`);
+        
+        arcs.on('mouseover', function(event, d) {
+            // Create tooltip content
+            let content = `<div style="font-weight: bold;">${d.data.code}</div>`;
+            if (d.data.desc) {
+                content += `<div>${d.data.desc}</div>`;
+            }
+            content += `<div>Value: ${formatCurrency(d.data.value)}</div>`;
+            content += `<div>Share: ${d.data.percentage.toFixed(1)}%</div>`;
+            
+            tooltip.html(content)
+                .style('visibility', 'visible')
+                .style('left', (event.pageX + 10) + 'px')
+                .style('top', (event.pageY - 28) + 'px');
+            
+            // Highlight arc
+            d3.select(this).select('path')
+                .attr('stroke', getCssVar('--color-primary'))
+                .attr('stroke-width', 2);
+        })
+        .on('mousemove', function(event) {
+            tooltip.style('left', (event.pageX + 10) + 'px')
+                .style('top', (event.pageY - 28) + 'px');
+        })
+        .on('mouseout', function() {
+            tooltip.style('visibility', 'hidden');
+            
+            d3.select(this).select('path')
+                .attr('stroke', getCssVar('--color-surface'))
+                .attr('stroke-width', 1);
+        });
+        
+        // Add center text
+        svg.append('text')
+            .attr('text-anchor', 'middle')
+            .attr('dy', '-0.5em')
+            .attr('font-size', '12px')
+            .attr('fill', getCssVar('--color-text-secondary'))
+            .text('Top NAICS');
+        
+        svg.append('text')
+            .attr('text-anchor', 'middle')
+            .attr('dy', '1em')
+            .attr('font-size', '14px')
+            .attr('fill', getCssVar('--color-text-primary'))
+            .attr('font-weight', 'bold')
+            .text(data[0].code);
+        
+        svg.append('text')
+            .attr('text-anchor', 'middle')
+            .attr('dy', '2.5em')
+            .attr('font-size', '10px')
+            .attr('fill', getCssVar('--color-text-tertiary'))
+            .text(truncateText(data[0].desc, 40));
+        
+    } catch (error) {
+        console.error("Error creating donut chart:", error);
+        displayNoData(containerId, `Error: ${error.message}`);
+    }
+}
+
+function displayShareOfWalletChart(model) {
+    // Process data for Share of Wallet
+    const contractorShares = processShareOfWalletData(model);
+    
+    // Display in the container
+    displayShareOfWalletDonut(contractorShares);
+}
+
+function processShareOfWalletData(model) {
+    if (!model || !model.primes) {
+        return [];
+    }
+    
+    // Aggregate values by prime contractor
+    const primeValues = {};
+    let totalValue = 0;
+    
+    // Get value from each prime
+    Object.values(model.primes).forEach(prime => {
+        if (prime.value > 0) {
+            primeValues[prime.name] = (primeValues[prime.name] || 0) + prime.value;
+            totalValue += prime.value;
+        }
+    });
+    
+    // Convert to array and sort
+    const sortedPrimes = Object.entries(primeValues)
+        .map(([name, value]) => ({
+            name: name,
+            value: value,
+            percentage: 0
+        }))
+        .sort((a, b) => b.value - a.value);
+    
+    // Take top 7 primes
+    const result = sortedPrimes.slice(0, 7);
+    
+    // Add "Other" category if needed
+    if (sortedPrimes.length > 7) {
+        const otherValue = sortedPrimes.slice(7)
+            .reduce((sum, item) => sum + item.value, 0);
+        
+        if (otherValue > 0) {
+            result.push({
+                name: "Other",
+                value: otherValue,
+                isOther: true,
+                count: sortedPrimes.length - 7
+            });
+        }
+    }
+    
+    // Calculate percentages
+    result.forEach(item => {
+        item.percentage = totalValue > 0 ? (item.value / totalValue) * 100 : 0;
+    });
+    
+    return result;
+}
+
+function displayShareOfWalletDonut(data) {
+    const containerId = 'share-of-wallet-container';
+    const container = document.getElementById(containerId);
+    
+    if (!container) {
+        console.error(`Container #${containerId} not found`);
+        ensureShareOfWalletContainer();
+        return;
+    }
+    
+    // Clear the container
+    container.innerHTML = '';
+    
+    if (!data || data.length === 0) {
+        displayNoData(containerId, 'No market share data available.');
+        return;
+    }
+    
+    try {
+        // Set up dimensions and colors
+        const width = container.clientWidth || 300;
+        const height = container.clientHeight || 300;
+        const radius = Math.min(width, height) / 2 * 0.8;
+        const innerRadius = radius * 0.6;
+        
+        // Format long names
+        data.forEach(item => {
+            if (item.name && item.name.length > 20 && !item.isOther) {
+                item.fullName = item.name;
+                const parts = item.name.split(' ');
+                if (parts.length > 2) {
+                    item.name = parts[0] + ' ' + parts[1];
+                } else {
+                    item.name = item.name.substring(0, 18) + '...';
+                }
+            }
+        });
+        
+        // Create SVG
+        const svg = d3.select(container)
+            .append('svg')
+            .attr('width', width)
+            .attr('height', height)
+            .append('g')
+            .attr('transform', `translate(${width / 2}, ${height / 2})`);
+        
+        // Create color scale
+        const colors = [
+            getCssVar('--chart-color-primary'),
+            getCssVar('--chart-color-secondary'),
+            getCssVar('--chart-color-tertiary'),
+            d3.color(getCssVar('--chart-color-primary')).darker(0.3),
+            d3.color(getCssVar('--chart-color-secondary')).darker(0.3),
+            d3.color(getCssVar('--chart-color-tertiary')).darker(0.3),
+            d3.color(getCssVar('--chart-color-primary')).brighter(0.3)
+        ];
+        
+        const color = d3.scaleOrdinal()
+            .domain(data.map(d => d.name))
+            .range(colors);
+        
+        // Create donut chart
+        const pie = d3.pie()
+            .sort(null)
+            .value(d => d.value);
+        
+        const arc = d3.arc()
+            .innerRadius(innerRadius)
+            .outerRadius(radius)
+            .cornerRadius(1);
+        
+        // Add arcs
+        const arcs = svg.selectAll('.arc')
+            .data(pie(data))
+            .enter()
+            .append('g')
+            .attr('class', 'arc');
+        
+        arcs.append('path')
+            .attr('d', arc)
+            .attr('fill', d => d.data.isOther ? getCssVar('--color-text-tertiary') : color(d.data.name))
+            .attr('stroke', getCssVar('--color-surface'))
+            .attr('stroke-width', 1);
+        
+        // Add tooltip
+        const tooltip = d3.select('body')
+            .append('div')
+            .attr('class', 'share-tooltip')
+            .style('position', 'absolute')
+            .style('visibility', 'hidden')
+            .style('background-color', getCssVar('--color-surface'))
+            .style('color', getCssVar('--color-text-primary'))
+            .style('padding', '10px')
+            .style('border-radius', '4px')
+            .style('font-size', '12px')
+            .style('pointer-events', 'none')
+            .style('z-index', '1000')
+            .style('border', `1px solid ${getCssVar('--color-border')}`);
+        
+        arcs.on('mouseover', function(event, d) {
+            // Create tooltip content
+            let content = `<div style="font-weight: bold;">${d.data.fullName || d.data.name}</div>`;
+            content += `<div>Value: ${formatCurrency(d.data.value)}</div>`;
+            content += `<div>Market Share: ${d.data.percentage.toFixed(1)}%</div>`;
+            if (d.data.isOther && d.data.count) {
+                content += `<div>Includes ${d.data.count} other contractors</div>`;
+            }
+            
+            tooltip.html(content)
+                .style('visibility', 'visible')
+                .style('left', (event.pageX + 10) + 'px')
+                .style('top', (event.pageY - 28) + 'px');
+            
+            // Highlight arc
+            d3.select(this).select('path')
+                .attr('stroke', getCssVar('--color-primary'))
+                .attr('stroke-width', 2);
+        })
+        .on('mousemove', function(event) {
+            tooltip.style('left', (event.pageX + 10) + 'px')
+                .style('top', (event.pageY - 28) + 'px');
+        })
+        .on('mouseout', function() {
+            tooltip.style('visibility', 'hidden');
+            
+            d3.select(this).select('path')
+                .attr('stroke', getCssVar('--color-surface'))
+                .attr('stroke-width', 1);
+        });
+        
+        // Add center text
+        svg.append('text')
+            .attr('text-anchor', 'middle')
+            .attr('dy', '-0.5em')
+            .attr('font-size', '12px')
+            .attr('fill', getCssVar('--color-text-secondary'))
+            .text('Market Leader');
+        
+        svg.append('text')
+            .attr('text-anchor', 'middle')
+            .attr('dy', '1em')
+            .attr('font-size', '14px')
+            .attr('fill', getCssVar('--color-text-primary'))
+            .attr('font-weight', 'bold')
+            .text(data[0].name);
+        
+        svg.append('text')
+            .attr('text-anchor', 'middle')
+            .attr('dy', '2.5em')
+            .attr('font-size', '10px')
+            .attr('fill', getCssVar('--color-text-tertiary'))
+            .text(`${data[0].percentage.toFixed(1)}% of market`);
+        
+    } catch (error) {
+        console.error("Error creating share of wallet chart:", error);
+        displayNoData(containerId, `Error: ${error.message}`);
+    }
+}
+
+function ensureShareOfWalletContainer() {
+    const containerId = 'share-of-wallet-container';
+    const bentoId = 'bento-share-of-wallet';
+    let container = document.getElementById(containerId);
+    
+    if (!container) {
+        console.log("Creating Share of Wallet container");
+        const bentoGrid = document.querySelector('.bento-grid');
+        if (!bentoGrid) {
+            console.error("Could not find bento grid for Share of Wallet container");
+            return;
+        }
+        
+        let bentoBox = document.getElementById(bentoId);
+        if (!bentoBox) {
+            bentoBox = document.createElement('div');
+            bentoBox.id = bentoId;
+            bentoBox.className = 'bento-box';
+            bentoBox.style.minHeight = '240px';
+            
+            const header = document.createElement('div');
+            header.className = 'card-header';
+            header.innerHTML = `
+                <div class="card-icon-circle">
+                    <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21.21 15.89A10 10 0 1 1 8.11 2.99"></path>
+                        <path d="M22 12A10 10 0 0 0 12 2v10z"></path>
+                    </svg>
+                </div>
+                <h2>Market Share</h2>
+            `;
+            bentoBox.appendChild(header);
+            bentoGrid.appendChild(bentoBox);
+        }
+        
+        // Create chart container
+        container = document.createElement('div');
+        container.id = containerId;
+        container.className = 'chart-container';
+        // Set explicit height to match other chart containers
+        container.style.minHeight = '220px';
+        container.style.height = '100%';
+        bentoBox.appendChild(container);
+    }
+    
+    return container;
+}
