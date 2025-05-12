@@ -235,16 +235,13 @@ a:hover { color: var(--color-secondary); text-decoration: none; }
 .bento-grid {
     display: grid;
     gap: var(--bento-gap);
-    grid-template-columns: repeat(5, 1fr);
-    /* Updated layout with Share of Wallet */
-    grid-template-areas:
-	
-		"share-wallet share-wallet sankey sankey sankey"
-		"tavtcv tavtcv tavtcv tavtcv tavtcv"
-		"dendrogram dendrogram dendrogram dendrogram dendrogram"
-		"naics-donut naics-donut map map arr"
-		"leaders leaders leaders leaders leaders"
-        "expiring expiring expiring expiring expiring";
+grid-template-columns: repeat(5, 1fr); /* Keep 5 columns */
+grid-template-rows: auto auto auto auto; /* Adjust rows as needed */
+grid-template-areas:
+    "sankey sankey sankey arr share-wallet"  /* Row 1: Flow overview & KPIs */
+    "leaders leaders leaders expiring expiring" /* Row 2: Key players & actions */
+    "dendrogram dendrogram dendrogram map map"  /* Row 3: Relationships & context */
+    "tavtcv tavtcv tavtcv naics-donut naics-donut"; /* Row 4: Contract & industry details */
     grid-template-rows: minmax(400px, auto) auto auto auto;
 }
 
