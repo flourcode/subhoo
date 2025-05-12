@@ -238,9 +238,9 @@ a:hover { color: var(--color-secondary); text-decoration: none; }
 grid-template-columns: repeat(5, 1fr); /* Keep 5 columns */
 grid-template-rows: auto auto auto auto; /* Adjust rows as needed */
 grid-template-areas:
-    "sankey sankey sankey share-wallet share-wallet"
+    "share-wallet share-wallet tavtcv tavtcv tavtcv"
     "dendrogram dendrogram dendrogram dendrogram dendrogram"
-    "tavtcv tavtcv tavtcv naics-donut naics-donut"
+    "sankey sankey sankey naics-donut naics-donut"
     "leaders leaders leaders map map"
 	"expiring expiring expiring expiring arr" ;	
     grid-template-rows: minmax(400px, auto) auto auto auto;
