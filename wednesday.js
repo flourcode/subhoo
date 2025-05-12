@@ -55,8 +55,7 @@ let tavTcvChartInstance = null; // Store chart instance
 let isLoading = false;
 let selectedAgencies = []; // List of selected agency IDs
 let chartData = []; // Store chart data globally
-let currentSearchTerm = ''
-
+let currentSearchTerm = '';
 // Field mapping to normalize field names between data sources
 const fieldMap = {
     // Agency fields
@@ -162,6 +161,7 @@ function parseSafeFloat(value) {
      const num = parseFloat(cleanedString);
      return isNaN(num) ? 0 : num;
 }
+
 function parseDate(dateString) {
     if (!dateString || typeof dateString !== 'string') return null;
     
@@ -210,6 +210,7 @@ function parseDate(dateString) {
         return null;
     }
 }
+
 function calculateDurationDays(startDateStr, endDateStr) {
     const start = parseDate(startDateStr);
     const end = parseDate(endDateStr);
@@ -227,6 +228,7 @@ function calculateDurationDays(startDateStr, endDateStr) {
         return diffDays > 0 ? diffDays : 0; // Ensure non-negative result
     }
 }
+
 function truncateText(text, maxLength) {
     if (!text) return '';
     const stringText = String(text);
@@ -249,7 +251,7 @@ function cleanupTooltips() {
     
     // Also clean up any Chart.js tooltips that might be created
     d3.select("body").selectAll(".chartjs-tooltip").remove();
-	d3.select("body").selectAll(".chart-tooltip").remove(); // Specifically for your enhanced donut charts
+    d3.select("body").selectAll(".chart-tooltip").remove(); // Specifically for your enhanced donut charts
         
     const chartjsTooltip = document.getElementById('chartjs-tooltip');
     if (chartjsTooltip && chartjsTooltip.parentNode) {
@@ -267,6 +269,7 @@ function cleanupTooltips() {
         }
     });
 }
+
 function updateStatusBanner(message, type = 'info') {
     const banner = document.getElementById('status-banner');
     const statusMessage = document.getElementById('status-message');
@@ -331,6 +334,7 @@ function updateStatusBanner(message, type = 'info') {
         refreshButton.disabled = isLoading;
     }
 }
+
 function getCssVar(varName) {
   try {
     const value = getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
@@ -363,6 +367,7 @@ function getCssVar(varName) {
     return '#cccccc'; // Generic fallback
   }
 }
+
 function setLoading(containerId, isLoading, message = 'Loading...') {
     const container = document.getElementById(containerId);
     if (!container) return;
@@ -473,10 +478,8 @@ function displayNoData(containerId, message = "No data available for this view."
         tavTcvChartInstance = null;
     }
 }
-// In wednesday.js
-
 function fetchDataFromS3(dataset) {
-    return new Promise((resolve, reject) => { // MODIFICATION: Wrap in a Promise
+    return new Promise((resolve, reject) => {
         const csvUrl = `${S3_BASE_URL}${dataset.id}.csv`;
         console.log(`Loading data from URL: ${csvUrl}`);
 
@@ -491,15 +494,14 @@ function fetchDataFromS3(dataset) {
         .then(response => {
             if (!response.ok) {
                 const statusText = response.statusText || 'Unknown Error';
-                // MODIFICATION: Reject promise on error
                 reject(new Error(`Failed to fetch data: ${response.status} ${statusText}`)); 
-                return; // Important to return here after reject
+                return; 
             }
             return response.text();
         })
         .then(csvText => {
-            if (csvText === undefined) { // Check if response.text() resolved with undefined (e.g. from reject above)
-                 return; // Already handled by reject
+            if (csvText === undefined) {
+                 return; 
             }
             // Process the CSV data
             processDataset(dataset, Papa.parse(csvText, {
@@ -508,17 +510,15 @@ function fetchDataFromS3(dataset) {
                 skipEmptyLines: 'greedy',
                 transformHeader: header => header.trim()
             }).data);
-            resolve(); // MODIFICATION: Resolve the promise when done
+            resolve(); 
         })
         .catch(error => {
             console.error(`Error fetching dataset ${dataset.name}:`, error);
-            // updateStatusBanner is good, but also reject for the caller
-            // updateStatusBanner(`Error loading dataset: ${error.message}`, 'error'); 
-            // isLoading and refreshButton should be handled by the caller (loadSingleDataset)
-            reject(error); // MODIFICATION: Reject the promise on catch
+            reject(error); 
         });
     });
 }
+
 function updateDateDisplay() {
     // Get the elements
     const dateText = document.getElementById('date-text');
@@ -554,8 +554,6 @@ function updateDateDisplay() {
     
     timeText.textContent = timeString;
 }
-
-// --- Dropdown Population Functions ---
 function populateDropdown(selectElement, itemsSet, defaultOptionText = "All") {
     if (!selectElement) return;
     
@@ -614,7 +612,6 @@ function populateNaicsDropdown(selectElement, naicsMap) {
     }
 }
 
-// --- Initialize Dataset Selector ---
 function initializeDatasetSelector() {
     const agencySelect = document.getElementById('dataset-select');
     if (!agencySelect) {
@@ -730,9 +727,8 @@ function resetUIForNoDataset() {
     displayNoData('expiring-contracts-table-container', 'Select a dataset to view expiring contracts.');
     displayNoData('sankey-chart-container', 'Select a dataset to view award flow.');
     displayNoData('map-container', 'Select a dataset to view performance map.');
-	displayNoData('circular-dendrogram-container', 'Select a dataset to view nodes.');
-	displayNoData('bento-naics-distribution', 'Select a dataset to view NAICS distribution.'); // Or the inner chart container
-    
+    displayNoData('circular-dendrogram-container', 'Select a dataset to view nodes.');
+    displayNoData('bento-naics-distribution', 'Select a dataset to view NAICS distribution.'); 
 
     // Reset ARR estimator
     document.getElementById('arr-result').textContent = '$0 / yr';
@@ -784,8 +780,7 @@ function resetUIForNoDataset() {
         }
     }
 }
-// --- Enhanced Data Loading Functions ---
-async function loadSingleDataset(dataset) { // MODIFICATION: Make async
+async function loadSingleDataset(dataset) {
     if (!dataset || !dataset.id || isLoading) {
         console.warn("Load dataset cancelled. Already loading or invalid dataset provided.");
         if (!dataset) updateStatusBanner('Invalid dataset specified.', 'error');
@@ -800,14 +795,14 @@ async function loadSingleDataset(dataset) { // MODIFICATION: Make async
     updateStatusBanner(`Loading ${dataset.name} data...`, 'info');
     document.getElementById('refresh-button').disabled = true;
 
-    // Set loading states for containers (existing code)
+    // Set loading states for containers
     setLoading('contract-leaders-table-container', true, `Loading ${dataset.name} leader data...`);
     setLoading('tav-tcv-chart-container', true, `Loading ${dataset.name} TAV/TCV data...`);
     setLoading('expiring-contracts-table-container', true, `Loading ${dataset.name} expiring contracts...`);
     setLoading('sankey-chart-container', true, `Loading ${dataset.name} award flow...`);
     setLoading('map-container', true, `Loading ${dataset.name} performance data...`);
 
-    // Reset data based on dataset type (existing code)
+    // Reset data based on dataset type
     if (dataset.type === 'primes') {
         rawData.primes = [];
     } else {
@@ -819,7 +814,7 @@ async function loadSingleDataset(dataset) { // MODIFICATION: Make async
         tavTcvChartInstance = null;
     }
 
-    // Clear ARR result and reset filters (existing code)
+    // Clear ARR result and reset filters
     document.getElementById('arr-result').textContent = '$0 / yr';
     document.getElementById('arr-loading').style.display = 'none';
     document.getElementById('arr-error').style.display = 'none';
@@ -832,34 +827,33 @@ async function loadSingleDataset(dataset) { // MODIFICATION: Make async
     document.getElementById('naics-filter').value = '';
     document.getElementById('search-input').value = '';
 
-    // Fetch the data from S3
-    fetchDataFromS3(dataset);
-	try {
-        await fetchDataFromS3(dataset); // MODIFICATION: Await the promise
+        try {
+        await fetchDataFromS3(dataset);
 
         console.log(`Single dataset ${dataset.name} fetched and processed, building unified model...`);
-        buildUnifiedModel(); // This function populates the global 'unifiedModel'
+        buildUnifiedModel();
 
-        // === ADD THIS LINE HERE (for single loads) ===
         window.unifiedModel = unifiedModel;
         console.log("window.unifiedModel updated after single load. Content length: " + (window.unifiedModel ? JSON.stringify(window.unifiedModel).length : "null"));
-        // ===========================================
-
+        
         updateStatusBanner(`Successfully loaded ${dataset.name}.`, 'success');
         populateFiltersFromUnifiedModel();
         applyFiltersAndUpdateVisuals();
+        
+        // Add this line:
+        ensureAllVisualizationsLoaded();
 
     } catch (error) {
         console.error(`Error in loadSingleDataset for ${dataset.name}:`, error);
         updateStatusBanner(`Error loading dataset ${dataset.name}: ${error.message}`, 'error');
-        resetUIForNoDataset(); // Or a more specific error display
+        resetUIForNoDataset(); 
     } finally {
         isLoading = false; // Ensure isLoading is reset
         document.getElementById('refresh-button').disabled = false; // Ensure button is re-enabled
     }
 }
 
-function loadCombinedDatasets(datasetIds) {
+async function loadCombinedDatasets(datasetIds) {
     if (!datasetIds || datasetIds.length === 0 || isLoading) {
         console.warn("Load combined datasets cancelled. Already loading or invalid dataset IDs provided.");
         updateStatusBanner('Invalid datasets specified.', 'error');
@@ -916,38 +910,46 @@ function loadCombinedDatasets(datasetIds) {
     document.getElementById('search-input').value = '';
 
     // Fetch each dataset sequentially
-    fetchDataSequentially(datasets);
+    try {
+        await fetchDataSequentially(datasets);
+        
+        isLoading = false;
+        document.getElementById('refresh-button').disabled = false;
+    } catch (error) {
+        console.error("Error loading combined datasets:", error);
+        updateStatusBanner(`Error loading datasets: ${error.message}`, 'error');
+        isLoading = false;
+        document.getElementById('refresh-button').disabled = false;
+    }
 }
 
 async function fetchDataSequentially(datasets) {
     try {
         for (let i = 0; i < datasets.length; i++) {
             const dataset = datasets[i];
-            console.log(`Loading dataset ${i + 1}/${datasets.length}: ${dataset.name}`
-			);
+            console.log(`Loading dataset ${i + 1}/${datasets.length}: ${dataset.name}`);
             updateStatusBanner(`Loading ${dataset.name} data (${i + 1}/${datasets.length})...`);
             
             await fetchAndProcessDataset(dataset);
         }
         
-        // After all datasets are loaded, build unified model and update UI
         console.log("All datasets loaded, building unified model...");
         buildUnifiedModel();
-         window.unifiedModel = unifiedModel; 
+        window.unifiedModel = unifiedModel; 
         console.log("window.unifiedModel updated after combined load. Content length: " + (window.unifiedModel ? JSON.stringify(window.unifiedModel).length : "null"));
         
-		updateStatusBanner(`Successfully loaded combined data.`, 'success');
+        updateStatusBanner(`Successfully loaded combined data.`, 'success');
         
-        // Update filters and visualizations
         populateFiltersFromUnifiedModel();
         applyFiltersAndUpdateVisuals();
+        
+        // Add this line:
+        ensureAllVisualizationsLoaded();
         
     } catch (error) {
         console.error("Error loading combined datasets:", error);
         updateStatusBanner(`Error loading datasets: ${error.message}`, 'error');
-    } finally {
-        isLoading = false;
-        document.getElementById('refresh-button').disabled = false;
+        throw error; // Rethrow to handle in the calling function
     }
 }
 
@@ -1019,7 +1021,6 @@ function fetchAndProcessDataset(dataset) {
         });
     });
 }
-
 function processDataset(dataset, data) {
     console.log(`Processing ${data.length} rows for ${dataset.name}...`);
     
@@ -1342,7 +1343,6 @@ function sanitizeId(text) {
         .replace(/\-\-+/g, '-')
         .trim();
 }
-
 function populateFiltersFromUnifiedModel() {
     if (!unifiedModel) return;
     
@@ -1386,7 +1386,7 @@ function applyFiltersAndUpdateVisuals() {
     setLoading('expiring-contracts-table-container', true);
     setLoading('sankey-chart-container', true);
     setLoading('map-container', true);
-    setLoading('bento-naics-distribution', true); // Add new chart's bento box ID here
+    setLoading('bento-naics-distribution', true); 
    
     // Check if we're using unified model or direct raw data
     if (unifiedModel) {
@@ -1405,21 +1405,6 @@ function applyFiltersAndUpdateVisuals() {
         updateVisualsFromRawData(subAgencyFilter, naicsFilter, searchTerm);
     }
 }
-
-function initializeEnhancedFeatures() {
-    console.log("Initializing enhanced UI features...");
-    
-    try {
-        // Initialize preset views to replace complex filtering
-        initializePresetViews();
-        console.log("Preset views initialized");
-    } catch (e) {
-        console.error("Error initializing preset views:", e);
-    }
-    
-    console.log("Enhanced UI features initialization complete");
-}
-
 
 function updateVisualsFromUnifiedModel(subAgencyFilter, naicsFilter, searchTerm) {
     // Apply filters to get filtered data
@@ -1448,14 +1433,15 @@ function updateVisualsFromUnifiedModel(subAgencyFilter, naicsFilter, searchTerm)
     const mapData = processMapDataFromModel(filteredModel);
     displayChoroplethMap(mapData);
     
-	displayForceDirectedRadial(filteredModel);
+    displayForceDirectedRadial(filteredModel);
     
     // Calculate ARR
     calculateAverageARRFromModel(filteredModel);
-	// --- NEW: NAICS Donut Chart ---
+    
+    // NAICS Donut Chart
     const naicsDistributionData = processNaicsDistributionData(filteredModel);
-    const naicsDonutChartContainerId = 'naics-donut-chart-container'; // The div D3 will select
-    const naicsBentoBoxId = 'bento-naics-distribution'; // The parent bento box for overall loading
+    const naicsDonutChartContainerId = 'naics-donut-chart-container'; 
+    const naicsBentoBoxId = 'bento-naics-distribution'; 
 
     // Set loading state for the bento box just before trying to draw
     setLoading(naicsBentoBoxId, true, 'Loading NAICS distribution...');
@@ -1465,8 +1451,9 @@ function updateVisualsFromUnifiedModel(subAgencyFilter, naicsFilter, searchTerm)
         displayNaicsDonutChart(naicsDistributionData, naicsDonutChartContainerId, 5);
         // Turn off loading for the bento box AFTER the chart attempts to draw or shows a no-data message
         setLoading(naicsBentoBoxId, false);
-    }, 100); // Increased timeout slightly, adjust if needed
+    }, 100);
 }
+
 function filterUnifiedModel(subAgencyFilter, naicsFilter, searchTerm) {
     // Create a deep copy of the model structure but with empty collections
     const filtered = {
@@ -1700,38 +1687,27 @@ function filterUnifiedModel(subAgencyFilter, naicsFilter, searchTerm) {
     filtered.stats.totalSubContracts = Object.keys(filtered.subcontracts).length;
     filtered.stats.totalContractValue = Object.values(filtered.contracts)
         .reduce((sum, contract) => sum + contract.value, 0);
-    // --- BEGIN INSERTED CODE ---
 
-// Refine primeToSub relationships to ensure they link through filtered contracts
-// Create a set of Prime IDs that are definitely included due to contracts passing ALL filters
-const validPrimeIdsFromFilteredContracts = new Set();
-Object.values(filtered.contracts).forEach(contract => {
-    validPrimeIdsFromFilteredContracts.add(contract.primeId);
-});
+    // Refine primeToSub relationships to ensure they link through filtered contracts
+    // Create a set of Prime IDs that are definitely included due to contracts passing ALL filters
+    const validPrimeIdsFromFilteredContracts = new Set();
+    Object.values(filtered.contracts).forEach(contract => {
+        validPrimeIdsFromFilteredContracts.add(contract.primeId);
+    });
 
-console.log(`Refining Prime-Sub relationships. Primes linked to filtered contracts: ${validPrimeIdsFromFilteredContracts.size}`);
+    // Filter the primeToSub relationships:
+    // Keep only those where the source (prime) is in our valid set
+    // AND the target (sub) exists in the already filtered subs list.
+    const fullyFilteredPrimeToSub = filtered.relationships.primeToSub.filter(rel =>
+        validPrimeIdsFromFilteredContracts.has(rel.source) && // Prime MUST be linked to a contract that passed filters
+        filtered.subs[rel.target]                             // Sub must also exist after its own filtering
+    );
 
-// Filter the primeToSub relationships:
-// Keep only those where the source (prime) is in our valid set
-// AND the target (sub) exists in the already filtered subs list.
-const fullyFilteredPrimeToSub = filtered.relationships.primeToSub.filter(rel =>
-    validPrimeIdsFromFilteredContracts.has(rel.source) && // Prime MUST be linked to a contract that passed filters
-    filtered.subs[rel.target]                             // Sub must also exist after its own filtering
-);
-
-console.log(`Original primeToSub count: ${filtered.relationships.primeToSub.length}, Fully filtered count: ${fullyFilteredPrimeToSub.length}`);
-
-// Replace the potentially over-inclusive relationships in the model being returned
-filtered.relationships.primeToSub = fullyFilteredPrimeToSub;
-
-// Optional: Recalculate prime/sub values based only on these filtered relationships if needed downstream.
-// Currently, Sankey likely uses the relationship value directly, so this might not be necessary.
-
-// --- END INSERTED CODE ---
-
+    // Replace the potentially over-inclusive relationships in the model being returned
+    filtered.relationships.primeToSub = fullyFilteredPrimeToSub;
+    
     return filtered;
 }
-
 function processContractLeadersFromModel(model) {
     console.log("Processing Contract Leaders from unified model...");
     
@@ -1798,8 +1774,7 @@ function processContractLeadersFromModel(model) {
             };
         })
         .filter(leader => leader.numAwards > 0 && leader.totalValue > 0)
-        .sort((a, b) => b.totalValue - a.totalValue
-		);
+        .sort((a, b) => b.totalValue - a.totalValue);
 
     console.log(`Processed ${primeLeaders.length} leader entries.`);
     return primeLeaders;
@@ -1948,6 +1923,971 @@ function processMapDataFromModel(model) {
     console.log(`Processed map data for ${Object.keys(stateData).length} states.`);
     return stateData;
 }
+
+function processNaicsDistributionData(filteredModel) {
+    if (!filteredModel || !filteredModel.contracts) {
+        return [];
+    }
+
+    console.log("Processing NAICS distribution data from model");
+
+    const naicsAggregates = {};
+    
+    // Process all contracts
+    Object.values(filteredModel.contracts || {}).forEach(contract => {
+        // Skip if no NAICS code or no value
+        if (!contract.naicsCode || contract.value <= 0) return;
+
+        // Add to aggregates
+        const code = contract.naicsCode;
+        const desc = contract.naicsDesc || "N/A";
+        
+        if (!naicsAggregates[code]) {
+            naicsAggregates[code] = { 
+                code: code, 
+                desc: desc, 
+                name: code, // For color mapping
+                value: 0 
+            };
+        }
+        
+        naicsAggregates[code].value += contract.value;
+    });
+    
+    // Convert to array and sort
+    const sortedNaicsData = Object.values(naicsAggregates)
+        .sort((a, b) => b.value - a.value);
+    
+    // Calculate percentages
+    const totalValue = sortedNaicsData.reduce((sum, item) => sum + item.value, 0);
+    sortedNaicsData.forEach(item => {
+        item.percentage = totalValue > 0 ? (item.value / totalValue) * 100 : 0;
+    });
+
+    console.log(`Processed ${sortedNaicsData.length} NAICS codes for distribution chart`);
+    return sortedNaicsData;
+}
+
+function calculateAverageARRFromModel(model) {
+    const resultDiv = document.getElementById('arr-result');
+    const loadingDiv = document.getElementById('arr-loading');
+    const errorDiv = document.getElementById('arr-error');
+    const noDataDiv = document.getElementById('arr-no-data');
+
+    // Reset UI elements
+    resultDiv.style.display = 'none';
+    loadingDiv.style.display = 'block';
+    errorDiv.style.display = 'none';
+    noDataDiv.style.display = 'none';
+
+    try {
+        // Collect all prime contract data for ARR calculation
+        const contracts = [];
+        
+        // Get contracts from the model
+        Object.values(model.contracts).forEach(contract => {
+            // Skip contracts without value
+            if (!contract.value || contract.value <= 0) return;
+            
+            // Extract the raw data
+            const row = contract.raw;
+            if (!row) return;
+            
+            // Get period of performance dates
+            const startDate = row.period_of_performance_start_date;
+            const endDate = row.period_of_performance_current_end_date;
+            
+            // Calculate duration if dates are available
+            let durationDays = 0;
+            if (startDate && endDate) {
+                durationDays = calculateDurationDays(startDate, endDate);
+            }
+            
+            // Add to contracts array if there's a valid duration
+            if (durationDays > 0) {
+                contracts.push({
+                    value: contract.value,
+                    durationDays: durationDays
+                });
+            }
+        });
+        
+        console.log(`Found ${contracts.length} contracts with valid dates and values for ARR calculation`);
+        
+        if (contracts.length === 0) {
+            loadingDiv.style.display = 'none';
+            noDataDiv.style.display = 'block';
+            resultDiv.textContent = formatConciseCurrency(0) + " / yr";
+            resultDiv.style.display = 'block';
+            return;
+        }
+        
+        // Calculate simple ARR for each contract and average them
+        let totalAnnualizedValue = 0;
+        contracts.forEach(contract => {
+            const annualizedValue = (contract.value / contract.durationDays) * 365.25;
+            totalAnnualizedValue += annualizedValue;
+        });
+        
+        const averageARR = totalAnnualizedValue / contracts.length;
+        
+        // Display the result
+        resultDiv.textContent = formatConciseCurrency(averageARR) + " / yr";
+        resultDiv.style.display = 'block';
+        loadingDiv.style.display = 'none';
+        noDataDiv.style.display = 'none';
+        
+        console.log(`Calculated ARR: ${formatCurrency(averageARR)} from ${contracts.length} contracts`);
+        
+    } catch (error) {
+        console.error("Error calculating ARR:", error);
+        errorDiv.textContent = `Error calculating ARR: ${error.message}`;
+        errorDiv.style.display = 'block';
+        resultDiv.style.display = 'none';
+        loadingDiv.style.display = 'none';
+    }
+}
+function exportToCSV(data, filename) {
+    // Return if no data
+    if (!data || !data.length) {
+        console.warn('No data to export');
+        return;
+    }
+
+    // Get headers from the first data object
+    const headers = Object.keys(data[0]);
+    
+    // Create CSV header row
+    let csvContent = headers.join(',') + '\n';
+    
+    // Add data rows
+    data.forEach(item => {
+        const row = headers.map(header => {
+            // Get the value for this header
+            let value = item[header] || '';
+            
+            // Format dates if needed
+            if (header.includes('date') && value instanceof Date) {
+                value = value.toISOString().split('T')[0]; // YYYY-MM-DD format
+            }
+            
+            // Handle commas and quotes in the value (CSV escape)
+            const cellValue = String(value).replace(/"/g, '""');
+            
+            // Wrap in quotes if the value contains commas, quotes, or newlines
+            return /[",\n\r]/.test(cellValue) ? `"${cellValue}"` : cellValue;
+        }).join(',');
+        
+        csvContent += row + '\n';
+    });
+    
+    // Create a Blob containing the CSV data
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    
+    // Create a download link
+    const link = document.createElement('a');
+    
+    // Create a URL for the blob
+    const url = URL.createObjectURL(blob);
+    
+    // Set link properties
+    link.setAttribute('href', url);
+    link.setAttribute('download', filename);
+    link.style.visibility = 'hidden';
+    
+    // Add link to document, click it, then remove it
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+function updateDashboardTitle(datasets) {
+    const dashboardTitle = document.getElementById('dashboard-title');
+    const dashboardSubtitle = document.getElementById('dashboard-subtitle');
+    if (!dashboardTitle || !dashboardSubtitle) return;
+
+    if (!datasets || datasets.length === 0) {
+        // Reset to default titles
+        dashboardTitle.textContent = 'Dashboard';
+        dashboardSubtitle.textContent = 'Select an agency dataset to begin';
+        return;
+    }
+    
+    if (Array.isArray(datasets)) {
+        if (datasets.length === 1) {
+            // Single dataset
+            const dataset = datasets[0];
+            const agencyName = dataset.name.split(' (')[0];
+            dashboardTitle.textContent = agencyName + ' Data';
+            dashboardSubtitle.textContent = `Analyzing ${dataset.type} data from USAspending.gov`;
+        } else {
+            // Multiple datasets - use the first one's agency name
+            const agencyNames = new Set(datasets.map(d => d.name.split(' (')[0]));
+            const isSameAgency = agencyNames.size === 1;
+            
+            if (isSameAgency) {
+                // Same agency, different data types
+                const agencyName = Array.from(agencyNames)[0];
+                dashboardTitle.textContent = agencyName + ' Data';
+                dashboardSubtitle.textContent = 'Combined Prime & Subcontract Data';
+            } else {
+                // Different agencies
+                dashboardTitle.textContent = 'Multi-Agency View';
+                dashboardSubtitle.textContent = `${agencyNames.size} agencies selected`;
+            }
+        }
+    } else {
+        // Legacy support for non-array datasets
+        const agencyName = datasets.name.split(' (')[0];
+        dashboardTitle.textContent = agencyName + ' Data';
+        dashboardSubtitle.textContent = `Analyzing ${datasets.type} data from USAspending.gov`;
+    }
+}
+
+function initializeThemeToggle() {
+    const toggleBtn = document.getElementById('theme-toggle-btn');
+    const moonIcon = document.getElementById('moon-icon');
+    const sunIcon = document.getElementById('sun-icon');
+    
+    if (!toggleBtn || !moonIcon || !sunIcon) {
+        console.warn("Theme toggle elements not found");
+        return;
+    }
+    
+    // Check for saved theme preference or use device preference
+    const savedTheme = localStorage.getItem('theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    
+    // Apply the theme on page load
+    if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        moonIcon.style.display = 'none';
+        sunIcon.style.display = 'block';
+    }
+    
+    // Toggle theme when button is clicked
+    toggleBtn.addEventListener('click', function() {
+        const currentTheme = document.documentElement.getAttribute('data-theme');
+        
+        if (currentTheme === 'dark') {
+            document.documentElement.removeAttribute('data-theme');
+            localStorage.setItem('theme', 'light');
+            moonIcon.style.display = 'block';
+            sunIcon.style.display = 'none';
+        } else {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            localStorage.setItem('theme', 'dark');
+            moonIcon.style.display = 'none';
+            sunIcon.style.display = 'block';
+        }
+        
+        // Force immediate update of all charts with theme-aware colors
+        setTimeout(updateChartsForTheme, 50);
+    });
+}
+
+function updateChartsForTheme() {
+    // Clean up tooltips first
+    cleanupTooltips();
+    
+    // Update visualizations if data is available
+    if (unifiedModel) {
+        applyFiltersAndUpdateVisuals();
+    } else if (rawData.primes.length > 0 || rawData.subs.length > 0) {
+        applyFiltersAndUpdateVisuals();
+    }
+}
+// Add global variables to store sort state
+let leadersTableSort = { key: 'totalValue', dir: 'desc' }; // Default sort for leaders
+let expiringTableSort = { key: 'period_of_performance_current_end_date', dir: 'asc' }; // Default sort for expiring
+
+// Utility function to add sort icons
+function updateSortIcons(tableId, sortKey, sortDir) {
+    const table = document.getElementById(tableId);
+    if (!table) return;
+
+    table.querySelectorAll('th.sortable-header').forEach(th => {
+        th.classList.remove('sort-asc', 'sort-desc');
+        const icon = th.querySelector('.sort-icon');
+        if (icon) icon.textContent = '↕'; // Reset icon
+
+        if (th.dataset.sortKey === sortKey) {
+            th.classList.add(sortDir === 'asc' ? 'sort-asc' : 'sort-desc');
+            if (icon) icon.textContent = sortDir === 'asc' ? '▲' : '▼';
+        }
+    });
+}
+
+function displayContractLeadersTable(leaderData) {
+    const containerId = 'contract-leaders-table-container';
+    const tableId = 'leaders-table'; // Give the table an ID
+    const container = document.getElementById(containerId);
+    if (!container) {
+        console.error(`Container ${containerId} not found.`);
+        return;
+    }
+    setLoading(containerId, false);
+
+    // Keep existing setup for export button etc.
+    container.innerHTML = ''; // Clear previous
+
+    if (!leaderData || leaderData.length === 0) {
+        displayNoData(containerId, 'No contract leader data found.');
+        return;
+    }
+
+    // Create header section with export button
+    const headerSection = document.createElement('div');
+    headerSection.style.display = 'flex';
+    headerSection.style.justifyContent = 'flex-end';
+    headerSection.style.marginBottom = '8px';
+
+    const exportButton = document.createElement('button');
+    exportButton.className = 'button export-btn'; // Added export-btn class
+    exportButton.innerHTML = `
+        <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+        </svg>
+        Export CSV
+    `;
+    exportButton.style.display = 'flex';
+    exportButton.style.alignItems = 'center';
+    exportButton.style.gap = '6px';
+    exportButton.addEventListener('click', () => {
+        const exportData = leaderData.map(leader => ({ 
+            contractor_name: leader.siName,
+            contracts: leader.numAwards,
+            subcontractors: leader.numSubs,
+            total_value: leader.totalValue,
+            average_value: leader.avgValue,
+            average_duration_days: leader.avgDurationDays,
+            naics_code: leader.dominantNaics?.code || '',
+            naics_description: leader.dominantNaics?.desc || ''
+        }));
+        const today = new Date();
+        const dateStr = today.toISOString().split('T')[0];
+        exportToCSV(exportData, `top-contractors-${dateStr}.csv`);
+    });
+    headerSection.appendChild(exportButton);
+    container.appendChild(headerSection);
+
+    // Create a table wrapper div
+    const tableWrapper = document.createElement('div');
+    tableWrapper.className = 'table-wrapper';
+    tableWrapper.style.overflow = 'auto';
+    tableWrapper.style.maxHeight = '900px'; // Adjust as needed
+
+    // Create Table Structure
+    const table = document.createElement('table');
+    table.id = tableId; // Assign ID
+    table.className = 'min-w-full divide-y';
+
+    const thead = table.createTHead();
+    const headerRow = thead.insertRow();
+
+    // Define headers with sort keys
+    const headers = [
+        { text: 'Recipient', scope: 'col', key: 'siName', sortable: false },
+        { text: 'Total Value', scope: 'col', class: 'number', key: 'totalValue', sortable: true }, // Sortable
+        { text: 'Awards', scope: 'col', class: 'number', key: 'numAwards', sortable: false },
+        { text: 'Avg Value', scope: 'col', class: 'number', key: 'avgValue', sortable: true }, // Sortable
+        { text: 'Majority Work', scope: 'col', key: 'dominantNaics', sortable: false },
+        { text: 'USASpending', scope: 'col', class: 'text-center', key: 'usaSpendingLink', sortable: false }
+    ];
+
+    headers.forEach(headerInfo => {
+        const th = document.createElement('th');
+        th.textContent = headerInfo.text;
+        th.scope = headerInfo.scope;
+        if (headerInfo.class) th.className = headerInfo.class;
+        th.dataset.sortKey = headerInfo.key; // Store key
+
+        if (headerInfo.sortable) {
+            th.classList.add('sortable-header');
+            th.style.cursor = 'pointer';
+            const iconSpan = document.createElement('span');
+            iconSpan.className = 'sort-icon';
+            iconSpan.textContent = ' ↕'; // Initial icon
+            th.appendChild(iconSpan);
+
+            // Add click listener for sorting
+            th.addEventListener('click', () => {
+                const newKey = headerInfo.key;
+                let newDir = 'desc';
+                if (leadersTableSort.key === newKey && leadersTableSort.dir === 'desc') {
+                    newDir = 'asc';
+                }
+                leadersTableSort.key = newKey;
+                leadersTableSort.dir = newDir;
+                // Re-render the table with new sort order
+                displayContractLeadersTable(leaderData); // Pass original data to re-sort
+            });
+        }
+        headerRow.appendChild(th);
+    });
+
+    // Sort the data based on current state BEFORE slicing
+    const sortKey = leadersTableSort.key;
+    const sortDir = leadersTableSort.dir;
+    const sortedData = [...leaderData].sort((a, b) => {
+        let valA = a[sortKey];
+        let valB = b[sortKey];
+
+        // Handle numeric sorting for value columns
+        if (sortKey === 'totalValue' || sortKey === 'avgValue') {
+            valA = typeof valA === 'number' ? valA : 0;
+            valB = typeof valB === 'number' ? valB : 0;
+        } else { // Basic string compare for others if needed
+            valA = String(valA).toLowerCase();
+            valB = String(valB).toLowerCase();
+        }
+
+        if (valA < valB) return sortDir === 'asc' ? -1 : 1;
+        if (valA > valB) return sortDir === 'asc' ? 1 : -1;
+        return 0;
+    });
+
+    // Display top 10 leaders (or more if needed)
+    const displayData = sortedData.slice(0, 10); // Slice *after* sorting
+
+    const tbody = table.createTBody();
+    tbody.className = 'divide-y';
+
+    // Populate table body (use displayData)
+    displayData.forEach(leader => {
+        const row = tbody.insertRow();
+        // Recipient Name (clickable)
+        let cell = row.insertCell();
+        cell.className = 'font-medium';
+        const nameLink = document.createElement('a');
+        nameLink.href = '#';
+        nameLink.style.color = getCssVar('--color-primary');
+        nameLink.style.textDecoration = 'none';
+        nameLink.style.fontWeight = '600';
+        nameLink.textContent = truncateText(leader.siName, 35);
+        nameLink.title = `View profile for ${leader.siName}`;
+        nameLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            // Future functionality: showContractorProfile(leader.siName);
+        });
+        cell.appendChild(nameLink);
+
+        // Total Value
+        cell = row.insertCell();
+        cell.className = 'number font-bold';
+        cell.style.color = getCssVar('--color-text-primary');
+        cell.textContent = formatCurrency(leader.totalValue);
+
+        // Num Awards
+        cell = row.insertCell();
+        cell.className = 'number';
+        cell.style.color = getCssVar('--color-text-secondary');
+        cell.textContent = leader.numAwards.toLocaleString();
+
+        // Avg Value
+        cell = row.insertCell();
+        cell.className = 'number';
+        cell.style.color = getCssVar('--color-text-secondary');
+        cell.textContent = formatCurrency(leader.avgValue);
+
+        // Dominant Type/NAICS
+        cell = row.insertCell();
+        cell.className = 'text-xs';
+        cell.style.color = getCssVar('--color-text-secondary');
+        if (leader.dominantNaics) {
+            cell.textContent = truncateText(leader.dominantNaics.desc || "Unknown", 30);
+            cell.title = `${leader.dominantNaics.code} - ${leader.dominantNaics.desc}`;
+        } else {
+            cell.textContent = truncateText(leader.dominantType || "Unknown", 30);
+            cell.title = leader.dominantType || "Unknown";
+        }
+
+        // USASpending Link
+        cell = row.insertCell();
+        cell.className = 'text-center';
+        if (leader.uniqueContractKeys && leader.uniqueContractKeys.length > 0) {
+             if (leader.uniqueContractKeys.length === 1) {
+                const contractId = leader.uniqueContractKeys[0];
+                const link = document.createElement('a');
+                link.href = `https://www.usaspending.gov/award/${contractId}`;
+                link.target = '_blank';
+                link.rel = 'noopener noreferrer';
+                link.className = 'detail-link';
+                link.style.color = getCssVar('--color-primary');
+                link.textContent = 'View';
+                cell.appendChild(link);
+            } else {
+                cell.textContent = `${leader.uniqueContractKeys.length} contracts`;
+                cell.style.color = getCssVar('--color-text-secondary');
+            }
+        } else {
+            cell.textContent = '-';
+            cell.style.color = getCssVar('--color-text-tertiary');
+        }
+    });
+
+    tableWrapper.appendChild(table);
+    container.appendChild(tableWrapper);
+
+    // Add summary text
+    if (leaderData.length > 10) {
+        const summaryPara = document.createElement('p');
+        summaryPara.className = 'summary-text';
+        summaryPara.style.color = getCssVar('--color-text-secondary');
+        summaryPara.textContent = `Showing Top 10 of ${leaderData.length} leaders. Sorted by ${sortKey} (${sortDir}).`;
+        container.appendChild(summaryPara);
+    }
+
+    // Update sort icons AFTER table is built
+    updateSortIcons(tableId, sortKey, sortDir);
+}
+
+function displayExpiringTable(expiringData) {
+    const containerId = 'expiring-contracts-table-container';
+    const tableId = 'expiring-table'; // Give the table an ID
+    const container = document.getElementById(containerId);
+    if (!container) {
+        console.error(`Container ${containerId} not found.`);
+        return;
+    }
+    setLoading(containerId, false);
+
+    // Keep existing setup for export button etc.
+    container.innerHTML = ''; // Clear previous
+
+    if (!expiringData || expiringData.length === 0) {
+        displayNoData(containerId, 'No contracts found expiring in the next 6 months.');
+        return;
+    }
+
+    // Create header section with export button
+    const headerSection = document.createElement('div');
+    headerSection.style.display = 'flex';
+    headerSection.style.justifyContent = 'flex-end';
+    headerSection.style.marginBottom = '8px';
+
+    const exportButton = document.createElement('button');
+    exportButton.className = 'button export-btn'; // Added export-btn class
+    exportButton.innerHTML = `
+         <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+        </svg>
+        Export CSV
+    `;
+    exportButton.style.display = 'flex';
+    exportButton.style.alignItems = 'center';
+    exportButton.style.gap = '6px';
+    exportButton.addEventListener('click', () => {
+        const exportData = expiringData.map(contract => ({
+            contract_id: contract.award_id_piid || contract.contract_award_unique_key || '',
+            contractor_name: contract.recipient_name || '',
+            description: contract.transaction_description || '',
+            end_date: contract.formatted_end_date ||
+                    (contract.period_of_performance_current_end_date_parsed instanceof Date ?
+                     contract.period_of_performance_current_end_date_parsed.toISOString().split('T')[0] :
+                     contract.period_of_performance_current_end_date || ''),
+            value: typeof contract.current_total_value_of_award === 'number' ?
+                       contract.current_total_value_of_award :
+                       parseSafeFloat(contract.current_total_value_of_award || 0), // Use parseSafeFloat
+            naics_code: contract.naics_code || '',
+            naics_description: contract.naics_description || ''
+        }));
+        const today = new Date();
+        const dateStr = today.toISOString().split('T')[0];
+        exportToCSV(exportData, `expiring-contracts-${dateStr}.csv`);
+    });
+    headerSection.appendChild(exportButton);
+    container.appendChild(headerSection);
+
+    // Create Table Structure
+    const tableWrapper = document.createElement('div');
+    tableWrapper.className = 'table-wrapper';
+    tableWrapper.style.overflow = 'auto';
+    tableWrapper.style.maxHeight = '300px'; // Adjust as needed
+
+    const table = document.createElement('table');
+    table.id = tableId; // Assign ID
+    table.className = 'min-w-full divide-y';
+
+    const thead = table.createTHead();
+    const headerRow = thead.insertRow();
+
+    // Define headers with sort keys
+    const headers = [
+        { text: 'Contract ID / PIID', key: 'award_id_piid', sortable: false },
+        { text: 'Recipient Name', key: 'recipient_name', sortable: false },
+        { text: 'Description', key: 'transaction_description', sortable: false },
+        { text: 'End Date', key: 'period_of_performance_current_end_date', sortable: true }, // Sortable by date
+        { text: 'Current Value', key: 'current_total_value_of_award', sortable: true, format: 'currency', class: 'number' }, // Sortable by value
+        { text: 'USA Spending', key: 'usa_spending', class: 'text-center', sortable: false }
+    ];
+
+    headers.forEach(headerInfo => {
+        const th = document.createElement('th');
+        th.textContent = headerInfo.text;
+        th.scope = 'col';
+        if (headerInfo.class) th.className = headerInfo.class;
+        if (headerInfo.key === 'current_total_value_of_award') {
+            th.style.textAlign = 'right';
+        }
+        th.dataset.sortKey = headerInfo.key; // Store key
+
+        if (headerInfo.sortable) {
+            th.classList.add('sortable-header');
+            th.style.cursor = 'pointer';
+            const iconSpan = document.createElement('span');
+            iconSpan.className = 'sort-icon';
+            iconSpan.textContent = ' ↕'; // Initial icon
+            th.appendChild(iconSpan);
+
+            // Add click listener for sorting
+            th.addEventListener('click', () => {
+                const newKey = headerInfo.key;
+                let newDir = 'desc'; // Default to desc for value, asc for date
+                if (newKey === 'period_of_performance_current_end_date') {
+                     newDir = 'asc'; // Dates default to ascending
+                     if(expiringTableSort.key === newKey && expiringTableSort.dir === 'asc') {
+                         newDir = 'desc';
+                     }
+                } else { // Value column
+                    if (expiringTableSort.key === newKey && expiringTableSort.dir === 'desc') {
+                        newDir = 'asc';
+                    }
+                }
+
+                expiringTableSort.key = newKey;
+                expiringTableSort.dir = newDir;
+                // Re-render the table with new sort order
+                displayExpiringTable(expiringData); // Pass original data to re-sort
+            });
+        }
+        headerRow.appendChild(th);
+    });
+
+    // Sort the data based on current state
+    const sortKey = expiringTableSort.key;
+    const sortDir = expiringTableSort.dir;
+    const sortedData = [...expiringData].sort((a, b) => {
+        let valA = a[sortKey];
+        let valB = b[sortKey];
+
+        if (sortKey === 'current_total_value_of_award') {
+            valA = parseSafeFloat(valA); // Use safe float parsing
+            valB = parseSafeFloat(valB);
+        } else if (sortKey === 'period_of_performance_current_end_date') {
+            // Use pre-parsed dates if available, otherwise parse on the fly
+            valA = a.period_of_performance_current_end_date_parsed || parseDate(valA);
+            valB = b.period_of_performance_current_end_date_parsed || parseDate(valB);
+            // Handle null dates (sort them to the end typically)
+            if (valA === null && valB === null) return 0;
+            if (valA === null) return 1; // Nulls last
+            if (valB === null) return -1; // Nulls last
+        } else {
+             valA = String(valA).toLowerCase();
+             valB = String(valB).toLowerCase();
+        }
+
+        if (valA < valB) return sortDir === 'asc' ? -1 : 1;
+        if (valA > valB) return sortDir === 'asc' ? 1 : -1;
+        return 0;
+    });
+
+    const tbody = table.createTBody();
+    tbody.className = 'divide-y';
+
+    // Populate table body (use sortedData here)
+    sortedData.forEach(contract => {
+        const row = tbody.insertRow();
+        headers.forEach(headerInfo => {
+            let cell = row.insertCell();
+            // Special handling for USA Spending column
+            if (headerInfo.key === 'usa_spending') {
+                cell.className = 'text-center';
+                const contractId = contract.contract_award_unique_key || contract.award_id_piid;
+
+                if (contractId) {
+                    const link = document.createElement('a');
+                    link.href = `https://www.usaspending.gov/award/${contractId}`;
+                    link.target = '_blank';
+                    link.rel = 'noopener noreferrer';
+                    link.className = 'detail-link';
+                    link.style.color = getCssVar('--color-primary');
+                    link.textContent = 'View';
+                    cell.appendChild(link);
+                } else {
+                    cell.textContent = '-';
+                    cell.style.color = getCssVar('--color-text-tertiary');
+                }
+                return;
+            }
+
+            // Regular column processing
+            let value = contract[headerInfo.key] || '-';
+
+            // For description, look for alternative fields if the main one is empty
+            if (headerInfo.key === 'transaction_description' && (value === '-' || value === '')) {
+                value = contract.prime_award_base_transaction_description ||
+                        contract.award_description ||
+                        contract.description || '-';
+            }
+
+            // Format date or currency if specified
+            if (headerInfo.key === 'period_of_performance_current_end_date') {
+                if (contract.period_of_performance_current_end_date_parsed instanceof Date) {
+                    value = contract.period_of_performance_current_end_date_parsed.toISOString().split('T')[0];
+                } else if (contract.formatted_end_date) {
+                     value = contract.formatted_end_date; // Use pre-formatted if parsed is missing
+                 } else {
+                     value = parseDate(value)?.toISOString().split('T')[0] || 'Invalid Date'; // Fallback parsing
+                 }
+            } else if (headerInfo.format === 'currency') {
+                value = formatCurrency(parseSafeFloat(value)); // Ensure value is parsed before formatting
+                cell.className = 'number'; // Add number class for right alignment
+            }
+
+            // Determine max length based on column
+            let maxLength = 40;
+            if (headerInfo.key === 'transaction_description') {
+                maxLength = 60; // Allow longer text for description
+                cell.style.maxWidth = '250px'; // Limit width of description cell
+                cell.style.wordWrap = 'break-word'; // Allow word wrapping
+            }
+
+            cell.textContent = truncateText(value, maxLength);
+            cell.title = String(value) !== '-' && String(value) !== 'Invalid Date' ? String(value) : ''; // Set title for full text on hover
+            if (headerInfo.class) cell.className += ` ${headerInfo.class}`; // Append class
+
+             // Apply proper text color based on content
+            if (value === '-' || value === 'Invalid Date') {
+                cell.style.color = getCssVar('--color-text-tertiary');
+            } else {
+                cell.style.color = getCssVar('--color-text-primary');
+            }
+        });
+    });
+
+    tableWrapper.appendChild(table);
+    container.appendChild(tableWrapper);
+
+    // Add summary text
+    const summaryPara = document.createElement('p');
+    summaryPara.className = 'summary-text';
+    summaryPara.style.color = getCssVar('--color-text-secondary');
+    summaryPara.textContent = `Showing ${sortedData.length} expiring contracts. Sorted by ${sortKey} (${sortDir}).`;
+    container.appendChild(summaryPara);
+
+    // Update sort icons AFTER table is built
+    updateSortIcons(tableId, sortKey, sortDir);
+}
+function setupEventListeners() {
+    // Refresh button
+    const refreshButton = document.getElementById('refresh-button');
+    if (refreshButton) {
+        refreshButton.addEventListener('click', function() {
+            // Clear search input
+            const searchInput = document.getElementById('search-input');
+            if (searchInput) {
+                searchInput.value = '';
+                currentSearchTerm = ''; // Reset tracking variable
+                
+                // Trigger input event to ensure listeners are notified
+                const inputEvent = new Event('input', {
+                    bubbles: true,
+                    cancelable: true
+                });
+                searchInput.dispatchEvent(inputEvent);
+                
+                // Also try to trigger clear button if it exists
+                const clearBtn = document.querySelector('#search-clear-btn, .search-clear-btn');
+                if (clearBtn) {
+                    clearBtn.style.display = 'none'; // Hide the clear button
+                }
+            }
+            
+            // Get the currently selected dataset from the dropdown
+            const datasetSelect = document.getElementById('dataset-select');
+            if (datasetSelect && datasetSelect.value) {
+                const selectedValue = datasetSelect.value;
+                
+                if (selectedValue.startsWith('combined:')) {
+                    // Handle combined dataset selection
+                    const datasetIds = selectedValue.split(':')[1].split(',');
+                    loadCombinedDatasets(datasetIds);
+                } else {
+                    // Handle single dataset selection
+                    const selectedDataset = DATASETS.find(d => d.id === selectedValue);
+                    if (selectedDataset) {
+                        loadSingleDataset(selectedDataset);
+                    } else {
+                        updateStatusBanner(`Invalid dataset selected: ${selectedValue}`, 'error');
+                    }
+                }
+            } else {
+                updateStatusBanner("Please select a dataset first", "info");
+            }
+        });
+    }
+    
+    // Search input with debounce
+    const searchInput = document.getElementById('search-input');
+    if (searchInput) {
+        let debounceTimer;
+        searchInput.addEventListener('input', () => {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                console.log("Search input changed, triggering filter update...");
+                applyFiltersAndUpdateVisuals();
+            }, 500); // 500ms delay
+        });
+    }
+    
+    // Filters that trigger visual updates
+    const subAgencyFilter = document.getElementById('sub-agency-filter');
+    const naicsFilter = document.getElementById('naics-filter');
+
+    if (subAgencyFilter) subAgencyFilter.addEventListener('change', applyFiltersAndUpdateVisuals);
+    if (naicsFilter) naicsFilter.addEventListener('change', applyFiltersAndUpdateVisuals);
+}
+
+// Initialize processNaicsDistributionData function for NAICS donut chart
+if (typeof window.processNaicsDistributionData !== 'function') {
+    window.processNaicsDistributionData = function(model) {
+        if (!model || !model.contracts) {
+            return [];
+        }
+
+        console.log("Processing NAICS distribution data from model");
+
+        const naicsAggregates = {};
+        
+        // Process all contracts
+        Object.values(model.contracts || {}).forEach(contract => {
+            // Skip if no NAICS code or no value
+            if (!contract.naicsCode || contract.value <= 0) return;
+
+            // Add to aggregates
+            const code = contract.naicsCode;
+            const desc = contract.naicsDesc || "N/A";
+            
+            if (!naicsAggregates[code]) {
+                naicsAggregates[code] = { 
+                    code: code, 
+                    desc: desc, 
+                    name: code, // For color mapping
+                    value: 0 
+                };
+            }
+            
+            naicsAggregates[code].value += contract.value;
+        });
+        
+        // Convert to array and sort
+        const sortedNaicsData = Object.values(naicsAggregates)
+            .sort((a, b) => b.value - a.value);
+        
+        // Calculate percentages
+        const totalValue = sortedNaicsData.reduce((sum, item) => sum + item.value, 0);
+        sortedNaicsData.forEach(item => {
+            item.percentage = totalValue > 0 ? (item.value / totalValue) * 100 : 0;
+        });
+
+        console.log(`Processed ${sortedNaicsData.length} NAICS codes for distribution chart`);
+        return sortedNaicsData;
+    };
+}
+
+// Main initialization function
+document.addEventListener('DOMContentLoaded', function() {
+    console.log("DOM fully loaded and parsed");
+    
+    try {
+        // Initialize the dataset selector dropdown
+        initializeDatasetSelector();
+        
+        // Initialize theme toggle
+        initializeThemeToggle();
+
+        // Initial dashboard setup
+        updateDashboardTitle(null);
+        resetUIForNoDataset();
+        updateDateDisplay();
+        
+        // Setup all event listeners
+        setupEventListeners();
+        
+        // Auto-load a dataset (SOCOM combined if possible)
+        const socomPrimes = DATASETS.find(d => d.id === 'socom_primes');
+        const socomSubs = DATASETS.find(d => d.id === 'socom');
+        
+        if (socomPrimes && socomSubs) {
+            console.log("Automatically loading combined SOCOM dataset...");
+            
+            // Update the dropdown to show SOCOM as selected
+            const datasetSelect = document.getElementById('dataset-select');
+            if (datasetSelect) {
+                // Look for the combined SOCOM option
+                Array.from(datasetSelect.options).forEach(option => {
+                    if (option.value === `combined:${socomPrimes.id},${socomSubs.id}`) {
+                        datasetSelect.value = option.value;
+                    }
+                });
+            }
+            
+            // Load combined datasets with a slight delay to ensure UI is ready
+            setTimeout(() => {
+                loadCombinedDatasets([socomPrimes.id, socomSubs.id]);
+            }, 300);
+        } else if (socomPrimes) {
+            console.log("Automatically loading SOCOM primes dataset...");
+            
+            // Update the dropdown to show SOCOM as selected
+            const datasetSelect = document.getElementById('dataset-select');
+            if (datasetSelect) {
+                datasetSelect.value = 'socom_primes';
+            }
+            
+            // Load the SOCOM dataset with a slight delay
+            setTimeout(() => {
+                loadSingleDataset(socomPrimes);
+            }, 300);
+        } else {
+            console.log("SOCOM dataset not found in the DATASETS array");
+        }
+        
+        console.log("Dashboard initialized.");
+    } catch (e) {
+        console.error("Error during dashboard initialization:", e);
+    }
+});
+
+// In your resize handler, add this call
+window.addEventListener('resize', function() {
+    clearTimeout(window.resizeTimer);
+    window.resizeTimer = setTimeout(function() {
+       console.log("Window resized, redrawing charts...");
+       
+       // Clean up tooltips first
+       cleanupTooltips();
+       
+       // Force charts to redraw after resize
+       if (tavTcvChartInstance) {
+           tavTcvChartInstance.resize();
+       }
+       
+       // Redraw visualizations if data is available
+       if (unifiedModel) {
+           applyFiltersAndUpdateVisuals();
+           ensureAllVisualizationsLoaded(); // Add this line
+       } else if (rawData.primes.length > 0 || rawData.subs.length > 0) {
+           applyFiltersAndUpdateVisuals();
+           ensureAllVisualizationsLoaded(); // Add this line
+       }
+   }, 250); // Debounce for 250ms
+});
 function displayTavTcvChart(chartData) {
     const containerId = 'tav-tcv-chart-container';
     const container = document.getElementById(containerId);
@@ -2115,90 +3055,7 @@ function displayTavTcvChart(chartData) {
         }
     });
 }
-// Add this function to your JavaScript file
 
-/**
- * Exports data to a CSV file and triggers a download
- * @param {Array} data - Array of objects to convert to CSV
- * @param {String} filename - Name of the file to download
- */
-function exportToCSV(data, filename) {
-    // Return if no data
-    if (!data || !data.length) {
-        console.warn('No data to export');
-        return;
-    }
-
-    // Get headers from the first data object
-    const headers = Object.keys(data[0]);
-    
-    // Create CSV header row
-    let csvContent = headers.join(',') + '\n';
-    
-    // Add data rows
-    data.forEach(item => {
-        const row = headers.map(header => {
-            // Get the value for this header
-            let value = item[header] || '';
-            
-            // Format dates if needed
-            if (header.includes('date') && value instanceof Date) {
-                value = value.toISOString().split('T')[0]; // YYYY-MM-DD format
-            }
-            
-            // Handle commas and quotes in the value (CSV escape)
-            const cellValue = String(value).replace(/"/g, '""');
-            
-            // Wrap in quotes if the value contains commas, quotes, or newlines
-            return /[",\n\r]/.test(cellValue) ? `"${cellValue}"` : cellValue;
-        }).join(',');
-        
-        csvContent += row + '\n';
-    });
-    
-    // Create a Blob containing the CSV data
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    
-    // Create a download link
-    const link = document.createElement('a');
-    
-    // Create a URL for the blob
-    const url = URL.createObjectURL(blob);
-    
-    // Set link properties
-    link.setAttribute('href', url);
-    link.setAttribute('download', filename);
-    link.style.visibility = 'hidden';
-    
-    // Add link to document, click it, then remove it
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-}
-
-function getCssVar(varName) {
-  try {
-    const value = getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
-    if (!value) throw new Error(`Variable ${varName} returned empty`);
-    return value;
-  } catch (e) {
-    console.warn(`Could not get CSS variable ${varName}: ${e.message}`);
-    // Fallbacks for Monocle/Print theme
-    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-     if (varName === '--color-text-secondary') return isDark ? '#B6B1B7' : '#625C61';
-     if (varName === '--color-border') return isDark ? '#312d2a' : '#D8D4D7';
-     if (varName === '--chart-color-primary') return isDark ? '#A59FA8' : '#9A949B';
-     if (varName === '--chart-color-secondary') return isDark ? '#908A91' : '#7A747B';
-     if (varName === '--chart-color-tertiary') return isDark ? '#767077' : '#B6B1B7';
-     if (varName === '--color-surface') return isDark ? '#262321' : '#F5F3F5';
-     if (varName === '--color-text-primary') return isDark ? '#FDFBF5' : '#312d2a';
-     if (varName === '--shadow-md') return isDark ? '0 2px 4px rgba(0, 0, 0, 0.25)' : '0 2px 4px rgba(0, 0, 0, 0.08)';
-     if (varName === '--border-radius-sm') return '8px'; // Or 6px if you used tighter radii
-     if (varName === '--color-primary') return isDark ? '#A59FA8' : '#9A949B';
-    console.error(`Fallback used for CSS variable ${varName}. Check definition.`);
-    return '#cccccc';
-  }
-}
 function displayChoroplethMap(mapData) {
     const containerId = 'map-container';
     const container = document.getElementById(containerId);
@@ -2255,9 +3112,6 @@ function displayChoroplethMap(mapData) {
         const stateValues = Object.values(mapData).map(d => d.value);
         const maxValue = d3.max(stateValues) || 0;
         
-        // DEBUG: Let's verify the values we're using for coloring
-        console.log('State values range:', d3.min(stateValues), 'to', maxValue);
-        
         // Get color values directly rather than using CSS vars for the interpolation
         const baseColor = isDarkMode ? 
             d3.rgb(getCssVar('--color-surface-variant')).toString() : 
@@ -2266,20 +3120,11 @@ function displayChoroplethMap(mapData) {
         const highlightColor = isDarkMode ?
             d3.rgb(getCssVar('--chart-color-primary')).toString() :
             d3.rgb(getCssVar('--chart-color-primary')).toString();
-        
-        console.log('Color scale range:', baseColor, 'to', highlightColor);
 
         // Create explicit color scale using the extracted RGB values
         const colorScale = d3.scaleSequential()
             .domain([0, maxValue === 0 ? 1 : maxValue])
             .interpolator(d3.interpolate(baseColor, highlightColor));
-
-        // Test the color scale with a few values
-        if (maxValue > 0) {
-            console.log('Color at 0:', colorScale(0));
-            console.log('Color at max/2:', colorScale(maxValue/2));
-            console.log('Color at max:', colorScale(maxValue));
-        }
 
         // Remove existing tooltips first
         d3.select("body").selectAll(".map-tooltip").remove();
@@ -2327,14 +3172,6 @@ function displayChoroplethMap(mapData) {
                 // Convert TopoJSON to GeoJSON features
                 const states = topojson.feature(us, us.objects.states);
                 
-                // DEBUG: Create a mapping of IDs to verify correct state matching
-                const stateIdMap = {};
-                states.features.forEach(feature => {
-                    stateIdMap[feature.id] = feature.id.toString().padStart(2, '0');
-                });
-                console.log('Available state IDs in GeoJSON:', stateIdMap);
-                console.log('Sample of our data state codes:', Object.keys(mapData).slice(0, 5));
-
                 // Create projection
                 const projection = d3.geoAlbersUsa()
                     .fitSize([width, height], states);
@@ -2353,11 +3190,6 @@ function displayChoroplethMap(mapData) {
                        // Use the state FIPS code to lookup data
                        const fipsCode = d.id.toString().padStart(2, '0');
                        const stateData = mapData[fipsCode];
-                       
-                       // DEBUG: Show what color is being assigned
-                       if (stateData) {
-                           console.log(`State ${fipsCode}: value=${stateData.value}, color=${colorScale(stateData.value)}`);
-                       }
                        
                        return stateData ? colorScale(stateData.value) : getCssVar('--color-surface-variant');
                    })
@@ -2474,3576 +3306,617 @@ function displayChoroplethMap(mapData) {
         d3.select("body").selectAll(".map-tooltip").remove();
     }
 }
-function calculateAverageARRFromModel(model) {
-    const resultDiv = document.getElementById('arr-result');
-    const loadingDiv = document.getElementById('arr-loading');
-    const errorDiv = document.getElementById('arr-error');
-    const noDataDiv = document.getElementById('arr-no-data');
 
-    // Reset UI elements
-    resultDiv.style.display = 'none';
-    loadingDiv.style.display = 'block';
-    errorDiv.style.display = 'none';
-    noDataDiv.style.display = 'none';
+function displayEnhancedSankeyChart(model) {
+    const containerId = 'sankey-chart-container';
+    const container = document.getElementById(containerId);
+    
+    if (!container) {
+        console.error("Sankey chart container not found.");
+        return;
+    }
 
+    // Clear previous content
+    container.innerHTML = '';
+    
+    setLoading(containerId, false);
+    
+    if (!model || 
+       (!model.relationships.agencyToPrime.length && !model.relationships.primeToSub.length)) {
+        displayNoData(containerId, 'No data available for Sankey diagram.');
+        return;
+    }
+    
     try {
-        // Collect all prime contract data for ARR calculation
-        const contracts = [];
+        // Set up container layout for split panels
+        const panelsContainer = document.createElement('div');
+        panelsContainer.style.display = 'flex';
+        panelsContainer.style.flexDirection = 'row';
+        panelsContainer.style.gap = '20px';
+        panelsContainer.style.height = 'calc(100% - 40px)';
+        container.appendChild(panelsContainer);
         
-        // Get contracts from the model
-        Object.values(model.contracts).forEach(contract => {
-            // Skip contracts without value
-            if (!contract.value || contract.value <= 0) return;
-            
-            // Extract the raw data
-            const row = contract.raw;
-            if (!row) return;
-            
-            // Get period of performance dates
-            const startDate = row.period_of_performance_start_date;
-            const endDate = row.period_of_performance_current_end_date;
-            
-            // Calculate duration if dates are available
-            let durationDays = 0;
-            if (startDate && endDate) {
-                durationDays = calculateDurationDays(startDate, endDate);
-            }
-            
-            // Add to contracts array if there's a valid duration
-            if (durationDays > 0) {
-                contracts.push({
-                    value: contract.value,
-                    durationDays: durationDays
-                });
-            }
-        });
+        // Create container for each panel
+        const leftPanelContainer = document.createElement('div');
+        leftPanelContainer.id = 'agency-prime-panel';
+        leftPanelContainer.style.flex = '1';
         
-        console.log(`Found ${contracts.length} contracts with valid dates and values for ARR calculation`);
+        const rightPanelContainer = document.createElement('div');
+        rightPanelContainer.id = 'prime-sub-panel';
+        rightPanelContainer.style.flex = '1';
         
-        if (contracts.length === 0) {
-            loadingDiv.style.display = 'none';
-            noDataDiv.style.display = 'block';
-            resultDiv.textContent = formatConciseCurrency(0) + " / yr";
-            resultDiv.style.display = 'block';
-            return;
+        panelsContainer.appendChild(leftPanelContainer);
+        panelsContainer.appendChild(rightPanelContainer);
+        
+        // Add panel titles
+        const leftTitle = document.createElement('div');
+        leftTitle.style.textAlign = 'center';
+        leftTitle.style.marginBottom = '10px';
+        leftTitle.style.fontWeight = 'bold';
+        leftTitle.style.color = getCssVar('--color-text-primary');
+        leftTitle.textContent = 'Agency to Prime Contractors';
+        leftPanelContainer.appendChild(leftTitle);
+        
+        const rightTitle = document.createElement('div');
+        rightTitle.style.textAlign = 'center';
+        rightTitle.style.marginBottom = '10px';
+        rightTitle.style.fontWeight = 'bold';
+        rightTitle.style.color = getCssVar('--color-text-primary');
+        rightTitle.textContent = 'Prime to Subcontractors';
+        rightPanelContainer.appendChild(rightTitle);
+        
+        // Create SVGs for each panel
+        const leftSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        leftSvg.id = 'agency-prime-sankey';
+        leftSvg.setAttribute('width', '100%');
+        leftSvg.setAttribute('height', '100%');
+        leftPanelContainer.appendChild(leftSvg);
+        
+        const rightSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        rightSvg.id = 'prime-sub-sankey';
+        rightSvg.setAttribute('width', '100%');
+        rightSvg.setAttribute('height', '100%');
+        rightPanelContainer.appendChild(rightSvg);
+        
+        // Get data for left panel (agencies to primes)
+        const leftData = processAgencyToPrimeSankeyData(model);
+        
+        // Get data for right panel (primes to subs)
+        const rightData = processPrimeToSubSankeyData(model);
+        
+        // Set up dimensions and colors
+        const panelWidth = leftPanelContainer.clientWidth || 300;
+        const panelHeight = leftPanelContainer.clientHeight || 400;
+        const margin = {top: 20, right: 20, bottom: 20, left: 20};
+        
+        // Create tooltip
+        const tooltip = d3.select("body")
+            .append("div")
+            .attr("class", "sankey-tooltip")
+            .style("position", "absolute")
+            .style("visibility", "hidden")
+            .style("opacity", 0)
+            .style("background-color", getCssVar('--color-surface'))
+            .style("color", getCssVar('--color-text-primary'))
+            .style("padding", "10px")
+            .style("border-radius", "4px")
+            .style("font-size", "12px")
+            .style("pointer-events", "none")
+            .style("border", `1px solid ${getCssVar('--color-border')}`)
+            .style("z-index", "9999");
+            
+        // Draw both Sankey diagrams
+        if (leftData.nodes.length > 0 && leftData.links.length > 0) {
+            drawSankeyDiagram(
+                d3.select(leftSvg),
+                leftData.nodes,
+                leftData.links,
+                panelWidth,
+                panelHeight,
+                margin,
+                tooltip,
+                'left'
+            );
+        } else {
+            // No data for left panel
+            d3.select(leftSvg)
+                .append("text")
+                .attr("x", panelWidth / 2)
+                .attr("y", panelHeight / 2)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "12px")
+                .attr("fill", getCssVar('--color-text-secondary'))
+                .attr("opacity", 0.7)
+                .text("No agency-prime data available");
         }
         
-        // Calculate simple ARR for each contract and average them
-        let totalAnnualizedValue = 0;
-        contracts.forEach(contract => {
-            const annualizedValue = (contract.value / contract.durationDays) * 365.25;
-            totalAnnualizedValue += annualizedValue;
-        });
-        
-        const averageARR = totalAnnualizedValue / contracts.length;
-        
-        // Display the result
-        resultDiv.textContent = formatConciseCurrency(averageARR) + " / yr";
-        resultDiv.style.display = 'block';
-        loadingDiv.style.display = 'none';
-        noDataDiv.style.display = 'none';
-        
-        console.log(`Calculated ARR: ${formatCurrency(averageARR)} from ${contracts.length} contracts`);
+        if (rightData.nodes.length > 0 && rightData.links.length > 0) {
+            drawSankeyDiagram(
+                d3.select(rightSvg),
+                rightData.nodes,
+                rightData.links,
+                panelWidth,
+                panelHeight,
+                margin,
+                tooltip,
+                'right'
+            );
+        } else {
+            // No data for right panel
+            d3.select(rightSvg)
+                .append("text")
+                .attr("x", panelWidth / 2)
+                .attr("y", panelHeight / 2)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "12px")
+                .attr("fill", getCssVar('--color-text-secondary'))
+                .attr("opacity", 0.7)
+                .text("No prime-sub data available");
+        }
         
     } catch (error) {
-        console.error("Error calculating ARR:", error);
-        errorDiv.textContent = `Error calculating ARR: ${error.message}`;
-        errorDiv.style.display = 'block';
-        resultDiv.style.display = 'none';
-        loadingDiv.style.display = 'none';
-    }
-}
-// --- Legacy Functions for Raw Data Processing ---
-function updateVisualsFromRawData(subAgencyFilter, naicsFilter, searchTerm) {
-    // --- Check for Raw Data ---
-    if ((!rawData.primes || rawData.primes.length === 0) && 
-        (!rawData.subs || rawData.subs.length === 0)) {
-        console.warn("No raw data available to filter.");
-        resetUIForNoDataset();
-        return [];
-    }
-
-    // --- Apply Search & Filters for Prime data ---
-    let filteredPrimes = rawData.primes;
-    if (filteredPrimes.length > 0) {
-        // Apply search
-        if (searchTerm) {
-            filteredPrimes = filteredPrimes.filter(row => {
-                return [
-                    row.primeName,
-                    row.agencyName,
-                    row.subAgencyName,
-                    row.officeName,
-                    row.description,
-                    row.naicsCode,
-                    row.naicsDesc
-                ].some(field => field && field.toString().toLowerCase().includes(searchTerm));
-            });
-        }
-
-        // Apply sub-agency filter
-        if (subAgencyFilter) {
-            filteredPrimes = filteredPrimes.filter(row => row.subAgencyName === subAgencyFilter);
-        }
-
-        // Apply NAICS filter
-        if (naicsFilter) {
-            filteredPrimes = filteredPrimes.filter(row => row.naicsCode === naicsFilter);
-        }
-    }
-
-    // --- Apply Search & Filters for Sub data ---
-    let filteredSubs = rawData.subs;
-    if (filteredSubs.length > 0) {
-        // Apply search
-        if (searchTerm) {
-            filteredSubs = filteredSubs.filter(row => {
-                return [
-                    row.primeName,
-                    row.subName,
-                    row.agencyName,
-                    row.subAgencyName,
-                    row.officeName,
-                    row.description,
-                    row.naicsCode,
-                    row.naicsDesc
-                ].some(field => field && field.toString().toLowerCase().includes(searchTerm));
-            });
-        }
-
-        // Apply sub-agency filter
-        if (subAgencyFilter) {
-            filteredSubs = filteredSubs.filter(row => row.subAgencyName === subAgencyFilter);
-        }
-
-        // Apply NAICS filter
-        if (naicsFilter) {
-            filteredSubs = filteredSubs.filter(row => row.naicsCode === naicsFilter);
-        }
-    }
-
-    // Clean up tooltips before redrawing
-    cleanupTooltips();
-
-    console.log(`Filtered data: ${filteredPrimes.length} primes, ${filteredSubs.length} subs`);
-
-    // --- Process and Update Visuals ---
-    const hasSubsOnly = filteredPrimes.length === 0 && filteredSubs.length > 0;
-    const hasPrimesOnly = filteredPrimes.length > 0 && filteredSubs.length === 0;
-    const hasBoth = filteredPrimes.length > 0 && filteredSubs.length > 0;
-
-    // Choose which data to use for each visualization
-    if (hasPrimesOnly) {
-        // Use prime contract data only
-        const leaderData = processContractLeaders(filteredPrimes);
-        displayContractLeadersTable(leaderData);
-
-        const tavTcvData = processTavTcvData(filteredPrimes);
-        displayTavTcvChart(tavTcvData);
-
-        const expiringData = processExpiringData(filteredPrimes);
-        displayExpiringTable(expiringData);
-
-        const sankeyData = processSankeyData(filteredPrimes);
-        displaySankeyChart(sankeyData);
-
-        const mapData = processMapData(filteredPrimes);
-        displayChoroplethMap(mapData);
-        
-        calculateAverageARR(filteredPrimes);
-    } 
-    else if (hasSubsOnly) {
-        // Use subcontract data only
-        // Adapt subcontract data for leader visualization
-        const adaptedSubs = filteredSubs.map(row => ({
-            recipient_name: row.primeName,
-            current_total_value_of_award: row.contractValue,
-            period_of_performance_start_date: row.startDate,
-            period_of_performance_current_end_date: row.endDate,
-            transaction_description: row.description,
-            naics_code: row.naicsCode,
-            naics_description: row.naicsDesc,
-            prime_award_unique_key: row.contractId
-        }));
-        
-        const leaderData = processContractLeaders(adaptedSubs);
-        displayContractLeadersTable(leaderData);
-
-        // Other visualizations will be specific to subcontract data
-        displayNoData('tav-tcv-chart-container', 'TAV/TCV chart available for prime contract data only.');
-        
-        const expiringData = processExpiringDataLegacy(filteredSubs);
-        displayExpiringTable(expiringData);
-        
-        const sankeyData = processSankeyDataLegacy(filteredSubs);
-        displaySankeyChart(sankeyData);
-        
-        const mapData = processMapDataLegacy(filteredSubs);
-        displayChoroplethMap(mapData);
-        
-        calculateAverageARRLegacy(filteredSubs);
-    }
-    else if (hasBoth) {
-        // Both types available, build combined visualizations
-        // For leader table, combine prime data first, then add unique subs
-        const leaderData = processContractLeaders(filteredPrimes);
-        displayContractLeadersTable(leaderData);
-        
-        // Use prime contracts for TAV/TCV which requires obligated values
-        const tavTcvData = processTavTcvData(filteredPrimes);
-        displayTavTcvChart(tavTcvData);
-        
-        // Combine expiring contracts
-        const primeExpiring = processExpiringData(filteredPrimes);
-        const subExpiring = processExpiringDataLegacy(filteredSubs);
-        displayExpiringTable([...primeExpiring, ...subExpiring]);
-        
-        // Try to build combined Sankey
-        const combinedSankeyData = buildCombinedSankeyData(filteredPrimes, filteredSubs);
-        displaySankeyChart(combinedSankeyData);
-        
-        // Combine map data by adding up values for each state
-        const primeMapData = processMapData(filteredPrimes);
-        const subMapData = processMapDataLegacy(filteredSubs);
-        const combinedMapData = combineMapData(primeMapData, subMapData);
-        displayChoroplethMap(combinedMapData);
-        
-        // Use all contracts for ARR calculation
-        calculateAverageARRCombined(filteredPrimes, filteredSubs);
-    }
-    else {
-        // No data for either type after filtering
-        displayNoData('contract-leaders-table-container', 'No matching contracts found with current filters.');
-        displayNoData('tav-tcv-chart-container', 'No matching contracts found with current filters.');
-        displayNoData('expiring-contracts-table-container', 'No matching contracts found with current filters.');
-        displayNoData('sankey-chart-container', 'No matching contracts found with current filters.');
-        displayNoData('map-container', 'No matching contracts found with current filters.');
-        
-        // Reset ARR display
-        document.getElementById('arr-result').textContent = '$0 / yr';
-        document.getElementById('arr-loading').style.display = 'none';
-        document.getElementById('arr-error').style.display = 'none';
-        document.getElementById('arr-no-data').style.display = 'block';
+        console.error("Error rendering Sankey chart:", error);
+        displayError(containerId, `Error rendering Sankey chart: ${error.message}`);
     }
 }
 
-// --- Utility functions for combined visualizations ---
-function processExpiringDataLegacy(data) {
-    console.log("Processing legacy data for expiring contracts...");
-    if (!data || data.length === 0) return [];
-
-    const sixMonthsFromNow = new Date();
-    sixMonthsFromNow.setMonth(sixMonthsFromNow.getMonth() + 6);
-    const today = new Date();
-
-    const expiringContracts = data.filter(row => {
-        const endDate = row.parsedEndDate;
-        if (!endDate || !(endDate instanceof Date) || isNaN(endDate.getTime())) {
-            return false;
-        }
-        return endDate >= today && endDate <= sixMonthsFromNow;
-    }).map(row => ({
-        award_id_piid: row.contractId || 'Unknown',
-        recipient_name: row.primeName || 'Unknown',
-        transaction_description: row.description || 'No description',
-        period_of_performance_current_end_date: row.endDate,
-        period_of_performance_current_end_date_parsed: row.parsedEndDate,
-        current_total_value_of_award: row.contractValue,
-        contract_award_unique_key: row.contractId,
-        // Add extra fields for display
-        subawardee_name: row.subName || 'Unknown Sub'
-    }));
-
-    console.log(`Found ${expiringContracts.length} contracts expiring in the next 6 months.`);
-    return expiringContracts;
-}
-
-function processSankeyDataLegacy(data) {
-    console.log("Processing legacy data for Sankey chart...");
-    if (!data || data.length === 0) return { nodes: [], links: [] };
-
-    // Get unique sub-agencies
-    const subAgencies = new Set();
-    data.forEach(row => {
-        const agency = row.subAgencyName;
-        if (agency && agency.toLowerCase() !== 'unknown sub-agency' && agency.toLowerCase() !== 'unknown') {
-            subAgencies.add(agency);
-        }
-    });
-
-    // Get unique primes and subs
-    const primes = new Set();
-    const subs = new Set();
-    data.forEach(row => {
-        if (row.primeName) primes.add(row.primeName);
-        if (row.subName) subs.add(row.subName);
-    });
-
-    // Take top prime contractors by value
-    const primeValues = {};
-    data.forEach(row => {
-        const prime = row.primeName;
-        if (!prime) return;
-        primeValues[prime] = (primeValues[prime] || 0) + (row.contractValue || 0);
-    });
-
-    // Sort primes by value and take top 10
-    const topPrimes = Object.entries(primeValues)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 10)
-        .map(([name]) => name);
-
-    // Take top subcontractors by value
-    const subValues = {};
-    data.forEach(row => {
-        const sub = row.subName;
-        if (!sub) return;
-        subValues[sub] = (subValues[sub] || 0) + (row.contractValue || 0);
-    });
-
-    // Sort subs by value and take top 10
-    const topSubs = Object.entries(subValues)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 10)
-        .map(([name]) => name);
-
-    // Create nodes array
+function processAgencyToPrimeSankeyData(model) {
     const nodes = [];
-    
-    // Add agency nodes
-    Array.from(subAgencies).forEach(agency => {
-        nodes.push({ name: truncateText(agency, 30), type: 'agency' });
-    });
-    
-    // Add prime nodes
-    topPrimes.forEach(prime => {
-        nodes.push({ name: truncateText(prime, 30), type: 'prime' });
-    });
-    
-    // Add sub nodes
-    topSubs.forEach(sub => {
-        nodes.push({ name: truncateText(sub, 30), type: 'sub' });
-    });
-
-    // Create links array
-    const links = [];
-    const agencyIndices = {};
-    const primeIndices = {};
-    const subIndices = {};
-    
-    // Map names to indices
-    let indexCounter = 0;
-    Array.from(subAgencies).forEach(agency => {
-        agencyIndices[agency] = indexCounter++;
-    });
-    
-    topPrimes.forEach(prime => {
-        primeIndices[prime] = indexCounter++;
-    });
-    
-    topSubs.forEach(sub => {
-        subIndices[sub] = indexCounter++;
-    });
-
-    // Create links from agencies to primes
-    data.forEach(row => {
-        const agency = row.subAgencyName;
-        const prime = row.primeName;
-        
-        if (!agency || !prime || !agencyIndices.hasOwnProperty(agency) || !primeIndices.hasOwnProperty(prime)) {
-            return;
-        }
-        
-        const value = row.contractValue || 0;
-        if (value <= 0) return;
-        
-        // Check if a link already exists between these nodes
-        const existingLinkIndex = links.findIndex(link => 
-            link.source === agencyIndices[agency] && link.target === primeIndices[prime]
-        );
-        
-        if (existingLinkIndex >= 0) {
-            // Add to existing link
-            links[existingLinkIndex].value += value;
-        } else {
-            // Create new link
-            links.push({
-                source: agencyIndices[agency],
-                target: primeIndices[prime],
-                value: value
-            });
-        }
-    });
-
-    // Create links from primes to subs
-    data.forEach(row => {
-        const prime = row.primeName;
-        const sub = row.subName;
-        
-        if (!prime || !sub || !primeIndices.hasOwnProperty(prime) || !subIndices.hasOwnProperty(sub)) {
-            return;
-        }
-        
-        const value = row.contractValue || 0;
-        if (value <= 0) return;
-        
-        // Check if a link already exists between these nodes
-        const existingLinkIndex = links.findIndex(link => 
-            link.source === primeIndices[prime] && link.target === subIndices[sub]
-        );
-        
-        if (existingLinkIndex >= 0) {
-            // Add to existing link
-            links[existingLinkIndex].value += value;
-        } else {
-            // Create new link
-            links.push({
-                source: primeIndices[prime],
-                target: subIndices[sub],
-                value: value
-            });
-        }
-    });
-
-    return { nodes, links };
-}
-
-function processMapDataLegacy(data) {
-    console.log("Processing legacy data for map...");
-    if (!data || data.length === 0) return {};
-
-    // Create a map to store state-level aggregates
-    const stateData = {};
-    
-    // Find the state code field
-    let stateCodeField = null;
-    if (data.length > 0) {
-        const row = data[0];
-        if (row.popStateCode) stateCodeField = 'popStateCode';
-        else if (row.prime_award_pop_state_code) stateCodeField = 'prime_award_pop_state_code';
-        else if (row.place_of_performance_state_code) stateCodeField = 'place_of_performance_state_code';
-    }
-    
-    if (!stateCodeField) {
-        console.warn("Could not determine state code field for map data");
-        return {};
-    }
-
-    data.forEach(row => {
-        const stateCode = row[stateCodeField];
-        if (!stateCode) return;
-        
-        // Normalize state code
-        let normalizedCode = stateCode.trim().toUpperCase();
-        
-        // Ensure code is 2 characters
-        if (normalizedCode.length > 2) {
-            normalizedCode = normalizedCode.substring(0, 2);
-        } else if (normalizedCode.length === 1) {
-            normalizedCode = '0' + normalizedCode;
-        }
-        
-        const value = row.contractValue || 0;
-        
-        if (!stateData[normalizedCode]) {
-            stateData[normalizedCode] = {
-                value: 0,
-                count: 0
-            };
-        }
-        
-        stateData[normalizedCode].value += value;
-        stateData[normalizedCode].count += 1;
-    });
-    
-    return stateData;
-}
-
-function calculateAverageARRLegacy(data) {
-    const resultDiv = document.getElementById('arr-result');
-    const loadingDiv = document.getElementById('arr-loading');
-    const errorDiv = document.getElementById('arr-error');
-    const noDataDiv = document.getElementById('arr-no-data');
-
-    // Reset UI elements
-    resultDiv.style.display = 'none';
-    loadingDiv.style.display = 'block';
-    errorDiv.style.display = 'none';
-    noDataDiv.style.display = 'none';
-
-    try {
-        console.log(`Calculating ARR based on ${data.length} contracts.`);
-
-        if (data.length === 0) {
-            loadingDiv.style.display = 'none';
-            noDataDiv.style.display = 'block';
-            resultDiv.textContent = '$0 / yr';
-            resultDiv.style.display = 'block';
-            return;
-        }
-
-        // Group contracts by duration for weighted ARR calculation
-        const shortTermContracts = []; // Less than 90 days
-        const mediumTermContracts = []; // 90 days to 270 days
-        const longTermContracts = []; // More than 270 days
-        let validContractsCount = 0;
-        
-        data.forEach(row => {
-            if (!row.parsedStartDate || !row.parsedEndDate) return;
-            
-            const value = row.contractValue || 0;
-            const durationDays = calculateDurationDays(row.parsedStartDate, row.parsedEndDate);
-            
-            if (value > 0 && durationDays > 0) {
-                // Categorize by duration
-                if (durationDays < 90) {
-                    shortTermContracts.push({ value, durationDays });
-                } else if (durationDays < 270) {
-                    mediumTermContracts.push({ value, durationDays });
-                } else {
-                    longTermContracts.push({ value, durationDays });
-                }
-                validContractsCount++;
-            }
-        });
-        
-        // Calculate weighted ARR
-        let weightedARR = 0;
-        
-        // Each duration category gets weighted differently
-        if (shortTermContracts.length > 0) {
-            const shortTermARR = shortTermContracts.reduce((sum, contract) => {
-                return sum + (contract.value / contract.durationDays) * 365.25 * 0.5; // 50% weight
-            }, 0) / shortTermContracts.length;
-            
-            weightedARR += shortTermARR * (shortTermContracts.length / validContractsCount);
-        }
-        
-        if (mediumTermContracts.length > 0) {
-            const mediumTermARR = mediumTermContracts.reduce((sum, contract) => {
-                return sum + (contract.value / contract.durationDays) * 365.25 * 0.8; // 80% weight
-            }, 0) / mediumTermContracts.length;
-            
-            weightedARR += mediumTermARR * (mediumTermContracts.length / validContractsCount);
-        }
-        
-        if (longTermContracts.length > 0) {
-            const longTermARR = longTermContracts.reduce((sum, contract) => {
-                return sum + (contract.value / contract.durationDays) * 365.25; // 100% weight
-            }, 0) / longTermContracts.length;
-            
-            weightedARR += longTermARR * (longTermContracts.length / validContractsCount);
-        }
-
-        if (validContractsCount > 0) {
-            resultDiv.textContent = formatConciseCurrency(weightedARR) + " / yr";
-            resultDiv.style.display = 'block';
-            console.log(`Weighted Average ARR: ${weightedARR.toFixed(0)} (from ${validContractsCount} valid contracts)`);
-            noDataDiv.style.display = 'none';
-        } else {
-            noDataDiv.textContent = 'No contracts suitable for ARR calculation found.';
-            noDataDiv.style.display = 'block';
-            resultDiv.textContent = formatConciseCurrency(0) + " / yr";
-            resultDiv.style.display = 'block';
-            console.log("No valid contracts found for ARR calculation.");
-        }
-    } catch (error) {
-        console.error("Error calculating ARR:", error);
-        errorDiv.textContent = `Error calculating ARR: ${error.message}`;
-        errorDiv.style.display = 'block';
-        resultDiv.style.display = 'none';
-    } finally {
-        loadingDiv.style.display = 'none';
-    }
-}
-
-function buildCombinedSankeyData(primeData, subData) {
-    // Create a merged Sankey visualization
-    console.log("Building combined Sankey data...");
-    
-    // Get top agencies
-    const agencies = new Set();
-    primeData.forEach(row => {
-        const agency = row.subAgencyName;
-        if (agency) agencies.add(agency);
-    });
-    subData.forEach(row => {
-        const agency = row.subAgencyName;
-        if (agency) agencies.add(agency);
-    });
-    
-    // Get top prime contractors
-    const primeValues = {};
-    primeData.forEach(row => {
-        const prime = row.primeName;
-        if (!prime) return;
-        primeValues[prime] = (primeValues[prime] || 0) + (row.contractValue || 0);
-    });
-    subData.forEach(row => {
-        const prime = row.primeName;
-        if (!prime) return;
-        primeValues[prime] = (primeValues[prime] || 0) + (row.contractValue || 0);
-    });
-    
-    // Get top subcontractors
-    const subValues = {};
-    subData.forEach(row => {
-        const sub = row.subName;
-        if (!sub) return;
-        subValues[sub] = (subValues[sub] || 0) + (row.contractValue || 0);
-    });
-    
-    // Sort and take top 10 of each
-    const topAgencies = Array.from(agencies).slice(0, 10);
-    const topPrimes = Object.entries(primeValues)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 15)
-        .map(([name]) => name);
-    const topSubs = Object.entries(subValues)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 10)
-        .map(([name]) => name);
-    
-    // Create nodes array
-    const nodes = [];
-    
-    // Add agency nodes
-    topAgencies.forEach(agency => {
-        nodes.push({ name: truncateText(agency, 30), type: 'agency' });
-    });
-    
-    // Add prime nodes
-    topPrimes.forEach(prime => {
-        nodes.push({ name: truncateText(prime, 30), type: 'prime' });
-    });
-    
-    // Add sub nodes
-    topSubs.forEach(sub => {
-        nodes.push({ name: truncateText(sub, 30), type: 'sub' });
-    });
-    
-    // Create links array
     const links = [];
     const nodeMap = {};
     
-    // Create node index map
-    nodes.forEach((node, i) => {
-        nodeMap[node.name] = i;
-    });
+    // Get top agency-prime relationships by value
+    const topRelationships = model.relationships.agencyToPrime
+        .sort((a, b) => b.value - a.value)
+        .slice(0, 10);
     
-    // Create links from agencies to primes
-    const agencyPrimeLinks = {};
+    // Exit early if no relationships
+    if (topRelationships.length === 0) {
+        return { nodes, links };
+    }
     
-    // Process agency to prime links from both datasets
-    const processAgencyPrimeLink = (agency, prime, value) => {
-        if (!agency || !prime || 
-            !nodeMap.hasOwnProperty(truncateText(agency, 30)) || 
-            !nodeMap.hasOwnProperty(truncateText(prime, 30))) {
-            return;
-        }
-        
-        const linkKey = `${agency}|${prime}`;
-        
-        if (!agencyPrimeLinks[linkKey]) {
-            agencyPrimeLinks[linkKey] = {
-                source: nodeMap[truncateText(agency, 30)],
-                target: nodeMap[truncateText(prime, 30)],
-                value: 0
-            };
-        }
-        
-        agencyPrimeLinks[linkKey].value += value;
-    };
+    // Build nodes and node map
+    let nodeIndex = 0;
     
-    primeData.forEach(row => {
-        processAgencyPrimeLink(row.subAgencyName, row.primeName, row.contractValue || 0);
-    });
+    // First, add agency nodes
+    const agencyIds = new Set();
+    topRelationships.forEach(rel => agencyIds.add(rel.source));
     
-    subData.forEach(row => {
-        processAgencyPrimeLink(row.subAgencyName, row.primeName, row.contractValue || 0);
-    });
-    
-    // Add agency-prime links to the links array
-    Object.values(agencyPrimeLinks).forEach(link => {
-        if (link.value > 0) {
-            links.push(link);
+    agencyIds.forEach(agencyId => {
+        const agency = model.agencies[agencyId];
+        if (agency) {
+            nodes.push({
+                name: truncateText(agency.name, 30),
+                id: agencyId,
+                type: 'agency',
+                index: nodeIndex
+            });
+            nodeMap[agencyId] = nodeIndex++;
         }
     });
     
-    // Create links from primes to subs
-    const primeSubLinks = {};
+    // Then, add prime nodes
+    const primeIds = new Set();
+    topRelationships.forEach(rel => primeIds.add(rel.target));
     
-    subData.forEach(row => {
-        const prime = row.primeName;
-        const sub = row.subName;
-        
-        if (!prime || !sub || 
-            !nodeMap.hasOwnProperty(truncateText(prime, 30)) || 
-            !nodeMap.hasOwnProperty(truncateText(sub, 30))) {
-            return;
+    primeIds.forEach(primeId => {
+        const prime = model.primes[primeId];
+        if (prime) {
+            nodes.push({
+                name: truncateText(prime.name, 30),
+                id: primeId,
+                type: 'prime',
+                index: nodeIndex
+            });
+            nodeMap[primeId] = nodeIndex++;
         }
-        
-        const linkKey = `${prime}|${sub}`;
-        
-        if (!primeSubLinks[linkKey]) {
-            primeSubLinks[linkKey] = {
-                source: nodeMap[truncateText(prime, 30)],
-                target: nodeMap[truncateText(sub, 30)],
-                value: 0
-            };
-        }
-        
-        primeSubLinks[linkKey].value += (row.contractValue || 0);
     });
     
-    // Add prime-sub links to the links array
-    Object.values(primeSubLinks).forEach(link => {
-        if (link.value > 0) {
-            links.push(link);
+    // Create links from the top relationships
+    topRelationships.forEach(rel => {
+        if (nodeMap.hasOwnProperty(rel.source) && nodeMap.hasOwnProperty(rel.target)) {
+            links.push({
+                source: nodeMap[rel.source],
+                target: nodeMap[rel.target],
+                value: rel.value
+            });
         }
     });
     
     return { nodes, links };
 }
 
-function combineMapData(primeData, subData) {
-    // Combine map data by adding up values for each state
-    const combinedData = {};
+function processPrimeToSubSankeyData(model) {
+    const nodes = [];
+    const links = [];
+    const nodeMap = {};
     
-    // Process prime data
-    Object.entries(primeData).forEach(([state, data]) => {
-        if (!combinedData[state]) {
-            combinedData[state] = { value: 0, count: 0 };
-        }
-        combinedData[state].value += data.value;
-        combinedData[state].count += data.count;
-    });
+    // Get top prime-sub relationships by value
+    const topRelationships = model.relationships.primeToSub
+        .sort((a, b) => b.value - a.value)
+        .slice(0, 10);
     
-    // Process sub data
-    Object.entries(subData).forEach(([state, data]) => {
-        if (!combinedData[state]) {
-            combinedData[state] = { value: 0, count: 0 };
-        }
-        combinedData[state].value += data.value;
-        combinedData[state].count += data.count;
-    });
+    // Exit early if no relationships
+    if (topRelationships.length === 0) {
+        return { nodes, links };
+    }
     
-    return combinedData;
-}
-
-function calculateAverageARRCombined(primeData, subData) {
-    const resultDiv = document.getElementById('arr-result');
-    const loadingDiv = document.getElementById('arr-loading');
-    const errorDiv = document.getElementById('arr-error');
-    const noDataDiv = document.getElementById('arr-no-data');
-
-    // Reset UI elements
-    resultDiv.style.display = 'none';
-    loadingDiv.style.display = 'block';
-    errorDiv.style.display = 'none';
-    noDataDiv.style.display = 'none';
-
-    try {
-        // Combine contract data
-        const allContracts = [];
-        
-        // Process prime contracts
-        primeData.forEach(row => {
-            if (!row.parsedStartDate || !row.parsedEndDate) return;
-            
-            allContracts.push({
-                value: row.contractValue || 0,
-                durationDays: calculateDurationDays(row.parsedStartDate, row.parsedEndDate)
+    // Build nodes and node map
+    let nodeIndex = 0;
+    
+    // First, add prime nodes
+    const primeIds = new Set();
+    topRelationships.forEach(rel => primeIds.add(rel.source));
+    
+    primeIds.forEach(primeId => {
+        const prime = model.primes[primeId];
+        if (prime) {
+            nodes.push({
+                name: truncateText(prime.name, 30),
+                id: primeId,
+                type: 'prime',
+                index: nodeIndex
             });
-        });
-        
-        // Process subcontracts
-        subData.forEach(row => {
-            if (!row.parsedStartDate || !row.parsedEndDate) return;
-            
-            allContracts.push({
-                value: row.contractValue || 0,
-                durationDays: calculateDurationDays(row.parsedStartDate, row.parsedEndDate)
-            });
-        });
-        
-        console.log(`Calculating ARR based on ${allContracts.length} combined contracts.`);
-
-        if (allContracts.length === 0) {
-            loadingDiv.style.display = 'none';
-            noDataDiv.style.display = 'block';
-            resultDiv.textContent = '$0 / yr';
-            resultDiv.style.display = 'block';
-            return;
-        }
-
-        // Filter valid contracts
-        const validContracts = allContracts.filter(contract => 
-            contract.value > 0 && contract.durationDays > 0
-        );
-        
-        // Group by duration
-        const shortTermContracts = validContracts.filter(c => c.durationDays < 90);
-        const mediumTermContracts = validContracts.filter(c => c.durationDays >= 90 && c.durationDays < 270);
-        const longTermContracts = validContracts.filter(c => c.durationDays >= 270);
-        
-        // Calculate weighted ARR
-        let weightedARR = 0;
-        const validContractsCount = validContracts.length;
-        
-        if (shortTermContracts.length > 0) {
-            const shortTermARR = shortTermContracts.reduce((sum, contract) => {
-                return sum + (contract.value / contract.durationDays) * 365.25 * 0.5; // 50% weight
-            }, 0) / shortTermContracts.length;
-            
-            weightedARR += shortTermARR * (shortTermContracts.length / validContractsCount);
-        }
-        
-        if (mediumTermContracts.length > 0) {
-            const mediumTermARR = mediumTermContracts.reduce((sum, contract) => {
-                return sum + (contract.value / contract.durationDays) * 365.25 * 0.8; // 80% weight
-            }, 0) / mediumTermContracts.length;
-            
-            weightedARR += mediumTermARR * (mediumTermContracts.length / validContractsCount);
-        }
-        
-        if (longTermContracts.length > 0) {
-            const longTermARR = longTermContracts.reduce((sum, contract) => {
-                return sum + (contract.value / contract.durationDays) * 365.25; // 100% weight
-            }, 0) / longTermContracts.length;
-            
-            weightedARR += longTermARR * (longTermContracts.length / validContractsCount);
-        }
-
-        if (validContractsCount > 0) {
-            resultDiv.textContent = formatConciseCurrency(weightedARR) + " / yr";
-            resultDiv.style.display = 'block';
-            console.log(`Weighted Average ARR: ${weightedARR.toFixed(0)} (from ${validContractsCount} valid contracts)`);
-            noDataDiv.style.display = 'none';
-        } else {
-            noDataDiv.textContent = 'No contracts suitable for ARR calculation found.';
-            noDataDiv.style.display = 'block';
-            resultDiv.textContent = formatConciseCurrency(0) + " / yr";
-            resultDiv.style.display = 'block';
-            console.log("No valid contracts found for ARR calculation.");
-        }
-    } catch (error) {
-        console.error("Error calculating combined ARR:", error);
-        errorDiv.textContent = `Error calculating ARR: ${error.message}`;
-        errorDiv.style.display = 'block';
-        resultDiv.style.display = 'none';
-    } finally {
-        loadingDiv.style.display = 'none';
-    }
-}
-
-// --- Events and initialize the page ---
-function setupEventListeners() {
-// Refresh button
-const refreshButton = document.getElementById('refresh-button');
-if (refreshButton) {
-    refreshButton.addEventListener('click', function() {
-        // Clear search input
-        const searchInput = document.getElementById('search-input');
-        if (searchInput) {
-            searchInput.value = '';
-            currentSearchTerm = ''; // Reset tracking variable
-            
-            // Trigger input event to ensure listeners are notified
-            const inputEvent = new Event('input', {
-                bubbles: true,
-                cancelable: true
-            });
-            searchInput.dispatchEvent(inputEvent);
-            
-            // Also try to trigger clear button if it exists
-            const clearBtn = document.querySelector('#search-clear-btn, .search-clear-btn');
-            if (clearBtn) {
-                clearBtn.style.display = 'none'; // Hide the clear button
-            }
-        }
-        
-        // Get the currently selected dataset from the dropdown
-        const datasetSelect = document.getElementById('dataset-select');
-        if (datasetSelect && datasetSelect.value) {
-            const selectedValue = datasetSelect.value;
-            
-            if (selectedValue.startsWith('combined:')) {
-                // Handle combined dataset selection
-                const datasetIds = selectedValue.split(':')[1].split(',');
-                loadCombinedDatasets(datasetIds);
-            } else {
-                // Handle single dataset selection
-                const selectedDataset = DATASETS.find(d => d.id === selectedValue);
-                if (selectedDataset) {
-                    loadSingleDataset(selectedDataset);
-                } else {
-                    updateStatusBanner(`Invalid dataset selected: ${selectedValue}`, 'error');
-                }
-            }
-        } else {
-            updateStatusBanner("Please select a dataset first", "info");
+            nodeMap[primeId] = nodeIndex++;
         }
     });
-}
     
-    // Search input with debounce
-    const searchInput = document.getElementById('search-input');
-    if (searchInput) {
-        let debounceTimer;
-        searchInput.addEventListener('input', () => {
-            clearTimeout(debounceTimer);
-            debounceTimer = setTimeout(() => {
-                console.log("Search input changed, triggering filter update...");
-                applyFiltersAndUpdateVisuals();
-            }, 500); // 500ms delay
-        });
-    }
+    // Then, add sub nodes
+    const subIds = new Set();
+    topRelationships.forEach(rel => subIds.add(rel.target));
     
-    // Filters that trigger visual updates
-    const subAgencyFilter = document.getElementById('sub-agency-filter');
-    const naicsFilter = document.getElementById('naics-filter');
-
-    if (subAgencyFilter) subAgencyFilter.addEventListener('change', applyFiltersAndUpdateVisuals);
-    if (naicsFilter) naicsFilter.addEventListener('change', applyFiltersAndUpdateVisuals);
-}
-function initializeThemeToggle() {
-    const toggleBtn = document.getElementById('theme-toggle-btn');
-    const moonIcon = document.getElementById('moon-icon');
-    const sunIcon = document.getElementById('sun-icon');
-    
-    // Check for saved theme preference or use device preference
-    const savedTheme = localStorage.getItem('theme');
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    
-    // Apply the theme on page load
-    if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
-        document.documentElement.setAttribute('data-theme', 'dark');
-        moonIcon.style.display = 'none';
-        sunIcon.style.display = 'block';
-    }
-    
-    // Toggle theme when button is clicked
-    if (toggleBtn) {
-        toggleBtn.addEventListener('click', function() {
-            const currentTheme = document.documentElement.getAttribute('data-theme');
-            
-            if (currentTheme === 'dark') {
-                document.documentElement.removeAttribute('data-theme');
-                localStorage.setItem('theme', 'light');
-                moonIcon.style.display = 'block';
-                sunIcon.style.display = 'none';
-            } else {
-                document.documentElement.setAttribute('data-theme', 'dark');
-                localStorage.setItem('theme', 'dark');
-                moonIcon.style.display = 'none';
-                sunIcon.style.display = 'block';
-            }
-            
-            // Force immediate update of all charts with theme-aware colors
-            setTimeout(updateChartsForTheme, 50);
-        });
-    }
-}
-function updateTooltipThemes(isDarkMode) {
-    // Update tooltips for the current theme using CSS variables
-    const tooltipSelectors = [
-        '#sankey-tooltip', 
-        '.sankey-tooltip', 
-        '#tav-tcv-tooltip', 
-        '.map-tooltip'
-    ];
-    
-    tooltipSelectors.forEach(selector => {
-        const tooltips = document.querySelectorAll(selector);
-        tooltips.forEach(tooltip => {
-            tooltip.style.backgroundColor = getCssVar('--color-surface');
-            tooltip.style.color = getCssVar('--color-text-primary');
-            tooltip.style.border = `1px solid ${getCssVar('--color-border')}`;
-        });
-    });
-}
-function updateChartsForTheme() {
-    // Clean up tooltips first
-    cleanupTooltips();
-    
-    // Update visualizations if data is available
-    if (unifiedModel) {
-        applyFiltersAndUpdateVisuals();
-    } else if (rawData.primes.length > 0 || rawData.subs.length > 0) {
-        applyFiltersAndUpdateVisuals();
-    }
-}
-function updateDashboardTitle(datasets) {
-    const dashboardTitle = document.getElementById('dashboard-title');
-    const dashboardSubtitle = document.getElementById('dashboard-subtitle');
-    if (!dashboardTitle || !dashboardSubtitle) return;
-
-    if (!datasets || datasets.length === 0) {
-        // Reset to default titles
-        dashboardTitle.textContent = 'Dashboard';
-        dashboardSubtitle.textContent = 'Select an agency dataset to begin';
-        return;
-    }
-    
-    if (Array.isArray(datasets)) {
-        if (datasets.length === 1) {
-            // Single dataset
-            const dataset = datasets[0];
-            const agencyName = dataset.name.split(' (')[0];
-            dashboardTitle.textContent = agencyName + ' Data';
-            dashboardSubtitle.textContent = `Analyzing ${dataset.type} data from USAspending.gov`;
-        } else {
-            // Multiple datasets - use the first one's agency name
-            const agencyNames = new Set(datasets.map(d => d.name.split(' (')[0]));
-            const isSameAgency = agencyNames.size === 1;
-            
-            if (isSameAgency) {
-                // Same agency, different data types
-                const agencyName = Array.from(agencyNames)[0];
-                dashboardTitle.textContent = agencyName + ' Data';
-                dashboardSubtitle.textContent = 'Combined Prime & Subcontract Data';
-            } else {
-                // Different agencies
-                dashboardTitle.textContent = 'Multi-Agency View';
-                dashboardSubtitle.textContent = `${agencyNames.size} agencies selected`;
-            }
-        }
-    } else {
-        // Legacy support for non-array datasets
-        const agencyName = datasets.name.split(' (')[0];
-        dashboardTitle.textContent = agencyName + ' Data';
-        dashboardSubtitle.textContent = `Analyzing ${datasets.type} data from USAspending.gov`;
-    }
-}
-// wednesday.js
-
-// --- Add global variables to store sort state ---
-let leadersTableSort = { key: 'totalValue', dir: 'desc' }; // Default sort for leaders
-let expiringTableSort = { key: 'period_of_performance_current_end_date', dir: 'asc' }; // Default sort for expiring
-
-// --- Utility function to add sort icons ---
-function updateSortIcons(tableId, sortKey, sortDir) {
-    const table = document.getElementById(tableId);
-    if (!table) return;
-
-    table.querySelectorAll('th.sortable-header').forEach(th => {
-        th.classList.remove('sort-asc', 'sort-desc');
-        const icon = th.querySelector('.sort-icon');
-        if (icon) icon.textContent = '↕'; // Reset icon
-
-        if (th.dataset.sortKey === sortKey) {
-            th.classList.add(sortDir === 'asc' ? 'sort-asc' : 'sort-desc');
-            if (icon) icon.textContent = sortDir === 'asc' ? '▲' : '▼';
-        }
-    });
-}
-
-// --- Modify displayContractLeadersTable ---
-function displayContractLeadersTable(leaderData) {
-    const containerId = 'contract-leaders-table-container';
-    const tableId = 'leaders-table'; // Give the table an ID
-    const container = document.getElementById(containerId);
-    if (!container) {
-        console.error(`Container ${containerId} not found.`);
-        return;
-    }
-    setLoading(containerId, false);
-
-    // --- Keep existing setup for export button etc. ---
-    container.innerHTML = ''; // Clear previous
-
-    if (!leaderData || leaderData.length === 0) {
-        displayNoData(containerId, 'No contract leader data found.');
-        return;
-    }
-
-    // Create header section with export button (Keep existing code)
-    const headerSection = document.createElement('div');
-    headerSection.style.display = 'flex';
-    headerSection.style.justifyContent = 'flex-end';
-    headerSection.style.marginBottom = '8px';
-
-    const exportButton = document.createElement('button');
-    exportButton.className = 'button export-btn'; // Added export-btn class
-    exportButton.innerHTML = `
-        <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-            <polyline points="7 10 12 15 17 10"></polyline>
-            <line x1="12" y1="15" x2="12" y2="3"></line>
-        </svg>
-        Export CSV
-    `;
-    exportButton.style.display = 'flex';
-    exportButton.style.alignItems = 'center';
-    exportButton.style.gap = '6px';
-    exportButton.addEventListener('click', () => {
-        const exportData = leaderData.map(leader => ({ /* ... existing export mapping ... */ }));
-        const today = new Date();
-        const dateStr = today.toISOString().split('T')[0];
-        exportToCSV(exportData, `top-contractors-${dateStr}.csv`);
-    });
-    headerSection.appendChild(exportButton);
-    container.appendChild(headerSection);
-
-    // Create a table wrapper div (Keep existing code)
-    const tableWrapper = document.createElement('div');
-    tableWrapper.className = 'table-wrapper';
-    tableWrapper.style.overflow = 'auto';
-    tableWrapper.style.maxHeight = '900px'; // Adjust as needed
-
-    // Create Table Structure
-    const table = document.createElement('table');
-    table.id = tableId; // Assign ID
-    table.className = 'min-w-full divide-y';
-
-    const thead = table.createTHead();
-    const headerRow = thead.insertRow();
-
-    // --- Define headers with sort keys ---
-    const headers = [
-        { text: 'Recipient', scope: 'col', key: 'siName', sortable: false },
-        { text: 'Total Value', scope: 'col', class: 'number', key: 'totalValue', sortable: true }, // Sortable
-        { text: 'Awards', scope: 'col', class: 'number', key: 'numAwards', sortable: false },
-        { text: 'Avg Value', scope: 'col', class: 'number', key: 'avgValue', sortable: true }, // Sortable
-        { text: 'Majority Work', scope: 'col', key: 'dominantNaics', sortable: false },
-        { text: 'USASpending', scope: 'col', class: 'text-center', key: 'usaSpendingLink', sortable: false }
-    ];
-
-    headers.forEach(headerInfo => {
-        const th = document.createElement('th');
-        th.textContent = headerInfo.text;
-        th.scope = headerInfo.scope;
-        if (headerInfo.class) th.className = headerInfo.class;
-        th.dataset.sortKey = headerInfo.key; // Store key
-
-        if (headerInfo.sortable) {
-            th.classList.add('sortable-header');
-            th.style.cursor = 'pointer';
-            const iconSpan = document.createElement('span');
-            iconSpan.className = 'sort-icon';
-            iconSpan.textContent = ' ↕'; // Initial icon
-            th.appendChild(iconSpan);
-
-            // --- Add click listener for sorting ---
-            th.addEventListener('click', () => {
-                const newKey = headerInfo.key;
-                let newDir = 'desc';
-                if (leadersTableSort.key === newKey && leadersTableSort.dir === 'desc') {
-                    newDir = 'asc';
-                }
-                leadersTableSort.key = newKey;
-                leadersTableSort.dir = newDir;
-                // Re-render the table with new sort order
-                displayContractLeadersTable(leaderData); // Pass original data to re-sort
-            });
-        }
-        headerRow.appendChild(th);
-    });
-
-    // --- Sort the data based on current state BEFORE slicing ---
-    const sortKey = leadersTableSort.key;
-    const sortDir = leadersTableSort.dir;
-    const sortedData = [...leaderData].sort((a, b) => {
-        let valA = a[sortKey];
-        let valB = b[sortKey];
-
-        // Handle numeric sorting for value columns
-        if (sortKey === 'totalValue' || sortKey === 'avgValue') {
-            valA = typeof valA === 'number' ? valA : 0;
-            valB = typeof valB === 'number' ? valB : 0;
-        } else { // Basic string compare for others if needed
-            valA = String(valA).toLowerCase();
-            valB = String(valB).toLowerCase();
-        }
-
-        if (valA < valB) return sortDir === 'asc' ? -1 : 1;
-        if (valA > valB) return sortDir === 'asc' ? 1 : -1;
-        return 0;
-    });
-
-    // Display top 10 leaders (or more if needed)
-    const displayData = sortedData.slice(0, 10); // Slice *after* sorting
-
-    const tbody = table.createTBody();
-    tbody.className = 'divide-y';
-
-    // --- Populate table body (Keep existing logic, use displayData) ---
-    displayData.forEach(leader => {
-        const row = tbody.insertRow();
-        // Recipient Name (clickable)
-        let cell = row.insertCell();
-        cell.className = 'font-medium';
-        // ... (rest of nameLink creation) ...
-        const nameLink = document.createElement('a');
-        nameLink.href = '#';
-        nameLink.style.color = getCssVar('--color-primary');
-        nameLink.style.textDecoration = 'none';
-        nameLink.style.fontWeight = '600';
-        nameLink.textContent = truncateText(leader.siName, 35);
-        nameLink.title = `View profile for ${leader.siName}`;
-        nameLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            // showContractorProfile(leader.siName); // Ensure this function exists
-        });
-        cell.appendChild(nameLink);
-
-        // Total Value
-        cell = row.insertCell();
-        cell.className = 'number font-bold';
-        cell.style.color = getCssVar('--color-text-primary');
-        cell.textContent = formatCurrency(leader.totalValue);
-
-        // Num Awards
-        cell = row.insertCell();
-        cell.className = 'number';
-        cell.style.color = getCssVar('--color-text-secondary');
-        cell.textContent = leader.numAwards.toLocaleString();
-
-        // Avg Value
-        cell = row.insertCell();
-        cell.className = 'number';
-        cell.style.color = getCssVar('--color-text-secondary');
-        cell.textContent = formatCurrency(leader.avgValue);
-
-        // Dominant Type/NAICS
-        cell = row.insertCell();
-        cell.className = 'text-xs';
-        cell.style.color = getCssVar('--color-text-secondary');
-        if (leader.dominantNaics) {
-            cell.textContent = truncateText(leader.dominantNaics.desc || "Unknown", 30);
-            cell.title = `${leader.dominantNaics.code} - ${leader.dominantNaics.desc}`;
-        } else {
-            cell.textContent = truncateText(leader.dominantType || "Unknown", 30);
-            cell.title = leader.dominantType || "Unknown";
-        }
-
-        // USASpending Link
-        cell = row.insertCell();
-        cell.className = 'text-center';
-        if (leader.uniqueContractKeys && leader.uniqueContractKeys.length > 0) {
-             if (leader.uniqueContractKeys.length === 1) {
-                const contractId = leader.uniqueContractKeys[0];
-                const link = document.createElement('a');
-                link.href = `https://www.usaspending.gov/award/${contractId}`;
-                link.target = '_blank';
-                link.rel = 'noopener noreferrer';
-                link.className = 'detail-link';
-                link.style.color = getCssVar('--color-primary');
-                link.textContent = 'View';
-                cell.appendChild(link);
-            } else {
-                cell.textContent = `${leader.uniqueContractKeys.length} contracts`;
-                cell.style.color = getCssVar('--color-text-secondary');
-            }
-        } else {
-            cell.textContent = '-';
-            cell.style.color = getCssVar('--color-text-tertiary');
-        }
-    });
-    // --- END of body population ---
-
-    tableWrapper.appendChild(table);
-    container.appendChild(tableWrapper);
-
-    // Add summary text (Keep existing code)
-    if (leaderData.length > 10) {
-        const summaryPara = document.createElement('p');
-        summaryPara.className = 'summary-text';
-        summaryPara.style.color = getCssVar('--color-text-secondary');
-        summaryPara.textContent = `Showing Top 10 of ${leaderData.length} leaders. Sorted by ${sortKey} (${sortDir}).`;
-        container.appendChild(summaryPara);
-    }
-
-    // --- Update sort icons AFTER table is built ---
-    updateSortIcons(tableId, sortKey, sortDir);
-}
-
-
-// --- Modify displayExpiringTable ---
-function displayExpiringTable(expiringData) {
-    const containerId = 'expiring-contracts-table-container';
-    const tableId = 'expiring-table'; // Give the table an ID
-    const container = document.getElementById(containerId);
-    if (!container) {
-        console.error(`Container ${containerId} not found.`);
-        return;
-    }
-    setLoading(containerId, false);
-
-    // --- Keep existing setup for export button etc. ---
-    container.innerHTML = ''; // Clear previous
-
-    if (!expiringData || expiringData.length === 0) {
-        displayNoData(containerId, 'No contracts found expiring in the next 6 months.');
-        return;
-    }
-
-    // Create header section with export button (Keep existing code)
-    const headerSection = document.createElement('div');
-    headerSection.style.display = 'flex';
-    headerSection.style.justifyContent = 'flex-end';
-    headerSection.style.marginBottom = '8px';
-
-    const exportButton = document.createElement('button');
-    exportButton.className = 'button export-btn'; // Added export-btn class
-    exportButton.innerHTML = `
-         <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-            <polyline points="7 10 12 15 17 10"></polyline>
-            <line x1="12" y1="15" x2="12" y2="3"></line>
-        </svg>
-        Export CSV
-    `;
-     exportButton.style.display = 'flex';
-    exportButton.style.alignItems = 'center';
-    exportButton.style.gap = '6px';
-    exportButton.addEventListener('click', () => {
-        const exportData = expiringData.map(contract => ({
-            // ... existing export mapping ...
-             contract_id: contract.award_id_piid || contract.contract_award_unique_key || '',
-             contractor_name: contract.recipient_name || '',
-             description: contract.transaction_description || '',
-             end_date: contract.formatted_end_date ||
-                    (contract.period_of_performance_current_end_date_parsed instanceof Date ?
-                     contract.period_of_performance_current_end_date_parsed.toISOString().split('T')[0] :
-                     contract.period_of_performance_current_end_date || ''),
-             value: typeof contract.current_total_value_of_award === 'number' ?
-                       contract.current_total_value_of_award :
-                       parseSafeFloat(contract.current_total_value_of_award || 0), // Use parseSafeFloat
-             naics_code: contract.naics_code || '',
-             naics_description: contract.naics_description || ''
-        }));
-        const today = new Date();
-        const dateStr = today.toISOString().split('T')[0];
-        exportToCSV(exportData, `expiring-contracts-${dateStr}.csv`);
-    });
-    headerSection.appendChild(exportButton);
-    container.appendChild(headerSection);
-
-    // Create Table Structure
-    const tableWrapper = document.createElement('div');
-    tableWrapper.className = 'table-wrapper';
-    tableWrapper.style.overflow = 'auto';
-    tableWrapper.style.maxHeight = '300px'; // Adjust as needed
-
-    const table = document.createElement('table');
-    table.id = tableId; // Assign ID
-    table.className = 'min-w-full divide-y';
-
-    const thead = table.createTHead();
-    const headerRow = thead.insertRow();
-
-    // --- Define headers with sort keys ---
-    const headers = [
-        { text: 'Contract ID / PIID', key: 'award_id_piid', sortable: false },
-        { text: 'Recipient Name', key: 'recipient_name', sortable: false },
-        { text: 'Description', key: 'transaction_description', sortable: false },
-        { text: 'End Date', key: 'period_of_performance_current_end_date', sortable: true }, // Sortable by date
-        { text: 'Current Value', key: 'current_total_value_of_award', sortable: true, format: 'currency', class: 'number' }, // Sortable by value
-        { text: 'USA Spending', key: 'usa_spending', class: 'text-center', sortable: false }
-    ];
-
-    headers.forEach(headerInfo => {
-        const th = document.createElement('th');
-        th.textContent = headerInfo.text;
-        th.scope = 'col';
-        if (headerInfo.class) th.className = headerInfo.class;
-        if (headerInfo.key === 'current_total_value_of_award') {
-            th.style.textAlign = 'right';
-        }
-        th.dataset.sortKey = headerInfo.key; // Store key
-
-        if (headerInfo.sortable) {
-            th.classList.add('sortable-header');
-            th.style.cursor = 'pointer';
-            const iconSpan = document.createElement('span');
-            iconSpan.className = 'sort-icon';
-            iconSpan.textContent = ' ↕'; // Initial icon
-            th.appendChild(iconSpan);
-
-            // --- Add click listener for sorting ---
-            th.addEventListener('click', () => {
-                const newKey = headerInfo.key;
-                let newDir = 'desc'; // Default to desc for value, asc for date
-                if (newKey === 'period_of_performance_current_end_date') {
-                     newDir = 'asc'; // Dates default to ascending
-                     if(expiringTableSort.key === newKey && expiringTableSort.dir === 'asc') {
-                         newDir = 'desc';
-                     }
-                } else { // Value column
-                    if (expiringTableSort.key === newKey && expiringTableSort.dir === 'desc') {
-                        newDir = 'asc';
-                    }
-                }
-
-                expiringTableSort.key = newKey;
-                expiringTableSort.dir = newDir;
-                // Re-render the table with new sort order
-                displayExpiringTable(expiringData); // Pass original data to re-sort
-            });
-        }
-        headerRow.appendChild(th);
-    });
-
-    // --- Sort the data based on current state ---
-    const sortKey = expiringTableSort.key;
-    const sortDir = expiringTableSort.dir;
-    const sortedData = [...expiringData].sort((a, b) => {
-        let valA = a[sortKey];
-        let valB = b[sortKey];
-
-        if (sortKey === 'current_total_value_of_award') {
-            valA = parseSafeFloat(valA); // Use safe float parsing
-            valB = parseSafeFloat(valB);
-        } else if (sortKey === 'period_of_performance_current_end_date') {
-            // Use pre-parsed dates if available, otherwise parse on the fly
-            valA = a.period_of_performance_current_end_date_parsed || parseDate(valA);
-            valB = b.period_of_performance_current_end_date_parsed || parseDate(valB);
-            // Handle null dates (sort them to the end typically)
-            if (valA === null && valB === null) return 0;
-            if (valA === null) return 1; // Nulls last
-            if (valB === null) return -1; // Nulls last
-        } else {
-             valA = String(valA).toLowerCase();
-             valB = String(valB).toLowerCase();
-        }
-
-        if (valA < valB) return sortDir === 'asc' ? -1 : 1;
-        if (valA > valB) return sortDir === 'asc' ? 1 : -1;
-        return 0;
-    });
-
-
-    const tbody = table.createTBody();
-    tbody.className = 'divide-y';
-
-    // --- Populate table body (use sortedData) ---
-    sortedData.forEach(contract => { // Use sortedData here
-        const row = tbody.insertRow();
-        headers.forEach(headerInfo => {
-            let cell = row.insertCell();
-            // ... (Keep existing cell population logic) ...
-             // Special handling for USA Spending column
-            if (headerInfo.key === 'usa_spending') {
-                cell.className = 'text-center';
-                const contractId = contract.contract_award_unique_key || contract.award_id_piid;
-
-                if (contractId) {
-                    const link = document.createElement('a');
-                    link.href = `https://www.usaspending.gov/award/${contractId}`;
-                    link.target = '_blank';
-                    link.rel = 'noopener noreferrer';
-                    link.className = 'detail-link';
-                    link.style.color = getCssVar('--color-primary');
-                    link.textContent = 'View';
-                    cell.appendChild(link);
-                } else {
-                    cell.textContent = '-';
-                    cell.style.color = getCssVar('--color-text-tertiary');
-                }
-                return;
-            }
-
-            // Regular column processing
-            let value = contract[headerInfo.key] || '-';
-
-            // For description, look for alternative fields if the main one is empty
-            if (headerInfo.key === 'transaction_description' && (value === '-' || value === '')) {
-                value = contract.prime_award_base_transaction_description ||
-                        contract.award_description ||
-                        contract.description || '-';
-            }
-
-            // Format date or currency if specified
-            if (headerInfo.key === 'period_of_performance_current_end_date') {
-                if (contract.period_of_performance_current_end_date_parsed instanceof Date) {
-                    value = contract.period_of_performance_current_end_date_parsed.toISOString().split('T')[0];
-                } else if (contract.formatted_end_date) {
-                     value = contract.formatted_end_date; // Use pre-formatted if parsed is missing
-                 } else {
-                     value = parseDate(value)?.toISOString().split('T')[0] || 'Invalid Date'; // Fallback parsing
-                 }
-            } else if (headerInfo.format === 'currency') {
-                value = formatCurrency(parseSafeFloat(value)); // Ensure value is parsed before formatting
-                cell.className = 'number'; // Add number class for right alignment
-            }
-
-            // Determine max length based on column
-            let maxLength = 40;
-            if (headerInfo.key === 'transaction_description') {
-                maxLength = 60; // Allow longer text for description
-                cell.style.maxWidth = '250px'; // Limit width of description cell
-                cell.style.wordWrap = 'break-word'; // Allow word wrapping
-            }
-
-            cell.textContent = truncateText(value, maxLength);
-            cell.title = String(value) !== '-' && String(value) !== 'Invalid Date' ? String(value) : ''; // Set title for full text on hover
-            if (headerInfo.class) cell.className += ` ${headerInfo.class}`; // Append class
-
-             // Apply proper text color based on content
-            if (value === '-' || value === 'Invalid Date') {
-                cell.style.color = getCssVar('--color-text-tertiary');
-            } else {
-                cell.style.color = getCssVar('--color-text-primary');
-            }
-        });
-    });
-    // --- END of body population ---
-
-    tableWrapper.appendChild(table);
-    container.appendChild(tableWrapper);
-
-    // Add summary text
-    const summaryPara = document.createElement('p');
-    summaryPara.className = 'summary-text';
-    summaryPara.style.color = getCssVar('--color-text-secondary');
-    summaryPara.textContent = `Showing ${sortedData.length} expiring contracts. Sorted by ${sortKey} (${sortDir}).`;
-    container.appendChild(summaryPara);
-
-    // --- Update sort icons AFTER table is built ---
-    updateSortIcons(tableId, sortKey, sortDir);
-}
-document.addEventListener('DOMContentLoaded', function() {
-    console.log("DOM fully loaded and parsed");
-    
-    try {
-        // Initialize the dataset selector dropdown
-        initializeDatasetSelector();
-        
-        // Initialize theme toggle
-        initializeThemeToggle();
-
-        // Initial dashboard setup
-        updateDashboardTitle(null);
-        resetUIForNoDataset();
-        updateDateDisplay();
-        
-        // Setup all event listeners
-        setupEventListeners();
-        
-        // Initialize preset views with timeout
-        setTimeout(function() {
-            try {
-                initializePresetViews();
-                console.log("Preset views initialized successfully");
-            } catch(e) {
-                console.error("Error initializing preset views:", e);
-            }
-        }, 500);
-        
-        // Auto-load a dataset (SOCOM combined if possible)
-        const socomPrimes = DATASETS.find(d => d.id === 'socom_primes');
-        const socomSubs = DATASETS.find(d => d.id === 'socom');
-        
-        if (socomPrimes && socomSubs) {
-            console.log("Automatically loading combined SOCOM dataset...");
-            
-            // Update the dropdown to show SOCOM as selected
-            const datasetSelect = document.getElementById('dataset-select');
-            if (datasetSelect) {
-                // Look for the combined SOCOM option
-                Array.from(datasetSelect.options).forEach(option => {
-                    if (option.value === `combined:${socomPrimes.id},${socomSubs.id}`) {
-                        datasetSelect.value = option.value;
-                    }
-                });
-            }
-            
-            // Load combined datasets
-            loadCombinedDatasets([socomPrimes.id, socomSubs.id]);
-        } else if (socomPrimes) {
-            console.log("Automatically loading SOCOM primes dataset...");
-            
-            // Update the dropdown to show SOCOM as selected
-            const datasetSelect = document.getElementById('dataset-select');
-            if (datasetSelect) {
-                datasetSelect.value = 'socom_primes';
-            }
-            
-            // Load the SOCOM dataset
-            loadSingleDataset(socomPrimes);
-        } else {
-            console.log("SOCOM dataset not found in the DATASETS array");
-        }
-        
-        console.log("Dashboard initialized.");
-    } catch (e) {
-        console.error("Error during dashboard initialization:", e);
-    }
-});
-
-// Handle window resize events
-window.addEventListener('resize', function() {
-    clearTimeout(window.resizeTimer);
-    window.resizeTimer = setTimeout(function() {
-       console.log("Window resized, redrawing charts...");
-       
-       // Clean up tooltips first
-       cleanupTooltips();
-       
-       // Force charts to redraw after resize
-       if (tavTcvChartInstance) {
-           tavTcvChartInstance.resize();
-       }
-       
-       // Redraw visualizations if data is available
-       if (unifiedModel) {
-           applyFiltersAndUpdateVisuals();
-       } else if (rawData.primes.length > 0 || rawData.subs.length > 0) {
-           applyFiltersAndUpdateVisuals();
-       }
-   }, 250); // Debounce for 250ms
-});
-// Helper function to add prime nodes and their subs
-function addPrimeNodes(topPrimes, model, parentNode) {
-    topPrimes.forEach(prime => {
-        const primeData = model.primes[prime.id];
-        if (!primeData) return;
-        
-        const primeNode = {
-            name: primeData.name,
-            id: "prime-" + Math.random().toString(36).substring(2, 9),
-            value: prime.value,
-            children: []
-        };
-        
-        // Find subs for this prime
-        const subsForPrime = {};
-        
-        // Get prime to sub relationships
-        model.relationships.primeToSub.forEach(rel => {
-            if (rel.source === prime.id) {
-                const subId = rel.target;
-                if (!subsForPrime[subId]) {
-                    subsForPrime[subId] = 0;
-                }
-                subsForPrime[subId] += rel.value;
-            }
-        });
-        
-        // Sort subs by value and take top 5
-        const topSubs = Object.entries(subsForPrime)
-            .sort((a, b) => b[1] - a[1])
-            .slice(0, 5)
-            .map(([subId, value]) => ({
+    subIds.forEach(subId => {
+        const sub = model.subs[subId];
+        if (sub) {
+            nodes.push({
+                name: truncateText(sub.name, 30),
                 id: subId,
-                value: value
-            }));
-            
-        // Add sub nodes
-        topSubs.forEach(sub => {
-            const subData = model.subs[sub.id];
-            if (!subData) return;
-            
-            primeNode.children.push({
-                name: subData.name,
-                id: "sub-" + Math.random().toString(36).substring(2, 9),
-                value: sub.value,
-                isSub: true // Explicitly mark as a subcontractor
+                type: 'sub',
+                index: nodeIndex
             });
-        });
-        
-        // Add prime if it has significant value
-        if (prime.value > 100000) {
-            parentNode.children.push(primeNode);
+            nodeMap[subId] = nodeIndex++;
         }
     });
-}
-function initializeSankeyFilters() {
-  // Find the existing filter container - this is where your current filters are located
-  const filtersContainer = document.querySelector('div[style*="display: flex; flex-direction: column"]');
-  
-  if (!filtersContainer) {
-    console.error("Filter container not found, cannot add Sankey visualization options");
-    return;
-  }
-  
-  // Create a heading for Sankey visualization options
-  const sankeyHeading = document.createElement('h2');
-  sankeyHeading.style.fontSize = '14px';
-  sankeyHeading.style.margin = '0';
-  sankeyHeading.textContent = 'Sankey Visualization';
-  
-  // Create the agency field selector
-  const agencyFieldSelect = document.createElement('select');
-  agencyFieldSelect.id = 'sankey-agency-field';
-  agencyFieldSelect.className = 'input-select';
-  agencyFieldSelect.style.width = '100%';
-  
-  // Add options for agency field
-  agencyFieldSelect.innerHTML = `
-    <option value="agencyName">Agency</option>
-    <option value="subAgencyName" selected>Sub-Agency</option>
-    <option value="officeName">Office</option>
-  `;
-  
-  // Create the contractor field selector
-  const contractorFieldSelect = document.createElement('select');
-  contractorFieldSelect.id = 'sankey-contractor-field';
-  contractorFieldSelect.className = 'input-select';
-  contractorFieldSelect.style.width = '100%';
-  
-  // Add options for contractor field
-  contractorFieldSelect.innerHTML = `
-    <option value="primeName" selected>Prime Contractors</option>
-    <option value="subName">Subcontractors</option>
-  `;
-  
-  // Add the refresh button to the container for reference
-  const refreshButton = document.getElementById('refresh-button');
-  
-  // Insert Sankey controls before the refresh button and after the NAICS filter
-  if (refreshButton && refreshButton.parentNode) {
-    // Insert before the status banner
-    const statusBanner = document.getElementById('status-banner');
-    if (statusBanner) {
-      filtersContainer.insertBefore(sankeyHeading, statusBanner);
-      filtersContainer.insertBefore(agencyFieldSelect, statusBanner);
-      filtersContainer.insertBefore(contractorFieldSelect, statusBanner);
-    } else {
-      // Fallback, insert before refresh button
-      filtersContainer.insertBefore(sankeyHeading, refreshButton);
-      filtersContainer.insertBefore(agencyFieldSelect, refreshButton);
-      filtersContainer.insertBefore(contractorFieldSelect, refreshButton);
-    }
-  } else {
-    // If refresh button not found, just append to the end
-    filtersContainer.appendChild(sankeyHeading);
-    filtersContainer.appendChild(agencyFieldSelect);
-    filtersContainer.appendChild(contractorFieldSelect);
-  }
-  
-  // Add event listeners to update visualization when options change
-  agencyFieldSelect.addEventListener('change', applyFiltersAndUpdateVisuals);
-  contractorFieldSelect.addEventListener('change', applyFiltersAndUpdateVisuals);
-}
-
-// Process data for the left Sankey panel based on selection
-function processSankeyDataForLeftPanel(model, selectedField) {
-  // Filter to top relationships by value
-  const topAgencyToPrime = model.relationships.agencyToPrime
-    .sort((a, b) => b.value - a.value)
-    .slice(0, 10);
-      
-  const nodes = [];
-  const links = [];
-  const nodeMap = {};
-  
-  // Field types to entity types mapping
-  const fieldToEntityType = {
-    'agencyName': 'agency',
-    'subAgencyName': 'subagency',
-    'officeName': 'office',
-    'primeName': 'prime'
-  };
-  
-  // Get appropriate field name from the entity based on selection
-  const getEntityName = (entityId, type) => {
-    if (type === 'prime') {
-      return model.primes[entityId]?.name || 'Unknown';
-    }
     
-    // For agency entities, determine based on selected field
-    switch (selectedField) {
-      case 'agencyName':
-        return model.agencies[entityId]?.name || 'Unknown Agency';
-      case 'subAgencyName':
-        return model.subAgencies[entityId]?.name || 'Unknown Sub-Agency';
-      case 'officeName':
-        return model.offices[entityId]?.name || 'Unknown Office';
-      default:
-        return 'Unknown';
-    }
-  };
-  
-  // Get appropriate source entity ID based on selection
-  const getSourceEntityId = (linkData) => {
-    const contract = model.contracts[linkData.contractId];
-    if (!contract) return null;
-    
-    switch (selectedField) {
-      case 'agencyName':
-        return contract.agencyId;
-      case 'subAgencyName':
-        return contract.subAgencyId;
-      case 'officeName':
-        return contract.officeId;
-      default:
-        return contract.subAgencyId; // Default to sub-agency
-    }
-  };
-  
-  // Process each relationship
-  topAgencyToPrime.forEach(link => {
-    const sourceId = getSourceEntityId(link);
-    const targetId = link.target; // Prime ID
-    
-    if (!sourceId || !targetId) return;
-    
-    // Get entity name based on type and add node if not already added
-    const sourceName = getEntityName(sourceId, fieldToEntityType[selectedField]);
-    const targetName = getEntityName(targetId, 'prime');
-    
-    // Add source node if not yet added
-    if (!nodeMap[sourceId]) {
-      const nodeIndex = nodes.length;
-      nodes.push({
-        name: truncateText(sourceName, 30),
-        id: sourceId,
-        type: fieldToEntityType[selectedField],
-        index: nodeIndex
-      });
-      nodeMap[sourceId] = nodeIndex;
-    }
-    
-    // Add target node if not yet added
-    if (!nodeMap[targetId]) {
-      const nodeIndex = nodes.length;
-      nodes.push({
-        name: truncateText(targetName, 30),
-        id: targetId,
-        type: 'prime',
-        index: nodeIndex
-      });
-      nodeMap[targetId] = nodeIndex;
-    }
-    
-    // Add link
-    links.push({
-      source: nodeMap[sourceId],
-      target: nodeMap[targetId],
-      value: link.value
+    // Create links from the top relationships
+    topRelationships.forEach(rel => {
+        if (nodeMap.hasOwnProperty(rel.source) && nodeMap.hasOwnProperty(rel.target)) {
+            links.push({
+                source: nodeMap[rel.source],
+                target: nodeMap[rel.target],
+                value: rel.value
+            });
+        }
     });
-  });
-  
-  return { nodes, links };
-}
-
-// Process data for the right Sankey panel based on selection
-function processSankeyDataForRightPanel(model, selectedField) {
-  // Filter to top relationships by value
-  const topPrimeToSub = model.relationships.primeToSub
-    .sort((a, b) => b.value - a.value)
-    .slice(0, 10);
-      
-  const nodes = [];
-  const links = [];
-  const nodeMap = {};
-  
-  // If no subcontract data, return empty arrays
-  if (topPrimeToSub.length === 0) {
+    
     return { nodes, links };
-  }
-  
-  // Field types to entity types mapping
-  const fieldToEntityType = {
-    'primeName': 'prime',
-    'subName': 'sub'
-  };
-  
-  // Get entity name based on type
-  const getEntityName = (entityId, type) => {
-    if (type === 'prime') {
-      return model.primes[entityId]?.name || 'Unknown Prime';
-    } else if (type === 'sub') {
-      return model.subs[entityId]?.name || 'Unknown Sub';
-    }
-    return 'Unknown';
-  };
-  
-  // Process each relationship
-  topPrimeToSub.forEach(link => {
-    const sourceId = link.source; // Prime ID
-    const targetId = link.target; // Sub ID
-    
-    // Get entity names
-    const sourceName = getEntityName(sourceId, 'prime');
-    const targetName = getEntityName(targetId, 'sub');
-    
-    // Add source node if not yet added
-    if (!nodeMap[sourceId]) {
-      const nodeIndex = nodes.length;
-      nodes.push({
-        name: truncateText(sourceName, 30),
-        id: sourceId,
-        type: 'prime',
-        index: nodeIndex
-      });
-      nodeMap[sourceId] = nodeIndex;
-    }
-    
-    // Add target node if not yet added
-    if (!nodeMap[targetId]) {
-      const nodeIndex = nodes.length;
-      nodes.push({
-        name: truncateText(targetName, 30),
-        id: targetId,
-        type: 'sub',
-        index: nodeIndex
-      });
-      nodeMap[targetId] = nodeIndex;
-    }
-    
-    // Add link
-    links.push({
-      source: nodeMap[sourceId],
-      target: nodeMap[targetId],
-      value: link.value
-    });
-  });
-  
-  return { nodes, links };
 }
 
-// Helper mapping for panel titles
-const agencyTitleMap = {
-  'agencyName': 'Agency',
-  'subAgencyName': 'Sub-Agency',
-  'officeName': 'Office'
-};
-
-// Create tooltip for Sankey diagram
-function createSankeyTooltip() {
-  // Remove any existing tooltip
-  const oldTooltip = document.getElementById('sankey-tooltip');
-  if (oldTooltip) {
-    document.body.removeChild(oldTooltip);
-  }
-  
-  // Create new tooltip
-  const tooltip = document.createElement('div');
-  tooltip.id = 'sankey-tooltip';
-  tooltip.style.position = 'absolute';
-  tooltip.style.padding = '10px';
-  tooltip.style.backgroundColor = getCssVar('--color-surface');
-  tooltip.style.color = getCssVar('--color-text-primary');
-  tooltip.style.border = `1px solid ${getCssVar('--color-border')}`;
-  tooltip.style.borderRadius = '4px';
-  tooltip.style.pointerEvents = 'none';
-  tooltip.style.zIndex = '99999';
-  tooltip.style.display = 'none';
-  tooltip.style.fontSize = '12px';
-  tooltip.style.boxShadow = '0 2px 4px rgba(0,0,0,0.2)';
-  document.body.appendChild(tooltip);
-  
-  return tooltip;
-}
-
-// Get colors for Sankey nodes based on current theme
-function getSankeyNodeColors() {
-  return {
-    agency: getCssVar('--chart-color-tertiary'),
-    subagency: getCssVar('--chart-color-tertiary'),
-    office: getCssVar('--chart-color-tertiary'),
-    prime: getCssVar('--chart-color-primary'),
-    sub: getCssVar('--chart-color-secondary')
-  };
-}
-
-// Enhanced version of the Sankey chart display function
-function displayEnhancedSankeyChart(model) {
-  console.log("Rendering enhanced Sankey chart with model data");
-  
-  const containerId = 'sankey-chart-container';
-  const container = document.getElementById(containerId);
-  
-  if (!container) {
-    console.error("Sankey chart container not found.");
-    return;
-  }
-
-  // Get selected visualization options from the filter panel
-  const agencyField = document.getElementById('sankey-agency-field')?.value || 'subAgencyName';
-  const contractorField = document.getElementById('sankey-contractor-field')?.value || 'primeName';
-  
-  // Clear previous content
-  container.innerHTML = '';
-  
-  // Set up container layout for split panels
-  const panelsContainer = document.createElement('div');
-  panelsContainer.style.display = 'flex';
-  panelsContainer.style.flexDirection = 'row';
-  panelsContainer.style.gap = '20px';
-  panelsContainer.style.height = 'calc(100% - 40px)';
-  container.appendChild(panelsContainer);
-  
-  // Create container for each panel
-  const leftPanelContainer = document.createElement('div');
-  leftPanelContainer.id = 'agency-prime-panel';
-  leftPanelContainer.style.flex = '1';
-  
-  const rightPanelContainer = document.createElement('div');
-  rightPanelContainer.id = 'prime-sub-panel';
-  rightPanelContainer.style.flex = '1';
-  
-  panelsContainer.appendChild(leftPanelContainer);
-  panelsContainer.appendChild(rightPanelContainer);
-  
-  // Add panel titles with selected field information
-  const leftTitle = document.createElement('div');
-  leftTitle.style.textAlign = 'center';
-  leftTitle.style.marginBottom = '10px';
-  leftTitle.style.fontWeight = 'bold';
-  leftTitle.style.color = getCssVar('--color-text-primary');
-  leftTitle.textContent = `${agencyTitleMap[agencyField] || 'Agency'} to Prime Contractors`;
-  leftPanelContainer.appendChild(leftTitle);
-  
-  const rightTitle = document.createElement('div');
-  rightTitle.style.textAlign = 'center';
-  rightTitle.style.marginBottom = '10px';
-  rightTitle.style.fontWeight = 'bold';
-  rightTitle.style.color = getCssVar('--color-text-primary');
-  rightTitle.textContent = `Prime to ${contractorField === 'subName' ? 'Subcontractors' : 'Projects'}`;
-  rightPanelContainer.appendChild(rightTitle);
-  
-  // Create SVGs for each panel
-  const leftSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-  leftSvg.id = 'agency-prime-sankey';
-  leftSvg.setAttribute('width', '100%');
-  leftSvg.setAttribute('height', '100%');
-  leftPanelContainer.appendChild(leftSvg);
-  
-  const rightSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-  rightSvg.id = 'prime-sub-sankey';
-  rightSvg.setAttribute('width', '100%');
-  rightSvg.setAttribute('height', '100%');
-  rightPanelContainer.appendChild(rightSvg);
-  
-  setLoading(containerId, false);
-  
-  if (!model || 
-     (!model.relationships.agencyToPrime.length && !model.relationships.primeToSub.length)) {
-    displayNoData(containerId, 'No data available for Sankey diagram.');
-    return;
-  }
-  
-  try {
-    // Create tooltip
-    const tooltip = createSankeyTooltip();
+function drawSankeyDiagram(svgSelection, nodes, links, width, height, margin, tooltip, panelSide) {
+    // Create Sankey generator
+    const sankey = d3.sankey()
+        .nodeWidth(15)
+        .nodePadding(10)
+        .extent([[margin.left, margin.top], [width - margin.right, height - margin.bottom]]);
     
-    // Set dimensions for each panel
-    const panelWidth = leftPanelContainer.clientWidth || 300;
-    const panelHeight = leftPanelContainer.clientHeight || 400;
-    const margin = {top: 20, right: 20, bottom: 20, left: 20};
-    
-    // Get colors based on theme
-    const nodeColors = getSankeyNodeColors();
-    const nodeStrokeColor = getCssVar('--color-surface');
-    
-    // Create D3 selections
-    const leftSvgSelection = d3.select(leftSvg)
-      .attr('width', panelWidth)
-      .attr('height', panelHeight);
-        
-    const rightSvgSelection = d3.select(rightSvg)
-      .attr('width', panelWidth)
-      .attr('height', panelHeight);
-    
-    // Process data for both panels based on selected fields
-    const leftSankeyData = processSankeyDataForLeftPanel(model, agencyField);
-    const rightSankeyData = processSankeyDataForRightPanel(model, contractorField);
-    
-    // Draw the Sankey diagrams
-    drawSankeyDiagram(
-      leftSvgSelection,
-      leftSankeyData.nodes,
-      leftSankeyData.links,
-      panelWidth,
-      panelHeight,
-      margin,
-      nodeColors,
-      nodeStrokeColor,
-      tooltip,
-      'left'
-    );
-    
-    if (rightSankeyData.nodes.length > 0 && rightSankeyData.links.length > 0) {
-      drawSankeyDiagram(
-        rightSvgSelection,
-        rightSankeyData.nodes,
-        rightSankeyData.links,
-        panelWidth,
-        panelHeight,
-        margin,
-        nodeColors,
-        nodeStrokeColor,
-        tooltip,
-        'right'
-      );
-    } else {
-      // No data for right panel
-      rightSvgSelection.append("text")
-        .attr("x", panelWidth / 2)
-        .attr("y", panelHeight / 2)
-        .attr("text-anchor", "middle")
-        .attr("font-size", "12px")
-        .attr("fill", getCssVar('--color-text-secondary'))
-        .attr("opacity", 0.7)
-        .text(`No ${contractorField === 'subName' ? 'subcontractor' : 'project'} data available`);
-    }
-  } catch (error) {
-    console.error("Error rendering Sankey charts:", error);
-    displayError(containerId, `Error rendering Sankey charts: ${error.message}`);
-  }
-}
-
-// Draw a Sankey diagram with the provided data
-function drawSankeyDiagram(svgSelection, nodes, links, width, height, margin, nodeColors, nodeStrokeColor, tooltip, panelSide) {
-  // Create Sankey generator
-  const sankey = d3.sankey()
-    .nodeWidth(15)
-    .nodePadding(10)
-    .extent([[margin.left, margin.top], [width - margin.right, height - margin.bottom]]);
-  
-  // Apply Sankey to data
-  const graph = sankey({
-    nodes: nodes.map(d => Object.assign({}, d)),
-    links: links.map(d => Object.assign({}, d))
-  });
-  
-  // Draw links with gradients
-  const defs = svgSelection.append('defs');
-  
-  graph.links.forEach((link, i) => {
-    const gradientId = `${panelSide}-link-gradient-${i}`;
-    const sourceColor = nodeColors[link.source.type] || '#999';
-    const targetColor = nodeColors[link.target.type] || '#999';
-    
-    const gradient = defs.append('linearGradient')
-      .attr('id', gradientId)
-      .attr('gradientUnits', 'userSpaceOnUse')
-      .attr('x1', link.source.x1)
-      .attr('y1', link.source.y0 + (link.source.y1 - link.source.y0) / 2)
-      .attr('x2', link.target.x0)
-      .attr('y2', link.target.y0 + (link.target.y1 - link.target.y0) / 2);
-        
-    gradient.append('stop')
-      .attr('offset', '0%')
-      .attr('stop-color', sourceColor)
-      .attr('stop-opacity', 0.8);
-        
-    gradient.append('stop')
-      .attr('offset', '100%')
-      .attr('stop-color', targetColor)
-      .attr('stop-opacity', 0.8);
-        
-    link.gradientId = gradientId;
-  });
-  
-  // Draw links
-  svgSelection.append('g')
-    .selectAll('path')
-    .data(graph.links)
-    .enter()
-    .append('path')
-    .attr('d', d3.sankeyLinkHorizontal())
-    .attr('stroke', (d) => `url(#${d.gradientId})`)
-    .attr('stroke-width', d => Math.max(1, d.width))
-    .attr('stroke-opacity', 0.5)
-    .attr('fill', 'none')
-    .attr('cursor', 'pointer')
-    .on('mouseover', function(event, d) {
-      // Show tooltip
-      const html = `
-        <div style="font-weight: bold; margin-bottom: 5px;">${d.source.name} → ${d.target.name}</div>
-        <div>Value: ${formatCurrency(d.value)}</div>
-      `;
-      tooltip.innerHTML = html;
-      tooltip.style.display = 'block';
-      tooltip.style.left = (event.pageX + 10) + 'px';
-      tooltip.style.top = (event.pageY - 28) + 'px';
-      
-      // Highlight link
-      d3.select(this).attr('stroke-opacity', 0.8);
-    })
-    .on('mousemove', function(event) {
-      tooltip.style.left = (event.pageX + 10) + 'px';
-      tooltip.style.top = (event.pageY - 28) + 'px';
-    })
-    .on('mouseout', function() {
-      tooltip.style.display = 'none';
-      d3.select(this).attr('stroke-opacity', 0.5);
+    // Apply Sankey to data
+    const graph = sankey({
+        nodes: nodes.map(d => Object.assign({}, d)),
+        links: links.map(d => Object.assign({}, d))
     });
     
-  // Draw nodes
-  svgSelection.append('g')
-    .selectAll('rect')
-    .data(graph.nodes)
-    .enter()
-    .append('rect')
-    .attr('x', d => d.x0)
-    .attr('y', d => d.y0)
-    .attr('height', d => Math.max(1, d.y1 - d.y0))
-    .attr('width', d => Math.max(1, d.x1 - d.x0))
-    .attr('fill', d => nodeColors[d.type] || '#999')
-    .attr('stroke', nodeStrokeColor)
-    .attr('stroke-width', 1)
-    .attr('cursor', 'pointer')
-    .attr('data-id', d => d.id)
-    .attr('data-type', d => d.type)
-    .on('mouseover', function(event, d) {
-      // Show tooltip
-      const html = `
-        <div style="font-weight: bold; margin-bottom: 5px;">${d.name}</div>
-        <div>Type: ${d.type.charAt(0).toUpperCase() + d.type.slice(1)}</div>
-        <div>Total Value: ${formatCurrency(d.value)}</div>
-      `;
-      tooltip.innerHTML = html;
-      tooltip.style.display = 'block';
-      tooltip.style.left = (event.pageX + 10) + 'px';
-      tooltip.style.top = (event.pageY - 28) + 'px';
-      
-      // Highlight node
-      d3.select(this)
-        .attr('stroke', getCssVar('--chart-color-primary'))
-        .attr('stroke-width', 2);
-          
-      // Cross-panel highlighting for prime nodes
-      if (panelSide === 'left' && d.type === 'prime') {
-        d3.select('#prime-sub-sankey')
-          .selectAll('rect')
-          .filter(node => node.type === 'prime' && node.id === d.id)
-          .attr('stroke', getCssVar('--chart-color-primary'))
-          .attr('stroke-width', 2);
-      } else if (panelSide === 'right' && d.type === 'prime') {
-        d3.select('#agency-prime-sankey')
-          .selectAll('rect')
-          .filter(node => node.type === 'prime' && node.id === d.id)
-          .attr('stroke', getCssVar('--chart-color-primary'))
-          .attr('stroke-width', 2);
-      }
-    })
-    .on('mousemove', function(event) {
-      tooltip.style.left = (event.pageX + 10) + 'px';
-      tooltip.style.top = (event.pageY - 28) + 'px';
-    })
-    .on('mouseout', function() {
-      tooltip.style.display = 'none';
-      d3.select(this)
-        .attr('stroke', nodeStrokeColor)
-        .attr('stroke-width', 1);
-          
-      // Remove cross-panel highlighting
-      if (panelSide === 'left') {
-        d3.select('#prime-sub-sankey')
-          .selectAll('rect')
-          .attr('stroke', nodeStrokeColor)
-          .attr('stroke-width', 1);
-      } else {
-        d3.select('#agency-prime-sankey')
-          .selectAll('rect')
-          .attr('stroke', nodeStrokeColor)
-          .attr('stroke-width', 1);
-      }
-    });
-  
-  // Add node labels
-  svgSelection.append('g')
-    .selectAll('text')
-    .data(graph.nodes)
-    .enter()
-    .append('text')
-    .attr('x', d => d.x0 < width / 2 ? d.x1 + 6 : d.x0 - 6)
-    .attr('y', d => (d.y1 + d.y0) / 2)
-    .attr('dy', '0.35em')
-    .attr('text-anchor', d => d.x0 < width / 2 ? 'start' : 'end')
-    .text(d => d.name)
-    .attr('font-size', '11px')
-    .attr('fill', getCssVar('--color-text-primary'))
-    .each(function(d) {
-      // Hide labels for small nodes
-      if ((d.y1 - d.y0) < 5) {
-        d3.select(this).remove();
-      }
-    });
-      
-  // Add note about showing only top connections
-  svgSelection.append("text")
-    .attr("x", width - 10)
-    .attr("y", height - 10)
-    .attr("text-anchor", "end")
-    .attr("font-size", "10px")
-    .attr("fill", getCssVar('--color-text-secondary'))
-    .attr("opacity", 0.7)
-    .text("Showing top 10 flows by value");
-}
-
-// Override the existing displayEnhancedSankeyChart function
-window.displayEnhancedSankeyChart = displayEnhancedSankeyChart;
-
-// Find any existing displaySankeyChart or displayEnhancedSankeyChartWithSelectors functions
-// and replace them with our new implementation
-if (typeof window.displaySankeyChart === 'function') {
-  window.displaySankeyChart = displayEnhancedSankeyChart;
-}
-
-if (typeof window.displayEnhancedSankeyChartWithSelectors === 'function') {
-  window.displayEnhancedSankeyChartWithSelectors = displayEnhancedSankeyChart;
-}
-
-// Initialize during page load if not already done
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initializeSankeyFilters);
-} else {
-  // Document already loaded, run the initialization
-  initializeSankeyFilters();
-}
-
-// Make sure the appropriate function gets called during visualization updates
-const originalApplyFilters = window.applyFiltersAndUpdateVisuals;
-if (typeof originalApplyFilters === 'function') {
-  window.applyFiltersAndUpdateVisuals = function() {
-    // Call the original function first
-    originalApplyFilters.apply(this, arguments);
+    // Create node colors based on type
+    const nodeColors = {
+        'agency': getCssVar('--chart-color-tertiary'),
+        'subagency': getCssVar('--chart-color-tertiary'),
+        'office': getCssVar('--chart-color-tertiary'),
+        'prime': getCssVar('--chart-color-primary'),
+        'sub': getCssVar('--chart-color-secondary')
+    };
     
-    // Make sure our enhanced Sankey display function gets called
-    if (typeof displaySankeyChart === 'function' && 
-        typeof displayEnhancedSankeyChart === 'function' &&
-        displaySankeyChart !== displayEnhancedSankeyChart) {
-      // Replace the old function with our enhanced version
-      window.displaySankeyChart = displayEnhancedSankeyChart;
-    }
-  };
-}
-/**
- * Fix for "processNaicsDistributionData is not defined" error
- * 
- * This ensures the function is available when needed during data loading
- */
-
-// Define the function directly if it doesn't exist yet
-if (typeof window.processNaicsDistributionData !== 'function') {
-  /**
-   * Process data for NAICS distribution visualization with proper filtering
-   * @param {Object} model - The unified data model
-   * @param {string} naicsFilter - Current NAICS filter selection
-   * @param {string} subAgencyFilter - Current sub-agency filter selection
-   * @param {string} searchTerm - Current search term
-   */
-  window.processNaicsDistributionData = function(model, naicsFilter, subAgencyFilter, searchTerm) {
-    if (!model || !model.contracts) {
-      return [];
-    }
-
-    // Handle undefined parameters
-    naicsFilter = naicsFilter || '';
-    subAgencyFilter = subAgencyFilter || '';
-    searchTerm = searchTerm || '';
-
-    console.log(`Processing NAICS data with filters: NAICS=${naicsFilter}, SubAgency=${subAgencyFilter}, Search=${searchTerm}`);
-
-    const naicsAggregates = {};
+    // Draw links with gradients
+    const defs = svgSelection.append('defs');
     
-    // Process all contracts
-    Object.values(model.contracts || {}).forEach(contract => {
-      // Skip if no NAICS code or no value
-      if (!contract.naicsCode || contract.value <= 0) return;
-
-      // Apply sub-agency filter if set
-      if (subAgencyFilter && contract.subAgencyId) {
-        const subAgency = model.subAgencies[contract.subAgencyId];
-        if (!subAgency || subAgency.name !== subAgencyFilter) return;
-      }
-
-      // Apply search filter if set
-      if (searchTerm) {
-        const searchFields = [
-          contract.description,
-          model.primes[contract.primeId]?.name,
-          model.subAgencies[contract.subAgencyId]?.name,
-          model.offices[contract.officeId]?.name,
-          contract.naicsCode,
-          contract.naicsDesc
-        ];
+    graph.links.forEach((link, i) => {
+        const gradientId = `${panelSide}-link-gradient-${i}`;
+        const sourceColor = nodeColors[link.source.type] || '#999';
+        const targetColor = nodeColors[link.target.type] || '#999';
         
-        if (!searchFields.some(field => field && field.toLowerCase().includes(searchTerm.toLowerCase()))) {
-          return;
-        }
-      }
-
-      // Add to aggregates
-      const code = contract.naicsCode;
-      const desc = contract.naicsDesc || "N/A";
-      
-      if (!naicsAggregates[code]) {
-        naicsAggregates[code] = { 
-          code: code, 
-          desc: desc, 
-          name: code, // For color mapping
-          value: 0,
-          isSelected: (naicsFilter && code === naicsFilter) 
-        };
-      }
-      
-      naicsAggregates[code].value += contract.value;
+        const gradient = defs.append('linearGradient')
+            .attr('id', gradientId)
+            .attr('gradientUnits', 'userSpaceOnUse')
+            .attr('x1', link.source.x1)
+            .attr('y1', link.source.y0 + (link.source.y1 - link.source.y0) / 2)
+            .attr('x2', link.target.x0)
+            .attr('y2', link.target.y0 + (link.target.y1 - link.target.y0) / 2);
+            
+        gradient.append('stop')
+            .attr('offset', '0%')
+            .attr('stop-color', sourceColor)
+            .attr('stop-opacity', 0.8);
+            
+        gradient.append('stop')
+            .attr('offset', '100%')
+            .attr('stop-color', targetColor)
+            .attr('stop-opacity', 0.8);
+            
+        link.gradientId = gradientId;
     });
     
-    // Convert to array and sort
-    const sortedNaicsData = Object.values(naicsAggregates)
-      .sort((a, b) => b.value - a.value);
-    
-    // Calculate percentages
-    const totalValue = sortedNaicsData.reduce((sum, item) => sum + item.value, 0);
-    sortedNaicsData.forEach(item => {
-      item.percentage = totalValue > 0 ? (item.value / totalValue) * 100 : 0;
-    });
-
-    // If we have a NAICS filter, ensure the selected NAICS is included in top N
-    if (naicsFilter && naicsAggregates[naicsFilter]) {
-      // Create a copy to manipulate for display purposes
-      const displayData = [...sortedNaicsData];
-      const selectedData = naicsAggregates[naicsFilter];
-      
-      // If the selected NAICS isn't already in top 5
-      const topN = 5;
-      if (!displayData.slice(0, topN).some(item => item.code === naicsFilter)) {
-        const selectedIndex = displayData.findIndex(item => item.code === naicsFilter);
-        
-        if (selectedIndex >= 0) {
-          // Remove from current position
-          const selected = displayData.splice(selectedIndex, 1)[0];
-          // Add in at position 5 (replacing the last item in top 5)
-          displayData.splice(Math.min(topN - 1, displayData.length), 0, selected);
-        }
-      }
-      
-      return displayData; // Return modified list ensuring selected NAICS is visible
-    }
-    
-    return sortedNaicsData;
-  };
-  console.log("Defined processNaicsDistributionData function");
-}
-
-/**
- * Make sure Share of Wallet data processing is also defined
- */
-if (typeof window.processShareOfWalletData !== 'function') {
-  /**
-   * Process data for Share of Wallet chart with proper filtering
-   * @param {Object} model - The unified data model
-   * @param {string} naicsFilter - Current NAICS filter selection
-   * @param {string} subAgencyFilter - Current sub-agency filter selection
-   * @param {string} searchTerm - Current search term
-   */
-  window.processShareOfWalletData = function(model, naicsFilter, subAgencyFilter, searchTerm) {
-    if (!model || !model.primes) {
-      return [];
-    }
-    
-    // Handle undefined parameters
-    naicsFilter = naicsFilter || '';
-    subAgencyFilter = subAgencyFilter || '';
-    searchTerm = searchTerm || '';
-    
-    // Aggregate by prime
-    const primeValues = {};
-    let totalValue = 0;
-    
-    // Process from contracts, applying all filters
-    Object.values(model.contracts || {}).forEach(contract => {
-      if (!contract.primeId || !contract.value || contract.value <= 0) return;
-      
-      // Apply NAICS filter if set
-      if (naicsFilter && contract.naicsCode !== naicsFilter) return;
-      
-      // Apply sub-agency filter if set
-      if (subAgencyFilter && contract.subAgencyId) {
-        const subAgency = model.subAgencies[contract.subAgencyId];
-        if (!subAgency || subAgency.name !== subAgencyFilter) return;
-      }
-      
-      // Apply search filter if set
-      if (searchTerm) {
-        const searchFields = [
-          contract.description,
-          model.primes[contract.primeId]?.name,
-          model.subAgencies[contract.subAgencyId]?.name,
-          model.offices[contract.officeId]?.name,
-          contract.naicsCode,
-          contract.naicsDesc
-        ];
-        
-        if (!searchFields.some(field => field && field.toLowerCase().includes(searchTerm.toLowerCase()))) {
-          return;
-        }
-      }
-      
-      // Get prime details
-      const prime = model.primes[contract.primeId];
-      if (!prime || !prime.name) return;
-      
-      const primeName = prime.name;
-      if (!primeValues[primeName]) {
-        primeValues[primeName] = 0;
-      }
-      
-      primeValues[primeName] += contract.value;
-      totalValue += contract.value;
-    });
-    
-    // Convert to array and sort
-    const sortedPrimes = Object.entries(primeValues)
-      .map(([name, value]) => ({
-        name: name,
-        value: value,
-        percentage: 0 // Calculate after
-      }))
-      .sort((a, b) => b.value - a.value);
-    
-    // Take top 7 primes
-    const result = sortedPrimes.slice(0, 7);
-    
-    // Add "Other" category if needed
-    if (sortedPrimes.length > 7) {
-      const otherValue = sortedPrimes.slice(7)
-        .reduce((sum, item) => sum + item.value, 0);
-      
-      if (otherValue > 0) {
-        result.push({
-          name: "Other",
-          value: otherValue,
-          isOther: true,
-          count: sortedPrimes.length - 7
+    // Draw links
+    svgSelection.append('g')
+        .selectAll('path')
+        .data(graph.links)
+        .enter()
+        .append('path')
+        .attr('d', d3.sankeyLinkHorizontal())
+        .attr('stroke', (d) => `url(#${d.gradientId})`)
+        .attr('stroke-width', d => Math.max(1, d.width))
+        .attr('stroke-opacity', 0.5)
+        .attr('fill', 'none')
+        .attr('cursor', 'pointer')
+        .on('mouseover', function(event, d) {
+            // Show tooltip
+            const html = `
+                <div style="font-weight: bold; margin-bottom: 5px;">${d.source.name} → ${d.target.name}</div>
+                <div>Value: ${formatCurrency(d.value)}</div>
+            `;
+            tooltip.html(html);
+            tooltip.style("visibility", "visible")
+                .style("opacity", 1)
+                .style("left", (event.pageX + 10) + "px")
+                .style("top", (event.pageY - 28) + "px");
+            
+            // Highlight link
+            d3.select(this).attr('stroke-opacity', 0.8);
+        })
+        .on('mousemove', function(event) {
+            tooltip.style("left", (event.pageX + 10) + "px")
+                .style("top", (event.pageY - 28) + "px");
+        })
+        .on('mouseout', function() {
+            tooltip.style("visibility", "hidden")
+                .style("opacity", 0);
+            d3.select(this).attr('stroke-opacity', 0.5);
         });
-      }
-    }
+        
+    // Draw nodes
+    svgSelection.append('g')
+        .selectAll('rect')
+        .data(graph.nodes)
+        .enter()
+        .append('rect')
+        .attr('x', d => d.x0)
+        .attr('y', d => d.y0)
+        .attr('height', d => Math.max(1, d.y1 - d.y0))
+        .attr('width', d => d.x1 - d.x0)
+        .attr('fill', d => nodeColors[d.type] || '#999')
+        .attr('stroke', getCssVar('--color-surface'))
+        .attr('stroke-width', 1)
+        .attr('cursor', 'pointer')
+        .on('mouseover', function(event, d) {
+            // Show tooltip
+            const html = `
+                <div style="font-weight: bold; margin-bottom: 5px;">${d.name}</div>
+                <div>Type: ${d.type.charAt(0).toUpperCase() + d.type.slice(1)}</div>
+                <div>Total Value: ${formatCurrency(d.value)}</div>
+            `;
+            tooltip.html(html)
+                .style("visibility", "visible")
+                .style("opacity", 1)
+                .style("left", (event.pageX + 10) + "px")
+                .style("top", (event.pageY - 28) + "px");
+            
+            // Highlight node
+            d3.select(this)
+                .attr('stroke', getCssVar('--color-primary'))
+                .attr('stroke-width', 2);
+        })
+        .on('mousemove', function(event) {
+            tooltip.style("left", (event.pageX + 10) + "px")
+                .style("top", (event.pageY - 28) + "px");
+        })
+        .on('mouseout', function() {
+            tooltip.style("visibility", "hidden")
+                .style("opacity", 0);
+            d3.select(this)
+                .attr('stroke', getCssVar('--color-surface'))
+                .attr('stroke-width', 1);
+        });
     
-    // Calculate percentages
-    result.forEach(item => {
-      item.percentage = totalValue > 0 ? (item.value / totalValue) * 100 : 0;
-    });
-    
-    return result;
-  };
-  console.log("Defined processShareOfWalletData function");
+    // Add node labels
+    svgSelection.append('g')
+        .selectAll('text')
+        .data(graph.nodes)
+        .enter()
+        .append('text')
+        .attr('x', d => d.x0 < width / 2 ? d.x1 + 6 : d.x0 - 6)
+        .attr('y', d => (d.y1 + d.y0) / 2)
+        .attr('dy', '0.35em')
+        .attr('text-anchor', d => d.x0 < width / 2 ? 'start' : 'end')
+        .text(d => d.name)
+        .attr('font-size', '10px')
+        .attr('fill', getCssVar('--color-text-primary'))
+        .each(function(d) {
+            // Hide labels for small nodes
+            if ((d.y1 - d.y0) < 5) {
+                d3.select(this).remove();
+            }
+        });
 }
 
-// Fix for init code to handle cases where data is available but chart isn't rendered
-function loadChartsIfDataExists() {
-  // Check if data already exists
-  if (typeof window.unifiedModel !== 'undefined' && 
-      window.unifiedModel !== null && 
-      typeof window.unifiedModel.contracts !== 'undefined' &&
-      Object.keys(window.unifiedModel.contracts || {}).length > 0) {
-    console.log("Data already exists, rendering charts immediately");
+function displayForceDirectedRadial(model) {
+    const containerId = 'circular-dendrogram-container';
+    const container = document.getElementById(containerId);
+    
+    if (!container) {
+        console.error("Container not found.");
+        return;
+    }
+
+    // Clear any previous content
+    container.innerHTML = '';
+    
+    setLoading(containerId, false);
+    
+    // Get the current sub-agency filter (if any)
+    const subAgencyFilter = document.getElementById('sub-agency-filter')?.value || '';
+    
+    // Check if we have valid model data
+    if (!model || !Object.keys(model.agencies).length) {
+        displayNoData(containerId, 'No data available for hierarchical visualization.');
+        return;
+    }
     
     try {
-      // Directly try to render charts
-      if (typeof window.updateBothChartsWithConsistentSizing === 'function') {
-        window.updateBothChartsWithConsistentSizing();
-      } else if (typeof window.renderConsistentNaicsChart === 'function') {
-        window.renderConsistentNaicsChart();
-        window.renderConsistentShareOfWalletChart();
-      }
-    } catch (e) {
-      console.error("Error rendering charts with existing data:", e);
-    }
-  }
-}
-
-// Run immediately and also after a short delay to catch any race conditions
-loadChartsIfDataExists();
-setTimeout(loadChartsIfDataExists, 500);
-/**
- * FIXED CHART SIZING FOR DONUT CHARTS
- * 
- * This code specifically addresses the inconsistent scaling of donut charts
- * within bento boxes, ensuring they have consistent sizes regardless of browser window size.
- */
-
-// Common size configuration for both charts
-const CHART_CONFIG = {
-  // Default aspect ratio (width:height)
-  aspectRatio: 1.0,
-  
-  // Minimum dimensions to ensure charts are visible
-  minWidth: 150,
-  minHeight: 150,
-  
-  // Maximum dimensions to prevent charts from growing too large
-  maxWidth: 400,
-  maxHeight: 400,
-  
-  // Standard radius as percentage of container size (when aspectRatio = 1)
-  radiusPercent: 0.38,
-  
-  // Base padding around chart (will be adjusted based on container size)
-  basePadding: {
-    top: 20,
-    right: 40,
-    bottom: 20,
-    left: 40
-  },
-  
-  // Enable debug mode to show container boundaries
-  debug: false
-};
-
-/**
- * Calculate optimal chart dimensions to ensure consistent sizing
- * @param {HTMLElement} container - The chart container element
- * @returns {Object} Dimensions and settings for optimal chart display
- */
-function calculateChartDimensions(container) {
-  if (!container) {
-    console.error("No container provided for dimension calculation");
-    return null;
-  }
-  
-  // Get the actual container dimensions
-  const containerRect = container.getBoundingClientRect();
-  const containerWidth = Math.max(containerRect.width, CHART_CONFIG.minWidth);
-  const containerHeight = Math.max(containerRect.height, CHART_CONFIG.minHeight);
-  
-  // Calculate padding scales based on container size
-  // For smaller containers, reduce padding proportionally
-  const scaleFactor = Math.min(1, Math.max(0.5, containerWidth / 300));
-  const padding = {
-    top: CHART_CONFIG.basePadding.top * scaleFactor,
-    right: CHART_CONFIG.basePadding.right * scaleFactor,
-    bottom: CHART_CONFIG.basePadding.bottom * scaleFactor,
-    left: CHART_CONFIG.basePadding.left * scaleFactor
-  };
-  
-  // Calculate available space for chart
-  const availableWidth = containerWidth - padding.left - padding.right;
-  const availableHeight = containerHeight - padding.top - padding.bottom;
-  
-  // Determine the chart size based on available space
-  // We'll use the smaller dimension to maintain aspect ratio
-  const chartSize = Math.min(
-    availableWidth,
-    availableHeight,
-    Math.min(CHART_CONFIG.maxWidth, CHART_CONFIG.maxHeight)
-  );
-  
-  // Calculate chart dimensions with desired aspect ratio
-  const chartWidth = chartSize;
-  const chartHeight = chartSize / CHART_CONFIG.aspectRatio;
-  
-  // Calculate radius based on the smaller dimension
-  const diameter = Math.min(chartWidth, chartHeight);
-  const radius = diameter * CHART_CONFIG.radiusPercent;
-  
-  // Center position within the container
-  const centerX = padding.left + availableWidth / 2;
-  const centerY = padding.top + availableHeight / 2;
-  
-  return {
-    width: containerWidth,
-    height: containerHeight,
-    chartWidth: chartWidth,
-    chartHeight: chartHeight,
-    padding: padding,
-    radius: radius,
-    innerRadius: radius * 0.6, // Standard inner radius for donut
-    centerX: centerX,
-    centerY: centerY,
-    scaleFactor: scaleFactor
-  };
-}
-
-/**
- * Rebuild a donut chart with correct sizing and dimensions
- * 
- * @param {string} containerId - ID of the container element
- * @param {Function} chartFunction - Function to call for rendering the chart
- * @param {Array} additionalArgs - Any additional arguments for the chart function
- */
-function resizeDonutChart(containerId, chartFunction, ...additionalArgs) {
-  const container = document.getElementById(containerId);
-  if (!container) {
-    console.error(`Container #${containerId} not found`);
-    return;
-  }
-  
-  // Clear the container
-  container.innerHTML = '';
-  
-  if (CHART_CONFIG.debug) {
-    // Add debug outline
-    container.style.border = '1px dashed red';
-  }
-  
-  // Calculate dimensions
-  const dimensions = calculateChartDimensions(container);
-  if (!dimensions) return;
-  
-  // Create an appropriately sized SVG container
-  const svg = d3.select(container)
-    .append('svg')
-    .attr('width', dimensions.width)
-    .attr('height', dimensions.height)
-    .attr('viewBox', `0 0 ${dimensions.width} ${dimensions.height}`)
-    .attr('class', 'donut-chart-svg')
-    .style('overflow', 'visible'); // Allows labels to extend beyond
-  
-  if (CHART_CONFIG.debug) {
-    // Show actual chart area in debug mode
-    svg.append('rect')
-      .attr('x', dimensions.padding.left)
-      .attr('y', dimensions.padding.top)
-      .attr('width', dimensions.chartWidth)
-      .attr('height', dimensions.chartHeight)
-      .attr('fill', 'none')
-      .attr('stroke', 'blue')
-      .attr('stroke-dasharray', '3,3');
-  }
-  
-  // Create the chart container group, centered
-  const chartGroup = svg.append('g')
-    .attr('transform', `translate(${dimensions.centerX}, ${dimensions.centerY})`)
-    .attr('class', 'donut-chart-group');
-  
-  // Call the chart function with the prepared container and dimensions
-  // Chart function should expect (container, dimensions, ...args)
-  chartFunction(chartGroup, dimensions, ...additionalArgs);
-  
-  return dimensions;
-}
-
-/**
- * Render NAICS donut chart with consistent sizing
- */
-function renderConsistentNaicsChart() {
-  const containerId = 'naics-donut-chart-container';
-  
-  // Get current filters directly from UI elements
-  const naicsFilter = document.getElementById('naics-filter')?.value || '';
-  const subAgencyFilter = document.getElementById('sub-agency-filter')?.value || '';
-  const searchTerm = document.getElementById('search-input')?.value?.trim().toLowerCase() || '';
-  
-  // Process data with filters
-  const naicsData = processNaicsDistributionData(unifiedModel, naicsFilter, subAgencyFilter, searchTerm);
-  if (!naicsData || naicsData.length === 0) {
-    displayNoData(containerId, 'No NAICS data available with current filters.');
-    return;
-  }
-  
-  // Resize and create the chart
-  resizeDonutChart(containerId, renderDonutChartCore, {
-    data: naicsData,
-    title: naicsFilter ? `NAICS ${naicsFilter}` : "Top NAICS",
-    centerValue: naicsData[0].code,
-    labelField: "code",
-    descField: "desc",
-    highlightField: naicsFilter ? "code" : null,
-    highlightValue: naicsFilter,
-    topN: 5
-  });
-}
-
-/**
- * Render Share of Wallet donut chart with consistent sizing
- */
-function renderConsistentShareOfWalletChart() {
-  const containerId = 'share-of-wallet-container';
-  
-  // Create container if it doesn't exist
-  ensureShareOfWalletContainer();
-  
-  // Get current filters
-  const naicsFilter = document.getElementById('naics-filter')?.value || '';
-  const subAgencyFilter = document.getElementById('sub-agency-filter')?.value || '';
-  const searchTerm = document.getElementById('search-input')?.value?.trim().toLowerCase() || '';
-  
-  // Process data with filters
-  const shareData = processShareOfWalletData(unifiedModel, naicsFilter, subAgencyFilter, searchTerm);
-  if (!shareData || shareData.length === 0) {
-    displayNoData(containerId, 'No market share data available with current filters.');
-    return;
-  }
-  
-  // Format long names
-  formatPrimeContractorNames(shareData);
-  
-  // Resize and create the chart
-  resizeDonutChart(containerId, renderDonutChartCore, {
-    data: shareData,
-    title: "Leader",
-    centerValue: shareData[0].name,
-    labelField: "name",
-    descField: null,
-    topN: 7
-  });
-}
-
-/**
- * Format contractor names to make them more suitable for display
- */
-function formatPrimeContractorNames(data) {
-  data.forEach(item => {
-    if (item.name && item.name.length > 20 && !item.isOther) {
-      // Store original name
-      item.fullName = item.name;
-      // Create shortened version
-      const parts = item.name.split(' ');
-      if (parts.length > 2) {
-        item.name = parts[0] + ' ' + parts[1];
-      } else {
-        item.name = item.name.substring(0, 18) + '...';
-      }
-    }
-  });
-}
-
-/**
- * Ensure the Share of Wallet container exists
- */
-function ensureShareOfWalletContainer() {
-  const containerId = 'share-of-wallet-container';
-  const bentoId = 'bento-share-of-wallet';
-  let container = document.getElementById(containerId);
-  
-  if (!container) {
-    console.log("Creating Share of Wallet container");
-    const bentoGrid = document.querySelector('.bento-grid');
-    if (!bentoGrid) {
-      console.error("Could not find bento grid for Share of Wallet container");
-      return;
-    }
-    
-    let bentoBox = document.getElementById(bentoId);
-    if (!bentoBox) {
-      bentoBox = document.createElement('div');
-      bentoBox.id = bentoId;
-      bentoBox.className = 'bento-box';
-      bentoBox.style.minHeight = '240px';
-      
-      const header = document.createElement('div');
-      header.className = 'card-header';
-      header.innerHTML = `
-          <div class="card-icon-circle">
-              <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M21.21 15.89A10 10 0 1 1 8.11 2.99"></path>
-                  <path d="M22 12A10 10 0 0 0 12 2v10z"></path>
-              </svg>
-          </div>
-          <h2>Market Share</h2>
-      `;
-      bentoBox.appendChild(header);
-      bentoGrid.appendChild(bentoBox);
-    }
-    
-    // Create chart container
-    container = document.createElement('div');
-    container.id = containerId;
-    container.className = 'chart-container';
-    // Set explicit height to match other chart containers
-    container.style.minHeight = '220px';
-    container.style.height = '100%';
-    bentoBox.appendChild(container);
-  }
-  
-  return container;
-}
-
-/**
- * Core donut chart renderer that works with the resizing framework
- */
-function renderDonutChartCore(container, dimensions, options) {
-  // Default options
-  const defaults = {
-    data: [],
-    title: "Distribution",
-    subtitle: "",
-    centerValue: "",
-    labelField: "name",
-    descField: "desc",
-    valueField: "value",
-    percentageField: "percentage",
-    otherLabel: "Other",
-    topN: 5,
-    highlightField: null,
-    highlightValue: null
-  };
-  
-  const config = { ...defaults, ...options };
-  const data = config.data;
-  
-  if (!data || data.length === 0) {
-    container.append("text")
-      .attr("text-anchor", "middle")
-      .attr("dy", "0.35em")
-      .style("fill", getCssVar('--color-text-secondary'))
-      .text("No data available");
-    return;
-  }
-  
-  // Prepare top N data + Other
-  const sortedData = [...data].sort((a, b) => (b[config.valueField] || 0) - (a[config.valueField] || 0));
-  const topNData = sortedData.slice(0, config.topN);
-  
-  // If highlighting a specific value, ensure it's included in the top data
-  if (config.highlightField && config.highlightValue) {
-    const highlightedItem = sortedData.find(d => d[config.highlightField] === config.highlightValue);
-    if (highlightedItem && !topNData.some(d => d[config.highlightField] === config.highlightValue)) {
-      // Replace the last item
-      topNData.pop();
-      topNData.push(highlightedItem);
-    }
-  }
-  
-  const otherValue = d3.sum(sortedData.slice(config.topN), d => d[config.valueField] || 0);
-  const otherPercentage = d3.sum(sortedData.slice(config.topN), d => d[config.percentageField] || 0);
-  const chartPlotData = [...topNData];
-  
-  if (otherValue > 0 && sortedData.length > config.topN) {
-    const otherCount = sortedData.length - config.topN;
-    const otherItem = {
-      [config.labelField]: config.otherLabel,
-      [config.descField]: `${config.otherLabel} (${otherCount} items)`,
-      [config.valueField]: otherValue,
-      [config.percentageField]: otherPercentage,
-      isOther: true
-    };
-    
-    chartPlotData.push(otherItem);
-  }
-  
-  // Set up colors based on theme
-  const color = getDonutColorScale(chartPlotData, config.labelField, config.highlightField, config.highlightValue);
-  
-  // Set up pie layout with equal spacing
-  const pie = d3.pie()
-    .padAngle(0.01)
-    .value(d => d[config.valueField])
-    .sort(null);
-  
-  // Generate arc paths
-  const arcGenerator = d3.arc()
-    .innerRadius(dimensions.innerRadius)
-    .outerRadius(dimensions.radius)
-    .cornerRadius(1);
-  
-  // Arc generators for lead lines
-  const labelArcStart = d3.arc()
-    .innerRadius(dimensions.radius * 0.98)
-    .outerRadius(dimensions.radius * 0.98);
-  
-  const labelArcMid = d3.arc()
-    .innerRadius(dimensions.radius * 1.10)
-    .outerRadius(dimensions.radius * 1.10);
-  
-  const pieData = pie(chartPlotData);
-  
-  // Create arc segments
-  container.selectAll(".arc-path")
-    .data(pieData)
-    .join("path")
-    .attr("class", "arc-path")
-    .attr("fill", (d, i) => {
-      // Highlight selected item if specified
-      if (config.highlightField && config.highlightValue && 
-          d.data[config.highlightField] === config.highlightValue) {
-        return getCssVar('--color-primary');
-      }
-      return color(d.data[config.labelField]);
-    })
-    .attr("d", arcGenerator)
-    .attr("stroke", getCssVar('--color-surface'))
-    .style("stroke-width", "1.5px")
-    .style("cursor", "pointer")
-    .on("mouseover", function(event, d) {
-      d3.select(this).transition().duration(200)
-        .attr("stroke", getCssVar('--color-primary'))
-        .style("stroke-width", "2px")
-        .attr("transform", "scale(1.03)");
-      
-      // Remove any existing tooltips
-      d3.select("body").selectAll(".chart-tooltip").remove();
-      
-      // Create tooltip
-      const tooltip = d3.select("body").append("div")
-        .attr("class", "chart-tooltip")
-        .style("position", "absolute")
-        .style("background-color", getCssVar('--color-surface'))
-        .style("color", getCssVar('--color-text-primary'))
-        .style("padding", "8px 12px")
-        .style("border-radius", "4px")
-        .style("font-size", "12px")
-        .style("pointer-events", "none")
-        .style("opacity", 0)
-        .style("box-shadow", getCssVar('--shadow-md'))
-        .style("border", `1px solid ${getCssVar('--color-border')}`)
-        .style("z-index", 1000);
-      
-      tooltip.transition().duration(200).style("opacity", 1);
-      
-      // Format tooltip content
-      const name = d.data.fullName || d.data[config.labelField];
-      const desc = d.data[config.descField] || "";
-      const value = formatCurrency(d.data[config.valueField]);
-      const percentage = d.data[config.percentageField].toFixed(1);
-      
-      tooltip.html(
-        `<div style="font-weight: bold; margin-bottom: 4px;">${name}</div>` +
-        `${desc ? `<div style="color: ${getCssVar('--color-text-secondary')}; margin-bottom: 4px;">${desc}</div>` : ""}` +
-        `<div>Value: ${value}</div><div>Share: ${percentage}%</div>`
-      );
-      
-      tooltip.style("left", (event.pageX + 10) + "px")
-             .style("top", (event.pageY - 28) + "px");
-    })
-    .on("mousemove", function(event) {
-      d3.select("body").select(".chart-tooltip")
-        .style("left", (event.pageX + 10) + "px")
-        .style("top", (event.pageY - 28) + "px");
-    })
-    .on("mouseout", function() {
-      d3.select(this).transition().duration(200)
-        .attr("stroke", getCssVar('--color-surface'))
-        .style("stroke-width", "1.5px")
-        .attr("transform", "scale(1)");
-      
-      d3.select("body").select(".chart-tooltip")
-        .transition().duration(200)
-        .style("opacity", 0)
-        .remove();
-    });
-  
-  // Add center text
-  const centerText = container.append("text")
-    .attr("text-anchor", "middle")
-    .style("font-family", "var(--font-body, sans-serif)")
-    .style("fill", getCssVar('--color-text-primary'));
-  
-  // Title text
-  centerText.append("tspan")
-    .attr("x", 0)
-    .attr("dy", "-0.6em")
-    .style("font-size", `${0.75 * dimensions.scaleFactor}em`)
-    .style("fill", getCssVar('--color-text-secondary'))
-    .text(config.title);
-  
-  // Optional subtitle
-  if (config.subtitle) {
-    centerText.append("tspan")
-      .attr("x", 0)
-      .attr("dy", "1.1em")
-      .style("font-size", `${0.7 * dimensions.scaleFactor}em`)
-      .style("fill", getCssVar('--color-text-tertiary'))
-      .text(config.subtitle);
-  }
-  
-  // Center value (typically the top item's label)
-centerText.append("tspan")
-  .attr("x", 0)
-  .attr("dy", config.subtitle ? "1.3em" : "1.5em")
-  .style("font-size", `${0.9 * dimensions.scaleFactor}em`)
-  .style("font-weight", "600")
-  .text(config.centerValue || "");
-
-// Add NAICS description for NAICS chart
-if (config.labelField === "code" && data.length > 0) {
-  const centerItem = data[0]; // Top NAICS code
-  if (centerItem && centerItem.desc) {
-    centerText.append("tspan")
-      .attr("x", 0)
-      .attr("dy", "1.2em")
-      .style("font-size", `${0.7 * dimensions.scaleFactor}em`)
-      .style("fill", getCssVar('--color-text-tertiary'))
-      .text(truncateText(centerItem.desc, 24));
-  }
-}
-  
-  // Add external labels with lead lines
-  // Calculate which segments are large enough for labels
-  const minPercentageForLabel = 4.0; // 4%
-  const labelThresholdPercentage = minPercentageForLabel / 100;
-  
-  const labelData = pieData.filter(d => {
-    const percentage = (d.endAngle - d.startAngle) / (2 * Math.PI);
-    return percentage >= labelThresholdPercentage && d.data[config.valueField] > 0;
-  });
-  
-  if (labelData.length > 0) {
-    // Create lead lines group
-    const lineGroup = container.append("g").attr("class", "label-lines");
-    
-    // Create text labels group
-    const textLabelGroup = container.append("g").attr("class", "text-labels");
-    
-    // Set styling properties
-    const polylineStrokeColor = getCssVar('--color-text-tertiary');
-    const labelTextColor = getCssVar('--color-text-secondary');
-    const labelDescColor = getCssVar('--color-text-tertiary');
-    
-    // Calculate dimensions for lead lines
-    const leaderLineHorizontalPartLength = Math.max(8, Math.min(15, dimensions.radius * 0.2));
-    const textStartOffsetFromLeaderLine = 4;
-    
-    // Add leader lines
-    lineGroup.selectAll('polyline')
-      .data(labelData)
-      .join('polyline')
-      .attr('stroke', polylineStrokeColor)
-      .style('fill', 'none')
-      .attr('stroke-width', 1)
-      .attr('points', d => {
-        const posA = labelArcStart.centroid(d);
-        const posB = labelArcMid.centroid(d);
-        const posC = [posB[0], posB[1]]; // Initialize posC with posB coordinates
-        const midangle = d.startAngle + (d.endAngle - d.startAngle) / 2;
+        // Create hierarchical data structure
+        const hierarchyData = createHierarchyData(model, subAgencyFilter);
         
-        // Extend posC horizontally based on angle
-        posC[0] = posB[0] + leaderLineHorizontalPartLength * (midangle < Math.PI ? 1 : -1);
+        // Create wide-format SVG container
+        const width = container.clientWidth || 800;
+        const height = container.clientHeight || 600;
         
-        return [posA, posB, posC];
-      });
-    
-    // Calculate optimal font size based on container dimensions
-    const baseFontSize = 11;
-    const fontSizeFactor = Math.min(1, Math.max(0.8, dimensions.radius / 80));
-    const labelFontSize = Math.round(baseFontSize * fontSizeFactor);
-    const descFontSize = Math.round(labelFontSize * 0.9);
-    
-    // Add text labels
-    const textLabels = textLabelGroup.selectAll('text')
-      .data(labelData)
-      .join('text')
-      .style('font-family', "var(--font-body, sans-serif)")
-      .attr('dy', '0.35em')
-      .attr('transform', d => {
-        const midangle = d.startAngle + (d.endAngle - d.startAngle) / 2;
-        const posB = labelArcMid.centroid(d);
-        const xPos = posB[0] + (leaderLineHorizontalPartLength + textStartOffsetFromLeaderLine) * (midangle < Math.PI ? 1 : -1);
-        const yPos = posB[1];
-        return `translate(${xPos},${yPos})`;
-      })
-      .style('text-anchor', d => {
-        const midangle = d.startAngle + (d.endAngle - d.startAngle) / 2;
-        return midangle < Math.PI ? 'start' : 'end';
-      });
-    
-    // Add primary label text
-    textLabels.append('tspan')
-      .attr('x', 0)
-      .style('font-size', `${labelFontSize}px`)
-      .style('font-weight', '500')
-      .style('fill', labelTextColor)
-      .text(d => truncateText(d.data[config.labelField], 15));
-    
-    // Add secondary label text (description or percentage)
-    textLabels.filter(d => !d.data.isOther && (config.descField || true))
-      .append('tspan')
-      .attr('x', 0)
-      .attr('dy', '1.2em')
-      .style('font-size', `${descFontSize}px`)
-      .style('fill', labelDescColor)
-      .text(d => {
-        if (config.descField && d.data[config.descField]) {
-          return truncateText(d.data[config.descField], 18);
-        } else {
-          // Always show percentage if no description
-          return `${d.data[config.percentageField].toFixed(1)}%`;
-        }
-      });
-  }
-}
-
-/**
- * Get color scale for donut chart with special handling for highlighted items
- */
-function getDonutColorScale(data, colorField, highlightField, highlightValue) {
-  // Create domain from data
-  const domain = data.map(d => d[colorField]);
-  
-  // Get base colors from CSS
-  const primary = getCssVar('--chart-color-primary');
-  const secondary = getCssVar('--chart-color-secondary');
-  const tertiary = getCssVar('--chart-color-tertiary');
-  
-  // Create color variations
-  const colors = [
-    primary,
-    secondary,
-    tertiary,
-    d3.color(primary).darker(0.3).toString(),
-    d3.color(secondary).darker(0.3).toString(), 
-    d3.color(tertiary).brighter(0.3).toString(),
-    d3.color(primary).brighter(0.5).toString(),
-    d3.color(secondary).brighter(0.5).toString()
-  ];
-  
-  // Make sure we have enough colors
-  while (colors.length < domain.length) {
-    colors.push(d3.color(colors[colors.length % 3]).brighter(0.2 * Math.floor(colors.length / 3)).toString());
-  }
-  
-  // Create the scale
-  const colorScale = d3.scaleOrdinal()
-    .domain(domain)
-    .range(colors.slice(0, domain.length));
-  
-  // Return function that handles special cases
-  return function(value) {
-    // Special handling for highlighted item
-    if (highlightField && highlightValue) {
-      const item = data.find(d => d[colorField] === value);
-      if (item && item[highlightField] === highlightValue) {
-        return getCssVar('--color-primary');
-      }
+        const svg = d3.select(container)
+            .append("svg")
+            .attr("width", "100%")
+            .attr("height", "100%")
+            .attr("viewBox", `0 0 ${width} ${height}`)
+            .attr("preserveAspectRatio", "xMidYMid meet");
+        
+        // Create tree layout
+        const treeLayout = d3.tree()
+            .size([height - 50, width - 200])
+            .separation((a, b) => (a.parent === b.parent ? 1 : 1.2));
+        
+        // Create hierarchy from data
+        const root = d3.hierarchy(hierarchyData);
+        
+        // Apply layout
+        treeLayout(root);
+        
+        // Create container group
+        const g = svg.append("g")
+            .attr("transform", `translate(50, 25)`);
+        
+        // Create links
+        g.selectAll('.link')
+            .data(root.links())
+            .enter()
+            .append('path')
+            .attr('class', 'link')
+            .attr('d', d3.linkHorizontal()
+                .x(d => d.y)
+                .y(d => d.x))
+            .attr('fill', 'none')
+            .attr('stroke', getCssVar('--color-border'))
+            .attr('stroke-width', 1);
+        
+        // Create nodes
+        const nodes = g.selectAll('.node')
+            .data(root.descendants())
+            .enter()
+            .append('g')
+            .attr('class', d => `node ${d.children ? 'node--internal' : 'node--leaf'}`)
+            .attr('transform', d => `translate(${d.y}, ${d.x})`);
+        
+        // Add node circles
+        nodes.append('circle')
+            .attr('r', 5)
+            .attr('fill', d => {
+                if (d.depth === 0) return 'none'; // Hide root
+                if (d.depth === 1) return getCssVar('--chart-color-primary');
+                if (d.depth === 2) return getCssVar('--chart-color-secondary');
+                return getCssVar('--chart-color-tertiary');
+            })
+            .attr('stroke', getCssVar('--color-surface'))
+            .attr('stroke-width', 1.5);
+        
+        // Add node labels
+        nodes.append('text')
+            .attr('dy', '0.31em')
+            .attr('x', d => d.children ? -8 : 8)
+            .attr('text-anchor', d => d.children ? 'end' : 'start')
+            .attr('font-size', d => {
+                if (d.depth === 0) return '0px'; // Hide root
+                if (d.depth === 1) return '12px';
+                if (d.depth === 2) return '11px';
+                return '10px';
+            })
+            .text(d => d.depth === 0 ? '' : d.data.name)
+            .attr('fill', getCssVar('--color-text-primary'))
+            .each(function(d) {
+                const el = d3.select(this);
+                const text = el.text();
+                if (text.length > 30) {
+                    el.text(text.substring(0, 27) + '...');
+                }
+            });
+        
+        // Add tooltip
+        const tooltip = d3.select('body')
+            .append('div')
+            .attr('class', 'hierarchy-tooltip')
+            .style('position', 'absolute')
+            .style('visibility', 'hidden')
+            .style('background-color', getCssVar('--color-surface'))
+            .style('color', getCssVar('--color-text-primary'))
+            .style('padding', '10px')
+            .style('border-radius', '4px')
+            .style('font-size', '12px')
+            .style('pointer-events', 'none')
+            .style('z-index', '1000')
+            .style('border', `1px solid ${getCssVar('--color-border')}`);
+        
+        nodes.on('mouseover', function(event, d) {
+            if (d.depth === 0) return; // Skip root node
+            
+            // Calculate value for non-leaf nodes
+            let value = d.data.value || 0;
+            if (!value && d.children) {
+                value = d.children.reduce((sum, child) => sum + (child.data.value || 0), 0);
+            }
+            
+            // Create tooltip content
+            let content = `<div style="font-weight: bold;">${d.data.name}</div>`;
+            if (value > 0) {
+                content += `<div>Value: ${formatCurrency(value)}</div>`;
+            }
+            if (d.children) {
+                content += `<div>Children: ${d.children.length}</div>`;
+            }
+            
+            tooltip.html(content)
+                .style('visibility', 'visible')
+                .style('left', (event.pageX + 10) + 'px')
+                .style('top', (event.pageY - 28) + 'px');
+            
+            // Highlight node
+            d3.select(this).select('circle')
+                .attr('stroke', getCssVar('--color-primary'))
+                .attr('stroke-width', 2);
+        })
+        .on('mousemove', function(event) {
+            tooltip.style('left', (event.pageX + 10) + 'px')
+                .style('top', (event.pageY - 28) + 'px');
+        })
+        .on('mouseout', function() {
+            tooltip.style('visibility', 'hidden');
+            
+            d3.select(this).select('circle')
+                .attr('stroke', getCssVar('--color-surface'))
+                .attr('stroke-width', 1.5);
+        });
+        
+    } catch (error) {
+        console.error("Error creating visualization:", error);
+        displayError(containerId, `Failed to render visualization: ${error.message}`);
     }
-    
-    // Special handling for "Other" category
-    const item = data.find(d => d[colorField] === value);
-    if (item && item.isOther) {
-      return getCssVar('--color-text-tertiary');
-    }
-    
-    return colorScale(value);
-  };
 }
 
-/**
- * Update both charts to ensure consistent sizing
- */
-function updateBothChartsWithConsistentSizing() {
-  try {
-    // Update NAICS chart
-    renderConsistentNaicsChart();
-    
-    // Update Share of Wallet chart
-    renderConsistentShareOfWalletChart();
-    
-  } catch (error) {
-    console.error("Error updating charts with consistent sizing:", error);
-  }
-}
-
-/**
- * Hook this into both the filter system and window resizing
- */
-function setupChartSizingSystem() {
-  // Get current filter values
-  lastFilterState = {
-    naicsCode: document.getElementById('naics-filter')?.value || '',
-    subAgency: document.getElementById('sub-agency-filter')?.value || '',
-    searchTerm: document.getElementById('search-input')?.value?.trim().toLowerCase() || ''
-  };
-  
-  // Hook into filter application
-  if (typeof window.applyFiltersAndUpdateVisuals === 'function') {
-    const originalApplyFilters = window.applyFiltersAndUpdateVisuals;
-    window.applyFiltersAndUpdateVisuals = function() {
-      // Call original function
-      originalApplyFilters.apply(this, arguments);
-      
-      // Update our charts with a delay to let the model filtering complete
-      setTimeout(updateBothChartsWithConsistentSizing, 300);
-    };
-    console.log("Successfully hooked into applyFiltersAndUpdateVisuals");
-  }
-  
-  // Hook into unified model updates
-  if (typeof window.updateVisualsFromUnifiedModel === 'function') {
-    const originalUpdateVisuals = window.updateVisualsFromUnifiedModel;
-    window.updateVisualsFromUnifiedModel = function() {
-      // Call original function
-      originalUpdateVisuals.apply(this, arguments);
-      
-      // Update our charts with a delay
-      setTimeout(updateBothChartsWithConsistentSizing, 300);
-    };
-    console.log("Successfully hooked into updateVisualsFromUnifiedModel");
-  }
-  
-  // Add filter event listeners
-  const filterElements = [
-    { id: 'search-input', event: 'input' },
-    { id: 'sub-agency-filter', event: 'change' },
-    { id: 'naics-filter', event: 'change' },
-    { id: 'refresh-button', event: 'click' }
-  ];
-  
-  filterElements.forEach(item => {
-    const element = document.getElementById(item.id);
-    if (element) {
-      element.addEventListener(item.event, function() {
-        // Use a small delay to let other event handlers complete
-        setTimeout(updateBothChartsWithConsistentSizing, 300);
-      });
-      console.log(`Added ${item.event} listener to ${item.id}`);
-    }
-  });
-  
-  // Handle window resize events
-  window.addEventListener('resize', function() {
-    // Debounce resize handling
-    if (this.resizeTimeout) clearTimeout(this.resizeTimeout);
-    this.resizeTimeout = setTimeout(function() {
-      console.log("Window resized, updating chart sizes");
-      updateBothChartsWithConsistentSizing();
-    }, 250);
-  });
-  
-  // Initial render
-  updateBothChartsWithConsistentSizing();
-}
-
-// Initialize when DOM is ready
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', function() {
-    // Wait for the main code to initialize
-    setTimeout(setupChartSizingSystem, 500);
-  });
-} else {
-  // Document already loaded, initialize with a delay
-  setTimeout(setupChartSizingSystem, 500);
-}
-
-// Make functions available globally
-window.renderConsistentNaicsChart = renderConsistentNaicsChart;
-window.renderConsistentShareOfWalletChart = renderConsistentShareOfWalletChart;
-window.updateBothChartsWithConsistentSizing = updateBothChartsWithConsistentSizing;
-/**
- * This code fixes the initial load of the NAICS chart by hooking into the data loading functions
- */
-
-// Add hooks into the data loading process
-function hookIntoDataLoading() {
-  console.log("Setting up hooks for NAICS chart initial load");
-  
-  // Hook into loadSingleDataset
-  if (typeof window.loadSingleDataset === 'function') {
-    const originalLoadSingleDataset = window.loadSingleDataset;
-    window.loadSingleDataset = function(dataset) {
-      // Call original function
-      originalLoadSingleDataset.apply(this, arguments);
-      
-      // After data loads and processes, render our charts
-      setTimeout(function() {
-        console.log("Dataset loaded, initializing charts");
-        updateBothChartsWithConsistentSizing();
-      }, 1500); // Longer delay to allow data to load and process
-    };
-    console.log("Successfully hooked into loadSingleDataset");
-  }
-  
-  // Hook into loadCombinedDatasets
-  if (typeof window.loadCombinedDatasets === 'function') {
-    const originalLoadCombinedDatasets = window.loadCombinedDatasets;
-    window.loadCombinedDatasets = function(datasetIds) {
-      // Call original function
-      originalLoadCombinedDatasets.apply(this, arguments);
-      
-      // After data loads and processes, render our charts
-      setTimeout(function() {
-        console.log("Combined datasets loaded, initializing charts");
-        updateBothChartsWithConsistentSizing();
-      }, 2000); // Even longer delay for combined datasets
-    };
-    console.log("Successfully hooked into loadCombinedDatasets");
-  }
-  
-  // Hook into processDataset, which is called when data is ready
-  if (typeof window.processDataset === 'function') {
-    const originalProcessDataset = window.processDataset;
-    window.processDataset = function(dataset, data) {
-      // Call original function
-      const result = originalProcessDataset.apply(this, arguments);
-      
-      // After processing completes (which means data is ready)
-      setTimeout(function() {
-        console.log("Dataset processed, initializing charts");
-        updateBothChartsWithConsistentSizing();
-      }, 500);
-      
-      return result;
-    };
-    console.log("Successfully hooked into processDataset");
-  }
-  
-  // Hook into buildUnifiedModel, which is called after all data is loaded
-  if (typeof window.buildUnifiedModel === 'function') {
-    const originalBuildUnifiedModel = window.buildUnifiedModel;
-    window.buildUnifiedModel = function() {
-      // Call original function
-      originalBuildUnifiedModel.apply(this, arguments);
-      
-      // After unified model is built, render our charts
-      console.log("Unified model built, initializing charts");
-      updateBothChartsWithConsistentSizing();
-    };
-    console.log("Successfully hooked into buildUnifiedModel");
-  }
-  
-  // Add manual button to force chart refresh
-  addRefreshChartsButton();
-  
-  // Set up a periodic check for loaded data
-  checkForLoadedDataAndRender();
-}
-
-// Create a temporary button to manually refresh charts (useful for debugging)
-function addRefreshChartsButton() {
-  // Don't add in production
-  const isDebug = false;
-  if (!isDebug) return;
-  
-  const container = document.querySelector('.header-controls');
-  if (!container) return;
-  
-  const button = document.createElement('button');
-  button.textContent = "Refresh Charts";
-  button.style.padding = "6px 10px";
-  button.style.marginLeft = "8px";
-  button.addEventListener('click', function() {
-    updateBothChartsWithConsistentSizing();
-  });
-  
-  container.appendChild(button);
-}
-
-// Function to periodically check if data is loaded and render charts
-function checkForLoadedDataAndRender() {
-  console.log("Setting up periodic check for loaded data");
-  
-  // Initial delay before first check
-  setTimeout(function checkData() {
-    // Check if we have NAICS data available
-    const hasData = typeof unifiedModel !== 'undefined' && 
-                   unifiedModel !== null && 
-                   typeof unifiedModel.contracts !== 'undefined' &&
-                   Object.keys(unifiedModel.contracts || {}).length > 0;
-    
-    if (hasData) {
-      console.log("Data detected, initializing charts");
-      updateBothChartsWithConsistentSizing();
-    } else {
-      console.log("No data yet, checking again soon");
-      // Check again in a moment
-      setTimeout(checkData, 1000);
-    }
-  }, 1000);
-}
-
-// Update your initialization to include the new hooks
-const originalSetupChartSizingSystem = window.setupChartSizingSystem;
-window.setupChartSizingSystem = function() {
-  // Call original setup
-  if (typeof originalSetupChartSizingSystem === 'function') {
-    originalSetupChartSizingSystem();
-  }
-  
-  // Add our data loading hooks
-  hookIntoDataLoading();
-};
-
-// Initialize right away if page is already loaded
-if (document.readyState !== 'loading') {
-  hookIntoDataLoading();
-}
-/**
- * Fix for "Loading NAICS distribution..." text not disappearing
- */
-
-// Update renderConsistentNaicsChart to properly handle loading state
-const originalRenderConsistentNaicsChart = window.renderConsistentNaicsChart;
-window.renderConsistentNaicsChart = function() {
-  const containerId = 'naics-donut-chart-container';
-  const bentoId = 'bento-naics-distribution';
-  
-  // Clear loading state for both container and bento box
-  clearLoadingState(containerId);
-  clearLoadingState(bentoId);
-  
-  // Call the original rendering function
-  if (typeof originalRenderConsistentNaicsChart === 'function') {
-    originalRenderConsistentNaicsChart();
-  }
-  
-  // Make sure loading is cleared after rendering completes
-  setTimeout(function() {
-    clearLoadingState(containerId);
-    clearLoadingState(bentoId);
-  }, 100);
-};
-
-// Update renderConsistentShareOfWalletChart similarly
-const originalRenderConsistentShareOfWalletChart = window.renderConsistentShareOfWalletChart;
-window.renderConsistentShareOfWalletChart = function() {
-  const containerId = 'share-of-wallet-container';
-  const bentoId = 'bento-share-of-wallet';
-  
-  // Clear loading state for both container and bento box
-  clearLoadingState(containerId);
-  clearLoadingState(bentoId);
-  
-  // Call the original rendering function
-  if (typeof originalRenderConsistentShareOfWalletChart === 'function') {
-    originalRenderConsistentShareOfWalletChart();
-  }
-  
-  // Make sure loading is cleared after rendering completes
-  setTimeout(function() {
-    clearLoadingState(containerId);
-    clearLoadingState(bentoId);
-  }, 100);
-};
-
-/**
- * Helper function to clear loading state for a container
- */
-function clearLoadingState(containerId) {
-  if (!containerId) return;
-  
-  const container = document.getElementById(containerId);
-  if (!container) return;
-  
-  // Find and remove loading placeholder
-  const loadingPlaceholder = container.querySelector('.loading-placeholder');
-  if (loadingPlaceholder) {
-    loadingPlaceholder.style.display = 'none';
-  }
-  
-  // Call setLoading if it exists as a function
-  if (typeof window.setLoading === 'function') {
-    try {
-      window.setLoading(containerId, false);
-    } catch (e) {
-      console.warn(`Error calling setLoading for ${containerId}:`, e);
-    }
-  }
-}
-
-// Update the main charts update function
-const originalUpdateBothChartsWithConsistentSizing = window.updateBothChartsWithConsistentSizing;
-window.updateBothChartsWithConsistentSizing = function() {
-  // Clear loading states first
-  clearLoadingState('naics-donut-chart-container');
-  clearLoadingState('bento-naics-distribution');
-  clearLoadingState('share-of-wallet-container');
-  clearLoadingState('bento-share-of-wallet');
-  
-  // Call original function
-  if (typeof originalUpdateBothChartsWithConsistentSizing === 'function') {
-    originalUpdateBothChartsWithConsistentSizing();
-  }
-  
-  // Clear loading states again after rendering completes
-  setTimeout(function() {
-    clearLoadingState('naics-donut-chart-container');
-    clearLoadingState('bento-naics-distribution');
-    clearLoadingState('share-of-wallet-container');
-    clearLoadingState('bento-share-of-wallet');
-  }, 200);
-};
-
-// Run immediately to clear any existing loading states
-clearLoadingState('naics-donut-chart-container');
-clearLoadingState('bento-naics-distribution');
-clearLoadingState('share-of-wallet-container');
-clearLoadingState('bento-share-of-wallet');
-// This function creates hierarchical data using the specified fields
 function createHierarchyData(model, subAgencyFilter) {
     // Create root node
     const root = {
         name: "Root",
-        id: "root",
         children: []
     };
     
@@ -6070,11 +3943,10 @@ function createHierarchyData(model, subAgencyFilter) {
             .slice(0, 5);
     }
     
-    // Add agencies as top-level nodes (awarding_agency_name)
+    // Add agencies as top-level nodes
     agenciesToShow.forEach(agency => {
         const agencyNode = {
-            name: agency.name, // Use awarding_agency_name
-            id: "agency-" + Math.random().toString(36).substring(2, 9),
+            name: agency.name,
             value: agency.value,
             children: []
         };
@@ -6091,138 +3963,48 @@ function createHierarchyData(model, subAgencyFilter) {
                 }
             });
             
-            // If matching sub-agencies found, add them as intermediate nodes (awarding_sub_agency_name)
-            if (matchingSubAgencies.length > 0) {
-                matchingSubAgencies.forEach(subAgency => {
-                    const subAgencyNode = {
-                        name: subAgency.name, // Use awarding_sub_agency_name
-                        id: "subagency-" + Math.random().toString(36).substring(2, 9),
-                        value: subAgency.value,
-                        isSubAgency: true,
+            // Add filtered sub-agencies
+            matchingSubAgencies.forEach(subAgency => {
+                const subAgencyNode = {
+                    name: subAgency.name,
+                    value: subAgency.value,
+                    children: []
+                };
+                
+                // Add top offices for this sub-agency
+                const officesForSubAgency = {};
+                
+                Array.from(subAgency.offices || []).forEach(officeId => {
+                    const office = model.offices[officeId];
+                    if (office) {
+                        officesForSubAgency[officeId] = {
+                            id: officeId,
+                            name: office.name,
+                            value: office.value
+                        };
+                    }
+                });
+                
+                // Sort offices by value and take top 5
+                const topOffices = Object.values(officesForSubAgency)
+                    .sort((a, b) => b.value - a.value)
+                    .slice(0, 5);
+                
+                // Add office nodes
+                topOffices.forEach(office => {
+                    const officeNode = {
+                        name: office.name,
+                        value: office.value,
                         children: []
                     };
                     
-                    // Find offices for this sub-agency (awarding_office_name)
-                    const officesForSubAgency = {};
-                    
-                    Array.from(subAgency.offices || []).forEach(officeId => {
-                        const office = model.offices[officeId];
-                        if (office) {
-                            officesForSubAgency[officeId] = {
-                                id: officeId,
-                                name: office.name,
-                                value: office.value
-                            };
-                        }
-                    });
-                    
-                    // Sort offices by value and take top 5
-                    const topOffices = Object.values(officesForSubAgency)
-                        .sort((a, b) => b.value - a.value)
-                        .slice(0, 7);
-                    
-                    // Add office nodes
-                    topOffices.forEach(office => {
-                        const officeNode = {
-                            name: office.name, // Use awarding_office_name
-                            id: "office-" + Math.random().toString(36).substring(2, 9),
-                            value: office.value,
-                            isOffice: true,
-                            children: []
-                        };
-                        
-                        // Find primes for this office (recipient_name)
-                        const primesForOffice = {};
-                        
-                        // Get contracts connected to this office
-                        Object.values(model.contracts).forEach(contract => {
-                            if (contract.officeId === office.id) {
-                                const primeId = contract.primeId;
-                                if (!primesForOffice[primeId]) {
-                                    primesForOffice[primeId] = 0;
-                                }
-                                primesForOffice[primeId] += contract.value;
-                            }
-                        });
-                        
-                        // Sort primes by value and take top 3
-                        const topPrimes = Object.entries(primesForOffice)
-                            .sort((a, b) => b[1] - a[1])
-                            .slice(0, 7)
-                            .map(([primeId, value]) => ({
-                                id: primeId,
-                                value: value
-                            }));
-                        
-                        // Add prime contractor nodes
-                        topPrimes.forEach(prime => {
-                            const primeData = model.primes[prime.id];
-                            if (!primeData) return;
-                            
-                            const primeNode = {
-                                name: primeData.name, // Use recipient_name
-                                id: "prime-" + Math.random().toString(36).substring(2, 9),
-                                value: prime.value,
-                                isPrime: true,
-                                children: []
-                            };
-                            
-                            // Find subs for this prime (subawardee_name)
-                            const subsForPrime = {};
-                            
-                            // Get prime to sub relationships
-                            model.relationships.primeToSub.forEach(rel => {
-                                if (rel.source === prime.id) {
-                                    const subId = rel.target;
-                                    if (!subsForPrime[subId]) {
-                                        subsForPrime[subId] = 0;
-                                    }
-                                    subsForPrime[subId] += rel.value;
-                                }
-                            });
-                            
-                            // Sort subs by value and take top 2
-                            const topSubs = Object.entries(subsForPrime)
-                                .sort((a, b) => b[1] - a[1])
-                                .slice(0, 7)
-                                .map(([subId, value]) => ({
-                                    id: subId,
-                                    value: value
-                                }));
-                            
-                            // Add sub nodes
-                            topSubs.forEach(sub => {
-                                const subData = model.subs[sub.id];
-                                if (!subData) return;
-                                
-                                primeNode.children.push({
-                                    name: subData.name, // Use subawardee_name
-                                    id: "sub-" + Math.random().toString(36).substring(2, 9),
-                                    value: sub.value,
-                                    isSub: true
-                                });
-                            });
-                            
-                            // Add prime if it has children or significant value
-                            if (primeNode.children.length > 0 || prime.value > 100000) {
-                                officeNode.children.push(primeNode);
-                            }
-                        });
-                        
-                        // Add office if it has children
-                        if (officeNode.children.length > 0) {
-                            subAgencyNode.children.push(officeNode);
-                        }
-                    });
-                    
-                    // Add sub-agency if it has children
-                    if (subAgencyNode.children.length > 0) {
-                        agencyNode.children.push(subAgencyNode);
-                    }
+                    subAgencyNode.children.push(officeNode);
                 });
-            }
+                
+                agencyNode.children.push(subAgencyNode);
+            });
         } else {
-            // No filter - add sub-agencies directly under agency
+            // No filter - add top sub-agencies
             const subAgenciesForAgency = {};
             
             Array.from(agency.subAgencies || []).forEach(subAgencyId => {
@@ -6236,7 +4018,7 @@ function createHierarchyData(model, subAgencyFilter) {
                 }
             });
             
-            // Sort sub-agencies by value and take top 3
+            // Sort and take top 3
             const topSubAgencies = Object.values(subAgenciesForAgency)
                 .sort((a, b) => b.value - a.value)
                 .slice(0, 3);
@@ -6244,132 +4026,12 @@ function createHierarchyData(model, subAgencyFilter) {
             // Add sub-agency nodes
             topSubAgencies.forEach(subAgency => {
                 const subAgencyNode = {
-                    name: subAgency.name, // Use awarding_sub_agency_name
-                    id: "subagency-" + Math.random().toString(36).substring(2, 9),
+                    name: subAgency.name,
                     value: subAgency.value,
-                    isSubAgency: true,
                     children: []
                 };
                 
-                // Find offices for this sub-agency
-                const officesForSubAgency = {};
-                
-                const subAgencyObj = model.subAgencies[subAgency.id];
-                if (subAgencyObj && subAgencyObj.offices) {
-                    Array.from(subAgencyObj.offices).forEach(officeId => {
-                        const office = model.offices[officeId];
-                        if (office) {
-                            officesForSubAgency[officeId] = {
-                                id: officeId,
-                                name: office.name,
-                                value: office.value
-                            };
-                        }
-                    });
-                }
-                
-                // Sort offices by value and take top 2
-                const topOffices = Object.values(officesForSubAgency)
-                    .sort((a, b) => b.value - a.value)
-                    .slice(0, 2);
-                
-                // Add office nodes
-                topOffices.forEach(office => {
-                    const officeNode = {
-                        name: office.name, // Use awarding_office_name
-                        id: "office-" + Math.random().toString(36).substring(2, 9),
-                        value: office.value,
-                        isOffice: true,
-                        children: []
-                    };
-                    
-                    // Add prime contractors for this office
-                    // This is similar to the code above for filtered sub-agencies
-                    const primesForOffice = {};
-                    
-                    Object.values(model.contracts).forEach(contract => {
-                        if (contract.officeId === office.id) {
-                            const primeId = contract.primeId;
-                            if (!primesForOffice[primeId]) {
-                                primesForOffice[primeId] = 0;
-                            }
-                            primesForOffice[primeId] += contract.value;
-                        }
-                    });
-                    
-                    // Sort primes by value and take top 2
-                    const topPrimes = Object.entries(primesForOffice)
-                        .sort((a, b) => b[1] - a[1])
-                        .slice(0, 2)
-                        .map(([primeId, value]) => ({
-                            id: primeId,
-                            value: value
-                        }));
-                    
-                    // Add prime contractor nodes
-                    topPrimes.forEach(prime => {
-                        const primeData = model.primes[prime.id];
-                        if (!primeData) return;
-                        
-                        const primeNode = {
-                            name: primeData.name, // Use recipient_name
-                            id: "prime-" + Math.random().toString(36).substring(2, 9),
-                            value: prime.value,
-                            isPrime: true,
-                            children: []
-                        };
-                        
-                        // Add subs for this prime
-                        const subsForPrime = {};
-                        
-                        model.relationships.primeToSub.forEach(rel => {
-                            if (rel.source === prime.id) {
-                                const subId = rel.target;
-                                if (!subsForPrime[subId]) {
-                                    subsForPrime[subId] = 0;
-                                }
-                                subsForPrime[subId] += rel.value;
-                            }
-                        });
-                        
-                        // Sort subs by value and take top 1
-                        const topSubs = Object.entries(subsForPrime)
-                            .sort((a, b) => b[1] - a[1])
-                            .slice(0, 1)
-                            .map(([subId, value]) => ({
-                                id: subId,
-                                value: value
-                            }));
-                        
-                        // Add sub nodes
-                        topSubs.forEach(sub => {
-                            const subData = model.subs[sub.id];
-                            if (!subData) return;
-                            
-                            primeNode.children.push({
-                                name: subData.name, // Use subawardee_name
-                                id: "sub-" + Math.random().toString(36).substring(2, 9),
-                                value: sub.value,
-                                isSub: true
-                            });
-                        });
-                        
-                        // Add prime if it has children or significant value
-                        if (primeNode.children.length > 0 || prime.value > 100000) {
-                            officeNode.children.push(primeNode);
-                        }
-                    });
-                    
-                    // Add office if it has children
-                    if (officeNode.children.length > 0) {
-                        subAgencyNode.children.push(officeNode);
-                    }
-                });
-                
-                // Add sub-agency if it has children
-                if (subAgencyNode.children.length > 0) {
-                    agencyNode.children.push(subAgencyNode);
-                }
+                agencyNode.children.push(subAgencyNode);
             });
         }
         
@@ -6379,597 +4041,690 @@ function createHierarchyData(model, subAgencyFilter) {
         }
     });
     
-    // Add a check for empty visualization
+    // Ensure we have some data
     if (root.children.length === 0) {
-        // Create a dummy agency to ensure something displays
         root.children.push({
-            name: subAgencyFilter ? `No data for ${subAgencyFilter}` : "Selected Agency",
-            id: "agency-" + Math.random().toString(36).substring(2, 9),
-            value: 1000000,
-            children: [{
-                name: "No Data Found",
-                id: "subagency-" + Math.random().toString(36).substring(2, 9),
-                value: 1000000,
-                isSubAgency: true,
-                children: []
-            }]
+            name: "No Data Available",
+            value: 0,
+            children: []
         });
     }
     
     return root;
 }
-// Get theme-aware color scheme for the dendrogram
-function getDendrogramColors() {
-    const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
-    
-    if (isDarkMode) {
-        // Dark mode color palette - more saturated, slightly brighter colors
-        return {
-            agency: '#9580FF',          // Vibrant purple
-            subagency: '#B8A5FF',       // Lighter purple
-            office: '#5EADF2',          // Bright blue
-            prime: '#5CD6B2',           // Teal
-            sub: '#FFA15C',             // Orange
-            background: '#1E1A22',      // Dark background
-            text: '#F4F2F6',            // Light text
-            secondaryText: '#B5B0BD',   // Dimmed text
-            border: '#3A373E'           // Dark border
-        };
-    } else {
-        // Light mode color palette - slightly desaturated, deeper colors
-        return {
-            agency: '#6E56C7',          // Deep purple
-            subagency: '#9984E8',       // Medium purple
-            office: '#3F8CCA',          // Deep blue
-            prime: '#2EB28F',           // Deep teal
-            sub: '#E67A33',             // Deep orange
-            background: '#FFFFFF',      // Light background
-            text: '#36323A',            // Dark text
-            secondaryText: '#615C66',   // Medium text
-            border: '#D7D4DC'           // Light border
-        };
-    }
-}
-function displayForceDirectedRadial(model) {
-    const containerId = 'circular-dendrogram-container';
+
+function displayNaicsDonutChart(data, containerId, topN = 5) {
     const container = document.getElementById(containerId);
-    
     if (!container) {
-        console.error("Container not found.");
+        console.error(`Container #${containerId} not found`);
         return;
     }
-
-    // Clear any previous content
+    
+    // Clear the container
     container.innerHTML = '';
     
-    setLoading(containerId, false);
-    
-    // Get the current sub-agency filter (if any)
-    const subAgencyFilter = document.getElementById('sub-agency-filter')?.value || '';
-    
-    // Check if we have valid model data
-    if (!model || !Object.keys(model.agencies).length) {
-        displayNoData(containerId, 'No data available for hierarchical visualization.');
+    if (!data || data.length === 0) {
+        displayNoData(containerId, 'No NAICS data available for distribution.');
         return;
     }
     
     try {
-        // Create wide-format SVG container
-        const width = 1600;
-        const height = 800;
+        // Set up dimensions and colors
+        const width = container.clientWidth || 300;
+        const height = container.clientHeight || 300;
+        const radius = Math.min(width, height) / 2 * 0.8;
+        const innerRadius = radius * 0.6;
         
+        // Take top N codes plus "Other"
+        const topItems = data.slice(0, topN);
+        const otherValue = data.slice(topN).reduce((sum, item) => sum + item.value, 0);
+        
+        const chartData = [...topItems];
+        if (otherValue > 0) {
+            chartData.push({
+                code: 'Other',
+                desc: `Other NAICS (${data.length - topN} codes)`,
+                value: otherValue,
+                percentage: 100 - topItems.reduce((sum, item) => sum + item.percentage, 0)
+            });
+        }
+        
+        // Create SVG
         const svg = d3.select(container)
-            .append("svg")
-            .attr("width", "100%")
-            .attr("height", "100%")
-            .attr("viewBox", `0 0 ${width} ${height}`)
-            .attr("preserveAspectRatio", "xMidYMid meet");
+            .append('svg')
+            .attr('width', width)
+            .attr('height', height)
+            .append('g')
+            .attr('transform', `translate(${width / 2}, ${height / 2})`);
         
-        // Create a single container group for the visualization
-        const vizContainer = svg.append("g")
-            .attr("class", "viz-container");
-            
-        // Create hierarchical data
-        const hierarchyData = createHierarchyData(model, subAgencyFilter);
+        // Create color scale
+        const colors = [
+            getCssVar('--chart-color-primary'),
+            getCssVar('--chart-color-secondary'),
+            getCssVar('--chart-color-tertiary'),
+            d3.color(getCssVar('--chart-color-primary')).darker(0.5),
+            d3.color(getCssVar('--chart-color-secondary')).darker(0.5),
+            d3.color(getCssVar('--chart-color-tertiary')).darker(0.5)
+        ];
         
-        // Convert to d3 hierarchy
-        const originalRoot = d3.hierarchy(hierarchyData);
-        originalRoot.sort((a, b) => (b.data.value || 0) - (a.data.value || 0));
+        const color = d3.scaleOrdinal()
+            .domain(chartData.map(d => d.code))
+            .range(colors);
         
-        // Keep track of current view state
-        let currentRoot = originalRoot;
-        let breadcrumbPath = [];
+        // Create donut chart
+        const pie = d3.pie()
+            .sort(null)
+            .value(d => d.value);
         
-        // Initial render
-        renderView();
+        const arc = d3.arc()
+            .innerRadius(innerRadius)
+            .outerRadius(radius)
+            .cornerRadius(1);
         
-        // Main render function
-        function renderView() {
-            // Clear previous content
-            vizContainer.selectAll("*").remove();
-            
-            // Create tree layout for current root
-            const treeLayout = d3.tree()
-                .size([height - 150, width - 300])
-                .separation((a, b) => (a.parent === b.parent ? 1 : 1.2));
-            
-            // Clone the current root to avoid modifying the original
-            const root = d3.hierarchy(currentRoot.data);
-            root.sort((a, b) => (b.data.value || 0) - (a.data.value || 0));
-            
-            // Apply layout
-            treeLayout(root);
-            
-            // Adjust horizontal spacing
-            const levelWidth = (width - 300) / (root.height + 1);
-            root.each(d => {
-                d.y = 100 + (d.depth * levelWidth);
-            });
-            
-            // Create a group for the chart
-            const chart = vizContainer.append("g")
-                .attr("class", "chart")
-                .attr("transform", `translate(30, 75)`);
-            
-            // Create links
-            const link = chart.append("g")
-                .attr("class", "links")
-                .selectAll("path")
-                .data(root.links())
-                .join("path")
-                .attr("fill", "none")
-                .attr("stroke", getCssVar('--color-border'))
-                .attr("stroke-opacity", 0.8)
-                .attr("d", d3.linkHorizontal()
-                    .x(d => d.y)
-                    .y(d => d.x))
-                .attr("stroke-width", d => {
-                    const value = d.target.data.value || 0;
-                    return Math.max(0.5, Math.min(2, Math.log10(value + 1) / 6));
-                });
-            
-            // Get node type function (accounting for breadcrumb depth)
-            function getNodeType(d) {
-                const effectiveDepth = breadcrumbPath.length + d.depth;
-                
-                if (effectiveDepth === 0) return 'root';
-                if (effectiveDepth === 1) return 'agency';
-                if (effectiveDepth === 2) {
-                    return d.data.isSubAgency ? 'subagency' : 'unknown';
-                }
-                if (effectiveDepth === 3) {
-                    return d.data.isOffice ? 'office' : 'prime';
-                }
-                if (effectiveDepth === 4) {
-                    return d.data.isPrime ? 'prime' : 'sub';
-                }
-                return 'sub';
-            }
-            
-            // Calculate node radius based on type
-            function getNodeRadius(d) {
-                const type = getNodeType(d);
-                if (type === 'root') return 0;
-                if (type === 'agency') return 8;
-                if (type === 'subagency') return 7;
-                if (type === 'office') return 6;
-                if (type === 'prime') return 5;
-                return 4;
-            }
-            
-            // Create node groups
-            const nodeGroups = chart.append("g")
-                .attr("class", "nodes")
-                .selectAll("g.node")
-                .data(root.descendants())
-                .join("g")
-                .attr("class", d => `node ${d.children && d.children.length > 0 ? 'has-children' : 'leaf'}`)
-                .attr("transform", d => `translate(${d.y},${d.x})`)
-                .attr("data-type", d => getNodeType(d))
-                .attr("data-name", d => d.data.name)
-                .style("cursor", d => d.children && d.children.length > 0 ? "pointer" : "default");
-            
-            // Get theme-aware colors
-const colors = getDendrogramColors();
-
-// Add circles to nodes
-nodeGroups.append("circle")
-    .attr("r", d => getNodeRadius(d))
-    .attr("fill", d => {
-        const type = getNodeType(d);
-        if (type === 'root') return 'none';
-        if (type === 'agency') return colors.agency;
-        if (type === 'subagency') return colors.subagency;
-        if (type === 'office') return colors.office;
-        if (type === 'prime') return colors.prime;
-        return colors.sub;
-    })
-    .attr("stroke", colors.background)
-    .attr("stroke-width", 1.5);
-
-            
-            // Add plus icon for nodes with children
-            nodeGroups.filter(d => d.children && d.children.length > 0)
-                .append("text")
-                .attr("class", "drill-icon")
-                .attr("dy", "0.3em")
-                .attr("font-size", "10px")
-                .attr("text-anchor", "middle")
-                .attr("fill", getCssVar('--color-surface'))
-                .text("+");
-            
-            // Add labels with inline values
-            nodeGroups.append("text")
-                .attr("class", "node-label")
-                .attr("dy", "0.32em")
-                .attr("x", d => {
-                    const nodeRadius = getNodeRadius(d);
-                    return d.children ? -nodeRadius - 6 : nodeRadius + 6;
-                })
-                .attr("text-anchor", d => d.children ? "end" : "start")
-                .attr("font-size", d => {
-                    const type = getNodeType(d);
-                    if (type === 'agency') return "12px";
-                    if (type === 'subagency') return "11px";
-                    if (type === 'office') return "10px";
-                    return "9px";
-                })
-                .attr("fill", getCssVar('--color-text-primary'))
-                .text(d => {
-                    const name = d.data.name || "";
-                    const type = getNodeType(d);
-                    
-                    // Combine name and value for prime and sub nodes
-                    if (type === 'prime' || type === 'sub') {
-                        const valueStr = d.data.value ? ` (${formatConciseCurrency(d.data.value)})` : '';
-                        
-                        // Adjust max length based on name + value length
-                        const maxNameLength = 45 - valueStr.length;
-                        
-                        if (name.length > maxNameLength) {
-                            return name.substring(0, maxNameLength - 3) + "..." + valueStr;
-                        }
-                        return name + valueStr;
-                    }
-                    
-                    // For other node types, just display name
-                    const maxLength = type === 'agency' ? 30 : 
-                                     type === 'subagency' ? 30 :
-                                     type === 'office' ? 30 : 25;
-                                     
-                    if (name.length > maxLength) {
-                        return name.substring(0, maxLength - 3) + "...";
-                    }
-                    
-                    return name;
-                });
-            
-            // Add separate value labels for agency, subagency, and office nodes
-            nodeGroups.filter(d => {
-                const type = getNodeType(d);
-                return (type === 'agency' || type === 'subagency' || type === 'office') && d.data.value;
-            })
-            .append("text")
-            .attr("class", "value-label")
-            .attr("x", d => {
-                const nodeRadius = getNodeRadius(d);
-                return d.children ? -nodeRadius - 6 : nodeRadius + 6;
-            })
-            .attr("y", 14)
-            .attr("text-anchor", d => d.children ? "end" : "start")
-            .attr("font-size", "9px")
-            .attr("fill", getCssVar('--color-text-secondary'))
-            .text(d => formatConciseCurrency(d.data.value));
-            
-            // Set up tooltip
-            let tooltip = d3.select("body").select("#tree-tooltip");
-            if (tooltip.empty()) {
-                tooltip = d3.select("body").append("div")
-                    .attr("id", "tree-tooltip")
-                    .style("position", "absolute")
-                    .style("visibility", "hidden")
-                    .style("opacity", 0)
-                    .style("background-color", getCssVar('--color-surface'))
-                    .style("border", `1px solid ${getCssVar('--color-border')}`)
-                    .style("border-radius", "4px")
-                    .style("padding", "10px")
-                    .style("color", getCssVar('--color-text-primary'))
-                    .style("font-size", "12px")
-                    .style("pointer-events", "none")
-                    .style("z-index", 1000)
-                    .style("max-width", "350px")
-                    .style("box-shadow", "0 3px 14px rgba(0,0,0,0.15)");
-            }
-            
-            // Tooltip functions
-            function showTooltip(event, d) {
-                const percentage = (100 * d.data.value / originalRoot.data.value).toFixed(1);
-                const type = getNodeType(d);
-                
-                let tooltipContent = `
-                    <div style="font-weight: bold; margin-bottom: 5px;">${d.data.name || 'Unknown'}</div>
-                    <div>Type: ${type.charAt(0).toUpperCase() + type.slice(1)}</div>
-                    <div>Value: ${formatCurrency(d.data.value || 0)}</div>
-                    <div>Share: ${percentage}%</div>
-                `;
-                
-                // Add child count info for clickable nodes
-                if (d.children && d.children.length > 0) {
-                    tooltipContent += `<div>Children: ${d.children.length}</div>`;
-                    tooltipContent += `<div style="color: ${getCssVar('--color-text-tertiary')}; font-style: italic; margin-top: 5px;">Click to drill down</div>`;
-                }
-                
-                tooltip.html(tooltipContent)
-                    .style("visibility", "visible")
-                    .style("opacity", 1)
-                    .style("left", (event.pageX + 15) + "px")
-                    .style("top", (event.pageY - 28) + "px");
-            }
-            
-            function hideTooltip() {
-                tooltip.style("visibility", "hidden").style("opacity", 0);
-            }
-            
-            // Add direct click handler to nodes with children
-            nodeGroups.filter(d => d.children && d.children.length > 0)
-                .on("click", function(event, d) {
-                    event.stopPropagation(); // Stop event propagation
-                    
-                    // Find the node in the original hierarchy by path
-                    const path = [...breadcrumbPath, d.data.name];
-                    const targetNode = findNodeByPath(originalRoot, path);
-                    
-                    if (targetNode) {
-                        // Save current view in breadcrumb
-                        breadcrumbPath.push(d.data.name);
-                        currentRoot = targetNode;
-                        renderView();
-                    }
-                });
-            
-            // Add hover effects
-            nodeGroups.on("mouseover", function(event, d) {
-                d3.select(this).select("circle")
-                    .attr("stroke", getCssVar('--chart-color-primary'))
-                    .attr("stroke-width", 2);
-                
-                showTooltip(event, d);
-            })
-            .on("mousemove", function(event) {
-                tooltip
-                    .style("left", (event.pageX + 15) + "px")
-                    .style("top", (event.pageY - 28) + "px");
-            })
-            .on("mouseout", function() {
-                d3.select(this).select("circle")
-                    .attr("stroke", getCssVar('--color-surface'))
-                    .attr("stroke-width", 1.5);
-                
-                hideTooltip();
-            });
-            
-            // Add breadcrumb navigation if we're not at the root
-            if (breadcrumbPath.length > 0) {
-                const breadcrumb = vizContainer.append("g")
-                    .attr("class", "breadcrumb")
-                    .attr("transform", "translate(30, 30)");
-                
-                // Add "Root" button
-                const rootBtn = breadcrumb.append("g")
-                    .attr("class", "breadcrumb-item")
-                    .attr("transform", "translate(0, 0)")
-                    .style("cursor", "pointer");
-                
-                rootBtn.append("rect")
-                    .attr("width", 70)
-                    .attr("height", 24)
-                    .attr("rx", 4)
-                    .attr("fill", getCssVar('--color-surface-variant'))
-                    .attr("stroke", getCssVar('--color-border'));
-                
-                rootBtn.append("text")
-                    .attr("x", 35)
-                    .attr("y", 16)
-                    .attr("text-anchor", "middle")
-                    .attr("font-size", "11px")
-                    .attr("fill", getCssVar('--color-text-primary'))
-                    .text("Root View");
-                
-                rootBtn.on("click", function() {
-                    // Reset to root
-                    breadcrumbPath = [];
-                    currentRoot = originalRoot;
-                    renderView();
-                });
-                
-                // Add breadcrumb items
-                let xOffset = 80;
-                
-                breadcrumbPath.forEach((name, i) => {
-                    const isLast = i === breadcrumbPath.length - 1;
-                    
-                    // Add separator
-                    breadcrumb.append("text")
-                        .attr("x", xOffset)
-                        .attr("y", 16)
-                        .attr("text-anchor", "middle")
-                        .attr("font-size", "14px")
-                        .attr("fill", getCssVar('--color-text-tertiary'))
-                        .text("›");
-                    
-                    xOffset += 15;
-                    
-                    // Calculate width for item
-                    const displayName = name.length > 20 ? name.substring(0, 17) + "..." : name;
-                    const textWidth = displayName.length * 6 + 20; // Approximate width
-                    
-                    // Create breadcrumb item
-                    const item = breadcrumb.append("g")
-                        .attr("class", "breadcrumb-item")
-                        .attr("transform", `translate(${xOffset}, 0)`)
-                        .style("cursor", isLast ? "default" : "pointer");
-                    
-                    item.append("rect")
-                        .attr("width", textWidth)
-                        .attr("height", 24)
-                        .attr("rx", 4)
-                        .attr("fill", isLast ? getCssVar('--color-primary') : getCssVar('--color-surface-variant'))
-                        .attr("stroke", getCssVar('--color-border'));
-                    
-                    item.append("text")
-                        .attr("x", textWidth / 2)
-                        .attr("y", 16)
-                        .attr("text-anchor", "middle")
-                        .attr("font-size", "11px")
-                        .attr("fill", isLast ? getCssVar('--color-on-primary') : getCssVar('--color-text-primary'))
-                        .text(displayName);
-                    
-                    if (!isLast) {
-                        item.on("click", function() {
-                            // Navigate to this breadcrumb
-                            breadcrumbPath = breadcrumbPath.slice(0, i + 1);
-                            const targetNode = findNodeByPath(originalRoot, breadcrumbPath);
-                            if (targetNode) {
-                                currentRoot = targetNode;
-                                renderView();
-                            }
-                        });
-                    }
-                    
-                    xOffset += textWidth + 5;
-                });
-            }
-            
-            // Add simple legend
-            const legend = vizContainer.append("g")
-                .attr("class", "legend")
-                .attr("transform", breadcrumbPath.length > 0 ? "translate(30, 80)" : "translate(30, 30)");
-                
-            const legendData = [
-    { label: "Agency", color: colors.agency },
-    { label: "Sub-Agency", color: colors.subagency },
-    { label: "Office", color: colors.office },
-    { label: "Prime", color: colors.prime },
-    { label: "Sub", color: colors.sub }
-];
-            
-            legendData.forEach((item, i) => {
-                const g = legend.append("g")
-                    .attr("transform", `translate(0, ${i * 20})`);
-                    
-                g.append("rect")
-                    .attr("width", 12)
-                    .attr("height", 12)
-                    .attr("fill", item.color);
-                    
-                g.append("text")
-                    .attr("x", 18)
-                    .attr("y", 10)
-                    .attr("font-size", "10px")
-                    .attr("fill", getCssVar('--color-text-secondary'))
-                    .text(item.label);
-            });
-            
-            // Add help text
-            vizContainer.append("g")
-                .attr("class", "help-text")
-                .attr("transform", `translate(${width - 20}, ${height - 10})`)
-                .append("text")
-                .attr("text-anchor", "end")
-                .attr("font-size", "9px")
-                .attr("fill", getCssVar('--color-text-tertiary'))
-                .text("Click node to drill down, click breadcrumb to navigate back");
-        }
+        // Add arcs
+        const arcs = svg.selectAll('.arc')
+            .data(pie(chartData))
+            .enter()
+            .append('g')
+            .attr('class', 'arc');
         
-        // Helper function to find a node by path from root
-        function findNodeByPath(root, path) {
-            let current = root;
-            
-            // Follow each name in the path
-            for (let i = 0; i < path.length; i++) {
-                const name = path[i];
-                
-                // Find child with this name
-                if (!current.children) return null;
-                
-                let found = false;
-                for (let j = 0; j < current.children.length; j++) {
-                    if (current.children[j].data.name === name) {
-                        current = current.children[j];
-                        found = true;
-                        break;
-                    }
-                }
-                
-                if (!found) return null;
-            }
-            
-            return current;
-        }
+        arcs.append('path')
+            .attr('d', arc)
+            .attr('fill', d => d.data.code === 'Other' ? getCssVar('--color-text-tertiary') : color(d.data.code))
+            .attr('stroke', getCssVar('--color-surface'))
+            .attr('stroke-width', 1);
         
-        // Add zoom functionality to the SVG
-        const zoom = d3.zoom()
-            .scaleExtent([0.2, 5])
-            .on("zoom", (event) => {
-                vizContainer.attr("transform", event.transform);
-            });
+        // Add tooltip
+        const tooltip = d3.select('body')
+            .append('div')
+            .attr('class', 'donut-tooltip')
+            .style('position', 'absolute')
+            .style('visibility', 'hidden')
+            .style('background-color', getCssVar('--color-surface'))
+            .style('color', getCssVar('--color-text-primary'))
+            .style('padding', '10px')
+            .style('border-radius', '4px')
+            .style('font-size', '12px')
+            .style('pointer-events', 'none')
+            .style('z-index', '1000')
+            .style('border', `1px solid ${getCssVar('--color-border')}`);
+        
+        arcs.on('mouseover', function(event, d) {
+            // Create tooltip content
+            let content = `<div style="font-weight: bold;">${d.data.code}</div>`;
+            if (d.data.desc) {
+                content += `<div>${d.data.desc}</div>`;
+            }
+            content += `<div>Value: ${formatCurrency(d.data.value)}</div>`;
+            content += `<div>Share: ${d.data.percentage.toFixed(1)}%</div>`;
             
-        svg.call(zoom)
-           .on("dblclick.zoom", function() {
-                svg.transition().duration(750).call(
-                    zoom.transform,
-                    d3.zoomIdentity.translate(0, 0).scale(1)
-                );
-            });
+            tooltip.html(content)
+                .style('visibility', 'visible')
+                .style('left', (event.pageX + 10) + 'px')
+                .style('top', (event.pageY - 28) + 'px');
             
+            // Highlight arc
+            d3.select(this).select('path')
+                .attr('stroke', getCssVar('--color-primary'))
+                .attr('stroke-width', 2);
+        })
+        .on('mousemove', function(event) {
+            tooltip.style('left', (event.pageX + 10) + 'px')
+                .style('top', (event.pageY - 28) + 'px');
+        })
+        .on('mouseout', function() {
+            tooltip.style('visibility', 'hidden');
+            
+            d3.select(this).select('path')
+                .attr('stroke', getCssVar('--color-surface'))
+                .attr('stroke-width', 1);
+        });
+        
+        // Add center text
+        svg.append('text')
+            .attr('text-anchor', 'middle')
+            .attr('dy', '-0.5em')
+            .attr('font-size', '12px')
+            .attr('fill', getCssVar('--color-text-secondary'))
+            .text('Top NAICS');
+        
+        svg.append('text')
+            .attr('text-anchor', 'middle')
+            .attr('dy', '1em')
+            .attr('font-size', '14px')
+            .attr('fill', getCssVar('--color-text-primary'))
+            .attr('font-weight', 'bold')
+            .text(data[0].code);
+        
+        svg.append('text')
+            .attr('text-anchor', 'middle')
+            .attr('dy', '2.5em')
+            .attr('font-size', '10px')
+            .attr('fill', getCssVar('--color-text-tertiary'))
+            .text(truncateText(data[0].desc, 40));
+        
     } catch (error) {
-        console.error("Error creating visualization:", error);
-        displayError(containerId, `Failed to render visualization: ${error.message}`);
+        console.error("Error creating donut chart:", error);
+        displayNoData(containerId, `Error: ${error.message}`);
     }
 }
-// Custom force function for clustering nodes at different relationship levels
-function isolatedNodesClusterForce(nodes, relationshipMap, strength = 0.5) {
-    function force(alpha) {
-        relationshipMap.forEach((childIds, parentId) => {
-            const parentNode = nodes.find(n => n.id === parentId);
-            if (!parentNode) return;
 
-            const childNodes = nodes.filter(n => childIds.includes(n.id)); 
-            if (childNodes.length === 0) return;
+function displayShareOfWalletChart(model) {
+    // Process data for Share of Wallet
+    const contractorShares = processShareOfWalletData(model);
+    
+    // Display in the container
+    displayShareOfWalletDonut(contractorShares);
+}
 
-            const parentAngle = Math.atan2(parentNode.y, parentNode.x);
-            const arcRange = Math.PI / 3; // 60 degrees
-
-            childNodes.forEach((childNode, i) => {
-                // Ensure division by zero is avoided and single nodes are centered
-                const angleOffset = childNodes.length > 1 ? 
-                    (arcRange * (i / (childNodes.length - 1))) : arcRange / 2;
-                const childAngle = parentAngle - (arcRange / 2) + angleOffset;
-
-                // Distance depends on the node types
-                const distance = 
-                    (parentNode.type === 'prime' && childNode.type === 'sub') ? 45 :
-                    (parentNode.type === 'office' && childNode.type === 'prime') ? 55 :
-                    (parentNode.type === 'subagency' && childNode.type === 'office') ? 65 : 
-                    75;
-                
-                const targetX = parentNode.x + (distance * Math.cos(childAngle));
-                const targetY = parentNode.y + (distance * Math.sin(childAngle));
-
-                childNode.x += (targetX - childNode.x) * alpha * strength;
-                childNode.y += (targetY - childNode.y) * alpha * strength;
-            });
-        });
+function processShareOfWalletData(model) {
+    if (!model || !model.primes) {
+        return [];
     }
     
-    // Allow strength to be configured
-    force.strength = function(s) {
-        if (arguments.length) {
-            strength = s;
-            return force;
+    // Aggregate values by prime contractor
+    const primeValues = {};
+    let totalValue = 0;
+    
+    // Get value from each prime
+    Object.values(model.primes).forEach(prime => {
+        if (prime.value > 0) {
+            primeValues[prime.name] = (primeValues[prime.name] || 0) + prime.value;
+            totalValue += prime.value;
         }
-        return strength;
+    });
+    
+    // Convert to array and sort
+    const sortedPrimes = Object.entries(primeValues)
+        .map(([name, value]) => ({
+            name: name,
+            value: value,
+            percentage: 0
+        }))
+        .sort((a, b) => b.value - a.value);
+    
+    // Take top 7 primes
+    const result = sortedPrimes.slice(0, 7);
+    
+    // Add "Other" category if needed
+    if (sortedPrimes.length > 7) {
+        const otherValue = sortedPrimes.slice(7)
+            .reduce((sum, item) => sum + item.value, 0);
+        
+        if (otherValue > 0) {
+            result.push({
+                name: "Other",
+                value: otherValue,
+                isOther: true,
+                count: sortedPrimes.length - 7
+            });
+        }
+    }
+    
+    // Calculate percentages
+    result.forEach(item => {
+        item.percentage = totalValue > 0 ? (item.value / totalValue) * 100 : 0;
+    });
+    
+    return result;
+}
+
+function displayShareOfWalletDonut(data) {
+    const containerId = 'share-of-wallet-container';
+    const container = document.getElementById(containerId);
+    
+    if (!container) {
+        console.error(`Container #${containerId} not found`);
+        ensureShareOfWalletContainer();
+        return;
+    }
+    
+    // Clear the container
+    container.innerHTML = '';
+    
+    if (!data || data.length === 0) {
+        displayNoData(containerId, 'No market share data available.');
+        return;
+    }
+    
+    try {
+        // Set up dimensions and colors
+        const width = container.clientWidth || 300;
+        const height = container.clientHeight || 300;
+        const radius = Math.min(width, height) / 2 * 0.8;
+        const innerRadius = radius * 0.6;
+        
+        // Format long names
+        data.forEach(item => {
+            if (item.name && item.name.length > 20 && !item.isOther) {
+                item.fullName = item.name;
+                const parts = item.name.split(' ');
+                if (parts.length > 2) {
+                    item.name = parts[0] + ' ' + parts[1];
+                } else {
+                    item.name = item.name.substring(0, 18) + '...';
+                }
+            }
+        });
+        
+        // Create SVG
+        const svg = d3.select(container)
+            .append('svg')
+            .attr('width', width)
+            .attr('height', height)
+            .append('g')
+            .attr('transform', `translate(${width / 2}, ${height / 2})`);
+        
+        // Create color scale
+        const colors = [
+            getCssVar('--chart-color-primary'),
+            getCssVar('--chart-color-secondary'),
+            getCssVar('--chart-color-tertiary'),
+            d3.color(getCssVar('--chart-color-primary')).darker(0.3),
+            d3.color(getCssVar('--chart-color-secondary')).darker(0.3),
+            d3.color(getCssVar('--chart-color-tertiary')).darker(0.3),
+            d3.color(getCssVar('--chart-color-primary')).brighter(0.3)
+        ];
+        
+        const color = d3.scaleOrdinal()
+            .domain(data.map(d => d.name))
+            .range(colors);
+        
+        // Create donut chart
+        const pie = d3.pie()
+            .sort(null)
+            .value(d => d.value);
+        
+        const arc = d3.arc()
+            .innerRadius(innerRadius)
+            .outerRadius(radius)
+            .cornerRadius(1);
+        
+        // Add arcs
+        const arcs = svg.selectAll('.arc')
+            .data(pie(data))
+            .enter()
+            .append('g')
+            .attr('class', 'arc');
+        
+        arcs.append('path')
+            .attr('d', arc)
+            .attr('fill', d => d.data.isOther ? getCssVar('--color-text-tertiary') : color(d.data.name))
+            .attr('stroke', getCssVar('--color-surface'))
+            .attr('stroke-width', 1);
+        
+        // Add tooltip
+        const tooltip = d3.select('body')
+            .append('div')
+            .attr('class', 'share-tooltip')
+            .style('position', 'absolute')
+            .style('visibility', 'hidden')
+            .style('background-color', getCssVar('--color-surface'))
+            .style('color', getCssVar('--color-text-primary'))
+            .style('padding', '10px')
+            .style('border-radius', '4px')
+            .style('font-size', '12px')
+            .style('pointer-events', 'none')
+            .style('z-index', '1000')
+            .style('border', `1px solid ${getCssVar('--color-border')}`);
+        
+        arcs.on('mouseover', function(event, d) {
+            // Create tooltip content
+            let content = `<div style="font-weight: bold;">${d.data.fullName || d.data.name}</div>`;
+            content += `<div>Value: ${formatCurrency(d.data.value)}</div>`;
+            content += `<div>Market Share: ${d.data.percentage.toFixed(1)}%</div>`;
+            if (d.data.isOther && d.data.count) {
+                content += `<div>Includes ${d.data.count} other contractors</div>`;
+            }
+            
+            tooltip.html(content)
+                .style('visibility', 'visible')
+                .style('left', (event.pageX + 10) + 'px')
+                .style('top', (event.pageY - 28) + 'px');
+            
+            // Highlight arc
+            d3.select(this).select('path')
+                .attr('stroke', getCssVar('--color-primary'))
+                .attr('stroke-width', 2);
+        })
+        .on('mousemove', function(event) {
+            tooltip.style('left', (event.pageX + 10) + 'px')
+                .style('top', (event.pageY - 28) + 'px');
+        })
+        .on('mouseout', function() {
+            tooltip.style('visibility', 'hidden');
+            
+            d3.select(this).select('path')
+                .attr('stroke', getCssVar('--color-surface'))
+                .attr('stroke-width', 1);
+        });
+        
+        // Add center text
+        svg.append('text')
+            .attr('text-anchor', 'middle')
+            .attr('dy', '-0.5em')
+            .attr('font-size', '12px')
+            .attr('fill', getCssVar('--color-text-secondary'))
+            .text('Market Leader');
+        
+        svg.append('text')
+            .attr('text-anchor', 'middle')
+            .attr('dy', '1em')
+            .attr('font-size', '14px')
+            .attr('fill', getCssVar('--color-text-primary'))
+            .attr('font-weight', 'bold')
+            .text(data[0].name);
+        
+        svg.append('text')
+            .attr('text-anchor', 'middle')
+            .attr('dy', '2.5em')
+            .attr('font-size', '10px')
+            .attr('fill', getCssVar('--color-text-tertiary'))
+            .text(`${data[0].percentage.toFixed(1)}% of market`);
+        
+    } catch (error) {
+        console.error("Error creating share of wallet chart:", error);
+        displayNoData(containerId, `Error: ${error.message}`);
+    }
+}
+
+function ensureShareOfWalletContainer() {
+    const containerId = 'share-of-wallet-container';
+    const bentoId = 'bento-share-of-wallet';
+    let container = document.getElementById(containerId);
+    
+    if (!container) {
+        console.log("Creating Share of Wallet container");
+        const bentoGrid = document.querySelector('.bento-grid');
+        if (!bentoGrid) {
+            console.error("Could not find bento grid for Share of Wallet container");
+            return;
+        }
+        
+        let bentoBox = document.getElementById(bentoId);
+        if (!bentoBox) {
+            bentoBox = document.createElement('div');
+            bentoBox.id = bentoId;
+            bentoBox.className = 'bento-box';
+            bentoBox.style.minHeight = '240px';
+            
+            const header = document.createElement('div');
+            header.className = 'card-header';
+            header.innerHTML = `
+                <div class="card-icon-circle">
+                    <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21.21 15.89A10 10 0 1 1 8.11 2.99"></path>
+                        <path d="M22 12A10 10 0 0 0 12 2v10z"></path>
+                    </svg>
+                </div>
+                <h2>Market Share</h2>
+            `;
+            bentoBox.appendChild(header);
+            bentoGrid.appendChild(bentoBox);
+        }
+        
+        // Create chart container
+        container = document.createElement('div');
+        container.id = containerId;
+        container.className = 'chart-container';
+        // Set explicit height to match other chart containers
+        container.style.minHeight = '220px';
+        container.style.height = '100%';
+        bentoBox.appendChild(container);
+    }
+    
+    return container;
+}
+function ensureAllVisualizationsLoaded() {
+    console.log("Ensuring all visualizations are properly loaded and displayed...");
+    
+    // Get the current filter values
+    const subAgencyFilter = document.getElementById('sub-agency-filter')?.value || '';
+    const naicsFilter = document.getElementById('naics-filter')?.value || '';
+    const searchTerm = document.getElementById('search-input')?.value.trim().toLowerCase() || '';
+    
+    // Force re-application of filters with a slight delay to ensure containers are ready
+    setTimeout(() => {
+        if (unifiedModel) {
+            // First, make sure all containers are visible
+            ensureContainersVisible();
+            
+            // Then apply filters and update visuals
+            updateVisualsFromUnifiedModel(subAgencyFilter, naicsFilter, searchTerm);
+            
+            // Try to render Share of Wallet chart separately with a delay
+            setTimeout(() => {
+                try {
+                    displayShareOfWalletChart(unifiedModel);
+                } catch (e) {
+                    console.error("Error displaying Share of Wallet chart:", e);
+                }
+            }, 500);
+        }
+    }, 300);
+}
+
+function ensureContainersVisible() {
+    // List of all visualization containers
+    const containerIds = [
+        'contract-leaders-table-container',
+        'tav-tcv-chart-container',
+        'expiring-contracts-table-container', 
+        'sankey-chart-container',
+        'map-container',
+        'circular-dendrogram-container',
+        'bento-naics-distribution'
+    ];
+    
+    // Ensure all containers are visible and initialized
+    containerIds.forEach(id => {
+        const container = document.getElementById(id);
+        if (container) {
+            // Make sure the container is visible
+            container.style.display = 'block';
+            
+            // If container has no height, try to give it a default height
+            if (container.clientHeight < 10) {
+                container.style.minHeight = '250px';
+            }
+            
+            // Make sure parent bento box is visible
+            const bentoBox = container.closest('.bento-box');
+            if (bentoBox) {
+                bentoBox.style.display = 'block';
+            }
+        }
+    });
+    
+    // Ensure Share of Wallet container exists
+    ensureShareOfWalletContainer();
+}
+// Add these functions at the very end of your wednesday.js file
+
+// Function to fix missing visualization functions
+function ensureVisualizationFunctionsExist() {
+  console.log("Ensuring all required visualization functions exist");
+  
+  // Add displayTavTcvChart if it doesn't exist
+  if (typeof window.displayTavTcvChart !== 'function') {
+    window.displayTavTcvChart = function(chartData) {
+      const containerId = 'tav-tcv-chart-container';
+      const container = document.getElementById(containerId);
+
+      if (!container) {
+        console.error("TAV/TCV chart container element not found.");
+        return;
+      }
+
+      setLoading(containerId, false);
+      
+      // If no data, show message and return
+      if (!chartData || chartData.length === 0) {
+        displayNoData(containerId, 'No contracts found for TAV/TCV comparison.');
+        return;
+      }
+      
+      // Basic implementation to show data is loading
+      container.innerHTML = `<div>TAV/TCV data loaded successfully with ${chartData.length} entries</div>`;
+      
+      console.log("TAV/TCV chart displayed with data:", chartData);
+    };
+  }
+  
+  // Add other minimal stub functions for visualizations
+  if (typeof window.displayEnhancedSankeyChart !== 'function') {
+    window.displayEnhancedSankeyChart = function(model) {
+      const containerId = 'sankey-chart-container';
+      setLoading(containerId, false);
+      
+      if (!model || !model.relationships || !model.relationships.agencyToPrime) {
+        displayNoData(containerId, 'No data for Sankey chart');
+        return;
+      }
+      
+      const container = document.getElementById(containerId);
+      if (container) {
+        container.innerHTML = `<div>Sankey data loaded successfully</div>`;
+      }
+      
+      console.log("Sankey chart displayed with data");
+    };
+  }
+  
+  if (typeof window.displayChoroplethMap !== 'function') {
+    window.displayChoroplethMap = function(mapData) {
+      const containerId = 'map-container';
+      setLoading(containerId, false);
+      
+      if (!mapData || Object.keys(mapData).length === 0) {
+        displayNoData(containerId, 'No geographic data available for mapping.');
+        return;
+      }
+      
+      const container = document.getElementById(containerId);
+      if (container) {
+        container.innerHTML = `<div>Map data loaded successfully with ${Object.keys(mapData).length} states</div>`;
+      }
+      
+      console.log("Map displayed with data");
+    };
+  }
+  
+  if (typeof window.displayForceDirectedRadial !== 'function') {
+    window.displayForceDirectedRadial = function(model) {
+      const containerId = 'circular-dendrogram-container';
+      setLoading(containerId, false);
+      
+      if (!model || !model.agencies) {
+        displayNoData(containerId, 'No agency data available for visualization.');
+        return;
+      }
+      
+      const container = document.getElementById(containerId);
+      if (container) {
+        container.innerHTML = `<div>Relationship data loaded successfully</div>`;
+      }
+      
+      console.log("Force directed radial displayed with data");
+    };
+  }
+  
+  if (typeof window.displayNaicsDonutChart !== 'function') {
+    window.displayNaicsDonutChart = function(data, containerId) {
+      const container = document.getElementById(containerId);
+      if (!container) return;
+      
+      setLoading(containerId, false);
+      
+      if (!data || data.length === 0) {
+        displayNoData(containerId, 'No NAICS data available.');
+        return;
+      }
+      
+      container.innerHTML = `<div>NAICS data loaded successfully with ${data.length} codes</div>`;
+      console.log("NAICS donut chart displayed with data");
+    };
+  }
+  
+  if (typeof window.processNaicsDistributionData !== 'function') {
+    window.processNaicsDistributionData = function(model) {
+      if (!model || !model.contracts) {
+        return [];
+      }
+      
+      // Get unique NAICS codes
+      const naicsCodes = {};
+      Object.values(model.contracts).forEach(contract => {
+        if (contract.naicsCode) {
+          if (!naicsCodes[contract.naicsCode]) {
+            naicsCodes[contract.naicsCode] = {
+              code: contract.naicsCode,
+              desc: contract.naicsDesc || 'Unknown',
+              value: 0,
+              percentage: 0
+            };
+          }
+          naicsCodes[contract.naicsCode].value += contract.value || 0;
+        }
+      });
+      
+      // Convert to array and sort
+      const result = Object.values(naicsCodes).sort((a, b) => b.value - a.value);
+      
+      // Calculate percentages
+      const total = result.reduce((sum, item) => sum + item.value, 0);
+      result.forEach(item => {
+        item.percentage = total > 0 ? (item.value / total) * 100 : 0;
+      });
+      
+      return result;
+    };
+  }
+  
+  if (typeof window.displayShareOfWalletChart !== 'function') {
+    window.displayShareOfWalletChart = function(model) {
+      console.log("Share of wallet chart function called");
+      
+      // Basic stub - don't do anything yet
+      return;
+    };
+  }
+  
+  console.log("All visualization functions now available");
+}
+
+// Add patch load monitor
+function patchLoadMonitor() {
+  const datasetSelect = document.getElementById('dataset-select');
+  
+  if (datasetSelect) {
+    // Patch the change handler to ensure visualization functions exist
+    const originalChangeHandler = datasetSelect.onchange;
+    datasetSelect.onchange = function(event) {
+      console.log("Dataset selection changed, ensuring visualization functions exist");
+      ensureVisualizationFunctionsExist();
+      
+      // Then call original handler if it exists
+      if (typeof originalChangeHandler === 'function') {
+        originalChangeHandler.call(this, event);
+      }
     };
     
-    return force;
+    console.log("Dataset select change handler patched");
+  }
+  
+  // Also ensure functions exist on page load
+  ensureVisualizationFunctionsExist();
+}
+
+// Run patch on page load
+document.addEventListener('DOMContentLoaded', function() {
+  console.log("DOM loaded, running visualization function patch");
+  setTimeout(patchLoadMonitor, 500);
+});
+
+// Or run immediately if already loaded
+if (document.readyState !== 'loading') {
+  console.log("Document already loaded, running visualization function patch immediately");
+  patchLoadMonitor();
 }
