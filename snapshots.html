@@ -65,8 +65,6 @@
   </div>
 
   <script>
-    // Agency code for Department of Homeland Security
-    const DHS_CODE = "086";
     // Date range for FY24-FY25
     const TIME_PERIOD = [{ start_date: "2023-10-01", end_date: "2025-09-30" }];
     
@@ -102,19 +100,19 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             filters: {
-              agencies: [{
-                type: "awarding",
-                tier: "toptier",
-                toptier_code: DHS_CODE
-              }],
               time_period: TIME_PERIOD,
-              award_type_codes: ["A", "B", "C", "D"]
+              award_type_codes: ["A", "B", "C", "D"],
+              agencies: [
+                {
+                  type: "awarding",
+                  tier: "toptier",
+                  name: "Department of Homeland Security"
+                }
+              ]
             },
             fields: ["Award ID", "Recipient Name", "Award Amount", "Action Date"],
             limit: 1,
-            page: 1,
-            sort: "Award Amount",
-            order: "desc"
+            page: 1
           })
         });
         
@@ -125,7 +123,7 @@
         const result = await res.json();
         const element = document.getElementById("total");
         
-        if (result.page_metadata?.total) {
+        if (result && result.page_metadata && result.page_metadata.total) {
           const totalAmount = parseFloat(result.page_metadata.total);
           element.textContent = `$${totalAmount.toLocaleString()}`;
           element.className = '';
@@ -134,7 +132,6 @@
           element.className = '';
         }
         
-        updateStatus('success', 'Data loaded successfully');
         return true;
       } catch (error) {
         handleError('total', error);
@@ -142,25 +139,23 @@
       }
     }
 
-    // Fetch data for specific category (recipients, naics, offices)
-    async function fetchCategory(category, labelField, valueField = "aggregated_amount") {
+    // Fetch recipient data
+    async function fetchRecipients() {
       try {
-        const endpoint = category === 'offices' 
-          ? 'awarding_office' 
-          : (category === 'naics' ? 'naics' : 'recipient');
-        
-        const res = await fetch(`https://api.usaspending.gov/api/v2/search/spending_by_category/${endpoint}/`, {
+        const res = await fetch("https://api.usaspending.gov/api/v2/search/spending_by_category/recipient/", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             filters: {
-              agencies: [{
-                type: "awarding",
-                tier: "toptier",
-                toptier_code: DHS_CODE
-              }],
               time_period: TIME_PERIOD,
-              award_type_codes: ["A", "B", "C", "D"]
+              award_type_codes: ["A", "B", "C", "D"],
+              agencies: [
+                {
+                  type: "awarding",
+                  tier: "toptier",
+                  name: "Department of Homeland Security"
+                }
+              ]
             },
             limit: 5
           })
@@ -171,26 +166,125 @@
         }
 
         const json = await res.json();
-        const ul = document.getElementById(`top-${category}`);
+        const ul = document.getElementById("top-recipients");
         ul.innerHTML = "";
         ul.className = '';
 
-        if (!json?.results?.length) {
+        if (!json || !json.results || json.results.length === 0) {
           ul.innerHTML = "<li>No data available</li>";
           return false;
         }
 
         json.results.forEach(item => {
           const li = document.createElement("li");
-          const label = item[labelField] || 'Unnamed';
-          const value = parseFloat(item[valueField] || 0);
-          li.textContent = `${label} – $${value.toLocaleString()}`;
+          li.textContent = `${item.name || 'Unnamed'} – $${parseFloat(item.amount || 0).toLocaleString()}`;
           ul.appendChild(li);
         });
         
         return true;
       } catch (error) {
-        handleError(category, error);
+        handleError('recipients', error);
+        return false;
+      }
+    }
+
+    // Fetch NAICS data
+    async function fetchNaics() {
+      try {
+        const res = await fetch("https://api.usaspending.gov/api/v2/search/spending_by_category/naics/", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            filters: {
+              time_period: TIME_PERIOD,
+              award_type_codes: ["A", "B", "C", "D"],
+              agencies: [
+                {
+                  type: "awarding",
+                  tier: "toptier",
+                  name: "Department of Homeland Security"
+                }
+              ]
+            },
+            limit: 5
+          })
+        });
+        
+        if (!res.ok) {
+          throw new Error(`HTTP error! Status: ${res.status}`);
+        }
+
+        const json = await res.json();
+        const ul = document.getElementById("top-naics");
+        ul.innerHTML = "";
+        ul.className = '';
+
+        if (!json || !json.results || json.results.length === 0) {
+          ul.innerHTML = "<li>No data available</li>";
+          return false;
+        }
+
+        json.results.forEach(item => {
+          const name = item.name || item.naics_description || 'Unnamed NAICS';
+          const code = item.code || item.naics || '';
+          const displayName = code ? `${code} - ${name}` : name;
+          li = document.createElement("li");
+          li.textContent = `${displayName} – $${parseFloat(item.amount || 0).toLocaleString()}`;
+          ul.appendChild(li);
+        });
+        
+        return true;
+      } catch (error) {
+        handleError('naics', error);
+        return false;
+      }
+    }
+
+    // Fetch awarding offices
+    async function fetchOffices() {
+      try {
+        const res = await fetch("https://api.usaspending.gov/api/v2/search/spending_by_category/awarding_subagency/", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            filters: {
+              time_period: TIME_PERIOD,
+              award_type_codes: ["A", "B", "C", "D"],
+              agencies: [
+                {
+                  type: "awarding",
+                  tier: "toptier",
+                  name: "Department of Homeland Security"
+                }
+              ]
+            },
+            limit: 5
+          })
+        });
+        
+        if (!res.ok) {
+          throw new Error(`HTTP error! Status: ${res.status}`);
+        }
+
+        const json = await res.json();
+        const ul = document.getElementById("top-offices");
+        ul.innerHTML = "";
+        ul.className = '';
+
+        if (!json || !json.results || json.results.length === 0) {
+          ul.innerHTML = "<li>No data available</li>";
+          return false;
+        }
+
+        json.results.forEach(item => {
+          const li = document.createElement("li");
+          li.textContent = `${item.name || 'Unnamed Office'} – $${parseFloat(item.amount || 0).toLocaleString()}`;
+          ul.appendChild(li);
+        });
+        
+        return true;
+      } catch (error) {
+        handleError('offices', error);
         return false;
       }
     }
@@ -203,9 +297,9 @@
         // Start all fetches in parallel
         const results = await Promise.all([
           fetchTotals(),
-          fetchCategory('recipients', 'name'),
-          fetchCategory('naics', 'name'),
-          fetchCategory('offices', 'name')
+          fetchRecipients(),
+          fetchNaics(),
+          fetchOffices()
         ]);
         
         // Check if all requests were successful
