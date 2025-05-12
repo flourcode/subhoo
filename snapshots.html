@@ -283,30 +283,29 @@
     // Fetch total obligations
     async function fetchTotals() {
       try {
-        const agencyFilter = {
-          type: "awarding",
-          tier: "toptier",
-          toptier_code: selectedAgency
+        const requestBody = {
+          filters: {
+            time_period: TIME_PERIOD,
+            award_type_codes: ["A", "B", "C", "D"]
+          },
+          fields: ["Award ID", "Recipient Name", "Award Amount", "Action Date"],
+          limit: 1,
+          page: 1
         };
         
-        // Add subagency if selected
-        if (selectedSubagency) {
-          agencyFilter.name = selectedSubagency;
+        // Add agency filter
+        if (selectedAgency) {
+          requestBody.filters.agencies = [{
+            type: "awarding",
+            tier: "toptier",
+            toptier_code: selectedAgency
+          }];
         }
         
         const res = await fetch("https://api.usaspending.gov/api/v2/search/spending_by_award/", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            filters: {
-              time_period: TIME_PERIOD,
-              award_type_codes: ["A", "B", "C", "D"],
-              agencies: [agencyFilter]
-            },
-            fields: ["Award ID", "Recipient Name", "Award Amount", "Action Date"],
-            limit: 1,
-            page: 1
-          })
+          body: JSON.stringify(requestBody)
         });
         
         if (!res.ok) {
@@ -335,28 +334,28 @@
     // Fetch recipient data
     async function fetchRecipients() {
       try {
-        const agencyFilter = {
-          type: "awarding",
-          tier: "toptier",
-          toptier_code: selectedAgency
+        const requestBody = {
+          category: "recipient",
+          filters: {
+            time_period: TIME_PERIOD,
+            award_type_codes: ["A", "B", "C", "D"]
+          },
+          limit: 5
         };
         
-        // Add subagency if selected
-        if (selectedSubagency) {
-          agencyFilter.name = selectedSubagency;
+        // Add agency filter
+        if (selectedAgency) {
+          requestBody.filters.agencies = [{
+            type: "awarding",
+            tier: "toptier",
+            toptier_code: selectedAgency
+          }];
         }
         
-        const res = await fetch("https://api.usaspending.gov/api/v2/search/spending_by_category/recipient/", {
+        const res = await fetch("https://api.usaspending.gov/api/v2/search/spending_by_category/", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            filters: {
-              time_period: TIME_PERIOD,
-              award_type_codes: ["A", "B", "C", "D"],
-              agencies: [agencyFilter]
-            },
-            limit: 5
-          })
+          body: JSON.stringify(requestBody)
         });
         
         if (!res.ok) {
@@ -389,28 +388,28 @@
     // Fetch NAICS data
     async function fetchNaics() {
       try {
-        const agencyFilter = {
-          type: "awarding",
-          tier: "toptier",
-          toptier_code: selectedAgency
+        const requestBody = {
+          category: "naics",
+          filters: {
+            time_period: TIME_PERIOD,
+            award_type_codes: ["A", "B", "C", "D"]
+          },
+          limit: 5
         };
         
-        // Add subagency if selected
-        if (selectedSubagency) {
-          agencyFilter.name = selectedSubagency;
+        // Add agency filter
+        if (selectedAgency) {
+          requestBody.filters.agencies = [{
+            type: "awarding",
+            tier: "toptier",
+            toptier_code: selectedAgency
+          }];
         }
         
-        const res = await fetch("https://api.usaspending.gov/api/v2/search/spending_by_category/naics/", {
+        const res = await fetch("https://api.usaspending.gov/api/v2/search/spending_by_category/", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            filters: {
-              time_period: TIME_PERIOD,
-              award_type_codes: ["A", "B", "C", "D"],
-              agencies: [agencyFilter]
-            },
-            limit: 5
-          })
+          body: JSON.stringify(requestBody)
         });
         
         if (!res.ok) {
@@ -428,10 +427,10 @@
         }
 
         json.results.forEach(item => {
-          const name = item.name || item.naics_description || 'Unnamed NAICS';
-          const code = item.code || item.naics || '';
-          const displayName = code ? `${code} - ${name}` : name;
           const li = document.createElement("li");
+          const name = item.name || 'Unnamed NAICS';
+          const code = item.code || '';
+          const displayName = code ? `${code} - ${name}` : name;
           li.textContent = `${displayName} – $${parseFloat(item.amount || 0).toLocaleString()}`;
           ul.appendChild(li);
         });
@@ -446,28 +445,28 @@
     // Fetch awarding offices
     async function fetchOffices() {
       try {
-        const agencyFilter = {
-          type: "awarding",
-          tier: "toptier",
-          toptier_code: selectedAgency
+        const requestBody = {
+          category: "awarding_subagency",
+          filters: {
+            time_period: TIME_PERIOD,
+            award_type_codes: ["A", "B", "C", "D"]
+          },
+          limit: 5
         };
         
-        // Add subagency if selected
-        if (selectedSubagency) {
-          agencyFilter.name = selectedSubagency;
+        // Add agency filter
+        if (selectedAgency) {
+          requestBody.filters.agencies = [{
+            type: "awarding",
+            tier: "toptier",
+            toptier_code: selectedAgency
+          }];
         }
         
-        const res = await fetch("https://api.usaspending.gov/api/v2/search/spending_by_category/awarding_subagency/", {
+        const res = await fetch("https://api.usaspending.gov/api/v2/search/spending_by_category/", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            filters: {
-              time_period: TIME_PERIOD,
-              award_type_codes: ["A", "B", "C", "D"],
-              agencies: [agencyFilter]
-            },
-            limit: 5
-          })
+          body: JSON.stringify(requestBody)
         });
         
         if (!res.ok) {
