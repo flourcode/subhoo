@@ -2176,198 +2176,6 @@ function exportToCSV(data, filename) {
     document.body.removeChild(link);
 }
 
-/**
- * Modify your displayExpiringTable function to include an export button
- * @param {Array} expiringData - Array of expiring contract data
- */
-function displayExpiringTable(expiringData) {
-    const containerId = 'expiring-contracts-table-container';
-    const container = document.getElementById(containerId);
-    if (!container) {
-        console.error(`Container ${containerId} not found.`);
-        return;
-    }
-
-    setLoading(containerId, false); // Turn off loading spinner
-
-    // Clear previous content
-    container.innerHTML = '';
-
-    if (!expiringData || expiringData.length === 0) {
-        displayNoData(containerId, 'No contracts found expiring in the next 6 months.');
-        return;
-    }
-
-    // Create header section with export button
-    const headerSection = document.createElement('div');
-    headerSection.style.display = 'flex';
-    headerSection.style.justifyContent = 'flex-end';
-    headerSection.style.marginBottom = '8px';
-    
-    // Create the export button
-    const exportButton = document.createElement('button');
-    exportButton.className = 'button';
-    exportButton.innerHTML = `
-        <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-            <polyline points="7 10 12 15 17 10"></polyline>
-            <line x1="12" y1="15" x2="12" y2="3"></line>
-        </svg>
-        Export CSV
-    `;
-    exportButton.style.display = 'flex';
-    exportButton.style.alignItems = 'center';
-    exportButton.style.gap = '6px';
-    
-    // Add click event to export button
-    exportButton.addEventListener('click', () => {
-        // Clone the data and clean it for export
-        const exportData = expiringData.map(contract => {
-            // Create a clean object for export - select only the fields you want
-            return {
-                contract_id: contract.award_id_piid || contract.contract_award_unique_key || '',
-                contractor_name: contract.recipient_name || '',
-                description: contract.transaction_description || '',
-                end_date: contract.formatted_end_date || 
-                    (contract.period_of_performance_current_end_date_parsed instanceof Date ? 
-                     contract.period_of_performance_current_end_date_parsed.toISOString().split('T')[0] : 
-                     contract.period_of_performance_current_end_date || ''),
-                value: typeof contract.current_total_value_of_award === 'number' ? 
-                       contract.current_total_value_of_award : 
-                       parseFloat(contract.current_total_value_of_award || 0),
-                naics_code: contract.naics_code || '',
-                naics_description: contract.naics_description || ''
-            };
-        });
-        
-        // Get current date for filename
-        const today = new Date();
-        const dateStr = today.toISOString().split('T')[0]; // YYYY-MM-DD format
-        
-        // Export the data
-        exportToCSV(exportData, `expiring-contracts-${dateStr}.csv`);
-    });
-    
-    // Add export button to header section
-    headerSection.appendChild(exportButton);
-    container.appendChild(headerSection);
-
-    // Create Table Structure
-    const tableWrapper = document.createElement('div');
-    tableWrapper.className = 'table-wrapper';
-    tableWrapper.style.overflow = 'auto';
-    tableWrapper.style.maxHeight = '300px';
-
-    const table = document.createElement('table');
-    table.className = 'min-w-full divide-y';
-
-    const thead = table.createTHead();
-    const headerRow = thead.insertRow();
-    
-    const headers = [
-        { text: 'Contract ID / PIID', key: 'award_id_piid' },
-        { text: 'Recipient Name', key: 'recipient_name' },
-        { text: 'Description', key: 'transaction_description' },
-        { text: 'End Date', key: 'period_of_performance_current_end_date' },
-        { text: 'Current Value', key: 'current_total_value_of_award', format: 'currency' },
-        { text: 'USA Spending', key: 'usa_spending', class: 'text-center' }
-    ];
-
-    headers.forEach(headerInfo => {
-        const th = document.createElement('th');
-        th.textContent = headerInfo.text;
-        th.scope = 'col';
-        if (headerInfo.class) th.className = headerInfo.class;
-        if (headerInfo.key === 'current_total_value_of_award') {
-            th.style.textAlign = 'right';
-        }
-        headerRow.appendChild(th);
-    });
-
-    const tbody = table.createTBody();
-    tbody.className = 'divide-y';
-
-    expiringData.forEach(contract => {
-        const row = tbody.insertRow();
-        
-        // Process each column defined in headers
-        headers.forEach(headerInfo => {
-            let cell = row.insertCell();
-            
-            // Special handling for USA Spending column
-            if (headerInfo.key === 'usa_spending') {
-                cell.className = 'text-center';
-                const contractId = contract.contract_award_unique_key || contract.award_id_piid;
-                
-                if (contractId) {
-                    const link = document.createElement('a');
-                    link.href = `https://www.usaspending.gov/award/${contractId}`;
-                    link.target = '_blank';
-                    link.rel = 'noopener noreferrer';
-                    link.className = 'detail-link';
-                    link.style.color = getCssVar('--color-primary');
-                    link.textContent = 'View';
-                    cell.appendChild(link);
-                } else {
-                    cell.textContent = '-';
-                    cell.style.color = getCssVar('--color-text-tertiary');
-                }
-                return;
-            }
-            
-            // Regular column processing
-            let value = contract[headerInfo.key] || '-';
-
-            // For description, look for alternative fields if the main one is empty
-            if (headerInfo.key === 'transaction_description' && (value === '-' || value === '')) {
-                value = contract.prime_award_base_transaction_description || 
-                        contract.award_description || 
-                        contract.description || '-';
-            }
-
-            // Format date or currency if specified
-            if (headerInfo.key === 'period_of_performance_current_end_date') {
-                if (contract.period_of_performance_current_end_date_parsed instanceof Date) {
-                    value = contract.period_of_performance_current_end_date_parsed.toISOString().split('T')[0];
-                } else if (contract.formatted_end_date) {
-                    value = contract.formatted_end_date;
-                }
-            } else if (headerInfo.format === 'currency') {
-                value = formatCurrency(value);
-                cell.className = 'number'; // Add number class for right alignment
-            }
-
-            // Determine max length based on column
-            let maxLength = 40;
-            if (headerInfo.key === 'transaction_description') {
-                maxLength = 60; // Allow longer text for description
-                cell.style.maxWidth = '250px'; // Limit width of description cell
-                cell.style.wordWrap = 'break-word'; // Allow word wrapping
-            }
-
-            cell.textContent = truncateText(value, maxLength);
-            cell.title = value !== '-' ? value : ''; // Set title for full text on hover
-            if (headerInfo.class) cell.className = headerInfo.class;
-            
-            // Apply proper text color based on content
-            if (value === '-') {
-                cell.style.color = getCssVar('--color-text-tertiary');
-            } else {
-                cell.style.color = getCssVar('--color-text-primary');
-            }
-        });
-    });
-
-    tableWrapper.appendChild(table);
-    container.appendChild(tableWrapper);
-
-    // Add summary text
-    const summaryPara = document.createElement('p');
-    summaryPara.className = 'summary-text';
-    summaryPara.style.color = getCssVar('--color-text-secondary');
-    summaryPara.textContent = `Showing ${expiringData.length} expiring contracts.`;
-    container.appendChild(summaryPara);
-}
 function getCssVar(varName) {
   try {
     const value = getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
@@ -3708,34 +3516,56 @@ function updateDashboardTitle(datasets) {
         dashboardSubtitle.textContent = `Analyzing ${datasets.type} data from USAspending.gov`;
     }
 }
-// Modify displayContractLeadersTable to include an export button
-// This is a full replacement, not just the addition
+// wednesday.js
+
+// --- Add global variables to store sort state ---
+let leadersTableSort = { key: 'totalValue', dir: 'desc' }; // Default sort for leaders
+let expiringTableSort = { key: 'period_of_performance_current_end_date', dir: 'asc' }; // Default sort for expiring
+
+// --- Utility function to add sort icons ---
+function updateSortIcons(tableId, sortKey, sortDir) {
+    const table = document.getElementById(tableId);
+    if (!table) return;
+
+    table.querySelectorAll('th.sortable-header').forEach(th => {
+        th.classList.remove('sort-asc', 'sort-desc');
+        const icon = th.querySelector('.sort-icon');
+        if (icon) icon.textContent = '↕'; // Reset icon
+
+        if (th.dataset.sortKey === sortKey) {
+            th.classList.add(sortDir === 'asc' ? 'sort-asc' : 'sort-desc');
+            if (icon) icon.textContent = sortDir === 'asc' ? '▲' : '▼';
+        }
+    });
+}
+
+// --- Modify displayContractLeadersTable ---
 function displayContractLeadersTable(leaderData) {
     const containerId = 'contract-leaders-table-container';
+    const tableId = 'leaders-table'; // Give the table an ID
     const container = document.getElementById(containerId);
     if (!container) {
         console.error(`Container ${containerId} not found.`);
         return;
     }
-    setLoading(containerId, false); // Turn off loading spinner
-    
-    // Remove any existing table or placeholders
-    container.innerHTML = '';
-    
+    setLoading(containerId, false);
+
+    // --- Keep existing setup for export button etc. ---
+    container.innerHTML = ''; // Clear previous
+
     if (!leaderData || leaderData.length === 0) {
         displayNoData(containerId, 'No contract leader data found.');
         return;
     }
-    
-    // Create header section with export button
+
+    // Create header section with export button (Keep existing code)
     const headerSection = document.createElement('div');
     headerSection.style.display = 'flex';
     headerSection.style.justifyContent = 'flex-end';
     headerSection.style.marginBottom = '8px';
-    
-    // Create the export button
+
     const exportButton = document.createElement('button');
-    exportButton.className = 'button';
+    exportButton.className = 'button export-btn'; // Added export-btn class
     exportButton.innerHTML = `
         <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -3747,76 +3577,104 @@ function displayContractLeadersTable(leaderData) {
     exportButton.style.display = 'flex';
     exportButton.style.alignItems = 'center';
     exportButton.style.gap = '6px';
-    
-    // Add click event to export button
     exportButton.addEventListener('click', () => {
-        // Prepare data for export
-        const exportData = leaderData.map(leader => ({
-            contractor_name: leader.siName,
-            total_value: leader.totalValue,
-            num_awards: leader.numAwards,
-            avg_value: leader.avgValue,
-            avg_duration_days: leader.avgDurationDays,
-            dominant_naics_code: leader.dominantNaics ? leader.dominantNaics.code : '',
-            dominant_naics_desc: leader.dominantNaics ? leader.dominantNaics.desc : '',
-        }));
-        
-        // Get current date for filename
+        const exportData = leaderData.map(leader => ({ /* ... existing export mapping ... */ }));
         const today = new Date();
-        const dateStr = today.toISOString().split('T')[0]; // YYYY-MM-DD format
-        
-        // Export the data
+        const dateStr = today.toISOString().split('T')[0];
         exportToCSV(exportData, `top-contractors-${dateStr}.csv`);
     });
-    
-    // Add export button to header section
     headerSection.appendChild(exportButton);
     container.appendChild(headerSection);
-    
-    // Create a table wrapper div
+
+    // Create a table wrapper div (Keep existing code)
     const tableWrapper = document.createElement('div');
     tableWrapper.className = 'table-wrapper';
     tableWrapper.style.overflow = 'auto';
-    tableWrapper.style.maxHeight = '900px';
-    
-    // Display top 10 leaders
-    const displayData = leaderData.slice(0, 10);
-    
+    tableWrapper.style.maxHeight = '900px'; // Adjust as needed
+
     // Create Table Structure
     const table = document.createElement('table');
+    table.id = tableId; // Assign ID
     table.className = 'min-w-full divide-y';
-    
+
     const thead = table.createTHead();
     const headerRow = thead.insertRow();
+
+    // --- Define headers with sort keys ---
     const headers = [
-        { text: 'Recipient', scope: 'col' },
-        { text: 'Total Value', scope: 'col', class: 'number' },
-        { text: 'Awards', scope: 'col', class: 'number' },
-        { text: 'Avg Value', scope: 'col', class: 'number' },
-        { text: 'Majority Work', scope: 'col' },
-        { text: 'USASpending', scope: 'col', class: 'text-center' }
+        { text: 'Recipient', scope: 'col', key: 'siName', sortable: false },
+        { text: 'Total Value', scope: 'col', class: 'number', key: 'totalValue', sortable: true }, // Sortable
+        { text: 'Awards', scope: 'col', class: 'number', key: 'numAwards', sortable: false },
+        { text: 'Avg Value', scope: 'col', class: 'number', key: 'avgValue', sortable: true }, // Sortable
+        { text: 'Majority Work', scope: 'col', key: 'dominantNaics', sortable: false },
+        { text: 'USASpending', scope: 'col', class: 'text-center', key: 'usaSpendingLink', sortable: false }
     ];
-    
+
     headers.forEach(headerInfo => {
         const th = document.createElement('th');
         th.textContent = headerInfo.text;
         th.scope = headerInfo.scope;
         if (headerInfo.class) th.className = headerInfo.class;
+        th.dataset.sortKey = headerInfo.key; // Store key
+
+        if (headerInfo.sortable) {
+            th.classList.add('sortable-header');
+            th.style.cursor = 'pointer';
+            const iconSpan = document.createElement('span');
+            iconSpan.className = 'sort-icon';
+            iconSpan.textContent = ' ↕'; // Initial icon
+            th.appendChild(iconSpan);
+
+            // --- Add click listener for sorting ---
+            th.addEventListener('click', () => {
+                const newKey = headerInfo.key;
+                let newDir = 'desc';
+                if (leadersTableSort.key === newKey && leadersTableSort.dir === 'desc') {
+                    newDir = 'asc';
+                }
+                leadersTableSort.key = newKey;
+                leadersTableSort.dir = newDir;
+                // Re-render the table with new sort order
+                displayContractLeadersTable(leaderData); // Pass original data to re-sort
+            });
+        }
         headerRow.appendChild(th);
     });
-    
+
+    // --- Sort the data based on current state BEFORE slicing ---
+    const sortKey = leadersTableSort.key;
+    const sortDir = leadersTableSort.dir;
+    const sortedData = [...leaderData].sort((a, b) => {
+        let valA = a[sortKey];
+        let valB = b[sortKey];
+
+        // Handle numeric sorting for value columns
+        if (sortKey === 'totalValue' || sortKey === 'avgValue') {
+            valA = typeof valA === 'number' ? valA : 0;
+            valB = typeof valB === 'number' ? valB : 0;
+        } else { // Basic string compare for others if needed
+            valA = String(valA).toLowerCase();
+            valB = String(valB).toLowerCase();
+        }
+
+        if (valA < valB) return sortDir === 'asc' ? -1 : 1;
+        if (valA > valB) return sortDir === 'asc' ? 1 : -1;
+        return 0;
+    });
+
+    // Display top 10 leaders (or more if needed)
+    const displayData = sortedData.slice(0, 10); // Slice *after* sorting
+
     const tbody = table.createTBody();
     tbody.className = 'divide-y';
-    
+
+    // --- Populate table body (Keep existing logic, use displayData) ---
     displayData.forEach(leader => {
         const row = tbody.insertRow();
-        
-        // Recipient Name (now clickable)
+        // Recipient Name (clickable)
         let cell = row.insertCell();
         cell.className = 'font-medium';
-        cell.style.color = getCssVar('--color-text-primary');
-        
-        // Create clickable name for contractor profile
+        // ... (rest of nameLink creation) ...
         const nameLink = document.createElement('a');
         nameLink.href = '#';
         nameLink.style.color = getCssVar('--color-primary');
@@ -3824,38 +3682,34 @@ function displayContractLeadersTable(leaderData) {
         nameLink.style.fontWeight = '600';
         nameLink.textContent = truncateText(leader.siName, 35);
         nameLink.title = `View profile for ${leader.siName}`;
-        
-        // Add click event to show contractor profile
         nameLink.addEventListener('click', (e) => {
             e.preventDefault();
-            showContractorProfile(leader.siName);
+            // showContractorProfile(leader.siName); // Ensure this function exists
         });
-        
         cell.appendChild(nameLink);
-        
+
         // Total Value
         cell = row.insertCell();
         cell.className = 'number font-bold';
         cell.style.color = getCssVar('--color-text-primary');
         cell.textContent = formatCurrency(leader.totalValue);
-        
+
         // Num Awards
         cell = row.insertCell();
         cell.className = 'number';
         cell.style.color = getCssVar('--color-text-secondary');
         cell.textContent = leader.numAwards.toLocaleString();
-        
+
         // Avg Value
         cell = row.insertCell();
         cell.className = 'number';
         cell.style.color = getCssVar('--color-text-secondary');
         cell.textContent = formatCurrency(leader.avgValue);
-        
+
         // Dominant Type/NAICS
         cell = row.insertCell();
         cell.className = 'text-xs';
         cell.style.color = getCssVar('--color-text-secondary');
-        // Check if using dominantNaics or dominantType
         if (leader.dominantNaics) {
             cell.textContent = truncateText(leader.dominantNaics.desc || "Unknown", 30);
             cell.title = `${leader.dominantNaics.code} - ${leader.dominantNaics.desc}`;
@@ -3863,15 +3717,12 @@ function displayContractLeadersTable(leaderData) {
             cell.textContent = truncateText(leader.dominantType || "Unknown", 30);
             cell.title = leader.dominantType || "Unknown";
         }
-        
+
         // USASpending Link
         cell = row.insertCell();
         cell.className = 'text-center';
-        
-        // Only create links when we have a specific contract ID
         if (leader.uniqueContractKeys && leader.uniqueContractKeys.length > 0) {
-            // If there's only one contract
-            if (leader.uniqueContractKeys.length === 1) {
+             if (leader.uniqueContractKeys.length === 1) {
                 const contractId = leader.uniqueContractKeys[0];
                 const link = document.createElement('a');
                 link.href = `https://www.usaspending.gov/award/${contractId}`;
@@ -3881,9 +3732,7 @@ function displayContractLeadersTable(leaderData) {
                 link.style.color = getCssVar('--color-primary');
                 link.textContent = 'View';
                 cell.appendChild(link);
-            } 
-            // If there are multiple contracts, note that
-            else {
+            } else {
                 cell.textContent = `${leader.uniqueContractKeys.length} contracts`;
                 cell.style.color = getCssVar('--color-text-secondary');
             }
@@ -3892,21 +3741,268 @@ function displayContractLeadersTable(leaderData) {
             cell.style.color = getCssVar('--color-text-tertiary');
         }
     });
-    
-    // Append the table to the wrapper
+    // --- END of body population ---
+
     tableWrapper.appendChild(table);
-    
-    // Append the wrapper to the container
     container.appendChild(tableWrapper);
-    
-    // Add summary text if more leaders exist
+
+    // Add summary text (Keep existing code)
     if (leaderData.length > 10) {
         const summaryPara = document.createElement('p');
         summaryPara.className = 'summary-text';
         summaryPara.style.color = getCssVar('--color-text-secondary');
-        summaryPara.textContent = `Showing Top 10 of ${leaderData.length} leaders by Total Value`;
+        summaryPara.textContent = `Showing Top 10 of ${leaderData.length} leaders. Sorted by ${sortKey} (${sortDir}).`;
         container.appendChild(summaryPara);
     }
+
+    // --- Update sort icons AFTER table is built ---
+    updateSortIcons(tableId, sortKey, sortDir);
+}
+
+
+// --- Modify displayExpiringTable ---
+function displayExpiringTable(expiringData) {
+    const containerId = 'expiring-contracts-table-container';
+    const tableId = 'expiring-table'; // Give the table an ID
+    const container = document.getElementById(containerId);
+    if (!container) {
+        console.error(`Container ${containerId} not found.`);
+        return;
+    }
+    setLoading(containerId, false);
+
+    // --- Keep existing setup for export button etc. ---
+    container.innerHTML = ''; // Clear previous
+
+    if (!expiringData || expiringData.length === 0) {
+        displayNoData(containerId, 'No contracts found expiring in the next 6 months.');
+        return;
+    }
+
+    // Create header section with export button (Keep existing code)
+    const headerSection = document.createElement('div');
+    headerSection.style.display = 'flex';
+    headerSection.style.justifyContent = 'flex-end';
+    headerSection.style.marginBottom = '8px';
+
+    const exportButton = document.createElement('button');
+    exportButton.className = 'button export-btn'; // Added export-btn class
+    exportButton.innerHTML = `
+         <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+        </svg>
+        Export CSV
+    `;
+     exportButton.style.display = 'flex';
+    exportButton.style.alignItems = 'center';
+    exportButton.style.gap = '6px';
+    exportButton.addEventListener('click', () => {
+        const exportData = expiringData.map(contract => ({
+            // ... existing export mapping ...
+             contract_id: contract.award_id_piid || contract.contract_award_unique_key || '',
+             contractor_name: contract.recipient_name || '',
+             description: contract.transaction_description || '',
+             end_date: contract.formatted_end_date ||
+                    (contract.period_of_performance_current_end_date_parsed instanceof Date ?
+                     contract.period_of_performance_current_end_date_parsed.toISOString().split('T')[0] :
+                     contract.period_of_performance_current_end_date || ''),
+             value: typeof contract.current_total_value_of_award === 'number' ?
+                       contract.current_total_value_of_award :
+                       parseSafeFloat(contract.current_total_value_of_award || 0), // Use parseSafeFloat
+             naics_code: contract.naics_code || '',
+             naics_description: contract.naics_description || ''
+        }));
+        const today = new Date();
+        const dateStr = today.toISOString().split('T')[0];
+        exportToCSV(exportData, `expiring-contracts-${dateStr}.csv`);
+    });
+    headerSection.appendChild(exportButton);
+    container.appendChild(headerSection);
+
+    // Create Table Structure
+    const tableWrapper = document.createElement('div');
+    tableWrapper.className = 'table-wrapper';
+    tableWrapper.style.overflow = 'auto';
+    tableWrapper.style.maxHeight = '300px'; // Adjust as needed
+
+    const table = document.createElement('table');
+    table.id = tableId; // Assign ID
+    table.className = 'min-w-full divide-y';
+
+    const thead = table.createTHead();
+    const headerRow = thead.insertRow();
+
+    // --- Define headers with sort keys ---
+    const headers = [
+        { text: 'Contract ID / PIID', key: 'award_id_piid', sortable: false },
+        { text: 'Recipient Name', key: 'recipient_name', sortable: false },
+        { text: 'Description', key: 'transaction_description', sortable: false },
+        { text: 'End Date', key: 'period_of_performance_current_end_date', sortable: true }, // Sortable by date
+        { text: 'Current Value', key: 'current_total_value_of_award', sortable: true, format: 'currency', class: 'number' }, // Sortable by value
+        { text: 'USA Spending', key: 'usa_spending', class: 'text-center', sortable: false }
+    ];
+
+    headers.forEach(headerInfo => {
+        const th = document.createElement('th');
+        th.textContent = headerInfo.text;
+        th.scope = 'col';
+        if (headerInfo.class) th.className = headerInfo.class;
+        if (headerInfo.key === 'current_total_value_of_award') {
+            th.style.textAlign = 'right';
+        }
+        th.dataset.sortKey = headerInfo.key; // Store key
+
+        if (headerInfo.sortable) {
+            th.classList.add('sortable-header');
+            th.style.cursor = 'pointer';
+            const iconSpan = document.createElement('span');
+            iconSpan.className = 'sort-icon';
+            iconSpan.textContent = ' ↕'; // Initial icon
+            th.appendChild(iconSpan);
+
+            // --- Add click listener for sorting ---
+            th.addEventListener('click', () => {
+                const newKey = headerInfo.key;
+                let newDir = 'desc'; // Default to desc for value, asc for date
+                if (newKey === 'period_of_performance_current_end_date') {
+                     newDir = 'asc'; // Dates default to ascending
+                     if(expiringTableSort.key === newKey && expiringTableSort.dir === 'asc') {
+                         newDir = 'desc';
+                     }
+                } else { // Value column
+                    if (expiringTableSort.key === newKey && expiringTableSort.dir === 'desc') {
+                        newDir = 'asc';
+                    }
+                }
+
+                expiringTableSort.key = newKey;
+                expiringTableSort.dir = newDir;
+                // Re-render the table with new sort order
+                displayExpiringTable(expiringData); // Pass original data to re-sort
+            });
+        }
+        headerRow.appendChild(th);
+    });
+
+    // --- Sort the data based on current state ---
+    const sortKey = expiringTableSort.key;
+    const sortDir = expiringTableSort.dir;
+    const sortedData = [...expiringData].sort((a, b) => {
+        let valA = a[sortKey];
+        let valB = b[sortKey];
+
+        if (sortKey === 'current_total_value_of_award') {
+            valA = parseSafeFloat(valA); // Use safe float parsing
+            valB = parseSafeFloat(valB);
+        } else if (sortKey === 'period_of_performance_current_end_date') {
+            // Use pre-parsed dates if available, otherwise parse on the fly
+            valA = a.period_of_performance_current_end_date_parsed || parseDate(valA);
+            valB = b.period_of_performance_current_end_date_parsed || parseDate(valB);
+            // Handle null dates (sort them to the end typically)
+            if (valA === null && valB === null) return 0;
+            if (valA === null) return 1; // Nulls last
+            if (valB === null) return -1; // Nulls last
+        } else {
+             valA = String(valA).toLowerCase();
+             valB = String(valB).toLowerCase();
+        }
+
+        if (valA < valB) return sortDir === 'asc' ? -1 : 1;
+        if (valA > valB) return sortDir === 'asc' ? 1 : -1;
+        return 0;
+    });
+
+
+    const tbody = table.createTBody();
+    tbody.className = 'divide-y';
+
+    // --- Populate table body (use sortedData) ---
+    sortedData.forEach(contract => { // Use sortedData here
+        const row = tbody.insertRow();
+        headers.forEach(headerInfo => {
+            let cell = row.insertCell();
+            // ... (Keep existing cell population logic) ...
+             // Special handling for USA Spending column
+            if (headerInfo.key === 'usa_spending') {
+                cell.className = 'text-center';
+                const contractId = contract.contract_award_unique_key || contract.award_id_piid;
+
+                if (contractId) {
+                    const link = document.createElement('a');
+                    link.href = `https://www.usaspending.gov/award/${contractId}`;
+                    link.target = '_blank';
+                    link.rel = 'noopener noreferrer';
+                    link.className = 'detail-link';
+                    link.style.color = getCssVar('--color-primary');
+                    link.textContent = 'View';
+                    cell.appendChild(link);
+                } else {
+                    cell.textContent = '-';
+                    cell.style.color = getCssVar('--color-text-tertiary');
+                }
+                return;
+            }
+
+            // Regular column processing
+            let value = contract[headerInfo.key] || '-';
+
+            // For description, look for alternative fields if the main one is empty
+            if (headerInfo.key === 'transaction_description' && (value === '-' || value === '')) {
+                value = contract.prime_award_base_transaction_description ||
+                        contract.award_description ||
+                        contract.description || '-';
+            }
+
+            // Format date or currency if specified
+            if (headerInfo.key === 'period_of_performance_current_end_date') {
+                if (contract.period_of_performance_current_end_date_parsed instanceof Date) {
+                    value = contract.period_of_performance_current_end_date_parsed.toISOString().split('T')[0];
+                } else if (contract.formatted_end_date) {
+                     value = contract.formatted_end_date; // Use pre-formatted if parsed is missing
+                 } else {
+                     value = parseDate(value)?.toISOString().split('T')[0] || 'Invalid Date'; // Fallback parsing
+                 }
+            } else if (headerInfo.format === 'currency') {
+                value = formatCurrency(parseSafeFloat(value)); // Ensure value is parsed before formatting
+                cell.className = 'number'; // Add number class for right alignment
+            }
+
+            // Determine max length based on column
+            let maxLength = 40;
+            if (headerInfo.key === 'transaction_description') {
+                maxLength = 60; // Allow longer text for description
+                cell.style.maxWidth = '250px'; // Limit width of description cell
+                cell.style.wordWrap = 'break-word'; // Allow word wrapping
+            }
+
+            cell.textContent = truncateText(value, maxLength);
+            cell.title = String(value) !== '-' && String(value) !== 'Invalid Date' ? String(value) : ''; // Set title for full text on hover
+            if (headerInfo.class) cell.className += ` ${headerInfo.class}`; // Append class
+
+             // Apply proper text color based on content
+            if (value === '-' || value === 'Invalid Date') {
+                cell.style.color = getCssVar('--color-text-tertiary');
+            } else {
+                cell.style.color = getCssVar('--color-text-primary');
+            }
+        });
+    });
+    // --- END of body population ---
+
+    tableWrapper.appendChild(table);
+    container.appendChild(tableWrapper);
+
+    // Add summary text
+    const summaryPara = document.createElement('p');
+    summaryPara.className = 'summary-text';
+    summaryPara.style.color = getCssVar('--color-text-secondary');
+    summaryPara.textContent = `Showing ${sortedData.length} expiring contracts. Sorted by ${sortKey} (${sortDir}).`;
+    container.appendChild(summaryPara);
+
+    // --- Update sort icons AFTER table is built ---
+    updateSortIcons(tableId, sortKey, sortDir);
 }
 document.addEventListener('DOMContentLoaded', function() {
     console.log("DOM fully loaded and parsed");

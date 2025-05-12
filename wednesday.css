@@ -702,3 +702,50 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
         font-size: 13px;
     }
 }
+/* wednesday.css */
+
+/* --- Add these styles for table sorting --- */
+th.sortable-header {
+    position: relative; /* Needed for absolute positioning of icon if used differently */
+    cursor: pointer;
+    user-select: none; /* Prevent text selection on click */
+}
+
+th.sortable-header:hover {
+    background-color: var(--color-surface-container); /* Slightly darker hover */
+    color: var(--color-primary); /* Highlight text on hover */
+}
+
+.sort-icon {
+    display: inline-block;
+    margin-left: 5px;
+    font-size: 0.9em;
+    color: var(--color-text-tertiary); /* Default icon color */
+    width: 1em; /* Ensure space for icon */
+    text-align: center;
+}
+
+th.sortable-header.sort-asc .sort-icon,
+th.sortable-header.sort-desc .sort-icon {
+    color: var(--color-primary); /* Active sort icon color */
+}
+
+/* Optional: Style for the active sort column header */
+th.sortable-header.sort-asc,
+th.sortable-header.sort-desc {
+    background-color: var(--color-surface-variant); /* Keep background consistent */
+    color: var(--color-text-primary); /* Make text primary when active */
+}
+
+/* --- Add export-btn class to button styles if needed, or adjust existing --- */
+.export-btn { /* Adjust if you already have a similar class */
+    /* Styles from the JS code or your existing .button styles */
+    padding: 6px 12px; /* Example */
+}
+
+/* Add class for number alignment if not already present */
+td.number, th.number {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+/* --- End of sorting styles --- */
