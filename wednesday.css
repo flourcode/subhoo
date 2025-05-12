@@ -240,7 +240,7 @@ grid-template-rows: auto auto auto auto; /* Adjust rows as needed */
 grid-template-areas:
     "share-wallet share-wallet tavtcv tavtcv tavtcv"
     "dendrogram dendrogram dendrogram dendrogram dendrogram"
-    "sankey sankey sankey leaders leaders leaders"
+    "sankey sankey leaders leaders leaders"
     "map map naics-donut naics-donut naics-donut"
 	"expiring expiring expiring expiring arr" ;	
     grid-template-rows: minmax(400px, auto) auto auto auto;
