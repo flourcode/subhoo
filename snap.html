@@ -5,791 +5,1375 @@
   <meta http-equiv="X-UA-Compatible" content="IE=Edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <!-- Use CDN for CSS frameworks -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/uswds/2.13.1/css/uswds.min.css">
-  
-  <!-- Inline CSS to avoid external file dependency -->
+  <title>Federal Spending & BD Analytics (Material) | USASpending.gov</title>
+  <meta name="description" content="Material Design dashboard for federal spending data and business development insights.">
+  <link rel="icon" type="image/x-icon" href="https://www.usaspending.gov/img/favicon.ico">
+
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+
   <style>
-    /* Basic layout and styling */
+    /* --- Configuration (8pt grid and Colors) --- */
+    :root {
+      --spacing-unit: 8px;
+      /* 60% Dominant */
+      --color-background-page: #eceff1; /* Material Blue Grey 50 */
+      --color-background-card: #ffffff; 
+      /* 30% Secondary */
+      --color-primary: #3f51b5; /* Material Indigo 500 */
+      --color-primary-dark: #303f9f; /* Material Indigo 700 */
+      --color-primary-light: #c5cae9; /* Material Indigo 100 */
+      --color-primary-text: #ffffff;
+      --color-text-primary: #212121;
+      --color-text-secondary: #757575; /* Material Grey 600 */
+      /* 10% Accent */
+      --color-accent: #ff4081; /* Material Pink A200 */
+      --color-accent-text: #ffffff;
+      /* Other UI Colors */
+      --color-divider: #e0e0e0; 
+      --color-error: #d32f2f; 
+      --shadow-dp2: 0 2px 2px 0 rgba(0,0,0,0.14), 0 3px 1px -2px rgba(0,0,0,0.12), 0 1px 5px 0 rgba(0,0,0,0.2);
+      --shadow-dp4: 0 4px 5px 0 rgba(0,0,0,0.14), 0 1px 10px 0 rgba(0,0,0,0.12), 0 2px 4px -1px rgba(0,0,0,0.2);
+      --shadow-dp8: 0 8px 10px 1px rgba(0,0,0,0.14), 0 3px 14px 2px rgba(0,0,0,0.12), 0 5px 5px -3px rgba(0,0,0,0.2);
+    }
+
+    /* --- Base & Typography --- */
     body {
-      font-family: 'Source Sans Pro', 'Helvetica Neue', 'Helvetica', 'Roboto', 'Arial', sans-serif;
+      font-family: 'Roboto', 'Helvetica Neue', Helvetica, Arial, sans-serif;
       margin: 0;
       padding: 0;
-      color: #212121;
+      background-color: var(--color-background-page);
+      color: var(--color-text-primary);
+      line-height: 1.6;
+      font-size: 16px; 
     }
+
+    .skip-to-main-content-link {
+      position: absolute; left: -9999px; z-index: 9999;
+      padding: calc(var(--spacing-unit) * 2); background-color: var(--color-accent);
+      color: var(--color-accent-text); opacity: 0; text-decoration: none;
+      border-bottom-right-radius: var(--spacing-unit);
+    }
+    .skip-to-main-content-link:focus { left: 0; top: 0; opacity: 1; }
+
+    /* --- Layout System --- */
+    .app-header {
+      background-color: var(--color-primary); color: var(--color-primary-text);
+      padding: calc(var(--spacing-unit) * 2) 0; box-shadow: var(--shadow-dp4);
+    }
+    .header-content {
+      max-width: 1200px; margin: 0 auto; padding: 0 calc(var(--spacing-unit) * 3);
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .header-logo img { height: calc(var(--spacing-unit) * 5); vertical-align: middle; }
+    .header-links a {
+      color: var(--color-primary-text); margin-left: calc(var(--spacing-unit) * 3);
+      text-decoration: none; font-weight: 500; padding: var(--spacing-unit) 0; 
+    }
+    .header-links a:hover, .header-links a:focus { text-decoration: underline; outline: 2px solid transparent; }
     
     .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 0 20px;
+      max-width: 1200px; margin: calc(var(--spacing-unit) * 3) auto;
+      padding: 0 calc(var(--spacing-unit) * 2);
     }
-    
-    header {
-      background-color: #112e51;
-      padding: 20px 0;
-      color: white;
+    .grid-layout {
+        display: grid;
+        grid-template-columns: repeat(12, 1fr);
+        gap: calc(var(--spacing-unit) * 3);
     }
-    
-    .header-parent {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 0 20px;
+    .grid-col-8 { grid-column: span 8; }
+    .grid-col-4 { grid-column: span 4; }
+    .grid-col-6 { grid-column: span 6; }
+    .grid-col-12 { grid-column: span 12; }
+
+
+    /* --- Card Component --- */
+    .card {
+      background-color: var(--color-background-card); border-radius: var(--spacing-unit);
+      box-shadow: var(--shadow-dp2); margin-bottom: calc(var(--spacing-unit) * 3);
+      padding: calc(var(--spacing-unit) * 3); transition: box-shadow 0.3s ease-in-out;
+      overflow: visible; /* Allow tooltips to overflow if needed, can be 'hidden' if causing issues */
     }
-    
-    .header-logo img {
-      height: 40px;
+    .card:hover { box-shadow: var(--shadow-dp8); }
+    .card-title {
+      font-size: 1.25rem; 
+      font-weight: 500; margin-top: 0; margin-bottom: calc(var(--spacing-unit) * 2);
+      color: var(--color-text-primary); border-bottom: 1px solid var(--color-divider);
+      padding-bottom: var(--spacing-unit); display: flex; align-items: center;
     }
-    
-    .header-right {
-      display: flex;
-      align-items: center;
+    .card-title .material-icons-outlined { font-size: 1.5rem; margin-right: var(--spacing-unit); color: var(--color-primary); }
+    .card-subtitle {
+      font-size: 1rem; font-weight: 400; 
+      margin-top: calc(var(--spacing-unit) * 2); margin-bottom: var(--spacing-unit);     
+      color: var(--color-text-secondary);
     }
-    
-    .header-links a {
-      color: white;
-      margin-left: 20px;
-      text-decoration: none;
+
+    /* Data display */
+    .data-point { font-size: 2rem; font-weight: 700; color: var(--color-accent); margin-bottom: var(--spacing-unit); }
+    .data-label { font-size: 0.875rem; color: var(--color-text-secondary); margin-bottom: calc(var(--spacing-unit) * 2); }
+    .data-list { list-style: none; padding: 0; margin: 0; }
+    .data-list li {
+      padding: var(--spacing-unit) 0; border-bottom: 1px solid var(--color-divider);
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; /* Allow wrapping for long names/values */
     }
+    .data-list li:last-child { border-bottom: none; }
+    .data-list .item-name { font-weight: 500; margin-right: var(--spacing-unit); }
+    .data-list .item-value { font-weight: 700; color: var(--color-primary); text-align: right; }
     
-    .header-links a:hover {
-      text-decoration: underline;
+    /* Tab Navigation (Material Inspired) */
+    .tabs-nav {
+        display: flex;
+        border-bottom: 1px solid var(--color-divider);
+        margin-bottom: calc(var(--spacing-unit) * 3);
+        background-color: var(--color-background-card); /* Give tabs a card-like background */
+        border-top-left-radius: var(--spacing-unit);
+        border-top-right-radius: var(--spacing-unit);
+        box-shadow: var(--shadow-dp2);
     }
-    
-    .skip-to-main-content-link {
-      position: absolute;
-      left: -9999px;
-      z-index: 999;
-      padding: 1em;
-      background-color: white;
-      color: #0071bc;
-      opacity: 0;
+    .tabs-nav-item {
+        padding: calc(var(--spacing-unit) * 2) calc(var(--spacing-unit) * 3);
+        cursor: pointer;
+        color: var(--color-text-secondary);
+        font-weight: 500;
+        border-bottom: 3px solid transparent; /* Thicker indicator */
+        transition: color 0.3s ease, border-color 0.3s ease;
+        text-align: center;
+        flex-grow: 1; 
+        white-space: nowrap;
     }
-    
-    .skip-to-main-content-link:focus {
-      left: 50%;
-      transform: translateX(-50%);
-      opacity: 1;
+    .tabs-nav-item:hover { color: var(--color-primary); }
+    .tabs-nav-item.active { color: var(--color-primary); border-bottom-color: var(--color-primary); }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* Form Elements (Material Inspired) */
+    .form-group { margin-bottom: calc(var(--spacing-unit) * 2); }
+    .form-label {
+        display: block; font-size: 0.875rem; color: var(--color-text-secondary);
+        margin-bottom: var(--spacing-unit); font-weight: 500;
     }
-    
-    h1 {
-      font-size: 2.5rem;
-      margin: 30px 0;
+    .form-input, .form-select {
+        width: 100%; padding: calc(var(--spacing-unit) * 1.5) var(--spacing-unit); 
+        border: 1px solid var(--color-divider); border-radius: calc(var(--spacing-unit) / 2);
+        font-size: 1rem; line-height: 1.5; background-color: var(--color-background-page); /* Light background */
+        transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        box-sizing: border-box;
     }
-    
-    h2 {
-      font-size: 1.8rem;
-      margin: 25px 0 15px;
+    .form-input:focus, .form-select:focus {
+        border-color: var(--color-primary); outline: none;
+        box-shadow: 0 0 0 2px var(--color-primary-light);
     }
-    
-    h3 {
-      font-size: 1.4rem;
-      margin: 20px 0 10px;
+    .form-button {
+        background-color: var(--color-primary); color: var(--color-primary-text);
+        padding: calc(var(--spacing-unit) * 1.25) calc(var(--spacing-unit) * 2.5); /* Slightly smaller */
+        border: none; border-radius: calc(var(--spacing-unit) / 2);
+        font-size: 0.9rem; font-weight: 500; cursor: pointer;
+        transition: background-color 0.3s ease, box-shadow 0.3s ease;
+        text-transform: uppercase; letter-spacing: 0.5px;
+        box-shadow: var(--shadow-dp2);
+        display: inline-flex; align-items: center; justify-content: center;
+        margin-top: var(--spacing-unit); /* Add margin if needed */
     }
-    
-    .section_headline {
-      border-bottom: 1px solid #dce4ef;
-      padding-bottom: 10px;
-      margin-bottom: 20px;
+    .form-button .material-icons-outlined { margin-right: var(--spacing-unit); font-size: 1.125rem; }
+    .form-button:hover { background-color: var(--color-primary-dark); box-shadow: var(--shadow-dp4); }
+
+    /* Pills for sub-navigation within cards */
+    .pills-nav {
+      list-style: none; padding: 0;
+      margin: 0 0 calc(var(--spacing-unit) * 2) 0;
+      display: flex; gap: var(--spacing-unit); flex-wrap: wrap;
     }
-    
-    .width-two-thirds {
-      width: 66%;
-      float: left;
-      padding-right: 30px;
-      box-sizing: border-box;
+    .pills-nav li a {
+      padding: var(--spacing-unit) calc(var(--spacing-unit) * 1.5);
+      background-color: var(--color-primary-light); color: var(--color-primary-dark);
+      text-decoration: none; border-radius: calc(var(--spacing-unit) * 0.5);
+      font-weight: 500; display: block; font-size: 0.875rem;
+      transition: background-color 0.2s ease, color 0.2s ease;
+      white-space: nowrap;
     }
-    
-    .width-one-third {
-      width: 34%;
-      float: left;
-      box-sizing: border-box;
+    .pills-nav li a:hover { background-color: var(--color-primary); color: var(--color-primary-text); }
+    .pills-nav li a[aria-selected="true"] { background-color: var(--color-primary); color: var(--color-primary-text); }
+
+
+    /* Chart styles */
+    .chart-container { width: 100%; min-height: 300px; }
+    .chart-container svg { display: block; width: 100%; height: 100%; }
+    .chart-container .axis path, .chart-container .axis line { fill: none; stroke: var(--color-text-secondary); shape-rendering: crispEdges; }
+    .chart-container .axis text { font-size: 0.75rem; fill: var(--color-text-secondary); }
+    .chart-container .bar { fill: var(--color-accent); transition: fill 0.2s ease-in-out; }
+    .chart-container .bar:hover { fill: var(--color-primary); }
+    .d3-tooltip {
+        position: absolute; text-align: center; padding: var(--spacing-unit); font-size: 0.875rem;
+        background: var(--color-text-primary); color: var(--color-background-card);
+        border: 0px; border-radius: var(--spacing-unit); pointer-events: none; opacity: 0;
+        box-shadow: var(--shadow-dp4); z-index: 10;
     }
-    
-    .three_column {
-      margin-bottom: 30px;
+
+    /* Loading and Error States */
+    .loading-spinner-container {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: calc(var(--spacing-unit) * 5) 0; min-height: 150px; 
     }
-    
-    .bar-chart {
-      list-style: none;
-      margin: 0;
-      padding: 0;
+    .spinner {
+      border: 4px solid rgba(0, 0, 0, 0.1); width: 36px; height: 36px;
+      border-radius: 50%; border-left-color: var(--color-accent);
+      animation: spin 1s linear infinite; margin-bottom: calc(var(--spacing-unit) * 2);
     }
-    
-    .bar-chart li {
-      margin-bottom: 10px;
-      padding: 10px;
-      background-color: #f1f1f1;
-      border-left: 4px solid #0071bc;
-    }
-    
-    .data {
-      font-weight: bold;
-      font-size: 1.2em;
-      color: #0071bc;
-    }
-    
-    .time-series {
-      width: 100%;
-      height: 300px;
-      margin: 20px 0;
-    }
-    
-    .pills {
-      list-style: none;
-      padding: 0;
-      margin: 0 0 20px 0;
-      display: flex;
-    }
-    
-    .pills li {
-      margin-right: 10px;
-    }
-    
-    .pills a {
-      padding: 8px 12px;
-      background-color: #f1f1f1;
-      color: #212121;
-      text-decoration: none;
-      border-radius: 4px;
-    }
-    
-    .pills a[aria-selected="true"] {
-      background-color: #0071bc;
-      color: white;
-    }
-    
-    .loading {
-      text-align: center;
-      padding: 40px;
-      font-style: italic;
-      color: #666;
-    }
-    
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    .loading-text, .error-message p { color: var(--color-text-secondary); font-style: italic; }
     .error-message {
-      color: #e31c3d;
-      background-color: #f9dede;
-      padding: 10px;
-      border-radius: 4px;
-      margin: 10px 0;
+      color: var(--color-error); background-color: #ffebee;
+      padding: calc(var(--spacing-unit) * 2); border-radius: var(--spacing-unit);
+      margin: var(--spacing-unit) 0; border: 1px solid var(--color-error);
+      display: flex; align-items: center;
     }
+    .error-message .material-icons-outlined { margin-right: var(--spacing-unit); }
     
-    /* Clear fix for floating elements */
-    .clearfix::after {
-      content: "";
-      clear: both;
-      display: table;
+    /* Debug section */
+    #api-log-card { margin-top: calc(var(--spacing-unit) * 3); grid-column: span 12; }
+    #api-log {
+      background-color: #37474f; 
+      color: #eceff1; padding: calc(var(--spacing-unit) * 2); border-radius: var(--spacing-unit);
+      font-family: monospace; font-size: 0.875rem; max-height: calc(var(--spacing-unit) * 25); 
+      overflow-y: auto; white-space: pre-wrap; word-break: break-all;
     }
-    
-    /* Responsive design */
-    @media screen and (max-width: 768px) {
-      .width-two-thirds,
-      .width-one-third {
-        width: 100%;
-        float: none;
-        padding-right: 0;
-      }
-      
-      .sm-hide {
-        display: none;
-      }
+    #api-log hr { border-color: #546e7a; } 
+
+    /* Responsive Adjustments */
+    @media screen and (max-width: 960px) { /* Tablet */
+      .grid-col-8, .grid-col-4, .grid-col-6 { grid-column: span 12; }
+      .tabs-nav { flex-wrap: wrap; } /* Allow tabs to wrap */
+      .tabs-nav-item { flex-grow: 0; flex-basis: 50%; border-bottom: 1px solid var(--color-divider); } /* Two tabs per row */
+      .tabs-nav-item.active { border-bottom-color: var(--color-primary); }
+    }
+    @media screen and (max-width: 600px) { /* Mobile */
+        .header-content { flex-direction: column; align-items: flex-start; gap: var(--spacing-unit); }
+        .header-links { margin-top: var(--spacing-unit); }
+        .header-links a { margin-left: 0; margin-right: calc(var(--spacing-unit) * 2); }
+        .card-title { font-size: 1.125rem; }
+        .card-title .material-icons-outlined { font-size: 1.25rem; }
+        .data-point { font-size: 1.75rem; }
+        .tabs-nav-item { flex-basis: 100%; } /* One tab per row on mobile */
     }
   </style>
-  
-  <title>USASpending Analytics Dashboard | USASpending.gov</title>
-  <meta name="description" content="Live federal spending data from USASpending.gov.">
-  <link rel="icon" type="image/x-icon" href="https://www.usaspending.gov/img/favicon.ico">
-  
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
 </head>
 
 <body>
-  <header>
-    <div class="header-parent">
-      <a href="#skip-to-h1" class="skip-to-main-content-link">
-        Skip to main content
-      </a>
+  <a href="#main-dashboard-content" class="skip-to-main-content-link">Skip to main content</a>
 
-      <div class="header-child header-logo">
-        <a href="https://www.usaspending.gov" alt="USASpending.gov Logo">
-          <img src="https://www.usaspending.gov/img/logo.png" alt="USASpending.gov" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMDAgNTAiPjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iNTAiIGZpbGw9IiMxMTJlNTEiLz48dGV4dCB4PSIxMCIgeT0iMzAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNiIgZmlsbD0id2hpdGUiPlVTQVNwZW5kaW5nLmdvdjwvdGV4dD48L3N2Zz4='" />
+  <header class="app-header">
+    <div class="header-content">
+      <div class="header-logo">
+        <a href="https://www.usaspending.gov" aria-label="USASpending.gov Home">
+          <img src="https://www.usaspending.gov/img/logo.png" alt="USASpending.gov Logo" 
+               onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMDAgNTAiPjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iNTAiIGZpbGw9IiMzZjUxYjUiLz48dGV4dCB4PSIxMCIgeT0iMzAiIGZvbnQtZmFtaWx5PSJSb2JvdG8sIEFyaWFsIiBmb250LXNpemU9IjE2IiBmaWxsPSJ3aGl0ZSI+VlNQZW5kaW5nLmdvdjwvdGV4dD48L3N2Zz4='; this.onerror=null;" />
         </a>
       </div>
-
-      <div class="header-child header-right">
-        <div class="header-links">
-          <a href="#explanation">About this site</a>
-          <a href="https://www.usaspending.gov/download_center/custom_award_data">Download Data</a>
-        </div>
-      </div>
+      <nav class="header-links" aria-label="Header navigation">
+        <a href="#explanation_section">About this site</a>
+        <a href="https://www.usaspending.gov/download_center/custom_award_data">Download Data</a>
+      </nav>
     </div>
   </header>
 
-  <div class="container">
-    <h1 id="skip-to-h1">Federal Spending Analytics Dashboard</h1>
-
-    <div id="main_data" class="width-two-thirds">
-      <!-- Total spending section -->
-      <section class="section_headline">
-        <h2>Total Federal Spending</h2>
-      </section>
-
-      <section id="current_spending_section">
-        <h3>Federal Spending in the Last 30 Days</h3>
-        <div id="current_spending" class="data loading">Loading...</div>
-      </section>
-
-      <section id="spending_time_series">
-        <h3>Spending Trends (90 Days)</h3>
-        <div id="spending_chart" class="time-series loading">Loading spending trends...</div>
-      </section>
-
-      <!-- Spending by category section -->
-      <section class="section_headline">
-        <h2>Spending by Category</h2>
-      </section>
-
-      <section id="spending_by_category">
-        <h3>Awards by Type</h3>
-        <div id="category_chart" class="loading">Loading category data...</div>
-      </section>
-
-      <!-- Top agencies section -->
-      <section class="section_headline">
-        <h2>Top Awarding Agencies</h2>
-      </section>
-      
-      <section id="top_agencies">
-        <div id="agencies_chart" class="loading">Loading agency data...</div>
-      </section>
-
-      <!-- Geographic distribution -->
-      <section class="section_headline">
-        <h2>Geographic Distribution</h2>
-      </section>
-      
-      <section id="geographic_distribution">
-        <h3>Spending by State</h3>
-        <div id="state_chart" class="loading">Loading geographic data...</div>
-      </section>
+  <div class="container" id="main-dashboard-content">
+    <h1 style="font-size: 2rem; margin-bottom: calc(var(--spacing-unit)*3); text-align: center; color: var(--color-primary);">Federal Spending & Business Development Analytics</h1>
+    
+    <div class="card"> 
+      <p>This dashboard provides federal spending data and competitive intelligence for business development teams. Navigate through different sections to gain insights on spending patterns, competitors, contract vehicles, and market opportunities.</p>
     </div>
 
-    <div id="secondary_data" class="width-one-third">
-      <!-- Top recipients -->
-      <section id="top_recipients_section">
-        <h2>Top Recipients</h2>
-        
-        <ul class="pills" role="tablist">
-          <li><a role="tab" aria-selected="true" id="tab-recipients-contracts" href="#" onclick="loadTopRecipients('contracts'); return false;">Contracts</a></li>
-          <li><a role="tab" id="tab-recipients-grants" href="#" onclick="loadTopRecipients('grants'); return false;">Grants</a></li>
-          <li><a role="tab" id="tab-recipients-all" href="#" onclick="loadTopRecipients('all'); return false;">All Awards</a></li>
-        </ul>
-        
-        <div id="top_recipients" class="loading">Loading recipient data...</div>
-      </section>
+    <nav class="tabs-nav" role="tablist">
+      <div class="tabs-nav-item active" role="tab" aria-selected="true" id="tab-overview" onclick="showTab('overview')">Market Overview</div>
+      <div class="tabs-nav-item" role="tab" id="tab-competitors" onclick="showTab('competitors')">Competitor Analysis</div>
+      <div class="tabs-nav-item" role="tab" id="tab-agencies" onclick="showTab('agencies')">Agency Intel</div>
+      <div class="tabs-nav-item" role="tab" id="tab-opportunities" onclick="showTab('opportunities')">Market Opportunities</div>
+      <div class="tabs-nav-item" role="tab" id="tab-vehicles" onclick="showTab('vehicles')">Contract Vehicles</div>
+    </nav>
 
-      <!-- Recent awards -->
-      <section id="recent_awards_section">
-        <h2>Recent Awards</h2>
-        <div id="recent_awards" class="loading">Loading recent awards...</div>
-      </section>
+    <div id="overview-tab" class="tab-content active">
+      <div class="grid-layout">
+        <div class="grid-col-8">
+          <section id="current_spending_section" class="card" aria-labelledby="current-spending-title">
+            <h2 id="current-spending-title" class="card-title"><span class="material-icons-outlined">account_balance_wallet</span>Federal Spending Overview</h2>
+            <div id="current_spending" class="loading-spinner-container">
+              <div class="spinner"></div><p class="loading-text">Loading spending data...</p>
+            </div>
+          </section>
+
+          <section id="spending_time_series_card" class="card" aria-labelledby="spending-time-series-title">
+            <h2 id="spending-time-series-title" class="card-title"><span class="material-icons-outlined">timeline</span>Federal Awards By Month</h2>
+            <div id="spending_chart" class="chart-container loading-spinner-container" style="min-height: 320px;">
+              <div class="spinner"></div><p class="loading-text">Loading monthly award trends...</p>
+            </div>
+          </section>
+
+          <section id="geographic_distribution_card" class="card" aria-labelledby="geographic-distribution-title">
+            <h2 id="geographic-distribution-title" class="card-title"><span class="material-icons-outlined">public</span>Geographic Distribution (Top 10 States)</h2>
+            <div id="state_chart" class="chart-container loading-spinner-container" style="min-height: 400px;">
+              <div class="spinner"></div><p class="loading-text">Loading geographic data...</p>
+            </div>
+          </section>
+        </div>
+
+        <div class="grid-col-4">
+          <section id="top_agencies_card" class="card" aria-labelledby="top-agencies-title">
+            <h2 id="top-agencies-title" class="card-title"><span class="material-icons-outlined">corporate_fare</span>Top Funding Agencies</h2>
+            <div id="agencies_chart" class="chart-container loading-spinner-container" style="min-height: 360px;">
+              <div class="spinner"></div><p class="loading-text">Loading agency data...</p>
+            </div>
+          </section>
+
+          <section id="spending_by_industry_card" class="card" aria-labelledby="spending-by-industry-title">
+            <h2 id="spending-by-industry-title" class="card-title"><span class="material-icons-outlined">business_center</span>Spending by Industry (Top NAICS)</h2>
+            <div id="industry_chart" class="chart-container loading-spinner-container" style="min-height: 360px;">
+              <div class="spinner"></div><p class="loading-text">Loading industry data...</p>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+
+    <div id="competitors-tab" class="tab-content">
+      <div class="grid-layout">
+        <div class="grid-col-8">
+          <section class="card" aria-labelledby="top-contractors-title-heading">
+            <h2 id="top-contractors-title-heading" class="card-title"><span class="material-icons-outlined">emoji_events</span>Top Federal Contractors</h2>
+            <nav class="pills-nav" role="tablist" style="margin-bottom: var(--spacing-unit);">
+              <li><a role="tab" aria-selected="true" id="pill-contractors-all" href="#" onclick="event.preventDefault(); loadTopContractors('all', 'top_contractors_chart');">All Awards</a></li>
+              <li><a role="tab" id="pill-contractors-contracts" href="#" onclick="event.preventDefault(); loadTopContractors('contracts', 'top_contractors_chart');">Contracts</a></li>
+              <li><a role="tab" id="pill-contractors-grants" href="#" onclick="event.preventDefault(); loadTopContractors('grants', 'top_contractors_chart');">Grants</a></li>
+            </nav>
+            <div id="top_contractors_chart" class="chart-container loading-spinner-container" style="min-height: 400px;">
+              <div class="spinner"></div><p class="loading-text">Loading contractor data...</p>
+            </div>
+          </section>
+
+          <section class="card" aria-labelledby="market-share-title-heading">
+            <h2 id="market-share-title-heading" class="card-title"><span class="material-icons-outlined">pie_chart</span>Market Share by Top 10 Contractors (Contracts)</h2>
+            <div id="contractor_market_share_chart" class="chart-container loading-spinner-container" style="min-height: 350px;">
+              <div class="spinner"></div><p class="loading-text">Loading market share data...</p>
+            </div>
+          </section>
+        </div>
+
+        <div class="grid-col-4">
+          <section class="card" aria-labelledby="competitor-lookup-title-heading">
+            <h2 id="competitor-lookup-title-heading" class="card-title"><span class="material-icons-outlined">manage_search</span>Competitor Lookup</h2>
+            <div class="form-group">
+              <label class="form-label" for="competitor-search-input">Company Name or UEI/DUNS:</label>
+              <input class="form-input" id="competitor-search-input" type="text" placeholder="Enter company name">
+            </div>
+            <button class="form-button" onclick="searchCompetitor()"><span class="material-icons-outlined">search</span>Search</button>
+            <div id="competitor_results_display" style="margin-top: var(--spacing-unit);"></div>
+          </section>
+
+          <section class="card" aria-labelledby="recent-contracts-title-heading">
+            <h2 id="recent-contracts-title-heading" class="card-title"><span class="material-icons-outlined">new_releases</span>Recent Contract Awards</h2>
+            <div id="recent_contract_awards_list" class="loading-spinner-container">
+              <div class="spinner"></div><p class="loading-text">Loading recent awards...</p>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+
+    <div id="agencies-tab" class="tab-content">
+        <div class="grid-layout">
+            <div class="grid-col-6">
+                <section class="card" aria-labelledby="agency-analysis-title">
+                    <h2 id="agency-analysis-title" class="card-title"><span class="material-icons-outlined">account_balance</span>Agency Spending Patterns</h2>
+                     <div class="form-group">
+                        <label class="form-label" for="agency-select">Select Agency:</label>
+                        <select class="form-select" id="agency-select">
+                            <option value="">-- Select an Agency --</option>
+                            </select>
+                     </div>
+                     <button class="form-button" onclick="analyzeAgency()"><span class="material-icons-outlined">analytics</span>Analyze</button>
+                    <div id="agency_analysis_results" style="margin-top: var(--spacing-unit);">
+                        </div>
+                </section>
+                 <section class="card" aria-labelledby="agency-award-timing-title">
+                    <h2 id="agency-award-timing-title" class="card-title"><span class="material-icons-outlined">event_available</span>Agency Award Timing (Selected Agency)</h2>
+                    <div id="agency_award_timing_chart" class="chart-container loading-spinner-container" style="min-height: 320px;">
+                        <p class="data-label">Select an agency to view award timing.</p>
+                    </div>
+                </section>
+            </div>
+            <div class="grid-col-6">
+                <section class="card" aria-labelledby="agency-categories-title">
+                    <h2 id="agency-categories-title" class="card-title"><span class="material-icons-outlined">category</span>Agency Funding by Award Category</h2>
+                    <div id="agency_categories_chart" class="chart-container loading-spinner-container" style="min-height: 320px;">
+                         <p class="data-label">Select an agency to view funding by category.</p>
+                    </div>
+                </section>
+                <section class="card" aria-labelledby="agency-q4-title">
+                    <h2 id="agency-q4-title" class="card-title"><span class="material-icons-outlined">crisis_alert</span>Q4 Spending Rush (Selected Agency)</h2>
+                    <div id="agency_q4_spending_data" class="loading-spinner-container">
+                        <p class="data-label">Select an agency to view Q4 spending patterns.</p>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </div>
+
+    <div id="opportunities-tab" class="tab-content">
+        <div class="grid-layout">
+            <div class="grid-col-6">
+                <section class="card" aria-labelledby="growing-markets-title">
+                    <h2 id="growing-markets-title" class="card-title"><span class="material-icons-outlined">trending_up</span>Fastest Growing Markets (NAICS)</h2>
+                    <div id="growing_markets_chart" class="chart-container loading-spinner-container" style="min-height: 400px;">
+                        <div class="spinner"></div><p class="loading-text">Loading market growth data...</p>
+                    </div>
+                </section>
+            </div>
+            <div class="grid-col-6">
+                <section class="card" aria-labelledby="psc-opportunities-title">
+                    <h2 id="psc-opportunities-title" class="card-title"><span class="material-icons-outlined">construction</span>Top Spending by PSC Code</h2>
+                    <div id="psc_spending_chart" class="chart-container loading-spinner-container" style="min-height: 400px;">
+                        <div class="spinner"></div><p class="loading-text">Loading PSC data...</p>
+                    </div>
+                </section>
+            </div>
+             <div class="grid-col-12">
+                <section class="card" aria-labelledby="new-programs-title">
+                    <h2 id="new-programs-title" class="card-title"><span class="material-icons-outlined">dynamic_feed</span>Potential New Programs/Initiatives</h2>
+                    <div id="new_programs_list" class="loading-spinner-container">
+                        <div class="spinner"></div><p class="loading-text">Analyzing recent awards for new programs...</p>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </div>
+
+    <div id="vehicles-tab" class="tab-content">
+        <div class="grid-layout">
+            <div class="grid-col-6">
+                <section class="card" aria-labelledby="active-vehicles-title">
+                    <h2 id="active-vehicles-title" class="card-title"><span class="material-icons-outlined">article</span>Active Contract Vehicles (IDVs)</h2>
+                    <div id="active_vehicles_list" class="loading-spinner-container">
+                        <div class="spinner"></div><p class="loading-text">Loading active IDVs...</p>
+                    </div>
+                </section>
+            </div>
+            <div class="grid-col-6">
+                 <section class="card" aria-labelledby="vehicle-lookup-title">
+                    <h2 id="vehicle-lookup-title" class="card-title"><span class="material-icons-outlined">find_in_page</span>Contract Vehicle Lookup</h2>
+                    <div class="form-group">
+                        <label class="form-label" for="vehicle-search-input">Contract Vehicle Name or ID:</label>
+                        <input class="form-input" id="vehicle-search-input" type="text" placeholder="e.g., GSA OASIS, SEWP V">
+                    </div>
+                    <button class="form-button" onclick="searchVehicle()"><span class="material-icons-outlined">search</span>Search Vehicle</button>
+                    <div id="vehicle_results_display" style="margin-top: var(--spacing-unit);"></div>
+                </section>
+                <section class="card" aria-labelledby="expiring-vehicles-title">
+                    <h2 id="expiring-vehicles-title" class="card-title"><span class="material-icons-outlined">event_busy</span>Expiring Vehicles (Next 12 Months)</h2>
+                    <div id="expiring_vehicles_list" class="loading-spinner-container">
+                        <div class="spinner"></div><p class="loading-text">Loading expiring vehicles...</p>
+                    </div>
+                </section>
+            </div>
+        </div>
     </div>
     
-    <div style="clear: both;"></div>
-  </div>
-
-  <div class="container" style="margin-top: 30px;">
-    <section id="explanation" class="width-two-thirds">
-      <h2>About this Site</h2>
-      <p>This dashboard displays live data from <a href="https://www.usaspending.gov/">USASpending.gov</a>, the official source for federal spending data. The data is retrieved directly from the USASpending.gov API, showing the most current information available about how federal tax dollars are being spent.</p>
-      <p>USASpending.gov is managed by the U.S. Department of the Treasury's Bureau of the Fiscal Service in accordance with the Federal Funding Accountability and Transparency Act (FFATA) and the Digital Accountability and Transparency Act (DATA Act).</p>
-    </section>
-
-    <section class="width-one-third">
-      <h2>Data Sources</h2>
-      <p>All data shown on this dashboard comes directly from the <a href="https://api.usaspending.gov/docs/endpoints">USASpending.gov API</a>. For more detailed data access and custom downloads, visit <a href="https://www.usaspending.gov/download_center/custom_award_data">USASpending.gov's Download Center</a>.</p>
+    <section id="api-log-card" class="card" aria-labelledby="api-log-title-heading">
+      <h2 id="api-log-title-heading" class="card-title"><span class="material-icons-outlined">plagiarism</span>API Request Log (Debug)</h2>
+      <div id="api-log">No API requests logged yet.</div>
     </section>
   </div>
 
+  <div class="container" style="margin-top: calc(var(--spacing-unit)*3); padding-bottom: calc(var(--spacing-unit)*3);" id="explanation_section">
+    <div class="grid-layout">
+        <section id="explanation" class="grid-col-8 card" aria-labelledby="about-dashboard-title">
+          <h2 id="about-dashboard-title" class="card-title"><span class="material-icons-outlined">info</span>About this Dashboard</h2>
+          <p>This Business Development Analytics Dashboard displays live data from <a href="https://www.usaspending.gov/">USASpending.gov</a>, the official source for federal spending data. The dashboard is designed to provide competitive intelligence for companies pursuing federal contracts.</p>
+          <p>USASpending.gov is managed by the U.S. Department of the Treasury's Bureau of the Fiscal Service.</p>
+        </section>
+
+        <section class="grid-col-4 card" aria-labelledby="data-sources-title-heading">
+          <h2 id="data-sources-title-heading" class="card-title"><span class="material-icons-outlined">source</span>Data Sources</h2>
+          <p>All data shown on this dashboard comes directly from the <a href="https://api.usaspending.gov/">USASpending.gov API</a>. For more detailed data access, visit <a href="https://www.usaspending.gov/download_center/custom_award_data">USASpending.gov's Download Center</a>.</p>
+        </section>
+    </div>
+  </div>
+
+  <div id="d3-tooltip" class="d3-tooltip"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
   <script>
-    // Global settings
+    // --- Global Settings & Helper Functions ---
     const API_BASE_URL = 'https://api.usaspending.gov/api/v2';
-    const DEFAULT_PARAMS = {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    };
-    
-    // Format currency values
-    function formatCurrency(amount) {
-      if (amount >= 1e12) {
-        return '$' + (amount / 1e12).toFixed(1) + ' trillion';
-      } else if (amount >= 1e9) {
-        return '$' + (amount / 1e9).toFixed(1) + ' billion';
-      } else if (amount >= 1e6) {
-        return '$' + (amount / 1e6).toFixed(1) + ' million';
-      } else if (amount >= 1e3) {
-        return '$' + (amount / 1e3).toFixed(1) + ' thousand';
-      } else {
-        return '$' + amount.toFixed(2);
-      }
+    const CORS_PROXY = ''; 
+    const d3Tooltip = d3.select("#d3-tooltip"); 
+
+    function logApiRequest(endpoint, params, response) {
+      const logElement = document.getElementById('api-log');
+      if (!logElement) return;
+      const timestamp = new Date().toLocaleTimeString();
+      let logEntry = document.createElement('div');
+      logEntry.innerHTML = `<strong>${timestamp} - ${endpoint}</strong><br>`;
+      if (params) logEntry.innerHTML += `Request: ${JSON.stringify(params)}<br>`;
+      if (response.status) logEntry.innerHTML += `Status: ${response.status} ${response.statusText}<br>`;
+      if (response.data) logEntry.innerHTML += `Response: ${JSON.stringify(response.data).substring(0, 250)}...<br>`;
+      else if (response.error) logEntry.innerHTML += `Error: ${response.error}<br>`;
+      logEntry.innerHTML += '<hr style="border-color: var(--color-divider); margin-top: var(--spacing-unit); margin-bottom: var(--spacing-unit);">';
+      if (logElement.innerHTML === 'No API requests logged yet.') logElement.innerHTML = '';
+      if (logElement.firstChild) logElement.insertBefore(logEntry, logElement.firstChild);
+      else logElement.appendChild(logEntry);
+    }
+
+    function formatCurrency(amount, short = true) {
+        if (!amount && amount !== 0) return 'N/A';
+        if (short) {
+            if (Math.abs(amount) >= 1e12) return '$' + (amount / 1e12).toFixed(1) + 'T';
+            if (Math.abs(amount) >= 1e9) return '$' + (amount / 1e9).toFixed(1) + 'B';
+            if (Math.abs(amount) >= 1e6) return '$' + (amount / 1e6).toFixed(1) + 'M';
+            if (Math.abs(amount) >= 1e3) return '$' + (amount / 1e3).toFixed(1) + 'K';
+            return '$' + amount.toFixed(0);
+        }
+        return '$' + amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
     
-    // Format date for API
-    function formatDateForAPI(date) {
-      return date.toISOString().split('T')[0];
+    function getCurrentFiscalYear() {
+      const today = new Date();
+      return today.getMonth() >= 9 ? today.getFullYear() + 1 : today.getFullYear();
     }
     
-    // Get date range for lookback periods
-    function getDateRange(days) {
-      const end = new Date();
-      const start = new Date();
+    function formatDateForAPI(date) { return date.toISOString().split('T')[0]; }
+    
+    function getDateRange(days, referenceDate = new Date()) {
+      const end = new Date(referenceDate); 
+      const start = new Date(referenceDate);
       start.setDate(start.getDate() - days);
-      
-      return {
-        start_date: formatDateForAPI(start),
-        end_date: formatDateForAPI(end)
-      };
+      return { start_date: formatDateForAPI(start), end_date: formatDateForAPI(end) };
     }
     
-    // Show error message
     function showError(containerId, message) {
       const container = document.getElementById(containerId);
-      container.innerHTML = '';
-      container.classList.remove('loading');
-      
+      if (!container) { console.error("showError: container not found", containerId); return; }
+      container.innerHTML = ''; 
+      container.classList.remove('loading-spinner-container');
       const errorDiv = document.createElement('div');
       errorDiv.className = 'error-message';
-      errorDiv.textContent = message || 'Error loading data. Please try again later.';
-      
+      errorDiv.innerHTML = `<span class="material-icons-outlined">error_outline</span> <p>${message || 'Error loading data.'}</p>`;
       container.appendChild(errorDiv);
     }
     
-    // Load total federal spending for last 30 days
-    async function loadTotalSpending() {
+    async function apiRequest(endpoint, params, method = null) {
       try {
-        const dateRange = getDateRange(30);
-        const response = await fetch(`${API_BASE_URL}/search/spending_by_award_count/`, {
-          ...DEFAULT_PARAMS,
-          body: JSON.stringify({
-            filters: {
-              time_period: [{ 
-                start_date: dateRange.start_date,
-                end_date: dateRange.end_date
-              }]
-            }
-          })
-        });
-        
-        if (!response.ok) throw new Error('Failed to fetch spending data');
-        
+        const url = `${CORS_PROXY}${API_BASE_URL}${endpoint}`;
+        const getEndpoints = ['/references/toptier_agencies', '/references/total_budgetary_resources'];
+        const useMethod = method || (getEndpoints.some(e => endpoint.startsWith(e)) ? 'GET' : 'POST');
+        let options = { method: useMethod, headers: { 'Content-Type': 'application/json' } };
+        let requestUrl = url;
+        if (useMethod === 'GET' && params) {
+          const queryParams = new URLSearchParams();
+          for (const key in params) queryParams.append(key, params[key]);
+          requestUrl = `${url}?${queryParams.toString()}`;
+        } else if (useMethod === 'POST' && params) {
+          options.body = JSON.stringify(params);
+        }
+        const response = await fetch(requestUrl, options);
+        if (!response.ok) throw new Error(`API Error ${response.status}: ${response.statusText} for ${requestUrl}`);
         const data = await response.json();
+        logApiRequest(endpoint, params, { status: response.status, statusText: response.statusText, data: data });
+        return data;
+      } catch (error) {
+        logApiRequest(endpoint, params, { error: error.message });
+        console.error(`API Request Failed for ${endpoint}:`, error); 
+        throw error;
+      }
+    }
+
+    // --- D3 Chart Creation Functions ---
+    function createHorizontalBarChart(containerId, data, barHeight = 24, customMargins = null, valueFormatter = (d => formatCurrency(d, false))) {
+        const container = d3.select("#" + containerId);
+        if (container.empty()) { console.error(`Container #${containerId} not found for bar chart.`); return; }
         
-        // Calculate total by adding up all award types
-        let totalSpending = 0;
-        if (data && data.results) {
-          // First try to get spending data
-          const spendingResponse = await fetch(`${API_BASE_URL}/agency/toptier/`, DEFAULT_PARAMS);
-          
-          if (spendingResponse.ok) {
-            const spendingData = await spendingResponse.json();
+        container.html(''); 
+        container.classed('loading-spinner-container', false);
+
+        if (!data || data.length === 0) {
+            showError(containerId, "No data available to display chart.");
+            return;
+        }
+
+        const defaultMargins = { top: 24, right: 24, bottom: 40, left: 160 }; 
+        const margins = customMargins || defaultMargins;
+
+        const svg = container.append("svg").attr("width", "100%").attr("height", "100%");
+        const chartGroup = svg.append("g").attr("transform", `translate(${margins.left},${margins.top})`);
+
+        function drawChart() {
+            const bounds = container.node().getBoundingClientRect();
+            const width = bounds.width - margins.left - margins.right;
+            const dynamicHeight = data.length * (barHeight + (barHeight / 2) ) + margins.top + margins.bottom; 
             
-            if (spendingData && spendingData.results) {
-              // Sum up the total budget_authority_amount
-              totalSpending = spendingData.results
-                .reduce((sum, agency) => sum + (agency.budget_authority_amount || 0), 0);
-            }
-          }
-          
-          // Only display data if we actually got a value
-          if (totalSpending <= 0) {
-            throw new Error('No spending data available from the API');
-          }
+            svg.attr("height", dynamicHeight); 
+            if (width <= 0) return;
+            chartGroup.selectAll("*").remove(); 
+
+            const y = d3.scaleBand()
+                .domain(data.map(d => d.name))
+                .range([0, dynamicHeight - margins.top - margins.bottom])
+                .padding(0.3); 
+
+            const xMax = d3.max(data, d => d.amount);
+            const x = d3.scaleLinear()
+                .domain([0, xMax > 0 ? xMax * 1.05 : 1]) 
+                .range([0, width]);
+
+            chartGroup.append("g").attr("class", "axis y-axis")
+                .call(d3.axisLeft(y).tickSize(0).tickPadding(8))
+                .selectAll("text").call(wrapText, margins.left - 16); 
+
+            chartGroup.append("g").attr("class", "axis x-axis")
+                .attr("transform", `translate(0, ${dynamicHeight - margins.top - margins.bottom})`)
+                .call(d3.axisBottom(x).ticks(Math.min(5, Math.max(1,data.length))).tickFormat(d => formatCurrency(d, true)));
+
+            chartGroup.selectAll(".bar")
+                .data(data)
+                .enter().append("rect")
+                .attr("class", "bar")
+                .attr("y", d => y(d.name))
+                .attr("x", 0)
+                .attr("width", d => Math.max(0, x(d.amount))) 
+                .attr("height", y.bandwidth())
+                .on("mouseover", (event, d) => {
+                    d3Tooltip.transition().duration(200).style("opacity", .9);
+                    d3Tooltip.html(`<strong>${d.name}</strong><br>${valueFormatter(d.amount)}`)
+                        .style("left", (event.pageX + 10) + "px")
+                        .style("top", (event.pageY - 28) + "px");
+                })
+                .on("mouseout", () => d3Tooltip.transition().duration(500).style("opacity", 0));
         }
         
-        const container = document.getElementById('current_spending');
-        container.textContent = formatCurrency(totalSpending);
-        container.classList.remove('loading');
-        
-        // Update page to show the amount
-        document.getElementById('current_spending_section').innerHTML = `
-          <h3>Federal Spending in the Last 30 Days</h3>
-          <div id="current_spending" class="data">${formatCurrency(totalSpending)}</div>
-          <p>Based on data from USASpending.gov API</p>
-        `;
-        
-      } catch (error) {
-        console.error('Error loading total spending:', error);
-        showError('current_spending', 'Error loading spending data');
-      }
+        function wrapText(text, width) {
+            text.each(function() {
+                let text = d3.select(this),
+                    words = text.text().split(/\s+/).reverse(), word, line = [], lineNumber = 0,
+                    lineHeight = 1.1, y = text.attr("y"), dy = parseFloat(text.attr("dy") || 0),
+                    tspan = text.text(null).append("tspan").attr("x", -8).attr("y", y).attr("dy", dy + "em");
+                while (word = words.pop()) {
+                    line.push(word);
+                    tspan.text(line.join(" "));
+                    if (tspan.node().getComputedTextLength() > width && line.length > 1) {
+                        line.pop(); tspan.text(line.join(" ")); line = [word];
+                        tspan = text.append("tspan").attr("x", -8).attr("y", y).attr("dy", ++lineNumber * lineHeight + dy + "em").text(word);
+                    }
+                }
+            });
+        }
+        drawChart(); 
+        container.node().__chartDrawFunction__ = drawChart;
     }
-    
-    // Load spending time series data
-    async function loadSpendingTimeSeries() {
-      try {
-        const dateRange = getDateRange(90);
-        const response = await fetch(`${API_BASE_URL}/search/spending_over_time/`, {
-          ...DEFAULT_PARAMS,
-          body: JSON.stringify({
-            group: 'month',
-            filters: {
-              time_period: [{ 
-                start_date: dateRange.start_date,
-                end_date: dateRange.end_date
-              }]
-            }
-          })
-        });
-        
-        if (!response.ok) throw new Error('Failed to fetch time series data');
-        
-        const data = await response.json();
-        const container = document.getElementById('spending_chart');
-        container.classList.remove('loading');
-        
-        if (!data.results || data.results.length === 0) {
-          container.textContent = 'No time series data available.';
-          return;
+
+    function createTimeSeriesChart(containerId, data, yAxisLabel = "Amount", yValueField = "amount", 
+                                   axisTickFormatter = (d => formatCurrency(d, true)), 
+                                   tooltipValueFormatter = (d => formatCurrency(d, false))) {
+        const container = d3.select("#" + containerId);
+        if (container.empty()) { console.error(`Container #${containerId} not found for time series.`); return; }
+
+        container.html(''); 
+        container.classed('loading-spinner-container', false);
+
+        if (!data || data.length === 0) {
+            showError(containerId, `No data available for ${yAxisLabel} chart.`);
+            return;
         }
         
-        // Format data for D3 chart
-        const chartData = data.results.map(item => ({
-          date: new Date(item.time_period.fiscal_year, item.time_period.month - 1),
-          amount: item.aggregated_amount
-        }));
-        
-        // Create D3 time series chart
-        const margin = {top: 20, right: 30, bottom: 40, left: 90};
-        const width = container.clientWidth - margin.left - margin.right;
-        const height = 300 - margin.top - margin.bottom;
-        
-        // Clear previous chart if any
-        container.innerHTML = '';
-        
-        const svg = d3.select('#spending_chart')
-          .append('svg')
-            .attr('width', width + margin.left + margin.right)
-            .attr('height', height + margin.top + margin.bottom)
-          .append('g')
-            .attr('transform', `translate(${margin.left},${margin.top})`);
+        const chartData = data.map(item => ({
+            date: item.date, 
+            value: item[yValueField]
+        })).sort((a,b) => a.date - b.date);
+
+        const margins = { top: 24, right: 24, bottom: 48, left: 96 };
+        const svg = container.append("svg").attr("width", "100%").attr("height", "100%");
+        const chartGroup = svg.append("g").attr("transform", `translate(${margins.left},${margins.top})`);
+
+        function drawLineChart() {
+            const bounds = container.node().getBoundingClientRect();
+            const width = bounds.width - margins.left - margins.right;
+            const height = bounds.height - margins.top - margins.bottom;
             
-        // X axis
-        const x = d3.scaleTime()
-          .domain(d3.extent(chartData, d => d.date))
-          .range([0, width]);
-          
-        svg.append('g')
-          .attr('transform', `translate(0,${height})`)
-          .call(d3.axisBottom(x).ticks(5).tickFormat(d3.timeFormat('%b %Y')));
-          
-        // Y axis
-        const y = d3.scaleLinear()
-          .domain([0, d3.max(chartData, d => d.amount)])
-          .range([height, 0]);
-          
-        svg.append('g')
-          .call(d3.axisLeft(y).tickFormat(d => formatCurrency(d)).ticks(5));
-          
-        // Add the line
-        svg.append('path')
-          .datum(chartData)
-          .attr('fill', 'none')
-          .attr('stroke', '#0071bc')
-          .attr('stroke-width', 2)
-          .attr('d', d3.line()
-            .x(d => x(d.date))
-            .y(d => y(d.amount))
-          );
-          
-        // Add points
-        svg.selectAll('dot')
-          .data(chartData)
-          .enter()
-          .append('circle')
-            .attr('cx', d => x(d.date))
-            .attr('cy', d => y(d.amount))
-            .attr('r', 5)
-            .attr('fill', '#0071bc');
-            
-      } catch (error) {
-        console.error('Error loading time series:', error);
-        showError('spending_chart', 'Error loading spending trends');
-      }
-    }
-    
-    // Load spending by category
-    async function loadSpendingByCategory() {
-      try {
-        const dateRange = getDateRange(90);
-        const response = await fetch(`${API_BASE_URL}/search/spending_by_category/award_category/`, {
-          ...DEFAULT_PARAMS,
-          body: JSON.stringify({
-            filters: {
-              time_period: [{ 
-                start_date: dateRange.start_date,
-                end_date: dateRange.end_date
-              }]
-            }
-          })
-        });
-        
-        if (!response.ok) throw new Error('Failed to fetch category data');
-        
-        const data = await response.json();
-        const container = document.getElementById('category_chart');
-        container.classList.remove('loading');
-        
-        if (!data.results || data.results.length === 0) {
-          container.textContent = 'No category data available.';
-          return;
+            svg.attr("viewBox", `0 0 ${bounds.width} ${bounds.height}`); 
+
+            if (width <=0 || height <=0) return;
+            chartGroup.selectAll("*").remove();
+
+            const x = d3.scaleTime().domain(d3.extent(chartData, d => d.date)).range([0, width]);
+            chartGroup.append("g").attr("transform", `translate(0,${height})`).call(d3.axisBottom(x).ticks(6).tickFormat(d3.timeFormat('%b %Y')));
+
+            const yMax = d3.max(chartData, d => d.value);
+            const y = d3.scaleLinear().domain([0, yMax > 0 ? yMax * 1.1 : 1]).range([height, 0]);
+            chartGroup.append("g").call(d3.axisLeft(y).ticks(5).tickFormat(axisTickFormatter));
+
+            chartGroup.append("path")
+                .datum(chartData)
+                .attr("fill", "none").attr("stroke", "var(--color-accent)").attr("stroke-width", 2)
+                .attr("d", d3.line().x(d => x(d.date)).y(d => y(d.value)));
+
+            chartGroup.selectAll(".dot")
+                .data(chartData)
+                .enter().append("circle").attr("class", "dot")
+                .attr("cx", d => x(d.date)).attr("cy", d => y(d.value))
+                .attr("r", 4).attr("fill", "var(--color-accent)")
+                .on("mouseover", (event, d) => {
+                    d3Tooltip.transition().duration(200).style("opacity", .9);
+                    d3Tooltip.html(`<strong>${d3.timeFormat('%b %Y')(d.date)}</strong><br>${yAxisLabel}: ${tooltipValueFormatter(d.value)}`)
+                        .style("left", (event.pageX + 10) + "px")
+                        .style("top", (event.pageY - 28) + "px");
+                })
+                .on("mouseout", () => d3Tooltip.transition().duration(500).style("opacity", 0));
         }
-        
-        const categories = data.results
-          .sort((a, b) => b.amount - a.amount)
-          .slice(0, 8); // Top 8 categories
-        
-        let html = '<ul class="bar-chart">';
-        categories.forEach(category => {
-          html += `
-            <li>
-              <strong>${category.name}</strong><br/>
-              ${formatCurrency(category.amount)}
-            </li>
-          `;
-        });
-        html += '</ul>';
-        
-        container.innerHTML = html;
-        
-      } catch (error) {
-        console.error('Error loading categories:', error);
-        showError('category_chart', 'Error loading category data');
-      }
+        drawLineChart();
+        container.node().__chartDrawFunction__ = drawLineChart; 
     }
-    
-    // Load top agencies
-    async function loadTopAgencies() {
-      try {
-        const response = await fetch(`${API_BASE_URL}/agency/toptier/`, DEFAULT_PARAMS);
-        
-        if (!response.ok) throw new Error('Failed to fetch agency data');
-        
-        const data = await response.json();
-        const container = document.getElementById('agencies_chart');
-        container.classList.remove('loading');
-        
-        if (!data.results || data.results.length === 0) {
-          container.textContent = 'No agency data available.';
-          return;
+
+    function createPieChart(containerId, data, valueField = 'amount', nameField = 'name') {
+        const container = d3.select("#" + containerId);
+        if (container.empty()) { console.error(`Container #${containerId} not found for pie chart.`); return; }
+
+        container.html('');
+        container.classed('loading-spinner-container', false);
+
+        if (!data || data.length === 0) {
+            showError(containerId, "No data available for pie chart.");
+            return;
         }
+
+        const margins = { top: 24, right: 24, bottom: 24, left: 24 };
         
-        const agencies = data.results
-          .filter(agency => agency.budget_authority_amount > 0)
-          .sort((a, b) => b.budget_authority_amount - a.budget_authority_amount)
-          .slice(0, 10); // Top 10 agencies
-        
-        let html = '<ul class="bar-chart">';
-        agencies.forEach(agency => {
-          html += `
-            <li>
-              <strong>${agency.name}</strong><br/>
-              ${formatCurrency(agency.budget_authority_amount)}
-            </li>
-          `;
-        });
-        html += '</ul>';
-        
-        container.innerHTML = html;
-        
-      } catch (error) {
-        console.error('Error loading agencies:', error);
-        showError('agencies_chart', 'Error loading agency data');
-      }
-    }
-    
-    // Load geographic distribution
-    async function loadGeographicDistribution() {
-      try {
-        const dateRange = getDateRange(90);
-        const response = await fetch(`${API_BASE_URL}/search/spending_by_geography/`, {
-          ...DEFAULT_PARAMS,
-          body: JSON.stringify({
-            scope: 'place_of_performance',
-            geo_layer: 'state',
-            filters: {
-              time_period: [{ 
-                start_date: dateRange.start_date,
-                end_date: dateRange.end_date
-              }]
-            }
-          })
-        });
-        
-        if (!response.ok) throw new Error('Failed to fetch geographic data');
-        
-        const data = await response.json();
-        const container = document.getElementById('state_chart');
-        container.classList.remove('loading');
-        
-        if (!data.results || data.results.length === 0) {
-          container.textContent = 'No geographic data available.';
-          return;
+        function drawPie() {
+            const bounds = container.node().getBoundingClientRect();
+            const width = bounds.width - margins.left - margins.right;
+            const height = bounds.height - margins.top - margins.bottom;
+            const radius = Math.min(width, height) / 2;
+
+            container.select("svg").remove(); 
+
+            const svg = container.append("svg")
+                .attr("width", "100%")
+                .attr("height", "100%")
+                .attr("viewBox", `0 0 ${bounds.width} ${bounds.height}`)
+              .append("g")
+                .attr("transform", `translate(${bounds.width / 2}, ${bounds.height / 2})`);
+
+            const color = d3.scaleOrdinal(d3.schemeCategory10);
+            const pie = d3.pie().value(d => d[valueField]).sort(null);
+            const arc = d3.arc().innerRadius(radius * 0.5).outerRadius(radius); 
+
+            const g = svg.selectAll(".arc")
+                .data(pie(data))
+                .enter().append("g")
+                .attr("class", "arc");
+
+            g.append("path")
+                .attr("d", arc)
+                .style("fill", d => color(d.data[nameField]))
+                .on("mouseover", (event, d) => {
+                    d3Tooltip.transition().duration(200).style("opacity", .9);
+                    d3Tooltip.html(`<strong>${d.data[nameField]}</strong><br>${formatCurrency(d.data[valueField], false)} (${((d.data[valueField] / d3.sum(data, item => item[valueField])) * 100).toFixed(1)}%)`)
+                        .style("left", (event.pageX + 10) + "px")
+                        .style("top", (event.pageY - 28) + "px");
+                })
+                .on("mouseout", () => d3Tooltip.transition().duration(500).style("opacity", 0));
         }
-        
-        const stateData = data.results
-          .sort((a, b) => b.aggregated_amount - a.aggregated_amount);
-        
-        let html = '<ul class="bar-chart">';
-        stateData.slice(0, 10).forEach(state => {
-          html += `
-            <li>
-              <strong>${state.display_name}</strong><br/>
-              ${formatCurrency(state.aggregated_amount)}
-            </li>
-          `;
-        });
-        html += '</ul>';
-        
-        container.innerHTML = html;
-        
-      } catch (error) {
-        console.error('Error loading geographic data:', error);
-        showError('state_chart', 'Error loading geographic data');
-      }
+        drawPie();
+        container.node().__chartDrawFunction__ = drawPie;
     }
-    
-    // Load top recipients
-    async function loadTopRecipients(type = 'all') {
-      // Update tab selection
-      document.querySelectorAll('#top_recipients_section .pills a').forEach(tab => {
-        tab.setAttribute('aria-selected', 'false');
-      });
-      document.getElementById(`tab-recipients-${type}`).setAttribute('aria-selected', 'true');
+
+
+    // --- Tab Navigation ---
+    function showTab(tabName) {
+      document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+      document.querySelectorAll('.tabs-nav-item').forEach(btn => btn.classList.remove('active'));
       
-      try {
-        const dateRange = getDateRange(30);
-        const container = document.getElementById('top_recipients');
-        container.innerHTML = '<div class="loading">Loading recipient data...</div>';
-        
-        const body = {
-          filters: {
-            time_period: [{ 
-              start_date: dateRange.start_date,
-              end_date: dateRange.end_date
-            }]
-          }
-        };
-        
-        // Add filter by award type if needed
-        if (type === 'contracts') {
-          body.filters.award_type_codes = ['A', 'B', 'C', 'D'];
-        } else if (type === 'grants') {
-          body.filters.award_type_codes = ['02', '03', '04', '05'];
-        }
-        
-        const response = await fetch(`${API_BASE_URL}/search/spending_by_category/recipient_duns/`, {
-          ...DEFAULT_PARAMS,
-          body: JSON.stringify(body)
-        });
-        
-        if (!response.ok) throw new Error('Failed to fetch recipient data');
-        
-        const data = await response.json();
-        
-        if (!data.results || data.results.length === 0) {
-          container.innerHTML = 'No recipient data available.';
+      const tabContent = document.getElementById(`${tabName}-tab`);
+      const tabButton = document.getElementById(`tab-${tabName}`);
+
+      if (tabContent) tabContent.classList.add('active');
+      if (tabButton) tabButton.classList.add('active');
+      
+      if (!tabContent) {
+          console.error(`Tab content for '${tabName}' not found.`);
           return;
-        }
-        
-        const recipients = data.results
-          .sort((a, b) => b.amount - a.amount)
-          .slice(0, 10); // Top 10 recipients
-        
-        let html = '<ul class="bar-chart">';
-        recipients.forEach(recipient => {
-          html += `
-            <li>
-              <strong>${recipient.name || 'Unnamed Recipient'}</strong><br/>
-              ${formatCurrency(recipient.amount)}
-            </li>
-          `;
-        });
-        html += '</ul>';
-        
-        container.innerHTML = html;
-        
-      } catch (error) {
-        console.error('Error loading recipients:', error);
-        showError('top_recipients', 'Error loading recipient data');
+      }
+      
+      // Load data for the tab if not already loaded
+      if (!tabContent.dataset.loaded) {
+        if (tabName === 'overview') loadMarketOverviewTab();
+        else if (tabName === 'competitors') loadCompetitorsTab();
+        else if (tabName === 'agencies') loadAgenciesTab();
+        else if (tabName === 'opportunities') loadOpportunitiesTab();
+        else if (tabName === 'vehicles') loadVehiclesTab();
+        tabContent.dataset.loaded = true; // Mark as loaded
       }
     }
-    
-    // Load recent awards
-    async function loadRecentAwards() {
+
+    // --- Data Loading Functions for Each Tab ---
+    // Market Overview Tab
+    async function loadMarketOverviewTab() {
+        loadBudgetOverview();
+        loadSpendingTimeSeries();
+        loadTopAgencies();
+        loadSpendingByIndustry(); 
+        loadGeographicDistribution();
+    }
+
+    async function loadBudgetOverview() {
+      const containerId = 'current_spending';
+      const container = document.getElementById(containerId);
       try {
-        const response = await fetch(`${API_BASE_URL}/search/spending_by_award/`, {
-          ...DEFAULT_PARAMS,
-          body: JSON.stringify({
-            page: 1,
-            limit: 5,
-            sort: 'Award Amount',
-            order: 'desc',
-            filters: {
-              time_period: [getDateRange(30)]
-            },
-            fields: [
-              "Award ID", 
-              "Recipient Name", 
-              "Award Amount",
-              "Awarding Agency",
-              "Award Date"
-            ]
-          })
+        const fiscalYear = getCurrentFiscalYear();
+        const data = await apiRequest('/search/spending_over_time/', {
+          group: 'fiscal_year', subawards: false,
+          filters: { time_period: [{ start_date: `${fiscalYear-1}-10-01`, end_date: `${fiscalYear}-09-30` }] }
         });
-        
-        if (!response.ok) throw new Error('Failed to fetch award data');
-        
-        const data = await response.json();
-        const container = document.getElementById('recent_awards');
-        container.classList.remove('loading');
-        
-        if (!data.results || data.results.length === 0) {
-          container.textContent = 'No recent award data available.';
-          return;
-        }
-        
-        let html = '<ul class="bar-chart">';
-        data.results.forEach(award => {
-          html += `
-            <li>
-              <strong>${award["Recipient Name"] || 'Unnamed Recipient'}</strong><br/>
-              ${formatCurrency(award["Award Amount"] || 0)}<br/>
-              <small>${award["Awarding Agency"] || 'Unknown Agency'} - ${award["Award Date"] || 'Unknown Date'}</small>
-            </li>
-          `;
-        });
-        html += '</ul>';
-        
-        container.innerHTML = html;
-        
-      } catch (error) {
-        console.error('Error loading recent awards:', error);
-        showError('recent_awards', 'Error loading award data');
-      }
+        if (!data || !data.results || data.results.length === 0) throw new Error('No budget data');
+        const currentYearSpending = data.results.find(item => item.time_period && item.time_period.fiscal_year == fiscalYear);
+        const totalAmount = currentYearSpending ? currentYearSpending.aggregated_amount : 0;
+        container.classList.remove('loading-spinner-container');
+        container.innerHTML = `
+          <p class="card-subtitle">Federal Spending - FY ${fiscalYear}</p>
+          <p class="data-point">${formatCurrency(totalAmount, false)}</p>
+          <p class="data-label">Total spending across all federal agencies</p>`;
+      } catch (error) { showError(containerId, 'Unable to load budget data: ' + error.message); }
     }
     
-    // Initialize everything when the page loads
+    async function loadSpendingTimeSeries() { 
+        const containerId = 'spending_chart';
+        try {
+            const dateRange = getDateRange(365); 
+            const apiData = await apiRequest('/search/spending_over_time/', {
+                group: 'month', subawards: false,
+                filters: { time_period: [{ start_date: dateRange.start_date, end_date: dateRange.end_date }] }
+            });
+            if (!apiData || !apiData.results || apiData.results.length === 0) throw new Error('No time series data');
+            
+            const mappedData = apiData.results.map(item => ({
+                date: new Date(item.time_period.fiscal_year, item.time_period.month - 1, 1), 
+                amount: item.aggregated_amount
+            }));
+            createTimeSeriesChart(containerId, mappedData, "Total Obligated", "amount");
+        } catch (error) { showError(containerId, 'Unable to load spending trends: ' + error.message); }
+    }
+
+    async function loadTopAgencies() {
+        const containerId = 'agencies_chart';
+        try {
+            const apiData = await apiRequest('/search/spending_by_category/funding_agency/', {
+                filters: { time_period: [{ start_date: getDateRange(365).start_date, end_date: getDateRange(365).end_date }] },
+                limit: 10, order: "desc", sort: "aggregated_amount" 
+            });
+            if (!apiData || !apiData.results || apiData.results.length === 0) throw new Error('No agency data');
+            const chartData = apiData.results
+                .filter(d => d.amount > 0) 
+                .map(d => ({ name: d.name || 'Unnamed Agency', amount: d.amount }));
+            createHorizontalBarChart(containerId, chartData, 24, { top: 16, right: 24, bottom: 32, left: 180 });
+        } catch (error) { showError(containerId, 'Unable to load agency data: ' + error.message); }
+    }
+
+    async function loadSpendingByIndustry() { // Using NAICS
+        const containerId = 'industry_chart';
+        try {
+            const dateRange = getDateRange(365); 
+            const apiData = await apiRequest('/search/spending_by_category/naics/', {
+                limit: 10, page: 1, order: "desc",
+                filters: {
+                    time_period: [{ start_date: dateRange.start_date, end_date: dateRange.end_date }]
+                }
+            });
+            if (!apiData || !apiData.results || apiData.results.length === 0) throw new Error('No NAICS data for industries');
+            const chartData = apiData.results
+                .map(d => ({ name: `${d.code || ''} - ${d.name || 'Unknown NAICS'}`, amount: d.total_obligation_amount || d.amount || 0 }))
+                .sort((a, b) => b.amount - a.amount);
+            createHorizontalBarChart(containerId, chartData, 24, { top: 16, right: 24, bottom: 32, left: 200 }); 
+        } catch (error) { showError(containerId, 'Unable to load industry (NAICS) data: ' + error.message); }
+    }
+
+
+    async function loadGeographicDistribution() {
+        const containerId = 'state_chart';
+        try {
+            const dateRange = getDateRange(90);
+            const apiData = await apiRequest('/search/spending_by_geography/', {
+                geo_layer: 'state', scope: 'place_of_performance',
+                filters: { time_period: [{ start_date: dateRange.start_date, end_date: dateRange.end_date }] },
+                limit: 10, order: "desc", sort: "aggregated_amount"
+            });
+            if (!apiData || !apiData.results || apiData.results.length === 0) throw new Error('No geographic data');
+            const chartData = apiData.results
+                .map(d => ({ name: d.display_name || d.shape_code || 'Unknown State', amount: d.aggregated_amount }))
+                .sort((a, b) => b.amount - a.amount); 
+            createHorizontalBarChart(containerId, chartData.slice(0,10), 24, { top: 16, right: 24, bottom: 32, left: 150 });
+        } catch (error) { showError(containerId, 'Unable to load geographic data: ' + error.message); }
+    }
+
+    // Competitors Tab
+    async function loadCompetitorsTab() {
+        loadTopContractors('all', 'top_contractors_chart'); 
+        loadContractorMarketShare();
+        loadRecentContractAwards();
+    }
+    
+    async function loadTopContractors(type = 'all', chartContainerId) {
+        const containerId = chartContainerId; 
+        const container = document.getElementById(containerId);
+        if(!container) { console.error("Container for top contractors not found:", containerId); return; }
+
+        container.innerHTML = `<div class="loading-spinner-container"><div class="spinner"></div><p class="loading-text">Loading contractor data...</p></div>`;
+        container.classList.add('loading-spinner-container');
+        
+        const pillsContainer = container.closest('.card').querySelector('.pills-nav');
+        if (pillsContainer) {
+            pillsContainer.querySelectorAll('a').forEach(tab => tab.setAttribute('aria-selected', 'false'));
+            const activePill = pillsContainer.querySelector(`#pill-contractors-${type}`);
+            if (activePill) activePill.setAttribute('aria-selected', 'true');
+        }
+
+        try {
+            const dateRange = getDateRange(365);
+            const requestBody = {
+                filters: { time_period: [{ start_date: dateRange.start_date, end_date: dateRange.end_date }] },
+                limit: 10, order: "desc", sort: "aggregated_amount" 
+            };
+            if (type === 'contracts') requestBody.filters.award_type_codes = ['A', 'B', 'C', 'D'];
+            else if (type === 'grants') requestBody.filters.award_type_codes = ['02', '03', '04', '05'];
+
+            const apiData = await apiRequest('/search/spending_by_category/recipient_duns/', requestBody);
+            
+            if (!apiData || !apiData.results || apiData.results.length === 0) {
+                 showError(containerId, 'No contractor data available for this selection.');
+                 return;
+            }
+            const chartData = apiData.results.map(d => ({ name: d.name || 'Unnamed Recipient', amount: d.amount }));
+            createHorizontalBarChart(containerId, chartData, 24, { top: 16, right: 24, bottom: 32, left: 200 });
+
+        } catch (error) { showError(containerId, 'Unable to load contractor data: ' + error.message); }
+    }
+
+    async function loadContractorMarketShare() {
+        const containerId = 'contractor_market_share_chart';
+        try {
+            const dateRange = getDateRange(365);
+            const apiData = await apiRequest('/search/spending_by_category/recipient_duns/', {
+                filters: { time_period: [{ start_date: dateRange.start_date, end_date: dateRange.end_date }], award_type_codes: ['A', 'B', 'C', 'D'] }, 
+                limit: 10, order: "desc", sort: "aggregated_amount"
+            });
+             if (!apiData || !apiData.results || apiData.results.length === 0) {
+                 showError(containerId, 'No market share data available.');
+                 return;
+            }
+            const chartData = apiData.results.map(d => ({ name: d.name || 'Unnamed Recipient', amount: d.amount }));
+            createPieChart(containerId, chartData, 'amount', 'name');
+
+        } catch (error) { showError(containerId, 'Unable to load market share: ' + error.message); }
+    }
+    
+    async function searchCompetitor() { // Simplified version
+        const searchTerm = document.getElementById('competitor-search-input').value.trim();
+        const resultsContainer = document.getElementById('competitor_results_display');
+        if (!searchTerm) { resultsContainer.innerHTML = '<p class="error-message">Please enter a company name or UEI/DUNS.</p>'; return; }
+        
+        resultsContainer.innerHTML = `<div class="loading-spinner-container"><div class="spinner"></div><p class="loading-text">Searching for ${searchTerm}...</p></div>`;
+        try {
+            const apiData = await apiRequest('/api/v2/autocomplete/recipient/', { search_text: searchTerm, limit: 5 });
+            resultsContainer.innerHTML = '';
+            if (!apiData || !apiData.results || apiData.results.length === 0) {
+                resultsContainer.innerHTML = '<p class="data-label">No competitors found matching your search.</p>';
+                return;
+            }
+            let html = '<ul class="data-list">';
+            apiData.results.forEach(result => {
+                html += `<li><span class="item-name">${result.recipient_name} ${result.uei ? `(UEI: ${result.uei})` : ''}</span> <button class="form-button" style="padding: 4px 8px; font-size: 0.8rem; margin-left: auto;" onclick="alert('Viewing details for ${result.recipient_name} - full implementation needed.')">View Details</button></li>`;
+            });
+            html += '</ul>';
+            resultsContainer.innerHTML = html;
+        } catch (error) {
+            showError('competitor_results_display', 'Error searching for competitor: ' + error.message);
+        }
+    }
+
+
+    async function loadRecentContractAwards() {
+        const containerId = 'recent_contract_awards_list';
+        const container = document.getElementById(containerId);
+        container.innerHTML = `<div class="loading-spinner-container"><div class="spinner"></div><p class="loading-text">Loading recent contract awards...</p></div>`;
+        container.classList.add('loading-spinner-container');
+        try {
+            const dateRange = getDateRange(30); 
+            const apiData = await apiRequest('/search/spending_by_award/', {
+                fields: ["Award ID", "Recipient Name", "Award Amount", "Awarding Agency", "Award Date"],
+                page: 1, limit: 5, sort: "Award Date", order: "desc",
+                filters: {
+                    time_period: [{ start_date: dateRange.start_date, end_date: dateRange.end_date }],
+                    award_type_codes: ["A", "B", "C", "D"] 
+                }
+            });
+            container.classList.remove('loading-spinner-container');
+            container.innerHTML = '';
+            if (!apiData || !apiData.results || apiData.results.length === 0) {
+                container.innerHTML = '<p class="data-label">No recent contract awards found.</p>'; return;
+            }
+            let html = '<ul class="data-list">';
+            apiData.results.forEach(award => {
+                html += `
+                    <li>
+                        <div>
+                            <span class="item-name">${award["Award ID"]} (${award["Recipient Name"] || 'N/A'})</span><br>
+                            <small class="data-label" style="margin-bottom:0;">${award["Awarding Agency"]} - ${award["Award Date"]}</small>
+                        </div>
+                        <span class="item-value">${formatCurrency(award["Award Amount"])}</span>
+                    </li>`;
+            });
+            html += '</ul>';
+            container.innerHTML = html;
+        } catch (error) { showError(containerId, 'Unable to load recent contract awards: ' + error.message); }
+    }
+
+    // Agency Intel Tab
+    async function loadAgenciesTab() {
+        populateAgencySelect(); // Populate dropdown
+        // Placeholder for initial content or message
+        document.getElementById('agency_analysis_results').innerHTML = '<p class="data-label">Select an agency and click "Analyze" to view details.</p>';
+        document.getElementById('agency_award_timing_chart').innerHTML = '<p class="data-label">Select an agency to view award timing.</p>';
+        document.getElementById('agency_categories_chart').innerHTML = '<p class="data-label">Select an agency to view funding by category.</p>';
+        document.getElementById('agency_q4_spending_data').innerHTML = '<p class="data-label">Select an agency to view Q4 spending patterns.</p>';
+    }
+
+    async function populateAgencySelect() {
+        const selectElement = document.getElementById('agency-select');
+        try {
+            const apiData = await apiRequest('/references/toptier_agencies/');
+            if (apiData && apiData.results) {
+                apiData.results.sort((a,b) => a.agency_name.localeCompare(b.agency_name)).forEach(agency => {
+                    const option = document.createElement('option');
+                    option.value = agency.toptier_code;
+                    option.textContent = `${agency.agency_name} (${agency.toptier_code})`;
+                    selectElement.appendChild(option);
+                });
+            }
+        } catch (error) {
+            console.error("Failed to populate agencies:", error);
+            // Could add an error message to the select or nearby
+        }
+    }
+    
+    async function analyzeAgency() {
+        const agencyCode = document.getElementById('agency-select').value;
+        const agencyName = document.getElementById('agency-select').selectedOptions[0].text.split(' (')[0]; // Get name part
+        const resultsContainer = document.getElementById('agency_analysis_results');
+        const timingChartContainerId = 'agency_award_timing_chart';
+        const categoriesChartContainerId = 'agency_categories_chart';
+        const q4ContainerId = 'agency_q4_spending_data';
+
+        if (!agencyCode) {
+            resultsContainer.innerHTML = '<p class="error-message">Please select an agency.</p>';
+            return;
+        }
+        resultsContainer.innerHTML = `<div class="loading-spinner-container"><div class="spinner"></div><p class="loading-text">Analyzing ${agencyName}...</p></div>`;
+        document.getElementById(timingChartContainerId).innerHTML = `<div class="loading-spinner-container"><div class="spinner"></div></div>`;
+        document.getElementById(categoriesChartContainerId).innerHTML = `<div class="loading-spinner-container"><div class="spinner"></div></div>`;
+        document.getElementById(q4ContainerId).innerHTML = `<div class="loading-spinner-container"><div class="spinner"></div></div>`;
+
+        try {
+            const fiscalYear = getCurrentFiscalYear();
+            // 1. Agency Overview (Total Spending)
+            const overviewData = await apiRequest('/v2/agency/' + agencyCode + '/budgetary_resources/', { fiscal_year: fiscalYear });
+            let totalObligation = 0;
+            if(overviewData && overviewData.results && overviewData.results.length > 0){
+                totalObligation = overviewData.results.reduce((sum, item) => sum + (item.obligated_amount || 0),0);
+            }
+            resultsContainer.innerHTML = `<p class="card-subtitle"><strong>${agencyName} - FY${fiscalYear} Overview</strong></p><p class="data-point">${formatCurrency(totalObligation, false)}</p><p class="data-label">Total Obligated Amount</p>`;
+
+            // 2. Agency Award Timing
+            const timingData = await apiRequest('/search/spending_over_time/', {
+                group: 'month', subawards: false,
+                filters: { time_period: [{ start_date: `${fiscalYear-1}-10-01`, end_date: `${fiscalYear}-09-30` }], agencies: [{ type: "funding", tier: "toptier", toptier_code: agencyCode }] }
+            });
+             if (!timingData || !timingData.results || timingData.results.length === 0) {
+                showError(timingChartContainerId, `No award timing data for ${agencyName}.`);
+            } else {
+                const mappedTimingData = timingData.results.map(item => ({ date: new Date(item.time_period.fiscal_year, item.time_period.month - 1, 1), amount: item.aggregated_amount }));
+                createTimeSeriesChart(timingChartContainerId, mappedTimingData, "Obligated Amount", "amount");
+            }
+
+            // 3. Agency Funding by Award Category
+            const categoryData = await apiRequest('/search/spending_by_category/', {
+                category: "award_category",
+                filters: { time_period: [{ start_date: `${fiscalYear-1}-10-01`, end_date: `${fiscalYear}-09-30` }], agencies: [{ type: "funding", tier: "toptier", toptier_code: agencyCode }] }
+            });
+            if (!categoryData || !categoryData.results || categoryData.results.length === 0) {
+                showError(categoriesChartContainerId, `No award category data for ${agencyName}.`);
+            } else {
+                const mappedCategoryData = categoryData.results.map(d => ({ name: d.name || 'Uncategorized', amount: d.amount })).sort((a, b) => b.amount - a.amount);
+                createHorizontalBarChart(categoriesChartContainerId, mappedCategoryData, 24, { top: 16, right: 24, bottom: 32, left: 120 });
+            }
+            
+            // 4. Q4 Spending (Simplified: compare Q4 to annual total for this agency)
+            const q4StartDate = `${fiscalYear}-07-01`;
+            const q4EndDate = `${fiscalYear}-09-30`;
+            const q4SpendingData = await apiRequest('/search/spending_over_time/', {
+                group: 'fiscal_year', subawards: false,
+                filters: { time_period: [{ start_date: q4StartDate, end_date: q4EndDate }], agencies: [{ type: "funding", tier: "toptier", toptier_code: agencyCode }] }
+            });
+            let q4Total = 0;
+            if (q4SpendingData && q4SpendingData.results && q4SpendingData.results.length > 0) {
+                q4Total = q4SpendingData.results[0].aggregated_amount || 0;
+            }
+            const q4Percentage = totalObligation > 0 ? (q4Total / totalObligation) * 100 : 0;
+            document.getElementById(q4ContainerId).innerHTML = `
+                <p class="card-subtitle"><strong>Q4 (Jul-Sep) Spending for FY${fiscalYear}</strong></p>
+                <p class="data-point">${formatCurrency(q4Total, false)}</p>
+                <p class="data-label">${q4Percentage.toFixed(1)}% of annual obligation</p>`;
+
+        } catch (error) {
+            showError('agency_analysis_results', `Error analyzing agency ${agencyName}: ${error.message}`);
+            showError(timingChartContainerId, `Could not load timing data for ${agencyName}.`);
+            showError(categoriesChartContainerId, `Could not load category data for ${agencyName}.`);
+            showError(q4ContainerId, `Could not load Q4 data for ${agencyName}.`);
+        }
+    }
+
+    // Market Opportunities Tab
+    async function loadOpportunitiesTab() {
+        loadGrowingMarkets();
+        loadPscSpendingOpportunities(); // For PSC spending
+        loadNewProgramOpportunities();
+    }
+
+    async function loadGrowingMarkets() { // NAICS based growth
+        const containerId = 'growing_markets_chart';
+        try {
+            const fiscalYear = getCurrentFiscalYear();
+            const currentYearData = await apiRequest('/search/spending_by_category/naics/', {
+                limit: 50, filters: { time_period: [{ start_date: `${fiscalYear-1}-10-01`, end_date: `${fiscalYear}-09-30` }] }
+            });
+            const previousYearData = await apiRequest('/search/spending_by_category/naics/', {
+                limit: 50, filters: { time_period: [{ start_date: `${fiscalYear-2}-10-01`, end_date: `${fiscalYear-1}-09-30` }] }
+            });
+
+            if (!currentYearData?.results || !previousYearData?.results) throw new Error('Missing NAICS data for growth calculation');
+
+            const growthData = [];
+            currentYearData.results.forEach(current => {
+                const previous = previousYearData.results.find(prev => prev.code === current.code);
+                if (previous && previous.amount > 1000000) { // Min $1M in previous year to be considered
+                    const growthRate = (current.amount - previous.amount) / previous.amount;
+                    if (growthRate > 0.1) { // Min 10% growth
+                         growthData.push({ name: `${current.code} - ${current.name}`, amount: growthRate * 100 }); // Store percentage
+                    }
+                }
+            });
+            growthData.sort((a, b) => b.amount - a.amount);
+            if (growthData.length === 0) {
+                showError(containerId, "Not enough comparable data to identify significant growing markets.");
+                return;
+            }
+            createHorizontalBarChart(containerId, growthData.slice(0, 10), 24, { top: 16, right: 24, bottom: 32, left: 220 }, d => `${d.toFixed(1)}% Growth`);
+        } catch (error) { showError(containerId, 'Unable to load growing markets: ' + error.message); }
+    }
+
+    async function loadPscSpendingOpportunities() {
+        const containerId = 'psc_spending_chart';
+        try {
+            const dateRange = getDateRange(365);
+            const apiData = await apiRequest('/search/spending_by_category/psc/', {
+                limit: 10, order: "desc",
+                filters: { time_period: [{ start_date: dateRange.start_date, end_date: dateRange.end_date }] }
+            });
+            if (!apiData || !apiData.results || apiData.results.length === 0) throw new Error('No PSC data');
+            const chartData = apiData.results.map(d => ({ name: `${d.code} - ${d.name}`, amount: d.amount }));
+            createHorizontalBarChart(containerId, chartData, 24, { top: 16, right: 24, bottom: 32, left: 220 });
+        } catch (error) { showError(containerId, 'Unable to load PSC spending: ' + error.message); }
+    }
+    
+    async function loadNewProgramOpportunities() {
+        const containerId = 'new_programs_list';
+        // This is a conceptual function. Real "new program" identification is complex.
+        // We'll simulate by looking for large, recent contract awards.
+        try {
+            const dateRange = getDateRange(90); // Last 90 days
+            const apiData = await apiRequest('/search/spending_by_award/', {
+                fields: ["Award ID", "Recipient Name", "Award Amount", "Awarding Agency", "Award Date", "Description"],
+                page: 1, limit: 5, sort: "Award Amount", order: "desc",
+                filters: {
+                    time_period: [{ start_date: dateRange.start_date, end_date: dateRange.end_date }],
+                    award_type_codes: ["A", "B", "C", "D"], // Contracts
+                    min_obligation_amount: 5000000 // Example: awards over $5M
+                }
+            });
+            const container = document.getElementById(containerId);
+            container.classList.remove('loading-spinner-container');
+            container.innerHTML = '';
+            if (!apiData || !apiData.results || apiData.results.length === 0) {
+                container.innerHTML = '<p class="data-label">No significant new contract awards matching criteria found recently.</p>'; return;
+            }
+            let html = '<ul class="data-list">';
+            apiData.results.forEach(award => {
+                html += `
+                    <li>
+                        <div>
+                            <span class="item-name"><strong>${award["Award ID"]}</strong> (${award["Recipient Name"] || 'N/A'})</span><br>
+                            <small class="data-label" style="margin-bottom:0;">${award["Awarding Agency"]} - ${award["Award Date"]}</small><br>
+                            <small class="data-label" style="font-style:normal; color: var(--color-text-primary);">${award["Description"] ? award["Description"].substring(0,150)+'...' : 'No description.'}</small>
+                        </div>
+                        <span class="item-value">${formatCurrency(award["Award Amount"])}</span>
+                    </li>`;
+            });
+            html += '</ul>';
+            container.innerHTML = html;
+
+        } catch (error) { showError(containerId, 'Error fetching potential new programs: ' + error.message); }
+    }
+
+
+    // Contract Vehicles Tab
+    async function loadVehiclesTab() {
+        loadActiveContractVehicles();
+        // loadVehicleActivity(); // More complex, requires specific IDV to analyze
+        loadExpiringVehicles();
+    }
+
+    async function loadActiveContractVehicles() {
+        const containerId = 'active_vehicles_list';
+        try {
+            const apiData = await apiRequest('/search/spending_by_award/', {
+                fields: ["Award ID", "Description", "Awarding Agency", "Period of Performance Current End Date", "Obligated Amount"],
+                page: 1, limit: 10, sort: "Obligated Amount", order: "desc",
+                filters: { award_type_codes: ["IDV_A", "IDV_B", "IDV_B_A", "IDV_B_B", "IDV_B_C", "IDV_C", "IDV_D", "IDV_E"] } // IDV types
+            });
+            const container = document.getElementById(containerId);
+            container.classList.remove('loading-spinner-container');
+            container.innerHTML = '';
+            if (!apiData || !apiData.results || apiData.results.length === 0) {
+                container.innerHTML = '<p class="data-label">No active IDV data found.</p>'; return;
+            }
+            let html = '<ul class="data-list">';
+            apiData.results.forEach(vehicle => {
+                html += `
+                    <li>
+                        <div>
+                            <span class="item-name"><strong>${vehicle["Award ID"]}</strong></span><br>
+                            <small class="data-label" style="margin-bottom:0;">${vehicle["Awarding Agency"]} | Ends: ${vehicle["Period of Performance Current End Date"]}</small><br>
+                            <small class="data-label" style="font-style:normal; color: var(--color-text-primary);">${vehicle["Description"] ? vehicle["Description"].substring(0,100)+'...' : 'No description.'}</small>
+                        </div>
+                        <span class="item-value">${formatCurrency(vehicle["Obligated Amount"])}</span>
+                    </li>`;
+            });
+            html += '</ul>';
+            container.innerHTML = html;
+        } catch (error) { showError(containerId, 'Unable to load active contract vehicles: ' + error.message); }
+    }
+    
+    async function searchVehicle() {
+        const searchTerm = document.getElementById('vehicle-search-input').value.trim();
+        const resultsContainer = document.getElementById('vehicle_results_display');
+        if (!searchTerm) { resultsContainer.innerHTML = '<p class="error-message">Please enter a vehicle ID or keyword.</p>'; return; }
+        resultsContainer.innerHTML = `<div class="loading-spinner-container"><div class="spinner"></div><p class="loading-text">Searching for ${searchTerm}...</p></div>`;
+        try {
+             const apiData = await apiRequest('/search/spending_by_award/', {
+                fields: ["Award ID", "Description", "Awarding Agency", "Period of Performance Current End Date", "Obligated Amount", "Award Type"],
+                page: 1, limit: 5,
+                filters: { award_type_codes: ["IDV_A", "IDV_B", "IDV_B_A", "IDV_B_B", "IDV_B_C", "IDV_C", "IDV_D", "IDV_E"], keyword: searchTerm }
+            });
+            resultsContainer.innerHTML = '';
+            if (!apiData || !apiData.results || apiData.results.length === 0) {
+                resultsContainer.innerHTML = '<p class="data-label">No vehicles found matching your search.</p>'; return;
+            }
+            let html = '<ul class="data-list">';
+            apiData.results.forEach(vehicle => {
+                 html += `
+                    <li>
+                        <div>
+                            <span class="item-name"><strong>${vehicle["Award ID"]}</strong> (${vehicle["Award Type"]})</span><br>
+                            <small class="data-label" style="margin-bottom:0;">${vehicle["Awarding Agency"]} | Ends: ${vehicle["Period of Performance Current End Date"]}</small><br>
+                            <small class="data-label" style="font-style:normal; color: var(--color-text-primary);">${vehicle["Description"] ? vehicle["Description"].substring(0,100)+'...' : 'No description.'}</small>
+                        </div>
+                        <span class="item-value">${formatCurrency(vehicle["Obligated Amount"])}</span>
+                    </li>`;
+            });
+            html += '</ul>';
+            resultsContainer.innerHTML = html;
+        } catch (error) { showError('vehicle_results_display', 'Error searching for vehicle: ' + error.message); }
+    }
+
+    async function loadExpiringVehicles() {
+        const containerId = 'expiring_vehicles_list';
+        try {
+            const currentDate = new Date();
+            const oneYearFromNow = new Date();
+            oneYearFromNow.setFullYear(currentDate.getFullYear() + 1);
+
+            const apiData = await apiRequest('/search/spending_by_award/', {
+                fields: ["Award ID", "Awarding Agency", "Period of Performance Current End Date", "Obligated Amount"],
+                page: 1, limit: 5, sort: "Period of Performance Current End Date", order: "asc",
+                filters: {
+                    award_type_codes: ["IDV_A", "IDV_B", "IDV_B_A", "IDV_B_B", "IDV_B_C", "IDV_C", "IDV_D", "IDV_E"],
+                    period_of_performance_end_date: { // Corrected filter key
+                        start_date: formatDateForAPI(currentDate),
+                        end_date: formatDateForAPI(oneYearFromNow)
+                    }
+                }
+            });
+            const container = document.getElementById(containerId);
+            container.classList.remove('loading-spinner-container');
+            container.innerHTML = '';
+            if (!apiData || !apiData.results || apiData.results.length === 0) {
+                container.innerHTML = '<p class="data-label">No IDVs found expiring in the next year.</p>'; return;
+            }
+            let html = '<ul class="data-list">';
+            apiData.results.forEach(vehicle => {
+                 html += `
+                    <li>
+                        <div>
+                            <span class="item-name"><strong>${vehicle["Award ID"]}</strong></span><br>
+                            <small class="data-label" style="margin-bottom:0;">${vehicle["Awarding Agency"]}</small>
+                        </div>
+                        <div>
+                            <span class="item-value" style="display:block; text-align:right;">${formatCurrency(vehicle["Obligated Amount"])}</span>
+                            <small class="data-label" style="display:block; text-align:right;">Expires: ${vehicle["Period of Performance Current End Date"]}</small>
+                        </div>
+                    </li>`;
+            });
+            html += '</ul>';
+            container.innerHTML = html;
+        } catch (error) { showError(containerId, 'Unable to load expiring vehicles: ' + error.message); }
+    }
+    
+    // --- Initialization & Resize Handling ---
+    let resizeTimer;
+    function handleResize() {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => {
+            const chartIds = [ 
+                'spending_chart', 'agencies_chart', 'industry_chart', 'state_chart',
+                'top_contractors_chart', 'contractor_market_share_chart',
+                'agency_award_timing_chart', 'agency_categories_chart',
+                'growing_markets_chart', 'psc_spending_chart'
+            ];
+            chartIds.forEach(id => {
+                const chartContainer = document.getElementById(id);
+                if (chartContainer && chartContainer.__chartDrawFunction__) {
+                    chartContainer.__chartDrawFunction__();
+                }
+            });
+        }, 250); 
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
-      loadTotalSpending();
-      loadSpendingTimeSeries();
-      loadSpendingByCategory();
-      loadTopAgencies();
-      loadGeographicDistribution();
-      loadTopRecipients('all');
-      loadRecentAwards();
+      if (typeof d3 === 'undefined') {
+        console.error('D3 library is not loaded. Charts cannot be rendered.');
+        const chartContainers = document.querySelectorAll('.chart-container');
+        chartContainers.forEach(container => showError(container.id, "Charting library failed to load. Please refresh."));
+        return; 
+      }
+      
+      showTab('overview'); // Load initial tab
+      
+      window.addEventListener('resize', handleResize);
     });
   </script>
 </body>
