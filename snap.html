@@ -453,7 +453,7 @@
                     Upload Contract Data
                     <input type="file" id="fileUpload" accept=".csv,.xlsx">
                 </label>
-                <span class="file-name" id="fileName">sample_prime.xlsx</span>
+                <span class="file-name" id="fileName">Upload a CSV or Excel file</span>
             </div>
         </div>
 
@@ -477,7 +477,7 @@
                     </div>
                 </div>
                 <div class="card-footer">
-                    <span id="subcontractPercentage">Loading...</span> of prime contract value is subcontracted
+                    <span id="subcontractPercentage">--</span> of prime contract value is subcontracted
                 </div>
             </div>
 
@@ -697,6 +697,13 @@
                 return null;
             }
 
+            // Log the data structure for debugging
+            console.log("Received data:", data);
+
+            // Check first item in data array to see if it has the expected properties
+            const firstItem = data[0];
+            console.log("First data item:", firstItem);
+
             // Validate required columns
             const requiredColumns = [
                 'prime_awardee_name',
@@ -707,7 +714,13 @@
                 'prime_award_amount'
             ];
 
-            const missingColumns = requiredColumns.filter(col => !data[0].hasOwnProperty(col));
+            const missingColumns = requiredColumns.filter(col => {
+                if (!firstItem.hasOwnProperty(col)) {
+                    console.log(`Missing column: ${col}`);
+                    return true;
+                }
+                return false;
+            });
             
             if (missingColumns.length > 0) {
                 showError(`Missing required columns: ${missingColumns.join(', ')}`);
@@ -717,24 +730,27 @@
             // Process and aggregate the data
             const processedData = {
                 // Prime and subcontract values
-                primeAwardTotal: parseFloat(data[0].prime_award_amount) || 0,
-                subcontractTotal: data.reduce((sum, row) => sum + (parseFloat(row.subaward_amount) || 0), 0),
+                primeAwardTotal: parseFloat(firstItem.prime_award_amount) || 0,
+                subcontractTotal: data.reduce((sum, row) => {
+                    const amount = parseFloat(row.subaward_amount);
+                    return sum + (isNaN(amount) ? 0 : amount);
+                }, 0),
                 
                 // Agency information
-                agency: data[0].prime_award_awarding_agency_name,
-                subAgency: data[0].prime_award_awarding_sub_agency_name,
-                office: data[0].prime_award_awarding_office_name,
+                agency: firstItem.prime_award_awarding_agency_name,
+                subAgency: firstItem.prime_award_awarding_sub_agency_name,
+                office: firstItem.prime_award_awarding_office_name,
                 
                 // Geographical data
                 stateDistribution: {},
                 
                 // NAICS information
-                naicsCode: data[0].prime_award_naics_code,
-                naicsDescription: data[0].prime_award_naics_description,
+                naicsCode: firstItem.prime_award_naics_code,
+                naicsDescription: firstItem.prime_award_naics_description,
                 
                 // Timeline data
-                startDate: data[0].prime_award_period_of_performance_start_date,
-                endDate: data[0].prime_award_period_of_performance_current_end_date,
+                startDate: firstItem.prime_award_period_of_performance_start_date,
+                endDate: firstItem.prime_award_period_of_performance_current_end_date,
                 
                 // Subcontractor analysis
                 subcontractors: {},
@@ -743,9 +759,9 @@
                 categories: {},
                 
                 // Contract details
-                contractDescription: data[0].prime_award_base_transaction_description,
-                contractUniqueKey: data[0].prime_award_unique_key,
-                primeAwardee: data[0].prime_awardee_name,
+                contractDescription: firstItem.prime_award_base_transaction_description,
+                contractUniqueKey: firstItem.prime_award_unique_key,
+                primeAwardee: firstItem.prime_awardee_name,
                 
                 // Original data for table
                 originalData: data
@@ -758,7 +774,8 @@
                     if (!processedData.stateDistribution[state]) {
                         processedData.stateDistribution[state] = 0;
                     }
-                    processedData.stateDistribution[state] += parseFloat(row.subaward_amount) || 0;
+                    const amount = parseFloat(row.subaward_amount);
+                    processedData.stateDistribution[state] += isNaN(amount) ? 0 : amount;
                 }
             });
             
@@ -774,7 +791,8 @@
                                      row.subaward_primary_place_of_performance_state_code
                         };
                     }
-                    processedData.subcontractors[sub].amount += parseFloat(row.subaward_amount) || 0;
+                    const amount = parseFloat(row.subaward_amount);
+                    processedData.subcontractors[sub].amount += isNaN(amount) ? 0 : amount;
                 }
             });
             
@@ -785,15 +803,18 @@
                     if (!processedData.categories[category]) {
                         processedData.categories[category] = 0;
                     }
-                    processedData.categories[category] += parseFloat(row.subaward_amount) || 0;
+                    const amount = parseFloat(row.subaward_amount);
+                    processedData.categories[category] += isNaN(amount) ? 0 : amount;
                 }
             });
             
+            console.log("Processed data:", processedData);
             return processedData;
         }
 
         // Initialize and update the Prime vs Subcontract Distribution chart
         function updatePrimeSubChart(data) {
+            console.log("Updating Prime vs Sub chart with data:", data);
             const ctx = document.getElementById('primeSubChart').getContext('2d');
             
             // Calculate the retained amount (prime award minus subcontracts)
@@ -834,7 +855,7 @@
                                             const value = data.datasets[0].data[i];
                                             const percentage = value / data.datasets[0].data.reduce((a, b) => a + b, 0);
                                             return {
-                                                text: `${label}: ${formatCurrency(value)} (${formatPercentage(percentage)})`,
+                                                text: `${label}: ${formatPercentage(percentage)}`,
                                                 fillStyle: data.datasets[0].backgroundColor[i],
                                                 strokeStyle: data.datasets[0].borderColor[i],
                                                 lineWidth: data.datasets[0].borderWidth,
@@ -863,6 +884,7 @@
 
         // Update the Agency and Sub-Agency Breakdown
         function updateAgencyTree(data) {
+            console.log("Updating Agency Tree with data:", data);
             const agencyTree = document.getElementById('agencyTree');
             agencyTree.innerHTML = '';
             
@@ -893,15 +915,12 @@
 
         // Update the Geographic Distribution chart
         function updateGeoDistributionChart(data) {
+            console.log("Updating Geo Distribution chart with data:", data.stateDistribution);
             const ctx = document.getElementById('geoDistributionChart').getContext('2d');
             
             // Process state distribution data
             const states = Object.keys(data.stateDistribution);
             const amounts = states.map(state => data.stateDistribution[state]);
-            
-            // Calculate percentages for better visualization
-            const total = amounts.reduce((a, b) => a + b, 0);
-            const percentages = amounts.map(amount => (amount / total) * 100);
             
             // Destroy previous chart if it exists
             if (charts.geoDistributionChart) {
@@ -919,4 +938,483 @@
                         backgroundColor: states.map((_, i) => `rgba(59, 130, 246, ${0.5 + (i * 0.2)})`),
                         borderColor: states.map((_, i) => `rgba(37, 99, 235, ${0.6 + (i * 0.2)})`),
                         borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const value = context.raw;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = value / total;
+                                    return `${context.label}: ${formatCurrency(value)} (${formatPercentage(percentage)})`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return formatCurrency(value);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Update the NAICS Code Analysis
+        function updateNaicsAnalysis(data) {
+            console.log("Updating NAICS analysis with data:", data.naicsCode, data.naicsDescription);
+            const naicsContent = document.getElementById('naicsContent');
+            
+            if (data.naicsCode && data.naicsDescription) {
+                naicsContent.innerHTML = `
+                    <div style="text-align: center; margin-bottom: 1.5rem;">
+                        <div style="display: inline-block; padding: 1rem 1.5rem; background-color: rgba(59, 130, 246, 0.1); 
+                                border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 0.5rem;">
+                            <div style="font-size: 1.25rem; font-weight: 600; color: var(--primary-dark);">
+                                ${data.naicsCode}
+                            </div>
+                            <div style="margin-top: 0.5rem; color: var(--text);">
+                                ${data.naicsDescription}
+                            </div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 2rem;">
+                        <h3 style="font-size: 0.875rem; font-weight: 600; margin-bottom: 0.75rem; color: var(--text-light);">
+                            NAICS Code Information
+                        </h3>
+                        <p style="font-size: 0.875rem; line-height: 1.5; color: var(--text);">
+                            This contract falls under NAICS code ${data.naicsCode}, which covers "${data.naicsDescription}".
+                            This classification is used by the federal government to categorize business establishments for the collection,
+                            analysis, and publication of statistical data related to the U.S. business economy.
+                        </p>
+                    </div>
+                `;
+            } else {
+                naicsContent.innerHTML = '<p>No NAICS data available</p>';
+            }
+        }
+
+        // Update the Contract Timeline Analysis
+        function updateTimelineAnalysis(data) {
+            console.log("Updating Timeline analysis with data:", data.startDate, data.endDate);
+            const timelineContent = document.getElementById('timelineContent');
+            
+            if (data.startDate && data.endDate) {
+                const startDate = new Date(data.startDate);
+                const endDate = new Date(data.endDate);
+                const duration = dateDiffInDays(startDate, endDate);
+                
+                // Calculate current progress if within timeline
+                const now = new Date();
+                let progressPercentage = 0;
+                const totalDuration = endDate - startDate;
+                
+                if (now >= startDate && now <= endDate) {
+                    progressPercentage = (now - startDate) / totalDuration;
+                } else if (now > endDate) {
+                    progressPercentage = 1;
+                }
+                
+                timelineContent.innerHTML = `
+                    <div style="padding: 1rem 0;">
+                        <div style="margin-bottom: 1.5rem;">
+                            <div style="font-size: 1.125rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--primary-dark);">
+                                Contract Period of Performance
+                            </div>
+                            <div style="display: flex; justify-content: space-between; font-size: 0.875rem; color: var(--text-light);">
+                                <span>Start: ${formatDate(data.startDate)}</span>
+                                <span>End: ${formatDate(data.endDate)}</span>
+                            </div>
+                            <div style="margin-top: 0.5rem; font-size: 0.875rem; color: var(--text);">
+                                Duration: ${duration} days
+                            </div>
+                        </div>
+                        
+                        <div class="timeline">
+                            <div class="timeline-line">
+                                <div class="timeline-progress" style="width: ${progressPercentage * 100}%;"></div>
+                            </div>
+                            <div class="timeline-point" style="left: 0%;">
+                                <div class="timeline-label timeline-start-label">${formatDate(data.startDate)}</div>
+                            </div>
+                            <div class="timeline-point" style="left: 100%;">
+                                <div class="timeline-label timeline-end-label">${formatDate(data.endDate)}</div>
+                            </div>
+                            ${progressPercentage > 0 && progressPercentage < 1 ? `
+                                <div class="timeline-point" style="left: ${progressPercentage * 100}%;">
+                                    <div class="timeline-label timeline-now-label">Today</div>
+                                </div>
+                            ` : ''}
+                        </div>
+                        
+                        <div style="margin-top: 2rem;">
+                            <div style="font-size: 1rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--primary-dark);">
+                                Contract Description
+                            </div>
+                            <div style="font-size: 0.875rem; color: var(--text);">
+                                ${data.contractDescription || 'No description available'}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                timelineContent.innerHTML = '<p>No timeline data available</p>';
+            }
+        }
+
+        // Update the Subcontractor Analysis chart
+        function updateSubcontractorChart(data) {
+            console.log("Updating Subcontractor chart with data:", data.subcontractors);
+            const ctx = document.getElementById('subcontractorChart').getContext('2d');
+            
+            // Process subcontractor data
+            const subcontractors = Object.keys(data.subcontractors);
+            const amounts = subcontractors.map(sub => data.subcontractors[sub].amount);
+            
+            // Destroy previous chart if it exists
+            if (charts.subcontractorChart) {
+                charts.subcontractorChart.destroy();
+            }
+            
+            // Create new chart
+            charts.subcontractorChart = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: subcontractors,
+                    datasets: [{
+                        data: amounts,
+                        backgroundColor: [
+                            'rgba(59, 130, 246, 0.7)',
+                            'rgba(16, 185, 129, 0.7)',
+                            'rgba(244, 114, 182, 0.7)',
+                            'rgba(251, 146, 60, 0.7)',
+                            'rgba(139, 92, 246, 0.7)'
+                        ],
+                        borderColor: [
+                            'rgba(37, 99, 235, 1)',
+                            'rgba(5, 150, 105, 1)',
+                            'rgba(219, 39, 119, 1)',
+                            'rgba(234, 88, 12, 1)',
+                            'rgba(109, 40, 217, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                generateLabels: (chart) => {
+                                    const data = chart.data;
+                                    if (data.labels.length && data.datasets.length) {
+                                        return data.labels.map((label, i) => {
+                                            const value = data.datasets[0].data[i];
+                                            const percentage = value / data.datasets[0].data.reduce((a, b) => a + b, 0);
+                                            return {
+                                                text: `${label}: ${formatPercentage(percentage)}`,
+                                                fillStyle: data.datasets[0].backgroundColor[i],
+                                                strokeStyle: data.datasets[0].borderColor[i],
+                                                lineWidth: data.datasets[0].borderWidth,
+                                                hidden: isNaN(value) || value === 0
+                                            };
+                                        });
+                                    }
+                                    return [];
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const value = context.raw;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = value / total;
+                                    return `${context.label}: ${formatCurrency(value)} (${formatPercentage(percentage)})`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Update the Product and Service Category chart
+        function updateCategoryChart(data) {
+            console.log("Updating Category chart with data:", data.categories);
+            const ctx = document.getElementById('categoryChart').getContext('2d');
+            
+            // Process category data
+            const categories = Object.keys(data.categories);
+            const amounts = categories.map(cat => data.categories[cat]);
+            
+            // Destroy previous chart if it exists
+            if (charts.categoryChart) {
+                charts.categoryChart.destroy();
+            }
+            
+            // Create new chart
+            charts.categoryChart = new Chart(ctx, {
+                type: 'polarArea',
+                data: {
+                    labels: categories,
+                    datasets: [{
+                        data: amounts,
+                        backgroundColor: [
+                            'rgba(59, 130, 246, 0.6)',
+                            'rgba(16, 185, 129, 0.6)',
+                            'rgba(244, 114, 182, 0.6)',
+                            'rgba(251, 146, 60, 0.6)',
+                            'rgba(139, 92, 246, 0.6)'
+                        ],
+                        borderColor: [
+                            'rgba(37, 99, 235, 1)',
+                            'rgba(5, 150, 105, 1)',
+                            'rgba(219, 39, 119, 1)',
+                            'rgba(234, 88, 12, 1)',
+                            'rgba(109, 40, 217, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const value = context.raw;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = value / total;
+                                    return `${context.label}: ${formatCurrency(value)} (${formatPercentage(percentage)})`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Update Contract Details
+        function updateContractDetails(data) {
+            console.log("Updating Contract Details with data:", data);
+            const contractDetails = document.getElementById('contractDetails');
+            
+            contractDetails.innerHTML = `
+                <div class="card-grid">
+                    <div class="stat-card">
+                        <div class="stat-value">${formatCurrency(data.primeAwardTotal)}</div>
+                        <div class="stat-label">Prime Award Value</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${formatCurrency(data.subcontractTotal)}</div>
+                        <div class="stat-label">Subcontracted Value</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${formatPercentage(data.subcontractTotal / data.primeAwardTotal)}</div>
+                        <div class="stat-label">Subcontracted %</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${Object.keys(data.subcontractors).length}</div>
+                        <div class="stat-label">Subcontractors</div>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 1.5rem;">
+                    <h3 style="font-size: 0.875rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-light);">
+                        Prime Contract Information
+                    </h3>
+                    <p style="font-size: 0.875rem; line-height: 1.5; color: var(--text);">
+                        <strong>Prime Contractor:</strong> ${data.primeAwardee || 'N/A'}<br>
+                        <strong>Contract ID:</strong> ${data.contractUniqueKey || 'N/A'}<br>
+                        <strong>Description:</strong> ${data.contractDescription || 'N/A'}<br>
+                        <strong>Period:</strong> ${formatDate(data.startDate)} to ${formatDate(data.endDate)}
+                    </p>
+                </div>
+            `;
+        }
+
+        // Update Subcontract Data Table
+        function updateSubcontractTable(data) {
+            console.log("Updating Subcontract Table with data:", data.originalData);
+            const tableBody = document.querySelector('#subcontractTable tbody');
+            tableBody.innerHTML = '';
+            
+            // Sort subcontractors by amount (descending)
+            const sortedSubcontractors = Object.keys(data.subcontractors).sort((a, b) => {
+                return data.subcontractors[b].amount - data.subcontractors[a].amount;
+            });
+            
+            // Add rows for each subcontractor
+            sortedSubcontractors.forEach(sub => {
+                const row = document.createElement('tr');
+                
+                // Find the description (category) for this subcontractor from the original data
+                const subData = data.originalData.find(row => row.subawardee_name === sub);
+                const description = subData ? subData.subaward_description : 'N/A';
+                
+                // Create row cells
+                row.innerHTML = `
+                    <td>${sub}</td>
+                    <td>${description}</td>
+                    <td>${formatCurrency(data.subcontractors[sub].amount)}</td>
+                    <td>${data.subcontractors[sub].location || 'N/A'}</td>
+                    <td>${data.subcontractors[sub].businessType || 'N/A'}</td>
+                `;
+                
+                tableBody.appendChild(row);
+            });
+        }
+
+        // Update all dashboard visualizations
+        function updateDashboard(data) {
+            console.log("Updating all dashboard visualizations");
+            // Update all charts and visualizations
+            updatePrimeSubChart(data);
+            updateAgencyTree(data);
+            updateGeoDistributionChart(data);
+            updateNaicsAnalysis(data);
+            updateTimelineAnalysis(data);
+            updateSubcontractorChart(data);
+            updateCategoryChart(data);
+            updateContractDetails(data);
+            updateSubcontractTable(data);
+            
+            // Show success message
+            showSuccess();
+        }
+
+        // File upload event handler
+        fileUpload.addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            
+            if (!file) return;
+            
+            // Update displayed filename
+            fileName.textContent = file.name;
+            
+            // Show loading indicator
+            loadingIndicator.style.display = 'flex';
+            
+            // Reset error message
+            dataAlert.style.display = 'none';
+            
+            try {
+                const fileExt = file.name.split('.').pop().toLowerCase();
+                
+                if (fileExt === 'csv') {
+                    // Create a FileReader to read the CSV file
+                    const reader = new FileReader();
                     
+                    reader.onload = function(e) {
+                        const csvText = e.target.result;
+                        // Parse the CSV text
+                        Papa.parse(csvText, {
+                            header: true,
+                            dynamicTyping: true,
+                            complete: function(results) {
+                                if (results.errors.length > 0 && results.errors[0].message !== "Delimiter") {
+                                    showError(results.errors[0].message);
+                                } else {
+                                    console.log("CSV parse results:", results);
+                                    // Process the data
+                                    dashboardData = processData(results.data);
+                                    
+                                    if (dashboardData) {
+                                        // Update dashboard with processed data
+                                        updateDashboard(dashboardData);
+                                    }
+                                }
+                            },
+                            error: function(error) {
+                                showError(error.message);
+                            }
+                        });
+                    };
+                    
+                    reader.onerror = function() {
+                        showError('Error reading file');
+                    };
+                    
+                    // Read the file as text
+                    reader.readAsText(file);
+                } else if (['xlsx', 'xls'].includes(fileExt)) {
+                    // Create a FileReader to read the Excel file
+                    const reader = new FileReader();
+                    
+                    reader.onload = function(e) {
+                        try {
+                            const data = e.target.result;
+                            const workbook = XLSX.read(data, { type: 'array' });
+                            
+                            // Get the first sheet
+                            const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                            
+                            // Convert to JSON
+                            const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+                            console.log("Excel parse results:", jsonData);
+                            
+                            // Process the data
+                            dashboardData = processData(jsonData);
+                            
+                            if (dashboardData) {
+                                // Update dashboard with processed data
+                                updateDashboard(dashboardData);
+                            }
+                        } catch (error) {
+                            showError(error.message);
+                        }
+                    };
+                    
+                    reader.onerror = function() {
+                        showError('Error reading file');
+                    };
+                    
+                    // Read the file as array buffer
+                    reader.readAsArrayBuffer(file);
+                } else {
+                    throw new Error('Unsupported file format. Please upload a CSV or Excel file.');
+                }
+            } catch (error) {
+                showError(error.toString());
+            }
+        });
+
+        // When the page is first loaded, display placeholder text in the dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.chart-container').forEach(container => {
+                const canvas = container.querySelector('canvas');
+                const ctx = canvas.getContext('2d');
+                ctx.font = '14px Arial';
+                ctx.fillStyle = '#6b7280';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('Upload a file to generate visualization', canvas.width / 2, canvas.height / 2);
+            });
+
+            document.getElementById('agencyTree').innerHTML = '<p style="color: #6b7280; text-align: center; padding: 2rem 0;">Upload a file to view agency data</p>';
+            document.getElementById('naicsContent').innerHTML = '<p style="color: #6b7280; text-align: center; padding: 2rem 0;">Upload a file to view NAICS code analysis</p>';
+            document.getElementById('timelineContent').innerHTML = '<p style="color: #6b7280; text-align: center; padding: 2rem 0;">Upload a file to view contract timeline</p>';
+            document.getElementById('contractDetails').innerHTML = '<p style="color: #6b7280; text-align: center; padding: 2rem 0;">Upload a file to view contract details</p>';
+        });
+    </script>
+</body>
+</html>
