@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Federal Contractors & Agencies Map</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+  <style>
+    html, body { margin: 0; height: 100%; }
+    #map { height: 100%; width: 100%; }
+    .legend {
+      background: white;
+      line-height: 1.4em;
+      padding: 10px;
+      border-radius: 5px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.2);
+      font-size: 12px;
+    }
+    .legend i {
+      width: 12px;
+      height: 12px;
+      float: left;
+      margin-right: 6px;
+      opacity: 0.9;
+      border-radius: 50%;
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+  <script>
+    const map = L.map('map').setView([38.9, -77.05], 6);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    const markers = L.markerClusterGroup();
+
+    function getContractorColor(value) {
+      if (value > 20000) return "red";
+      if (value > 10000) return "orange";
+      if (value > 5000) return "yellow";
+      return "green";
+    }
+
+    function getAgencyColor(tier) {
+      if (tier === 1) return "#003366";
+      if (tier === 2) return "#3399cc";
+      return "#cccccc";
+    }
+
+    async function loadData() {
+      const contractors = await fetch('contractors_real.json').then(res => res.json());
+      const agencies = await fetch('agencies_real.json').then(res => res.json());
+
+      contractors.forEach(c => {
+        const marker = L.circleMarker([c.lat, c.lon], {
+          radius: 8,
+          color: "#000",
+          weight: 1,
+          fillColor: getContractorColor(c.value),
+          fillOpacity: 0.9
+        })
+        .bindPopup(`<strong>${c.name}</strong><br>$${(c.value / 1000).toFixed(1)}B<br>${c.address}`)
+        .bindTooltip(c.name, { direction: "top" });
+        markers.addLayer(marker);
+      });
+
+      agencies.forEach(a => {
+        const marker = L.circleMarker([a.lat, a.lon], {
+          radius: 8,
+          color: "#000",
+          weight: 1,
+          fillColor: getAgencyColor(a.tier),
+          fillOpacity: 0.9
+        })
+        .bindPopup(`<strong>${a.name}</strong><br>Tier ${a.tier}<br>${a.address}`)
+        .bindTooltip(a.name, { direction: "top" });
+        markers.addLayer(marker);
+      });
+
+      map.addLayer(markers);
+    }
+
+    loadData();
+
+    const legend = L.control({ position: "bottomleft" });
+    legend.onAdd = function () {
+      const div = L.DomUtil.create("div", "legend");
+      div.innerHTML += "<b>Legend</b><br>";
+      div.innerHTML += '<i style="background: red"></i> Contractor > $20B<br>';
+      div.innerHTML += '<i style="background: orange"></i> $10B–$20B<br>';
+      div.innerHTML += '<i style="background: yellow"></i> $5B–$10B<br>';
+      div.innerHTML += '<i style="background: green"></i> < $5B<br>';
+      div.innerHTML += '<i style="background: #003366"></i> Agency Tier 1<br>';
+      div.innerHTML += '<i style="background: #3399cc"></i> Agency Tier 2<br>';
+      div.innerHTML += '<i style="background: #cccccc"></i> Agency Tier 3<br>';
+      return div;
+    };
+    legend.addTo(map);
+  </script>
+</body>
+</html>
