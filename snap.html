@@ -689,7 +689,6 @@
             }, 3000);
         }
 
-        // Process and validate the uploaded data
         function processData(data) {
             // Check if data is not empty
             if (!data || data.length === 0) {
@@ -697,8 +696,14 @@
                 return null;
             }
 
-            // Log the data structure for debugging
-            console.log("Received data:", data);
+            console.log(`Processing ${data.length} rows of data`);
+            
+            // For very large datasets, log only the first few rows
+            if (data.length > 100) {
+                console.log("First 5 rows:", data.slice(0, 5));
+            } else {
+                console.log("All data:", data);
+            }
 
             // Check first item in data array to see if it has the expected properties
             const firstItem = data[0];
@@ -727,14 +732,12 @@
                 return null;
             }
 
-            // Process and aggregate the data
+            // Process data in batches for large datasets
+            // Start with the first item to get basic contract info
             const processedData = {
                 // Prime and subcontract values
                 primeAwardTotal: parseFloat(firstItem.prime_award_amount) || 0,
-                subcontractTotal: data.reduce((sum, row) => {
-                    const amount = parseFloat(row.subaward_amount);
-                    return sum + (isNaN(amount) ? 0 : amount);
-                }, 0),
+                subcontractTotal: 0, // Will calculate in the loop
                 
                 // Agency information
                 agency: firstItem.prime_award_awarding_agency_name,
@@ -763,54 +766,313 @@
                 contractUniqueKey: firstItem.prime_award_unique_key,
                 primeAwardee: firstItem.prime_awardee_name,
                 
-                // Original data for table
-                originalData: data
+                // Original data reference - for very large datasets, we'll only store a subset
+                originalData: data.length > 1000 ? data.slice(0, 1000) : data
             };
             
-            // Calculate state distribution
-            data.forEach(row => {
-                const state = row.subaward_primary_place_of_performance_state_code;
-                if (state) {
-                    if (!processedData.stateDistribution[state]) {
-                        processedData.stateDistribution[state] = 0;
-                    }
+            // Process the data in batches for larger datasets
+            const batchSize = 1000;
+            for (let i = 0; i < data.length; i += batchSize) {
+                const end = Math.min(i + batchSize, data.length);
+                console.log(`Processing batch ${i} to ${end} of ${data.length}`);
+                
+                // Process this batch
+                const batch = data.slice(i, end);
+                
+                // Calculate totals and distributions for this batch
+                batch.forEach(row => {
+                    // Subaward amount
                     const amount = parseFloat(row.subaward_amount);
-                    processedData.stateDistribution[state] += isNaN(amount) ? 0 : amount;
-                }
+                    if (!isNaN(amount)) {
+                        processedData.subcontractTotal += amount;
+                    
+                        // State distribution
+                        const state = row.subaward_primary_place_of_performance_state_code;
+                        if (state) {
+                            if (!processedData.stateDistribution[state]) {
+                                processedData.stateDistribution[state] = 0;
+                            }
+                            processedData.stateDistribution[state] += amount;
+                        }
+                        
+                        // Subcontractor distribution
+                        const sub = row.subawardee_name;
+                        if (sub) {
+                            if (!processedData.subcontractors[sub]) {
+                                processedData.subcontractors[sub] = {
+                                    amount: 0,
+                                    businessType: row.subawardee_business_types,
+                                    location: `${row.subaward_primary_place_of_performance_city_name || ''}, ${row.subaward_primary_place_of_performance_state_code || ''}`.trim()
+                                };
+                            }
+                            processedData.subcontractors[sub].amount += amount;
+                        }
+                        
+                        // Category distribution
+                        const category = row.subaward_description;
+                        if (category) {
+                            if (!processedData.categories[category]) {
+                                processedData.categories[category] = 0;
+                            }
+                            processedData.categories[category] += amount;
+                        }
+                    }
+                });
+            }
+            
+            // For large datasets, limit the number of categories and states to display
+            // to prevent overcrowded charts
+            if (Object.keys(processedData.categories).length > 10) {
+                console.log("Limiting categories to top 10 by value");
+                processedData.categories = limitObjectToTopN(processedData.categories, 10);
+            }
+            
+            if (Object.keys(processedData.stateDistribution).length > 15) {
+                console.log("Limiting states to top 15 by value");
+                processedData.stateDistribution = limitObjectToTopN(processedData.stateDistribution, 15);
+            }
+            
+            if (Object.keys(processedData.subcontractors).length > 10) {
+                console.log("Limiting subcontractors to top 10 by value");
+                processedData.subcontractors = limitObjectToTopN(processedData.subcontractors, 10, true);
+            }
+            
+            console.log("Processed data summary:", {
+                primeAwardTotal: processedData.primeAwardTotal,
+                subcontractTotal: processedData.subcontractTotal,
+                numStates: Object.keys(processedData.stateDistribution).length,
+                numSubcontractors: Object.keys(processedData.subcontractors).length,
+                numCategories: Object.keys(processedData.categories).length
             });
             
-            // Calculate subcontractor distribution
-            data.forEach(row => {
-                const sub = row.subawardee_name;
-                if (sub) {
-                    if (!processedData.subcontractors[sub]) {
-                        processedData.subcontractors[sub] = {
-                            amount: 0,
-                            businessType: row.subawardee_business_types,
-                            location: row.subaward_primary_place_of_performance_city_name + ', ' +
-                                     row.subaward_primary_place_of_performance_state_code
-                        };
-                    }
-                    const amount = parseFloat(row.subaward_amount);
-                    processedData.subcontractors[sub].amount += isNaN(amount) ? 0 : amount;
-                }
-            });
-            
-            // Calculate category distribution
-            data.forEach(row => {
-                const category = row.subaward_description;
-                if (category) {
-                    if (!processedData.categories[category]) {
-                        processedData.categories[category] = 0;
-                    }
-                    const amount = parseFloat(row.subaward_amount);
-                    processedData.categories[category] += isNaN(amount) ? 0 : amount;
-                }
-            });
-            
-            console.log("Processed data:", processedData);
             return processedData;
         }
+        
+        // Helper function to limit object to top N items by value
+        function limitObjectToTopN(obj, n, isComplex = false) {
+            const entries = Object.entries(obj);
+            
+            // Sort entries by value (descending)
+            entries.sort((a, b) => {
+                const valueA = isComplex ? a[1].amount : a[1];
+                const valueB = isComplex ? b[1].amount : b[1];
+                return valueB - valueA;
+            });
+            
+            // Take only the top N entries
+            const limitedEntries = entries.slice(0, n);
+            
+            // Convert back to object
+            return Object.fromEntries(limitedEntries);
+        }
+
+        // File upload event handler - improved for large files
+        fileUpload.addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            
+            if (!file) return;
+            
+            // Update displayed filename
+            fileName.textContent = file.name;
+            
+            // Show loading indicator
+            loadingIndicator.style.display = 'flex';
+            
+            // Reset error message
+            dataAlert.style.display = 'none';
+            
+            try {
+                const fileExt = file.name.split('.').pop().toLowerCase();
+                
+                if (fileExt === 'csv') {
+                    // Improved CSV handling for large files
+                    const reader = new FileReader();
+                    
+                    reader.onload = function(e) {
+                        const csvText = e.target.result;
+                        
+                        // First, detect the delimiter
+                        const possibleDelimiters = [',', '\t', ';', '|'];
+                        let bestDelimiter = ',';
+                        let maxFields = 0;
+                        
+                        // Take a sample of the first few lines to detect delimiter
+                        const sampleLines = csvText.split('\n').slice(0, 5).join('\n');
+                        
+                        possibleDelimiters.forEach(delimiter => {
+                            const result = Papa.parse(sampleLines, {
+                                delimiter: delimiter,
+                                preview: 5
+                            });
+                            
+                            // Find the row with the most fields
+                            const fields = result.data.reduce((max, row) => 
+                                Math.max(max, row.length), 0);
+                                
+                            if (fields > maxFields) {
+                                maxFields = fields;
+                                bestDelimiter = delimiter;
+                            }
+                        });
+                        
+                        console.log(`Detected delimiter: "${bestDelimiter}" with ${maxFields} fields`);
+                        
+                        // Now parse with the detected delimiter
+                        Papa.parse(csvText, {
+                            header: true,
+                            dynamicTyping: true,
+                            delimiter: bestDelimiter,
+                            skipEmptyLines: true,
+                            // For large files, use a streaming approach
+                            worker: true,  // Use a web worker for large files
+                            step: function(results, parser) {
+                                // This callback is called for each row
+                                // You could use this to show progress for very large files
+                            },
+                            complete: function(results) {
+                                console.log("CSV parse complete:", results.data.length, "rows");
+                                
+                                if (results.errors.length > 0) {
+                                    console.warn("CSV parsing warnings/errors:", results.errors);
+                                    // Only show error if it's not just a warning about delimiter
+                                    if (!results.errors.every(e => e.code === "UndetectableDelimiter")) {
+                                        showError(`CSV parsing error: ${results.errors[0].message}`);
+                                        return;
+                                    }
+                                }
+                                
+                                // Process the data
+                                dashboardData = processData(results.data);
+                                
+                                if (dashboardData) {
+                                    // Update dashboard with processed data
+                                    updateDashboard(dashboardData);
+                                }
+                            },
+                            error: function(error) {
+                                showError(`Error parsing CSV: ${error.message}`);
+                            }
+                        });
+                    };
+                    
+                    reader.onerror = function() {
+                        showError('Error reading file');
+                    };
+                    
+                    // Read the file as text
+                    reader.readAsText(file);
+                } else if (['xlsx', 'xls'].includes(fileExt)) {
+                    // Improved Excel handling for large files
+                    const reader = new FileReader();
+                    
+                    reader.onload = function(e) {
+                        try {
+                            const data = e.target.result;
+                            console.log("Excel file loaded, parsing...");
+                            
+                            // Use binary string for better performance with large files
+                            const workbook = XLSX.read(data, { 
+                                type: 'array',
+                                cellDates: true,
+                                cellNF: false,
+                                cellText: false
+                            });
+                            
+                            // Get the first sheet
+                            const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                            console.log("Found sheet:", workbook.SheetNames[0]);
+                            
+                            // For large Excel files, convert in chunks
+                            const range = XLSX.utils.decode_range(firstSheet['!ref']);
+                            const totalRows = range.e.r - range.s.r + 1;
+                            
+                            console.log(`Excel has ${totalRows} rows`);
+                            
+                            if (totalRows > 10000) {
+                                console.log("Large Excel file detected, processing in chunks");
+                                
+                                // Process header row to get column names
+                                const headers = [];
+                                const range = XLSX.utils.decode_range(firstSheet['!ref']);
+                                
+                                for (let C = range.s.c; C <= range.e.c; ++C) {
+                                    const cell = firstSheet[XLSX.utils.encode_cell({r: range.s.r, c: C})];
+                                    headers.push(cell ? cell.v : '');
+                                }
+                                
+                                // Process data rows in chunks
+                                const chunkSize = 1000;
+                                const jsonData = [];
+                                
+                                for (let startRow = range.s.r + 1; startRow <= range.e.r; startRow += chunkSize) {
+                                    const endRow = Math.min(startRow + chunkSize - 1, range.e.r);
+                                    
+                                    console.log(`Processing Excel rows ${startRow} to ${endRow}`);
+                                    
+                                    // For each row in this chunk
+                                    for (let R = startRow; R <= endRow; ++R) {
+                                        const row = {};
+                                        
+                                        // For each column
+                                        for (let C = range.s.c; C <= range.e.c; ++C) {
+                                            const cellAddress = XLSX.utils.encode_cell({r: R, c: C});
+                                            const cell = firstSheet[cellAddress];
+                                            
+                                            if (cell && headers[C]) {
+                                                row[headers[C]] = cell.v;
+                                            }
+                                        }
+                                        
+                                        jsonData.push(row);
+                                    }
+                                }
+                                
+                                console.log(`Processed ${jsonData.length} rows from Excel`);
+                                
+                                // Process the data
+                                dashboardData = processData(jsonData);
+                                
+                                if (dashboardData) {
+                                    // Update dashboard with processed data
+                                    updateDashboard(dashboardData);
+                                }
+                            } else {
+                                // For smaller files, use the standard approach
+                                const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+                                console.log(`Processed ${jsonData.length} rows from Excel`);
+                                
+                                // Process the data
+                                dashboardData = processData(jsonData);
+                                
+                                if (dashboardData) {
+                                    // Update dashboard with processed data
+                                    updateDashboard(dashboardData);
+                                }
+                            }
+                        } catch (error) {
+                            console.error("Excel parsing error:", error);
+                            showError(`Error parsing Excel file: ${error.message}`);
+                        } finally {
+                            loadingIndicator.style.display = 'none';
+                        }
+                    };
+                    
+                    reader.onerror = function() {
+                        showError('Error reading file');
+                        loadingIndicator.style.display = 'none';
+                    };
+                    
+                    // Read the file as array buffer
+                    reader.readAsArrayBuffer(file);
+                } else {
+                    throw new Error('Unsupported file format. Please upload a CSV or Excel file.');
+                }
+            } catch (error) {
+                console.error("File processing error:", error);
+                showError(error.toString());
+                loadingIndicator.style.display = 'none';
+            }
+        });
 
         // Initialize and update the Prime vs Subcontract Distribution chart
         function updatePrimeSubChart(data) {
