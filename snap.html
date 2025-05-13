@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Federal Business Development Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        :root {
+            --primary: #1e40af;
+            --primary-light: #3b82f6;
+            --primary-dark: #1e3a8a;
+            --secondary: #10b981;
+            --secondary-light: #34d399;
+            --background: #f9fafb;
+            --surface: #ffffff;
+            --border: #e5e7eb;
+            --text: #111827;
+            --text-light: #6b7280;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: var(--background);
+            color: var(--text);
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1.5rem;
+        }
+        
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        
+        .dashboard-title {
+            color: var(--primary-dark);
+            font-size: 1.75rem;
+            font-weight: 700;
+        }
+        
+        .file-upload-container {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .file-upload-btn {
+            display: inline-block;
+            position: relative;
+            padding: 0.5rem 1rem;
+            background-color: var(--primary);
+            color: white;
+            border-radius: 0.375rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .file-upload-btn:hover {
+            background-color: var(--primary-dark);
+        }
+        
+        .file-upload-btn input {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+        
+        .file-name {
+            color: var(--text-light);
+            font-size: 0.875rem;
+        }
+        
+        .data-alert {
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            background-color: #fef2f2;
+            border-left: 4px solid #ef4444;
+            border-radius: 0.375rem;
+            display: none;
+        }
+
+        .data-success {
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            background-color: #ecfdf5;
+            border-left: 4px solid #10b981;
+            border-radius: 0.375rem;
+            display: none;
+        }
+        
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            grid-auto-rows: minmax(300px, auto);
+            gap: 1.5rem;
+        }
+        
+        .dashboard-card {
+            background-color: var(--surface);
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            padding: 1.25rem;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .card-half {
+            grid-column: span 6;
+        }
+        
+        .card-full {
+            grid-column: span 12;
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .card-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--primary);
+        }
+        
+        .card-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .card-action-btn {
+            background: none;
+            border: none;
+            color: var(--text-light);
+            cursor: pointer;
+            padding: 0.25rem;
+            border-radius: 0.25rem;
+            transition: background-color 0.2s;
+        }
+        
+        .card-action-btn:hover {
+            background-color: var(--border);
+        }
+        
+        .card-content {
+            flex: 1;
+            position: relative;
+        }
+        
+        .chart-container {
+            width: 100%;
+            height: 100%;
+            min-height: 250px;
+            position: relative;
+        }
+        
+        .card-footer {
+            margin-top: 1rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid var(--border);
+            font-size: 0.875rem;
+            color: var(--text-light);
+        }
+        
+        .metric-container {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            height: 100%;
+        }
+        
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        
+        .metric-label {
+            color: var(--text-light);
+            font-size: 0.875rem;
+        }
+        
+        .metric-secondary {
+            margin-top: 0.5rem;
+            font-size: 1rem;
+            color: var(--text);
+        }
+
+        .agency-tree {
+            padding: 1rem 0;
+        }
+        
+        .agency-node {
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.5rem;
+            border-radius: 0.375rem;
+            font-weight: 500;
+        }
+        
+        .agency-level-1 {
+            background-color: var(--primary-dark);
+            color: white;
+        }
+        
+        .agency-level-2 {
+            background-color: var(--primary-light);
+            color: white;
+            margin-left: 1.5rem;
+        }
+        
+        .agency-level-3 {
+            background-color: rgba(59, 130, 246, 0.2);
+            color: var(--primary-dark);
+            margin-left: 3rem;
+        }
+
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .stat-card {
+            background-color: #f3f4f6;
+            border-radius: 0.375rem;
+            padding: 1rem;
+        }
+        
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 0.25rem;
+        }
+        
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--text-light);
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+            font-size: 0.875rem;
+        }
+        
+        .data-table th {
+            background-color: #f3f4f6;
+            padding: 0.75rem 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text);
+            border-bottom: 2px solid var(--border);
+        }
+        
+        .data-table td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border);
+            color: var(--text);
+        }
+        
+        .data-table tbody tr:hover {
+            background-color: #f9fafb;
+        }
+
+        .progress-bar {
+            height: 0.5rem;
+            background-color: #e5e7eb;
+            border-radius: 0.25rem;
+            overflow: hidden;
+            margin-top: 0.25rem;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background-color: var(--primary-light);
+        }
+
+        @media (max-width: 1200px) {
+            .card-half {
+                grid-column: span 12;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .dashboard-grid {
+                display: flex;
+                flex-direction: column;
+            }
+            
+            .dashboard-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+
+        /* Loading animation */
+        .loading {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(30, 64, 175, 0.2);
+            border-radius: 50%;
+            border-top-color: var(--primary);
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Map styles */
+        .map-container {
+            height: 100%;
+            min-height: 250px;
+            position: relative;
+        }
+
+        .us-map {
+            display: flex;
+            flex-wrap: wrap;
+            height: 100%;
+        }
+
+        .state {
+            border: 1px solid #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 0.75rem;
+            color: white;
+            font-weight: 500;
+            text-shadow: 0 0 2px rgba(0,0,0,0.5);
+            position: relative;
+        }
+
+        .state-tooltip {
+            position: absolute;
+            background-color: rgba(0,0,0,0.8);
+            color: #fff;
+            padding: 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            z-index: 100;
+            display: none;
+            pointer-events: none;
+        }
+
+        /* Timeline styles */
+        .timeline {
+            position: relative;
+            padding: 1rem 0;
+            margin-top: 1rem;
+        }
+
+        .timeline-line {
+            position: absolute;
+            top: 1.5rem;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background-color: #e5e7eb;
+        }
+
+        .timeline-progress {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            background-color: var(--primary-light);
+        }
+
+        .timeline-point {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: var(--primary);
+            top: -4px;
+            transform: translateX(-50%);
+        }
+
+        .timeline-label {
+            position: absolute;
+            font-size: 0.75rem;
+            color: var(--text-light);
+            transform: translateX(-50%);
+            text-align: center;
+            width: 80px;
+        }
+
+        .timeline-start-label {
+            top: -1.5rem;
+        }
+
+        .timeline-end-label {
+            top: -1.5rem;
+        }
+
+        .timeline-now-label {
+            top: 0.75rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="loading">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <div class="container">
+        <div class="dashboard-header">
+            <h1 class="dashboard-title">Federal Business Development Dashboard</h1>
+            <div class="file-upload-container">
+                <label class="file-upload-btn">
+                    Upload Contract Data
+                    <input type="file" id="fileUpload" accept=".csv,.xlsx">
+                </label>
+                <span class="file-name" id="fileName">sample_prime.xlsx</span>
+            </div>
+        </div>
+
+        <div class="data-alert" id="dataAlert">
+            <strong>Error:</strong> <span id="alertMessage"></span>
+        </div>
+
+        <div class="data-success" id="dataSuccess">
+            <strong>Success:</strong> Data loaded successfully! Dashboard updated.
+        </div>
+
+        <div class="dashboard-grid">
+            <!-- Prime vs Subcontract Value Distribution -->
+            <div class="dashboard-card card-half">
+                <div class="card-header">
+                    <h2 class="card-title">Prime vs Subcontract Value Distribution</h2>
+                </div>
+                <div class="card-content">
+                    <div class="chart-container">
+                        <canvas id="primeSubChart"></canvas>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <span id="subcontractPercentage">Loading...</span> of prime contract value is subcontracted
+                </div>
+            </div>
+
+            <!-- Agency and Sub-Agency Breakdown -->
+            <div class="dashboard-card card-half">
+                <div class="card-header">
+                    <h2 class="card-title">Agency and Sub-Agency Breakdown</h2>
+                </div>
+                <div class="card-content">
+                    <div class="agency-tree" id="agencyTree">
+                        <!-- Agency tree will be populated dynamically -->
+                    </div>
+                </div>
+                <div class="card-footer">
+                    Hierarchical view of contract-awarding agencies
+                </div>
+            </div>
+
+            <!-- Geographic Distribution of Contract Performance -->
+            <div class="dashboard-card card-half">
+                <div class="card-header">
+                    <h2 class="card-title">Geographic Distribution of Contract Performance</h2>
+                </div>
+                <div class="card-content">
+                    <div class="chart-container">
+                        <canvas id="geoDistributionChart"></canvas>
+                    </div>
+                    <div class="state-tooltip" id="stateTooltip"></div>
+                </div>
+                <div class="card-footer">
+                    Subaward distribution by state of performance
+                </div>
+            </div>
+
+            <!-- NAICS Code Analysis -->
+            <div class="dashboard-card card-half">
+                <div class="card-header">
+                    <h2 class="card-title">NAICS Code Analysis</h2>
+                </div>
+                <div class="card-content">
+                    <div id="naicsContent">
+                        <!-- NAICS content will be populated dynamically -->
+                    </div>
+                </div>
+                <div class="card-footer">
+                    Primary NAICS codes and related services
+                </div>
+            </div>
+
+            <!-- Contract Type and Project Timeline Analysis -->
+            <div class="dashboard-card card-half">
+                <div class="card-header">
+                    <h2 class="card-title">Contract Type and Project Timeline</h2>
+                </div>
+                <div class="card-content">
+                    <div id="timelineContent">
+                        <!-- Timeline content will be populated dynamically -->
+                    </div>
+                </div>
+                <div class="card-footer">
+                    Contract timeline and performance period
+                </div>
+            </div>
+
+            <!-- Subcontractor Analysis -->
+            <div class="dashboard-card card-half">
+                <div class="card-header">
+                    <h2 class="card-title">Subcontractor Analysis</h2>
+                </div>
+                <div class="card-content">
+                    <div class="chart-container">
+                        <canvas id="subcontractorChart"></canvas>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    Distribution of subcontract value by subcontractor
+                </div>
+            </div>
+
+            <!-- Product and Service Category Analysis -->
+            <div class="dashboard-card card-half">
+                <div class="card-header">
+                    <h2 class="card-title">Product and Service Category Analysis</h2>
+                </div>
+                <div class="card-content">
+                    <div class="chart-container">
+                        <canvas id="categoryChart"></canvas>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    Breakdown of subaward work by category
+                </div>
+            </div>
+
+            <!-- Contract Details -->
+            <div class="dashboard-card card-half">
+                <div class="card-header">
+                    <h2 class="card-title">Contract Details</h2>
+                </div>
+                <div class="card-content">
+                    <div id="contractDetails">
+                        <!-- Contract details will be populated dynamically -->
+                    </div>
+                </div>
+                <div class="card-footer">
+                    Key metrics and details about the prime contract
+                </div>
+            </div>
+
+            <!-- Subcontract Data Table -->
+            <div class="dashboard-card card-full">
+                <div class="card-header">
+                    <h2 class="card-title">Subcontract Details</h2>
+                </div>
+                <div class="card-content">
+                    <div style="overflow-x: auto;">
+                        <table class="data-table" id="subcontractTable">
+                            <thead>
+                                <tr>
+                                    <th>Subcontractor</th>
+                                    <th>Description</th>
+                                    <th>Amount</th>
+                                    <th>Location</th>
+                                    <th>Business Type</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Table rows will be populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    Detailed subcontract data
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let dashboardData = null;
+        let charts = {};
+
+        // DOM elements
+        const fileUpload = document.getElementById('fileUpload');
+        const fileName = document.getElementById('fileName');
+        const dataAlert = document.getElementById('dataAlert');
+        const dataSuccess = document.getElementById('dataSuccess');
+        const alertMessage = document.getElementById('alertMessage');
+        const loadingIndicator = document.querySelector('.loading');
+
+        // Format currency values
+        function formatCurrency(value) {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            }).format(value);
+        }
+
+        // Format percentage values
+        function formatPercentage(value) {
+            return new Intl.NumberFormat('en-US', {
+                style: 'percent',
+                minimumFractionDigits: 1,
+                maximumFractionDigits: 1
+            }).format(value);
+        }
+
+        // Format date values
+        function formatDate(dateString) {
+            if (!dateString) return 'N/A';
+            
+            const date = new Date(dateString);
+            return new Intl.DateTimeFormat('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            }).format(date);
+        }
+
+        // Calculate the difference between two dates in days
+        function dateDiffInDays(dateStr1, dateStr2) {
+            const date1 = new Date(dateStr1);
+            const date2 = new Date(dateStr2);
+            const diffTime = Math.abs(date2 - date1);
+            return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        }
+
+        // Show error message
+        function showError(message) {
+            alertMessage.textContent = message;
+            dataAlert.style.display = 'block';
+            dataSuccess.style.display = 'none';
+            loadingIndicator.style.display = 'none';
+        }
+
+        // Show success message
+        function showSuccess() {
+            dataAlert.style.display = 'none';
+            dataSuccess.style.display = 'block';
+            loadingIndicator.style.display = 'none';
+            
+            // Hide success message after 3 seconds
+            setTimeout(() => {
+                dataSuccess.style.display = 'none';
+            }, 3000);
+        }
+
+        // Process and validate the uploaded data
+        function processData(data) {
+            // Check if data is not empty
+            if (!data || data.length === 0) {
+                showError('No data found in the uploaded file.');
+                return null;
+            }
+
+            // Validate required columns
+            const requiredColumns = [
+                'prime_awardee_name',
+                'subawardee_name',
+                'prime_award_awarding_agency_name',
+                'prime_award_awarding_sub_agency_name',
+                'subaward_amount',
+                'prime_award_amount'
+            ];
+
+            const missingColumns = requiredColumns.filter(col => !data[0].hasOwnProperty(col));
+            
+            if (missingColumns.length > 0) {
+                showError(`Missing required columns: ${missingColumns.join(', ')}`);
+                return null;
+            }
+
+            // Process and aggregate the data
+            const processedData = {
+                // Prime and subcontract values
+                primeAwardTotal: parseFloat(data[0].prime_award_amount) || 0,
+                subcontractTotal: data.reduce((sum, row) => sum + (parseFloat(row.subaward_amount) || 0), 0),
+                
+                // Agency information
+                agency: data[0].prime_award_awarding_agency_name,
+                subAgency: data[0].prime_award_awarding_sub_agency_name,
+                office: data[0].prime_award_awarding_office_name,
+                
+                // Geographical data
+                stateDistribution: {},
+                
+                // NAICS information
+                naicsCode: data[0].prime_award_naics_code,
+                naicsDescription: data[0].prime_award_naics_description,
+                
+                // Timeline data
+                startDate: data[0].prime_award_period_of_performance_start_date,
+                endDate: data[0].prime_award_period_of_performance_current_end_date,
+                
+                // Subcontractor analysis
+                subcontractors: {},
+                
+                // Product/service categories
+                categories: {},
+                
+                // Contract details
+                contractDescription: data[0].prime_award_base_transaction_description,
+                contractUniqueKey: data[0].prime_award_unique_key,
+                primeAwardee: data[0].prime_awardee_name,
+                
+                // Original data for table
+                originalData: data
+            };
+            
+            // Calculate state distribution
+            data.forEach(row => {
+                const state = row.subaward_primary_place_of_performance_state_code;
+                if (state) {
+                    if (!processedData.stateDistribution[state]) {
+                        processedData.stateDistribution[state] = 0;
+                    }
+                    processedData.stateDistribution[state] += parseFloat(row.subaward_amount) || 0;
+                }
+            });
+            
+            // Calculate subcontractor distribution
+            data.forEach(row => {
+                const sub = row.subawardee_name;
+                if (sub) {
+                    if (!processedData.subcontractors[sub]) {
+                        processedData.subcontractors[sub] = {
+                            amount: 0,
+                            businessType: row.subawardee_business_types,
+                            location: row.subaward_primary_place_of_performance_city_name + ', ' +
+                                     row.subaward_primary_place_of_performance_state_code
+                        };
+                    }
+                    processedData.subcontractors[sub].amount += parseFloat(row.subaward_amount) || 0;
+                }
+            });
+            
+            // Calculate category distribution
+            data.forEach(row => {
+                const category = row.subaward_description;
+                if (category) {
+                    if (!processedData.categories[category]) {
+                        processedData.categories[category] = 0;
+                    }
+                    processedData.categories[category] += parseFloat(row.subaward_amount) || 0;
+                }
+            });
+            
+            return processedData;
+        }
+
+        // Initialize and update the Prime vs Subcontract Distribution chart
+        function updatePrimeSubChart(data) {
+            const ctx = document.getElementById('primeSubChart').getContext('2d');
+            
+            // Calculate the retained amount (prime award minus subcontracts)
+            const retained = data.primeAwardTotal - data.subcontractTotal;
+            const subPercentage = data.subcontractTotal / data.primeAwardTotal;
+            
+            // Update the percentage in the card footer
+            document.getElementById('subcontractPercentage').textContent = formatPercentage(subPercentage);
+            
+            // Destroy previous chart if it exists
+            if (charts.primeSubChart) {
+                charts.primeSubChart.destroy();
+            }
+            
+            // Create new chart
+            charts.primeSubChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Prime Retained', 'Subcontracted'],
+                    datasets: [{
+                        data: [retained, data.subcontractTotal],
+                        backgroundColor: ['#3b82f6', '#10b981'],
+                        borderColor: ['#2563eb', '#059669'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                generateLabels: (chart) => {
+                                    const data = chart.data;
+                                    if (data.labels.length && data.datasets.length) {
+                                        return data.labels.map((label, i) => {
+                                            const value = data.datasets[0].data[i];
+                                            const percentage = value / data.datasets[0].data.reduce((a, b) => a + b, 0);
+                                            return {
+                                                text: `${label}: ${formatCurrency(value)} (${formatPercentage(percentage)})`,
+                                                fillStyle: data.datasets[0].backgroundColor[i],
+                                                strokeStyle: data.datasets[0].borderColor[i],
+                                                lineWidth: data.datasets[0].borderWidth,
+                                                hidden: isNaN(value) || value === 0
+                                            };
+                                        });
+                                    }
+                                    return [];
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const value = context.raw;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = value / total;
+                                    return `${context.label}: ${formatCurrency(value)} (${formatPercentage(percentage)})`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Update the Agency and Sub-Agency Breakdown
+        function updateAgencyTree(data) {
+            const agencyTree = document.getElementById('agencyTree');
+            agencyTree.innerHTML = '';
+            
+            // Create agency nodes
+            if (data.agency) {
+                const agencyNode = document.createElement('div');
+                agencyNode.className = 'agency-node agency-level-1';
+                agencyNode.textContent = data.agency;
+                agencyTree.appendChild(agencyNode);
+                
+                if (data.subAgency) {
+                    const subAgencyNode = document.createElement('div');
+                    subAgencyNode.className = 'agency-node agency-level-2';
+                    subAgencyNode.textContent = data.subAgency;
+                    agencyTree.appendChild(subAgencyNode);
+                    
+                    if (data.office) {
+                        const officeNode = document.createElement('div');
+                        officeNode.className = 'agency-node agency-level-3';
+                        officeNode.textContent = data.office;
+                        agencyTree.appendChild(officeNode);
+                    }
+                }
+            } else {
+                agencyTree.innerHTML = '<p>No agency data available</p>';
+            }
+        }
+
+        // Update the Geographic Distribution chart
+        function updateGeoDistributionChart(data) {
+            const ctx = document.getElementById('geoDistributionChart').getContext('2d');
+            
+            // Process state distribution data
+            const states = Object.keys(data.stateDistribution);
+            const amounts = states.map(state => data.stateDistribution[state]);
+            
+            // Calculate percentages for better visualization
+            const total = amounts.reduce((a, b) => a + b, 0);
+            const percentages = amounts.map(amount => (amount / total) * 100);
+            
+            // Destroy previous chart if it exists
+            if (charts.geoDistributionChart) {
+                charts.geoDistributionChart.destroy();
+            }
+            
+            // Create new chart
+            charts.geoDistributionChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: states,
+                    datasets: [{
+                        label: 'Subaward Amount by State',
+                        data: amounts,
+                        backgroundColor: states.map((_, i) => `rgba(59, 130, 246, ${0.5 + (i * 0.2)})`),
+                        borderColor: states.map((_, i) => `rgba(37, 99, 235, ${0.6 + (i * 0.2)})`),
+                        borderWidth: 1
+                    
