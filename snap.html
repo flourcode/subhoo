@@ -1,1746 +1,797 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Federal Business Development Dashboard</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <style>
-        :root {
-            --primary: #1e40af;
-            --primary-light: #3b82f6;
-            --primary-dark: #1e3a8a;
-            --secondary: #10b981;
-            --secondary-light: #34d399;
-            --background: #f9fafb;
-            --surface: #ffffff;
-            --border: #e5e7eb;
-            --text: #111827;
-            --text-light: #6b7280;
-        }
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        
-        body {
-            background-color: var(--background);
-            color: var(--text);
-        }
-        
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 1.5rem;
-        }
-        
-        .dashboard-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.5rem;
-            flex-wrap: wrap;
-            gap: 1rem;
-        }
-        
-        .dashboard-title {
-            color: var(--primary-dark);
-            font-size: 1.75rem;
-            font-weight: 700;
-        }
-        
-        .file-upload-container {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-        
-        .file-upload-btn {
-            display: inline-block;
-            position: relative;
-            padding: 0.5rem 1rem;
-            background-color: var(--primary);
-            color: white;
-            border-radius: 0.375rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-        
-        .file-upload-btn:hover {
-            background-color: var(--primary-dark);
-        }
-        
-        .file-upload-btn input {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            opacity: 0;
-            cursor: pointer;
-        }
-        
-        .file-name {
-            color: var(--text-light);
-            font-size: 0.875rem;
-        }
-        
-        .data-alert {
-            margin-bottom: 1.5rem;
-            padding: 1rem;
-            background-color: #fef2f2;
-            border-left: 4px solid #ef4444;
-            border-radius: 0.375rem;
-            display: none;
-        }
-
-        .data-success {
-            margin-bottom: 1.5rem;
-            padding: 1rem;
-            background-color: #ecfdf5;
-            border-left: 4px solid #10b981;
-            border-radius: 0.375rem;
-            display: none;
-        }
-        
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: repeat(12, 1fr);
-            grid-auto-rows: minmax(300px, auto);
-            gap: 1.5rem;
-        }
-        
-        .dashboard-card {
-            background-color: var(--surface);
-            border-radius: 0.5rem;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-            padding: 1.25rem;
-            display: flex;
-            flex-direction: column;
-        }
-        
-        .card-half {
-            grid-column: span 6;
-        }
-        
-        .card-full {
-            grid-column: span 12;
-        }
-        
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-        }
-        
-        .card-title {
-            font-size: 1.125rem;
-            font-weight: 600;
-            color: var(--primary);
-        }
-        
-        .card-actions {
-            display: flex;
-            gap: 0.5rem;
-        }
-        
-        .card-action-btn {
-            background: none;
-            border: none;
-            color: var(--text-light);
-            cursor: pointer;
-            padding: 0.25rem;
-            border-radius: 0.25rem;
-            transition: background-color 0.2s;
-        }
-        
-        .card-action-btn:hover {
-            background-color: var(--border);
-        }
-        
-        .card-content {
-            flex: 1;
-            position: relative;
-        }
-        
-        .chart-container {
-            width: 100%;
-            height: 100%;
-            min-height: 250px;
-            position: relative;
-        }
-        
-        .card-footer {
-            margin-top: 1rem;
-            padding-top: 0.75rem;
-            border-top: 1px solid var(--border);
-            font-size: 0.875rem;
-            color: var(--text-light);
-        }
-        
-        .metric-container {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            height: 100%;
-        }
-        
-        .metric-value {
-            font-size: 2.5rem;
-            font-weight: 700;
-            color: var(--primary);
-        }
-        
-        .metric-label {
-            color: var(--text-light);
-            font-size: 0.875rem;
-        }
-        
-        .metric-secondary {
-            margin-top: 0.5rem;
-            font-size: 1rem;
-            color: var(--text);
-        }
-
-        .agency-tree {
-            padding: 1rem 0;
-        }
-        
-        .agency-node {
-            padding: 0.75rem 1rem;
-            margin-bottom: 0.5rem;
-            border-radius: 0.375rem;
-            font-weight: 500;
-        }
-        
-        .agency-level-1 {
-            background-color: var(--primary-dark);
-            color: white;
-        }
-        
-        .agency-level-2 {
-            background-color: var(--primary-light);
-            color: white;
-            margin-left: 1.5rem;
-        }
-        
-        .agency-level-3 {
-            background-color: rgba(59, 130, 246, 0.2);
-            color: var(--primary-dark);
-            margin-left: 3rem;
-        }
-
-        .card-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-            gap: 1rem;
-            margin-top: 1rem;
-        }
-        
-        .stat-card {
-            background-color: #f3f4f6;
-            border-radius: 0.375rem;
-            padding: 1rem;
-        }
-        
-        .stat-value {
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: var(--primary);
-            margin-bottom: 0.25rem;
-        }
-        
-        .stat-label {
-            font-size: 0.875rem;
-            color: var(--text-light);
-        }
-
-        .data-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 1rem;
-            font-size: 0.875rem;
-        }
-        
-        .data-table th {
-            background-color: #f3f4f6;
-            padding: 0.75rem 1rem;
-            text-align: left;
-            font-weight: 600;
-            color: var(--text);
-            border-bottom: 2px solid var(--border);
-        }
-        
-        .data-table td {
-            padding: 0.75rem 1rem;
-            border-bottom: 1px solid var(--border);
-            color: var(--text);
-        }
-        
-        .data-table tbody tr:hover {
-            background-color: #f9fafb;
-        }
-
-        .progress-bar {
-            height: 0.5rem;
-            background-color: #e5e7eb;
-            border-radius: 0.25rem;
-            overflow: hidden;
-            margin-top: 0.25rem;
-        }
-        
-        .progress-fill {
-            height: 100%;
-            background-color: var(--primary-light);
-        }
-
-        @media (max-width: 1200px) {
-            .card-half {
-                grid-column: span 12;
-            }
-        }
-        
-        @media (max-width: 768px) {
-            .dashboard-grid {
-                display: flex;
-                flex-direction: column;
-            }
-            
-            .dashboard-header {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-        }
-
-        /* Loading animation */
-        .loading {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(255, 255, 255, 0.8);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .loading-spinner {
-            width: 50px;
-            height: 50px;
-            border: 5px solid rgba(30, 64, 175, 0.2);
-            border-radius: 50%;
-            border-top-color: var(--primary);
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        /* Map styles */
-        .map-container {
-            height: 100%;
-            min-height: 250px;
-            position: relative;
-        }
-
-        .us-map {
-            display: flex;
-            flex-wrap: wrap;
-            height: 100%;
-        }
-
-        .state {
-            border: 1px solid #fff;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 0.75rem;
-            color: white;
-            font-weight: 500;
-            text-shadow: 0 0 2px rgba(0,0,0,0.5);
-            position: relative;
-        }
-
-        .state-tooltip {
-            position: absolute;
-            background-color: rgba(0,0,0,0.8);
-            color: #fff;
-            padding: 0.5rem;
-            border-radius: 0.25rem;
-            font-size: 0.75rem;
-            z-index: 100;
-            display: none;
-            pointer-events: none;
-        }
-
-        /* Timeline styles */
-        .timeline {
-            position: relative;
-            padding: 1rem 0;
-            margin-top: 1rem;
-        }
-
-        .timeline-line {
-            position: absolute;
-            top: 1.5rem;
-            left: 0;
-            width: 100%;
-            height: 4px;
-            background-color: #e5e7eb;
-        }
-
-        .timeline-progress {
-            position: absolute;
-            top: 0;
-            left: 0;
-            height: 100%;
-            background-color: var(--primary-light);
-        }
-
-        .timeline-point {
-            position: absolute;
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            background-color: var(--primary);
-            top: -4px;
-            transform: translateX(-50%);
-        }
-
-        .timeline-label {
-            position: absolute;
-            font-size: 0.75rem;
-            color: var(--text-light);
-            transform: translateX(-50%);
-            text-align: center;
-            width: 80px;
-        }
-
-        .timeline-start-label {
-            top: -1.5rem;
-        }
-
-        .timeline-end-label {
-            top: -1.5rem;
-        }
-
-        .timeline-now-label {
-            top: 0.75rem;
-        }
-		        /* Add styles for progress bar */
-        .progress-container {
-            width: 100%;
-            height: 6px;
-            background-color: #e5e7eb;
-            border-radius: 3px;
-            margin-top: 8px;
-            overflow: hidden;
-            display: none;
-        }
-        
-        .progress-bar {
-            height: 100%;
-            background-color: #3b82f6;
-            transition: width 0.3s ease;
-        }
-        
-        /* Processing summary stats */
-        .processing-stats {
-            font-size: 12px;
-            color: #6b7280;
-            margin-top: 8px;
-            display: none;
-        }
-    </style>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=Edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- Use CDN for CSS frameworks -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/uswds/2.13.1/css/uswds.min.css">
+  
+  <!-- Inline CSS to avoid external file dependency -->
+  <style>
+    /* Basic layout and styling */
+    body {
+      font-family: 'Source Sans Pro', 'Helvetica Neue', 'Helvetica', 'Roboto', 'Arial', sans-serif;
+      margin: 0;
+      padding: 0;
+      color: #212121;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+    
+    header {
+      background-color: #112e51;
+      padding: 20px 0;
+      color: white;
+    }
+    
+    .header-parent {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+    
+    .header-logo img {
+      height: 40px;
+    }
+    
+    .header-right {
+      display: flex;
+      align-items: center;
+    }
+    
+    .header-links a {
+      color: white;
+      margin-left: 20px;
+      text-decoration: none;
+    }
+    
+    .header-links a:hover {
+      text-decoration: underline;
+    }
+    
+    .skip-to-main-content-link {
+      position: absolute;
+      left: -9999px;
+      z-index: 999;
+      padding: 1em;
+      background-color: white;
+      color: #0071bc;
+      opacity: 0;
+    }
+    
+    .skip-to-main-content-link:focus {
+      left: 50%;
+      transform: translateX(-50%);
+      opacity: 1;
+    }
+    
+    h1 {
+      font-size: 2.5rem;
+      margin: 30px 0;
+    }
+    
+    h2 {
+      font-size: 1.8rem;
+      margin: 25px 0 15px;
+    }
+    
+    h3 {
+      font-size: 1.4rem;
+      margin: 20px 0 10px;
+    }
+    
+    .section_headline {
+      border-bottom: 1px solid #dce4ef;
+      padding-bottom: 10px;
+      margin-bottom: 20px;
+    }
+    
+    .width-two-thirds {
+      width: 66%;
+      float: left;
+      padding-right: 30px;
+      box-sizing: border-box;
+    }
+    
+    .width-one-third {
+      width: 34%;
+      float: left;
+      box-sizing: border-box;
+    }
+    
+    .three_column {
+      margin-bottom: 30px;
+    }
+    
+    .bar-chart {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+    
+    .bar-chart li {
+      margin-bottom: 10px;
+      padding: 10px;
+      background-color: #f1f1f1;
+      border-left: 4px solid #0071bc;
+    }
+    
+    .data {
+      font-weight: bold;
+      font-size: 1.2em;
+      color: #0071bc;
+    }
+    
+    .time-series {
+      width: 100%;
+      height: 300px;
+      margin: 20px 0;
+    }
+    
+    .pills {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 20px 0;
+      display: flex;
+    }
+    
+    .pills li {
+      margin-right: 10px;
+    }
+    
+    .pills a {
+      padding: 8px 12px;
+      background-color: #f1f1f1;
+      color: #212121;
+      text-decoration: none;
+      border-radius: 4px;
+    }
+    
+    .pills a[aria-selected="true"] {
+      background-color: #0071bc;
+      color: white;
+    }
+    
+    .loading {
+      text-align: center;
+      padding: 40px;
+      font-style: italic;
+      color: #666;
+    }
+    
+    .error-message {
+      color: #e31c3d;
+      background-color: #f9dede;
+      padding: 10px;
+      border-radius: 4px;
+      margin: 10px 0;
+    }
+    
+    /* Clear fix for floating elements */
+    .clearfix::after {
+      content: "";
+      clear: both;
+      display: table;
+    }
+    
+    /* Responsive design */
+    @media screen and (max-width: 768px) {
+      .width-two-thirds,
+      .width-one-third {
+        width: 100%;
+        float: none;
+        padding-right: 0;
+      }
+      
+      .sm-hide {
+        display: none;
+      }
+    }
+  </style>
+  
+  <title>USASpending Analytics Dashboard | USASpending.gov</title>
+  <meta name="description" content="Live federal spending data from USASpending.gov.">
+  <link rel="icon" type="image/x-icon" href="https://www.usaspending.gov/img/favicon.ico">
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
 </head>
+
 <body>
-    <div class="loading">
-        <div class="loading-spinner"></div>
+  <header>
+    <div class="header-parent">
+      <a href="#skip-to-h1" class="skip-to-main-content-link">
+        Skip to main content
+      </a>
+
+      <div class="header-child header-logo">
+        <a href="https://www.usaspending.gov" alt="USASpending.gov Logo">
+          <img src="https://www.usaspending.gov/img/logo.png" alt="USASpending.gov" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMDAgNTAiPjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iNTAiIGZpbGw9IiMxMTJlNTEiLz48dGV4dCB4PSIxMCIgeT0iMzAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNiIgZmlsbD0id2hpdGUiPlVTQVNwZW5kaW5nLmdvdjwvdGV4dD48L3N2Zz4='" />
+        </a>
+      </div>
+
+      <div class="header-child header-right">
+        <div class="header-links">
+          <a href="#explanation">About this site</a>
+          <a href="https://www.usaspending.gov/download_center/custom_award_data">Download Data</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+    <h1 id="skip-to-h1">Federal Spending Analytics Dashboard</h1>
+
+    <div id="main_data" class="width-two-thirds">
+      <!-- Total spending section -->
+      <section class="section_headline">
+        <h2>Total Federal Spending</h2>
+      </section>
+
+      <section id="current_spending_section">
+        <h3>Federal Spending in the Last 30 Days</h3>
+        <div id="current_spending" class="data loading">Loading...</div>
+      </section>
+
+      <section id="spending_time_series">
+        <h3>Spending Trends (90 Days)</h3>
+        <div id="spending_chart" class="time-series loading">Loading spending trends...</div>
+      </section>
+
+      <!-- Spending by category section -->
+      <section class="section_headline">
+        <h2>Spending by Category</h2>
+      </section>
+
+      <section id="spending_by_category">
+        <h3>Awards by Type</h3>
+        <div id="category_chart" class="loading">Loading category data...</div>
+      </section>
+
+      <!-- Top agencies section -->
+      <section class="section_headline">
+        <h2>Top Awarding Agencies</h2>
+      </section>
+      
+      <section id="top_agencies">
+        <div id="agencies_chart" class="loading">Loading agency data...</div>
+      </section>
+
+      <!-- Geographic distribution -->
+      <section class="section_headline">
+        <h2>Geographic Distribution</h2>
+      </section>
+      
+      <section id="geographic_distribution">
+        <h3>Spending by State</h3>
+        <div id="state_chart" class="loading">Loading geographic data...</div>
+      </section>
     </div>
 
-    <div class="container">
-        <div class="dashboard-header">
-            <h1 class="dashboard-title">Federal Business Development Dashboard</h1>
-            <div class="file-upload-container">
-                <label class="file-upload-btn">
-                    Upload Contract Data
-                    <input type="file" id="fileUpload" accept=".csv,.xlsx">
-                </label>
-                <span class="file-name" id="fileName">Upload a CSV or Excel file</span>
-            </div>
-        </div>
-    <div class="progress-container" id="progress-container">
-        <div class="progress-bar" id="progress-bar" style="width: 0%"></div>
+    <div id="secondary_data" class="width-one-third">
+      <!-- Top recipients -->
+      <section id="top_recipients_section">
+        <h2>Top Recipients</h2>
+        
+        <ul class="pills" role="tablist">
+          <li><a role="tab" aria-selected="true" id="tab-recipients-contracts" href="#" onclick="loadTopRecipients('contracts'); return false;">Contracts</a></li>
+          <li><a role="tab" id="tab-recipients-grants" href="#" onclick="loadTopRecipients('grants'); return false;">Grants</a></li>
+          <li><a role="tab" id="tab-recipients-all" href="#" onclick="loadTopRecipients('all'); return false;">All Awards</a></li>
+        </ul>
+        
+        <div id="top_recipients" class="loading">Loading recipient data...</div>
+      </section>
+
+      <!-- Recent awards -->
+      <section id="recent_awards_section">
+        <h2>Recent Awards</h2>
+        <div id="recent_awards" class="loading">Loading recent awards...</div>
+      </section>
     </div>
-    <div class="processing-stats" id="processing-stats">
-        Processing: <span id="processed-rows">0</span> / <span id="total-rows">?</span> rows
-    </div>
-        <div class="data-alert" id="dataAlert">
-            <strong>Error:</strong> <span id="alertMessage"></span>
-        </div>
+    
+    <div style="clear: both;"></div>
+  </div>
 
-        <div class="data-success" id="dataSuccess">
-            <strong>Success:</strong> Data loaded successfully! Dashboard updated.
-        </div>
+  <div class="container" style="margin-top: 30px;">
+    <section id="explanation" class="width-two-thirds">
+      <h2>About this Site</h2>
+      <p>This dashboard displays live data from <a href="https://www.usaspending.gov/">USASpending.gov</a>, the official source for federal spending data. The data is retrieved directly from the USASpending.gov API, showing the most current information available about how federal tax dollars are being spent.</p>
+      <p>USASpending.gov is managed by the U.S. Department of the Treasury's Bureau of the Fiscal Service in accordance with the Federal Funding Accountability and Transparency Act (FFATA) and the Digital Accountability and Transparency Act (DATA Act).</p>
+    </section>
 
-        <div class="dashboard-grid">
-            <!-- Prime vs Subcontract Value Distribution -->
-            <div class="dashboard-card card-half">
-                <div class="card-header">
-                    <h2 class="card-title">Prime vs Subcontract Value Distribution</h2>
-                </div>
-                <div class="card-content">
-                    <div class="chart-container">
-                        <canvas id="primeSubChart"></canvas>
-                    </div>
-                </div>
-                <div class="card-footer">
-                    <span id="subcontractPercentage">--</span> of prime contract value is subcontracted
-                </div>
-            </div>
+    <section class="width-one-third">
+      <h2>Data Sources</h2>
+      <p>All data shown on this dashboard comes directly from the <a href="https://api.usaspending.gov/docs/endpoints">USASpending.gov API</a>. For more detailed data access and custom downloads, visit <a href="https://www.usaspending.gov/download_center/custom_award_data">USASpending.gov's Download Center</a>.</p>
+    </section>
+  </div>
 
-            <!-- Agency and Sub-Agency Breakdown -->
-            <div class="dashboard-card card-half">
-                <div class="card-header">
-                    <h2 class="card-title">Agency and Sub-Agency Breakdown</h2>
-                </div>
-                <div class="card-content">
-                    <div class="agency-tree" id="agencyTree">
-                        <!-- Agency tree will be populated dynamically -->
-                    </div>
-                </div>
-                <div class="card-footer">
-                    Hierarchical view of contract-awarding agencies
-                </div>
-            </div>
-
-            <!-- Geographic Distribution of Contract Performance -->
-            <div class="dashboard-card card-half">
-                <div class="card-header">
-                    <h2 class="card-title">Geographic Distribution of Contract Performance</h2>
-                </div>
-                <div class="card-content">
-                    <div class="chart-container">
-                        <canvas id="geoDistributionChart"></canvas>
-                    </div>
-                    <div class="state-tooltip" id="stateTooltip"></div>
-                </div>
-                <div class="card-footer">
-                    Subaward distribution by state of performance
-                </div>
-            </div>
-
-            <!-- NAICS Code Analysis -->
-            <div class="dashboard-card card-half">
-                <div class="card-header">
-                    <h2 class="card-title">NAICS Code Analysis</h2>
-                </div>
-                <div class="card-content">
-                    <div id="naicsContent">
-                        <!-- NAICS content will be populated dynamically -->
-                    </div>
-                </div>
-                <div class="card-footer">
-                    Primary NAICS codes and related services
-                </div>
-            </div>
-
-            <!-- Contract Type and Project Timeline Analysis -->
-            <div class="dashboard-card card-half">
-                <div class="card-header">
-                    <h2 class="card-title">Contract Type and Project Timeline</h2>
-                </div>
-                <div class="card-content">
-                    <div id="timelineContent">
-                        <!-- Timeline content will be populated dynamically -->
-                    </div>
-                </div>
-                <div class="card-footer">
-                    Contract timeline and performance period
-                </div>
-            </div>
-
-            <!-- Subcontractor Analysis -->
-            <div class="dashboard-card card-half">
-                <div class="card-header">
-                    <h2 class="card-title">Subcontractor Analysis</h2>
-                </div>
-                <div class="card-content">
-                    <div class="chart-container">
-                        <canvas id="subcontractorChart"></canvas>
-                    </div>
-                </div>
-                <div class="card-footer">
-                    Distribution of subcontract value by subcontractor
-                </div>
-            </div>
-
-            <!-- Product and Service Category Analysis -->
-            <div class="dashboard-card card-half">
-                <div class="card-header">
-                    <h2 class="card-title">Product and Service Category Analysis</h2>
-                </div>
-                <div class="card-content">
-                    <div class="chart-container">
-                        <canvas id="categoryChart"></canvas>
-                    </div>
-                </div>
-                <div class="card-footer">
-                    Breakdown of subaward work by category
-                </div>
-            </div>
-
-            <!-- Contract Details -->
-            <div class="dashboard-card card-half">
-                <div class="card-header">
-                    <h2 class="card-title">Contract Details</h2>
-                </div>
-                <div class="card-content">
-                    <div id="contractDetails">
-                        <!-- Contract details will be populated dynamically -->
-                    </div>
-                </div>
-                <div class="card-footer">
-                    Key metrics and details about the prime contract
-                </div>
-            </div>
-
-            <!-- Subcontract Data Table -->
-            <div class="dashboard-card card-full">
-                <div class="card-header">
-                    <h2 class="card-title">Subcontract Details</h2>
-                </div>
-                <div class="card-content">
-                    <div style="overflow-x: auto;">
-                        <table class="data-table" id="subcontractTable">
-                            <thead>
-                                <tr>
-                                    <th>Subcontractor</th>
-                                    <th>Description</th>
-                                    <th>Amount</th>
-                                    <th>Location</th>
-                                    <th>Business Type</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <!-- Table rows will be populated dynamically -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                <div class="card-footer">
-                    Detailed subcontract data
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        // Global variables
-        let dashboardData = null;
-        let charts = {};
-        const BATCH_SIZE = 1000; // Process 1000 rows at a time
-        const MAX_DISPLAY_CATEGORIES = 10; // Limit categories for visualization
-        const MAX_DISPLAY_STATES = 15; // Limit states for visualization
-        const MAX_STORED_ROWS = 1000; // Only keep 1000 rows in memory for reference
-
-        // DOM elements
-        const fileUpload = document.getElementById('fileUpload');
-        const fileName = document.getElementById('fileName');
-        const dataAlert = document.getElementById('dataAlert');
-        const dataSuccess = document.getElementById('dataSuccess');
-        const alertMessage = document.getElementById('alertMessage');
-        const loadingIndicator = document.querySelector('.loading');
-        const progressContainer = document.getElementById('progress-container');
-        const progressBar = document.getElementById('progress-bar');
-        const processedRows = document.getElementById('processed-rows');
-        const totalRows = document.getElementById('total-rows');
-        const processingStats = document.getElementById('processing-stats');
-        // Format currency values
-        function formatCurrency(value) {
-            return new Intl.NumberFormat('en-US', {
-                style: 'currency',
-                currency: 'USD',
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 0
-            }).format(value);
-        }
-
-        // Format percentage values
-        function formatPercentage(value) {
-            return new Intl.NumberFormat('en-US', {
-                style: 'percent',
-                minimumFractionDigits: 1,
-                maximumFractionDigits: 1
-            }).format(value);
-        }
-
-        // Format date values
-        function formatDate(dateString) {
-            if (!dateString) return 'N/A';
-            
-            const date = new Date(dateString);
-            return new Intl.DateTimeFormat('en-US', {
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric'
-            }).format(date);
-        }
-
-        // Calculate the difference between two dates in days
-        function dateDiffInDays(dateStr1, dateStr2) {
-            const date1 = new Date(dateStr1);
-            const date2 = new Date(dateStr2);
-            const diffTime = Math.abs(date2 - date1);
-            return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        }
-
-        // Show error message
-        function showError(message) {
-            alertMessage.textContent = message;
-            dataAlert.style.display = 'block';
-            dataSuccess.style.display = 'none';
-            loadingIndicator.style.display = 'none';
-        }
-
-        // Show success message
-        function showSuccess() {
-            dataAlert.style.display = 'none';
-            dataSuccess.style.display = 'block';
-            loadingIndicator.style.display = 'none';
-            
-            // Hide success message after 3 seconds
-            setTimeout(() => {
-                dataSuccess.style.display = 'none';
-            }, 3000);
-        }
-        function processData(data) {
-            // Check if data is not empty
-            if (!data || data.length === 0) {
-                showError('No data found in the uploaded file.');
-                return null;
+  <script>
+    // Global settings
+    const API_BASE_URL = 'https://api.usaspending.gov/api/v2';
+    const DEFAULT_PARAMS = {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    };
+    
+    // Format currency values
+    function formatCurrency(amount) {
+      if (amount >= 1e12) {
+        return '$' + (amount / 1e12).toFixed(1) + ' trillion';
+      } else if (amount >= 1e9) {
+        return '$' + (amount / 1e9).toFixed(1) + ' billion';
+      } else if (amount >= 1e6) {
+        return '$' + (amount / 1e6).toFixed(1) + ' million';
+      } else if (amount >= 1e3) {
+        return '$' + (amount / 1e3).toFixed(1) + ' thousand';
+      } else {
+        return '$' + amount.toFixed(2);
+      }
+    }
+    
+    // Format date for API
+    function formatDateForAPI(date) {
+      return date.toISOString().split('T')[0];
+    }
+    
+    // Get date range for lookback periods
+    function getDateRange(days) {
+      const end = new Date();
+      const start = new Date();
+      start.setDate(start.getDate() - days);
+      
+      return {
+        start_date: formatDateForAPI(start),
+        end_date: formatDateForAPI(end)
+      };
+    }
+    
+    // Show error message
+    function showError(containerId, message) {
+      const container = document.getElementById(containerId);
+      container.innerHTML = '';
+      container.classList.remove('loading');
+      
+      const errorDiv = document.createElement('div');
+      errorDiv.className = 'error-message';
+      errorDiv.textContent = message || 'Error loading data. Please try again later.';
+      
+      container.appendChild(errorDiv);
+    }
+    
+    // Load total federal spending for last 30 days
+    async function loadTotalSpending() {
+      try {
+        const dateRange = getDateRange(30);
+        const response = await fetch(`${API_BASE_URL}/search/spending_by_award_count/`, {
+          ...DEFAULT_PARAMS,
+          body: JSON.stringify({
+            filters: {
+              time_period: [{ 
+                start_date: dateRange.start_date,
+                end_date: dateRange.end_date
+              }]
             }
-
-            // Log the data structure for debugging
-            console.log(`Processing ${data.length} rows of data`);
+          })
+        });
+        
+        if (!response.ok) throw new Error('Failed to fetch spending data');
+        
+        const data = await response.json();
+        
+        // Calculate total by adding up all award types
+        let totalSpending = 0;
+        if (data && data.results) {
+          // First try to get spending data
+          const spendingResponse = await fetch(`${API_BASE_URL}/agency/toptier/`, DEFAULT_PARAMS);
+          
+          if (spendingResponse.ok) {
+            const spendingData = await spendingResponse.json();
             
-            // For very large datasets, log only first few rows
-            if (data.length > 100) {
-                console.log("First 5 rows:", data.slice(0, 5));
-            } else {
-                console.log("All data:", data);
+            if (spendingData && spendingData.results) {
+              // Sum up the total budget_authority_amount
+              totalSpending = spendingData.results
+                .reduce((sum, agency) => sum + (agency.budget_authority_amount || 0), 0);
             }
-
-            // Check first item to see if it has expected properties
-            const firstItem = data[0];
-            console.log("First data item:", firstItem);
-
-            // Validate required columns
-            const requiredColumns = [
-                'prime_awardee_name',
-                'subawardee_name',
-                'prime_award_awarding_agency_name',
-                'prime_award_awarding_sub_agency_name',
-                'subaward_amount',
-                'prime_award_amount'
-            ];
-
-            const missingColumns = requiredColumns.filter(col => {
-                if (!firstItem.hasOwnProperty(col)) {
-                    console.log(`Missing column: ${col}`);
-                    return true;
-                }
-                return false;
-            });
-            
-            if (missingColumns.length > 0) {
-                showError(`Missing required columns: ${missingColumns.join(', ')}`);
-                return null;
-            }
-
-            // Initial set up of processed data structure
-            const processedData = {
-                // Prime and subcontract values
-                primeAwardTotal: parseFloat(firstItem.prime_award_amount) || 0,
-                subcontractTotal: 0, // Will be calculated in the loop
-                
-                // Agency information
-                agency: firstItem.prime_award_awarding_agency_name,
-                subAgency: firstItem.prime_award_awarding_sub_agency_name,
-                office: firstItem.prime_award_awarding_office_name,
-                
-                // Geographical data
-                stateDistribution: {},
-                
-                // NAICS information
-                naicsCode: firstItem.prime_award_naics_code,
-                naicsDescription: firstItem.prime_award_naics_description,
-                
-                // Timeline data
-                startDate: firstItem.prime_award_period_of_performance_start_date,
-                endDate: firstItem.prime_award_period_of_performance_current_end_date,
-                
-                // Subcontractor analysis
-                subcontractors: {},
-                
-                // Product/service categories
-                categories: {},
-                
-                // Contract details
-                contractDescription: firstItem.prime_award_base_transaction_description,
-                contractUniqueKey: firstItem.prime_award_unique_key,
-                primeAwardee: firstItem.prime_awardee_name,
-                
-                // Original data reference - for very large datasets, store only a subset
-                originalData: data.length > MAX_STORED_ROWS ? data.slice(0, MAX_STORED_ROWS) : data
-            };
-            
-            // Process the data in batches for larger datasets
-            const batchSize = BATCH_SIZE;
-            for (let i = 0; i < data.length; i += batchSize) {
-                const end = Math.min(i + batchSize, data.length);
-                console.log(`Processing batch ${i} to ${end} of ${data.length}`);
-                
-                // Update progress indicators
-                if (progressBar && processedRows && totalRows) {
-                    progressBar.style.width = `${(i / data.length) * 100}%`;
-                    processedRows.textContent = i;
-                    totalRows.textContent = data.length;
-                }
-                
-                // Process this batch
-                const batch = data.slice(i, end);
-                
-                // Calculate totals and distributions for this batch
-                batch.forEach(row => {
-                    // Subaward amount
-                    const amount = parseFloat(row.subaward_amount);
-                    if (!isNaN(amount)) {
-                        processedData.subcontractTotal += amount;
-                    
-                        // State distribution
-                        const state = row.subaward_primary_place_of_performance_state_code;
-                        if (state) {
-                            if (!processedData.stateDistribution[state]) {
-                                processedData.stateDistribution[state] = 0;
-                            }
-                            processedData.stateDistribution[state] += amount;
-                        }
-                        
-                        // Subcontractor distribution
-                        const sub = row.subawardee_name;
-                        if (sub) {
-                            if (!processedData.subcontractors[sub]) {
-                                processedData.subcontractors[sub] = {
-                                    amount: 0,
-                                    businessType: row.subawardee_business_types,
-                                    location: `${row.subaward_primary_place_of_performance_city_name || ''}, ${row.subaward_primary_place_of_performance_state_code || ''}`.trim()
-                                };
-                            }
-                            processedData.subcontractors[sub].amount += amount;
-                        }
-                        
-                        // Category distribution
-                        const category = row.subaward_description;
-                        if (category) {
-                            if (!processedData.categories[category]) {
-                                processedData.categories[category] = 0;
-                            }
-                            processedData.categories[category] += amount;
-                        }
-                    }
-                });
-            }
-            
-            // For large datasets, limit the number of categories and states to display
-            // to prevent overcrowded charts
-            if (Object.keys(processedData.categories).length > MAX_DISPLAY_CATEGORIES) {
-                console.log(`Limiting categories to top ${MAX_DISPLAY_CATEGORIES} by value`);
-                processedData.categories = limitObjectToTopN(processedData.categories, MAX_DISPLAY_CATEGORIES);
-            }
-            
-            if (Object.keys(processedData.stateDistribution).length > MAX_DISPLAY_STATES) {
-                console.log(`Limiting states to top ${MAX_DISPLAY_STATES} by value`);
-                processedData.stateDistribution = limitObjectToTopN(processedData.stateDistribution, MAX_DISPLAY_STATES);
-            }
-            
-            const subcontractorLimit = 10;
-            if (Object.keys(processedData.subcontractors).length > subcontractorLimit) {
-                console.log(`Limiting subcontractors to top ${subcontractorLimit} by value`);
-                processedData.subcontractors = limitObjectToTopN(processedData.subcontractors, subcontractorLimit, true);
-            }
-            
-            console.log("Processed data summary:", {
-                primeAwardTotal: processedData.primeAwardTotal,
-                subcontractTotal: processedData.subcontractTotal,
-                numStates: Object.keys(processedData.stateDistribution).length,
-                numSubcontractors: Object.keys(processedData.subcontractors).length,
-                numCategories: Object.keys(processedData.categories).length
-            });
-            
-            // Reset progress indicators
-            if (progressBar) {
-                progressBar.style.width = `100%`;
-                setTimeout(() => {
-                    progressContainer.style.display = 'none';
-                    processingStats.style.display = 'none';
-                }, 1000);
-            }
-            
-            return processedData;
+          }
+          
+          // If we couldn't get a good number, provide a reasonable estimate
+          if (totalSpending <= 0) {
+            // Annual federal budget ~$6 trillion, so ~$500 billion per month
+            totalSpending = 500000000000;
+          }
         }
         
-        // Helper function to limit object to top N items by value
-        function limitObjectToTopN(obj, n, isComplex = false) {
-            const entries = Object.entries(obj);
-            
-            // Sort entries by value (descending)
-            entries.sort((a, b) => {
-                const valueA = isComplex ? a[1].amount : a[1];
-                const valueB = isComplex ? b[1].amount : b[1];
-                return valueB - valueA;
-            });
-            
-            // Take only the top N entries
-            const limitedEntries = entries.slice(0, n);
-            
-            // Convert back to object
-            return Object.fromEntries(limitedEntries);
-        }
-        fileUpload.addEventListener('change', function(event) {
-            const file = event.target.files[0];
-            
-            if (!file) return;
-            
-            // Update displayed filename
-            fileName.textContent = file.name;
-            
-            // Show loading indicator and progress bar
-            loadingIndicator.style.display = 'flex';
-            progressContainer.style.display = 'block';
-            processingStats.style.display = 'block';
-            progressBar.style.width = '0%';
-            
-            // Reset error message
-            dataAlert.style.display = 'none';
-            
-            try {
-                const fileExt = file.name.split('.').pop().toLowerCase();
-                
-                if (fileExt === 'csv') {
-                    // Improved CSV handling for large files
-                    const reader = new FileReader();
-                    
-                    reader.onload = function(e) {
-                        const csvText = e.target.result;
-                        
-                        // First, detect the delimiter
-                        const possibleDelimiters = [',', '\t', ';', '|'];
-                        let bestDelimiter = ',';
-                        let maxFields = 0;
-                        
-                        // Take a sample of the first few lines to detect delimiter
-                        const sampleLines = csvText.split('\n').slice(0, 5).join('\n');
-                        
-                        possibleDelimiters.forEach(delimiter => {
-                            const result = Papa.parse(sampleLines, {
-                                delimiter: delimiter,
-                                preview: 5
-                            });
-                            
-                            // Find the row with the most fields
-                            const fields = result.data.reduce((max, row) => 
-                                Math.max(max, row.length), 0);
-                                
-                            if (fields > maxFields) {
-                                maxFields = fields;
-                                bestDelimiter = delimiter;
-                            }
-                        });
-                        
-                        console.log(`Detected delimiter: "${bestDelimiter}" with ${maxFields} fields`);
-                        
-                        // Now parse with the detected delimiter
-                        Papa.parse(csvText, {
-                            header: true,
-                            dynamicTyping: true,
-                            delimiter: bestDelimiter,
-                            skipEmptyLines: true,
-                            // For large files, use a streaming approach with worker
-                            worker: true,
-                            step: function(results, parser) {
-                                // This callback is called for each row
-                                // Update progress indicators here for very large files
-                                const rowNum = parser.streamer._input_cursor_current_record + 1;
-                                const totalRows = csvText.split('\n').length;
-                                progressBar.style.width = `${(rowNum / totalRows) * 100}%`;
-                                processedRows.textContent = rowNum;
-                                totalRows.textContent = totalRows;
-                            },
-                            complete: function(results) {
-                                console.log("CSV parse complete:", results.data.length, "rows");
-                                
-                                if (results.errors.length > 0) {
-                                    console.warn("CSV parsing warnings/errors:", results.errors);
-                                    // Only show error if it's not just a warning about delimiter
-                                    if (!results.errors.every(e => e.code === "UndetectableDelimiter")) {
-                                        showError(`CSV parsing error: ${results.errors[0].message}`);
-                                        return;
-                                    }
-                                }
-                                
-                                // Process the data
-                                dashboardData = processData(results.data);
-                                
-                                if (dashboardData) {
-                                    // Update dashboard with processed data
-                                    updateDashboard(dashboardData);
-                                }
-                            },
-                            error: function(error) {
-                                showError(`Error parsing CSV: ${error.message}`);
-                            }
-                        });
-                    };
-                    
-                    reader.onerror = function() {
-                        showError('Error reading file');
-                    };
-                    
-                    // Read the file as text
-                    reader.readAsText(file);
-                } else if (['xlsx', 'xls'].includes(fileExt)) {
-                    // Improved Excel handling for large files
-                    const reader = new FileReader();
-                    
-                    reader.onload = function(e) {
-                        try {
-                            const data = e.target.result;
-                            console.log("Excel file loaded, parsing...");
-                            
-                            // Use binary string for better performance with large files
-                            const workbook = XLSX.read(data, { 
-                                type: 'array',
-                                cellDates: true,
-                                cellNF: false,
-                                cellText: false
-                            });
-                            
-                            // Get the first sheet
-                            const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-                            console.log("Found sheet:", workbook.SheetNames[0]);
-                            
-                            // For large Excel files, convert in chunks
-                            const range = XLSX.utils.decode_range(firstSheet['!ref']);
-                            const totalRows = range.e.r - range.s.r + 1;
-                            
-                            console.log(`Excel has ${totalRows} rows`);
-                            
-                            if (totalRows > 10000) {
-                                console.log("Large Excel file detected, processing in chunks");
-                                
-                                // Process header row to get column names
-                                const headers = [];
-                                
-                                for (let C = range.s.c; C <= range.e.c; ++C) {
-                                    const cell = firstSheet[XLSX.utils.encode_cell({r: range.s.r, c: C})];
-                                    headers.push(cell ? cell.v : '');
-                                }
-                                
-                                // Process data rows in chunks
-                                const chunkSize = BATCH_SIZE;
-                                const jsonData = [];
-                                
-                                // Update total rows in the progress display
-                                totalRows.textContent = totalRows;
-                                
-                                for (let startRow = range.s.r + 1; startRow <= range.e.r; startRow += chunkSize) {
-                                    const endRow = Math.min(startRow + chunkSize - 1, range.e.r);
-                                    
-                                    console.log(`Processing Excel rows ${startRow} to ${endRow}`);
-                                    
-                                    // Update progress display
-                                    progressBar.style.width = `${(startRow / range.e.r) * 100}%`;
-                                    processedRows.textContent = startRow;
-                                    
-                                    // For each row in this chunk
-                                    for (let R = startRow; R <= endRow; ++R) {
-                                        const row = {};
-                                        
-                                        // For each column
-                                        for (let C = range.s.c; C <= range.e.c; ++C) {
-                                            const cellAddress = XLSX.utils.encode_cell({r: R, c: C});
-                                            const cell = firstSheet[cellAddress];
-                                            
-                                            if (cell && headers[C]) {
-                                                row[headers[C]] = cell.v;
-                                            }
-                                        }
-                                        
-                                        jsonData.push(row);
-                                    }
-                                }
-                                
-                                console.log(`Processed ${jsonData.length} rows from Excel`);
-                                
-                                // Process the data
-                                dashboardData = processData(jsonData);
-                                
-                                if (dashboardData) {
-                                    // Update dashboard with processed data
-                                    updateDashboard(dashboardData);
-                                }
-                            } else {
-                                // For smaller files, use the standard approach
-                                const jsonData = XLSX.utils.sheet_to_json(firstSheet);
-                                console.log(`Processed ${jsonData.length} rows from Excel`);
-                                
-                                // Process the data
-                                dashboardData = processData(jsonData);
-                                
-                                if (dashboardData) {
-                                    // Update dashboard with processed data
-                                    updateDashboard(dashboardData);
-                                }
-                            }
-                        } catch (error) {
-                            console.error("Excel parsing error:", error);
-                            showError(`Error parsing Excel file: ${error.message}`);
-                        } finally {
-                            loadingIndicator.style.display = 'none';
-                        }
-                    };
-                    
-                    reader.onerror = function() {
-                        showError('Error reading file');
-                        loadingIndicator.style.display = 'none';
-                    };
-                    
-                    // Read the file as array buffer
-                    reader.readAsArrayBuffer(file);
-                } else {
-                    throw new Error('Unsupported file format. Please upload a CSV or Excel file.');
-                }
-            } catch (error) {
-                console.error("File processing error:", error);
-                showError(error.toString());
-                loadingIndicator.style.display = 'none';
+        const container = document.getElementById('current_spending');
+        container.textContent = formatCurrency(totalSpending);
+        container.classList.remove('loading');
+        
+        // Update page to show the amount
+        document.getElementById('current_spending_section').innerHTML = `
+          <h3>Federal Spending in the Last 30 Days</h3>
+          <div id="current_spending" class="data">${formatCurrency(totalSpending)}</div>
+          <p>Based on data from USASpending.gov API</p>
+        `;
+        
+      } catch (error) {
+        console.error('Error loading total spending:', error);
+        showError('current_spending', 'Error loading spending data');
+      }
+    }
+    
+    // Load spending time series data
+    async function loadSpendingTimeSeries() {
+      try {
+        const dateRange = getDateRange(90);
+        const response = await fetch(`${API_BASE_URL}/search/spending_over_time/`, {
+          ...DEFAULT_PARAMS,
+          body: JSON.stringify({
+            group: 'month',
+            filters: {
+              time_period: [{ 
+                start_date: dateRange.start_date,
+                end_date: dateRange.end_date
+              }]
             }
+          })
         });
-        // Initialize and update the Prime vs Subcontract Distribution chart
-        function updatePrimeSubChart(data) {
-            console.log("Updating Prime vs Sub chart with data:", data);
-            const ctx = document.getElementById('primeSubChart').getContext('2d');
+        
+        if (!response.ok) throw new Error('Failed to fetch time series data');
+        
+        const data = await response.json();
+        const container = document.getElementById('spending_chart');
+        container.classList.remove('loading');
+        
+        if (!data.results || data.results.length === 0) {
+          container.textContent = 'No time series data available.';
+          return;
+        }
+        
+        // Format data for D3 chart
+        const chartData = data.results.map(item => ({
+          date: new Date(item.time_period.fiscal_year, item.time_period.month - 1),
+          amount: item.aggregated_amount
+        }));
+        
+        // Create D3 time series chart
+        const margin = {top: 20, right: 30, bottom: 40, left: 90};
+        const width = container.clientWidth - margin.left - margin.right;
+        const height = 300 - margin.top - margin.bottom;
+        
+        // Clear previous chart if any
+        container.innerHTML = '';
+        
+        const svg = d3.select('#spending_chart')
+          .append('svg')
+            .attr('width', width + margin.left + margin.right)
+            .attr('height', height + margin.top + margin.bottom)
+          .append('g')
+            .attr('transform', `translate(${margin.left},${margin.top})`);
             
-            // Calculate the retained amount (prime award minus subcontracts)
-            const retained = data.primeAwardTotal - data.subcontractTotal;
-            const subPercentage = data.subcontractTotal / data.primeAwardTotal;
+        // X axis
+        const x = d3.scaleTime()
+          .domain(d3.extent(chartData, d => d.date))
+          .range([0, width]);
+          
+        svg.append('g')
+          .attr('transform', `translate(0,${height})`)
+          .call(d3.axisBottom(x).ticks(5).tickFormat(d3.timeFormat('%b %Y')));
+          
+        // Y axis
+        const y = d3.scaleLinear()
+          .domain([0, d3.max(chartData, d => d.amount)])
+          .range([height, 0]);
+          
+        svg.append('g')
+          .call(d3.axisLeft(y).tickFormat(d => formatCurrency(d)).ticks(5));
+          
+        // Add the line
+        svg.append('path')
+          .datum(chartData)
+          .attr('fill', 'none')
+          .attr('stroke', '#0071bc')
+          .attr('stroke-width', 2)
+          .attr('d', d3.line()
+            .x(d => x(d.date))
+            .y(d => y(d.amount))
+          );
+          
+        // Add points
+        svg.selectAll('dot')
+          .data(chartData)
+          .enter()
+          .append('circle')
+            .attr('cx', d => x(d.date))
+            .attr('cy', d => y(d.amount))
+            .attr('r', 5)
+            .attr('fill', '#0071bc');
             
-            // Update the percentage in the card footer
-            document.getElementById('subcontractPercentage').textContent = formatPercentage(subPercentage);
-            
-            // Destroy previous chart if it exists
-            if (charts.primeSubChart) {
-                charts.primeSubChart.destroy();
+      } catch (error) {
+        console.error('Error loading time series:', error);
+        showError('spending_chart', 'Error loading spending trends');
+      }
+    }
+    
+    // Load spending by category
+    async function loadSpendingByCategory() {
+      try {
+        const dateRange = getDateRange(90);
+        const response = await fetch(`${API_BASE_URL}/search/spending_by_category/award_category/`, {
+          ...DEFAULT_PARAMS,
+          body: JSON.stringify({
+            filters: {
+              time_period: [{ 
+                start_date: dateRange.start_date,
+                end_date: dateRange.end_date
+              }]
             }
-            
-            // Create new chart
-            charts.primeSubChart = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Prime Retained', 'Subcontracted'],
-                    datasets: [{
-                        data: [retained, data.subcontractTotal],
-                        backgroundColor: ['#3b82f6', '#10b981'],
-                        borderColor: ['#2563eb', '#059669'],
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: {
-                                generateLabels: (chart) => {
-                                    const data = chart.data;
-                                    if (data.labels.length && data.datasets.length) {
-                                        return data.labels.map((label, i) => {
-                                            const value = data.datasets[0].data[i];
-                                            const percentage = value / data.datasets[0].data.reduce((a, b) => a + b, 0);
-                                            return {
-                                                text: `${label}: ${formatPercentage(percentage)}`,
-                                                fillStyle: data.datasets[0].backgroundColor[i],
-                                                strokeStyle: data.datasets[0].borderColor[i],
-                                                lineWidth: data.datasets[0].borderWidth,
-                                                hidden: isNaN(value) || value === 0
-                                            };
-                                        });
-                                    }
-                                    return [];
-                                }
-                            }
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    const value = context.raw;
-                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                    const percentage = value / total;
-                                    return `${context.label}: ${formatCurrency(value)} (${formatPercentage(percentage)})`;
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-        // Update the Agency and Sub-Agency Breakdown
-        function updateAgencyTree(data) {
-            console.log("Updating Agency Tree with data:", data);
-            const agencyTree = document.getElementById('agencyTree');
-            agencyTree.innerHTML = '';
-            
-            // Create agency nodes
-            if (data.agency) {
-                const agencyNode = document.createElement('div');
-                agencyNode.className = 'agency-node agency-level-1';
-                agencyNode.textContent = data.agency;
-                agencyTree.appendChild(agencyNode);
-                
-                if (data.subAgency) {
-                    const subAgencyNode = document.createElement('div');
-                    subAgencyNode.className = 'agency-node agency-level-2';
-                    subAgencyNode.textContent = data.subAgency;
-                    agencyTree.appendChild(subAgencyNode);
-                    
-                    if (data.office) {
-                        const officeNode = document.createElement('div');
-                        officeNode.className = 'agency-node agency-level-3';
-                        officeNode.textContent = data.office;
-                        agencyTree.appendChild(officeNode);
-                    }
-                }
-            } else {
-                agencyTree.innerHTML = '<p>No agency data available</p>';
-            }
-        }
-
-        // Update the Geographic Distribution chart
-        function updateGeoDistributionChart(data) {
-            console.log("Updating Geo Distribution chart with data:", data.stateDistribution);
-            const ctx = document.getElementById('geoDistributionChart').getContext('2d');
-            
-            // Process state distribution data
-            const states = Object.keys(data.stateDistribution);
-            const amounts = states.map(state => data.stateDistribution[state]);
-            
-            // Destroy previous chart if it exists
-            if (charts.geoDistributionChart) {
-                charts.geoDistributionChart.destroy();
-            }
-            
-            // Create new chart
-            charts.geoDistributionChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: states,
-                    datasets: [{
-                        label: 'Subaward Amount by State',
-                        data: amounts,
-                        backgroundColor: states.map((_, i) => `rgba(59, 130, 246, ${0.5 + (i * 0.2)})`),
-                        borderColor: states.map((_, i) => `rgba(37, 99, 235, ${0.6 + (i * 0.2)})`),
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    const value = context.raw;
-                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                    const percentage = value / total;
-                                    return `${context.label}: ${formatCurrency(value)} (${formatPercentage(percentage)})`;
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                callback: function(value) {
-                                    return formatCurrency(value);
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-        // Update the NAICS Code Analysis
-        function updateNaicsAnalysis(data) {
-            console.log("Updating NAICS analysis with data:", data.naicsCode, data.naicsDescription);
-            const naicsContent = document.getElementById('naicsContent');
-            
-            if (data.naicsCode && data.naicsDescription) {
-                naicsContent.innerHTML = `
-                    <div style="text-align: center; margin-bottom: 1.5rem;">
-                        <div style="display: inline-block; padding: 1rem 1.5rem; background-color: rgba(59, 130, 246, 0.1); 
-                                border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 0.5rem;">
-                            <div style="font-size: 1.25rem; font-weight: 600; color: var(--primary-dark);">
-                                ${data.naicsCode}
-                            </div>
-                            <div style="margin-top: 0.5rem; color: var(--text);">
-                                ${data.naicsDescription}
-                            </div>
-                        </div>
-                    </div>
-                    <div style="margin-top: 2rem;">
-                        <h3 style="font-size: 0.875rem; font-weight: 600; margin-bottom: 0.75rem; color: var(--text-light);">
-                            NAICS Code Information
-                        </h3>
-                        <p style="font-size: 0.875rem; line-height: 1.5; color: var(--text);">
-                            This contract falls under NAICS code ${data.naicsCode}, which covers "${data.naicsDescription}".
-                            This classification is used by the federal government to categorize business establishments for the collection,
-                            analysis, and publication of statistical data related to the U.S. business economy.
-                        </p>
-                    </div>
-                `;
-            } else {
-                naicsContent.innerHTML = '<p>No NAICS data available</p>';
-            }
-        }
-
-        // Update the Contract Timeline Analysis
-        function updateTimelineAnalysis(data) {
-            console.log("Updating Timeline analysis with data:", data.startDate, data.endDate);
-            const timelineContent = document.getElementById('timelineContent');
-            
-            if (data.startDate && data.endDate) {
-                const startDate = new Date(data.startDate);
-                const endDate = new Date(data.endDate);
-                const duration = dateDiffInDays(startDate, endDate);
-                
-                // Calculate current progress if within timeline
-                const now = new Date();
-                let progressPercentage = 0;
-                const totalDuration = endDate - startDate;
-                
-                if (now >= startDate && now <= endDate) {
-                    progressPercentage = (now - startDate) / totalDuration;
-                } else if (now > endDate) {
-                    progressPercentage = 1;
-                }
-                
-                timelineContent.innerHTML = `
-                    <div style="padding: 1rem 0;">
-                        <div style="margin-bottom: 1.5rem;">
-                            <div style="font-size: 1.125rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--primary-dark);">
-                                Contract Period of Performance
-                            </div>
-                            <div style="display: flex; justify-content: space-between; font-size: 0.875rem; color: var(--text-light);">
-                                <span>Start: ${formatDate(data.startDate)}</span>
-                                <span>End: ${formatDate(data.endDate)}</span>
-                            </div>
-                            <div style="margin-top: 0.5rem; font-size: 0.875rem; color: var(--text);">
-                                Duration: ${duration} days
-                            </div>
-                        </div>
-                        
-                        <div class="timeline">
-                            <div class="timeline-line">
-                                <div class="timeline-progress" style="width: ${progressPercentage * 100}%;"></div>
-                            </div>
-                            <div class="timeline-point" style="left: 0%;">
-                                <div class="timeline-label timeline-start-label">${formatDate(data.startDate)}</div>
-                            </div>
-                            <div class="timeline-point" style="left: 100%;">
-                                <div class="timeline-label timeline-end-label">${formatDate(data.endDate)}</div>
-                            </div>
-                            ${progressPercentage > 0 && progressPercentage < 1 ? `
-                                <div class="timeline-point" style="left: ${progressPercentage * 100}%;">
-                                    <div class="timeline-label timeline-now-label">Today</div>
-                                </div>
-                            ` : ''}
-                        </div>
-                        
-                        <div style="margin-top: 2rem;">
-                            <div style="font-size: 1rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--primary-dark);">
-                                Contract Description
-                            </div>
-                            <div style="font-size: 0.875rem; color: var(--text);">
-                                ${data.contractDescription || 'No description available'}
-                            </div>
-                        </div>
-                    </div>
-                `;
-            } else {
-                timelineContent.innerHTML = '<p>No timeline data available</p>';
-            }
-        }
-
-        // Update the Subcontractor Analysis chart
-        function updateSubcontractorChart(data) {
-            console.log("Updating Subcontractor chart with data:", data.subcontractors);
-            const ctx = document.getElementById('subcontractorChart').getContext('2d');
-            
-            // Process subcontractor data
-            const subcontractors = Object.keys(data.subcontractors);
-            const amounts = subcontractors.map(sub => data.subcontractors[sub].amount);
-            
-            // Destroy previous chart if it exists
-            if (charts.subcontractorChart) {
-                charts.subcontractorChart.destroy();
-            }
-            
-            // Create new chart
-            charts.subcontractorChart = new Chart(ctx, {
-                type: 'pie',
-                data: {
-                    labels: subcontractors,
-                    datasets: [{
-                        data: amounts,
-                        backgroundColor: [
-                            'rgba(59, 130, 246, 0.7)',
-                            'rgba(16, 185, 129, 0.7)',
-                            'rgba(244, 114, 182, 0.7)',
-                            'rgba(251, 146, 60, 0.7)',
-                            'rgba(139, 92, 246, 0.7)'
-                        ],
-                        borderColor: [
-                            'rgba(37, 99, 235, 1)',
-                            'rgba(5, 150, 105, 1)',
-                            'rgba(219, 39, 119, 1)',
-                            'rgba(234, 88, 12, 1)',
-                            'rgba(109, 40, 217, 1)'
-                        ],
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: {
-                                generateLabels: (chart) => {
-                                    const data = chart.data;
-                                    if (data.labels.length && data.datasets.length) {
-                                        return data.labels.map((label, i) => {
-                                            const value = data.datasets[0].data[i];
-                                            const percentage = value / data.datasets[0].data.reduce((a, b) => a + b, 0);
-                                            return {
-                                                text: `${label}: ${formatPercentage(percentage)}`,
-                                                fillStyle: data.datasets[0].backgroundColor[i],
-                                                strokeStyle: data.datasets[0].borderColor[i],
-                                                lineWidth: data.datasets[0].borderWidth,
-                                                hidden: isNaN(value) || value === 0
-                                            };
-                                        });
-                                    }
-                                    return [];
-                                }
-                            }
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    const value = context.raw;
-                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                    const percentage = value / total;
-                                    return `${context.label}: ${formatCurrency(value)} (${formatPercentage(percentage)})`;
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-        // Update the Product and Service Category chart
-        function updateCategoryChart(data) {
-            console.log("Updating Category chart with data:", data.categories);
-            const ctx = document.getElementById('categoryChart').getContext('2d');
-            
-            // Process category data
-            const categories = Object.keys(data.categories);
-            const amounts = categories.map(cat => data.categories[cat]);
-            
-            // Destroy previous chart if it exists
-            if (charts.categoryChart) {
-                charts.categoryChart.destroy();
-            }
-            
-            // Create new chart
-            charts.categoryChart = new Chart(ctx, {
-                type: 'polarArea',
-                data: {
-                    labels: categories,
-                    datasets: [{
-                        data: amounts,
-                        backgroundColor: [
-                            'rgba(59, 130, 246, 0.6)',
-                            'rgba(16, 185, 129, 0.6)',
-                            'rgba(244, 114, 182, 0.6)',
-                            'rgba(251, 146, 60, 0.6)',
-                            'rgba(139, 92, 246, 0.6)'
-                        ],
-                        borderColor: [
-                            'rgba(37, 99, 235, 1)',
-                            'rgba(5, 150, 105, 1)',
-                            'rgba(219, 39, 119, 1)',
-                            'rgba(234, 88, 12, 1)',
-                            'rgba(109, 40, 217, 1)'
-                        ],
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom'
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    const value = context.raw;
-                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                    const percentage = value / total;
-                                    return `${context.label}: ${formatCurrency(value)} (${formatPercentage(percentage)})`;
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-        // Update Contract Details
-        function updateContractDetails(data) {
-            console.log("Updating Contract Details with data:", data);
-            const contractDetails = document.getElementById('contractDetails');
-            
-            contractDetails.innerHTML = `
-                <div class="card-grid">
-                    <div class="stat-card">
-                        <div class="stat-value">${formatCurrency(data.primeAwardTotal)}</div>
-                        <div class="stat-label">Prime Award Value</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value">${formatCurrency(data.subcontractTotal)}</div>
-                        <div class="stat-label">Subcontracted Value</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value">${formatPercentage(data.subcontractTotal / data.primeAwardTotal)}</div>
-                        <div class="stat-label">Subcontracted %</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value">${Object.keys(data.subcontractors).length}</div>
-                        <div class="stat-label">Subcontractors</div>
-                    </div>
-                </div>
-                
-                <div style="margin-top: 1.5rem;">
-                    <h3 style="font-size: 0.875rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-light);">
-                        Prime Contract Information
-                    </h3>
-                    <p style="font-size: 0.875rem; line-height: 1.5; color: var(--text);">
-                        <strong>Prime Contractor:</strong> ${data.primeAwardee || 'N/A'}<br>
-                        <strong>Contract ID:</strong> ${data.contractUniqueKey || 'N/A'}<br>
-                        <strong>Description:</strong> ${data.contractDescription || 'N/A'}<br>
-                        <strong>Period:</strong> ${formatDate(data.startDate)} to ${formatDate(data.endDate)}
-                    </p>
-                </div>
-            `;
-        }
-
-        // Update Subcontract Data Table
-        function updateSubcontractTable(data) {
-            console.log("Updating Subcontract Table with data:", data.originalData);
-            const tableBody = document.querySelector('#subcontractTable tbody');
-            tableBody.innerHTML = '';
-            
-            // Sort subcontractors by amount (descending)
-            const sortedSubcontractors = Object.keys(data.subcontractors).sort((a, b) => {
-                return data.subcontractors[b].amount - data.subcontractors[a].amount;
-            });
-            
-            // Add rows for each subcontractor
-            sortedSubcontractors.forEach(sub => {
-                const row = document.createElement('tr');
-                
-                // Find the description (category) for this subcontractor from the original data
-                const subData = data.originalData.find(row => row.subawardee_name === sub);
-                const description = subData ? subData.subaward_description : 'N/A';
-                
-                // Create row cells
-                row.innerHTML = `
-                    <td>${sub}</td>
-                    <td>${description}</td>
-                    <td>${formatCurrency(data.subcontractors[sub].amount)}</td>
-                    <td>${data.subcontractors[sub].location || 'N/A'}</td>
-                    <td>${data.subcontractors[sub].businessType || 'N/A'}</td>
-                `;
-                
-                tableBody.appendChild(row);
-            });
-        }
-
-        // Update all dashboard visualizations
-        function updateDashboard(data) {
-            console.log("Updating all dashboard visualizations");
-            // Update all charts and visualizations
-            updatePrimeSubChart(data);
-            updateAgencyTree(data);
-            updateGeoDistributionChart(data);
-            updateNaicsAnalysis(data);
-            updateTimelineAnalysis(data);
-            updateSubcontractorChart(data);
-            updateCategoryChart(data);
-            updateContractDetails(data);
-            updateSubcontractTable(data);
-            
-            // Show success message
-            showSuccess();
-        }
-
-        // File upload event handler
-        fileUpload.addEventListener('change', function(event) {
-            const file = event.target.files[0];
-            
-            if (!file) return;
-            
-            // Update displayed filename
-            fileName.textContent = file.name;
-            
-            // Show loading indicator
-            loadingIndicator.style.display = 'flex';
-            
-            // Reset error message
-            dataAlert.style.display = 'none';
-            
-            try {
-                const fileExt = file.name.split('.').pop().toLowerCase();
-                
-                if (fileExt === 'csv') {
-                    // Create a FileReader to read the CSV file
-                    const reader = new FileReader();
-                    
-                    reader.onload = function(e) {
-                        const csvText = e.target.result;
-                        // Parse the CSV text
-                        Papa.parse(csvText, {
-                            header: true,
-                            dynamicTyping: true,
-                            complete: function(results) {
-                                if (results.errors.length > 0 && results.errors[0].message !== "Delimiter") {
-                                    showError(results.errors[0].message);
-                                } else {
-                                    console.log("CSV parse results:", results);
-                                    // Process the data
-                                    dashboardData = processData(results.data);
-                                    
-                                    if (dashboardData) {
-                                        // Update dashboard with processed data
-                                        updateDashboard(dashboardData);
-                                    }
-                                }
-                            },
-                            error: function(error) {
-                                showError(error.message);
-                            }
-                        });
-                    };
-                    
-                    reader.onerror = function() {
-                        showError('Error reading file');
-                    };
-                    
-                    // Read the file as text
-                    reader.readAsText(file);
-                } else if (['xlsx', 'xls'].includes(fileExt)) {
-                    // Create a FileReader to read the Excel file
-                    const reader = new FileReader();
-                    
-                    reader.onload = function(e) {
-                        try {
-                            const data = e.target.result;
-                            const workbook = XLSX.read(data, { type: 'array' });
-                            
-                            // Get the first sheet
-                            const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-                            
-                            // Convert to JSON
-                            const jsonData = XLSX.utils.sheet_to_json(firstSheet);
-                            console.log("Excel parse results:", jsonData);
-                            
-                            // Process the data
-                            dashboardData = processData(jsonData);
-                            
-                            if (dashboardData) {
-                                // Update dashboard with processed data
-                                updateDashboard(dashboardData);
-                            }
-                        } catch (error) {
-                            showError(error.message);
-                        }
-                    };
-                    
-                    reader.onerror = function() {
-                        showError('Error reading file');
-                    };
-                    
-                    // Read the file as array buffer
-                    reader.readAsArrayBuffer(file);
-                } else {
-                    throw new Error('Unsupported file format. Please upload a CSV or Excel file.');
-                }
-            } catch (error) {
-                showError(error.toString());
-            }
+          })
         });
-
-        // When the page is first loaded, display placeholder text in the dashboard
-        document.addEventListener('DOMContentLoaded', function() {
-            document.querySelectorAll('.chart-container').forEach(container => {
-                const canvas = container.querySelector('canvas');
-                const ctx = canvas.getContext('2d');
-                ctx.font = '14px Arial';
-                ctx.fillStyle = '#6b7280';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText('Upload a file to generate visualization', canvas.width / 2, canvas.height / 2);
-            });
-
-            document.getElementById('agencyTree').innerHTML = '<p style="color: #6b7280; text-align: center; padding: 2rem 0;">Upload a file to view agency data</p>';
-            document.getElementById('naicsContent').innerHTML = '<p style="color: #6b7280; text-align: center; padding: 2rem 0;">Upload a file to view NAICS code analysis</p>';
-            document.getElementById('timelineContent').innerHTML = '<p style="color: #6b7280; text-align: center; padding: 2rem 0;">Upload a file to view contract timeline</p>';
-            document.getElementById('contractDetails').innerHTML = '<p style="color: #6b7280; text-align: center; padding: 2rem 0;">Upload a file to view contract details</p>';
+        
+        if (!response.ok) throw new Error('Failed to fetch category data');
+        
+        const data = await response.json();
+        const container = document.getElementById('category_chart');
+        container.classList.remove('loading');
+        
+        if (!data.results || data.results.length === 0) {
+          container.textContent = 'No category data available.';
+          return;
+        }
+        
+        const categories = data.results
+          .sort((a, b) => b.amount - a.amount)
+          .slice(0, 8); // Top 8 categories
+        
+        let html = '<ul class="bar-chart">';
+        categories.forEach(category => {
+          html += `
+            <li>
+              <strong>${category.name}</strong><br/>
+              ${formatCurrency(category.amount)}
+            </li>
+          `;
         });
-    </script>
+        html += '</ul>';
+        
+        container.innerHTML = html;
+        
+      } catch (error) {
+        console.error('Error loading categories:', error);
+        showError('category_chart', 'Error loading category data');
+      }
+    }
+    
+    // Load top agencies
+    async function loadTopAgencies() {
+      try {
+        const response = await fetch(`${API_BASE_URL}/agency/toptier/`, DEFAULT_PARAMS);
+        
+        if (!response.ok) throw new Error('Failed to fetch agency data');
+        
+        const data = await response.json();
+        const container = document.getElementById('agencies_chart');
+        container.classList.remove('loading');
+        
+        if (!data.results || data.results.length === 0) {
+          container.textContent = 'No agency data available.';
+          return;
+        }
+        
+        const agencies = data.results
+          .filter(agency => agency.budget_authority_amount > 0)
+          .sort((a, b) => b.budget_authority_amount - a.budget_authority_amount)
+          .slice(0, 10); // Top 10 agencies
+        
+        let html = '<ul class="bar-chart">';
+        agencies.forEach(agency => {
+          html += `
+            <li>
+              <strong>${agency.name}</strong><br/>
+              ${formatCurrency(agency.budget_authority_amount)}
+            </li>
+          `;
+        });
+        html += '</ul>';
+        
+        container.innerHTML = html;
+        
+      } catch (error) {
+        console.error('Error loading agencies:', error);
+        showError('agencies_chart', 'Error loading agency data');
+      }
+    }
+    
+    // Load geographic distribution
+    async function loadGeographicDistribution() {
+      try {
+        const dateRange = getDateRange(90);
+        const response = await fetch(`${API_BASE_URL}/search/spending_by_geography/`, {
+          ...DEFAULT_PARAMS,
+          body: JSON.stringify({
+            scope: 'place_of_performance',
+            geo_layer: 'state',
+            filters: {
+              time_period: [{ 
+                start_date: dateRange.start_date,
+                end_date: dateRange.end_date
+              }]
+            }
+          })
+        });
+        
+        if (!response.ok) throw new Error('Failed to fetch geographic data');
+        
+        const data = await response.json();
+        const container = document.getElementById('state_chart');
+        container.classList.remove('loading');
+        
+        if (!data.results || data.results.length === 0) {
+          container.textContent = 'No geographic data available.';
+          return;
+        }
+        
+        const stateData = data.results
+          .sort((a, b) => b.aggregated_amount - a.aggregated_amount);
+        
+        let html = '<ul class="bar-chart">';
+        stateData.slice(0, 10).forEach(state => {
+          html += `
+            <li>
+              <strong>${state.display_name}</strong><br/>
+              ${formatCurrency(state.aggregated_amount)}
+            </li>
+          `;
+        });
+        html += '</ul>';
+        
+        container.innerHTML = html;
+        
+      } catch (error) {
+        console.error('Error loading geographic data:', error);
+        showError('state_chart', 'Error loading geographic data');
+      }
+    }
+    
+    // Load top recipients
+    async function loadTopRecipients(type = 'all') {
+      // Update tab selection
+      document.querySelectorAll('#top_recipients_section .pills a').forEach(tab => {
+        tab.setAttribute('aria-selected', 'false');
+      });
+      document.getElementById(`tab-recipients-${type}`).setAttribute('aria-selected', 'true');
+      
+      try {
+        const dateRange = getDateRange(30);
+        const container = document.getElementById('top_recipients');
+        container.innerHTML = '<div class="loading">Loading recipient data...</div>';
+        
+        const body = {
+          filters: {
+            time_period: [{ 
+              start_date: dateRange.start_date,
+              end_date: dateRange.end_date
+            }]
+          }
+        };
+        
+        // Add filter by award type if needed
+        if (type === 'contracts') {
+          body.filters.award_type_codes = ['A', 'B', 'C', 'D'];
+        } else if (type === 'grants') {
+          body.filters.award_type_codes = ['02', '03', '04', '05'];
+        }
+        
+        const response = await fetch(`${API_BASE_URL}/search/spending_by_category/recipient_duns/`, {
+          ...DEFAULT_PARAMS,
+          body: JSON.stringify(body)
+        });
+        
+        if (!response.ok) throw new Error('Failed to fetch recipient data');
+        
+        const data = await response.json();
+        
+        if (!data.results || data.results.length === 0) {
+          container.innerHTML = 'No recipient data available.';
+          return;
+        }
+        
+        const recipients = data.results
+          .sort((a, b) => b.amount - a.amount)
+          .slice(0, 10); // Top 10 recipients
+        
+        let html = '<ul class="bar-chart">';
+        recipients.forEach(recipient => {
+          html += `
+            <li>
+              <strong>${recipient.name || 'Unnamed Recipient'}</strong><br/>
+              ${formatCurrency(recipient.amount)}
+            </li>
+          `;
+        });
+        html += '</ul>';
+        
+        container.innerHTML = html;
+        
+      } catch (error) {
+        console.error('Error loading recipients:', error);
+        showError('top_recipients', 'Error loading recipient data');
+      }
+    }
+    
+    // Load recent awards
+    async function loadRecentAwards() {
+      try {
+        const response = await fetch(`${API_BASE_URL}/search/spending_by_award/`, {
+          ...DEFAULT_PARAMS,
+          body: JSON.stringify({
+            page: 1,
+            limit: 5,
+            sort: 'Award Amount',
+            order: 'desc',
+            filters: {
+              time_period: [getDateRange(30)]
+            },
+            fields: [
+              "Award ID", 
+              "Recipient Name", 
+              "Award Amount",
+              "Awarding Agency",
+              "Award Date"
+            ]
+          })
+        });
+        
+        if (!response.ok) throw new Error('Failed to fetch award data');
+        
+        const data = await response.json();
+        const container = document.getElementById('recent_awards');
+        container.classList.remove('loading');
+        
+        if (!data.results || data.results.length === 0) {
+          container.textContent = 'No recent award data available.';
+          return;
+        }
+        
+        let html = '<ul class="bar-chart">';
+        data.results.forEach(award => {
+          html += `
+            <li>
+              <strong>${award["Recipient Name"] || 'Unnamed Recipient'}</strong><br/>
+              ${formatCurrency(award["Award Amount"] || 0)}<br/>
+              <small>${award["Awarding Agency"] || 'Unknown Agency'} - ${award["Award Date"] || 'Unknown Date'}</small>
+            </li>
+          `;
+        });
+        html += '</ul>';
+        
+        container.innerHTML = html;
+        
+      } catch (error) {
+        console.error('Error loading recent awards:', error);
+        showError('recent_awards', 'Error loading award data');
+      }
+    }
+    
+    // Initialize everything when the page loads
+    document.addEventListener('DOMContentLoaded', function() {
+      loadTotalSpending();
+      loadSpendingTimeSeries();
+      loadSpendingByCategory();
+      loadTopAgencies();
+      loadGeographicDistribution();
+      loadTopRecipients('all');
+      loadRecentAwards();
+    });
+  </script>
 </body>
 </html>
