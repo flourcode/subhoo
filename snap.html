@@ -404,10 +404,9 @@
             }
           }
           
-          // If we couldn't get a good number, provide a reasonable estimate
+          // Only display data if we actually got a value
           if (totalSpending <= 0) {
-            // Annual federal budget ~$6 trillion, so ~$500 billion per month
-            totalSpending = 500000000000;
+            throw new Error('No spending data available from the API');
           }
         }
         
