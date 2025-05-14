@@ -1,0 +1,1286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Streamlined Federal Business Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-treemap@2.3.0/dist/chartjs-chart-treemap.min.js"></script>
+
+    <style>
+        /* Custom styles can go here, but try to use Tailwind classes as much as possible */
+        body {
+            font-family: 'Inter', sans-serif; /* A common Tailwind font */
+        }
+        .chart-container {
+            position: relative;
+            height: 300px; /* Adjust as needed */
+            width: 100%;
+        }
+        .modal {
+            display: none; /* Hidden by default */
+        }
+        .modal.active {
+            display: flex; /* Show when active */
+        }
+        /* Additional custom styles from your original file can be selectively added here if not replaceable by Tailwind */
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 60px;
+            font-weight: 600;
+        }
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border-left-color: #09f; /* Tailwind: border-blue-500 */
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .highlight-section { /* Example: if you still need specific non-Tailwind animations */
+            animation: highlight-pulse 2s ease-in-out;
+        }
+        @keyframes highlight-pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); }
+            50% { box-shadow: 0 0 0 8px rgba(231, 76, 60, 0.3); }
+        }
+        /* Calendar specific styles (can be refactored with Tailwind) */
+        .calendar-day-header {
+            font-weight: 600;
+            text-align: center;
+            padding: 5px 0;
+            background-color: #2980b9; /* Consider Tailwind bg-blue-600 */
+            color: white;
+            border-radius: 4px;
+        }
+         .calendar-event {
+            padding: 3px 5px;
+            background-color: #3498db; /* Consider Tailwind bg-blue-500 */
+            color: white;
+            border-radius: 3px;
+            margin-bottom: 3px;
+            font-size: 11px;
+            cursor: pointer;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .calendar-event:hover {
+            background-color: #2980b9; /* Consider Tailwind bg-blue-600 */
+        }
+        .event-tooltip {
+            position: absolute;
+            background-color: white;
+            border: 1px solid #ddd; /* Tailwind: border border-gray-300 */
+            border-radius: 4px; /* Tailwind: rounded */
+            padding: 10px; /* Tailwind: p-2.5 */
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* Tailwind: shadow-lg */
+            z-index: 1000;
+            max-width: 300px;
+            display: none;
+        }
+        /* Map base styles */
+        .map-base {
+            width: 100%;
+            height: 100%;
+            background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA5ODAgNjEwIj48cGF0aCBmaWxsPSIjZjhmOWZhIiBzdHJva2U9IiNkZGQiIGQ9Ik0yMTMsNDg1LjVsLTEwLTEuNWwtNi41LTguNWwtMi0xMC41bC01LTUuNWwtMS41LTctNS0yLTUtNy01LTJsLTExLjUtNy41bDIuNS0xMGwtOS0xMy41YzAsMCwtMi41LTMuNSwtMy01LjVzLTIsLTctMiwtN2wzLjUtOGwxMS0xMWwxMS41LDNsNC41LDdsNS41LDEuNWwzLTUuNWwyLTkuNWwtMi41LTlsLTctN2wtMi41LTExLjVsOS0ybDUtMC41bDQuNS01LjVsLTIuNS0xNC41bDQsLTIzLjVsLTAtMTFsLTcuNS0xMGwtMS41LTExLjVsLTguNS0xM2wtNi41LTEuNWwtNS0xM2wtMTMsMWwtMTAuNS03LjVsLTEsLTExLjVsLTQuNS0xMWwtMTEtNi41bC05LTAuNWwtMTAuNSw2bC01LDE2LjVsLTUuNSwxM2wtMTAsLTEwLjVsLTEzLDZsLTYuNSw4LjVsLTEzLDRsLTE2LDkuNWwtMTAuNSwxM2wtNiwxbC0zLDEwLjVsMi41LDEzLjVsLTAuNSw5bC03LjUsMTkuNWwtMTUsMy41bC01LjUsOGwtMTUuNSw0LjVsLTgsNGwtMTkuNSwxLjVsLTguNSw0LjVsLTE1LDExLjVsLTIuNSwxOGw3LDE4LjVsOC4yLDUtMywxMGwxOCw3bDQuNSw3LjVsMTMuNSw0LjVsNi41LDExLjVsMTAsMTFsNi41LDEwLjVsOC4zLDEwLjVsOS41LDEwLjVsNy41LDExLjVsMCw5bDYsMGwxMi41LDVsMTMsMGw2LDguNWw5LjUsNmwxNC41LDguNWwxNy41LDVsMTIsNC41bDIwLDEwLjVsMTIuNSwxMy41bDIuNSw3LjVsMTEuNSwxMmwxMSw2LjVsOCwxbDEuNSw2LjVsLTQuNSw5bDIsOGwxMSw4bDYsMTJsMTYsOGw1LTYuNWwwLTlsMTMsLTEwLjVsMTMsLTEzLjVsNC0wLjVsNi41LDJsLTEsMTUuNWw2LjUsLTRsOS41LC0xMC41bDEwLC0xNC41bC01LC0xMmwtMTIuNSwtMTVsMS41LC0xMC41bC04LC0zLjVsLTUsLTEybDEwLC05TDIxMyw0ODUuNXoiLz48cGF0aCBmaWxsPSIjZjhmOWZhIiBzdHJva2U9IiNkZGQiIGQ9Ik02OTYuNSwxOTYuNWwtMTEtMTEuNWwtNS41LTExbC0xMi01LjVsLTEwLjUsLTJsLTEyLDYuNWwtNi41LDIuNWwtNi41LTEuNWwtMjYtNWwtMTAuNS0xMmwtMTQsLTJsLTYsMGwtNS41LDNsLTExLDNsLTI3LC0xMWwtMTIuNSw0LjVsLTgsLTFsLTEzLDEzbC05LDExbC01LC0xbC00LC05LjVsLTguNSwwbC0xOC41LC0wLjVsLTcuNSwtNmwtOC41LC0xMWwtMzEsLTkuNWwtNiwxMGwtOCwxLjVsLTMsLTEuNWwtMzgsLTQzLjVsLTQsLTEybC0xMC41LC00LjVsLTkuNSwtMC41bC05LC01LjVsLTE4LDEuNWwtMTIsMTBsLTI0LDFsLTYuNSwxMGwtMjUuNSw3LjVsLTYuNSwxMy41bC0yLDEwbC0xMiw5bC0zLDEwLjVsMS41LDhsLTEwLjUsMy41bC0wLjUsMTEuNWwtNy41LDYuNWwtNy41LDIwLjVsLTE0LjUsMTEuNWwtMTQsNGwtOS41LDExLjVsLTEwLDIuNWwtMTYuNSwtMS41bC0xMy45LC0xMS41bC0xMS41LDFsLTExLDYuNWwtMTgsNGwtMyw4LjVsLTcuNiw2LjVsLTkuNSw5LjVsLTAuNSw5LjVsLTYsMGwtMTAsNS41bC0yLDUuNWwtMTEuNSw3bC0xMS41LDEybC03LDEzbC02LjUsOC41bC0xMi41LC0yLjVsLTUuNSwtOWwtNC4yLC0xNS41bC04LjUsLTEyLjVsLTIuMywtMTJsMTEuNSwtMy41bDkuNSwtOS41bDYuNSwtMTFsMC41LC0xM2wtNSwtMTQuNWwtNC44LC0xMmwtNy41LC05LjVsLTEwLC0xMGwtNi0xMy41bC05LjUsMGwtNiwxMGwtOCw0LjVsLTYuNSw5LjVsMSw5LjVsLTgsNGwtMTYsLTYuNWwtMTcsLTFsLTEwLC0zLjVsLTguNSwtMTBsLTMuNSwtMjUuNWwtNC41LC0xM2wtNS41LC0zLjVsLTEwLDJsLTEwLjUsOWwtMTgsNy41bDIuNSwtOWwtMS41LC05LjVsLTQuNSwtOGwtMTYsLTEuNWwtNywtNGwtMTAuNywtMTdsMiwtMTBsLTcsLTkuNWwtMC41LC05bC01LjgsLTRsLTcuNSwtMTFsLTcsLTMuNWwtMTMsN2wxNC41LDIwLjVsMSw5LjVsLTEuNSw5LjVsLTkuNSw5LjVsLTQsMTEuNWwtMTEuNSw5bC00LjUsMTNsLTEuNSwxMi41bC02LjgsMS41bDIuMywyOGwzLjUsMTNsNiwyLjVsNywxMmw5LjUsMWwxNy41LDEwLjVsMyw3LjVsLTQsMTQuNWwtNC41LDkuNWwtMC41LDlsNy4yLDEyLjVsMiw5LjVsLTUsMTcuNWwxLjgsMTQsNSwxM2wtMSwxMGwzLjUsMTMuNWw5LjUsMTMuNWwwLDExbDQsMTNsOC41LDE0LjVsMTIuNSwxOGw1LDEwLjVsOC41LDEwLjVsMi41LDEwLjVsLTEsMThsNiwxOGwxNyw4LjVsLTEuNSw5bDQsMTBsNy41LDEuNWwxOS41LDE1LjVsMTEuNSwyNGwxMS41LDAuNWwxMC41LDguNWw4LDEuNWw1LjUsMTAuNWw3LjUsMTBsNiwybC0xLjUsMTkuNWwxLjUsMTJsLTcuNSwxM2wtMiw4LjVsLTExLjUsMTFsLTUsOGwxLDExbDIxLDE0LjVsNiwzbDcuNSwtNC41bDYsOWwxOCw3bDMsMTlsMCwxMGwxNyw2bDYuNiw5LjVsMTYuOSw3LDUsMTRsMTMuNSwtMmwxNSwtNmwxMS41LS41bDcuNSwxMWwyNCwxNi41bDIsMTJsMTkuNSw4bDQuNSw3LjVsNi41LDFsMTAuNSwtOGwxNC41LDVsNywxNC41bDEzLDExLjVsMTIuNSw0LjVsMTQuNSwybDEwLC0xMGwxMywyLjVsMTIuNSwtNC41bDkuNSw2bDEwLDZsMTMsLTVsLTIuNSwtOS41bDMsLTExLjVsNy41LC02LjVsNiwwbDYuNSw3LjVsMTYuNSwtMS41bDgsMmwtNi41LC0xM2wxLC0xM2wtMy41LC0xMi41bC01LC0xMS41bDYsLTcuNWwtMC41LC05LjVsLTgsLTEwbC0xLC0xMC41bDYuNSwtMTJsLTMuNSwtMjkuNWwtNC41LC0xN2wtMTAuNSwtNi41bC00LjUsLTEyLjVsNi41LC05LjVsLTAsLTEwbC01LC0xMC41bC0xLC0xM2w2LC0xOGwxLjUsLTE0LjVsLTIuNSwtOGwtMTEsLTkuNWwxMi41LC02LjVsLTUsLTEwLjVsLTEuNSwtOWwtMTEsLTExLjVsMTAsLTEwbDMsLTExLjVsLTIsLTEwLjVsLTYuNSwtOC41bC0xNywtOGwxLjUsMTJsLTIuNSw5bC05LDJsLTUuNSwxMGwtNy41LC0xNWwzLC0xM2wtNSwtOC41bDUuNSwtMTBsOCwtNi41bDgsMGwxMiwtN2wwLC0xMC41bDUuNSwtOGwxMC41LDFsMTMsLTRsMTcuNSwybDYsLTQuNWwxNSwtMWw3LjUsNC41bDE0LC0zbDEyLjUsMmw1LC0xLjVsNywtMThsMjMuNSwtMGwxMC41LC0xMS41bDcsLTFsMTUsMC41bDgsLTQuNWw5LC02LjVsLTIuNSwtOGwtMTAsLTRsLTYuMjUsLTYuNzVsMTEuMjUsLTEuNzVsNy41LDJsNSwxNC41bDcsOC41bDQuNSw4LjVsLTEuNSw5LjVsNiw5LjVsNy41LDRMNjk2LjUsMTk2LjV6Ii8+PHBhdGggZmlsbD0iI2Y4ZjlmYSIgc3Ryb2tlPSIjZGRkIiBkPSJNODgwLDI0MGwtMTAuNSwtMTMuNWwtMTMuNSwtNC41bC0xMSwtMTIuNWwtNywtOGwtMTUsLTYuNWwtNy41LC0xMS41bC0xNSwtMi41bC0xMywtMTdsLTEwLC01bC0xMywtMy41bC05LC0zLjVsLTgsMS41bC0xMy41LC0zbC03LDEuNWwtOS41LC0xLjVsLTkuNSwtNy41bC0xNSwxLjVsLTEwLjUsLTNsLTEzLjUsNmwtNy41LC0xLjVsLTExLjUsNS41bC05LC0zbC01LjUsMTVsLTQuNSw2LjVsLTgsMTJsLTgsNmwtMTYsOGwtMTYuNSwyLjVsLTE0LC0wLjVsLTExLjcsMTUuNWwxNS43LDIuNWw2LDExLjVsMTIuNSwzbDEzLDZsNy41LDguNWw2LDEzbDEyLjUsM2w5LjUsMTIuNWwxMS41LDcuNWwxMS41LS01bDMsMTAuNWwxNC41LC0wLjVsMTQsNWwxNy41LC01bDEyLjUsNy41bDEwLC0xMi41bDkuNSwwbDQsOGwxMywxLjVsNi41LC00bDEyLjUsMi41bDExLC0xLjVsNC41LDVsMTAsLTAuNWwxNi41LC01bDkuNSwzbDI0LC02LjVsMTMuNSw2LjVsMTUsLTAuNWwyMi41LC04LjVsMC41LC0yOGwxMiwtMi41bDYuNSwtNS41bDEwLjUsLTQuNWwyLC01LjVsMTEsLTcuNUw4ODAsMjQweiIvPjwvc3ZnPg==');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+        .map-marker {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: #e74c3c; /* Consider Tailwind bg-red-500 */
+            transform: translate(-50%, -50%);
+        }
+
+    </style>
+</head>
+<body class="bg-gray-100 p-4 md:p-8">
+    <div class="dashboard-container max-w-7xl mx-auto">
+        <header class="mb-6">
+            <h1 class="text-3xl font-bold text-gray-800">Federal Business Development Dashboard</h1>
+            <p class="text-gray-600">Prime to Subcontractor Teaming Opportunities</p>
+        </header>
+
+        <section id="fileInputSection" class="bg-white p-6 rounded-lg shadow-md mb-6">
+            <div id="autoload-section" class="mb-4">
+                <div id="processingIndicator" class="loading hidden">
+                    <div class="spinner"></div>
+                    <span class="ml-2 text-gray-700">Processing data...</span>
+                </div>
+                <p id="autoload-status" class="text-sm text-gray-600 p-3 bg-gray-50 rounded-md">Attempting to load data from S3 bucket...</p>
+            </div>
+            
+            <div id="manual-upload-section" class="hidden">
+                <h3 class="text-xl font-semibold text-gray-700 mb-2">Upload Federal Contractor CSV Data</h3>
+                <p class="text-sm text-gray-600 mb-4">If auto-loading fails or you want to use a different file, you can manually upload <code>sbaall.csv</code></p>
+                
+                <div class="flex items-center gap-4 mb-4">
+                    <input type="file" id="csvFileInput" accept=".csv" class="hidden">
+                    <label for="csvFileInput" class="px-4 py-2 bg-blue-500 text-white rounded-md cursor-pointer hover:bg-blue-600 transition-colors">Choose CSV File</label>
+                    <span id="file-name-display" class="text-sm text-gray-700 p-2 border border-gray-300 rounded-md min-w-[200px]">No file selected</span>
+                </div>
+                
+                <div id="errorMessage" class="text-red-600 bg-red-100 p-3 rounded-md hidden mb-2">Error processing file.</div>
+                <div id="successMessage" class="text-green-600 bg-green-100 p-3 rounded-md hidden mb-2">File processed successfully.</div>
+                
+                <div class="mt-4">
+                    <a href="https://subhoodata.s3.us-east-1.amazonaws.com/data/sbaall.csv" download class="text-blue-500 hover:text-blue-600 hover:underline text-sm">Download sbaall.csv from S3</a>
+                </div>
+            </div>
+        </section>
+
+        <main id="dashboardContent" class="hidden">
+            <section id="statisticsSection" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <div class="stat-card bg-white p-4 rounded-lg shadow">
+                    <div class="text-3xl font-bold text-blue-600" id="totalContractsValue">0</div>
+                    <div class="text-sm text-gray-500">Total Contracts</div>
+                </div>
+                <div class="stat-card bg-white p-4 rounded-lg shadow">
+                    <div class="text-3xl font-bold text-blue-600" id="totalValueValue">$0</div>
+                    <div class="text-sm text-gray-500">Total Contract Value</div>
+                </div>
+                <div class="stat-card bg-white p-4 rounded-lg shadow">
+                    <div class="text-3xl font-bold text-blue-600" id="avgContractValue">$0</div>
+                    <div class="text-sm text-gray-500">Average Contract Value</div>
+                </div>
+                <div class="stat-card bg-white p-4 rounded-lg shadow">
+                    <div class="text-3xl font-bold text-blue-600" id="uniquePrimesValue">0</div>
+                    <div class="text-sm text-gray-500">Unique Prime Contractors</div>
+                </div>
+            </section>
+
+            <section id="advancedFiltersSection" class="bg-white p-6 rounded-lg shadow-md mb-6">
+                <details class="group">
+                    <summary class="flex justify-between items-center font-semibold text-gray-700 cursor-pointer hover:text-blue-600">
+                        Advanced Filtering Options
+                        <span class="text-sm text-blue-500 group-open:rotate-180 transition-transform duration-300 transform">&#9660;</span>
+                    </summary>
+                    <div class="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div class="filter-group">
+                            <label for="naicsFilter" class="block text-sm font-medium text-gray-700 mb-1">NAICS Code</label>
+                            <select id="naicsFilter" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                <option value="">All NAICS Codes</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label for="agencyFilter" class="block text-sm font-medium text-gray-700 mb-1">Department/Agency</label>
+                            <select id="agencyFilter" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                <option value="">All Departments/Agencies</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label for="stateFilter" class="block text-sm font-medium text-gray-700 mb-1">State</label>
+                            <select id="stateFilter" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                <option value="">All States</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label for="contractTypeFilter" class="block text-sm font-medium text-gray-700 mb-1">Contract Type</label>
+                            <select id="contractTypeFilter" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                <option value="">All Contract Types</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label for="subcontractPlanFilter" class="block text-sm font-medium text-gray-700 mb-1">Subcontract Plan</label>
+                            <select id="subcontractPlanFilter" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                <option value="">All Subcontract Plans</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label for="valueRangeFilter" class="block text-sm font-medium text-gray-700 mb-1">Contract Value Range</label>
+                            <select id="valueRangeFilter" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                <option value="">All Values</option>
+                                <option value="0-100000">Under $100K</option>
+                                <option value="100000-1000000">$100K - $1M</option>
+                                <option value="1000000-10000000">$1M - $10M</option>
+                                <option value="10000000-100000000">$10M - $100M</option>
+                                <option value="100000000-">Over $100M</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mt-6 flex justify-end gap-3">
+                        <button id="clearFiltersBtn" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors">Clear Filters</button>
+                        <button id="applyFiltersBtn" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors">Apply Filters</button>
+                    </div>
+                </details>
+            </section>
+            <div id="activeFilterIndicator" class="bg-blue-100 text-blue-700 p-3 rounded-md mb-6 hidden flex justify-between items-center">
+                <span>Filtered by: [Prime Name]</span>
+                <button class="clear-filter-btn-tailwind bg-red-500 text-white px-3 py-1 rounded-md text-sm hover:bg-red-600">Clear Filter</button>
+            </div>
+
+
+            <section id="primeSearchSection" class="bg-white p-6 rounded-lg shadow-md mb-6">
+                <h2 class="text-xl font-semibold text-gray-700 mb-3">Prime Contractor Search</h2>
+                <input type="text" id="primeSearchInput" class="w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 mb-3" placeholder="Search for a prime contractor...">
+                <div id="searchResults" class="max-h-60 overflow-y-auto border border-gray-200 rounded-md">
+                    </div>
+            </section>
+
+            <section id="coreChartsSection" class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <div class="dashboard-card bg-white p-6 rounded-lg shadow">
+                    <h2 class="text-lg font-semibold text-gray-700 mb-3">Top Prime Contractors by Contract Value</h2>
+                    <div class="chart-container">
+                        <canvas id="primeContractorsChart"></canvas>
+                    </div>
+                </div>
+                <div class="dashboard-card bg-white p-6 rounded-lg shadow">
+                    <h2 class="text-lg font-semibold text-gray-700 mb-3">Department Contract Distribution</h2>
+                    <div class="chart-container">
+                        <canvas id="departmentChart"></canvas>
+                    </div>
+                </div>
+                 </section>
+
+            <section id="progressiveDisclosureButtons" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                <button id="showNaicsAnalysisBtn" class="bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-4 rounded-lg shadow transition-colors w-full">NAICS Analysis</button>
+                <button id="showRecompeteCalendarBtn" class="bg-purple-500 hover:bg-purple-600 text-white font-semibold py-3 px-4 rounded-lg shadow transition-colors w-full">Recompete Calendar</button>
+                <button id="showPrimeProfilesBtn" class="bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-3 px-4 rounded-lg shadow transition-colors w-full">Prime Profiles</button>
+                <button id="showRegionalFocusBtn" class="bg-indigo-500 hover:bg-indigo-600 text-white font-semibold py-3 px-4 rounded-lg shadow transition-colors w-full">Regional Focus</button>
+                <button id="showSubcontractPlansBtn" class="bg-pink-500 hover:bg-pink-600 text-white font-semibold py-3 px-4 rounded-lg shadow transition-colors w-full">Subcontract Plan Explorer</button>
+                 <button id="showMoreChartsBtn" class="bg-teal-500 hover:bg-teal-600 text-white font-semibold py-3 px-4 rounded-lg shadow transition-colors w-full">More Overview Charts</button>
+            </section>
+            
+        </main>
+    </div>
+
+    <div id="detailModal" class="modal fixed inset-0 bg-gray-800 bg-opacity-75 items-center justify-center p-4 z-50">
+        <div class="modal-content bg-white rounded-lg shadow-xl p-6 max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="modal-header flex justify-between items-center mb-4 pb-4 border-b border-gray-200">
+                <h2 class="modal-title text-xl font-semibold text-gray-800" id="modalTitle">Details</h2>
+                <button class="modal-close text-gray-500 hover:text-gray-700 text-2xl" id="modalCloseBtn">&times;</button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <p class="text-gray-700">Loading details...</p>
+            </div>
+            <div class="modal-footer mt-6 pt-4 border-t border-gray-200 flex justify-end">
+                <button class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors" id="modalCloseBtnAction">Close</button>
+            </div>
+        </div>
+    </div>
+
+<script>
+// --- DOM Elements ---
+const processingIndicator = document.getElementById('processingIndicator');
+const autoloadStatus = document.getElementById('autoload-status');
+const manualUploadSection = document.getElementById('manual-upload-section');
+const dashboardContent = document.getElementById('dashboardContent');
+const csvFileInput = document.getElementById('csvFileInput');
+const fileNameDisplay = document.getElementById('file-name-display');
+const errorMessageDiv = document.getElementById('errorMessage');
+const successMessageDiv = document.getElementById('successMessage');
+const detailModal = document.getElementById('detailModal');
+const modalTitle = document.getElementById('modalTitle');
+const modalBody = document.getElementById('modalBody');
+const modalCloseBtn = document.getElementById('modalCloseBtn');
+const modalCloseBtnAction = document.getElementById('modalCloseBtnAction'); // Footer close button
+
+// --- Global Variables ---
+let parsedData = [];
+const charts = {}; // Store chart instances
+let activeFilter = null; // For prime contractor filter
+const S3_CSV_URL = 'https://subhoodata.s3.us-east-1.amazonaws.com/data/sbaall.csv';
+
+// State coordinates for map (if regional focus is implemented with this map)
+const stateCoordinates = {
+    'AL': {x: 575, y: 330}, 'AK': {x: 120, y: 240}, 'AZ': {x: 165, y: 310},
+    'AR': {x: 500, y: 320}, 'CA': {x: 75, y: 250}, 'CO': {x: 300, y: 250},
+    'CT': {x: 790, y: 170}, 'DE': {x: 760, y: 210}, 'FL': {x: 650, y: 380},
+    'GA': {x: 620, y: 330}, 'HI': {x: 250, y: 380}, 'ID': {x: 180, y: 180},
+    'IL': {x: 520, y: 240}, 'IN': {x: 560, y: 240}, 'IA': {x: 470, y: 220},
+    'KS': {x: 420, y: 270}, 'KY': {x: 580, y: 270}, 'LA': {x: 490, y: 360},
+    'ME': {x: 830, y: 130}, 'MD': {x: 740, y: 220}, 'MA': {x: 800, y: 160},
+    'MI': {x: 560, y: 190}, 'MN': {x: 470, y: 170}, 'MS': {x: 530, y: 340},
+    'MO': {x: 490, y: 270}, 'MT': {x: 250, y: 150}, 'NE': {x: 420, y: 230},
+    'NV': {x: 130, y: 220}, 'NH': {x: 810, y: 150}, 'NJ': {x: 770, y: 190},
+    'NM': {x: 250, y: 310}, 'NY': {x: 750, y: 170}, 'NC': {x: 680, y: 280},
+    'ND': {x: 390, y: 150}, 'OH': {x: 600, y: 230}, 'OK': {x: 420, y: 310},
+    'OR': {x: 90, y: 160}, 'PA': {x: 700, y: 210}, 'RI': {x: 810, y: 170},
+    'SC': {x: 650, y: 310}, 'SD': {x: 390, y: 190}, 'TN': {x: 580, y: 300},
+    'TX': {x: 380, y: 350}, 'UT': {x: 180, y: 240}, 'VT': {x: 790, y: 140},
+    'VA': {x: 700, y: 250}, 'WA': {x: 100, y: 120}, 'WV': {x: 650, y: 240},
+    'WI': {x: 510, y: 180}, 'WY': {x: 300, y: 200}, 'DC': {x: 730, y: 230}
+};
+
+
+// --- Utility Functions ---
+function formatCurrency(value) {
+    return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+    }).format(value);
+}
+
+function parseCurrencyValue(valueStr) {
+    if (!valueStr) return 0;
+    return parseFloat(String(valueStr).replace(/[$,\s]/g, '')) || 0;
+}
+
+function formatDate(dateStr) {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return ''; // Invalid date
+    return new Intl.DateTimeFormat('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+    }).format(date);
+}
+
+function showProcessing(message) {
+    processingIndicator.classList.remove('hidden');
+    if (message) processingIndicator.querySelector('span').textContent = message;
+    autoloadStatus.textContent = message || 'Processing data...';
+    autoloadStatus.classList.remove('hidden');
+    autoloadStatus.classList.remove('text-red-600', 'text-green-600'); // Reset color
+    autoloadStatus.classList.add('text-gray-600');
+}
+
+function hideProcessing() {
+    processingIndicator.classList.add('hidden');
+}
+
+function showErrorMessage(message, isAutoloadError = false) {
+    if (isAutoloadError) {
+        autoloadStatus.textContent = `Error: ${message}`;
+        autoloadStatus.classList.add('text-red-600');
+        manualUploadSection.classList.remove('hidden');
+        manualUploadSection.classList.add('highlight-section'); // You might need to define this style
+    } else {
+        errorMessageDiv.textContent = message;
+        errorMessageDiv.classList.remove('hidden');
+        successMessageDiv.classList.add('hidden');
+    }
+    hideProcessing();
+}
+
+function showSuccessMessage(message, isAutoloadSuccess = false) {
+    if (isAutoloadSuccess) {
+        autoloadStatus.textContent = message;
+        autoloadStatus.classList.add('text-green-600');
+    } else {
+        successMessageDiv.textContent = message;
+        successMessageDiv.classList.remove('hidden');
+        errorMessageDiv.classList.add('hidden');
+    }
+    hideProcessing();
+}
+
+// --- Data Processing and Chart Initialization ---
+function cleanupCharts() {
+    Object.keys(charts).forEach(key => {
+        if (charts[key]) {
+            charts[key].destroy();
+            charts[key] = null;
+        }
+    });
+}
+
+function processAndInitialize(data) {
+    if (!data || data.length === 0) {
+        showErrorMessage('No data to display.', !manualUploadSection.classList.contains('hidden'));
+        return;
+    }
+    
+    parsedData = data;
+    activeFilter = null; 
+    document.getElementById('activeFilterIndicator').classList.add('hidden');
+    
+    dashboardContent.classList.remove('hidden');
+    manualUploadSection.classList.remove('highlight-section'); 
+
+    cleanupCharts(); // Destroy old charts before creating new ones
+    
+    populateFilterOptions(); // Populate advanced filter dropdowns
+    
+    // Initialize only the core charts visible on the main page initially
+    initializeCoreVisuals(parsedData); 
+    
+    setupPrimeSearch(parsedData); // Setup search after data is processed
+
+    showSuccessMessage('Data loaded and processed successfully!', true); // Autoload success
+    hideProcessing();
+}
+
+// --- S3 Data Loading ---
+function loadDataFromS3() {
+    showProcessing('Attempting to load data from S3...');
+    fetch(S3_CSV_URL, { mode: 'cors', cache: 'no-cache', headers: { 'Accept': 'text/csv' } })
+    .then(response => {
+        if (!response.ok) {
+            let errorDetail = `HTTP error ${response.status}`;
+            if (response.status === 0) errorDetail = "Network error or CORS issue.";
+            else if (response.status === 403) errorDetail = "Access Forbidden (403). Check S3 bucket permissions and CORS.";
+            else if (response.status === 404) errorDetail = "File Not Found (404) at the S3 URL.";
+            throw new Error(`Failed to fetch data from S3. ${errorDetail}`);
+        }
+        return response.text();
+    })
+    .then(csvText => {
+        if (!csvText || csvText.trim() === '') {
+            showErrorMessage('S3 file is empty or contains no data.', true);
+            return;
+        }
+        showProcessing('Parsing CSV data from S3...');
+        Papa.parse(csvText, {
+            header: true,
+            dynamicTyping: true,
+            skipEmptyLines: true,
+            complete: function(results) {
+                if (results.errors && results.errors.length > 0) {
+                    showErrorMessage('Error parsing CSV from S3: ' + results.errors[0].message, true);
+                    return;
+                }
+                if (results.data && results.data.length > 0) {
+                    processAndInitialize(results.data);
+                } else {
+                    showErrorMessage('No data could be parsed from the S3 file.', true);
+                }
+            },
+            error: function(error) {
+                showErrorMessage('Error parsing CSV data from S3: ' + error.message, true);
+            }
+        });
+    })
+    .catch(error => {
+        let errorMsg = error.message; 
+        if (navigator.onLine === false && !errorMsg.includes("offline")) {
+            errorMsg += " You also appear to be offline.";
+        }
+        showErrorMessage(errorMsg, true);
+    });
+}
+
+// --- Populate Filter Dropdowns ---
+function populateFilterOptions() {
+    const naicsCodes = new Set();
+    const agencies = new Set();
+    const states = new Set();
+    const contractTypes = new Set();
+    const subcontractPlans = new Set();
+    
+    parsedData.forEach(record => {
+        if (record['NAICS Code']) {
+            naicsCodes.add(`${record['NAICS Code']}|${(record['NAICS Description'] || '').substring(0, 50)}`);
+        }
+        if (record['Contracting Department Name']) agencies.add(record['Contracting Department Name']);
+        if (record['Principal Place of Performance State Code']) states.add(record['Principal Place of Performance State Code']);
+        if (record['Award or Indefinite Delivery Vehicle Type']) contractTypes.add(record['Award or Indefinite Delivery Vehicle Type']);
+        if (record['Subcontract Plan']) subcontractPlans.add(record['Subcontract Plan']);
+    });
+
+    const populateSelect = (selectId, optionsSet, defaultOptionText, valueFormatter) => {
+        const selectElement = document.getElementById(selectId);
+        selectElement.innerHTML = `<option value="">${defaultOptionText}</option>`; // Clear and add default
+        Array.from(optionsSet).sort().forEach(item => {
+            const option = document.createElement('option');
+            if (valueFormatter) {
+                const { value, text } = valueFormatter(item);
+                option.value = value;
+                option.textContent = text;
+            } else {
+                option.value = item;
+                option.textContent = item || 'Not Specified';
+            }
+            selectElement.appendChild(option);
+        });
+    };
+
+    populateSelect('naicsFilter', naicsCodes, 'All NAICS Codes', item => {
+        const [code, desc] = item.split('|');
+        return { value: code, text: `${code} - ${desc}` };
+    });
+    populateSelect('agencyFilter', agencies, 'All Departments/Agencies');
+    populateSelect('stateFilter', states, 'All States');
+    populateSelect('contractTypeFilter', contractTypes, 'All Contract Types');
+    populateSelect('subcontractPlanFilter', subcontractPlans, 'All Subcontract Plans');
+}
+
+// --- Apply Advanced Filters ---
+function applyAdvancedFilters() {
+    const filters = {
+        naics: document.getElementById('naicsFilter').value,
+        agency: document.getElementById('agencyFilter').value,
+        state: document.getElementById('stateFilter').value,
+        contractType: document.getElementById('contractTypeFilter').value,
+        subcontractPlan: document.getElementById('subcontractPlanFilter').value,
+        valueRange: document.getElementById('valueRangeFilter').value,
+    };
+
+    let filteredData = parsedData.filter(record => {
+        if (filters.naics && record['NAICS Code'] != filters.naics) return false;
+        if (filters.agency && record['Contracting Department Name'] !== filters.agency) return false;
+        if (filters.state && record['Principal Place of Performance State Code'] !== filters.state) return false;
+        if (filters.contractType && record['Award or Indefinite Delivery Vehicle Type'] !== filters.contractType) return false;
+        if (filters.subcontractPlan && record['Subcontract Plan'] !== filters.subcontractPlan) return false;
+        
+        if (filters.valueRange) {
+            const [min, max] = filters.valueRange.split('-').map(v => v ? parseInt(v) : null);
+            const value = parseCurrencyValue(record['Base and All Options Value (Total Contract Value)']);
+            if (min !== null && value < min) return false;
+            if (max !== null && value >= max) return false; // Max is exclusive for ranges like 0-100k
+        }
+        return true;
+    });
+    
+    initializeCoreVisuals(filteredData); // Re-render core charts with filtered data
+    updateActiveFilterIndicator(filteredData.length < parsedData.length, filteredData.length);
+}
+
+function clearAdvancedFilters() {
+    document.getElementById('naicsFilter').value = '';
+    document.getElementById('agencyFilter').value = '';
+    document.getElementById('stateFilter').value = '';
+    document.getElementById('contractTypeFilter').value = '';
+    document.getElementById('subcontractPlanFilter').value = '';
+    document.getElementById('valueRangeFilter').value = '';
+    
+    initializeCoreVisuals(parsedData); // Re-render with all data
+    updateActiveFilterIndicator(false);
+}
+
+function updateActiveFilterIndicator(isFiltered, count) {
+    const indicator = document.getElementById('activeFilterIndicator');
+    if (isFiltered) {
+        indicator.innerHTML = `<span>Filtered: ${count.toLocaleString()} of ${parsedData.length.toLocaleString()} contracts</span> <button class="clear-filter-btn-tailwind bg-red-500 text-white px-3 py-1 rounded-md text-sm hover:bg-red-600" onclick="clearAdvancedFilters()">Clear Filters</button>`;
+        indicator.classList.remove('hidden');
+    } else {
+        indicator.classList.add('hidden');
+    }
+}
+
+
+// --- Initialize Core Visualizations (Statistics and Main Charts) ---
+function initializeCoreVisuals(data) {
+    updateStatistics(data);
+    createPrimeContractorsChart(data);
+    createDepartmentChart(data);
+    // Add other core charts here if any were decided for the main view
+}
+
+// --- Statistics Update ---
+function updateStatistics(data) {
+    if (!data || data.length === 0) {
+        document.getElementById('totalContractsValue').textContent = '0';
+        document.getElementById('totalValueValue').textContent = '$0';
+        document.getElementById('avgContractValue').textContent = '$0';
+        document.getElementById('uniquePrimesValue').textContent = '0';
+        return;
+    }
+    
+    document.getElementById('totalContractsValue').textContent = data.length.toLocaleString();
+    let totalValue = 0;
+    let contractsWithValue = 0;
+    data.forEach(record => {
+        const value = parseCurrencyValue(record['Base and All Options Value (Total Contract Value)']);
+        if (value > 0) {
+            totalValue += value;
+            contractsWithValue++;
+        }
+    });
+    document.getElementById('totalValueValue').textContent = formatCurrency(totalValue);
+    const avgValue = contractsWithValue > 0 ? totalValue / contractsWithValue : 0;
+    document.getElementById('avgContractValue').textContent = formatCurrency(avgValue);
+    const uniquePrimes = new Set(data.map(r => r['Legal Business Name']).filter(Boolean));
+    document.getElementById('uniquePrimesValue').textContent = uniquePrimes.size.toLocaleString();
+}
+
+// --- Chart Creation Functions (Example for Prime Contractors) ---
+function createChart(canvasId, type, data, options) {
+    const ctx = document.getElementById(canvasId).getContext('2d');
+    if (charts[canvasId]) {
+        charts[canvasId].destroy();
+    }
+    charts[canvasId] = new Chart(ctx, { type, data, options });
+}
+
+function createPrimeContractorsChart(data) {
+    const primeValues = {};
+    data.forEach(record => {
+        const prime = record['Legal Business Name'];
+        if (prime) {
+            primeValues[prime] = (primeValues[prime] || 0) + parseCurrencyValue(record['Base and All Options Value (Total Contract Value)']);
+        }
+    });
+    const sortedPrimes = Object.entries(primeValues).sort((a, b) => b[1] - a[1]).slice(0, 10);
+    const labels = sortedPrimes.map(item => item[0]);
+    const values = sortedPrimes.map(item => item[1]);
+
+    createChart('primeContractorsChart', 'bar', 
+        { labels, datasets: [{ label: 'Contract Value', data: values, backgroundColor: 'rgba(54, 162, 235, 0.7)', borderColor: 'rgba(54, 162, 235, 1)', borderWidth: 1 }] },
+        { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => formatCurrency(ctx.raw) } } }, scales: { x: { ticks: { callback: val => formatCurrency(val).slice(0,-3)+'k' } }, y: { ticks: { autoSkip: false, callback: function(val) { const label = this.getLabelForValue(val); return label.length > 20 ? label.substring(0, 17) + '...' : label; } } } } }
+    );
+}
+
+function createDepartmentChart(data) {
+    const deptValues = {};
+    data.forEach(record => {
+        const dept = record['Contracting Department Name'];
+        if (dept) {
+            deptValues[dept] = (deptValues[dept] || 0) + parseCurrencyValue(record['Base and All Options Value (Total Contract Value)']);
+        }
+    });
+    const sortedDepts = Object.entries(deptValues).sort((a, b) => b[1] - a[1]).slice(0, 10);
+    const labels = sortedDepts.map(item => item[0]);
+    const values = sortedDepts.map(item => item[1]);
+    
+    createChart('departmentChart', 'pie',
+        { labels, datasets: [{ data: values, backgroundColor: ['#3B82F6','#EF4444','#F59E0B','#10B981','#8B5CF6','#EC4899','#6366F1', '#FBBF24', '#22C55E', '#D946EF'], borderWidth: 1 }] },
+        { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { boxWidth: 12, font: { size: 10 } } }, tooltip: { callbacks: { label: ctx => `${ctx.label || ''}: ${formatCurrency(ctx.raw)}` } } } }
+    );
+}
+
+// --- Prime Search ---
+function setupPrimeSearch(allData) {
+    const searchInput = document.getElementById('primeSearchInput');
+    const resultsContainer = document.getElementById('searchResults');
+    const filterIndicator = document.getElementById('activeFilterIndicator');
+
+    // Clear prime filter function (global for inline onclick)
+    window.clearPrimeFilterFromIndicator = function() {
+        activeFilter = null;
+        filterIndicator.classList.add('hidden');
+        initializeCoreVisuals(parsedData); // Re-initialize with full data or currently filtered data
+        searchInput.value = '';
+        resultsContainer.innerHTML = '';
+    };
+    
+    // Apply prime filter function (global for inline onclick)
+    window.applyPrimeFilter = function(primeName) {
+        const primeData = parsedData.filter(record => record['Legal Business Name'] === primeName);
+        activeFilter = primeName; // Store the name of the actively filtered prime
+        
+        // Update the indicator text and make it visible
+        filterIndicator.innerHTML = `<span>Filtered by Prime: <strong>${primeName}</strong></span> <button class="clear-filter-btn-tailwind bg-red-500 text-white px-3 py-1 rounded-md text-sm hover:bg-red-600" onclick="clearPrimeFilterFromIndicator()">Clear Filter</button>`;
+        filterIndicator.classList.remove('hidden');
+        
+        initializeCoreVisuals(primeData); // Re-initialize charts with data for this prime
+        resultsContainer.innerHTML = ''; // Clear search results
+        searchInput.value = primeName; // Optionally fill search bar with prime's name
+        
+        // Close any open modals, like the advanced filter details
+        const advancedFilterDetails = document.querySelector('#advancedFiltersSection details');
+        if (advancedFilterDetails) advancedFilterDetails.open = false;
+    };
+    
+    searchInput.addEventListener('input', _.debounce(function() {
+        const searchTerm = this.value.toLowerCase().trim();
+        if (searchTerm.length < 2) {
+            resultsContainer.innerHTML = '';
+            return;
+        }
+        const matches = new Map();
+        allData.forEach(record => {
+            const prime = record['Legal Business Name'];
+            if (prime && prime.toLowerCase().includes(searchTerm)) {
+                if (!matches.has(prime)) matches.set(prime, { name: prime, contracts: 0, totalValue: 0 });
+                const primeMatchData = matches.get(prime);
+                primeMatchData.contracts++;
+                primeMatchData.totalValue += parseCurrencyValue(record['Base and All Options Value (Total Contract Value)']);
+            }
+        });
+        const sortedMatches = Array.from(matches.values()).sort((a, b) => b.totalValue - a.totalValue).slice(0, 10);
+        
+        if (sortedMatches.length > 0) {
+            resultsContainer.innerHTML = sortedMatches.map(match => `
+                <div class="p-3 hover:bg-gray-100 cursor-pointer border-b border-gray-200 last:border-b-0" onclick="applyPrimeFilter('${match.name.replace(/'/g, "\\'")}')">
+                    <strong class="text-blue-600">${match.name}</strong><br>
+                    <small class="text-gray-600">Contracts: ${match.contracts.toLocaleString()} | Value: ${formatCurrency(match.totalValue)}</small>
+                </div>
+            `).join('');
+        } else {
+            resultsContainer.innerHTML = '<div class="p-3 text-gray-500">No matching prime contractors found.</div>';
+        }
+    }, 300));
+}
+
+
+// --- Modal Handling ---
+function openModal(title, contentGenerator) {
+    modalTitle.textContent = title;
+    modalBody.innerHTML = ''; // Clear previous content
+    contentGenerator(modalBody); // Populate modal with new content
+    detailModal.classList.add('active');
+}
+
+function closeModal() {
+    detailModal.classList.remove('active');
+    modalBody.innerHTML = ''; // Clear content on close
+    // If any charts were rendered in the modal, destroy them
+    Object.keys(charts).forEach(key => {
+        if (key.startsWith('modal_')) { // Convention for modal chart IDs
+            if (charts[key]) charts[key].destroy();
+            delete charts[key];
+        }
+    });
+}
+modalCloseBtn.addEventListener('click', closeModal);
+modalCloseBtnAction.addEventListener('click', closeModal); // Footer close button
+detailModal.addEventListener('click', (e) => { // Close on backdrop click
+    if (e.target === detailModal) {
+        closeModal();
+    }
+});
+
+
+// --- Progressive Disclosure Section Handlers ---
+// Placeholder: NAICS Analysis
+document.getElementById('showNaicsAnalysisBtn').addEventListener('click', () => {
+    openModal('NAICS Code Analysis', (container) => {
+        // 1. Create a canvas for the chart
+        const canvasId = 'modal_naicsTreemapChart'; // Unique ID for modal chart
+        container.innerHTML = `
+            <p class="text-gray-600 mb-4">
+                This treemap visualization helps identify which prime contractors specialize in specific industries based on NAICS codes. 
+                Larger boxes represent higher contract values.
+            </p>
+            <div class="chart-container h-96 mb-4">
+                <canvas id="${canvasId}"></canvas>
+            </div>
+            <div id="modal_naicsTreemapLegend" class="text-sm text-center text-gray-500"></div>
+            <div class="mt-6">
+                <h3 class="text-md font-semibold text-gray-700 mb-2">NAICS Code Details</h3>
+                <div class="mb-3 max-w-xs">
+                    <select id="modal_naicsDetailSelector" class="w-full p-2 border border-gray-300 rounded-md shadow-sm">
+                        <option value="">Select a NAICS Code</option>
+                    </select>
+                </div>
+                <div id="modal_naicsDetailContent" class="bg-gray-50 p-3 rounded-md min-h-[100px]">
+                    <p class="text-gray-500">Select a NAICS code to view details.</p>
+                </div>
+            </div>`;
+        
+        // 2. Process data and create the treemap (or alternative chart)
+        // This function would be similar to your original createNaicsTreemap,
+        // but adapted to render in the modal and use the new canvasId.
+        // For simplicity, let's use a bar chart for now.
+        const naicsCounts = {}, naicsValues = {}, naicsDescriptions = {};
+        parsedData.forEach(record => {
+            const naics = record['NAICS Code'], naicsDesc = record['NAICS Description'];
+            if (naics) {
+                if (naicsDesc && !naicsDescriptions[naics]) naicsDescriptions[naics] = naicsDesc;
+                naicsCounts[naics] = (naicsCounts[naics] || 0) + 1;
+                naicsValues[naics] = (naicsValues[naics] || 0) + parseCurrencyValue(record['Base and All Options Value (Total Contract Value)']);
+            }
+        });
+        const sortedNAICS = Object.entries(naicsValues).sort((a, b) => b[1] - a[1]).slice(0, 10);
+        const labels = sortedNAICS.map(item => `${item[0]} - ${(naicsDescriptions[item[0]] || '').substring(0,20)}...`);
+        const values = sortedNAICS.map(item => item[1]);
+
+        createChart(canvasId, 'bar', 
+            { labels, datasets: [{ label: 'Contract Value', data: values, backgroundColor: 'rgba(22, 163, 74, 0.7)' }] }, // Green color for NAICS
+            { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { callback: val => formatCurrency(val).slice(0,-3)+'k' } } } }
+        );
+        document.getElementById('modal_naicsTreemapLegend').textContent = 'Top 10 NAICS Codes by Contract Value.';
+
+        // Populate NAICS detail selector
+        const naicsDetailSelector = document.getElementById('modal_naicsDetailSelector');
+        const uniqueNaics = new Set();
+        parsedData.forEach(r => { if(r['NAICS Code']) uniqueNaics.add(`${r['NAICS Code']}|${(r['NAICS Description'] || '').substring(0,50)}`)});
+        Array.from(uniqueNaics).sort().forEach(item => {
+            const [code, desc] = item.split('|');
+            const option = document.createElement('option');
+            option.value = code;
+            option.textContent = `${code} - ${desc}`;
+            naicsDetailSelector.appendChild(option);
+        });
+        
+        naicsDetailSelector.addEventListener('change', function() {
+            const selectedCode = this.value;
+            const detailContent = document.getElementById('modal_naicsDetailContent');
+            if (!selectedCode) {
+                detailContent.innerHTML = '<p class="text-gray-500">Select a NAICS code to view details.</p>';
+                return;
+            }
+            const naicsSpecificData = parsedData.filter(r => r['NAICS Code'] == selectedCode);
+            const primeBreakdown = {};
+            naicsSpecificData.forEach(r => {
+                const prime = r['Legal Business Name'];
+                if(prime) {
+                    primeBreakdown[prime] = (primeBreakdown[prime] || 0) + parseCurrencyValue(r['Base and All Options Value (Total Contract Value)']);
+                }
+            });
+            const sortedPrimesInNaics = Object.entries(primeBreakdown).sort((a,b) => b[1] - a[1]).slice(0,5);
+            let html = `<h4 class="font-semibold mb-2">Top Primes for NAICS ${selectedCode}:</h4><ul>`;
+            sortedPrimesInNaics.forEach(([prime, val]) => {
+                html += `<li class="text-sm">${prime}: ${formatCurrency(val)}</li>`;
+            });
+            html += `</ul>`;
+            if(sortedPrimesInNaics.length === 0) html = `<p class="text-gray-500">No prime contractor data for this NAICS code.</p>`;
+            detailContent.innerHTML = html;
+        });
+    });
+});
+
+// Placeholder: Recompete Calendar
+document.getElementById('showRecompeteCalendarBtn').addEventListener('click', () => {
+    openModal('Recompete Opportunity Calendar', (container) => {
+        container.innerHTML = `
+            <p class="text-gray-600 mb-4">
+                Track upcoming contract completion dates to identify potential recompete opportunities.
+            </p>
+            <div class="calendar-container h-96 border border-gray-200 rounded-md p-4">
+                <div class="flex justify-between items-center mb-4">
+                    <button id="modal_calendarPrevBtn" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">&lt;</button>
+                    <h3 id="modal_calendarTitle" class="text-lg font-semibold">Month Year</h3>
+                    <button id="modal_calendarNextBtn" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">&gt;</button>
+                </div>
+                <div id="modal_calendarGrid" class="grid grid-cols-7 gap-1 text-sm">
+                    </div>
+            </div>
+            <div class="event-tooltip"></div> `;
+        // Call a function to initialize and render the calendar, e.g., initializeModalCalendar(parsedData);
+        // This would involve date logic, event mapping, and DOM manipulation for the calendar grid.
+        // For brevity, the full calendar logic from original file is not duplicated here but should be adapted.
+        initializeModalCalendar(parsedData, 'modal_calendarPrevBtn', 'modal_calendarTitle', 'modal_calendarNextBtn', 'modal_calendarGrid');
+
+    });
+});
+
+function initializeModalCalendar(data, prevBtnId, titleId, nextBtnId, gridId) {
+    const contractEvents = [];
+    data.forEach(record => {
+        if (record['Completion Date']) {
+            const completionDate = new Date(record['Completion Date']);
+            if (!isNaN(completionDate.getTime())) {
+                contractEvents.push({
+                    date: completionDate,
+                    prime: record['Legal Business Name'],
+                    value: parseCurrencyValue(record['Base and All Options Value (Total Contract Value)']),
+                    id: record['Procurement Instrument Identifier'] || 'N/A'
+                });
+            }
+        }
+    });
+    contractEvents.sort((a, b) => a.date - b.date);
+
+    let currentDate = new Date();
+    currentDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+
+    const prevBtn = document.getElementById(prevBtnId);
+    const nextBtn = document.getElementById(nextBtnId);
+    const calendarTitleEl = document.getElementById(titleId);
+    const calendarGridEl = document.getElementById(gridId);
+    const tooltipEl = document.querySelector('.event-tooltip');
+
+
+    prevBtn.onclick = () => {
+        currentDate.setMonth(currentDate.getMonth() - 1);
+        renderMonthView();
+    };
+    nextBtn.onclick = () => {
+        currentDate.setMonth(currentDate.getMonth() + 1);
+        renderMonthView();
+    };
+
+    function renderMonthView() {
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth();
+        calendarTitleEl.textContent = `${new Intl.DateTimeFormat('en-US', { month: 'long' }).format(currentDate)} ${year}`;
+        
+        const firstDay = new Date(year, month, 1);
+        const lastDay = new Date(year, month + 1, 0);
+        const daysInMonth = lastDay.getDate();
+        const firstDayOfWeek = firstDay.getDay(); // 0 (Sun) - 6 (Sat)
+
+        let html = '';
+        const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        dayNames.forEach(day => { html += `<div class="calendar-day-header">${day}</div>`; });
+
+        for (let i = 0; i < firstDayOfWeek; i++) { html += '<div class="p-2 border bg-gray-50"></div>'; }
+
+        for (let day = 1; day <= daysInMonth; day++) {
+            const date = new Date(year, month, day);
+            const dayEvents = contractEvents.filter(event => 
+                event.date.getFullYear() === year && 
+                event.date.getMonth() === month && 
+                event.date.getDate() === day
+            );
+
+            html += `<div class="p-2 border min-h-[80px] relative ${dayEvents.length > 0 ? 'bg-blue-50' : ''}">
+                        <div class="font-semibold text-right">${day}</div>`;
+            dayEvents.slice(0, 2).forEach(event => {
+                html += `<div class="calendar-event" data-event-details="${event.prime} (${formatCurrency(event.value)}) - ID: ${event.id}">
+                            ${event.prime ? event.prime.substring(0,10)+'...' : 'Contract'}
+                         </div>`;
+            });
+            if (dayEvents.length > 2) {
+                html += `<div class="text-xs text-gray-500 mt-1">+${dayEvents.length - 2} more</div>`;
+            }
+            html += `</div>`;
+        }
+        calendarGridEl.innerHTML = html;
+        setupCalendarEventTooltips(tooltipEl);
+    }
+    renderMonthView();
+}
+
+function setupCalendarEventTooltips(tooltipEl) {
+    document.querySelectorAll('.calendar-event[data-event-details]').forEach(el => {
+        el.onmouseenter = (e) => {
+            tooltipEl.innerHTML = el.dataset.eventDetails;
+            tooltipEl.style.display = 'block';
+            const rect = el.getBoundingClientRect();
+            tooltipEl.style.left = `${rect.left + window.scrollX}px`;
+            tooltipEl.style.top = `${rect.top + window.scrollY - tooltipEl.offsetHeight - 5}px`;
+        };
+        el.onmouseleave = () => {
+            tooltipEl.style.display = 'none';
+        };
+    });
+}
+
+
+// Placeholder: Prime Profiles
+document.getElementById('showPrimeProfilesBtn').addEventListener('click', () => {
+    openModal('Prime Contractor Profiles', (container) => {
+        container.innerHTML = `
+            <p class="text-gray-600 mb-4">
+                Detailed profile cards for each prime contractor showing key metrics and patterns.
+            </p>
+            <div class="mb-4">
+                <input type="text" id="modal_primeCardSearch" class="w-full p-2 border border-gray-300 rounded-md" placeholder="Search prime contractors...">
+            </div>
+            <div id="modal_primeCardContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[60vh] overflow-y-auto">
+                </div>`;
+        // Call a function to generate and display prime profile cards, e.g., initializeModalPrimeProfiles(parsedData);
+        // This would involve iterating through primes, creating HTML for each card, and handling search.
+        initializeModalPrimeProfiles(parsedData);
+    });
+});
+
+function initializeModalPrimeProfiles(data) {
+    const primeProfiles = {};
+    data.forEach(record => {
+        const primeName = record['Legal Business Name'];
+        if (!primeName) return;
+        if (!primeProfiles[primeName]) {
+            primeProfiles[primeName] = { name: primeName, contracts: 0, totalValue: 0, naics: new Set() };
+        }
+        primeProfiles[primeName].contracts++;
+        primeProfiles[primeName].totalValue += parseCurrencyValue(record['Base and All Options Value (Total Contract Value)']);
+        if(record['NAICS Code']) primeProfiles[primeName].naics.add(record['NAICS Code']);
+    });
+
+    const container = document.getElementById('modal_primeCardContainer');
+    const searchInput = document.getElementById('modal_primeCardSearch');
+    
+    function renderCards(filterTerm = '') {
+        container.innerHTML = '';
+        let count = 0;
+        Object.values(primeProfiles)
+            .filter(p => filterTerm === '' || p.name.toLowerCase().includes(filterTerm.toLowerCase()))
+            .sort((a,b) => b.totalValue - a.totalValue)
+            .slice(0, 50) // Limit for performance
+            .forEach(profile => {
+                count++;
+                const card = document.createElement('div');
+                card.className = 'p-4 bg-gray-50 rounded-lg border border-gray-200';
+                card.innerHTML = `
+                    <h4 class="font-semibold text-blue-600">${profile.name}</h4>
+                    <p class="text-sm">Contracts: ${profile.contracts.toLocaleString()}</p>
+                    <p class="text-sm">Total Value: ${formatCurrency(profile.totalValue)}</p>
+                    <p class="text-xs mt-1">Top NAICS: ${Array.from(profile.naics).slice(0,3).join(', ')}</p>
+                    <button class="mt-2 text-xs bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600" onclick="applyPrimeFilter('${profile.name.replace(/'/g, "\\'")}')">Filter Dashboard</button>
+                `;
+                container.appendChild(card);
+        });
+        if(count === 0) container.innerHTML = `<p class="text-gray-500 p-4">No matching prime contractors found.</p>`;
+    }
+    
+    searchInput.addEventListener('input', _.debounce(() => renderCards(searchInput.value), 300));
+    renderCards(); // Initial render
+}
+
+
+// Placeholder: Regional Focus
+document.getElementById('showRegionalFocusBtn').addEventListener('click', () => {
+    openModal('Regional Focus Finder', (container) => {
+        container.innerHTML = `
+            <p class="text-gray-600 mb-4">
+                Visualize geographic concentration of contracts to identify regional opportunities.
+            </p>
+            <div class="map-container h-96 border border-gray-200 rounded-md relative mb-4">
+                <div class="map-base" id="modal_mapBase">
+                    </div>
+                 <div class="absolute top-2 right-2 bg-white p-2 rounded shadow text-xs">
+                    <label for="modal_mapViewSelector" class="mr-2">View by:</label>
+                    <select id="modal_mapViewSelector" class="p-1 border rounded">
+                        <option value="count">Contract Count</option>
+                        <option value="value">Contract Value</option>
+                    </select>
+                </div>
+            </div>
+            <div id="modal_regionTableContainer" class="max-h-[300px] overflow-y-auto">
+                <table class="min-w-full divide-y divide-gray-200 text-sm">
+                    <thead class="bg-gray-50"><tr><th class="px-3 py-2 text-left font-medium text-gray-500">State</th><th class="px-3 py-2 text-left font-medium text-gray-500">Contracts</th><th class="px-3 py-2 text-left font-medium text-gray-500">Value</th></tr></thead>
+                    <tbody id="modal_regionTableBody" class="bg-white divide-y divide-gray-200"></tbody>
+                </table>
+            </div>`;
+        initializeModalRegionalFocus(parsedData);
+    });
+});
+
+function initializeModalRegionalFocus(data) {
+    const stateData = {};
+    let mapViewType = 'count'; // Default
+
+    data.forEach(record => {
+        const state = record['Principal Place of Performance State Code'];
+        if (!state || !stateCoordinates[state]) return; // Ensure state and coords exist
+        if (!stateData[state]) {
+            stateData[state] = { state: state, count: 0, value: 0, primes: {}, naics: {} };
+        }
+        const value = parseCurrencyValue(record['Base and All Options Value (Total Contract Value)']);
+        stateData[state].count++;
+        stateData[state].value += value;
+    });
+
+    const mapBaseEl = document.getElementById('modal_mapBase');
+    const mapViewSelector = document.getElementById('modal_mapViewSelector');
+    const regionTableBody = document.getElementById('modal_regionTableBody');
+    const tooltipEl = document.querySelector('.event-tooltip') || createGlobalTooltip(); // Ensure tooltip exists
+
+    function createGlobalTooltip() {
+        const tt = document.createElement('div');
+        tt.className = 'event-tooltip'; // Use existing styles
+        document.body.appendChild(tt);
+        return tt;
+    }
+
+
+    function renderMap() {
+        mapBaseEl.innerHTML = ''; // Clear old markers
+        const maxCount = Math.max(1, ...Object.values(stateData).map(s => s.count)); // Avoid division by zero
+        const maxValue = Math.max(1, ...Object.values(stateData).map(s => s.value));
+
+        Object.values(stateData).forEach(sData => {
+            const coords = stateCoordinates[sData.state];
+            if (!coords) return;
+
+            const sizeValue = mapViewType === 'count' ? sData.count / maxCount : sData.value / maxValue;
+            const markerSize = Math.max(5, Math.min(25, sizeValue * 25)); // Scale marker size
+
+            const marker = document.createElement('div');
+            marker.className = 'map-marker'; // Use existing style
+            marker.style.width = `${markerSize}px`;
+            marker.style.height = `${markerSize}px`;
+            marker.style.left = `${coords.x / 980 * 100}%`; // Convert absolute px to % for responsiveness
+            marker.style.top = `${coords.y / 610 * 100}%`;
+            marker.dataset.details = `${sData.state}: ${sData.count} contracts, ${formatCurrency(sData.value)}`;
+            
+            marker.onmouseenter = (e) => {
+                tooltipEl.innerHTML = marker.dataset.details;
+                tooltipEl.style.display = 'block';
+                const rect = marker.getBoundingClientRect();
+                tooltipEl.style.left = `${rect.left + window.scrollX + markerSize / 2 - tooltipEl.offsetWidth / 2}px`;
+                tooltipEl.style.top = `${rect.top + window.scrollY - tooltipEl.offsetHeight - 5}px`;
+            };
+            marker.onmouseleave = () => { tooltipEl.style.display = 'none'; };
+            mapBaseEl.appendChild(marker);
+        });
+    }
+    
+    function renderTable() {
+        regionTableBody.innerHTML = '';
+        Object.values(stateData).sort((a,b) => b.count - a.count).forEach(sData => {
+            const row = regionTableBody.insertRow();
+            row.insertCell().textContent = sData.state;
+            row.insertCell().textContent = sData.count.toLocaleString();
+            row.insertCell().textContent = formatCurrency(sData.value);
+        });
+    }
+
+    mapViewSelector.onchange = (e) => {
+        mapViewType = e.target.value;
+        renderMap();
+    };
+
+    renderMap();
+    renderTable();
+}
+
+
+// Placeholder: Subcontract Plan Explorer
+document.getElementById('showSubcontractPlansBtn').addEventListener('click', () => {
+    openModal('Subcontracting Plan Explorer', (container) => {
+        container.innerHTML = `
+            <p class="text-gray-600 mb-4">
+                Identify prime contractors with mandatory small business subcontracting requirements.
+            </p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div>
+                    <h4 class="font-semibold mb-2 text-center">Subcontracting Plan Types</h4>
+                    <div class="chart-container h-64"><canvas id="modal_subplanTypesChart"></canvas></div>
+                </div>
+                <div>
+                    <h4 class="font-semibold mb-2 text-center">Top Depts with Sub Plans</h4>
+                    <div class="chart-container h-64"><canvas id="modal_subplanDepartmentsChart"></canvas></div>
+                </div>
+            </div>
+            <h4 class="font-semibold mb-2">Primes with Subcontracting Plans</h4>
+            <div id="modal_subplanTableContainer" class="max-h-[300px] overflow-y-auto border rounded-md">
+                </div>
+        `;
+        initializeModalSubcontractExplorer(parsedData);
+    });
+});
+
+function initializeModalSubcontractExplorer(data) {
+    const subplans = {};
+    const subplanDepts = {};
+    const primeSubplans = {};
+
+    data.forEach(record => {
+        const plan = record['Subcontract Plan'] || 'Not Specified';
+        const dept = record['Contracting Department Name'];
+        const prime = record['Legal Business Name'];
+        const value = parseCurrencyValue(record['Base and All Options Value (Total Contract Value)']);
+
+        subplans[plan] = (subplans[plan] || 0) + 1;
+        if (plan !== 'Not Specified' && plan !== 'No Subcontracting Plan') {
+            subplanDepts[dept] = (subplanDepts[dept] || 0) + 1;
+        }
+        if (prime && plan !== 'Not Specified' && plan !== 'No Subcontracting Plan') {
+            if (!primeSubplans[prime]) primeSubplans[prime] = { name: prime, count: 0, totalValue: 0, plans: {} };
+            primeSubplans[prime].count++;
+            primeSubplans[prime].totalValue += value;
+            primeSubplans[prime].plans[plan] = (primeSubplans[prime].plans[plan] || 0) + 1;
+        }
+    });
+
+    // Subplan Types Chart
+    createChart('modal_subplanTypesChart', 'pie', 
+        { labels: Object.keys(subplans), datasets: [{ data: Object.values(subplans), backgroundColor: ['#3B82F6','#EF4444','#F59E0B','#10B981','#8B5CF6'] }] },
+        { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels:{font:{size:10}} } } }
+    );
+
+    // Subplan Departments Chart
+    const sortedDepts = Object.entries(subplanDepts).sort((a,b)=>b[1]-a[1]).slice(0,5);
+    createChart('modal_subplanDepartmentsChart', 'bar',
+        { labels: sortedDepts.map(d=>d[0].substring(0,15)+'...'), datasets: [{ label: 'Count', data: sortedDepts.map(d=>d[1]), backgroundColor: '#10B981' }] },
+        { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+    );
+    
+    // Prime Subplans Table
+    const tableContainer = document.getElementById('modal_subplanTableContainer');
+    let tableHTML = `<table class="min-w-full divide-y divide-gray-200 text-xs">
+                        <thead class="bg-gray-50"><tr>
+                            <th class="px-2 py-2 text-left font-medium">Prime</th>
+                            <th class="px-2 py-2 text-left font-medium">Sub Plans Count</th>
+                            <th class="px-2 py-2 text-left font-medium">Total Value</th></tr></thead>
+                        <tbody class="bg-white divide-y divide-gray-200">`;
+    Object.values(primeSubplans).sort((a,b)=>b.totalValue - a.totalValue).slice(0,20).forEach(p => {
+        tableHTML += `<tr>
+                        <td class="px-2 py-1">${p.name}</td>
+                        <td class="px-2 py-1">${p.count.toLocaleString()}</td>
+                        <td class="px-2 py-1">${formatCurrency(p.totalValue)}</td></tr>`;
+    });
+    tableHTML += `</tbody></table>`;
+    tableContainer.innerHTML = tableHTML || '<p class="p-3 text-gray-500">No subcontracting plan data for primes.</p>';
+}
+
+
+// Placeholder: More Overview Charts (Example: Contract Type and Value Range)
+document.getElementById('showMoreChartsBtn').addEventListener('click', () => {
+    openModal('Additional Overview Charts', (container) => {
+        container.innerHTML = `
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-700 mb-3">Contract Type Breakdown</h3>
+                    <div class="chart-container h-72"><canvas id="modal_contractTypeChart"></canvas></div>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-700 mb-3">Contract Value Range Distribution</h3>
+                    <div class="chart-container h-72"><canvas id="modal_valueRangeChart"></canvas></div>
+                </div>
+            </div>`;
+
+        // Contract Type Chart
+        const contractTypes = {};
+        parsedData.forEach(r => { if(r['Award or Indefinite Delivery Vehicle Type']) contractTypes[r['Award or Indefinite Delivery Vehicle Type']] = (contractTypes[r['Award or Indefinite Delivery Vehicle Type']] || 0) + 1; });
+        createChart('modal_contractTypeChart', 'doughnut',
+            { labels: Object.keys(contractTypes), datasets: [{ data: Object.values(contractTypes), backgroundColor: ['#3B82F6','#EF4444','#F59E0B','#10B981','#8B5CF6'] }] },
+            { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels:{font:{size:10}} } } }
+        );
+
+        // Value Range Chart
+        const ranges = [ { min: 0, max: 100000, label: '< $100K' }, { min: 100000, max: 1000000, label: '$100K-$1M' }, { min: 1000000, max: 10000000, label: '$1M-$10M' }, { min: 10000000, max: 100000000, label: '$10M-$100M' }, { min: 100000000, max: Infinity, label: '> $100M' } ];
+        const rangeCounts = Array(ranges.length).fill(0);
+        parsedData.forEach(r => {
+            const value = parseCurrencyValue(r['Base and All Options Value (Total Contract Value)']);
+            for (let i = 0; i < ranges.length; i++) if (value >= ranges[i].min && value < ranges[i].max) { rangeCounts[i]++; break; }
+        });
+        createChart('modal_valueRangeChart', 'bar',
+            { labels: ranges.map(r => r.label), datasets: [{ label: 'Contracts', data: rangeCounts, backgroundColor: '#F59E0B' }] },
+            { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: {y: {beginAtZero: true}} }
+        );
+    });
+});
+
+
+// --- File Input Handling ---
+csvFileInput.addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (!file) {
+        fileNameDisplay.textContent = 'No file selected';
+        return;
+    }
+    fileNameDisplay.textContent = file.name;
+    showProcessing('Processing manually uploaded file...');
+    
+    Papa.parse(file, {
+        header: true,
+        dynamicTyping: true,
+        skipEmptyLines: true,
+        complete: function(results) {
+            if (results.errors && results.errors.length > 0) {
+                showErrorMessage('Error parsing CSV file: ' + results.errors[0].message);
+                return;
+            }
+            if (results.data && results.data.length > 0) {
+                showSuccessMessage('File processed successfully!');
+                processAndInitialize(results.data);
+                autoloadStatus.classList.add('hidden'); // Hide S3 status
+            } else {
+                showErrorMessage('No data found in the uploaded file or file is empty.');
+            }
+        },
+        error: function(error) {
+            showErrorMessage('CSV parsing failed: ' + error.message);
+        }
+    });
+});
+
+// --- Event Listeners for Advanced Filters ---
+document.getElementById('applyFiltersBtn').addEventListener('click', applyAdvancedFilters);
+document.getElementById('clearFiltersBtn').addEventListener('click', clearAdvancedFilters);
+
+
+// --- Page Load ---
+document.addEventListener('DOMContentLoaded', function() {
+    // Initial setup, S3 load will be primary
+    loadDataFromS3(); 
+});
+
+</script>
+</body>
+</html>
