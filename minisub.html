@@ -18,6 +18,16 @@
             height: 300px; 
             width: 100%;
         }
+        .chart-no-data {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #6b7280; /* Tailwind gray-500 */
+            background-color: #f9fafb; /* Tailwind gray-50 */
+            border: 1px dashed #d1d5db; /* Tailwind gray-300 */
+            border-radius: 0.375rem; /* rounded-md */
+        }
         .spinner {
             border: 4px solid rgba(0, 0, 0, 0.1);
             width: 24px;
@@ -46,13 +56,17 @@
             border-radius: 3px;
             margin-bottom: 3px;
             font-size: 11px;
-            cursor: pointer;
+            cursor: default; 
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
-        .calendar-event:hover {
-            background-color: #2980b9;
+        .calendar-day-cell { 
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .calendar-day-cell:hover:not(.bg-gray-50) { 
+             background-color: #eff6ff !important; 
         }
         .event-tooltip {
             position: absolute;
@@ -88,6 +102,82 @@
         #processingIndicator.flex {
             display: flex;
         }
+        #unifiedSearchSuggestions {
+            position: absolute;
+            background-color: white;
+            border: 1px solid #d1d5db; 
+            border-top: none;
+            border-radius: 0 0 0.375rem 0.375rem; 
+            max-height: 240px; 
+            overflow-y: auto;
+            width: calc(100% - 2px); 
+            z-index: 50; 
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06); 
+        }
+        .suggestion-item {
+            padding: 0.5rem 0.75rem; 
+            cursor: pointer;
+        }
+        .suggestion-item:hover {
+            background-color: #f3f4f6; 
+        }
+        .suggestion-item .type-label {
+            font-size: 0.75rem; 
+            color: #6b7280; 
+            margin-left: 0.5rem; 
+            background-color: #e5e7eb; 
+            padding: 0.125rem 0.375rem; 
+            border-radius: 0.25rem; 
+        }
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background-color: rgba(0,0,0,0.75);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            padding: 1rem;
+        }
+        .modal-content {
+            background-color: white;
+            border-radius: 0.5rem; 
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05); 
+            padding: 1.5rem; 
+            max-width: 90vw; 
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+        }
+        .modal-content-lg { max-width: 60rem; } 
+        .modal-content-md { max-width: 48rem; } 
+
+        .modal-close-btn {
+            position: absolute;
+            top: 0.75rem; 
+            right: 0.75rem; 
+            background: none;
+            border: none;
+            font-size: 1.5rem; 
+            color: #9ca3af; 
+            cursor: pointer;
+        }
+        .modal-close-btn:hover {
+            color: #374151; 
+        }
+        .table-responsive {
+            display: block;
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .table-responsive thead th { 
+            position: sticky;
+            top: 0;
+            z-index: 10; 
+            background-color: #f9fafb; 
+        }
     </style>
 </head>
 <body class="bg-gray-100 p-4 md:p-8">
@@ -103,8 +193,7 @@
                 Data is automatically loaded.
             </p>
             <p class="text-gray-600 mb-2">
-                <strong>How to Use:</strong> Use the <strong>Search & Filter</strong> bar below to find specific prime contractors, 
-                or filter by NAICS code, department, specific contracting agency/office, and/or state. Enter multiple terms to narrow your results (e.g., "Acme Corp 541511 Defense VA DLA").
+                <strong>How to Use:</strong> Use the <strong>Search & Filter</strong> bar below. As you type, suggestions for Prime Names, NAICS, Agencies, etc., will appear. Click a suggestion to filter the dashboard, or press Enter to search with your typed term(s).
             </p>
             <p class="text-gray-600 text-sm">
                 If data fails to load, a manual upload option will appear. Source CSV:
@@ -149,11 +238,15 @@
             
             <section id="searchAndFilterSection" class="bg-white p-6 rounded-lg shadow-md mb-6">
                 <h2 class="text-xl font-semibold text-gray-700 mb-3">Search & Filter Contracts</h2>
-                <input type="text" id="unifiedSearchInput" class="w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 mb-4" placeholder="Search by Prime, NAICS, Department, Agency, Office, State...">
+                <div class="relative">
+                    <input type="text" id="unifiedSearchInput" class="w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="Search by Prime, NAICS, Department, Agency, Office, State...">
+                    <div id="unifiedSearchSuggestions" class="hidden">
+                        </div>
+                </div>
                                 
-                <div id="activeFilterIndicator" class="bg-blue-100 text-blue-700 p-3 rounded-md mb-4 hidden flex justify-between items-center">
+                <div id="activeFilterIndicator" class="bg-blue-100 text-blue-700 p-3 rounded-md mt-4 hidden flex justify-between items-center">
                     </div>
-                </section>
+            </section>
 
             <section id="coreChartsSection" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-6">
                 <div class="dashboard-card bg-white p-6 rounded-lg shadow">
@@ -196,16 +289,14 @@
                         <canvas id="topAgenciesChart"></canvas>
                     </div>
                 </div>
-                <div class="dashboard-card bg-white p-6 rounded-lg shadow md:col-span-2 xl:col-span-1"> <h2 class="text-lg font-semibold text-gray-700 mb-3 text-center">Contract Awards Over Time (by Year)</h2>
-                     <div class="metric-filters" id="awardsTimeFilters_main">
-                        <button class="filter-btn active" data-filter="count" data-chart="awardsOverTimeChart">By Count</button>
-                        <button class="filter-btn" data-filter="value" data-chart="awardsOverTimeChart">By Value</button>
-                    </div>
+                <div class="dashboard-card bg-white p-6 rounded-lg shadow md:col-span-2 xl:col-span-1"> 
+                     <h2 class="text-lg font-semibold text-gray-700 mb-3 text-center">Contract Timeline Forecast</h2>
                     <div class="chart-container">
-                        <canvas id="awardsOverTimeChart"></canvas>
+                        <canvas id="timelineChart"></canvas> 
                     </div>
                 </div>
-                 <div class="dashboard-card bg-white p-6 rounded-lg shadow md:col-span-2 xl:col-span-2"> <h2 class="text-lg font-semibold text-gray-700 mb-3 text-center">Prime Market Share (Top 5 Primes Overall)</h2>
+                 <div class="dashboard-card bg-white p-6 rounded-lg shadow md:col-span-2 xl:col-span-2"> 
+                    <h2 class="text-lg font-semibold text-gray-700 mb-3 text-center">Prime Market Share (for current filter)</h2>
                     <div class="chart-container">
                         <canvas id="marketShareChart"></canvas>
                     </div>
@@ -214,7 +305,7 @@
             
             <section id="primeProfilesSection" class="bg-white p-6 rounded-lg shadow-md mb-6">
                 <h2 class="text-xl font-semibold text-gray-700 mb-3">Prime Contractor Profiles</h2>
-                 <p class="text-sm text-gray-500 mb-3">Displaying profiles based on current search/filter. Use the search below to refine this list further.</p>
+                 <p class="text-sm text-gray-500 mb-3">Displaying profiles based on current search/filter. Click a prime name for more details. Use search below to refine this list.</p>
                 <div class="mb-4">
                     <input type="text" id="primeProfilesSearchInput" class="w-full md:w-1/2 lg:w-1/3 p-2 border border-gray-300 rounded-md" placeholder="Filter displayed profiles by name...">
                 </div>
@@ -223,7 +314,7 @@
 
             <section id="contractExpirationCalendarSection" class="bg-white p-6 rounded-lg shadow-md mb-6">
                 <h2 class="text-xl font-semibold text-gray-700 mb-3">Contract Expiration Calendar</h2>
-                 <p class="text-sm text-gray-500 mb-3">Displaying calendar based on current search/filter.</p>
+                 <p class="text-sm text-gray-500 mb-3">Displaying calendar based on current search/filter. Click a day with events for details.</p>
                 <div class="calendar-container min-h-[400px] border border-gray-200 rounded-md p-4">
                     <div class="flex justify-between items-center mb-4">
                         <button id="calendarPrevBtn" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">&lt;</button>
@@ -235,6 +326,16 @@
             </section>
         </main>
     </div>
+
+    <div id="genericModal" class="modal-backdrop hidden">
+        <div id="genericModalContent" class="modal-content">
+            <button id="genericModalCloseBtn" class="modal-close-btn">&times;</button>
+            <h2 id="genericModalTitle" class="text-xl font-semibold text-gray-800 mb-4">Modal Title</h2>
+            <div id="genericModalBody" class="text-gray-700">
+                </div>
+        </div>
+    </div>
+
     <div class="event-tooltip"></div>
 
 <script>
@@ -248,6 +349,7 @@ const errorMessageDiv = document.getElementById('errorMessage');
 const successMessageDiv = document.getElementById('successMessage');
 const s3LoadErrorDiv = document.getElementById('s3LoadError');
 const unifiedSearchInput = document.getElementById('unifiedSearchInput'); 
+const unifiedSearchSuggestions = document.getElementById('unifiedSearchSuggestions'); 
 const activeFilterIndicator = document.getElementById('activeFilterIndicator');
 
 const primeProfilesContainer = document.getElementById('primeProfilesContainer');
@@ -258,17 +360,42 @@ const calendarTitleEl = document.getElementById('calendarTitle');
 const calendarGridEl = document.getElementById('calendarGrid');
 const globalTooltipEl = document.querySelector('.event-tooltip');
 
+// Modal Elements
+const genericModal = document.getElementById('genericModal');
+const genericModalContent = document.getElementById('genericModalContent');
+const genericModalTitle = document.getElementById('genericModalTitle');
+const genericModalBody = document.getElementById('genericModalBody');
+const genericModalCloseBtn = document.getElementById('genericModalCloseBtn');
+
+
 // --- Global Variables ---
 let parsedData = [];
 const charts = {}; 
 const S3_CSV_URL = 'https://subhoodata.s3.us-east-1.amazonaws.com/data/sbaall.csv';
 let currentMainStateChartFilter = 'count';
-let currentAwardsTimeFilter = 'count'; // For the new awards over time chart
+const ITEMS_PER_PAGE_MODAL_TABLE = 10; 
 
 // --- Utility Functions ---
 function formatCurrency(value) { return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value); }
 function parseCurrencyValue(valueStr) { if (!valueStr) return 0; return parseFloat(String(valueStr).replace(/[$,\s]/g, '')) || 0; }
 function formatDate(dateStr) { if (!dateStr) return ''; const date = new Date(dateStr); return isNaN(date.getTime()) ? '' : new Intl.DateTimeFormat('en-US', { year: 'numeric', month: 'short', day: 'numeric' }).format(date); }
+
+function createAwardLink(piid) {
+    if (!piid || typeof piid !== 'string' || piid.trim() === '' || piid.toLowerCase() === 'n/a') {
+        return piid || 'N/A'; 
+    }
+    const encodedPiid = encodeURIComponent(piid.trim());
+    return `<a href="https://www.fpds.gov/ezsearch/fpdsportal?indexName=awardfull&templateName=1.5.3&s=FPDS&q=${encodedPiid}&x=18&y=15" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 hover:underline">${piid}</a>`;
+}
+
+function createEntityLink(entityId, entityName) {
+    if (!entityId || typeof entityId !== 'string' || entityId.trim() === '' || entityId.toLowerCase() === 'n/a') {
+        return entityName || entityId || 'N/A'; 
+    }
+    const encodedEntityId = encodeURIComponent(entityId.trim());
+    return `<a href="https://www.fpds.gov/ezsearch/fpdsportal?s=FPDS&q=${encodedEntityId}&x=0&y=0" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 hover:underline">${entityName || entityId}</a>`;
+}
+
 
 function showProcessingBriefly() { processingIndicator.classList.remove('hidden'); processingIndicator.classList.add('flex'); }
 function hideProcessing() { processingIndicator.classList.add('hidden'); processingIndicator.classList.remove('flex');}
@@ -295,6 +422,28 @@ function showSuccessMessage(message, isAutoloadSuccess = false) {
     hideProcessing();
 }
 
+// --- Modal Management ---
+function openModal(title, contentHTML, sizeClass = 'modal-content-md') {
+    genericModalTitle.textContent = title;
+    genericModalBody.innerHTML = contentHTML;
+    genericModalContent.className = `modal-content ${sizeClass}`; 
+    genericModal.classList.remove('hidden');
+    genericModal.classList.add('flex');
+}
+
+function closeModal() {
+    genericModal.classList.add('hidden');
+    genericModal.classList.remove('flex');
+    genericModalBody.innerHTML = ''; 
+}
+genericModalCloseBtn.addEventListener('click', closeModal);
+genericModal.addEventListener('click', (event) => { 
+    if (event.target === genericModal) {
+        closeModal();
+    }
+});
+
+
 // --- Data Processing and Chart Initialization ---
 function cleanupCharts() { Object.keys(charts).forEach(key => { if (charts[key]) { charts[key].destroy(); charts[key] = null; } }); }
 
@@ -310,7 +459,7 @@ function processAndInitialize(data) {
     initializeCoreVisuals(parsedData);
     setupUnifiedSearch(); 
     initializePrimeProfilesSection(parsedData);
-    initializeContractExpirationCalendarSection(parsedData); // Renamed function
+    initializeContractExpirationCalendarSection(parsedData); 
     showSuccessMessage('Data loaded and dashboard initialized.', true); 
     hideProcessing();
 }
@@ -350,46 +499,69 @@ function loadDataFromS3() {
     });
 }
 
-// --- Unified Search and Filtering Logic ---
-function applyUnifiedSearch(searchTerm) {
-    if (!searchTerm || searchTerm.trim() === '') {
-        clearAllFilters(); 
-        return;
-    }
-    const keywords = searchTerm.toLowerCase().split(' ').filter(k => k); 
-    const filteredData = parsedData.filter(record => {
-        return keywords.every(keyword => { 
-            const primeName = record['Legal Business Name']?.toLowerCase() || '';
-            const naicsCode = String(record['NAICS Code'] || '')?.toLowerCase(); 
-            const naicsDesc = record['NAICS Description']?.toLowerCase() || '';
-            const departmentName = record['Contracting Department Name']?.toLowerCase() || ''; // Added Department
-            const agencyName = record['Contracting Agency Name']?.toLowerCase() || ''; // Added Agency
-            const officeName = record['Contracting Office Name']?.toLowerCase() || ''; // Added Office
-            const stateCode = record['Principal Place of Performance State Code']?.toLowerCase() || '';
+// --- Unified Search, Suggestions, and Filtering Logic ---
+function applyFilter(searchTerm, filterType = null, filterValue = null) { 
+    let filteredData;
+    let displaySearchTerm = searchTerm; 
 
-            return primeName.includes(keyword) ||
-                   naicsCode.includes(keyword) ||
-                   naicsDesc.includes(keyword) ||
-                   departmentName.includes(keyword) ||
-                   agencyName.includes(keyword) ||
-                   officeName.includes(keyword) ||
-                   (keyword.length === 2 && stateCode === keyword) || 
-                   (keyword.length > 2 && stateCode.includes(keyword)); 
+    if (filterType) { 
+        const termToMatch = (filterValue || searchTerm).toLowerCase(); 
+        filteredData = parsedData.filter(record => {
+            let recordValue = '';
+            switch (filterType) {
+                case 'primeName': recordValue = record['Legal Business Name']?.toLowerCase() || ''; break;
+                case 'naicsCode': recordValue = String(record['NAICS Code'] || '').toLowerCase(); break;
+                case 'naicsDesc': recordValue = record['NAICS Description']?.toLowerCase() || ''; break;
+                case 'departmentName': recordValue = record['Contracting Department Name']?.toLowerCase() || ''; break; 
+                case 'agencyName': recordValue = record['Contracting Agency Name']?.toLowerCase() || ''; break;
+                case 'officeName': recordValue = record['Contracting Office Name']?.toLowerCase() || ''; break;
+                case 'stateCode': recordValue = record['Principal Place of Performance State Code']?.toLowerCase() || ''; break;
+                default: return false;
+            }
+            if (filterValue) return recordValue === termToMatch; 
+            return recordValue.includes(termToMatch); 
         });
-    });
+        displaySearchTerm = `${filterType.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}: ${filterValue || searchTerm}`; 
+    } else { 
+        if (!searchTerm || searchTerm.trim() === '') {
+            clearAllFilters(); return;
+        }
+        const keywords = searchTerm.toLowerCase().split(' ').filter(k => k);
+        filteredData = parsedData.filter(record => {
+            return keywords.every(keyword => {
+                const primeName = record['Legal Business Name']?.toLowerCase() || '';
+                const naicsCode = String(record['NAICS Code'] || '').toLowerCase();
+                const naicsDesc = record['NAICS Description']?.toLowerCase() || '';
+                const departmentName = record['Contracting Department Name']?.toLowerCase() || '';
+                const agencyName = record['Contracting Agency Name']?.toLowerCase() || '';
+                const officeName = record['Contracting Office Name']?.toLowerCase() || '';
+                const stateCode = record['Principal Place of Performance State Code']?.toLowerCase() || '';
+                return primeName.includes(keyword) || naicsCode.includes(keyword) ||
+                       naicsDesc.includes(keyword) || departmentName.includes(keyword) ||
+                       agencyName.includes(keyword) || officeName.includes(keyword) ||
+                       (keyword.length === 2 && stateCode === keyword) ||
+                       (keyword.length > 2 && stateCode.includes(keyword));
+            });
+        });
+    }
 
-    initializeCoreVisuals(filteredData); 
+    initializeCoreVisuals(filteredData);
     initializePrimeProfilesSection(filteredData);
-    initializeContractExpirationCalendarSection(filteredData); // Renamed
-    updateActiveFilterIndicator(searchTerm, filteredData.length);
+    initializeContractExpirationCalendarSection(filteredData);
+    updateActiveFilterIndicator(displaySearchTerm, filteredData.length);
+    unifiedSearchSuggestions.innerHTML = ''; 
+    unifiedSearchSuggestions.classList.add('hidden');
 }
+
 
 function clearAllFilters() {
     unifiedSearchInput.value = '';
     activeFilterIndicator.classList.add('hidden');
+    unifiedSearchSuggestions.innerHTML = '';
+    unifiedSearchSuggestions.classList.add('hidden');
     initializeCoreVisuals(parsedData); 
     initializePrimeProfilesSection(parsedData); 
-    initializeContractExpirationCalendarSection(parsedData); // Renamed
+    initializeContractExpirationCalendarSection(parsedData); 
 }
 
 function updateActiveFilterIndicator(searchTerm, count) {
@@ -402,28 +574,118 @@ function updateActiveFilterIndicator(searchTerm, count) {
     }
 }
 
+function selectSearchSuggestion(term, type, originalValue) { 
+    unifiedSearchInput.value = originalValue; 
+    applyFilter(originalValue, type, originalValue); 
+    unifiedSearchSuggestions.innerHTML = '';
+    unifiedSearchSuggestions.classList.add('hidden');
+}
+
 function setupUnifiedSearch() {
     unifiedSearchInput.addEventListener('input', _.debounce(function() {
-        applyUnifiedSearch(this.value);
-    }, 500)); 
+        const searchTerm = this.value.toLowerCase().trim();
+        unifiedSearchSuggestions.innerHTML = ''; 
+
+        if (searchTerm.length < 2) {
+            unifiedSearchSuggestions.classList.add('hidden');
+            return;
+        }
+
+        const suggestions = new Map(); 
+        const maxSuggestions = 15;
+
+        parsedData.forEach(record => {
+            if (suggestions.size >= maxSuggestions) return;
+
+            const checkAndAdd = (value, type, displayValue = null) => {
+                if (suggestions.size >= maxSuggestions) return;
+                const originalVal = value; 
+                const valStr = String(value || '').toLowerCase();
+                if (valStr.includes(searchTerm)) {
+                    const key = `${type}-${originalVal}`; 
+                    if (!suggestions.has(key)) {
+                         suggestions.set(key, { termForDisplay: displayValue || originalVal, type: type, originalValue: originalVal });
+                    }
+                }
+            };
+            
+            checkAndAdd(record['Legal Business Name'], 'primeName');
+            checkAndAdd(String(record['NAICS Code'] || ''), 'naicsCode');
+            
+            const descWords = (record['NAICS Description'] || '').split(/\s+/); 
+            descWords.forEach(word => {
+                if (word.toLowerCase().includes(searchTerm) && word.length > 2) { 
+                     checkAndAdd(word, 'naicsDesc', word); 
+                }
+            });
+            checkAndAdd(record['Contracting Department Name'], 'departmentName');
+            checkAndAdd(record['Contracting Agency Name'], 'agencyName');
+            checkAndAdd(record['Contracting Office Name'], 'officeName');
+            checkAndAdd(record['Principal Place of Performance State Code'], 'stateCode');
+        });
+
+        if (suggestions.size > 0) {
+            unifiedSearchSuggestions.classList.remove('hidden');
+            Array.from(suggestions.values()).forEach(sugg => {
+                const item = document.createElement('div');
+                item.className = 'suggestion-item';
+                item.textContent = sugg.termForDisplay.length > 60 ? sugg.termForDisplay.substring(0, 57) + '...' : sugg.termForDisplay;
+                const typeLabel = document.createElement('span');
+                typeLabel.className = 'type-label';
+                let displayType = sugg.type;
+                if (sugg.type === 'primeName') displayType = 'Prime';
+                else if (sugg.type === 'naicsCode') displayType = 'NAICS';
+                else if (sugg.type === 'naicsDesc') displayType = 'NAICS Keyword';
+                else if (sugg.type === 'departmentName') displayType = 'Dept.';
+                else if (sugg.type === 'agencyName') displayType = 'Agency';
+                else if (sugg.type === 'officeName') displayType = 'Office';
+                else if (sugg.type === 'stateCode') displayType = 'State';
+                typeLabel.textContent = displayType;
+                item.appendChild(typeLabel);
+
+                item.onclick = () => selectSearchSuggestion(sugg.termForDisplay, sugg.type, sugg.originalValue); 
+                unifiedSearchSuggestions.appendChild(item);
+            });
+        } else {
+            unifiedSearchSuggestions.classList.add('hidden');
+        }
+    }, 300));
+
+    unifiedSearchInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            applyFilter(this.value.trim()); 
+            unifiedSearchSuggestions.innerHTML = '';
+            unifiedSearchSuggestions.classList.add('hidden');
+        }
+    });
+
+    document.addEventListener('click', function(event) {
+        if (!unifiedSearchInput.contains(event.target) && !unifiedSearchSuggestions.contains(event.target)) {
+            unifiedSearchSuggestions.classList.add('hidden');
+        }
+    });
 }
+
 
 // --- Initialize Core Visualizations ---
 function initializeCoreVisuals(data) { 
     updateStatistics(data);
     createPrimeContractorsChart(data);
-    createDepartmentChart(data);
+    createDepartmentChart(data); 
     createNaicsChart_main(data);
     createContractTypeChart_main(data);
     createStateContractsChart_main(data, currentMainStateChartFilter);
-    createTopAgenciesChart(data); // New
-    createAwardsOverTimeChart(data, currentAwardsTimeFilter); // New
-    createMarketShareChart(data); // New
+    createTopAgenciesChart(data); 
+    createTimelineChart(data); 
+    createMarketShareChart(data); 
 }
 
 // --- Statistics Update ---
 function updateStatistics(data) { 
-    if (!data || data.length === 0) { /* ... */ return; }
+    if (!data || data.length === 0) {
+        ['totalContractsValue', 'totalValueValue', 'avgContractValue', 'uniquePrimesValue'].forEach(id => document.getElementById(id).textContent = '0');
+        return;
+    }
     document.getElementById('totalContractsValue').textContent = data.length.toLocaleString();
     let totalValue = 0, contractsWithValue = 0;
     data.forEach(r => { const v = parseCurrencyValue(r['Base and All Options Value (Total Contract Value)']); if (v>0) {totalValue+=v; contractsWithValue++;}});
@@ -433,7 +695,31 @@ function updateStatistics(data) {
 }
 
 // --- Chart Creation Functions ---
-function createChart(canvasId, type, data, options) { 
+function createChart(canvasId, type, data, options, noDataMessage = "No data available for current selection.") { 
+    const chartContainer = document.getElementById(canvasId).parentElement; 
+    
+    let isEmpty = true;
+    if (data && data.datasets && data.datasets.length > 0) {
+        isEmpty = data.datasets.every(ds => !ds.data || ds.data.length === 0 || ds.data.every(val => val === 0 || val === null));
+    } else if (type === 'pie' || type === 'doughnut') { 
+        if (data && data.datasets && data.datasets[0] && data.datasets[0].data) {
+           isEmpty = data.datasets[0].data.every(val => val === 0);
+        }
+    }
+
+    if (isEmpty) {
+        chartContainer.innerHTML = `<div class="chart-no-data">${noDataMessage}</div>`;
+        if (charts[canvasId]) {
+            charts[canvasId].destroy();
+            charts[canvasId] = null;
+        }
+        return;
+    } else {
+        if (chartContainer.querySelector('.chart-no-data')) {
+            chartContainer.innerHTML = `<canvas id="${canvasId}"></canvas>`;
+        }
+    }
+    
     const ctx = document.getElementById(canvasId).getContext('2d');
     if (charts[canvasId]) charts[canvasId].destroy();
     charts[canvasId] = new Chart(ctx, { type, data, options });
@@ -453,10 +739,27 @@ function createDepartmentChart(data) {
     const deptValues = {};
     data.forEach(r => { if (r['Contracting Department Name']) deptValues[r['Contracting Department Name']] = (deptValues[r['Contracting Department Name']] || 0) + parseCurrencyValue(r['Base and All Options Value (Total Contract Value)']); });
     const sorted = Object.entries(deptValues).sort((a,b)=>b[1]-a[1]).slice(0,10);
-    createChart('departmentChart', 'pie',
-        { labels: sorted.map(i=>i[0]), datasets: [{ data: sorted.map(i=>i[1]), backgroundColor: ['#3B82F6','#EF4444','#F59E0B','#10B981','#8B5CF6','#EC4899','#6366F1','#FBBF24','#22C55E','#D946EF'] }] },
-        { responsive: true, maintainAspectRatio: false, plugins: { legend: {position:'right', labels:{boxWidth:12,font:{size:10}}}, tooltip:{callbacks:{label:c=>`${c.label||''}: ${formatCurrency(c.raw)}`}}}}
-    );
+    
+    const chartData = { 
+        labels: sorted.map(i=>i[0]), 
+        datasets: [{ data: sorted.map(i=>i[1]), backgroundColor: ['#3B82F6','#EF4444','#F59E0B','#10B981','#8B5CF6','#EC4899','#6366F1','#FBBF24','#22C55E','#D946EF'] }] 
+    };
+    const chartOptions = { 
+        responsive: true, maintainAspectRatio: false, 
+        plugins: { 
+            legend: {position:'right', labels:{boxWidth:12,font:{size:10}}}, 
+            tooltip:{callbacks:{label:c=>`${c.label||''}: ${formatCurrency(c.raw)}`}}
+        },
+        onClick: (event, elements) => {
+            if (elements.length > 0) {
+                const chartElement = elements[0];
+                const departmentName = chartData.labels[chartElement.index];
+                unifiedSearchInput.value = departmentName; 
+                applyFilter(departmentName, 'departmentName', departmentName); 
+            }
+        }
+    };
+    createChart('departmentChart', 'pie', chartData, chartOptions);
 }
 
 function createNaicsChart_main(data) { 
@@ -501,49 +804,70 @@ function createStateContractsChart_main(data, filterType = 'count') {
     );
 }
 
-// New Chart: Top Contracting Agencies
 function createTopAgenciesChart(data) {
     const agencyValues = {};
     data.forEach(r => {
-        const agency = r['Contracting Agency Name']; // Using the more specific agency name
+        const agency = r['Contracting Agency Name']; 
         if (agency) {
             agencyValues[agency] = (agencyValues[agency] || 0) + parseCurrencyValue(r['Base and All Options Value (Total Contract Value)']);
         }
     });
     const sortedAgencies = Object.entries(agencyValues).sort((a, b) => b[1] - a[1]).slice(0, 10);
     createChart('topAgenciesChart', 'bar',
-        { labels: sortedAgencies.map(item => item[0]), datasets: [{ label: 'Contract Value', data: sortedAgencies.map(item => item[1]), backgroundColor: 'rgba(234, 88, 12, 0.7)' }] }, // Orange color
+        { labels: sortedAgencies.map(item => item[0]), datasets: [{ label: 'Contract Value', data: sortedAgencies.map(item => item[1]), backgroundColor: 'rgba(234, 88, 12, 0.7)' }] }, 
         { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => formatCurrency(ctx.raw) } } }, scales: { x: { ticks: { callback: val => formatCurrency(val).slice(0, -3) + 'k' } }, y: { ticks: { autoSkip: false, callback: function(val) { const label = this.getLabelForValue(val); return label.length > 20 ? label.substring(0, 17) + '...' : label; } } } } }
     );
 }
 
-// New Chart: Contract Awards Over Time
-function createAwardsOverTimeChart(data, filterType = 'count') {
-    const awardsByYear = {}; // { "2023": { count: x, value: y } }
-    data.forEach(r => {
-        const startDateStr = r['Period of Performance Start Date'];
-        if (startDateStr) {
-            const startDate = new Date(startDateStr);
-            if (!isNaN(startDate.getTime())) {
-                const year = startDate.getFullYear();
-                if (year > 2000 && year < 2030) { // Filter for reasonable year range
-                    if (!awardsByYear[year]) awardsByYear[year] = { count: 0, value: 0 };
-                    awardsByYear[year].count++;
-                    awardsByYear[year].value += parseCurrencyValue(r['Base and All Options Value (Total Contract Value)']);
-                }
+function createTimelineChart(data) {
+    const startYears = {}; 
+    const endYears = {};
+    data.forEach(record => {
+        if (record['Period of Performance Start Date']) { 
+            const d = new Date(record['Period of Performance Start Date']); 
+            if (!isNaN(d.getTime())) { 
+                const y = d.getFullYear(); 
+                if (y > 2000 && y < 2030) startYears[y] = (startYears[y] || 0) + 1; 
+            }
+        }
+        if (record['Completion Date']) { 
+            const d = new Date(record['Completion Date']); 
+            if (!isNaN(d.getTime())) { 
+                const y = d.getFullYear(); 
+                if (y > 2000 && y < 2030) endYears[y] = (endYears[y] || 0) + 1; 
             }
         }
     });
-    const sortedYears = Object.keys(awardsByYear).sort((a,b) => parseInt(a) - parseInt(b));
-    const chartDataValues = sortedYears.map(year => awardsByYear[year][filterType]);
+    const allYears = new Set([...Object.keys(startYears), ...Object.keys(endYears)].map(Number));
+    const sortedYears = Array.from(allYears).sort((a,b) => a-b);
+    
+    const labels = [], startCounts = [], endCounts = [];
+    sortedYears.forEach(year => { 
+        labels.push(year.toString()); 
+        startCounts.push(startYears[year] || 0); 
+        endCounts.push(endYears[year] || 0); 
+    });
 
-    createChart('awardsOverTimeChart', 'line',
-        { labels: sortedYears, datasets: [{ label: filterType === 'count' ? 'Number of Contracts' : 'Total Contract Value', data: chartDataValues, borderColor: 'rgba(75, 192, 192, 1)', backgroundColor: 'rgba(75, 192, 192, 0.2)', fill: true, tension: 0.1 }] },
-        { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true, position: 'top' } , tooltip: { callbacks: { label: ctx => filterType === 'count' ? ctx.raw.toLocaleString() : formatCurrency(ctx.raw) } } }, scales: { y: { beginAtZero: true, ticks: { callback: val => filterType === 'count' ? val.toLocaleString() : formatCurrency(val).slice(0,-3)+'k' } } } }
+    createChart('timelineChart', 'line', 
+        { 
+            labels, 
+            datasets: [ 
+                { label: 'Contracts Starting', data: startCounts, borderColor: 'rgba(54, 162, 235, 1)', backgroundColor: 'rgba(54, 162, 235, 0.2)', fill: true, tension: 0.1 }, 
+                { label: 'Contracts Ending', data: endCounts, borderColor: 'rgba(255, 99, 132, 1)', backgroundColor: 'rgba(255, 99, 132, 0.2)', fill: true, tension: 0.1 } 
+            ] 
+        },
+        { 
+            responsive: true, maintainAspectRatio: false, 
+            plugins: { 
+                legend: { display: true, position: 'top'},
+                tooltip: { callbacks: { label: ctx => `${ctx.dataset.label || ''}: ${ctx.parsed.y.toLocaleString()}` } } 
+            }, 
+            scales: { y: { beginAtZero: true, ticks: { callback: val => val.toLocaleString() } } } 
+        }
     );
 }
 
-// New Chart: Market Share
+
 function createMarketShareChart(data) {
     const primeValues = {};
     data.forEach(r => {
@@ -557,13 +881,13 @@ function createMarketShareChart(data) {
     
     const chartLabels = top5Primes.map(item => item[0]);
     const chartValues = top5Primes.map(item => item[1]);
-    if (otherPrimesValue > 0) {
+    if (otherPrimesValue > 0 && sortedPrimes.length > 5) { 
         chartLabels.push('Others');
         chartValues.push(otherPrimesValue);
     }
 
     createChart('marketShareChart', 'pie',
-        { labels: chartLabels, datasets: [{ data: chartValues, backgroundColor: ['#8B5CF6', '#EC4899', '#FBBF24', '#22C55E', '#6366F1', '#A8A29E'] }] }, // Different colors
+        { labels: chartLabels, datasets: [{ data: chartValues, backgroundColor: ['#8B5CF6', '#EC4899', '#FBBF24', '#22C55E', '#6366F1', '#A8A29E'] }] }, 
         { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { boxWidth: 12, font: { size: 10 } } }, tooltip: { callbacks: { label: ctx => `${ctx.label || ''}: ${formatCurrency(ctx.raw)} (${((ctx.raw / chartValues.reduce((a,b)=>a+b,0)) * 100).toFixed(1)}%)` } } } }
     );
 }
@@ -574,7 +898,7 @@ function initializePrimeProfilesSection(data) {
     const profiles = {};
     data.forEach(r => {
         const name = r['Legal Business Name']; if (!name) return;
-        if (!profiles[name]) profiles[name] = { name: name, contracts: 0, totalValue: 0, naics: new Set(), agencies: new Set() };
+        if (!profiles[name]) profiles[name] = { name: name, contracts: 0, totalValue: 0, naics: new Set(), agencies: new Set(), uei: r['Unique Entity ID'] }; 
         profiles[name].contracts++; profiles[name].totalValue += parseCurrencyValue(r['Base and All Options Value (Total Contract Value)']);
         if(r['NAICS Code']) profiles[name].naics.add(String(r['NAICS Code'])); 
         if(r['Contracting Agency Name']) profiles[name].agencies.add(r['Contracting Agency Name']);
@@ -589,12 +913,12 @@ function initializePrimeProfilesSection(data) {
                 const card = document.createElement('div');
                 card.className = 'p-4 bg-gray-50 rounded-lg border shadow hover:shadow-md';
                 card.innerHTML = `
-                    <h4 class="font-semibold text-blue-700 truncate" title="${p.name}">${p.name}</h4>
+                    <h4 class="font-semibold text-blue-700 truncate cursor-pointer hover:underline" title="${p.name}" onclick="showDetailedPrimeProfile('${p.name.replace(/'/g, "\\'")}')">${p.name}</h4>
                     <p class="text-sm">Contracts: ${p.contracts.toLocaleString()}</p>
                     <p class="text-sm">Value: ${formatCurrency(p.totalValue)}</p>
                     <p class="text-xs mt-1 truncate" title="Top NAICS: ${Array.from(p.naics).slice(0,3).join(', ')}">Top NAICS: ${Array.from(p.naics).slice(0,3).join(', ')}</p>
                     <p class="text-xs mt-1 truncate" title="Top Agencies: ${Array.from(p.agencies).slice(0,2).join(', ')}">Top Agencies: ${Array.from(p.agencies).slice(0,2).join(', ')}</p>
-                    <button class="mt-2 text-xs bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600" onclick="setUnifiedSearchTerm('${p.name.replace(/'/g, "\\'")}')">View Dashboard for this Prime</button>`;
+                    <button class="mt-2 text-xs bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600" onclick="setUnifiedSearchTerm('${p.name.replace(/'/g, "\\'")}', 'primeName')">Filter Dashboard by this Prime</button>`; 
                 primeProfilesContainer.appendChild(card);
         });
         if(count === 0) primeProfilesContainer.innerHTML = `<p class="p-4 col-span-full text-center text-gray-500">No primes match current filters or profile search.</p>`;
@@ -603,19 +927,136 @@ function initializePrimeProfilesSection(data) {
     renderCards(); 
 }
 
-function setUnifiedSearchTerm(term) {
-    unifiedSearchInput.value = term;
-    applyUnifiedSearch(term); 
+function showDetailedPrimeProfile(primeName) {
+    const primeContracts = parsedData.filter(r => r['Legal Business Name'] === primeName);
+    if (primeContracts.length === 0) {
+        openModal("Prime Details", "<p>No contract data found for this prime in the current dataset.</p>");
+        return;
+    }
+
+    const primeRecord = primeContracts[0]; 
+    const primeUEI = primeRecord ? primeRecord['Unique Entity ID'] : 'N/A';
+    const parentUEI = primeRecord ? primeRecord['Ultimate Parent Unique Entity ID'] : 'N/A';
+    const parentName = primeRecord ? primeRecord['Ultimate Parent Legal Business Name'] : 'N/A';
+
+
+    let totalValue = 0;
+    const naicsData = {};
+    const agencyData = {};
+
+    primeContracts.forEach(c => {
+        const val = parseCurrencyValue(c['Base and All Options Value (Total Contract Value)']);
+        totalValue += val;
+        const naics = String(c['NAICS Code'] || 'N/A');
+        naicsData[naics] = (naicsData[naics] || 0) + val;
+        const agency = c['Contracting Agency Name'] || 'N/A';
+        agencyData[agency] = (agencyData[agency] || 0) + val;
+    });
+
+    const topNaics = Object.entries(naicsData).sort((a,b) => b[1]-a[1]).slice(0,5);
+    const topAgencies = Object.entries(agencyData).sort((a,b) => b[1]-a[1]).slice(0,5);
+
+    let currentPage = 1;
+
+    function renderContractTablePage(page) {
+        const start = (page - 1) * ITEMS_PER_PAGE_MODAL_TABLE;
+        const end = start + ITEMS_PER_PAGE_MODAL_TABLE;
+        const pageContracts = primeContracts.slice(start, end);
+        
+        let tableHTML = `<div class="table-responsive"><table class="min-w-full divide-y divide-gray-200 text-xs">
+            <thead class="bg-gray-50"><tr>
+                <th class="px-2 py-2 text-left font-medium">PIID</th>
+                <th class="px-2 py-2 text-left font-medium">Agency</th>
+                <th class="px-2 py-2 text-left font-medium">NAICS</th>
+                <th class="px-2 py-2 text-left font-medium">Value</th>
+                <th class="px-2 py-2 text-left font-medium">End Date</th>
+            </tr></thead><tbody class="bg-white divide-y divide-gray-200">`;
+        
+        pageContracts.forEach(c => {
+            tableHTML += `<tr>
+                <td class="px-2 py-1 whitespace-nowrap">${createAwardLink(c['Procurement Instrument Identifier'])}</td>
+                <td class="px-2 py-1 whitespace-nowrap">${c['Contracting Agency Name'] || 'N/A'}</td>
+                <td class="px-2 py-1">${c['NAICS Code'] || 'N/A'}</td>
+                <td class="px-2 py-1 whitespace-nowrap">${formatCurrency(parseCurrencyValue(c['Base and All Options Value (Total Contract Value)']))}</td>
+                <td class="px-2 py-1 whitespace-nowrap">${formatDate(c['Completion Date'])}</td>
+            </tr>`;
+        });
+        tableHTML += `</tbody></table></div>`;
+        
+        const totalPages = Math.ceil(primeContracts.length / ITEMS_PER_PAGE_MODAL_TABLE);
+        tableHTML += `<div class="mt-3 flex justify-between items-center text-xs">
+            <button id="prevPageBtnPrimeDetail" class="px-2 py-1 border rounded ${page === 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100'}" ${page === 1 ? 'disabled' : ''}>Previous</button>
+            <span>Page ${page} of ${totalPages}</span>
+            <button id="nextPageBtnPrimeDetail" class="px-2 py-1 border rounded ${page === totalPages ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100'}" ${page === totalPages ? 'disabled' : ''}>Next</button>
+        </div>`;
+        
+        const tableContainer = document.getElementById('primeContractsTableContainer');
+        if (tableContainer) tableContainer.innerHTML = tableHTML;
+
+
+        if (document.getElementById('prevPageBtnPrimeDetail')) {
+            document.getElementById('prevPageBtnPrimeDetail').onclick = () => {
+                if (currentPage > 1) { currentPage--; renderContractTablePage(currentPage); }
+            };
+        }
+        if (document.getElementById('nextPageBtnPrimeDetail')) {
+            document.getElementById('nextPageBtnPrimeDetail').onclick = () => {
+                if (currentPage < totalPages) { currentPage++; renderContractTablePage(currentPage); }
+            };
+        }
+    }
+
+    const modalHTML = `
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+                <h4 class="font-semibold text-gray-600">Key Stats</h4>
+                <p>UEI: ${createEntityLink(primeUEI, primeUEI)}</p> 
+                ${parentName && parentName !== 'N/A' ? `<p>Parent: ${createEntityLink(parentUEI, parentName)}</p>` : ''}
+                <p>Total Contracts: ${primeContracts.length.toLocaleString()}</p>
+                <p>Total Value: ${formatCurrency(totalValue)}</p>
+                <p>Avg. Contract Value: ${formatCurrency(primeContracts.length > 0 ? totalValue / primeContracts.length : 0)}</p>
+            </div>
+            <div>
+                <h4 class="font-semibold text-gray-600">Top NAICS Codes (by Value)</h4>
+                <ul class="list-disc list-inside text-sm">
+                    ${topNaics.map(item => `<li>${item[0]}: ${formatCurrency(item[1])}</li>`).join('')}
+                </ul>
+            </div>
+            <div>
+                <h4 class="font-semibold text-gray-600">Top Contracting Agencies (by Value)</h4>
+                <ul class="list-disc list-inside text-sm">
+                    ${topAgencies.map(item => `<li>${item[0]}: ${formatCurrency(item[1])}</li>`).join('')}
+                </ul>
+            </div>
+        </div>
+        <h4 class="font-semibold text-gray-600 mt-4 mb-2">Contracts List (${primeContracts.length})</h4>
+        <div id="primeContractsTableContainer">
+            </div>
+    `;
+    openModal(`Detailed Profile: ${primeName}`, modalHTML, 'modal-content-lg');
+    renderContractTablePage(currentPage); 
 }
 
 
-// --- Contract Expiration Calendar Section --- Renamed
+function setUnifiedSearchTerm(term, type = 'primeName') { 
+    unifiedSearchInput.value = term;
+    applyFilter(term, type, term); 
+}
+
+
+// --- Contract Expiration Calendar Section --- 
 function initializeContractExpirationCalendarSection(data) { 
     const events = [];
     data.forEach(r => {
         if (r['Completion Date']) {
             const date = new Date(r['Completion Date']);
-            if (!isNaN(date.getTime())) events.push({date:date, prime:r['Legal Business Name'], value:parseCurrencyValue(r['Base and All Options Value (Total Contract Value)']), id:r['Procurement Instrument Identifier']||'N/A'});
+            if (!isNaN(date.getTime())) events.push({
+                date: date, 
+                prime: r['Legal Business Name'], 
+                value: parseCurrencyValue(r['Base and All Options Value (Total Contract Value)']), 
+                id: r['Procurement Instrument Identifier'] || 'N/A',
+                agency: r['Contracting Agency Name'] || 'N/A'
+            });
         }
     });
     events.sort((a,b) => a.date - b.date);
@@ -632,32 +1073,87 @@ function initializeContractExpirationCalendarSection(data) {
         dayNames.forEach(d => {html += `<div class="calendar-day-header">${d}</div>`;});
         for(let i=0; i<firstDOW; i++) html+='<div class="p-2 border bg-gray-50 min-h-[80px]"></div>';
         for(let day=1; day<=daysInM; day++) {
+            const currentDateObj = new Date(year, month, day);
             const dEvents = events.filter(e=>e.date.getFullYear()===year && e.date.getMonth()===month && e.date.getDate()===day);
-            html += `<div class="p-2 border min-h-[80px] relative ${dEvents.length>0?'bg-blue-50':'bg-white'}">
+            html += `<div class="calendar-day-cell p-2 border min-h-[80px] relative ${dEvents.length>0?'bg-blue-50':'bg-white'}" 
+                         ${dEvents.length > 0 ? `onclick="showCalendarDayDetailsModal(new Date(${year},${month},${day}), JSON.parse(this.dataset.eventsJson))" data-events-json='${JSON.stringify(dEvents).replace(/'/g, "&apos;")}'` : ''}
+                         role="button" tabindex="0" aria-label="${dEvents.length > 0 ? dEvents.length + ' contracts ending' : 'No contracts ending'} on ${formatDate(currentDateObj)}">
                         <div class="font-semibold text-right text-gray-700">${day}</div>`;
-            dEvents.slice(0,2).forEach(e => {html+=`<div class="calendar-event" data-event-details="${e.prime} (${formatCurrency(e.value)}) - ID: ${e.id}">${e.prime?e.prime.substring(0,10)+(e.prime.length>10?'...':''):'Contract'}</div>`;});
-            if(dEvents.length>2) html+=`<div class="text-xs mt-1 cursor-pointer hover:underline" data-event-details="${dEvents.length} events.">${dEvents.length-2} more</div>`;
+            dEvents.slice(0,2).forEach(e => {html+=`<div class="calendar-event" title="${e.prime} (${formatCurrency(e.value)}) - ID: ${e.id}">${e.prime?e.prime.substring(0,10)+(e.prime.length>10?'...':''):'Contract'}</div>`;});
+            if(dEvents.length>2) html+=`<div class="text-xs mt-1">${dEvents.length-2} more</div>`;
             html += `</div>`;
         }
         calendarGridEl.innerHTML = html;
-        setupCalendarEventTooltips(globalTooltipEl);
     }
     renderCalView();
 }
 
-function setupCalendarEventTooltips(tooltipEl) { 
-    document.querySelectorAll('#calendarGrid [data-event-details]').forEach(el => {
-        el.onmouseenter = (e) => {
-            tooltipEl.innerHTML = el.dataset.eventDetails; tooltipEl.style.display = 'block';
-            const rect = el.getBoundingClientRect();
-            let top = rect.top+window.scrollY-tooltipEl.offsetHeight-5, left = rect.left+window.scrollX+(rect.width/2)-(tooltipEl.offsetWidth/2);
-            if(top<window.scrollY) top=rect.bottom+window.scrollY+5; if(left<window.scrollX)left=window.scrollX+5;
-            if(left+tooltipEl.offsetWidth > window.innerWidth) left=window.innerWidth-tooltipEl.offsetWidth-5;
-            tooltipEl.style.top=`${top}px`; tooltipEl.style.left=`${left}px`;
-        };
-        el.onmouseleave = () => { tooltipEl.style.display = 'none'; };
-    });
+function showCalendarDayDetailsModal(dateObj, eventsOnDate) {
+    const formattedDate = formatDate(dateObj);
+    let currentCalendarPage = 1;
+
+    function renderCalendarDayPage(page) {
+        const start = (page - 1) * ITEMS_PER_PAGE_MODAL_TABLE;
+        const end = start + ITEMS_PER_PAGE_MODAL_TABLE;
+        const pageEvents = eventsOnDate.slice(start, end);
+
+        let tableHTML = `<div class="table-responsive"><table class="min-w-full divide-y divide-gray-200 text-xs">
+            <thead class="bg-gray-50"><tr> 
+                <th class="px-2 py-2 text-left font-medium">PIID</th>
+                <th class="px-2 py-2 text-left font-medium">Prime Contractor</th>
+                <th class="px-2 py-2 text-left font-medium">Agency</th>
+                <th class="px-2 py-2 text-left font-medium">Value</th>
+            </tr></thead>
+            <tbody class="bg-white divide-y divide-gray-200">`;
+        pageEvents.forEach(event => {
+            tableHTML += `<tr>
+                <td class="px-2 py-1 whitespace-nowrap">${createAwardLink(event.id)}</td>
+                <td class="px-2 py-1 whitespace-nowrap">${event.prime}</td>
+                <td class="px-2 py-1 whitespace-nowrap">${event.agency}</td>
+                <td class="px-2 py-1 whitespace-nowrap">${formatCurrency(event.value)}</td>
+            </tr>`;
+        });
+        tableHTML += `</tbody></table></div>`;
+        
+        const totalPages = Math.ceil(eventsOnDate.length / ITEMS_PER_PAGE_MODAL_TABLE);
+        if (totalPages > 1) { // Only show pagination if needed
+            tableHTML += `<div class="mt-3 flex justify-between items-center text-xs">
+                <button id="prevPageBtnCal" class="px-2 py-1 border rounded ${page === 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100'}" ${page === 1 ? 'disabled' : ''}>Previous</button>
+                <span>Page ${page} of ${totalPages}</span>
+                <button id="nextPageBtnCal" class="px-2 py-1 border rounded ${page === totalPages ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100'}" ${page === totalPages ? 'disabled' : ''}>Next</button>
+            </div>`;
+        }
+        
+        const tableContainer = document.getElementById('calendarDayTableContainer');
+        if (tableContainer) {
+            tableContainer.innerHTML = tableHTML;
+        } else { 
+            genericModalBody.innerHTML = `
+                <p class="mb-3 text-sm text-gray-600">Total Contracts Ending: ${eventsOnDate.length}</p>
+                <div id="calendarDayTableContainer">${tableHTML}</div>`;
+        }
+
+        if (document.getElementById('prevPageBtnCal')) {
+            document.getElementById('prevPageBtnCal').onclick = () => {
+                if (currentCalendarPage > 1) { currentCalendarPage--; renderCalendarDayPage(currentCalendarPage); }
+            };
+        }
+        if (document.getElementById('nextPageBtnCal')) {
+            document.getElementById('nextPageBtnCal').onclick = () => {
+                if (currentCalendarPage < totalPages) { currentCalendarPage++; renderCalendarDayPage(currentCalendarPage); }
+            };
+        }
+    }
+    
+    const initialModalHTML = `
+        <p class="mb-3 text-sm text-gray-600">Total Contracts Ending: ${eventsOnDate.length}</p>
+        <div id="calendarDayTableContainer">
+            </div>`;
+
+    openModal(`Contract Expirations for ${formattedDate}`, initialModalHTML, 'modal-content-lg'); 
+    renderCalendarDayPage(currentCalendarPage); 
 }
+
 
 // --- Event Listeners for Chart Filters ---
 document.getElementById('stateChartFilters_main').addEventListener('click', function(e) { 
@@ -666,20 +1162,9 @@ document.getElementById('stateChartFilters_main').addEventListener('click', func
         currentMainStateChartFilter = filterType;
         this.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
         e.target.classList.add('active');
-        applyUnifiedSearch(unifiedSearchInput.value); // Re-apply search to update this chart
+        applyFilter(unifiedSearchInput.value.trim()); 
     }
 });
-
-document.getElementById('awardsTimeFilters_main').addEventListener('click', function(e) {
-    if (e.target.classList.contains('filter-btn')) {
-        const filterType = e.target.dataset.filter;
-        currentAwardsTimeFilter = filterType;
-        this.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
-        e.target.classList.add('active');
-        applyUnifiedSearch(unifiedSearchInput.value); // Re-apply search to update this chart
-    }
-});
-
 
 // --- File Input Handling ---
 csvFileInput.addEventListener('change', function(e) { 
