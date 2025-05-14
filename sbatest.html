@@ -41,16 +41,59 @@
         }
         .file-input-container {
             margin-bottom: 20px;
-            padding: 15px;
+            padding: 25px;
             background-color: #fff;
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            text-align: center;
         }
-        .file-input-label {
-            display: block;
+        .file-input-heading {
+            font-size: 20px;
             margin-bottom: 10px;
-            font-weight: 600;
-            color: #34495e;
+            color: #2c3e50;
+        }
+        .file-input-instructions {
+            margin-bottom: 20px;
+            color: #7f8c8d;
+            font-size: 16px;
+        }
+        .file-input-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .file-input-button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #3498db;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .file-input-button:hover {
+            background-color: #2980b9;
+        }
+        input[type="file"] {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            border: 0;
+        }
+        #file-name-display {
+            padding: 8px;
+            background-color: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            min-width: 250px;
+            text-align: left;
+            color: #666;
         }
         .dashboard-grid {
             display: grid;
@@ -224,21 +267,27 @@
         .error-message {
             color: #e74c3c;
             text-align: center;
-            padding: 10px;
+            padding: 15px;
             font-weight: 600;
             background-color: #fadbd8;
             border-radius: 4px;
-            margin-top: 10px;
+            margin-top: 15px;
+            margin-bottom: 15px;
         }
         .download-link {
-            margin-top: 10px;
-            text-align: center;
+            margin-top: 15px;
         }
         .download-link a {
             color: #2980b9;
             text-decoration: none;
+            display: inline-block;
+            padding: 10px 15px;
+            background-color: #f5f7fa;
+            border-radius: 4px;
+            transition: background-color 0.2s;
         }
         .download-link a:hover {
+            background-color: #e8eaed;
             text-decoration: underline;
         }
     </style>
@@ -253,24 +302,27 @@
         </div>
 
         <div class="file-input-container">
-            <div id="initialLoadingMessage">
-                <div id="loadingIndicator" class="loading">
-                    <div class="spinner"></div>
-                    <span id="loadingMessage">Loading data from S3 bucket...</span>
+            <div id="fileUploadSection">
+                <h3 class="file-input-heading">Upload Federal Contractor CSV Data</h3>
+                <p class="file-input-instructions">Upload <code>sbaall.csv</code> to visualize federal prime-to-subcontractor data.</p>
+                
+                <div class="file-input-wrapper">
+                    <input type="file" id="csvFileInput" accept=".csv">
+                    <label for="csvFileInput" class="file-input-button">Choose CSV File</label>
+                    <span id="file-name-display">No file selected</span>
                 </div>
-                <div id="errorMessage" class="error-message hidden">
-                    Error loading data. Please upload the file manually.
-                </div>
-            </div>
-            <div id="fileUploadSection" class="hidden">
-                <label class="file-input-label">Upload CSV File (with same column structure)</label>
-                <input type="file" id="csvFileInput" accept=".csv">
+                
                 <div id="processingIndicator" class="loading hidden">
                     <div class="spinner"></div>
                     <span>Processing data...</span>
                 </div>
+                
+                <div id="errorMessage" class="error-message hidden">
+                    Error processing file
+                </div>
+                
                 <div class="download-link">
-                    <a href="https://subhoodata.s3.us-east-1.amazonaws.com/data/sbaall.csv" download>Download sbaall.csv</a>
+                    <a href="https://subhoodata.s3.us-east-1.amazonaws.com/data/sbaall.csv" download>Download sbaall.csv from S3</a>
                 </div>
             </div>
         </div>
