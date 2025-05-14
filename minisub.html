@@ -18,10 +18,7 @@
             height: 300px; 
             width: 100%;
         }
-        .chart-container-detail-view { /* For charts within the new prime detail section */
-            height: 280px; /* Slightly smaller */
-            margin-bottom: 1rem;
-        }
+        /* .chart-container-detail-view was removed as charts are no longer in prime detail view */
         .chart-no-data {
             display: flex;
             flex-direction: column; 
@@ -41,7 +38,7 @@
             margin-bottom: 0.5rem; 
             color: #9ca3af; 
         }
-        .spinner, .global-spinner { 
+        .spinner { 
             border: 4px solid rgba(0, 0, 0, 0.1);
             width: 24px;
             height: 24px;
@@ -50,19 +47,7 @@
             animation: spin 1s linear infinite;
             margin-right: 10px;
         }
-        #globalProcessingIndicator { 
-            position: fixed;
-            top: 10px;
-            right: 10px;
-            background-color: rgba(255, 255, 255, 0.9);
-            padding: 0.5rem 1rem;
-            border-radius: 0.375rem;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            z-index: 2000; 
-            display: flex;
-            align-items: center;
-        }
-
+        
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
@@ -233,11 +218,6 @@
     </style>
 </head>
 <body class="bg-gray-100 p-2 sm:p-4 md:p-8">
-    <div id="globalProcessingIndicator" class="hidden">
-        <div class="global-spinner"></div>
-        <span class="text-sm text-gray-700">Processing...</span>
-    </div>
-
     <div class="dashboard-container max-w-7xl mx-auto">
         <header class="mb-4 md:mb-6">
             <h1 class="text-2xl sm:text-3xl font-bold text-gray-800">Federal Business Development Dashboard</h1>
@@ -305,30 +285,8 @@
                     </div>
             </section>
 
-            <section id="primeDetailViewSection" class="bg-white p-4 md:p-6 rounded-lg shadow-md mb-4 md:mb-6 hidden">
-                <h2 id="primeDetailTitle" class="text-xl md:text-2xl font-bold text-blue-700 mb-4">Prime Contractor Details</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 text-sm md:text-base">
-                    <div id="primeDetailStats">
-                        </div>
-                    <div class="grid grid-cols-1 gap-4">
-                        <div>
-                            <h4 class="font-semibold text-gray-600 mb-1">Top NAICS Codes for this Prime</h4>
-                            <div class="chart-container-detail-view"><canvas id="primeDetailNaicsChart"></canvas></div>
-                        </div>
-                        <div>
-                            <h4 class="font-semibold text-gray-600 mb-1">Top Contracting Agencies for this Prime</h4>
-                            <div class="chart-container-detail-view"><canvas id="primeDetailAgenciesChart"></canvas></div>
-                        </div>
-                    </div>
-                </div>
-                <h3 class="text-lg font-semibold text-gray-700 mt-6 mb-2">Contracts List for this Prime</h3>
-                <div id="primeDetailContractsTableContainer" class="table-responsive max-h-96 overflow-y-auto">
-                    </div>
-            </section>
-
-
             <section id="coreChartsSection" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6 mb-4 md:mb-6">
-                <div class="dashboard-card bg-white p-4 md:p-6 rounded-lg shadow">
+                <div id="primeContractorsChartCard" class="dashboard-card bg-white p-4 md:p-6 rounded-lg shadow">
                     <h2 class="text-md md:text-lg font-semibold text-gray-700 mb-3 text-center">Top Prime Contractors by Value</h2>
                     <div class="chart-container">
                         <canvas id="primeContractorsChart"></canvas>
@@ -374,7 +332,7 @@
                         <canvas id="timelineChart"></canvas> 
                     </div>
                 </div>
-                 <div class="dashboard-card bg-white p-4 md:p-6 rounded-lg shadow md:col-span-2 xl:col-span-2"> 
+                 <div id="marketShareChartCard" class="dashboard-card bg-white p-4 md:p-6 rounded-lg shadow md:col-span-2 xl:col-span-2"> 
                     <h2 class="text-md md:text-lg font-semibold text-gray-700 mb-3 text-center">Prime Market Share (for current filter)</h2>
                     <div class="chart-container">
                         <canvas id="marketShareChart"></canvas>
@@ -389,6 +347,17 @@
                     <input type="text" id="primeProfilesSearchInput" class="w-full md:w-1/2 lg:w-1/3 p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-400 focus:border-blue-400" placeholder="Filter displayed profiles by name...">
                 </div>
                 <div id="primeProfilesContainer" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 md:gap-4 max-h-[70vh] overflow-y-auto"></div>
+            </section>
+
+            <section id="primeDetailViewSection" class="bg-white p-4 md:p-6 rounded-lg shadow-md mb-4 md:mb-6 hidden">
+                <h2 id="primeDetailTitle" class="text-xl md:text-2xl font-bold text-blue-700 mb-4">Prime Contractor Details</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 text-sm md:text-base">
+                    <div id="primeDetailStats">
+                        </div>
+                    </div>
+                <h3 class="text-lg font-semibold text-gray-700 mt-6 mb-2">Contracts List for this Prime</h3>
+                <div id="primeDetailContractsTableContainer" class="table-responsive max-h-96 overflow-y-auto">
+                    </div>
             </section>
 
             <section id="contractExpirationCalendarSection" class="bg-white p-4 md:p-6 rounded-lg shadow-md mb-4 md:mb-6">
@@ -429,7 +398,7 @@
 
 <script>
 // --- DOM Elements ---
-const globalProcessingIndicator = document.getElementById('globalProcessingIndicator'); 
+// const globalProcessingIndicator = document.getElementById('globalProcessingIndicator'); // Removed
 const processingIndicator = document.getElementById('processingIndicator'); 
 const manualUploadSection = document.getElementById('manual-upload-section');
 const dashboardContent = document.getElementById('dashboardContent');
@@ -473,7 +442,7 @@ const S3_CSV_URL = 'https://subhoodata.s3.us-east-1.amazonaws.com/data/sbaall.cs
 let currentMainStateChartFilter = 'count';
 const ITEMS_PER_PAGE_MODAL_TABLE = 10; 
 let currentCalendarDate = new Date(); 
-let currentPrimeDetailViewPage = 1; // For pagination within prime detail view
+let currentPrimeDetailViewPage = 1; 
 
 // --- Utility Functions ---
 function formatCurrency(value) {
@@ -518,8 +487,7 @@ function createEntityLink(entityId, entityName) {
     return `<a href="https://www.fpds.gov/ezsearch/fpdsportal?s=FPDS&q=${encodedEntityId}&x=0&y=0" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 hover:underline">${entityName || entityId}</a>`;
 }
 
-function showGlobalLoader() { globalProcessingIndicator.classList.remove('hidden');}
-function hideGlobalLoader() { globalProcessingIndicator.classList.add('hidden'); }
+// Removed showGlobalLoader and hideGlobalLoader
 
 function showProcessingBriefly() { processingIndicator.classList.remove('hidden'); processingIndicator.classList.add('flex'); }
 function hideProcessing() { processingIndicator.classList.add('hidden'); processingIndicator.classList.remove('flex');}
@@ -533,8 +501,7 @@ function showErrorMessage(message, isAutoloadError = false) {
         errorMessageDiv.textContent = message; errorMessageDiv.classList.remove('hidden');
         successMessageDiv.classList.add('hidden');
     }
-    hideProcessing();
-    hideGlobalLoader(); 
+    hideProcessing(); 
 }
 
 function showSuccessMessage(message, isAutoloadSuccess = false) {
@@ -544,7 +511,7 @@ function showSuccessMessage(message, isAutoloadSuccess = false) {
         successMessageDiv.textContent = message; successMessageDiv.classList.remove('hidden');
         errorMessageDiv.classList.add('hidden');
     }
-    hideProcessing();
+    hideProcessing(); 
 }
 
 // --- Modal Management (Only for Calendar Day Details now) ---
@@ -579,16 +546,15 @@ function processAndInitialize(data) {
     dashboardContent.classList.remove('hidden');
     manualUploadSection.classList.add('hidden'); 
     s3LoadErrorDiv.classList.add('hidden'); 
-    primeDetailViewSection.classList.add('hidden'); // Ensure prime detail is hidden initially
+    primeDetailViewSection.classList.add('hidden'); 
 
     cleanupCharts(); 
     initializeCoreVisuals(parsedData);
     setupUnifiedSearch(); 
-    initializePrimeProfilesSection(parsedData); // This will show all primes initially
+    initializePrimeProfilesSection(parsedData); 
     initializeContractExpirationCalendarSection(parsedData); 
     showSuccessMessage('Data loaded and dashboard initialized.', true); 
     hideProcessing(); 
-    hideGlobalLoader(); 
 }
 
 // --- S3 Data Loading ---
@@ -628,88 +594,115 @@ function loadDataFromS3() {
 
 // --- Unified Search, Suggestions, and Filtering Logic ---
 function applyFilter(searchTerm, filterType = null, filterValue = null) { 
-    showGlobalLoader(); 
+    // showGlobalLoader(); // Removed
     setTimeout(() => { 
-        let filteredData;
-        let displaySearchTerm = searchTerm; 
-        let isPrimeSpecificFilter = false;
+        try {
+            let filteredData;
+            let displaySearchTerm = searchTerm; 
+            let isPrimeSpecificFilter = false;
 
-        if (filterType === 'primeName') {
-            isPrimeSpecificFilter = true;
-            const primeToFilter = filterValue || searchTerm;
-            filteredData = parsedData.filter(record => (record['Legal Business Name']?.toLowerCase() || '') === primeToFilter.toLowerCase());
-            displaySearchTerm = `Prime: ${primeToFilter}`;
-            renderPrimeDetailView(primeToFilter, filteredData); // Render the detailed view for this prime
-            primeDetailViewSection.classList.remove('hidden');
-        } else if (filterType) { 
-            const termToMatch = (filterValue || searchTerm).toLowerCase(); 
-            filteredData = parsedData.filter(record => {
-                let recordValue = '';
-                switch (filterType) {
-                    // primeName is handled above
-                    case 'naicsCode': recordValue = String(record['NAICS Code'] || '').toLowerCase(); break;
-                    case 'naicsDesc': recordValue = record['NAICS Description']?.toLowerCase() || ''; break;
-                    case 'departmentName': recordValue = record['Contracting Department Name']?.toLowerCase() || ''; break; 
-                    case 'agencyName': recordValue = record['Contracting Agency Name']?.toLowerCase() || ''; break;
-                    case 'officeName': recordValue = record['Contracting Office Name']?.toLowerCase() || ''; break;
-                    case 'stateCode': recordValue = record['Principal Place of Performance State Code']?.toLowerCase() || ''; break;
-                    case 'contractType': recordValue = record['Award or Indefinite Delivery Vehicle Type']?.toLowerCase() || ''; break; 
-                    default: return false;
-                }
-                if (filterValue) return recordValue === termToMatch; 
-                return recordValue.includes(termToMatch); 
-            });
-            displaySearchTerm = `${filterType.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}: ${filterValue || searchTerm}`; 
-            primeDetailViewSection.classList.add('hidden'); // Hide prime detail if not a primeName filter
-        } else { 
-            if (!searchTerm || searchTerm.trim() === '') {
-                clearAllFilters(); 
-                hideGlobalLoader(); 
-                return;
-            }
-            const keywords = searchTerm.toLowerCase().split(' ').filter(k => k);
-            filteredData = parsedData.filter(record => {
-                return keywords.every(keyword => {
-                    const primeName = record['Legal Business Name']?.toLowerCase() || '';
-                    const naicsCode = String(record['NAICS Code'] || '').toLowerCase();
-                    const naicsDesc = record['NAICS Description']?.toLowerCase() || '';
-                    const departmentName = record['Contracting Department Name']?.toLowerCase() || '';
-                    const agencyName = record['Contracting Agency Name']?.toLowerCase() || '';
-                    const officeName = record['Contracting Office Name']?.toLowerCase() || '';
-                    const stateCode = record['Principal Place of Performance State Code']?.toLowerCase() || '';
-                    return primeName.includes(keyword) || naicsCode.includes(keyword) ||
-                           naicsDesc.includes(keyword) || departmentName.includes(keyword) ||
-                           agencyName.includes(keyword) || officeName.includes(keyword) ||
-                           (keyword.length === 2 && stateCode === keyword) ||
-                           (keyword.length > 2 && stateCode.includes(keyword));
+            // Control visibility of general charts that don't make sense for a single prime view
+            const marketShareCard = document.getElementById('marketShareChartCard');
+            const primeContractorsCard = document.getElementById('primeContractorsChartCard');
+
+            if (filterType === 'primeName') {
+                isPrimeSpecificFilter = true;
+                const primeToFilter = filterValue || searchTerm;
+                filteredData = parsedData.filter(record => (record['Legal Business Name']?.toLowerCase() || '') === primeToFilter.toLowerCase());
+                displaySearchTerm = `Prime: ${primeToFilter}`;
+                renderPrimeDetailView(primeToFilter, filteredData); 
+                primeDetailViewSection.classList.remove('hidden');
+                // Hide general prime charts when a specific prime is selected
+                if(marketShareCard) marketShareCard.classList.add('hidden');
+                if(primeContractorsCard) primeContractorsCard.classList.add('hidden');
+
+            } else if (filterType) { 
+                const termToMatch = (filterValue || searchTerm).toLowerCase(); 
+                filteredData = parsedData.filter(record => {
+                    let recordValue = '';
+                    switch (filterType) {
+                        case 'naicsCode': recordValue = String(record['NAICS Code'] || '').toLowerCase(); break;
+                        case 'naicsDesc': recordValue = record['NAICS Description']?.toLowerCase() || ''; break;
+                        case 'departmentName': recordValue = record['Contracting Department Name']?.toLowerCase() || ''; break; 
+                        case 'agencyName': recordValue = record['Contracting Agency Name']?.toLowerCase() || ''; break;
+                        case 'officeName': recordValue = record['Contracting Office Name']?.toLowerCase() || ''; break;
+                        case 'stateCode': recordValue = record['Principal Place of Performance State Code']?.toLowerCase() || ''; break;
+                        case 'contractType': recordValue = record['Award or Indefinite Delivery Vehicle Type']?.toLowerCase() || ''; break; 
+                        default: return false;
+                    }
+                    if (filterValue) return recordValue === termToMatch; 
+                    return recordValue.includes(termToMatch); 
                 });
-            });
-            primeDetailViewSection.classList.add('hidden'); // Hide prime detail for general keyword search
-        }
+                displaySearchTerm = `${filterType.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}: ${filterValue || searchTerm}`; 
+                primeDetailViewSection.classList.add('hidden'); 
+                if(marketShareCard) marketShareCard.classList.remove('hidden');
+                if(primeContractorsCard) primeContractorsCard.classList.remove('hidden');
+            } else { 
+                if (!searchTerm || searchTerm.trim() === '') {
+                    clearAllFilters(); 
+                    return;
+                }
+                const keywords = searchTerm.toLowerCase().split(' ').filter(k => k);
+                filteredData = parsedData.filter(record => {
+                    return keywords.every(keyword => {
+                        const primeName = record['Legal Business Name']?.toLowerCase() || '';
+                        const naicsCode = String(record['NAICS Code'] || '').toLowerCase();
+                        const naicsDesc = record['NAICS Description']?.toLowerCase() || '';
+                        const departmentName = record['Contracting Department Name']?.toLowerCase() || '';
+                        const agencyName = record['Contracting Agency Name']?.toLowerCase() || '';
+                        const officeName = record['Contracting Office Name']?.toLowerCase() || '';
+                        const stateCode = record['Principal Place of Performance State Code']?.toLowerCase() || '';
+                        return primeName.includes(keyword) || naicsCode.includes(keyword) ||
+                               naicsDesc.includes(keyword) || departmentName.includes(keyword) ||
+                               agencyName.includes(keyword) || officeName.includes(keyword) ||
+                               (keyword.length === 2 && stateCode === keyword) ||
+                               (keyword.length > 2 && stateCode.includes(keyword));
+                    });
+                });
+                primeDetailViewSection.classList.add('hidden'); 
+                if(marketShareCard) marketShareCard.classList.remove('hidden');
+                if(primeContractorsCard) primeContractorsCard.classList.remove('hidden');
+            }
 
-        initializeCoreVisuals(filteredData);
-        initializePrimeProfilesSection(filteredData); // This will show only the selected prime if isPrimeSpecificFilter is true
-        initializeContractExpirationCalendarSection(filteredData);
-        updateActiveFilterIndicator(displaySearchTerm, filteredData.length);
-        unifiedSearchSuggestions.innerHTML = ''; 
-        unifiedSearchSuggestions.classList.add('hidden');
-        hideGlobalLoader(); 
+            initializeCoreVisuals(filteredData, isPrimeSpecificFilter); // Pass flag
+            initializePrimeProfilesSection(filteredData); 
+            initializeContractExpirationCalendarSection(filteredData);
+            updateActiveFilterIndicator(displaySearchTerm, filteredData.length);
+            unifiedSearchSuggestions.innerHTML = ''; 
+            unifiedSearchSuggestions.classList.add('hidden');
+        } catch (error) {
+            console.error("Error during filter application:", error);
+        } finally {
+            // hideGlobalLoader(); // Removed
+        }
     }, 10); 
 }
 
 
 function clearAllFilters() {
-    showGlobalLoader();
+    // showGlobalLoader(); // Removed
     setTimeout(() => {
-        unifiedSearchInput.value = '';
-        activeFilterIndicator.classList.add('hidden');
-        unifiedSearchSuggestions.innerHTML = '';
-        unifiedSearchSuggestions.classList.add('hidden');
-        primeDetailViewSection.classList.add('hidden'); // Hide prime detail view
-        initializeCoreVisuals(parsedData); 
-        initializePrimeProfilesSection(parsedData); 
-        initializeContractExpirationCalendarSection(parsedData); 
-        hideGlobalLoader();
+        try {
+            unifiedSearchInput.value = '';
+            activeFilterIndicator.classList.add('hidden');
+            unifiedSearchSuggestions.innerHTML = '';
+            unifiedSearchSuggestions.classList.add('hidden');
+            primeDetailViewSection.classList.add('hidden'); 
+            
+            // Ensure general charts are visible when all filters are cleared
+            const marketShareCard = document.getElementById('marketShareChartCard');
+            const primeContractorsCard = document.getElementById('primeContractorsChartCard');
+            if(marketShareCard) marketShareCard.classList.remove('hidden');
+            if(primeContractorsCard) primeContractorsCard.classList.remove('hidden');
+
+            initializeCoreVisuals(parsedData, false); // Pass false for isPrimeSpecificFilter
+            initializePrimeProfilesSection(parsedData); 
+            initializeContractExpirationCalendarSection(parsedData); 
+        } catch (error) {
+            console.error("Error during clearing filters:", error);
+        } finally {
+            // hideGlobalLoader(); // Removed
+        }
     }, 10);
 }
 
@@ -828,16 +821,30 @@ function setupUnifiedSearch() {
 
 
 // --- Initialize Core Visualizations ---
-function initializeCoreVisuals(data) { 
+function initializeCoreVisuals(data, isPrimeSpecificView = false) { 
     updateStatistics(data);
-    createPrimeContractorsChart(data);
+    
+    // Conditionally render or clear these charts based on the view
+    const marketShareCard = document.getElementById('marketShareChartCard');
+    const primeContractorsCard = document.getElementById('primeContractorsChartCard');
+
+    if (isPrimeSpecificView) {
+        if (charts.marketShareChart) { charts.marketShareChart.destroy(); charts.marketShareChart = null; }
+        if (marketShareCard) marketShareCard.querySelector('.chart-container').innerHTML = `<div class="chart-no-data">Market share not applicable for single prime view.</div>`;
+        
+        if (charts.primeContractorsChart) { charts.primeContractorsChart.destroy(); charts.primeContractorsChart = null; }
+        if (primeContractorsCard) primeContractorsCard.querySelector('.chart-container').innerHTML = `<div class="chart-no-data">Top primes not applicable for single prime view.</div>`;
+    } else {
+        createMarketShareChart(data); 
+        createPrimeContractorsChart(data);
+    }
+    
     createDepartmentChart(data); 
     createNaicsChart_main(data);
     createContractTypeChart_main(data);
     createStateContractsChart_main(data, currentMainStateChartFilter);
     createTopAgenciesChart(data); 
     createTimelineChart(data); 
-    createMarketShareChart(data); 
 }
 
 // --- Statistics Update ---
@@ -856,7 +863,11 @@ function updateStatistics(data) {
 
 // --- Chart Creation Functions ---
 function createChart(canvasId, type, data, options, noDataMessage = "No data available for current selection.") { 
-    const chartContainer = document.getElementById(canvasId).parentElement; 
+    const chartContainer = document.getElementById(canvasId)?.parentElement; // Added optional chaining
+    if (!chartContainer) {
+        // console.warn(`Chart container for ${canvasId} not found.`);
+        return; // Exit if canvas container doesn't exist (e.g. if chart card is hidden)
+    }
     
     let isEmpty = true;
     if (data && data.datasets && data.datasets.length > 0) {
@@ -891,6 +902,9 @@ function createChart(canvasId, type, data, options, noDataMessage = "No data ava
 }
 
 function createPrimeContractorsChart(data) { 
+    const canvasElement = document.getElementById('primeContractorsChart');
+    if (!canvasElement) return; // Don't try to create if element is hidden/gone
+
     const primeValues = {};
     data.forEach(r => { if (r['Legal Business Name']) primeValues[r['Legal Business Name']] = (primeValues[r['Legal Business Name']] || 0) + parseCurrencyValue(r['Base and All Options Value (Total Contract Value)']); });
     const sorted = Object.entries(primeValues).sort((a,b)=>b[1]-a[1]).slice(0,10);
@@ -1063,6 +1077,9 @@ function createTimelineChart(data) {
 
 
 function createMarketShareChart(data) {
+    const canvasElement = document.getElementById('marketShareChart');
+    if (!canvasElement) return; // Don't try to create if element is hidden/gone
+
     const primeValues = {};
     data.forEach(r => {
         if (r['Legal Business Name']) {
@@ -1121,7 +1138,6 @@ function initializePrimeProfilesSection(data) {
     renderCards(); 
 }
 
-// Renders the detailed view for a single prime on the main page
 function renderPrimeDetailView(primeName, primeSpecificData) {
     if (!primeName || primeSpecificData.length === 0) {
         primeDetailViewSection.classList.add('hidden');
@@ -1129,26 +1145,15 @@ function renderPrimeDetailView(primeName, primeSpecificData) {
     }
 
     primeDetailTitle.textContent = `Details for: ${primeName}`;
-    const primeRecord = primeSpecificData[0]; // Assuming UEI etc. is consistent
+    const primeRecord = primeSpecificData[0]; 
     const primeUEI = primeRecord ? primeRecord['Unique Entity ID'] : 'N/A';
     const parentUEI = primeRecord ? primeRecord['Ultimate Parent Unique Entity ID'] : 'N/A';
     const parentName = primeRecord ? primeRecord['Ultimate Parent Legal Business Name'] : 'N/A';
 
     let totalValue = 0;
-    const naicsData = {};
-    const agencyData = {};
-
     primeSpecificData.forEach(c => {
-        const val = parseCurrencyValue(c['Base and All Options Value (Total Contract Value)']);
-        totalValue += val;
-        const naics = String(c['NAICS Code'] || 'N/A');
-        naicsData[naics] = (naicsData[naics] || 0) + val;
-        const agency = c['Contracting Agency Name'] || 'N/A';
-        agencyData[agency] = (agencyData[agency] || 0) + val;
+        totalValue += parseCurrencyValue(c['Base and All Options Value (Total Contract Value)']);
     });
-
-    const topNaics = Object.entries(naicsData).sort((a,b) => b[1]-a[1]).slice(0,5);
-    const topAgencies = Object.entries(agencyData).sort((a,b) => b[1]-a[1]).slice(0,5);
 
     primeDetailStats.innerHTML = `
         <h4 class="font-semibold text-gray-600">Key Stats</h4>
@@ -1158,18 +1163,17 @@ function renderPrimeDetailView(primeName, primeSpecificData) {
         <p>Total Value (in current filter): ${formatCurrency(totalValue)}</p>
         <p>Avg. Contract Value (in current filter): ${formatCurrency(primeSpecificData.length > 0 ? totalValue / primeSpecificData.length : 0)}</p>
     `;
-
-    // Render prime-specific charts
-    createChart('primeDetailNaicsChart', 'pie', 
-        { labels: topNaics.map(item => item[0]), datasets: [{ data: topNaics.map(item => item[1]), backgroundColor: ['#3B82F6','#EF4444','#F59E0B','#10B981','#8B5CF6'] }] },
-        { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels:{boxWidth:10, font:{size:9}} }, tooltip: { callbacks: { label: ctx => `${ctx.label}: ${formatCurrency(ctx.raw)}` } } } }
-    );
-    createChart('primeDetailAgenciesChart', 'bar',
-        { labels: topAgencies.map(item => item[0]), datasets: [{ label: 'Value', data: topAgencies.map(item => item[1]), backgroundColor: 'rgba(22, 163, 74, 0.7)' }] },
-        { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => formatCurrency(ctx.raw) } } }, scales: { x: { ticks: { callback: val => formatCurrency(val) } }, y: { ticks: { autoSkip: false, callback: function(val){const l=this.getLabelForValue(val); return l.length > 25 ? l.substring(0,22)+'...' : l;}, font:{size:9} }} } }
-    );
     
-    renderPrimeDetailContractsTable(primeSpecificData, 1); // Render first page of contracts
+    // Clear previous charts if they exist in the detail view (they were removed, but good practice if re-added)
+    if(charts.primeDetailNaicsChart) { charts.primeDetailNaicsChart.destroy(); delete charts.primeDetailNaicsChart;}
+    if(charts.primeDetailAgenciesChart) { charts.primeDetailAgenciesChart.destroy(); delete charts.primeDetailAgenciesChart;}
+    // Ensure the canvas containers are empty or re-created if charts were removed
+    document.getElementById('primeDetailNaicsChart').parentElement.innerHTML = '<canvas id="primeDetailNaicsChart"></canvas>';
+    document.getElementById('primeDetailAgenciesChart').parentElement.innerHTML = '<canvas id="primeDetailAgenciesChart"></canvas>';
+
+
+    currentPrimeDetailViewPage = 1; 
+    renderPrimeDetailContractsTable(primeSpecificData, currentPrimeDetailViewPage); 
     primeDetailViewSection.classList.remove('hidden');
 }
 
