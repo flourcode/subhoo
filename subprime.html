@@ -1247,14 +1247,29 @@ function showSuccessMessage(message, isAutoloadSuccess = false) {
 }
 
 // --- Data Processing and Chart Initialization ---
+// Function to clean up all charts before reinitializing
+function cleanupCharts() {
+    // Destroy all chart instances
+    Object.keys(charts).forEach(key => {
+        if (charts[key]) {
+            try {
+                charts[key].destroy();
+            } catch (e) {
+                console.warn(`Failed to destroy chart ${key}:`, e);
+            }
+            charts[key] = null;
+        }
+    });
+}
+
+// Add to processAndInitialize function:
 function processAndInitialize(data) {
     if (!data || data.length === 0) {
-        // If autoload was attempted and failed, the message is already set by showErrorMessage
-        // If manual upload resulted in no data, show message in manual section
         const isAutoloadAttempted = !manualUploadSection.classList.contains('hidden');
         showErrorMessage('No data to display.', isAutoloadAttempted);
         return;
     }
+    
     parsedData = data;
     activeFilter = null; 
     document.getElementById('activeFilterIndicator').classList.add('hidden');
@@ -1262,6 +1277,9 @@ function processAndInitialize(data) {
     dashboardContent.classList.remove('hidden');
     manualUploadSection.classList.remove('highlight-section'); 
 
+    // Clean up all existing charts
+    cleanupCharts();
+    
     // Populate filter dropdowns
     populateFilterOptions();
     
@@ -1857,7 +1875,6 @@ csvFileInput.addEventListener('change', function(e) {
     });
 });
 
-// --- ENHANCED FEATURE 1: NAICS Code Drill-Down Analysis ---
 function createNaicsTreemap(data) {
     // Group data by NAICS Code, then by Legal Business Name
     const naicsGroups = {};
@@ -1991,127 +2008,54 @@ function createNaicsTreemap(data) {
         return;
     }
     
-    // Prepare the treemap data
-    const treemapData = [];
-    
-    sortedNaics.forEach(naicsGroup => {
-        // Convert children object to array and sort by value
-        const sortedChildren = Object.entries(naicsGroup.children)
-            .sort((a, b) => b[1].value - a[1].value)
-            .slice(0, 8) // Top 8 contractors per NAICS
-            .map(([name, data]) => ({
-                name: name,
-                value: data.value,
-                contractCount: data.contractCount,
-                naicsCode: naicsGroup.code,
-                naicsDesc: naicsGroup.description,
-                group: 'contractor'
-            }));
-        
-        // Add NAICS node
-        treemapData.push({
-            name: naicsGroup.name,
-            value: naicsGroup.totalValue,
-            contractCount: naicsGroup.contractCount,
-            code: naicsGroup.code,
-            description: naicsGroup.description,
-            group: 'naics',
-            children: sortedChildren
-        });
-    });
-    
-    // Create the treemap chart
-    const ctx = document.getElementById('naicsTreemapChart').getContext('2d');
-    
-    if (charts.naicsTreemapChart) {
-        charts.naicsTreemapChart.destroy();
-    }
-    
     try {
+        // FIX: First, make sure any existing chart is destroyed
+        if (charts.naicsTreemapChart) {
+            charts.naicsTreemapChart.destroy();
+            charts.naicsTreemapChart = null;
+        }
+        
+        // Simple alternative visualization if treemap plugin isn't available
+        // Use standard Chart.js bar chart instead
+        const ctx = document.getElementById('naicsTreemapChart').getContext('2d');
+        
+        const topNaicsCodes = sortedNaics.map(naics => naics.code);
+        const topNaicsValues = sortedNaics.map(naics => naics.totalValue);
+        const topNaicsLabels = sortedNaics.map(naics => 
+            naics.code + ' - ' + naics.description.substring(0, 25) + (naics.description.length > 25 ? '...' : '')
+        );
+        
         charts.naicsTreemapChart = new Chart(ctx, {
-            type: 'treemap',
+            type: 'bar',
             data: {
+                labels: topNaicsLabels,
                 datasets: [{
-                    tree: treemapData,
-                    key: 'value',
-                    groups: ['group'],
-                    spacing: 2,
-                    borderWidth: 1,
-                    borderColor: '#fff',
-                    backgroundColor: (ctx) => {
-                        // Color by group
-                        const group = ctx.raw._data ? ctx.raw._data.group : '';
-                        return group === 'naics' ? 'rgba(54, 162, 235, 0.8)' : 
-                               group === 'contractor' ? 'rgba(255, 99, 132, 0.8)' : 
-                               'rgba(0, 0, 0, 0)';
-                    },
-                    color: '#fff',
-                    labels: {
-                        display: true,
-                        align: 'center',
-                        formatter: (ctx) => {
-                            const item = ctx.raw._data;
-                            if (!item) return '';
-                            
-                            if (item.group === 'naics') {
-                                // NAICS title with code
-                                return item.code + ' - ' + (item.description ? item.description.substring(0, 20) + '...' : '');
-                            } else if (item.group === 'contractor') {
-                                // Contractor name and value
-                                return item.name.length > 20 ? item.name.substring(0, 17) + '...' : item.name;
-                            }
-                            
-                            return '';
-                        },
-                        font: {
-                            weight: 'bold',
-                            size: function(ctx) {
-                                return ctx.raw._data && ctx.raw._data.group === 'naics' ? 14 : 12;
-                            }
-                        }
-                    }
+                    label: 'Contract Value by NAICS Code',
+                    data: topNaicsValues,
+                    backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
                 }]
             },
             options: {
+                indexAxis: 'y',
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
+                    legend: { display: false },
                     tooltip: {
                         callbacks: {
-                            title: (tooltipItems) => {
-                                const item = tooltipItems[0].raw._data;
-                                if (!item) return '';
-                                
-                                if (item.group === 'naics') {
-                                    return `NAICS ${item.code}`;
-                                } else if (item.group === 'contractor') {
-                                    return item.name;
-                                }
-                                
-                                return '';
-                            },
-                            label: (tooltipItem) => {
-                                const item = tooltipItem.raw._data;
-                                if (!item) return [];
-                                
-                                const lines = [];
-                                
-                                if (item.group === 'naics') {
-                                    lines.push(`Description: ${item.description}`);
-                                    lines.push(`Contracts: ${item.contractCount.toLocaleString()}`);
-                                    lines.push(`Total Value: ${formatCurrency(item.value)}`);
-                                } else if (item.group === 'contractor') {
-                                    lines.push(`NAICS: ${item.naicsCode}`);
-                                    lines.push(`Contracts: ${item.contractCount.toLocaleString()}`);
-                                    lines.push(`Total Value: ${formatCurrency(item.value)}`);
-                                }
-                                
-                                return lines;
+                            label: (context) => {
+                                return `Value: ${formatCurrency(context.raw)}`;
                             }
                         }
-                    },
-                    legend: {
-                        display: false
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: {
+                            callback: (value) => formatCurrency(value)
+                        }
                     }
                 }
             }
@@ -2119,24 +2063,18 @@ function createNaicsTreemap(data) {
         
         // Create a simple legend
         document.getElementById('naicsTreemapLegend').innerHTML = `
-            <div style="display: flex; justify-content: center; margin-top: 10px; gap: 20px;">
-                <div style="display: flex; align-items: center;">
-                    <span style="display: inline-block; width: 15px; height: 15px; background-color: rgba(54, 162, 235, 0.8); margin-right: 5px;"></span>
-                    <span>NAICS Codes</span>
-                </div>
-                <div style="display: flex; align-items: center;">
-                    <span style="display: inline-block; width: 15px; height: 15px; background-color: rgba(255, 99, 132, 0.8); margin-right: 5px;"></span>
-                    <span>Prime Contractors</span>
-                </div>
+            <div style="text-align: center; margin-top: 10px; font-size: 14px; color: #7f8c8d;">
+                <p>Top NAICS Codes by Contract Value</p>
+                <p style="font-size: 12px; margin-top: 5px;">Click on a NAICS code below for detailed contractor breakdown</p>
             </div>
         `;
+        
     } catch (error) {
         console.error("Error creating NAICS treemap:", error);
         document.getElementById('naicsTreemapChart').innerHTML = 
-            '<div class="error-message">Could not create treemap visualization. Chart.js Treemap plugin may be missing.</div>';
+            `<div class="error-message">Could not create visualization. Technical details: ${error.message}</div>`;
     }
 }
-
 // --- ENHANCED FEATURE 2: Recompete Opportunity Calendar ---
 function initializeRecompeteCalendar(data) {
     // Process contract completion dates
@@ -3112,46 +3050,53 @@ function initializeRegionalFocusFinder(data) {
         `;
     }
     
-    // Function to render the region table
-    function renderRegionTable() {
-        const tableBody = document.getElementById('regionTableBody');
-        
-        // Sort states by contract count (descending)
-        const sortedStates = Object.values(stateData).sort((a, b) => b.count - a.count);
-        
-        let html = '';
-        
-        sortedStates.forEach(state => {
-            // Find top prime contractor
-            const topPrime = Object.entries(state.primes)
-                .sort((a, b) => b[1].value - a[1].value)[0];
-            
-            // Find top NAICS code
-            const topNaics = Object.values(state.naics)
-                .sort((a, b) => b.value - a[1].value)[0];
-            
-            html += `
-                <tr data-state="${state.state}" style="cursor: pointer;">
-                    <td>${state.state}</td>
-                    <td>${state.count.toLocaleString()}</td>
-                    <td>${formatCurrency(state.value)}</td>
-                    <td>${topPrime ? topPrime[0] : 'N/A'}</td>
-                    <td>${topNaics ? topNaics.code : 'N/A'}</td>
-                </tr>
-            `;
-        });
-        
-        tableBody.innerHTML = html;
-        
-        // Add click event to show details
-        tableBody.querySelectorAll('tr[data-state]').forEach(row => {
-            row.addEventListener('click', function() {
-                const stateCode = this.getAttribute('data-state');
-                showStateDetails(stateCode);
-            });
-        });
-    }
+  // Function to render the region table
+function renderRegionTable() {
+    const tableBody = document.getElementById('regionTableBody');
     
+    // Sort states by contract count (descending)
+    const sortedStates = Object.values(stateData).sort((a, b) => b.count - a.count);
+    
+    let html = '';
+    
+    sortedStates.forEach(state => {
+        // Find top prime contractor (with error handling)
+        let topPrime = ['N/A', {value: 0}];
+        let topNaics = null;
+        
+        // FIX: Add null checks and handle empty arrays
+        const primeEntries = Object.entries(state.primes);
+        if (primeEntries.length > 0) {
+            topPrime = primeEntries.sort((a, b) => b[1].value - a[1].value)[0];
+        }
+        
+        // Find top NAICS code (with error handling)
+        const naicsValues = Object.values(state.naics);
+        if (naicsValues.length > 0) {
+            topNaics = naicsValues.sort((a, b) => b.value - a.value)[0];
+        }
+        
+        html += `
+            <tr data-state="${state.state}" style="cursor: pointer;">
+                <td>${state.state}</td>
+                <td>${state.count.toLocaleString()}</td>
+                <td>${formatCurrency(state.value)}</td>
+                <td>${topPrime[0] !== 'N/A' ? topPrime[0] : 'N/A'}</td>
+                <td>${topNaics ? topNaics.code : 'N/A'}</td>
+            </tr>
+        `;
+    });
+    
+    tableBody.innerHTML = html;
+    
+    // Add click event to show details
+    tableBody.querySelectorAll('tr[data-state]').forEach(row => {
+        row.addEventListener('click', function() {
+            const stateCode = this.getAttribute('data-state');
+            showStateDetails(stateCode);
+        });
+    });
+}
     // Function to show state details
     function showStateDetails(stateCode) {
         const stateInfo = stateData[stateCode];
