@@ -155,7 +155,7 @@
             100% { transform: rotate(360deg); }
         }
         .hidden {
-            display: none;
+            display: none !important;
         }
         .metric-filters {
             display: flex;
@@ -221,6 +221,26 @@
             cursor: pointer;
             font-size: 12px;
         }
+        .error-message {
+            color: #e74c3c;
+            text-align: center;
+            padding: 10px;
+            font-weight: 600;
+            background-color: #fadbd8;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+        .download-link {
+            margin-top: 10px;
+            text-align: center;
+        }
+        .download-link a {
+            color: #2980b9;
+            text-decoration: none;
+        }
+        .download-link a:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
@@ -236,7 +256,10 @@
             <div id="initialLoadingMessage">
                 <div id="loadingIndicator" class="loading">
                     <div class="spinner"></div>
-                    <span>Loading data from S3 bucket...</span>
+                    <span id="loadingMessage">Loading data from S3 bucket...</span>
+                </div>
+                <div id="errorMessage" class="error-message hidden">
+                    Error loading data. Please upload the file manually.
                 </div>
             </div>
             <div id="fileUploadSection" class="hidden">
@@ -246,8 +269,13 @@
                     <div class="spinner"></div>
                     <span>Processing data...</span>
                 </div>
+                <div class="download-link">
+                    <a href="https://subhoodata.s3.us-east-1.amazonaws.com/data/sbaall.csv" download>Download sbaall.csv</a>
+                </div>
             </div>
         </div>
+        
+        <div id="dashboardContent" class="hidden">
 
         <div class="flex-row">
             <div class="stat-card">
@@ -1191,15 +1219,19 @@
             
             reader.onload = function(e) {
                 const csvData = e.target.result;
+                console.log('File loaded, size:', csvData.length);
+                console.log('Sample of file data:', csvData.substring(0, 200));
                 
                 Papa.parse(csvData, {
                     header: true,
                     dynamicTyping: true,
                     skipEmptyLines: true,
                     complete: function(results) {
-                        if (results.errors.length > 0) {
+                        console.log('CSV parsing complete, rows:', results.data.length);
+                        
+                        if (results.errors && results.errors.length > 0) {
                             console.error('CSV parsing errors:', results.errors);
-                            alert('Error parsing CSV file. Please check the console for details.');
+                            alert('Error parsing CSV file: ' + results.errors[0].message);
                             loadingIndicator.classList.add('hidden');
                             return;
                         }
@@ -1208,10 +1240,33 @@
                         filteredData = parsedData;
                         activeFilter = null;
                         document.getElementById('activeFilterIndicator').classList.add('hidden');
+                        console.log('Successfully parsed', parsedData.length, 'rows');
+                        
+                        // Hide error message if showing
+                        if (!document.getElementById('errorMessage').classList.contains('hidden')) {
+                            document.getElementById('errorMessage').classList.add('hidden');
+                        }
+                        
+                        // Show dashboard
+                        document.getElementById('dashboardContent').classList.remove('hidden');
+                        
+                        // Initialize charts
                         initializeCharts(parsedData);
+                        
+                        loadingIndicator.classList.add('hidden');
+                    },
+                    error: function(error) {
+                        console.error('PapaParse error:', error);
+                        alert('CSV parsing failed: ' + error.message);
                         loadingIndicator.classList.add('hidden');
                     }
                 });
+            };
+            
+            reader.onerror = function() {
+                console.error('FileReader error');
+                alert('Error reading file');
+                loadingIndicator.classList.add('hidden');
             };
             
             reader.readAsText(file);
