@@ -535,26 +535,39 @@ genericModal.addEventListener('click', (event) => {
     }
 });
 
-
 // --- Data Processing and Chart Initialization ---
 function cleanupCharts() { Object.keys(charts).forEach(key => { if (charts[key]) { charts[key].destroy(); charts[key] = null; } }); }
 
 function processAndInitialize(data) {
-    if (!data || data.length === 0) { showErrorMessage('No data to display. Please try manual upload or check the S3 source.', true); return; }
-    parsedData = data; 
-    activeFilterIndicator.classList.add('hidden');
-    dashboardContent.classList.remove('hidden');
-    manualUploadSection.classList.add('hidden'); 
-    s3LoadErrorDiv.classList.add('hidden'); 
-    primeDetailViewSection.classList.add('hidden'); 
+    try {
+        if (!data || data.length === 0) { 
+            showErrorMessage('No data to display. Please try manual upload or check the S3 source.', true); 
+            // showErrorMessage already calls hideProcessing(), so we are covered here.
+            return; 
+        }
+        parsedData = data; 
+        activeFilterIndicator.classList.add('hidden');
+        dashboardContent.classList.remove('hidden');
+        manualUploadSection.classList.add('hidden'); 
+        s3LoadErrorDiv.classList.add('hidden'); 
+        primeDetailViewSection.classList.add('hidden'); // Ensure prime detail is hidden initially
 
-    cleanupCharts(); 
-    initializeCoreVisuals(parsedData);
-    setupUnifiedSearch(); 
-    initializePrimeProfilesSection(parsedData); 
-    initializeContractExpirationCalendarSection(parsedData); 
-    showSuccessMessage('Data loaded and dashboard initialized.', true); 
-    hideProcessing(); 
+        cleanupCharts(); 
+        initializeCoreVisuals(parsedData);
+        setupUnifiedSearch(); 
+        initializePrimeProfilesSection(parsedData); 
+        initializeContractExpirationCalendarSection(parsedData); 
+        showSuccessMessage('Data loaded and dashboard initialized.', true); // This calls hideProcessing()
+    } catch (error) {
+        console.error("Error during processAndInitialize:", error);
+        // Show a generic error to the user and ensure the S3 spinner is hidden.
+        showErrorMessage("An error occurred while initializing the dashboard. Please try refreshing.", false); 
+    } finally {
+        // This finally block ensures hideProcessing is called even if an unexpected error 
+        // occurred that wasn't caught and handled by showErrorMessage within the try block,
+        // or if showSuccessMessage wasn't reached.
+        hideProcessing(); 
+    }
 }
 
 // --- S3 Data Loading ---
