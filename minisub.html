@@ -13,41 +13,29 @@
             font-family: Inter, sans-serif; /* Fallback font */
             font-feature-settings: 'liga' 1, 'calt' 1; /* fix for Chrome */
 
-            /* Light Mode Colors */
-            --background: oklch(100% 0 245);
+            /* Updated Light Mode Colors */
+            --background: oklch(100% 0 210);
             --on-accent: oklch(100% 0 0);
-            --accent: oklch(60.93749960229421% 0.19843750000000002 245); /* Main Blue */
-            --accent-secondary-bg: oklch(60.93749960229421% 0.19843750000000002 245 / 16%); 
-            --gradient-bg-start: oklch(60.93749960229421% 0.19843750000000002 245 / 8%);
-            --gradient-bg-end: oklch(60.93749960229421% 0.19843750000000002 245 / 0%);
+            --accent: oklch(59.86328085930507% 0.13750000000000004 210);
+            /* Assuming 'accent-b' was a typo and meant 'accent-secondary' or similar for a lighter/transparent accent */
+            --accent-secondary: oklch(59.86328085930507% 0.13750000000000004 210 / 16%); /* Renamed from accent-b for clarity */
+            --gradient-bg-start: oklch(59.86328085930507% 0.13750000000000004 210 / 8%);
+            --gradient-bg-end: oklch(59.86328085930507% 0.13750000000000004 210 / 0%);
             --text-primary: oklch(0% 0 0);
-            --text-secondary: oklch(57.51953087460143% 0.05 245);
-            --text-tertiary: oklch(74.07226514157075% 0.05 245);
-            --border-level-1: oklch(70.80078078792195% 0.1 245 / 8%);
-            --border-level-2: oklch(70.80078078792195% 0.1 245 / 16%);
-            --border-level-3: oklch(70.80078078792195% 0.1 245 / 32%);
-            --surface-level-1: oklch(98% 0.005 245); /* Slightly off-white for cards */
-            --surface-level-2: oklch(95% 0.01 245); 
-            --surface-level-3: oklch(90% 0.015 245); 
+            --text-secondary: oklch(57.71484337332673% 0 210);
+            --text-tertiary: oklch(74.26757764029605% 0 210);
+            --border-level-1: oklch(71.19140578537257% 0 210 / 8%);
+            --border-level-2: oklch(71.19140578537257% 0 210 / 16%);
+            --border-level-3: oklch(71.19140578537257% 0 210 / 32%);
+            --surface-level-1: oklch(71.19140578537257% 0 210 / 4%);
+            --surface-level-2: oklch(71.19140578537257% 0 210 / 8%);
+            --surface-level-3: oklch(71.19140578537257% 0 210 / 16%);
 
-            /* Chart Specific Accent Variations (Light Mode) */
-            --chart-accent-1: var(--accent); /* Main Blue */
-            --chart-accent-2: oklch(70% 0.18 275); /* A complementary purple/blue */
-            --chart-accent-3: oklch(75% 0.15 215); /* A lighter, slightly greener blue */
-            --chart-accent-4: oklch(65% 0.22 255); /* A deeper indigo */
-            --chart-accent-5: oklch(80% 0.12 230); /* A softer, sky blue */
-            --chart-accent-contrast: oklch(65% 0.18 15); /* Contrasting color (e.g., for negative or distinct series - a warm pink/red) */
-
-
+            /* General variables from user */
             --header-font-weight: 600;
             --button-font-weight: 500;
             --space-m: 12px; 
         }
-
-        @supports (font-variation-settings: normal) {
-            :root { font-family: InterVariable, sans-serif; }
-        }
-        
         html.dark {
             /* Dark Mode Colors */
             --background: oklch(20% 0.005 245); /* Darker background */
@@ -424,7 +412,7 @@
                 <div id="activeFilterIndicator" class="bg-[var(--accent-secondary-bg)] text-[var(--accent)] p-3 rounded-md mt-4 hidden flex flex-col sm:flex-row justify-between items-center text-sm border border-[var(--accent)]">
                     </div>
             </section>
-            <section id="coreChartsSection" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6 mb-4 md:mb-6">
+            <section id="coreChartsSection" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 gap-4 md:gap-6 mb-4 md:mb-6">
                 <div id="primeContractorsChartCard" class="dashboard-card p-4 md:p-6">
                     <h2 class="text-md md:text-lg font-semibold text-[var(--text-primary)] mb-3 text-center" style="font-weight: var(--header-font-weight);">Top Prime Contractors by Value</h2>
                     <div class="chart-container">
@@ -465,13 +453,13 @@
                         <canvas id="topAgenciesChart"></canvas>
                     </div>
                 </div>
-                <div class="dashboard-card p-4 md:p-6 md:col-span-2 xl:col-span-1"> 
+                <div class="dashboard-card p-4 md:p-6"> 
                      <h2 class="text-md md:text-lg font-semibold text-[var(--text-primary)] mb-3 text-center" style="font-weight: var(--header-font-weight);">Contract Timeline Forecast</h2>
                     <div class="chart-container">
                         <canvas id="timelineChart"></canvas> 
                     </div>
                 </div>
-                 <div id="marketShareChartCard" class="dashboard-card p-4 md:p-6 md:col-span-2 xl:col-span-2"> 
+                 <div id="marketShareChartCard" class="dashboard-card p-4 md:p-6"> 
                     <h2 class="text-md md:text-lg font-semibold text-[var(--text-primary)] mb-3 text-center" style="font-weight: var(--header-font-weight);">Prime Market Share (for current filter)</h2>
                     <div class="chart-container">
                         <canvas id="marketShareChart"></canvas>
@@ -537,7 +525,6 @@
     </div>
 <script>
 // --- DOM Elements ---
-// const globalProcessingIndicator = document.getElementById('globalProcessingIndicator'); // Removed
 const processingIndicator = document.getElementById('processingIndicator'); 
 const manualUploadSection = document.getElementById('manual-upload-section');
 const dashboardContent = document.getElementById('dashboardContent');
@@ -591,6 +578,9 @@ let currentCalendarDate = new Date();
 let currentPrimeDetailViewPage = 1; 
 let isViewingSpecificPrime = false; 
 let specificPrimeName = null;      
+let currentPrimeDetailSort = { column: 'Completion Date', order: 'desc' }; // Default sort for prime detail table
+let currentCalendarModalSort = { column: 'prime', order: 'asc' }; // Default sort for calendar modal table
+
 
 // --- Chart Color Palette (Derived from CSS Variables) ---
 let chartPrimaryColor, chartSecondaryColor, chartTertiaryColor, chartNeutralColor, chartAccentColor;
@@ -771,14 +761,15 @@ function applyFilter(searchTerm, filterType = null, filterValue = null) {
     try {
         let filteredData;
         let displaySearchTerm = searchTerm; 
-        let isPrimeSpecificFilter = false;
-
+        // isViewingSpecificPrime is now a global variable, managed here
+        
         const marketShareCard = document.getElementById('marketShareChartCard');
         const primeContractorsCard = document.getElementById('primeContractorsChartCard');
 
         if (filterType === 'primeName') {
-            isPrimeSpecificFilter = true;
-            const primeToFilter = filterValue || searchTerm;
+            isViewingSpecificPrime = true; 
+            specificPrimeName = filterValue || searchTerm; // Store the specific prime name
+            const primeToFilter = specificPrimeName;
             filteredData = parsedData.filter(record => (record['Legal Business Name']?.toLowerCase() || '') === primeToFilter.toLowerCase());
             displaySearchTerm = `Prime: ${primeToFilter}`;
             renderPrimeDetailView(primeToFilter, filteredData); 
@@ -809,7 +800,7 @@ function applyFilter(searchTerm, filterType = null, filterValue = null) {
             primeDetailViewSection.classList.add('hidden'); 
             if(marketShareCard) marketShareCard.classList.remove('hidden');
             if(primeContractorsCard) primeContractorsCard.classList.remove('hidden');
-        } else { 
+        } else { // General keyword search 
             isViewingSpecificPrime = false; 
             specificPrimeName = null;
             if (!searchTerm || searchTerm.trim() === '') {
@@ -838,7 +829,7 @@ function applyFilter(searchTerm, filterType = null, filterValue = null) {
             if(primeContractorsCard) primeContractorsCard.classList.remove('hidden');
         }
 
-        initializeCoreVisuals(filteredData, isPrimeSpecificFilter); 
+        initializeCoreVisuals(filteredData, isViewingSpecificPrime); 
         initializePrimeProfilesSection(filteredData); 
         initializeContractExpirationCalendarSection(filteredData);
         updateActiveFilterIndicator(displaySearchTerm, filteredData.length);
@@ -1403,11 +1394,13 @@ function renderPrimeDetailContractsTable(contracts, page) {
     
     let tableHTML = `<div class="table-responsive"><table class="min-w-full divide-y divide-[var(--border-level-1)] text-xs">
         <thead class="bg-[var(--surface-level-2)]"><tr>
-            <th class="px-2 py-2 text-left font-medium text-[var(--text-secondary)]">PIID</th>
-            <th class="px-2 py-2 text-left font-medium text-[var(--text-secondary)]">Agency</th>
-            <th class="px-2 py-2 text-left font-medium text-[var(--text-secondary)]">Office</th> <th class="px-2 py-2 text-left font-medium text-[var(--text-secondary)]">NAICS Code</th>
-            <th class="px-2 py-2 text-left font-medium text-[var(--text-secondary)]">NAICS Description</th> <th class="px-2 py-2 text-left font-medium text-[var(--text-secondary)]">Value</th>
-            <th class="px-2 py-2 text-left font-medium text-[var(--text-secondary)]">End Date</th>
+            <th class="px-2 py-2 text-left font-medium text-[var(--text-secondary)]" data-sort-prime="id">PIID ${currentPrimeDetailSort.column === 'id' ? (currentPrimeDetailSort.order === 'asc' ? '▲' : '▼') : ''}</th>
+            <th class="px-2 py-2 text-left font-medium text-[var(--text-secondary)]" data-sort-prime="agency">Agency ${currentPrimeDetailSort.column === 'agency' ? (currentPrimeDetailSort.order === 'asc' ? '▲' : '▼') : ''}</th>
+            <th class="px-2 py-2 text-left font-medium text-[var(--text-secondary)]" data-sort-prime="office">Office ${currentPrimeDetailSort.column === 'office' ? (currentPrimeDetailSort.order === 'asc' ? '▲' : '▼') : ''}</th>
+            <th class="px-2 py-2 text-left font-medium text-[var(--text-secondary)]" data-sort-prime="naicsCode">NAICS ${currentPrimeDetailSort.column === 'naicsCode' ? (currentPrimeDetailSort.order === 'asc' ? '▲' : '▼') : ''}</th>
+            <th class="px-2 py-2 text-left font-medium text-[var(--text-secondary)]" data-sort-prime="naicsDesc">NAICS Desc. ${currentPrimeDetailSort.column === 'naicsDesc' ? (currentPrimeDetailSort.order === 'asc' ? '▲' : '▼') : ''}</th>
+            <th class="px-2 py-2 text-left font-medium text-[var(--text-secondary)]" data-sort-prime="value">Value ${currentPrimeDetailSort.column === 'value' ? (currentPrimeDetailSort.order === 'asc' ? '▲' : '▼') : ''}</th>
+            <th class="px-2 py-2 text-left font-medium text-[var(--text-secondary)]" data-sort-prime="endDate">End Date ${currentPrimeDetailSort.column === 'endDate' ? (currentPrimeDetailSort.order === 'asc' ? '▲' : '▼') : ''}</th>
         </tr></thead><tbody class="bg-[var(--background)] divide-y divide-[var(--border-level-1)]">`;
     
     pageContracts.forEach(c => {
@@ -1416,7 +1409,7 @@ function renderPrimeDetailContractsTable(contracts, page) {
             <td class="px-2 py-1 whitespace-nowrap">${c['Contracting Agency Name'] || 'N/A'}</td>
             <td class="px-2 py-1 whitespace-nowrap">${c['Contracting Office Name'] || 'N/A'}</td>
             <td class="px-2 py-1">${c['NAICS Code'] || 'N/A'}</td>
-            <td class="px-2 py-1 whitespace-normal max-w-xs truncate">${c['NAICS Description'] || 'N/A'}</td>
+            <td class="px-2 py-1 whitespace-normal max-w-xs truncate" title="${c['NAICS Description'] || ''}">${c['NAICS Description'] ? c['NAICS Description'].substring(0,50) + (c['NAICS Description'].length > 50 ? '...' : '') : 'N/A'}</td>
             <td class="px-2 py-1 whitespace-nowrap">${formatCurrency(parseCurrencyValue(c['Base and All Options Value (Total Contract Value)']))}</td>
             <td class="px-2 py-1 whitespace-nowrap">${formatDate(c['Completion Date'])}</td>
         </tr>`;
@@ -1434,6 +1427,22 @@ function renderPrimeDetailContractsTable(contracts, page) {
     
     primeDetailContractsTableContainer.innerHTML = tableHTML;
 
+    // Add event listeners for sorting prime detail table
+    document.querySelectorAll('#primeDetailContractsTableContainer th[data-sort-prime]').forEach(th => {
+        th.onclick = () => { 
+            const sortColumn = th.dataset.sortPrime;
+            if (currentPrimeDetailSort.column === sortColumn) {
+                currentPrimeDetailSort.order = currentPrimeDetailSort.order === 'asc' ? 'desc' : 'asc';
+            } else {
+                currentPrimeDetailSort.column = sortColumn;
+                currentPrimeDetailSort.order = 'asc';
+            }
+            currentPrimeDetailViewPage = 1; 
+            const sortedContracts = sortPrimeDetailData(contracts, currentPrimeDetailSort.column, currentPrimeDetailSort.order);
+            renderPrimeDetailContractsTable(sortedContracts, currentPrimeDetailViewPage);
+        };
+    });
+
     if (document.getElementById('prevPageBtnPrimeDetailView')) {
         document.getElementById('prevPageBtnPrimeDetailView').onclick = () => {
             if (currentPrimeDetailViewPage > 1) { currentPrimeDetailViewPage--; renderPrimeDetailContractsTable(contracts, currentPrimeDetailViewPage); }
@@ -1444,6 +1453,52 @@ function renderPrimeDetailContractsTable(contracts, page) {
             if (currentPrimeDetailViewPage < totalPages) { currentPrimeDetailViewPage++; renderPrimeDetailContractsTable(contracts, currentPrimeDetailViewPage); }
         };
     }
+}
+
+// Helper function to sort data for the Prime Detail contracts table
+function sortPrimeDetailData(data, column, order) {
+    return [...data].sort((a, b) => {
+        let valA, valB;
+        switch (column) {
+            case 'id':
+                valA = a['Procurement Instrument Identifier'] || '';
+                valB = b['Procurement Instrument Identifier'] || '';
+                break;
+            case 'agency':
+                valA = a['Contracting Agency Name'] || '';
+                valB = b['Contracting Agency Name'] || '';
+                break;
+            case 'office':
+                valA = a['Contracting Office Name'] || '';
+                valB = b['Contracting Office Name'] || '';
+                break;
+            case 'naicsCode':
+                valA = String(a['NAICS Code'] || '');
+                valB = String(b['NAICS Code'] || '');
+                break;
+            case 'naicsDesc':
+                valA = a['NAICS Description'] || '';
+                valB = b['NAICS Description'] || '';
+                break;
+            case 'value':
+                valA = parseCurrencyValue(a['Base and All Options Value (Total Contract Value)']);
+                valB = parseCurrencyValue(b['Base and All Options Value (Total Contract Value)']);
+                break;
+            case 'endDate':
+                valA = new Date(a['Completion Date'] || 0).getTime();
+                valB = new Date(b['Completion Date'] || 0).getTime();
+                break;
+            default:
+                return 0;
+        }
+
+        if (typeof valA === 'string') valA = valA.toLowerCase();
+        if (typeof valB === 'string') valB = valB.toLowerCase();
+        
+        if (valA < valB) return order === 'asc' ? -1 : 1;
+        if (valA > valB) return order === 'asc' ? 1 : -1;
+        return 0;
+    });
 }
 
 
@@ -1464,7 +1519,8 @@ function initializeContractExpirationCalendarSection(data) {
                 prime: r['Legal Business Name'], 
                 value: parseCurrencyValue(r['Base and All Options Value (Total Contract Value)']), 
                 id: r['Procurement Instrument Identifier'] || 'N/A',
-                agency: r['Contracting Agency Name'] || 'N/A'
+                agency: r['Contracting Agency Name'] || 'N/A',
+                office: r['Contracting Office Name'] || 'N/A' // Added office
             });
         }
     });
@@ -1535,9 +1591,9 @@ function initializeContractExpirationCalendarSection(data) {
 function showCalendarDayDetailsModal(dateObj, eventsOnDate) {
     const formattedDate = formatDate(dateObj);
     let currentCalendarPage = 1;
-    let currentSort = { column: 'prime', order: 'asc' }; 
+    // currentCalendarModalSort is already a global variable
 
-    function sortEvents(events, column, order) {
+    function sortEvents(events, column, order) { // This helper can be local or global if reused
         return [...events].sort((a, b) => {
             let valA = a[column];
             let valB = b[column];
@@ -1547,14 +1603,19 @@ function showCalendarDayDetailsModal(dateObj, eventsOnDate) {
             } else if (typeof valA === 'string') {
                 valA = valA.toLowerCase();
                 valB = valB.toLowerCase();
+            } else if (valA === null || valA === undefined) { // Handle null/undefined for sorting
+                return order === 'asc' ? -1 : 1;
+            } else if (valB === null || valB === undefined) {
+                return order === 'asc' ? 1 : -1;
             }
+
             if (valA < valB) return order === 'asc' ? -1 : 1;
             if (valA > valB) return order === 'asc' ? 1 : -1;
             return 0;
         });
     }
     
-    let sortedEvents = sortEvents(eventsOnDate, currentSort.column, currentSort.order);
+    let sortedEvents = sortEvents(eventsOnDate, currentCalendarModalSort.column, currentCalendarModalSort.order);
 
 
     function renderCalendarDayPage(page, sortedData) {
@@ -1564,17 +1625,19 @@ function showCalendarDayDetailsModal(dateObj, eventsOnDate) {
 
         let tableHTML = `<div class="table-responsive"><table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-xs">
             <thead class="bg-gray-50 dark:bg-gray-700"><tr> 
-                <th class="px-2 py-2 text-left font-medium text-gray-500 dark:text-gray-300" data-sort="id">PIID ${currentSort.column === 'id' ? (currentSort.order === 'asc' ? '▲' : '▼') : ''}</th>
-                <th class="px-2 py-2 text-left font-medium text-gray-500 dark:text-gray-300" data-sort="prime">Prime ${currentSort.column === 'prime' ? (currentSort.order === 'asc' ? '▲' : '▼') : ''}</th>
-                <th class="px-2 py-2 text-left font-medium text-gray-500 dark:text-gray-300" data-sort="agency">Agency ${currentSort.column === 'agency' ? (currentSort.order === 'asc' ? '▲' : '▼') : ''}</th>
-                <th class="px-2 py-2 text-left font-medium text-gray-500 dark:text-gray-300" data-sort="value">Value ${currentSort.column === 'value' ? (currentSort.order === 'asc' ? '▲' : '▼') : ''}</th>
+                <th class="px-2 py-2 text-left font-medium text-gray-500 dark:text-gray-300" data-sort-cal="id">PIID ${currentCalendarModalSort.column === 'id' ? (currentCalendarModalSort.order === 'asc' ? '▲' : '▼') : ''}</th>
+                <th class="px-2 py-2 text-left font-medium text-gray-500 dark:text-gray-300" data-sort-cal="prime">Prime ${currentCalendarModalSort.column === 'prime' ? (currentCalendarModalSort.order === 'asc' ? '▲' : '▼') : ''}</th>
+                <th class="px-2 py-2 text-left font-medium text-gray-500 dark:text-gray-300" data-sort-cal="agency">Agency ${currentCalendarModalSort.column === 'agency' ? (currentCalendarModalSort.order === 'asc' ? '▲' : '▼') : ''}</th>
+                <th class="px-2 py-2 text-left font-medium text-gray-500 dark:text-gray-300" data-sort-cal="office">Office ${currentCalendarModalSort.column === 'office' ? (currentCalendarModalSort.order === 'asc' ? '▲' : '▼') : ''}</th>
+                <th class="px-2 py-2 text-left font-medium text-gray-500 dark:text-gray-300" data-sort-cal="value">Value ${currentCalendarModalSort.column === 'value' ? (currentCalendarModalSort.order === 'asc' ? '▲' : '▼') : ''}</th>
             </tr></thead>
             <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">`;
         pageEvents.forEach(event => {
             tableHTML += `<tr>
                 <td class="px-2 py-1 whitespace-nowrap">${createAwardLink(event.id)}</td>
-                <td class="px-2 py-1 whitespace-nowrap">${event.prime}</td>
-                <td class="px-2 py-1 whitespace-nowrap">${event.agency}</td>
+                <td class="px-2 py-1 whitespace-nowrap">${event.prime || 'N/A'}</td>
+                <td class="px-2 py-1 whitespace-nowrap">${event.agency || 'N/A'}</td>
+                <td class="px-2 py-1 whitespace-nowrap">${event.office || 'N/A'}</td>
                 <td class="px-2 py-1 whitespace-nowrap">${formatCurrency(event.value)}</td>
             </tr>`;
         });
@@ -1598,17 +1661,17 @@ function showCalendarDayDetailsModal(dateObj, eventsOnDate) {
                 <div id="calendarDayTableContainer">${tableHTML}</div>`;
         }
 
-        document.querySelectorAll('#calendarDayTableContainer th[data-sort]').forEach(th => {
+        document.querySelectorAll('#calendarDayTableContainer th[data-sort-cal]').forEach(th => {
             th.onclick = () => { 
-                const sortColumn = th.dataset.sort;
-                if (currentSort.column === sortColumn) {
-                    currentSort.order = currentSort.order === 'asc' ? 'desc' : 'asc';
+                const sortColumn = th.dataset.sortCal;
+                if (currentCalendarModalSort.column === sortColumn) {
+                    currentCalendarModalSort.order = currentCalendarModalSort.order === 'asc' ? 'desc' : 'asc';
                 } else {
-                    currentSort.column = sortColumn;
-                    currentSort.order = 'asc';
+                    currentCalendarModalSort.column = sortColumn;
+                    currentCalendarModalSort.order = 'asc';
                 }
                 currentCalendarPage = 1; 
-                sortedEvents = sortEvents(eventsOnDate, currentSort.column, currentSort.order); 
+                sortedEvents = sortEvents(eventsOnDate, currentCalendarModalSort.column, currentCalendarModalSort.order); 
                 renderCalendarDayPage(currentCalendarPage, sortedEvents);
             };
         });
