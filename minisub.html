@@ -227,7 +227,7 @@ const fileNameDisplay = document.getElementById('file-name-display');
 const errorMessageDiv = document.getElementById('errorMessage');
 const successMessageDiv = document.getElementById('successMessage');
 const s3LoadErrorDiv = document.getElementById('s3LoadError');
-const unifiedSearchInput = document.getElementById('unifiedSearchInput'); // New unified search input
+const unifiedSearchInput = document.getElementById('unifiedSearchInput'); 
 const activeFilterIndicator = document.getElementById('activeFilterIndicator');
 
 const primeProfilesContainer = document.getElementById('primeProfilesContainer');
@@ -241,8 +241,6 @@ const globalTooltipEl = document.querySelector('.event-tooltip');
 // --- Global Variables ---
 let parsedData = [];
 const charts = {}; 
-// activePrimeFilter is no longer needed as a separate global state for filtering logic.
-// The unifiedSearchInput.value will be the primary source for filtering.
 const S3_CSV_URL = 'https://subhoodata.s3.us-east-1.amazonaws.com/data/sbaall.csv';
 let currentMainStateChartFilter = 'count';
 
@@ -288,9 +286,8 @@ function processAndInitialize(data) {
     s3LoadErrorDiv.classList.add('hidden'); 
 
     cleanupCharts(); 
-    // populateFilterOptions(); // No longer needed as dropdowns are removed
     initializeCoreVisuals(parsedData);
-    setupUnifiedSearch(); // Initialize the new unified search
+    setupUnifiedSearch(); 
     initializePrimeProfilesSection(parsedData);
     initializeRecompeteCalendarSection(parsedData);
     showSuccessMessage('Data loaded and dashboard initialized.', true); 
@@ -298,7 +295,7 @@ function processAndInitialize(data) {
 }
 
 // --- S3 Data Loading ---
-function loadDataFromS3() { // (No changes from v4)
+function loadDataFromS3() { 
     showProcessingBriefly();
     fetch(S3_CSV_URL, { mode: 'cors', cache: 'no-cache', headers: { 'Accept': 'text/csv' } })
     .then(response => {
@@ -314,7 +311,9 @@ function loadDataFromS3() { // (No changes from v4)
     .then(csvText => {
         if (!csvText || csvText.trim() === '') { showErrorMessage('S3 file is empty.', true); return; }
         Papa.parse(csvText, {
-            header: true, dynamicTyping: true, skipEmptyLines: true,
+            header: true,
+            dynamicTyping: true, // This can cause NAICS to be numbers
+            skipEmptyLines: true,
             complete: results => {
                 if (results.errors && results.errors.length > 0) { showErrorMessage('Error parsing CSV from S3: ' + results.errors[0].message, true); return; }
                 if (results.data && results.data.length > 0) processAndInitialize(results.data);
@@ -330,21 +329,21 @@ function loadDataFromS3() { // (No changes from v4)
     });
 }
 
-// populateFilterOptions is removed.
 
 // --- Unified Search and Filtering Logic ---
 function applyUnifiedSearch(searchTerm) {
     if (!searchTerm || searchTerm.trim() === '') {
-        clearAllFilters(); // If search is cleared, show all data
+        clearAllFilters(); 
         return;
     }
 
-    const keywords = searchTerm.toLowerCase().split(' ').filter(k => k); // Split into keywords and remove empty strings
+    const keywords = searchTerm.toLowerCase().split(' ').filter(k => k); 
     
     const filteredData = parsedData.filter(record => {
-        return keywords.every(keyword => { // Record must match ALL keywords
+        return keywords.every(keyword => { 
             const primeName = record['Legal Business Name']?.toLowerCase() || '';
-            const naicsCode = record['NAICS Code']?.toLowerCase() || '';
+            // FIX: Ensure NAICS Code is treated as a string for .toLowerCase() and .includes()
+            const naicsCode = String(record['NAICS Code'] || '')?.toLowerCase(); // Convert to string first
             const naicsDesc = record['NAICS Description']?.toLowerCase() || '';
             const agencyName = record['Contracting Department Name']?.toLowerCase() || '';
             const stateCode = record['Principal Place of Performance State Code']?.toLowerCase() || '';
@@ -353,8 +352,8 @@ function applyUnifiedSearch(searchTerm) {
                    naicsCode.includes(keyword) ||
                    naicsDesc.includes(keyword) ||
                    agencyName.includes(keyword) ||
-                   (keyword.length === 2 && stateCode === keyword) || // Exact match for 2-letter state codes
-                   (keyword.length > 2 && stateCode.includes(keyword)); // Partial for typed out state names (less common)
+                   (keyword.length === 2 && stateCode === keyword) || 
+                   (keyword.length > 2 && stateCode.includes(keyword)); 
         });
     });
 
@@ -385,11 +384,11 @@ function updateActiveFilterIndicator(searchTerm, count) {
 function setupUnifiedSearch() {
     unifiedSearchInput.addEventListener('input', _.debounce(function() {
         applyUnifiedSearch(this.value);
-    }, 500)); // Debounce for 500ms
+    }, 500)); 
 }
 
 // --- Initialize Core Visualizations ---
-function initializeCoreVisuals(data) { // (No changes from v4)
+function initializeCoreVisuals(data) { 
     updateStatistics(data);
     createPrimeContractorsChart(data);
     createDepartmentChart(data);
@@ -399,7 +398,7 @@ function initializeCoreVisuals(data) { // (No changes from v4)
 }
 
 // --- Statistics Update ---
-function updateStatistics(data) { // (No changes from v4)
+function updateStatistics(data) { 
     if (!data || data.length === 0) { /* ... */ return; }
     document.getElementById('totalContractsValue').textContent = data.length.toLocaleString();
     let totalValue = 0, contractsWithValue = 0;
@@ -410,13 +409,13 @@ function updateStatistics(data) { // (No changes from v4)
 }
 
 // --- Chart Creation Functions ---
-function createChart(canvasId, type, data, options) { // (No changes from v4)
+function createChart(canvasId, type, data, options) { 
     const ctx = document.getElementById(canvasId).getContext('2d');
     if (charts[canvasId]) charts[canvasId].destroy();
     charts[canvasId] = new Chart(ctx, { type, data, options });
 }
 
-function createPrimeContractorsChart(data) { // (No changes from v4)
+function createPrimeContractorsChart(data) { 
     const primeValues = {};
     data.forEach(r => { if (r['Legal Business Name']) primeValues[r['Legal Business Name']] = (primeValues[r['Legal Business Name']] || 0) + parseCurrencyValue(r['Base and All Options Value (Total Contract Value)']); });
     const sorted = Object.entries(primeValues).sort((a,b)=>b[1]-a[1]).slice(0,10);
@@ -426,7 +425,7 @@ function createPrimeContractorsChart(data) { // (No changes from v4)
     );
 }
 
-function createDepartmentChart(data) { // (No changes from v4)
+function createDepartmentChart(data) { 
     const deptValues = {};
     data.forEach(r => { if (r['Contracting Department Name']) deptValues[r['Contracting Department Name']] = (deptValues[r['Contracting Department Name']] || 0) + parseCurrencyValue(r['Base and All Options Value (Total Contract Value)']); });
     const sorted = Object.entries(deptValues).sort((a,b)=>b[1]-a[1]).slice(0,10);
@@ -436,22 +435,24 @@ function createDepartmentChart(data) { // (No changes from v4)
     );
 }
 
-function createNaicsChart_main(data) { // (No changes from v4)
+function createNaicsChart_main(data) { 
     const naicsValues = {}, naicsDesc = {};
     data.forEach(r => {
         if (r['NAICS Code']) {
-            naicsValues[r['NAICS Code']] = (naicsValues[r['NAICS Code']] || 0) + parseCurrencyValue(r['Base and All Options Value (Total Contract Value)']);
-            if (!naicsDesc[r['NAICS Code']]) naicsDesc[r['NAICS Code']] = r['NAICS Description'] || '';
+            // Ensure NAICS Code is treated as string for keying, though values are numeric
+            const naicsKey = String(r['NAICS Code']);
+            naicsValues[naicsKey] = (naicsValues[naicsKey] || 0) + parseCurrencyValue(r['Base and All Options Value (Total Contract Value)']);
+            if (!naicsDesc[naicsKey]) naicsDesc[naicsKey] = r['NAICS Description'] || '';
         }
     });
     const sorted = Object.entries(naicsValues).sort((a,b)=>b[1]-a[1]).slice(0,10);
     createChart('naicsChart_main', 'bar',
-        { labels: sorted.map(i=>`${i[0]} - ${naicsDesc[i[0]].substring(0,20)}...`), datasets: [{ label: 'Contract Value', data: sorted.map(i=>i[1]), backgroundColor: 'rgba(22, 163, 74, 0.7)' }] },
+        { labels: sorted.map(i=>`${i[0]} - ${naicsDesc[i[0]] ? naicsDesc[i[0]].substring(0,20) : ''}...`), datasets: [{ label: 'Contract Value', data: sorted.map(i=>i[1]), backgroundColor: 'rgba(22, 163, 74, 0.7)' }] },
         { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: {display:false}, tooltip:{callbacks:{label:c=>formatCurrency(c.raw)}}}, scales: {x:{ticks:{callback:v=>formatCurrency(v).slice(0,-3)+'k'}}}}
     );
 }
 
-function createContractTypeChart_main(data) { // (No changes from v4)
+function createContractTypeChart_main(data) { 
     const contractTypes = {};
     data.forEach(r => { if (r['Award or Indefinite Delivery Vehicle Type']) contractTypes[r['Award or Indefinite Delivery Vehicle Type']] = (contractTypes[r['Award or Indefinite Delivery Vehicle Type']] || 0) + 1; });
     createChart('contractTypeChart_main', 'doughnut',
@@ -460,7 +461,7 @@ function createContractTypeChart_main(data) { // (No changes from v4)
     );
 }
 
-function createStateContractsChart_main(data, filterType = 'count') { // (No changes from v4)
+function createStateContractsChart_main(data, filterType = 'count') { 
     const stateData = {}; 
     data.forEach(r => {
         const state = r['Principal Place of Performance State Code'];
@@ -478,20 +479,20 @@ function createStateContractsChart_main(data, filterType = 'count') { // (No cha
 }
 
 // --- Prime Profiles Section ---
-function initializePrimeProfilesSection(data) { // (No changes from v4)
+function initializePrimeProfilesSection(data) { 
     const profiles = {};
     data.forEach(r => {
         const name = r['Legal Business Name']; if (!name) return;
         if (!profiles[name]) profiles[name] = { name: name, contracts: 0, totalValue: 0, naics: new Set() };
         profiles[name].contracts++; profiles[name].totalValue += parseCurrencyValue(r['Base and All Options Value (Total Contract Value)']);
-        if(r['NAICS Code']) profiles[name].naics.add(r['NAICS Code']);
+        if(r['NAICS Code']) profiles[name].naics.add(String(r['NAICS Code'])); // Ensure NAICS is string for Set
     });
     function renderCards(filterTerm = '') {
         primeProfilesContainer.innerHTML = ''; let count = 0;
         Object.values(profiles)
             .filter(p => filterTerm === '' || p.name.toLowerCase().includes(filterTerm.toLowerCase()))
             .sort((a,b) => b.totalValue - a.totalValue)
-            .forEach(p => { // Consider pagination or limiting if list is very long
+            .forEach(p => { 
                 count++;
                 const card = document.createElement('div');
                 card.className = 'p-4 bg-gray-50 rounded-lg border shadow hover:shadow-md';
@@ -509,15 +510,14 @@ function initializePrimeProfilesSection(data) { // (No changes from v4)
     renderCards(); 
 }
 
-// Helper function to set unified search term and trigger search (e.g., from profile cards)
 function setUnifiedSearchTerm(term) {
     unifiedSearchInput.value = term;
-    applyUnifiedSearch(term); // Directly call the search function
+    applyUnifiedSearch(term); 
 }
 
 
 // --- Recompete Calendar Section ---
-function initializeRecompeteCalendarSection(data) { // (No changes from v4)
+function initializeRecompeteCalendarSection(data) { 
     const events = [];
     data.forEach(r => {
         if (r['Completion Date']) {
@@ -552,7 +552,7 @@ function initializeRecompeteCalendarSection(data) { // (No changes from v4)
     renderCalView();
 }
 
-function setupCalendarEventTooltips(tooltipEl) { // (No changes from v4)
+function setupCalendarEventTooltips(tooltipEl) { 
     document.querySelectorAll('#calendarGrid [data-event-details]').forEach(el => {
         el.onmouseenter = (e) => {
             tooltipEl.innerHTML = el.dataset.eventDetails; tooltipEl.style.display = 'block';
@@ -567,7 +567,7 @@ function setupCalendarEventTooltips(tooltipEl) { // (No changes from v4)
 }
 
 // --- Event Listeners for Chart Filters ---
-document.getElementById('stateChartFilters_main').addEventListener('click', function(e) { // (No changes from v4)
+document.getElementById('stateChartFilters_main').addEventListener('click', function(e) { 
     if (e.target.classList.contains('filter-btn')) {
         const filterType = e.target.dataset.filter;
         currentMainStateChartFilter = filterType;
@@ -576,12 +576,12 @@ document.getElementById('stateChartFilters_main').addEventListener('click', func
         
         let dataToUse = parsedData;
         const currentSearchTerm = unifiedSearchInput.value.trim();
-        if (currentSearchTerm) { // If there's an active unified search, use that data
+        if (currentSearchTerm) { 
             const keywords = currentSearchTerm.toLowerCase().split(' ').filter(k => k);
             dataToUse = parsedData.filter(record => {
                 return keywords.every(keyword => {
                     return (record['Legal Business Name']?.toLowerCase().includes(keyword) ||
-                           record['NAICS Code']?.toLowerCase().includes(keyword) ||
+                           String(record['NAICS Code'] || '').toLowerCase().includes(keyword) || // Ensure string conversion
                            record['NAICS Description']?.toLowerCase().includes(keyword) ||
                            record['Contracting Department Name']?.toLowerCase().includes(keyword) ||
                            (keyword.length === 2 && (record['Principal Place of Performance State Code']?.toLowerCase() === keyword)) ||
@@ -594,7 +594,7 @@ document.getElementById('stateChartFilters_main').addEventListener('click', func
 });
 
 // --- File Input Handling ---
-csvFileInput.addEventListener('change', function(e) { // (No changes from v4)
+csvFileInput.addEventListener('change', function(e) { 
     const file = e.target.files[0]; if (!file) { fileNameDisplay.textContent = 'No file'; return; }
     fileNameDisplay.textContent = file.name; showProcessingBriefly();
     Papa.parse(file, {
