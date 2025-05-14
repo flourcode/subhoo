@@ -1,0 +1,1230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Federal Business Development Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            background-color: #f5f7fa;
+            padding: 20px;
+        }
+        .dashboard-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .dashboard-title {
+            color: #2c3e50;
+            font-size: 24px;
+            font-weight: 600;
+        }
+        .dashboard-subtitle {
+            color: #7f8c8d;
+            font-size: 16px;
+            margin-top: 5px;
+        }
+        .file-input-container {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+        .file-input-label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: #34495e;
+        }
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+        .dashboard-card {
+            background-color: #fff;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #2c3e50;
+        }
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+        .full-width {
+            grid-column: span 2;
+        }
+        .flex-row {
+            display: flex;
+            gap: 20px;
+        }
+        .search-container {
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+        }
+        .search-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+        .results-container {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #eee;
+            border-radius: 4px;
+            padding: 10px;
+        }
+        .result-item {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            position: relative;
+        }
+        .result-item:hover {
+            background-color: #f8f9fa;
+        }
+        .result-item:last-child {
+            border-bottom: none;
+        }
+        .stat-card {
+            flex: 1;
+            background-color: #fff;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #2980b9;
+            margin-bottom: 5px;
+        }
+        .stat-label {
+            font-size: 14px;
+            color: #7f8c8d;
+        }
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100px;
+            font-weight: 600;
+            color: #7f8c8d;
+        }
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border-left-color: #09f;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .hidden {
+            display: none;
+        }
+        .metric-filters {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .filter-btn {
+            padding: 6px 12px;
+            background-color: #f1f1f1;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .filter-btn.active {
+            background-color: #2980b9;
+            color: white;
+        }
+        #mapContainer {
+            height: 400px;
+            width: 100%;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+            font-size: 14px;
+        }
+        th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+        }
+        .view-details-btn {
+            display: inline-block;
+            padding: 4px 8px;
+            background-color: #2980b9;
+            color: white;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+        #activeFilterIndicator {
+            background-color: #f8f9fa;
+            padding: 8px 12px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .clear-filter-btn {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="dashboard-header">
+            <div>
+                <h1 class="dashboard-title">Federal Business Development Dashboard</h1>
+                <p class="dashboard-subtitle">Prime to Subcontractor Teaming Opportunities</p>
+            </div>
+        </div>
+
+        <div class="file-input-container">
+            <div id="initialLoadingMessage">
+                <div id="loadingIndicator" class="loading">
+                    <div class="spinner"></div>
+                    <span>Loading data from S3 bucket...</span>
+                </div>
+            </div>
+            <div id="fileUploadSection" class="hidden">
+                <label class="file-input-label">Upload CSV File (with same column structure)</label>
+                <input type="file" id="csvFileInput" accept=".csv">
+                <div id="processingIndicator" class="loading hidden">
+                    <div class="spinner"></div>
+                    <span>Processing data...</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex-row">
+            <div class="stat-card">
+                <div class="stat-value" id="totalContractsValue">0</div>
+                <div class="stat-label">Total Contracts</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalValueValue">$0</div>
+                <div class="stat-label">Total Contract Value</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="avgContractValue">$0</div>
+                <div class="stat-label">Average Contract Value</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="uniquePrimesValue">0</div>
+                <div class="stat-label">Unique Prime Contractors</div>
+            </div>
+        </div>
+
+        <div class="search-container">
+            <h2 class="card-title">Prime Contractor Search</h2>
+            <input type="text" id="primeSearchInput" class="search-input" placeholder="Search for a prime contractor...">
+            <div id="searchResults" class="results-container"></div>
+        </div>
+        
+        <div id="activeFilterIndicator" class="hidden">
+            Filtered by: [Prime Name]
+            <button class="clear-filter-btn" onclick="clearPrimeFilter()">Clear Filter</button>
+        </div>
+
+        <div class="dashboard-grid">
+            <div class="dashboard-card">
+                <h2 class="card-title">Top Prime Contractors by Contract Value</h2>
+                <div class="chart-container">
+                    <canvas id="primeContractorsChart"></canvas>
+                </div>
+            </div>
+
+            <div class="dashboard-card">
+                <h2 class="card-title">Department Contract Distribution</h2>
+                <div class="chart-container">
+                    <canvas id="departmentChart"></canvas>
+                </div>
+            </div>
+
+            <div class="dashboard-card">
+                <h2 class="card-title">NAICS Code Distribution</h2>
+                <div class="metric-filters" id="naicsFilters">
+                    <button class="filter-btn active" data-filter="count">By Count</button>
+                    <button class="filter-btn" data-filter="value">By Value</button>
+                </div>
+                <div class="chart-container">
+                    <canvas id="naicsChart"></canvas>
+                </div>
+            </div>
+
+            <div class="dashboard-card">
+                <h2 class="card-title">Geographic Contract Distribution</h2>
+                <div class="metric-filters" id="stateFilters">
+                    <button class="filter-btn active" data-filter="count">By Count</button>
+                    <button class="filter-btn" data-filter="value">By Value</button>
+                </div>
+                <div class="chart-container">
+                    <canvas id="stateChart"></canvas>
+                </div>
+            </div>
+
+            <div class="dashboard-card">
+                <h2 class="card-title">Contract Type Breakdown</h2>
+                <div class="chart-container">
+                    <canvas id="contractTypeChart"></canvas>
+                </div>
+            </div>
+
+            <div class="dashboard-card">
+                <h2 class="card-title">Contract Value Range Distribution</h2>
+                <div class="chart-container">
+                    <canvas id="valueRangeChart"></canvas>
+                </div>
+            </div>
+
+            <div class="dashboard-card full-width">
+                <h2 class="card-title">Contract Timeline Forecast</h2>
+                <div class="chart-container">
+                    <canvas id="timelineChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let parsedData = [];
+        const charts = {};
+        
+        // Helper function to format currency
+        function formatCurrency(value) {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            }).format(value);
+        }
+        
+        // Format large numbers
+        function formatNumber(num) {
+            if (num >= 1000000000) {
+                return (num / 1000000000).toFixed(1) + 'B';
+            }
+            if (num >= 1000000) {
+                return (num / 1000000).toFixed(1) + 'M';
+            }
+            if (num >= 1000) {
+                return (num / 1000).toFixed(1) + 'K';
+            }
+            return num;
+        }
+
+        // Parse currency value
+        function parseCurrencyValue(valueStr) {
+            if (!valueStr) return 0;
+            return parseFloat(String(valueStr).replace(/[$,\s]/g, '')) || 0;
+        }
+        
+        // Initialize charts
+        function initializeCharts(data) {
+            updateStatistics(data);
+            createPrimeContractorsChart(data);
+            createDepartmentChart(data);
+            createNAICSChart(data);
+            createStateChart(data);
+            createContractTypeChart(data);
+            createValueRangeChart(data);
+            createTimelineChart(data);
+            setupPrimeSearch(data);
+        }
+        
+        // Update dashboard statistics
+        function updateStatistics(data) {
+            if (!data || data.length === 0) {
+                document.getElementById('totalContractsValue').textContent = '0';
+                document.getElementById('totalValueValue').textContent = '$0';
+                document.getElementById('avgContractValue').textContent = '$0';
+                document.getElementById('uniquePrimesValue').textContent = '0';
+                return;
+            }
+            
+            // Count total contracts
+            document.getElementById('totalContractsValue').textContent = data.length.toLocaleString();
+            
+            // Calculate total contract value
+            let totalValue = 0;
+            let contractsWithValue = 0;
+            
+            data.forEach(record => {
+                const value = parseCurrencyValue(record['Base and All Options Value (Total Contract Value)']);
+                if (value > 0) {
+                    totalValue += value;
+                    contractsWithValue++;
+                }
+            });
+            
+            document.getElementById('totalValueValue').textContent = formatCurrency(totalValue);
+            
+            // Calculate average contract value
+            const avgValue = contractsWithValue > 0 ? totalValue / contractsWithValue : 0;
+            document.getElementById('avgContractValue').textContent = formatCurrency(avgValue);
+            
+            // Count unique prime contractors
+            const uniquePrimes = new Set();
+            data.forEach(record => {
+                if (record['Legal Business Name']) {
+                    uniquePrimes.add(record['Legal Business Name']);
+                }
+            });
+            
+            document.getElementById('uniquePrimesValue').textContent = uniquePrimes.size.toLocaleString();
+        }
+        
+        // Create Top Prime Contractors chart
+        function createPrimeContractorsChart(data) {
+            const primeValues = {};
+            
+            data.forEach(record => {
+                const prime = record['Legal Business Name'];
+                if (prime) {
+                    const value = parseCurrencyValue(record['Base and All Options Value (Total Contract Value)']);
+                    primeValues[prime] = (primeValues[prime] || 0) + value;
+                }
+            });
+            
+            // If we're filtering for a specific prime, adjust chart behavior
+            let sortedPrimes;
+            
+            if (activeFilter) {
+                // If active filter, show this prime plus top competitors in same departments
+                // Find departments this prime works in
+                const primeDepts = new Set();
+                data.forEach(record => {
+                    if (record['Contracting Department Name']) {
+                        primeDepts.add(record['Contracting Department Name']);
+                    }
+                });
+                
+                // Find all primes that work in these departments
+                const relatedPrimes = {};
+                parsedData.forEach(record => {
+                    const prime = record['Legal Business Name'];
+                    const dept = record['Contracting Department Name'];
+                    if (prime && prime !== activeFilter && dept && primeDepts.has(dept)) {
+                        const value = parseCurrencyValue(record['Base and All Options Value (Total Contract Value)']);
+                        relatedPrimes[prime] = (relatedPrimes[prime] || 0) + value;
+                    }
+                });
+                
+                // Create sortedPrimes with the active prime first, then top related primes
+                const sortedRelatedPrimes = Object.entries(relatedPrimes)
+                    .sort((a, b) => b[1] - a[1])
+                    .slice(0, 9);
+                
+                // Combine active prime with related primes
+                sortedPrimes = [[activeFilter, primeValues[activeFilter] || 0], ...sortedRelatedPrimes];
+            } else {
+                // Normal case - just top 10 primes
+                sortedPrimes = Object.entries(primeValues)
+                    .sort((a, b) => b[1] - a[1])
+                    .slice(0, 10);
+            }
+            
+            const labels = sortedPrimes.map(item => item[0]);
+            const values = sortedPrimes.map(item => item[1]);
+            
+            // Create color array that highlights the active prime if one is selected
+            const backgroundColors = labels.map(label => 
+                label === activeFilter ? 'rgba(231, 76, 60, 0.7)' : 'rgba(54, 162, 235, 0.7)'
+            );
+            const borderColors = labels.map(label => 
+                label === activeFilter ? 'rgba(231, 76, 60, 1)' : 'rgba(54, 162, 235, 1)'
+            );
+            
+            const ctx = document.getElementById('primeContractorsChart').getContext('2d');
+            
+            if (charts.primeContractorsChart) {
+                charts.primeContractorsChart.destroy();
+            }
+            
+            charts.primeContractorsChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Contract Value',
+                        data: values,
+                        backgroundColor: backgroundColors,
+                        borderColor: borderColors,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return formatCurrency(context.raw);
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: {
+                                callback: function(value) {
+                                    return formatCurrency(value);
+                                }
+                            }
+                        },
+                        y: {
+                            ticks: {
+                                callback: function(value) {
+                                    const label = this.getLabelForValue(value);
+                                    if (label.length > 20) {
+                                        return label.substring(0, 20) + '...';
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Create Department Contract Distribution chart
+        function createDepartmentChart(data) {
+            const deptValues = {};
+            
+            data.forEach(record => {
+                const dept = record['Contracting Department Name'];
+                if (dept) {
+                    const value = parseCurrencyValue(record['Base and All Options Value (Total Contract Value)']);
+                    deptValues[dept] = (deptValues[dept] || 0) + value;
+                }
+            });
+            
+            // Sort departments by value and get top 10
+            const sortedDepts = Object.entries(deptValues)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 10);
+            
+            const labels = sortedDepts.map(item => item[0]);
+            const values = sortedDepts.map(item => item[1]);
+            
+            const ctx = document.getElementById('departmentChart').getContext('2d');
+            
+            if (charts.departmentChart) {
+                charts.departmentChart.destroy();
+            }
+            
+            charts.departmentChart = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: values,
+                        backgroundColor: [
+                            'rgba(255, 99, 132, 0.7)',
+                            'rgba(54, 162, 235, 0.7)',
+                            'rgba(255, 206, 86, 0.7)',
+                            'rgba(75, 192, 192, 0.7)',
+                            'rgba(153, 102, 255, 0.7)',
+                            'rgba(255, 159, 64, 0.7)',
+                            'rgba(199, 199, 199, 0.7)',
+                            'rgba(83, 102, 255, 0.7)',
+                            'rgba(40, 159, 64, 0.7)',
+                            'rgba(210, 99, 132, 0.7)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                boxWidth: 15,
+                                font: {
+                                    size: 10
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = formatCurrency(context.raw);
+                                    return `${label}: ${value}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Create NAICS Code Distribution chart
+        function createNAICSChart(data, filterType = 'count') {
+            const naicsCounts = {};
+            const naicsValues = {};
+            const naicsDescriptions = {};
+            
+            data.forEach(record => {
+                const naics = record['NAICS Code'];
+                const naicsDesc = record['NAICS Description'];
+                
+                if (naics) {
+                    // Store NAICS descriptions
+                    if (naicsDesc && !naicsDescriptions[naics]) {
+                        naicsDescriptions[naics] = naicsDesc;
+                    }
+                    
+                    // Count occurrences
+                    naicsCounts[naics] = (naicsCounts[naics] || 0) + 1;
+                    
+                    // Sum values
+                    const value = parseCurrencyValue(record['Base and All Options Value (Total Contract Value)']);
+                    naicsValues[naics] = (naicsValues[naics] || 0) + value;
+                }
+            });
+            
+            // Sort by selected filter
+            const sortedNAICS = Object.entries(filterType === 'count' ? naicsCounts : naicsValues)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 10);
+            
+            const naicsCodes = sortedNAICS.map(item => item[0]);
+            const values = sortedNAICS.map(item => item[1]);
+            
+            // Create labels with description
+            const labels = naicsCodes.map(code => {
+                const desc = naicsDescriptions[code] || '';
+                return `${code} - ${desc.substring(0, 20)}${desc.length > 20 ? '...' : ''}`;
+            });
+            
+            const ctx = document.getElementById('naicsChart').getContext('2d');
+            
+            if (charts.naicsChart) {
+                charts.naicsChart.destroy();
+            }
+            
+            charts.naicsChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: filterType === 'count' ? 'Number of Contracts' : 'Contract Value',
+                        data: values,
+                        backgroundColor: 'rgba(75, 192, 192, 0.7)',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    if (filterType === 'count') {
+                                        return `Contracts: ${context.raw.toLocaleString()}`;
+                                    } else {
+                                        return `Value: ${formatCurrency(context.raw)}`;
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: {
+                                callback: function(value) {
+                                    if (filterType === 'count') {
+                                        return value.toLocaleString();
+                                    } else {
+                                        return formatCurrency(value);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Create Geographic Contract Distribution chart
+        function createStateChart(data, filterType = 'count') {
+            const stateCounts = {};
+            const stateValues = {};
+            
+            data.forEach(record => {
+                const state = record['Principal Place of Performance State Code'];
+                if (state) {
+                    // Count occurrences
+                    stateCounts[state] = (stateCounts[state] || 0) + 1;
+                    
+                    // Sum values
+                    const value = parseCurrencyValue(record['Base and All Options Value (Total Contract Value)']);
+                    stateValues[state] = (stateValues[state] || 0) + value;
+                }
+            });
+            
+            // Sort by selected filter
+            const sortedStates = Object.entries(filterType === 'count' ? stateCounts : stateValues)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 10);
+            
+            const labels = sortedStates.map(item => item[0]);
+            const values = sortedStates.map(item => item[1]);
+            
+            const ctx = document.getElementById('stateChart').getContext('2d');
+            
+            if (charts.stateChart) {
+                charts.stateChart.destroy();
+            }
+            
+            charts.stateChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: filterType === 'count' ? 'Number of Contracts' : 'Contract Value',
+                        data: values,
+                        backgroundColor: 'rgba(153, 102, 255, 0.7)',
+                        borderColor: 'rgba(153, 102, 255, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    if (filterType === 'count') {
+                                        return `Contracts: ${context.raw.toLocaleString()}`;
+                                    } else {
+                                        return `Value: ${formatCurrency(context.raw)}`;
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            ticks: {
+                                callback: function(value) {
+                                    if (filterType === 'count') {
+                                        return value.toLocaleString();
+                                    } else {
+                                        return formatCurrency(value);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Create Contract Type Breakdown chart
+        function createContractTypeChart(data) {
+            const contractTypes = {};
+            
+            data.forEach(record => {
+                const type = record['Award or Indefinite Delivery Vehicle Type'];
+                if (type) {
+                    contractTypes[type] = (contractTypes[type] || 0) + 1;
+                }
+            });
+            
+            const labels = Object.keys(contractTypes);
+            const values = Object.values(contractTypes);
+            
+            const ctx = document.getElementById('contractTypeChart').getContext('2d');
+            
+            if (charts.contractTypeChart) {
+                charts.contractTypeChart.destroy();
+            }
+            
+            charts.contractTypeChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: values,
+                        backgroundColor: [
+                            'rgba(255, 99, 132, 0.7)',
+                            'rgba(54, 162, 235, 0.7)',
+                            'rgba(255, 206, 86, 0.7)',
+                            'rgba(75, 192, 192, 0.7)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.raw;
+                                    const percentage = Math.round((value / values.reduce((a, b) => a + b, 0)) * 100);
+                                    return `${label}: ${value.toLocaleString()} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Create Contract Value Range Distribution chart
+        function createValueRangeChart(data) {
+            // Define value ranges
+            const ranges = [
+                { min: 0, max: 100000, label: '< $100K' },
+                { min: 100000, max: 1000000, label: '$100K-$1M' },
+                { min: 1000000, max: 10000000, label: '$1M-$10M' },
+                { min: 10000000, max: 100000000, label: '$10M-$100M' },
+                { min: 100000000, max: 1000000000, label: '$100M-$1B' },
+                { min: 1000000000, max: Infinity, label: '> $1B' }
+            ];
+            
+            const rangeCounts = Array(ranges.length).fill(0);
+            
+            data.forEach(record => {
+                const value = parseCurrencyValue(record['Base and All Options Value (Total Contract Value)']);
+                
+                for (let i = 0; i < ranges.length; i++) {
+                    if (value >= ranges[i].min && value < ranges[i].max) {
+                        rangeCounts[i]++;
+                        break;
+                    }
+                }
+            });
+            
+            const labels = ranges.map(range => range.label);
+            
+            const ctx = document.getElementById('valueRangeChart').getContext('2d');
+            
+            if (charts.valueRangeChart) {
+                charts.valueRangeChart.destroy();
+            }
+            
+            charts.valueRangeChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Number of Contracts',
+                        data: rangeCounts,
+                        backgroundColor: 'rgba(255, 159, 64, 0.7)',
+                        borderColor: 'rgba(255, 159, 64, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `Contracts: ${context.raw.toLocaleString()}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return value.toLocaleString();
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Create Contract Timeline Forecast chart
+        function createTimelineChart(data) {
+            // Group contracts by year (start date)
+            const startYears = {};
+            const endYears = {};
+            
+            data.forEach(record => {
+                if (record['Period of Performance Start Date']) {
+                    const startDate = new Date(record['Period of Performance Start Date']);
+                    if (!isNaN(startDate.getTime())) {
+                        const year = startDate.getFullYear();
+                        startYears[year] = (startYears[year] || 0) + 1;
+                    }
+                }
+                
+                if (record['Completion Date']) {
+                    const endDate = new Date(record['Completion Date']);
+                    if (!isNaN(endDate.getTime())) {
+                        const year = endDate.getFullYear();
+                        if (year <= 2035) { // Filter out extremely distant end dates
+                            endYears[year] = (endYears[year] || 0) + 1;
+                        }
+                    }
+                }
+            });
+            
+            // Get all years from both start and end
+            const allYears = new Set([...Object.keys(startYears), ...Object.keys(endYears)].map(Number));
+            const sortedYears = Array.from(allYears).sort((a, b) => a - b);
+            
+            // Fill in missing years
+            const labels = [];
+            const startCounts = [];
+            const endCounts = [];
+            
+            sortedYears.forEach(year => {
+                labels.push(year.toString());
+                startCounts.push(startYears[year] || 0);
+                endCounts.push(endYears[year] || 0);
+            });
+            
+            const ctx = document.getElementById('timelineChart').getContext('2d');
+            
+            if (charts.timelineChart) {
+                charts.timelineChart.destroy();
+            }
+            
+            charts.timelineChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Contracts Starting',
+                            data: startCounts,
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                            backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                            fill: true,
+                            tension: 0.1
+                        },
+                        {
+                            label: 'Contracts Ending',
+                            data: endCounts,
+                            borderColor: 'rgba(255, 99, 132, 1)',
+                            backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                            fill: true,
+                            tension: 0.1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.dataset.label || '';
+                                    const value = context.parsed.y;
+                                    return `${label}: ${value.toLocaleString()}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return value.toLocaleString();
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Global variable to store the current filtered dataset
+        let filteredData = [];
+        let activeFilter = null;
+        
+        // Function to update all charts based on filtered data
+        function updateAllCharts(data) {
+            filteredData = data;
+            updateStatistics(data);
+            createPrimeContractorsChart(data);
+            createDepartmentChart(data);
+            createNAICSChart(data);
+            createStateChart(data);
+            createContractTypeChart(data);
+            createValueRangeChart(data);
+            createTimelineChart(data);
+        }
+        
+        // Set up Prime Contractor Search functionality
+        function setupPrimeSearch(data) {
+            const searchInput = document.getElementById('primeSearchInput');
+            const resultsContainer = document.getElementById('searchResults');
+            const filterIndicator = document.getElementById('activeFilterIndicator');
+            
+            // Function to clear active filter
+            window.clearPrimeFilter = function() {
+                activeFilter = null;
+                filterIndicator.classList.add('hidden');
+                updateAllCharts(parsedData);
+                searchInput.value = '';
+                resultsContainer.innerHTML = '';
+            };
+            
+            // Function to apply filter for a specific prime
+            window.applyPrimeFilter = function(primeName) {
+                // Filter data to only include records for this prime
+                const primeData = parsedData.filter(record => 
+                    record['Legal Business Name'] === primeName
+                );
+                
+                // Update filter indicator
+                activeFilter = primeName;
+                filterIndicator.textContent = `Filtered by: ${primeName}`;
+                filterIndicator.classList.remove('hidden');
+                
+                // Update all charts with the filtered data
+                updateAllCharts(primeData);
+                
+                // Close search results
+                resultsContainer.innerHTML = '';
+            };
+            
+            searchInput.addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase().trim();
+                
+                if (searchTerm.length < 2) {
+                    resultsContainer.innerHTML = '';
+                    return;
+                }
+                
+                // Find matching prime contractors
+                const matches = new Map();
+                
+                data.forEach(record => {
+                    const prime = record['Legal Business Name'];
+                    if (prime && prime.toLowerCase().includes(searchTerm)) {
+                        if (!matches.has(prime)) {
+                            matches.set(prime, {
+                                name: prime,
+                                contracts: 0,
+                                totalValue: 0,
+                                agencies: new Set(),
+                                naics: new Set()
+                            });
+                        }
+                        
+                        const primeData = matches.get(prime);
+                        primeData.contracts++;
+                        
+                        const value = parseCurrencyValue(record['Base and All Options Value (Total Contract Value)']);
+                        primeData.totalValue += value;
+                        
+                        if (record['Contracting Agency Name']) {
+                            primeData.agencies.add(record['Contracting Agency Name']);
+                        }
+                        
+                        if (record['NAICS Code']) {
+                            primeData.naics.add(record['NAICS Code']);
+                        }
+                    }
+                });
+                
+                // Sort matches by total value
+                const sortedMatches = Array.from(matches.values())
+                    .sort((a, b) => b.totalValue - a.totalValue)
+                    .slice(0, 10);
+                
+                // Display results
+                if (sortedMatches.length > 0) {
+                    let resultsHTML = '';
+                    
+                    sortedMatches.forEach(match => {
+                        resultsHTML += `
+                            <div class="result-item" onclick="applyPrimeFilter('${match.name.replace(/'/g, "\\'")}')">
+                                <strong>${match.name}</strong><br>
+                                Contracts: ${match.contracts.toLocaleString()}<br>
+                                Total Value: ${formatCurrency(match.totalValue)}<br>
+                                Agencies: ${Array.from(match.agencies).slice(0, 3).join(', ')}${match.agencies.size > 3 ? '...' : ''}<br>
+                                NAICS Codes: ${Array.from(match.naics).slice(0, 3).join(', ')}${match.naics.size > 3 ? '...' : ''}
+                                <div class="view-details-btn">View Details</div>
+                            </div>
+                        `;
+                    });
+                    
+                    resultsContainer.innerHTML = resultsHTML;
+                } else {
+                    resultsContainer.innerHTML = '<div class="result-item">No matching prime contractors found.</div>';
+                }
+            });
+        }
+        
+        // Set up filter buttons
+        function setupFilters() {
+            const naicsFilters = document.getElementById('naicsFilters');
+            naicsFilters.addEventListener('click', function(e) {
+                if (e.target.classList.contains('filter-btn')) {
+                    const filterType = e.target.dataset.filter;
+                    
+                    // Update active button
+                    naicsFilters.querySelectorAll('.filter-btn').forEach(btn => {
+                        btn.classList.remove('active');
+                    });
+                    e.target.classList.add('active');
+                    
+                    // Update chart
+                    createNAICSChart(parsedData, filterType);
+                }
+            });
+            
+            const stateFilters = document.getElementById('stateFilters');
+            stateFilters.addEventListener('click', function(e) {
+                if (e.target.classList.contains('filter-btn')) {
+                    const filterType = e.target.dataset.filter;
+                    
+                    // Update active button
+                    stateFilters.querySelectorAll('.filter-btn').forEach(btn => {
+                        btn.classList.remove('active');
+                    });
+                    e.target.classList.add('active');
+                    
+                    // Update chart
+                    createStateChart(parsedData, filterType);
+                }
+            });
+        }
+        
+        // Handle file upload
+        document.getElementById('csvFileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const loadingIndicator = document.getElementById('processingIndicator');
+            loadingIndicator.classList.remove('hidden');
+            
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                const csvData = e.target.result;
+                
+                Papa.parse(csvData, {
+                    header: true,
+                    dynamicTyping: true,
+                    skipEmptyLines: true,
+                    complete: function(results) {
+                        if (results.errors.length > 0) {
+                            console.error('CSV parsing errors:', results.errors);
+                            alert('Error parsing CSV file. Please check the console for details.');
+                            loadingIndicator.classList.add('hidden');
+                            return;
+                        }
+                        
+                        parsedData = results.data;
+                        filteredData = parsedData;
+                        activeFilter = null;
+                        document.getElementById('activeFilterIndicator').classList.add('hidden');
+                        initializeCharts(parsedData);
+                        loadingIndicator.classList.add('hidden');
+                    }
+                });
+            };
+            
+            reader.readAsText(file);
+        });
+        
+        // Initialize filters
+        setupFilters();
+
+        // Initialize the dashboard with empty data
+        // Create a sample dataset for initial display
+        const sampleData = [];
+
+        // Don't initialize with sample data - wait for data to load from S3
+    </script>
+</body>
+</html>
