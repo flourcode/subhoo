@@ -18,10 +18,7 @@
             height: 300px; 
             width: 100%;
         }
-        .chart-container-modal { /* For charts within modals */
-            height: 250px;
-            margin-bottom: 1rem;
-        }
+        /* Removed .chart-container-modal as prime detail modal is gone */
         .chart-no-data {
             display: flex;
             flex-direction: column; 
@@ -41,7 +38,7 @@
             margin-bottom: 0.5rem; 
             color: #9ca3af; 
         }
-        .spinner, .global-spinner { /* Added global-spinner */
+        .spinner, .global-spinner { 
             border: 4px solid rgba(0, 0, 0, 0.1);
             width: 24px;
             height: 24px;
@@ -50,7 +47,7 @@
             animation: spin 1s linear infinite;
             margin-right: 10px;
         }
-        #globalProcessingIndicator { /* Style for global loader */
+        #globalProcessingIndicator { 
             position: fixed;
             top: 10px;
             right: 10px;
@@ -58,7 +55,7 @@
             padding: 0.5rem 1rem;
             border-radius: 0.375rem;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            z-index: 2000; /* High z-index */
+            z-index: 2000; 
             display: flex;
             align-items: center;
         }
@@ -138,7 +135,7 @@
             outline: none;
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.4); 
         }
-        #processingIndicator.flex { /* For local processing indicator */
+        #processingIndicator.flex { 
             display: flex;
         }
         #unifiedSearchSuggestions {
@@ -218,11 +215,11 @@
             z-index: 10; 
             background-color: #f9fafb; 
         }
-        .table-responsive th { /* For sortable headers */
+        .table-responsive th { 
             cursor: pointer;
         }
         .table-responsive th:hover {
-            background-color: #e5e7eb; /* Tailwind gray-200 */
+            background-color: #e5e7eb; 
         }
         .dashboard-card {
             transition: box-shadow 0.3s ease-in-out;
@@ -362,7 +359,7 @@
             
             <section id="primeProfilesSection" class="bg-white p-4 md:p-6 rounded-lg shadow-md mb-4 md:mb-6">
                 <h2 class="text-lg md:text-xl font-semibold text-gray-700 mb-3">Prime Contractor Profiles</h2>
-                 <p class="text-xs md:text-sm text-gray-500 mb-3">Displaying profiles based on current search/filter. Click a prime name for more details. Use search below to refine this list.</p>
+                 <p class="text-xs md:text-sm text-gray-500 mb-3">Displaying profiles based on current search/filter. Click a prime name to filter the entire dashboard to that prime. Use search below to refine this list further.</p>
                 <div class="mb-4">
                     <input type="text" id="primeProfilesSearchInput" class="w-full md:w-1/2 lg:w-1/3 p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-400 focus:border-blue-400" placeholder="Filter displayed profiles by name...">
                 </div>
@@ -407,8 +404,8 @@
 
 <script>
 // --- DOM Elements ---
-const globalProcessingIndicator = document.getElementById('globalProcessingIndicator'); // For global loading
-const processingIndicator = document.getElementById('processingIndicator'); // For S3 specific loading
+const globalProcessingIndicator = document.getElementById('globalProcessingIndicator'); 
+const processingIndicator = document.getElementById('processingIndicator'); 
 const manualUploadSection = document.getElementById('manual-upload-section');
 const dashboardContent = document.getElementById('dashboardContent');
 const csvFileInput = document.getElementById('csvFileInput');
@@ -444,7 +441,7 @@ const charts = {};
 const S3_CSV_URL = 'https://subhoodata.s3.us-east-1.amazonaws.com/data/sbaall.csv';
 let currentMainStateChartFilter = 'count';
 const ITEMS_PER_PAGE_MODAL_TABLE = 10; 
-let currentCalendarDate = new Date(); // For calendar navigation
+let currentCalendarDate = new Date(); 
 
 // --- Utility Functions ---
 function formatCurrency(value) {
@@ -489,10 +486,8 @@ function createEntityLink(entityId, entityName) {
     return `<a href="https://www.fpds.gov/ezsearch/fpdsportal?s=FPDS&q=${encodedEntityId}&x=0&y=0" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 hover:underline">${entityName || entityId}</a>`;
 }
 
-// Global loading indicator functions
 function showGlobalLoader() { globalProcessingIndicator.classList.remove('hidden');}
 function hideGlobalLoader() { globalProcessingIndicator.classList.add('hidden'); }
-
 
 function showProcessingBriefly() { processingIndicator.classList.remove('hidden'); processingIndicator.classList.add('flex'); }
 function hideProcessing() { processingIndicator.classList.add('hidden'); processingIndicator.classList.remove('flex');}
@@ -507,7 +502,7 @@ function showErrorMessage(message, isAutoloadError = false) {
         successMessageDiv.classList.add('hidden');
     }
     hideProcessing();
-    hideGlobalLoader(); // Also hide global loader on error
+    hideGlobalLoader(); 
 }
 
 function showSuccessMessage(message, isAutoloadSuccess = false) {
@@ -518,7 +513,6 @@ function showSuccessMessage(message, isAutoloadSuccess = false) {
         errorMessageDiv.classList.add('hidden');
     }
     hideProcessing();
-    // Don't hide global loader here, let applyFilter/processAndInitialize handle it
 }
 
 // --- Modal Management ---
@@ -534,6 +528,9 @@ function closeModal() {
     genericModal.classList.add('hidden');
     genericModal.classList.remove('flex');
     genericModalBody.innerHTML = ''; 
+    // If modal-specific charts were used, destroy them here
+    if(charts.primeDetailNaicsChart) charts.primeDetailNaicsChart.destroy();
+    if(charts.primeDetailAgenciesChart) charts.primeDetailAgenciesChart.destroy();
 }
 genericModalCloseBtn.addEventListener('click', closeModal);
 genericModal.addEventListener('click', (event) => { 
@@ -560,13 +557,13 @@ function processAndInitialize(data) {
     initializePrimeProfilesSection(parsedData);
     initializeContractExpirationCalendarSection(parsedData); 
     showSuccessMessage('Data loaded and dashboard initialized.', true); 
-    hideProcessing(); // Hide S3-specific loader
-    hideGlobalLoader(); // Hide global loader
+    hideProcessing(); 
+    hideGlobalLoader(); 
 }
 
 // --- S3 Data Loading ---
 function loadDataFromS3() { 
-    showProcessingBriefly(); // S3 specific loader
+    showProcessingBriefly(); 
     fetch(S3_CSV_URL, { mode: 'cors', cache: 'no-cache', headers: { 'Accept': 'text/csv' } })
     .then(response => {
         if (!response.ok) {
@@ -601,8 +598,8 @@ function loadDataFromS3() {
 
 // --- Unified Search, Suggestions, and Filtering Logic ---
 function applyFilter(searchTerm, filterType = null, filterValue = null) { 
-    showGlobalLoader(); // Show global loader at the start of filtering
-    setTimeout(() => { // Allow UI to update with loader before heavy processing
+    showGlobalLoader(); 
+    setTimeout(() => { 
         let filteredData;
         let displaySearchTerm = searchTerm; 
 
@@ -618,7 +615,7 @@ function applyFilter(searchTerm, filterType = null, filterValue = null) {
                     case 'agencyName': recordValue = record['Contracting Agency Name']?.toLowerCase() || ''; break;
                     case 'officeName': recordValue = record['Contracting Office Name']?.toLowerCase() || ''; break;
                     case 'stateCode': recordValue = record['Principal Place of Performance State Code']?.toLowerCase() || ''; break;
-                    case 'contractType': recordValue = record['Award or Indefinite Delivery Vehicle Type']?.toLowerCase() || ''; break; // Added for chart click
+                    case 'contractType': recordValue = record['Award or Indefinite Delivery Vehicle Type']?.toLowerCase() || ''; break; 
                     default: return false;
                 }
                 if (filterValue) return recordValue === termToMatch; 
@@ -628,7 +625,7 @@ function applyFilter(searchTerm, filterType = null, filterValue = null) {
         } else { 
             if (!searchTerm || searchTerm.trim() === '') {
                 clearAllFilters(); 
-                hideGlobalLoader(); // Hide loader if clearing
+                hideGlobalLoader(); 
                 return;
             }
             const keywords = searchTerm.toLowerCase().split(' ').filter(k => k);
@@ -656,8 +653,8 @@ function applyFilter(searchTerm, filterType = null, filterValue = null) {
         updateActiveFilterIndicator(displaySearchTerm, filteredData.length);
         unifiedSearchSuggestions.innerHTML = ''; 
         unifiedSearchSuggestions.classList.add('hidden');
-        hideGlobalLoader(); // Hide global loader after processing
-    }, 10); // Small delay
+        hideGlobalLoader(); 
+    }, 10); 
 }
 
 
@@ -699,10 +696,6 @@ function setupUnifiedSearch() {
 
         if (searchTerm.length < 2) {
             unifiedSearchSuggestions.classList.add('hidden');
-            if (searchTerm.length === 0 && activeFilterIndicator.classList.contains('hidden') === false) {
-                // If search is cleared and a filter was active, re-apply to show all or previous state
-                // This might be too aggressive, consider if only explicit clear should reset
-            }
             return;
         }
 
@@ -716,7 +709,6 @@ function setupUnifiedSearch() {
                 if (suggestions.size >= maxSuggestions) return;
                 const originalVal = value; 
                 const valStr = String(value || '').toLowerCase();
-                // Highlight match logic
                 if (valStr.includes(searchTerm)) {
                     const key = `${type}-${originalVal}`; 
                     if (!suggestions.has(key)) {
@@ -754,7 +746,6 @@ function setupUnifiedSearch() {
             Array.from(suggestions.values()).forEach(sugg => {
                 const item = document.createElement('div');
                 item.className = 'suggestion-item';
-                // Use innerHTML for highlighted text
                 item.innerHTML = (typeof sugg.termForDisplayHTML === 'string' && sugg.termForDisplayHTML.length > 60 ? sugg.termForDisplayHTML.substring(0, 57) + '...' : sugg.termForDisplayHTML);
                 
                 const typeLabel = document.createElement('span');
@@ -774,7 +765,7 @@ function setupUnifiedSearch() {
                 unifiedSearchSuggestions.appendChild(item);
             });
         } else {
-            unifiedSearchSuggestions.classList.remove('hidden'); // Keep it hidden or show "no suggestions"
+            unifiedSearchSuggestions.classList.remove('hidden'); 
             unifiedSearchSuggestions.innerHTML = `<div class="p-2 text-sm text-gray-500">No specific suggestions. Press Enter to search all fields.</div>`;
         }
     }, 300));
@@ -911,18 +902,19 @@ function createNaicsChart_main(data) {
         }
     });
     const sorted = Object.entries(naicsValues).sort((a,b)=>b[1]-a[1]).slice(0,10);
-    const chartData = { labels: sorted.map(i=>`${i[0]} - ${naicsDesc[i[0]] ? naicsDesc[i[0]].substring(0,20) : ''}...`), datasets: [{ label: 'Contract Value', data: sorted.map(i=>i[1]), backgroundColor: 'rgba(22, 163, 74, 0.7)' }] };
+    const chartData = { labels: sorted.map(i=>i[0]), displayLabels: sorted.map(i=>`${i[0]} - ${naicsDesc[i[0]] ? naicsDesc[i[0]].substring(0,20) : ''}...`), datasets: [{ label: 'Contract Value', data: sorted.map(i=>i[1]), backgroundColor: 'rgba(22, 163, 74, 0.7)' }] };
     const chartOptions = { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: {display:false}, tooltip:{callbacks:{label:c=>formatCurrency(c.raw)}}}, scales: {x:{ticks:{callback:v=>formatCurrency(v)}}},
         onClick: (event, elements) => {
             if (elements.length > 0) {
-                const naicsCodeWithDesc = chartData.labels[elements[0].index];
-                const naicsCode = naicsCodeWithDesc.split(' - ')[0]; // Extract NAICS code
+                const naicsCode = chartData.labels[elements[0].index]; // Use the actual code for filtering
                 unifiedSearchInput.value = naicsCode; 
                 applyFilter(naicsCode, 'naicsCode', naicsCode); 
             }
         }
     };
-    createChart('naicsChart_main', 'bar', chartData, chartOptions);
+    // Use displayLabels for rendering the chart labels
+    chartOptions.data = { labels: chartData.displayLabels, datasets: chartData.datasets};
+    createChart('naicsChart_main', 'bar', chartOptions.data , chartOptions);
 }
 
 function createContractTypeChart_main(data) { 
@@ -1081,7 +1073,7 @@ function initializePrimeProfilesSection(data) {
                 const card = document.createElement('div');
                 card.className = 'p-3 md:p-4 bg-gray-50 rounded-lg border shadow hover:shadow-lg transition-shadow duration-150'; 
                 card.innerHTML = `
-                    <h4 class="font-semibold text-blue-700 truncate cursor-pointer hover:underline" title="${p.name}" onclick="showDetailedPrimeProfile('${p.name.replace(/'/g, "\\'")}')">${p.name}</h4>
+                    <h4 class="font-semibold text-blue-700 truncate cursor-pointer hover:underline" title="${p.name}" onclick="setUnifiedSearchTerm('${p.name.replace(/'/g, "\\'")}', 'primeName')">${p.name}</h4>
                     <p class="text-xs md:text-sm">Contracts: ${p.contracts.toLocaleString()}</p>
                     <p class="text-xs md:text-sm">Value: ${formatCurrency(p.totalValue)}</p>
                     <p class="text-xs mt-1 truncate" title="Top NAICS: ${Array.from(p.naics).slice(0,3).join(', ')}">Top NAICS: ${Array.from(p.naics).slice(0,3).join(', ')}</p>
@@ -1095,123 +1087,7 @@ function initializePrimeProfilesSection(data) {
     renderCards(); 
 }
 
-function showDetailedPrimeProfile(primeName) {
-    const primeContracts = parsedData.filter(r => r['Legal Business Name'] === primeName);
-    if (primeContracts.length === 0) {
-        openModal("Prime Details", "<p>No contract data found for this prime in the current dataset.</p>");
-        return;
-    }
-
-    const primeRecord = primeContracts[0]; 
-    const primeUEI = primeRecord ? primeRecord['Unique Entity ID'] : 'N/A';
-    const parentUEI = primeRecord ? primeRecord['Ultimate Parent Unique Entity ID'] : 'N/A';
-    const parentName = primeRecord ? primeRecord['Ultimate Parent Legal Business Name'] : 'N/A';
-
-    let totalValue = 0;
-    const naicsData = {};
-    const agencyData = {};
-
-    primeContracts.forEach(c => {
-        const val = parseCurrencyValue(c['Base and All Options Value (Total Contract Value)']);
-        totalValue += val;
-        const naics = String(c['NAICS Code'] || 'N/A');
-        naicsData[naics] = (naicsData[naics] || 0) + val;
-        const agency = c['Contracting Agency Name'] || 'N/A';
-        agencyData[agency] = (agencyData[agency] || 0) + val;
-    });
-
-    const topNaics = Object.entries(naicsData).sort((a,b) => b[1]-a[1]).slice(0,5);
-    const topAgencies = Object.entries(agencyData).sort((a,b) => b[1]-a[1]).slice(0,5);
-
-    let currentPage = 1;
-
-    function renderContractTablePage(page) {
-        const start = (page - 1) * ITEMS_PER_PAGE_MODAL_TABLE;
-        const end = start + ITEMS_PER_PAGE_MODAL_TABLE;
-        const pageContracts = primeContracts.slice(start, end);
-        
-        let tableHTML = `<div class="table-responsive"><table class="min-w-full divide-y divide-gray-200 text-xs">
-            <thead class="bg-gray-50"><tr>
-                <th class="px-2 py-2 text-left font-medium">PIID</th>
-                <th class="px-2 py-2 text-left font-medium">Agency</th>
-                <th class="px-2 py-2 text-left font-medium">NAICS</th>
-                <th class="px-2 py-2 text-left font-medium">Value</th>
-                <th class="px-2 py-2 text-left font-medium">End Date</th>
-            </tr></thead><tbody class="bg-white divide-y divide-gray-200">`;
-        
-        pageContracts.forEach(c => {
-            tableHTML += `<tr>
-                <td class="px-2 py-1 whitespace-nowrap">${createAwardLink(c['Procurement Instrument Identifier'])}</td>
-                <td class="px-2 py-1 whitespace-nowrap">${c['Contracting Agency Name'] || 'N/A'}</td>
-                <td class="px-2 py-1">${c['NAICS Code'] || 'N/A'}</td>
-                <td class="px-2 py-1 whitespace-nowrap">${formatCurrency(parseCurrencyValue(c['Base and All Options Value (Total Contract Value)']))}</td>
-                <td class="px-2 py-1 whitespace-nowrap">${formatDate(c['Completion Date'])}</td>
-            </tr>`;
-        });
-        tableHTML += `</tbody></table></div>`;
-        
-        const totalPages = Math.ceil(primeContracts.length / ITEMS_PER_PAGE_MODAL_TABLE);
-        if (totalPages > 1) {
-             tableHTML += `<div class="mt-3 flex justify-between items-center text-xs">
-                <button id="prevPageBtnPrimeDetail" class="px-2 py-1 border rounded ${page === 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100 transition-colors'}" ${page === 1 ? 'disabled' : ''}>Previous</button>
-                <span>Page ${page} of ${totalPages}</span>
-                <button id="nextPageBtnPrimeDetail" class="px-2 py-1 border rounded ${page === totalPages ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100 transition-colors'}" ${page === totalPages ? 'disabled' : ''}>Next</button>
-            </div>`;
-        }
-        
-        const tableContainer = document.getElementById('primeContractsTableContainer');
-        if (tableContainer) tableContainer.innerHTML = tableHTML;
-
-
-        if (document.getElementById('prevPageBtnPrimeDetail')) {
-            document.getElementById('prevPageBtnPrimeDetail').onclick = () => {
-                if (currentPage > 1) { currentPage--; renderContractTablePage(currentPage); }
-            };
-        }
-        if (document.getElementById('nextPageBtnPrimeDetail')) {
-            document.getElementById('nextPageBtnPrimeDetail').onclick = () => {
-                if (currentPage < totalPages) { currentPage++; renderContractTablePage(currentPage); }
-            };
-        }
-    }
-
-    const modalHTML = `
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-            <div>
-                <h4 class="font-semibold text-gray-600">Key Stats</h4>
-                <p>UEI: ${createEntityLink(primeUEI, primeUEI)}</p> 
-                ${parentName && parentName !== 'N/A' ? `<p>Parent: ${createEntityLink(parentUEI, parentName)}</p>` : ''}
-                <p>Total Contracts: ${primeContracts.length.toLocaleString()}</p>
-                <p>Total Value: ${formatCurrency(totalValue)}</p>
-                <p>Avg. Contract Value: ${formatCurrency(primeContracts.length > 0 ? totalValue / primeContracts.length : 0)}</p>
-            </div>
-            <div class="grid grid-cols-1 gap-4"> <div>
-                    <h4 class="font-semibold text-gray-600 mb-1">Top NAICS Codes (by Value)</h4>
-                    <div class="chart-container-modal"><canvas id="primeDetailNaicsChart"></canvas></div>
-                </div>
-                <div>
-                    <h4 class="font-semibold text-gray-600 mb-1">Top Contracting Agencies (by Value)</h4>
-                    <div class="chart-container-modal"><canvas id="primeDetailAgenciesChart"></canvas></div>
-                </div>
-            </div>
-        </div>
-        <h4 class="font-semibold text-gray-600 mt-4 mb-2">Contracts List (${primeContracts.length})</h4>
-        <div id="primeContractsTableContainer">
-            </div>
-    `;
-    openModal(`Detailed Profile: ${primeName}`, modalHTML, 'modal-content-lg');
-    renderContractTablePage(currentPage); 
-
-    // Render prime-specific charts
-    createChart('primeDetailNaicsChart', 'pie', 
-        { labels: topNaics.map(item => item[0]), datasets: [{ data: topNaics.map(item => item[1]), backgroundColor: ['#3B82F6','#EF4444','#F59E0B','#10B981','#8B5CF6'] }] },
-        { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels:{boxWidth:10, font:{size:9}} }, tooltip: { callbacks: { label: ctx => `${ctx.label}: ${formatCurrency(ctx.raw)}` } } } }
-    );
-    createChart('primeDetailAgenciesChart', 'bar',
-        { labels: topAgencies.map(item => item[0]), datasets: [{ label: 'Value', data: topAgencies.map(item => item[1]), backgroundColor: 'rgba(22, 163, 74, 0.7)' }] },
-        { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => formatCurrency(ctx.raw) } } }, scales: { x: { ticks: { callback: val => formatCurrency(val) } }, y: { ticks: { autoSkip: false, callback: function(val){const l=this.getLabelForValue(val); return l.length > 25 ? l.substring(0,22)+'...' : l;}, font:{size:9} }} } }
-    );
-}
+// Removed showDetailedPrimeProfile as it's no longer used with modals for prime details
 
 
 function setUnifiedSearchTerm(term, type = 'primeName') { 
@@ -1238,6 +1114,8 @@ function initializeContractExpirationCalendarSection(data) {
     events.sort((a,b) => a.date - b.date);
     
     // Populate Year and Month Selectors
+    calendarYearSelect.innerHTML = ''; // Clear previous options
+    calendarMonthSelect.innerHTML = ''; // Clear previous options
     const currentYear = new Date().getFullYear();
     for (let i = currentYear - 5; i <= currentYear + 5; i++) {
         const option = document.createElement('option');
@@ -1280,11 +1158,11 @@ function initializeContractExpirationCalendarSection(data) {
         for(let day=1; day<=daysInM; day++) {
             const currentDateObj = new Date(year, month, day);
             const dEvents = events.filter(e=>e.date.getFullYear()===year && e.date.getMonth()===month && e.date.getDate()===day);
-            // Visual density indicator: darker blue for more events
+            // Visual density indicator
             let dayBgClass = 'bg-white';
             if (dEvents.length > 0) dayBgClass = 'bg-blue-50';
-            if (dEvents.length > 2) dayBgClass = 'bg-blue-100'; // Slightly darker for more events
-            if (dEvents.length > 5) dayBgClass = 'bg-blue-200'; // Even darker
+            if (dEvents.length > 2) dayBgClass = 'bg-blue-100'; 
+            if (dEvents.length > 5) dayBgClass = 'bg-blue-200'; 
 
             html += `<div class="calendar-day-cell p-1 sm:p-2 border min-h-[60px] sm:min-h-[80px] relative ${dayBgClass}" 
                          ${dEvents.length > 0 ? `onclick="showCalendarDayDetailsModal(new Date(${year},${month},${day}), JSON.parse(this.dataset.eventsJson))" data-events-json='${JSON.stringify(dEvents).replace(/'/g, "&apos;")}'` : ''}
@@ -1299,18 +1177,17 @@ function initializeContractExpirationCalendarSection(data) {
     renderCalView(); // Initial render
 }
 
-// Updated to include pagination and sorting for calendar day details modal
 function showCalendarDayDetailsModal(dateObj, eventsOnDate) {
     const formattedDate = formatDate(dateObj);
     let currentCalendarPage = 1;
-    let currentSort = { column: 'prime', order: 'asc' }; // Default sort
+    let currentSort = { column: 'prime', order: 'asc' }; 
 
     function sortEvents(events, column, order) {
         return [...events].sort((a, b) => {
             let valA = a[column];
             let valB = b[column];
             if (column === 'value') {
-                valA = parseFloat(valA); // Ensure numeric comparison for value
+                valA = parseFloat(valA); 
                 valB = parseFloat(valB);
             } else if (typeof valA === 'string') {
                 valA = valA.toLowerCase();
@@ -1322,7 +1199,7 @@ function showCalendarDayDetailsModal(dateObj, eventsOnDate) {
         });
     }
     
-    const sortedEvents = sortEvents(eventsOnDate, currentSort.column, currentSort.order);
+    let sortedEvents = sortEvents(eventsOnDate, currentSort.column, currentSort.order);
 
 
     function renderCalendarDayPage(page, sortedData) {
@@ -1366,9 +1243,8 @@ function showCalendarDayDetailsModal(dateObj, eventsOnDate) {
                 <div id="calendarDayTableContainer">${tableHTML}</div>`;
         }
 
-        // Add event listeners for sorting
         document.querySelectorAll('#calendarDayTableContainer th[data-sort]').forEach(th => {
-            th.addEventListener('click', () => {
+            th.onclick = () => { // Changed from addEventListener to direct onclick to simplify re-binding
                 const sortColumn = th.dataset.sort;
                 if (currentSort.column === sortColumn) {
                     currentSort.order = currentSort.order === 'asc' ? 'desc' : 'asc';
@@ -1376,10 +1252,10 @@ function showCalendarDayDetailsModal(dateObj, eventsOnDate) {
                     currentSort.column = sortColumn;
                     currentSort.order = 'asc';
                 }
-                currentCalendarPage = 1; // Reset to first page after sorting
-                const newlySortedEvents = sortEvents(eventsOnDate, currentSort.column, currentSort.order);
-                renderCalendarDayPage(currentCalendarPage, newlySortedEvents);
-            });
+                currentCalendarPage = 1; 
+                sortedEvents = sortEvents(eventsOnDate, currentSort.column, currentSort.order); // Re-sort original eventsOnDate
+                renderCalendarDayPage(currentCalendarPage, sortedEvents);
+            };
         });
 
 
