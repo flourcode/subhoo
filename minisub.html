@@ -104,7 +104,7 @@
             </p>
             <p class="text-gray-600 mb-2">
                 <strong>How to Use:</strong> Use the <strong>Search & Filter</strong> bar below to find specific prime contractors, 
-                or filter by NAICS code, department/agency, and/or state. Enter multiple terms to narrow your results (e.g., "Acme Corp 541511 Defense").
+                or filter by NAICS code, department, specific contracting agency/office, and/or state. Enter multiple terms to narrow your results (e.g., "Acme Corp 541511 Defense VA DLA").
             </p>
             <p class="text-gray-600 text-sm">
                 If data fails to load, a manual upload option will appear. Source CSV:
@@ -149,15 +149,15 @@
             
             <section id="searchAndFilterSection" class="bg-white p-6 rounded-lg shadow-md mb-6">
                 <h2 class="text-xl font-semibold text-gray-700 mb-3">Search & Filter Contracts</h2>
-                <input type="text" id="unifiedSearchInput" class="w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 mb-4" placeholder="Search by Prime Name, NAICS, Agency, State (e.g., Acme Corp 541511 Defense VA)...">
-                
+                <input type="text" id="unifiedSearchInput" class="w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 mb-4" placeholder="Search by Prime, NAICS, Department, Agency, Office, State...">
+                                
                 <div id="activeFilterIndicator" class="bg-blue-100 text-blue-700 p-3 rounded-md mb-4 hidden flex justify-between items-center">
                     </div>
                 </section>
 
-            <section id="coreChartsSection" class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <section id="coreChartsSection" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-6">
                 <div class="dashboard-card bg-white p-6 rounded-lg shadow">
-                    <h2 class="text-lg font-semibold text-gray-700 mb-3 text-center">Top Prime Contractors by Contract Value</h2>
+                    <h2 class="text-lg font-semibold text-gray-700 mb-3 text-center">Top Prime Contractors by Value</h2>
                     <div class="chart-container">
                         <canvas id="primeContractorsChart"></canvas>
                     </div>
@@ -180,7 +180,7 @@
                         <canvas id="contractTypeChart_main"></canvas>
                     </div>
                 </div>
-                <div class="dashboard-card bg-white p-6 rounded-lg shadow lg:col-span-2"> 
+                <div class="dashboard-card bg-white p-6 rounded-lg shadow"> 
                     <h2 class="text-lg font-semibold text-gray-700 mb-1 text-center">Contract Distribution by State</h2>
                     <div class="metric-filters" id="stateChartFilters_main">
                         <button class="filter-btn active" data-filter="count" data-chart="stateContractsChart_main">By Count</button>
@@ -188,6 +188,26 @@
                     </div>
                     <div class="chart-container" style="height: 320px;"> 
                         <canvas id="stateContractsChart_main"></canvas>
+                    </div>
+                </div>
+                <div class="dashboard-card bg-white p-6 rounded-lg shadow">
+                    <h2 class="text-lg font-semibold text-gray-700 mb-3 text-center">Top Contracting Agencies by Value</h2>
+                    <div class="chart-container">
+                        <canvas id="topAgenciesChart"></canvas>
+                    </div>
+                </div>
+                <div class="dashboard-card bg-white p-6 rounded-lg shadow md:col-span-2 xl:col-span-1"> <h2 class="text-lg font-semibold text-gray-700 mb-3 text-center">Contract Awards Over Time (by Year)</h2>
+                     <div class="metric-filters" id="awardsTimeFilters_main">
+                        <button class="filter-btn active" data-filter="count" data-chart="awardsOverTimeChart">By Count</button>
+                        <button class="filter-btn" data-filter="value" data-chart="awardsOverTimeChart">By Value</button>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="awardsOverTimeChart"></canvas>
+                    </div>
+                </div>
+                 <div class="dashboard-card bg-white p-6 rounded-lg shadow md:col-span-2 xl:col-span-2"> <h2 class="text-lg font-semibold text-gray-700 mb-3 text-center">Prime Market Share (Top 5 Primes Overall)</h2>
+                    <div class="chart-container">
+                        <canvas id="marketShareChart"></canvas>
                     </div>
                 </div>
             </section>
@@ -201,8 +221,8 @@
                 <div id="primeProfilesContainer" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 max-h-[70vh] overflow-y-auto"></div>
             </section>
 
-            <section id="recompeteCalendarSection" class="bg-white p-6 rounded-lg shadow-md mb-6">
-                <h2 class="text-xl font-semibold text-gray-700 mb-3">Recompete Opportunity Calendar</h2>
+            <section id="contractExpirationCalendarSection" class="bg-white p-6 rounded-lg shadow-md mb-6">
+                <h2 class="text-xl font-semibold text-gray-700 mb-3">Contract Expiration Calendar</h2>
                  <p class="text-sm text-gray-500 mb-3">Displaying calendar based on current search/filter.</p>
                 <div class="calendar-container min-h-[400px] border border-gray-200 rounded-md p-4">
                     <div class="flex justify-between items-center mb-4">
@@ -243,6 +263,7 @@ let parsedData = [];
 const charts = {}; 
 const S3_CSV_URL = 'https://subhoodata.s3.us-east-1.amazonaws.com/data/sbaall.csv';
 let currentMainStateChartFilter = 'count';
+let currentAwardsTimeFilter = 'count'; // For the new awards over time chart
 
 // --- Utility Functions ---
 function formatCurrency(value) { return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value); }
@@ -289,7 +310,7 @@ function processAndInitialize(data) {
     initializeCoreVisuals(parsedData);
     setupUnifiedSearch(); 
     initializePrimeProfilesSection(parsedData);
-    initializeRecompeteCalendarSection(parsedData);
+    initializeContractExpirationCalendarSection(parsedData); // Renamed function
     showSuccessMessage('Data loaded and dashboard initialized.', true); 
     hideProcessing();
 }
@@ -312,7 +333,7 @@ function loadDataFromS3() {
         if (!csvText || csvText.trim() === '') { showErrorMessage('S3 file is empty.', true); return; }
         Papa.parse(csvText, {
             header: true,
-            dynamicTyping: true, // This can cause NAICS to be numbers
+            dynamicTyping: true, 
             skipEmptyLines: true,
             complete: results => {
                 if (results.errors && results.errors.length > 0) { showErrorMessage('Error parsing CSV from S3: ' + results.errors[0].message, true); return; }
@@ -329,29 +350,29 @@ function loadDataFromS3() {
     });
 }
 
-
 // --- Unified Search and Filtering Logic ---
 function applyUnifiedSearch(searchTerm) {
     if (!searchTerm || searchTerm.trim() === '') {
         clearAllFilters(); 
         return;
     }
-
     const keywords = searchTerm.toLowerCase().split(' ').filter(k => k); 
-    
     const filteredData = parsedData.filter(record => {
         return keywords.every(keyword => { 
             const primeName = record['Legal Business Name']?.toLowerCase() || '';
-            // FIX: Ensure NAICS Code is treated as a string for .toLowerCase() and .includes()
-            const naicsCode = String(record['NAICS Code'] || '')?.toLowerCase(); // Convert to string first
+            const naicsCode = String(record['NAICS Code'] || '')?.toLowerCase(); 
             const naicsDesc = record['NAICS Description']?.toLowerCase() || '';
-            const agencyName = record['Contracting Department Name']?.toLowerCase() || '';
+            const departmentName = record['Contracting Department Name']?.toLowerCase() || ''; // Added Department
+            const agencyName = record['Contracting Agency Name']?.toLowerCase() || ''; // Added Agency
+            const officeName = record['Contracting Office Name']?.toLowerCase() || ''; // Added Office
             const stateCode = record['Principal Place of Performance State Code']?.toLowerCase() || '';
 
             return primeName.includes(keyword) ||
                    naicsCode.includes(keyword) ||
                    naicsDesc.includes(keyword) ||
+                   departmentName.includes(keyword) ||
                    agencyName.includes(keyword) ||
+                   officeName.includes(keyword) ||
                    (keyword.length === 2 && stateCode === keyword) || 
                    (keyword.length > 2 && stateCode.includes(keyword)); 
         });
@@ -359,7 +380,7 @@ function applyUnifiedSearch(searchTerm) {
 
     initializeCoreVisuals(filteredData); 
     initializePrimeProfilesSection(filteredData);
-    initializeRecompeteCalendarSection(filteredData);
+    initializeContractExpirationCalendarSection(filteredData); // Renamed
     updateActiveFilterIndicator(searchTerm, filteredData.length);
 }
 
@@ -368,7 +389,7 @@ function clearAllFilters() {
     activeFilterIndicator.classList.add('hidden');
     initializeCoreVisuals(parsedData); 
     initializePrimeProfilesSection(parsedData); 
-    initializeRecompeteCalendarSection(parsedData);
+    initializeContractExpirationCalendarSection(parsedData); // Renamed
 }
 
 function updateActiveFilterIndicator(searchTerm, count) {
@@ -395,6 +416,9 @@ function initializeCoreVisuals(data) {
     createNaicsChart_main(data);
     createContractTypeChart_main(data);
     createStateContractsChart_main(data, currentMainStateChartFilter);
+    createTopAgenciesChart(data); // New
+    createAwardsOverTimeChart(data, currentAwardsTimeFilter); // New
+    createMarketShareChart(data); // New
 }
 
 // --- Statistics Update ---
@@ -439,7 +463,6 @@ function createNaicsChart_main(data) {
     const naicsValues = {}, naicsDesc = {};
     data.forEach(r => {
         if (r['NAICS Code']) {
-            // Ensure NAICS Code is treated as string for keying, though values are numeric
             const naicsKey = String(r['NAICS Code']);
             naicsValues[naicsKey] = (naicsValues[naicsKey] || 0) + parseCurrencyValue(r['Base and All Options Value (Total Contract Value)']);
             if (!naicsDesc[naicsKey]) naicsDesc[naicsKey] = r['NAICS Description'] || '';
@@ -478,14 +501,83 @@ function createStateContractsChart_main(data, filterType = 'count') {
     );
 }
 
+// New Chart: Top Contracting Agencies
+function createTopAgenciesChart(data) {
+    const agencyValues = {};
+    data.forEach(r => {
+        const agency = r['Contracting Agency Name']; // Using the more specific agency name
+        if (agency) {
+            agencyValues[agency] = (agencyValues[agency] || 0) + parseCurrencyValue(r['Base and All Options Value (Total Contract Value)']);
+        }
+    });
+    const sortedAgencies = Object.entries(agencyValues).sort((a, b) => b[1] - a[1]).slice(0, 10);
+    createChart('topAgenciesChart', 'bar',
+        { labels: sortedAgencies.map(item => item[0]), datasets: [{ label: 'Contract Value', data: sortedAgencies.map(item => item[1]), backgroundColor: 'rgba(234, 88, 12, 0.7)' }] }, // Orange color
+        { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => formatCurrency(ctx.raw) } } }, scales: { x: { ticks: { callback: val => formatCurrency(val).slice(0, -3) + 'k' } }, y: { ticks: { autoSkip: false, callback: function(val) { const label = this.getLabelForValue(val); return label.length > 20 ? label.substring(0, 17) + '...' : label; } } } } }
+    );
+}
+
+// New Chart: Contract Awards Over Time
+function createAwardsOverTimeChart(data, filterType = 'count') {
+    const awardsByYear = {}; // { "2023": { count: x, value: y } }
+    data.forEach(r => {
+        const startDateStr = r['Period of Performance Start Date'];
+        if (startDateStr) {
+            const startDate = new Date(startDateStr);
+            if (!isNaN(startDate.getTime())) {
+                const year = startDate.getFullYear();
+                if (year > 2000 && year < 2030) { // Filter for reasonable year range
+                    if (!awardsByYear[year]) awardsByYear[year] = { count: 0, value: 0 };
+                    awardsByYear[year].count++;
+                    awardsByYear[year].value += parseCurrencyValue(r['Base and All Options Value (Total Contract Value)']);
+                }
+            }
+        }
+    });
+    const sortedYears = Object.keys(awardsByYear).sort((a,b) => parseInt(a) - parseInt(b));
+    const chartDataValues = sortedYears.map(year => awardsByYear[year][filterType]);
+
+    createChart('awardsOverTimeChart', 'line',
+        { labels: sortedYears, datasets: [{ label: filterType === 'count' ? 'Number of Contracts' : 'Total Contract Value', data: chartDataValues, borderColor: 'rgba(75, 192, 192, 1)', backgroundColor: 'rgba(75, 192, 192, 0.2)', fill: true, tension: 0.1 }] },
+        { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true, position: 'top' } , tooltip: { callbacks: { label: ctx => filterType === 'count' ? ctx.raw.toLocaleString() : formatCurrency(ctx.raw) } } }, scales: { y: { beginAtZero: true, ticks: { callback: val => filterType === 'count' ? val.toLocaleString() : formatCurrency(val).slice(0,-3)+'k' } } } }
+    );
+}
+
+// New Chart: Market Share
+function createMarketShareChart(data) {
+    const primeValues = {};
+    data.forEach(r => {
+        if (r['Legal Business Name']) {
+            primeValues[r['Legal Business Name']] = (primeValues[r['Legal Business Name']] || 0) + parseCurrencyValue(r['Base and All Options Value (Total Contract Value)']);
+        }
+    });
+    const sortedPrimes = Object.entries(primeValues).sort((a, b) => b[1] - a[1]);
+    const top5Primes = sortedPrimes.slice(0, 5);
+    const otherPrimesValue = sortedPrimes.slice(5).reduce((sum, item) => sum + item[1], 0);
+    
+    const chartLabels = top5Primes.map(item => item[0]);
+    const chartValues = top5Primes.map(item => item[1]);
+    if (otherPrimesValue > 0) {
+        chartLabels.push('Others');
+        chartValues.push(otherPrimesValue);
+    }
+
+    createChart('marketShareChart', 'pie',
+        { labels: chartLabels, datasets: [{ data: chartValues, backgroundColor: ['#8B5CF6', '#EC4899', '#FBBF24', '#22C55E', '#6366F1', '#A8A29E'] }] }, // Different colors
+        { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { boxWidth: 12, font: { size: 10 } } }, tooltip: { callbacks: { label: ctx => `${ctx.label || ''}: ${formatCurrency(ctx.raw)} (${((ctx.raw / chartValues.reduce((a,b)=>a+b,0)) * 100).toFixed(1)}%)` } } } }
+    );
+}
+
+
 // --- Prime Profiles Section ---
 function initializePrimeProfilesSection(data) { 
     const profiles = {};
     data.forEach(r => {
         const name = r['Legal Business Name']; if (!name) return;
-        if (!profiles[name]) profiles[name] = { name: name, contracts: 0, totalValue: 0, naics: new Set() };
+        if (!profiles[name]) profiles[name] = { name: name, contracts: 0, totalValue: 0, naics: new Set(), agencies: new Set() };
         profiles[name].contracts++; profiles[name].totalValue += parseCurrencyValue(r['Base and All Options Value (Total Contract Value)']);
-        if(r['NAICS Code']) profiles[name].naics.add(String(r['NAICS Code'])); // Ensure NAICS is string for Set
+        if(r['NAICS Code']) profiles[name].naics.add(String(r['NAICS Code'])); 
+        if(r['Contracting Agency Name']) profiles[name].agencies.add(r['Contracting Agency Name']);
     });
     function renderCards(filterTerm = '') {
         primeProfilesContainer.innerHTML = ''; let count = 0;
@@ -500,7 +592,8 @@ function initializePrimeProfilesSection(data) {
                     <h4 class="font-semibold text-blue-700 truncate" title="${p.name}">${p.name}</h4>
                     <p class="text-sm">Contracts: ${p.contracts.toLocaleString()}</p>
                     <p class="text-sm">Value: ${formatCurrency(p.totalValue)}</p>
-                    <p class="text-xs mt-1 truncate" title="NAICS: ${Array.from(p.naics).slice(0,3).join(', ')}">NAICS: ${Array.from(p.naics).slice(0,3).join(', ')}</p>
+                    <p class="text-xs mt-1 truncate" title="Top NAICS: ${Array.from(p.naics).slice(0,3).join(', ')}">Top NAICS: ${Array.from(p.naics).slice(0,3).join(', ')}</p>
+                    <p class="text-xs mt-1 truncate" title="Top Agencies: ${Array.from(p.agencies).slice(0,2).join(', ')}">Top Agencies: ${Array.from(p.agencies).slice(0,2).join(', ')}</p>
                     <button class="mt-2 text-xs bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600" onclick="setUnifiedSearchTerm('${p.name.replace(/'/g, "\\'")}')">View Dashboard for this Prime</button>`;
                 primeProfilesContainer.appendChild(card);
         });
@@ -516,8 +609,8 @@ function setUnifiedSearchTerm(term) {
 }
 
 
-// --- Recompete Calendar Section ---
-function initializeRecompeteCalendarSection(data) { 
+// --- Contract Expiration Calendar Section --- Renamed
+function initializeContractExpirationCalendarSection(data) { 
     const events = [];
     data.forEach(r => {
         if (r['Completion Date']) {
@@ -573,25 +666,20 @@ document.getElementById('stateChartFilters_main').addEventListener('click', func
         currentMainStateChartFilter = filterType;
         this.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
         e.target.classList.add('active');
-        
-        let dataToUse = parsedData;
-        const currentSearchTerm = unifiedSearchInput.value.trim();
-        if (currentSearchTerm) { 
-            const keywords = currentSearchTerm.toLowerCase().split(' ').filter(k => k);
-            dataToUse = parsedData.filter(record => {
-                return keywords.every(keyword => {
-                    return (record['Legal Business Name']?.toLowerCase().includes(keyword) ||
-                           String(record['NAICS Code'] || '').toLowerCase().includes(keyword) || // Ensure string conversion
-                           record['NAICS Description']?.toLowerCase().includes(keyword) ||
-                           record['Contracting Department Name']?.toLowerCase().includes(keyword) ||
-                           (keyword.length === 2 && (record['Principal Place of Performance State Code']?.toLowerCase() === keyword)) ||
-                           (keyword.length > 2 && (record['Principal Place of Performance State Code']?.toLowerCase().includes(keyword))) );
-                });
-            });
-        }
-        createStateContractsChart_main(dataToUse, filterType);
+        applyUnifiedSearch(unifiedSearchInput.value); // Re-apply search to update this chart
     }
 });
+
+document.getElementById('awardsTimeFilters_main').addEventListener('click', function(e) {
+    if (e.target.classList.contains('filter-btn')) {
+        const filterType = e.target.dataset.filter;
+        currentAwardsTimeFilter = filterType;
+        this.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+        e.target.classList.add('active');
+        applyUnifiedSearch(unifiedSearchInput.value); // Re-apply search to update this chart
+    }
+});
+
 
 // --- File Input Handling ---
 csvFileInput.addEventListener('change', function(e) { 
