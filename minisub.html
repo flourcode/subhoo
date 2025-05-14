@@ -15,7 +15,7 @@
         }
         .chart-container {
             position: relative;
-            height: 300px; /* Default height, can be overridden */
+            height: 300px; 
             width: 100%;
         }
         .spinner {
@@ -35,7 +35,7 @@
             font-weight: 600;
             text-align: center;
             padding: 5px 0;
-            background-color: #2980b9; /* Tailwind: bg-blue-600 */
+            background-color: #2980b9; 
             color: white;
             border-radius: 4px;
         }
@@ -65,26 +65,29 @@
             max-width: 300px;
             display: none;
         }
-        /* Styles for filter buttons on charts */
         .metric-filters {
             display: flex;
             gap: 10px;
             margin-bottom: 10px;
-            justify-content: center; /* Center filter buttons */
+            justify-content: center;
         }
         .filter-btn {
-            padding: 4px 8px; /* Smaller padding */
-            background-color: #f1f1f1; /* Tailwind: bg-gray-200 */
-            border: 1px solid #ddd; /* Tailwind: border border-gray-300 */
-            border-radius: 4px; /* Tailwind: rounded */
+            padding: 4px 8px;
+            background-color: #f1f1f1; 
+            border: 1px solid #ddd; 
+            border-radius: 4px; 
             cursor: pointer;
-            font-size: 12px; /* Smaller font */
+            font-size: 12px; 
             transition: background-color 0.2s;
         }
         .filter-btn.active {
-            background-color: #2980b9; /* Tailwind: bg-blue-600 */
+            background-color: #2980b9; 
             color: white;
-            border-color: #2980b9; /* Tailwind: border-blue-600 */
+            border-color: #2980b9; 
+        }
+        /* Ensure visibility for the processing indicator if it's ever unhidden */
+        #processingIndicator.flex {
+            display: flex;
         }
     </style>
 </head>
@@ -92,30 +95,40 @@
     <div class="dashboard-container max-w-7xl mx-auto">
         <header class="mb-6">
             <h1 class="text-3xl font-bold text-gray-800">Federal Business Development Dashboard</h1>
-            <p class="text-gray-600">Prime to Subcontractor Teaming Opportunities</p>
-        </header>
+            </header>
 
-        <section id="fileInputSection" class="bg-white p-6 rounded-lg shadow-md mb-6">
-            <div id="autoload-section" class="mb-1">
-                <div id="processingIndicator" class="hidden items-center text-gray-700">
-                    <div class="spinner"></div>
-                    <span class="ml-2">Processing data...</span>
-                </div>
-                <p id="autoload-status" class="hidden"></p> 
+        <section id="explainerSection" class="bg-white p-6 rounded-lg shadow-md mb-6">
+            <h2 class="text-2xl font-semibold text-gray-700 mb-3">Welcome!</h2>
+            <p class="text-gray-600 mb-2">
+                This dashboard helps you explore federal contracting data to identify potential teaming opportunities
+                between prime and subcontractors. Data is automatically loaded from our S3 bucket.
+            </p>
+            <p class="text-gray-600 mb-2">
+                <strong>How to Use:</strong>
+            </p>
+            <ul class="list-disc list-inside text-gray-600 mb-2 ml-4">
+                <li>Use the <strong>Prime Contractor Search</strong> below to find specific primes or filter by NAICS code, agency, or state.</li>
+                <li>Key statistics and overview charts provide an immediate snapshot of the contracting landscape.</li>
+                <li>Scroll down to view detailed <strong>Prime Contractor Profiles</strong> and the <strong>Recompete Opportunity Calendar</strong>.</li>
+            </ul>
+            <p class="text-gray-600 text-sm">
+                If data fails to load automatically, a manual upload option will appear. You can also download the source CSV:
+                <a href="https://subhoodata.s3.us-east-1.amazonaws.com/data/sbaall.csv" download class="text-blue-500 hover:text-blue-600 hover:underline">sbaall.csv</a>.
+            </p>
+            <div id="processingIndicator" class="hidden items-center text-gray-700 mt-4">
+                <div class="spinner"></div>
+                <span class="ml-2">Processing data...</span>
             </div>
-            <div id="manual-upload-section" class="hidden">
-                <h3 class="text-xl font-semibold text-gray-700 mb-2">Upload Federal Contractor CSV Data</h3>
-                <p class="text-sm text-gray-600 mb-4">If auto-loading fails or you want to use a different file, you can manually upload <code>sbaall.csv</code></p>
+            <div id="s3LoadError" class="text-red-600 bg-red-100 p-3 rounded-md mt-3 hidden"></div>
+            <div id="manual-upload-section" class="hidden mt-4 border-t pt-4">
+                <h3 class="text-lg font-semibold text-gray-700 mb-2">Manual CSV Upload</h3>
                 <div class="flex items-center gap-4 mb-4">
                     <input type="file" id="csvFileInput" accept=".csv" class="hidden">
                     <label for="csvFileInput" class="px-4 py-2 bg-blue-500 text-white rounded-md cursor-pointer hover:bg-blue-600 transition-colors">Choose CSV File</label>
                     <span id="file-name-display" class="text-sm text-gray-700 p-2 border border-gray-300 rounded-md min-w-[200px]">No file selected</span>
                 </div>
-                <div id="errorMessage" class="text-red-600 bg-red-100 p-3 rounded-md hidden mb-2">Error processing file.</div>
-                <div id="successMessage" class="text-green-600 bg-green-100 p-3 rounded-md hidden mb-2">File processed successfully.</div>
-                <div class="mt-4">
-                    <a href="https://subhoodata.s3.us-east-1.amazonaws.com/data/sbaall.csv" download class="text-blue-500 hover:text-blue-600 hover:underline text-sm">Download sbaall.csv from S3</a>
-                </div>
+                <div id="errorMessage" class="text-red-600 bg-red-100 p-3 rounded-md hidden mb-2"></div>
+                <div id="successMessage" class="text-green-600 bg-green-100 p-3 rounded-md hidden mb-2"></div>
             </div>
         </section>
 
@@ -138,48 +151,39 @@
                     <div class="text-sm text-gray-500">Unique Prime Contractors</div>
                 </div>
             </section>
-
-            <section id="advancedFiltersSection" class="bg-white p-6 rounded-lg shadow-md mb-6">
-                <details class="group">
-                    <summary class="flex justify-between items-center font-semibold text-gray-700 cursor-pointer hover:text-blue-600">
-                        Advanced Filtering Options
-                        <span class="text-sm text-blue-500 group-open:rotate-180 transition-transform duration-300 transform">&#9660;</span>
-                    </summary>
-                    <div class="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <div class="filter-group">
-                            <label for="naicsFilter" class="block text-sm font-medium text-gray-700 mb-1">NAICS Code</label>
-                            <select id="naicsFilter" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
-                                <option value="">All NAICS Codes</option>
-                            </select>
-                        </div>
-                        <div class="filter-group">
-                            <label for="agencyFilter" class="block text-sm font-medium text-gray-700 mb-1">Department/Agency</label>
-                            <select id="agencyFilter" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
-                                <option value="">All Departments/Agencies</option>
-                            </select>
-                        </div>
-                        <div class="filter-group">
-                            <label for="stateFilter" class="block text-sm font-medium text-gray-700 mb-1">State</label>
-                            <select id="stateFilter" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
-                                <option value="">All States</option>
-                            </select>
-                        </div>
+            
+            <section id="searchAndFilterSection" class="bg-white p-6 rounded-lg shadow-md mb-6">
+                <h2 class="text-xl font-semibold text-gray-700 mb-3">Prime Contractor Search & Filters</h2>
+                <input type="text" id="primeSearchInput" class="w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 mb-4" placeholder="Search by Prime Contractor Name...">
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                    <div>
+                        <label for="naicsFilter" class="block text-sm font-medium text-gray-700 mb-1">NAICS Code</label>
+                        <select id="naicsFilter" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                            <option value="">All NAICS Codes</option>
+                        </select>
                     </div>
-                    <div class="mt-6 flex justify-end gap-3">
-                        <button id="clearFiltersBtn" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors">Clear Filters</button>
-                        <button id="applyFiltersBtn" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors">Apply Filters</button>
+                    <div>
+                        <label for="agencyFilter" class="block text-sm font-medium text-gray-700 mb-1">Department/Agency</label>
+                        <select id="agencyFilter" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                            <option value="">All Departments/Agencies</option>
+                        </select>
                     </div>
-                </details>
-            </section>
-            <div id="activeFilterIndicator" class="bg-blue-100 text-blue-700 p-3 rounded-md mb-6 hidden flex justify-between items-center">
-                <span>Filtered by: [Prime Name]</span>
-                <button class="clear-filter-btn-tailwind bg-red-500 text-white px-3 py-1 rounded-md text-sm hover:bg-red-600">Clear Filter</button>
-            </div>
-
-            <section id="primeSearchSection" class="bg-white p-6 rounded-lg shadow-md mb-6">
-                <h2 class="text-xl font-semibold text-gray-700 mb-3">Prime Contractor Search</h2>
-                <input type="text" id="primeSearchInput" class="w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 mb-3" placeholder="Search for a prime contractor...">
-                <div id="searchResults" class="max-h-60 overflow-y-auto border border-gray-200 rounded-md"></div>
+                    <div>
+                        <label for="stateFilter" class="block text-sm font-medium text-gray-700 mb-1">State</label>
+                        <select id="stateFilter" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                            <option value="">All States</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="flex justify-end gap-3 mb-4">
+                    <button id="clearFiltersBtn" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors">Clear Filters</button>
+                    <button id="applyFiltersBtn" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors">Apply Filters</button>
+                </div>
+                <div id="activeFilterIndicator" class="bg-blue-100 text-blue-700 p-3 rounded-md mb-4 hidden flex justify-between items-center">
+                    </div>
+                <div id="searchResults" class="max-h-60 overflow-y-auto border border-gray-200 rounded-md">
+                    </div>
             </section>
 
             <section id="coreChartsSection" class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
@@ -236,7 +240,7 @@
                     <div id="calendarGrid" class="grid grid-cols-7 gap-1 text-sm"></div>
                 </div>
             </section>
-            </main>
+        </main>
     </div>
     <div class="event-tooltip"></div>
 
@@ -247,8 +251,9 @@ const manualUploadSection = document.getElementById('manual-upload-section');
 const dashboardContent = document.getElementById('dashboardContent');
 const csvFileInput = document.getElementById('csvFileInput');
 const fileNameDisplay = document.getElementById('file-name-display');
-const errorMessageDiv = document.getElementById('errorMessage');
-const successMessageDiv = document.getElementById('successMessage');
+const errorMessageDiv = document.getElementById('errorMessage'); // For manual upload errors
+const successMessageDiv = document.getElementById('successMessage'); // For manual upload success
+const s3LoadErrorDiv = document.getElementById('s3LoadError'); // For S3 load errors
 
 const primeProfilesContainer = document.getElementById('primeProfilesContainer');
 const primeProfilesSearchInput = document.getElementById('primeProfilesSearchInput');
@@ -261,41 +266,34 @@ const globalTooltipEl = document.querySelector('.event-tooltip');
 // --- Global Variables ---
 let parsedData = [];
 const charts = {}; 
-let activeFilter = null; 
+let activePrimeFilter = null; // Renamed for clarity
 const S3_CSV_URL = 'https://subhoodata.s3.us-east-1.amazonaws.com/data/sbaall.csv';
-let currentMainStateChartFilter = 'count'; // For the new main page state chart
+let currentMainStateChartFilter = 'count';
 
 // --- Utility Functions ---
 function formatCurrency(value) { return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value); }
 function parseCurrencyValue(valueStr) { if (!valueStr) return 0; return parseFloat(String(valueStr).replace(/[$,\s]/g, '')) || 0; }
 function formatDate(dateStr) { if (!dateStr) return ''; const date = new Date(dateStr); return isNaN(date.getTime()) ? '' : new Intl.DateTimeFormat('en-US', { year: 'numeric', month: 'short', day: 'numeric' }).format(date); }
 
-function showProcessingBriefly() { processingIndicator.classList.remove('hidden'); }
-function hideProcessing() { processingIndicator.classList.add('hidden'); }
+function showProcessingBriefly() { processingIndicator.classList.remove('hidden'); processingIndicator.classList.add('flex'); }
+function hideProcessing() { processingIndicator.classList.add('hidden'); processingIndicator.classList.remove('flex');}
 
 function showErrorMessage(message, isAutoloadError = false) {
     if (isAutoloadError) {
         manualUploadSection.classList.remove('hidden');
-        const fileInputSection = document.getElementById('fileInputSection');
-        let s3ErrorDiv = document.getElementById('s3LoadError');
-        if (!s3ErrorDiv) {
-            s3ErrorDiv = document.createElement('div'); s3ErrorDiv.id = 's3LoadError';
-            s3ErrorDiv.className = 'text-red-600 bg-red-100 p-3 rounded-md mb-2';
-            fileInputSection.insertBefore(s3ErrorDiv, manualUploadSection);
-        }
-        s3ErrorDiv.textContent = `S3 Auto-load failed: ${message}. Please use manual upload.`;
-    } else {
+        s3LoadErrorDiv.textContent = `S3 Auto-load failed: ${message}. Please use manual upload option above.`;
+        s3LoadErrorDiv.classList.remove('hidden');
+    } else { // For manual upload errors
         errorMessageDiv.textContent = message; errorMessageDiv.classList.remove('hidden');
-        successMessageDiv.classList.add('hidden');
+        successMessageDiv.classList.add('hidden'); // Hide manual success if error
     }
     hideProcessing();
 }
 
 function showSuccessMessage(message, isAutoloadSuccess = false) {
     if (isAutoloadSuccess) {
-        const s3ErrorDiv = document.getElementById('s3LoadError');
-        if (s3ErrorDiv) s3ErrorDiv.classList.add('hidden');
-    } else {
+        s3LoadErrorDiv.classList.add('hidden'); // Hide S3 error if S3 load is successful
+    } else { // For manual upload success
         successMessageDiv.textContent = message; successMessageDiv.classList.remove('hidden');
         errorMessageDiv.classList.add('hidden');
     }
@@ -307,14 +305,16 @@ function cleanupCharts() { Object.keys(charts).forEach(key => { if (charts[key])
 
 function processAndInitialize(data) {
     if (!data || data.length === 0) { showErrorMessage('No data to display. Please try manual upload or check the S3 source.', true); return; }
-    parsedData = data; activeFilter = null;
-    document.getElementById('activeFilterIndicator').classList.add('hidden');
+    parsedData = data; activePrimeFilter = null;
+    document.getElementById('activeFilterIndicator').classList.add('hidden'); // Both general and prime filter indicators
     dashboardContent.classList.remove('hidden');
-    manualUploadSection.classList.remove('highlight-section');
+    manualUploadSection.classList.add('hidden'); // Hide manual upload if S3 load was successful
+    s3LoadErrorDiv.classList.add('hidden'); // Hide S3 error message if successful
+
     cleanupCharts(); populateFilterOptions(); initializeCoreVisuals(parsedData);
     setupPrimeSearch(parsedData); initializePrimeProfilesSection(parsedData);
     initializeRecompeteCalendarSection(parsedData);
-    showSuccessMessage('Data loaded and dashboard initialized.', true);
+    showSuccessMessage('Data loaded and dashboard initialized.', true); // This message is not displayed prominently
     hideProcessing();
 }
 
@@ -328,7 +328,7 @@ function loadDataFromS3() {
             if (response.status === 0) errorDetail = "Network error or CORS issue.";
             else if (response.status === 403) errorDetail = "Access Forbidden (403).";
             else if (response.status === 404) errorDetail = "File Not Found (404).";
-            throw new Error(`Failed to fetch data from S3. ${errorDetail}`);
+            throw new Error(`S3 Load Error: ${errorDetail}`);
         }
         return response.text();
     })
@@ -346,12 +346,12 @@ function loadDataFromS3() {
     })
     .catch(error => {
         let errorMsg = error.message; 
-        if (navigator.onLine === false && !errorMsg.includes("offline")) errorMsg += " You appear to be offline.";
-        showErrorMessage(errorMsg, true);
+        if (navigator.onLine === false && !errorMsg.includes("offline")) errorMsg += " You may also be offline.";
+        showErrorMessage(errorMsg, true); // Pass true to indicate it's an autoload error
     });
 }
 
-// --- Populate Filter Dropdowns (Simplified) ---
+// --- Populate Filter Dropdowns ---
 function populateFilterOptions() {
     const naicsCodes = new Set(), agencies = new Set(), states = new Set();
     parsedData.forEach(r => {
@@ -373,46 +373,97 @@ function populateFilterOptions() {
     populateSelect('stateFilter', states, 'All States');
 }
 
-// --- Apply Advanced Filters (Simplified) ---
-function applyAdvancedFilters() {
+// --- Apply Advanced Filters ---
+function applyAdvancedFilters(comingFromPrimeFilter = false) {
+    let currentData = parsedData;
+    let isAdvFiltered = false;
+
+    // If a prime filter is active, advanced filters apply ON TOP of the prime-filtered data
+    if (activePrimeFilter && !comingFromPrimeFilter) { // Check !comingFromPrimeFilter to avoid re-filtering prime data
+        currentData = parsedData.filter(r => r['Legal Business Name'] === activePrimeFilter);
+    } else if (!activePrimeFilter) {
+        // No prime filter, apply advanced filters to full dataset
+    }
+
+
     const filters = {
         naics: document.getElementById('naicsFilter').value,
         agency: document.getElementById('agencyFilter').value,
         state: document.getElementById('stateFilter').value,
     };
-    let filteredData = parsedData.filter(r => 
-        (!filters.naics || r['NAICS Code'] == filters.naics) &&
-        (!filters.agency || r['Contracting Department Name'] === filters.agency) &&
-        (!filters.state || r['Principal Place of Performance State Code'] === filters.state)
-    );
-    initializeCoreVisuals(filteredData); 
-    initializePrimeProfilesSection(filteredData);
-    initializeRecompeteCalendarSection(filteredData);
-    updateActiveFilterIndicator(filteredData.length < parsedData.length, filteredData.length);
+
+    const advancedFilteredData = currentData.filter(r => {
+        let pass = true;
+        if (filters.naics && r['NAICS Code'] != filters.naics) pass = false;
+        if (filters.agency && r['Contracting Department Name'] !== filters.agency) pass = false;
+        if (filters.state && r['Principal Place of Performance State Code'] !== filters.state) pass = false;
+        if (pass && (filters.naics || filters.agency || filters.state)) isAdvFiltered = true;
+        return pass;
+    });
+    
+    // Determine what data to use for visuals
+    const dataForVisuals = (filters.naics || filters.agency || filters.state) ? advancedFilteredData : currentData;
+
+    initializeCoreVisuals(dataForVisuals); 
+    initializePrimeProfilesSection(dataForVisuals);
+    initializeRecompeteCalendarSection(dataForVisuals);
+    updateActiveFilterIndicator(isAdvFiltered || activePrimeFilter, dataForVisuals.length);
 }
 
 function clearAdvancedFilters() {
-    document.getElementById('naicsFilter').value = ''; document.getElementById('agencyFilter').value = ''; document.getElementById('stateFilter').value = '';
-    initializeCoreVisuals(parsedData); initializePrimeProfilesSection(parsedData); initializeRecompeteCalendarSection(parsedData);
-    updateActiveFilterIndicator(false);
+    document.getElementById('naicsFilter').value = ''; 
+    document.getElementById('agencyFilter').value = ''; 
+    document.getElementById('stateFilter').value = '';
+    
+    // If a prime filter is active, clearing advanced filters should show data for that prime only
+    // Otherwise, show all data.
+    const dataToUse = activePrimeFilter ? parsedData.filter(r => r['Legal Business Name'] === activePrimeFilter) : parsedData;
+
+    initializeCoreVisuals(dataToUse); 
+    initializePrimeProfilesSection(dataToUse); 
+    initializeRecompeteCalendarSection(dataToUse);
+    updateActiveFilterIndicator(!!activePrimeFilter, dataToUse.length); // Show indicator if prime is filtered
 }
 
+
 function updateActiveFilterIndicator(isFiltered, count) {
-    const ind = document.getElementById('activeFilterIndicator');
-    if (isFiltered) {
-        ind.innerHTML = `<span>Filtered: ${count.toLocaleString()} of ${parsedData.length.toLocaleString()}</span> <button class="clear-filter-btn-tailwind" onclick="clearAdvancedFilters()">Clear</button>`;
-        ind.classList.remove('hidden');
-    } else ind.classList.add('hidden');
+    const indicator = document.getElementById('activeFilterIndicator');
+    let filterText = [];
+    const naicsVal = document.getElementById('naicsFilter').value;
+    const agencyVal = document.getElementById('agencyFilter').value;
+    const stateVal = document.getElementById('stateFilter').value;
+
+    if (activePrimeFilter) filterText.push(`Prime: <strong>${activePrimeFilter}</strong>`);
+    if (naicsVal) filterText.push(`NAICS: ${naicsVal}`);
+    if (agencyVal) filterText.push(`Agency: ${agencyVal}`);
+    if (stateVal) filterText.push(`State: ${stateVal}`);
+
+    if (filterText.length > 0) {
+        indicator.innerHTML = `<span>Filtered by: ${filterText.join('; ')} (${count.toLocaleString()} contracts)</span> 
+                             <button class="clear-filter-btn-tailwind bg-red-500 text-white px-3 py-1 rounded-md text-sm hover:bg-red-600" onclick="clearAllFilters()">Clear All Filters</button>`;
+        indicator.classList.remove('hidden');
+    } else {
+        indicator.classList.add('hidden');
+    }
 }
+
+// New function to clear both prime and advanced filters
+function clearAllFilters() {
+    activePrimeFilter = null;
+    document.getElementById('primeSearchInput').value = '';
+    document.getElementById('searchResults').innerHTML = '';
+    clearAdvancedFilters(); // This will then call updateActiveFilterIndicator correctly
+}
+
 
 // --- Initialize Core Visualizations ---
 function initializeCoreVisuals(data) {
     updateStatistics(data);
     createPrimeContractorsChart(data);
     createDepartmentChart(data);
-    createNaicsChart_main(data); // New main page chart
-    createContractTypeChart_main(data); // New main page chart
-    createStateContractsChart_main(data, currentMainStateChartFilter); // New main page chart
+    createNaicsChart_main(data);
+    createContractTypeChart_main(data);
+    createStateContractsChart_main(data, currentMainStateChartFilter);
 }
 
 // --- Statistics Update ---
@@ -453,7 +504,6 @@ function createDepartmentChart(data) {
     );
 }
 
-// New chart for NAICS on main page
 function createNaicsChart_main(data) {
     const naicsValues = {}, naicsDesc = {};
     data.forEach(r => {
@@ -464,24 +514,22 @@ function createNaicsChart_main(data) {
     });
     const sorted = Object.entries(naicsValues).sort((a,b)=>b[1]-a[1]).slice(0,10);
     createChart('naicsChart_main', 'bar',
-        { labels: sorted.map(i=>`${i[0]} - ${naicsDesc[i[0]].substring(0,20)}...`), datasets: [{ label: 'Contract Value', data: sorted.map(i=>i[1]), backgroundColor: 'rgba(22, 163, 74, 0.7)' }] }, // Green
+        { labels: sorted.map(i=>`${i[0]} - ${naicsDesc[i[0]].substring(0,20)}...`), datasets: [{ label: 'Contract Value', data: sorted.map(i=>i[1]), backgroundColor: 'rgba(22, 163, 74, 0.7)' }] },
         { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: {display:false}, tooltip:{callbacks:{label:c=>formatCurrency(c.raw)}}}, scales: {x:{ticks:{callback:v=>formatCurrency(v).slice(0,-3)+'k'}}}}
     );
 }
 
-// New chart for Contract Types on main page
 function createContractTypeChart_main(data) {
     const contractTypes = {};
     data.forEach(r => { if (r['Award or Indefinite Delivery Vehicle Type']) contractTypes[r['Award or Indefinite Delivery Vehicle Type']] = (contractTypes[r['Award or Indefinite Delivery Vehicle Type']] || 0) + 1; });
     createChart('contractTypeChart_main', 'doughnut',
-        { labels: Object.keys(contractTypes), datasets: [{ data: Object.values(contractTypes), backgroundColor: ['#3B82F6','#EF4444','#F59E0B','#10B981','#8B5CF6', '#F472B6', '#6B7280', '#06B6D4', '#F97316', '#84CC16'] }] }, // More colors
+        { labels: Object.keys(contractTypes), datasets: [{ data: Object.values(contractTypes), backgroundColor: ['#3B82F6','#EF4444','#F59E0B','#10B981','#8B5CF6', '#F472B6', '#6B7280', '#06B6D4', '#F97316', '#84CC16'] }] },
         { responsive: true, maintainAspectRatio: false, plugins: { legend: {position:'right', labels:{boxWidth:12,font:{size:10}}}, tooltip:{callbacks:{label:c=>`${c.label||''}: ${c.raw.toLocaleString()}`}}}}
     );
 }
 
-// New chart for State Contracts on main page
 function createStateContractsChart_main(data, filterType = 'count') {
-    const stateData = {}; // Stores { count: X, value: Y } for each state
+    const stateData = {}; 
     data.forEach(r => {
         const state = r['Principal Place of Performance State Code'];
         if (state) {
@@ -492,42 +540,33 @@ function createStateContractsChart_main(data, filterType = 'count') {
     });
     const sorted = Object.entries(stateData).sort((a,b) => b[1][filterType] - a[1][filterType]).slice(0,10);
     createChart('stateContractsChart_main', 'bar',
-        { labels: sorted.map(i=>i[0]), datasets: [{ label: filterType === 'count' ? 'Number of Contracts' : 'Total Contract Value', data: sorted.map(i=>i[1][filterType]), backgroundColor: 'rgba(139, 92, 246, 0.7)' }] }, // Purple
+        { labels: sorted.map(i=>i[0]), datasets: [{ label: filterType === 'count' ? 'Number of Contracts' : 'Total Contract Value', data: sorted.map(i=>i[1][filterType]), backgroundColor: 'rgba(139, 92, 246, 0.7)' }] },
         { responsive: true, maintainAspectRatio: false, plugins: { legend: {display:false}, tooltip:{callbacks:{label:c=> filterType === 'count' ? c.raw.toLocaleString() : formatCurrency(c.raw)}}}, scales: {y:{ticks:{callback:v=> filterType==='count'?v.toLocaleString():formatCurrency(v).slice(0,-3)+'k'}}}}
     );
 }
 
 
-// --- Prime Search (Main Search Bar) ---
+// --- Prime Search (Name Search) & Filter Application ---
 function setupPrimeSearch(allData) {
     const searchInput = document.getElementById('primeSearchInput');
     const resultsContainer = document.getElementById('searchResults');
-    const filterIndicator = document.getElementById('activeFilterIndicator');
-
-    window.clearPrimeFilterFromIndicator = function() {
-        activeFilter = null; filterIndicator.classList.add('hidden');
-        applyAdvancedFilters(); // Re-apply general filters
-        searchInput.value = ''; resultsContainer.innerHTML = '';
-    };
     
-    window.applyPrimeFilter = function(primeName) {
-        const primeData = parsedData.filter(r => r['Legal Business Name'] === primeName);
-        activeFilter = primeName; 
-        filterIndicator.innerHTML = `<span>Filtered by Prime: <strong>${primeName}</strong></span> <button class="clear-filter-btn-tailwind bg-red-500 text-white px-3 py-1 rounded-md text-sm hover:bg-red-600" onclick="clearPrimeFilterFromIndicator()">Clear</button>`;
-        filterIndicator.classList.remove('hidden');
-        initializeCoreVisuals(primeData); 
-        initializePrimeProfilesSection(primeData); 
-        initializeRecompeteCalendarSection(primeData);
-        resultsContainer.innerHTML = ''; searchInput.value = primeName; 
-        const advFilterDetails = document.querySelector('#advancedFiltersSection details');
-        if (advFilterDetails) advFilterDetails.open = false;
+    // This function is now for applying ONLY the prime name filter
+    window.applyPrimeNameFilter = function(primeName) {
+        activePrimeFilter = primeName; 
+        // Update visuals based on this prime, AND any existing advanced filters
+        applyAdvancedFilters(true); // Pass true to indicate this is coming from prime filter selection
+        
+        searchInput.value = primeName; 
+        resultsContainer.innerHTML = ''; // Clear search results after selection
     };
     
     searchInput.addEventListener('input', _.debounce(function() {
         const term = this.value.toLowerCase().trim();
         if (term.length < 2) { resultsContainer.innerHTML = ''; return; }
+        // Prime name search should always search the full dataset for discoverability
         const matches = new Map();
-        allData.forEach(r => {
+        parsedData.forEach(r => { // Search against full parsedData
             const prime = r['Legal Business Name'];
             if (prime && prime.toLowerCase().includes(term)) {
                 if (!matches.has(prime)) matches.set(prime, { name: prime, contracts: 0, totalValue: 0 });
@@ -536,14 +575,14 @@ function setupPrimeSearch(allData) {
         });
         const sorted = Array.from(matches.values()).sort((a,b)=>b.totalValue-a.totalValue).slice(0,10);
         resultsContainer.innerHTML = sorted.length > 0 ? sorted.map(m => `
-            <div class="p-3 hover:bg-gray-100 cursor-pointer border-b last:border-b-0" onclick="applyPrimeFilter('${m.name.replace(/'/g, "\\'")}')">
+            <div class="p-3 hover:bg-gray-100 cursor-pointer border-b last:border-b-0" onclick="applyPrimeNameFilter('${m.name.replace(/'/g, "\\'")}')">
                 <strong class="text-blue-600">${m.name}</strong><br>
                 <small class="text-gray-600">Contracts: ${m.contracts.toLocaleString()} | Value: ${formatCurrency(m.totalValue)}</small>
             </div>`).join('') : '<div class="p-3 text-gray-500">No matches.</div>';
     }, 300));
 }
 
-// --- Prime Profiles Section (Always Visible) ---
+// --- Prime Profiles Section ---
 function initializePrimeProfilesSection(data) {
     const profiles = {};
     data.forEach(r => {
@@ -566,16 +605,16 @@ function initializePrimeProfilesSection(data) {
                     <p class="text-sm">Contracts: ${p.contracts.toLocaleString()}</p>
                     <p class="text-sm">Value: ${formatCurrency(p.totalValue)}</p>
                     <p class="text-xs mt-1 truncate" title="NAICS: ${Array.from(p.naics).slice(0,3).join(', ')}">NAICS: ${Array.from(p.naics).slice(0,3).join(', ')}</p>
-                    <button class="mt-2 text-xs bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600" onclick="applyPrimeFilter('${p.name.replace(/'/g, "\\'")}')">Filter Dashboard</button>`;
+                    <button class="mt-2 text-xs bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600" onclick="applyPrimeNameFilter('${p.name.replace(/'/g, "\\'")}')">Filter Dashboard</button>`;
                 primeProfilesContainer.appendChild(card);
         });
         if(count === 0) primeProfilesContainer.innerHTML = `<p class="p-4 col-span-full text-center text-gray-500">No primes match.</p>`;
     }
     primeProfilesSearchInput.addEventListener('input', _.debounce(() => renderCards(primeProfilesSearchInput.value), 300));
-    renderCards();
+    renderCards(); // Initial render based on the data passed to this function
 }
 
-// --- Recompete Calendar Section (Always Visible) ---
+// --- Recompete Calendar Section ---
 function initializeRecompeteCalendarSection(data) {
     const events = [];
     data.forEach(r => {
@@ -625,33 +664,33 @@ function setupCalendarEventTooltips(tooltipEl) {
     });
 }
 
-// --- Event Listeners for Chart Filters (e.g., State Chart) ---
+// --- Event Listeners for Chart Filters ---
 document.getElementById('stateChartFilters_main').addEventListener('click', function(e) {
     if (e.target.classList.contains('filter-btn')) {
         const filterType = e.target.dataset.filter;
-        const chartId = e.target.dataset.chart; // Should be 'stateContractsChart_main'
-        if (chartId === 'stateContractsChart_main') {
-            currentMainStateChartFilter = filterType; // Update global state for this chart's filter
-            this.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
-            e.target.classList.add('active');
-            // Determine which data to use (globally filtered or prime-specific)
-            const dataToUse = activeFilter ? parsedData.filter(r => r['Legal Business Name'] === activeFilter) : parsedData.filter(record => {
-                // Re-apply advanced filters if any are set, otherwise use all parsedData
-                const filters = {
-                    naics: document.getElementById('naicsFilter').value,
-                    agency: document.getElementById('agencyFilter').value,
-                    state: document.getElementById('stateFilter').value,
-                };
-                if (filters.naics && record['NAICS Code'] != filters.naics) return false;
-                if (filters.agency && record['Contracting Department Name'] !== filters.agency) return false;
-                if (filters.state && record['Principal Place of Performance State Code'] !== filters.state) return false;
-                return true;
-            });
-            createStateContractsChart_main(dataToUse, filterType);
+        currentMainStateChartFilter = filterType;
+        this.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+        e.target.classList.add('active');
+        
+        let dataToUse = parsedData;
+        if (activePrimeFilter) {
+            dataToUse = parsedData.filter(r => r['Legal Business Name'] === activePrimeFilter);
         }
+        const advFilters = {
+            naics: document.getElementById('naicsFilter').value,
+            agency: document.getElementById('agencyFilter').value,
+            state: document.getElementById('stateFilter').value,
+        };
+        if (advFilters.naics || advFilters.agency || advFilters.state) {
+             dataToUse = dataToUse.filter(r => 
+                (!advFilters.naics || r['NAICS Code'] == advFilters.naics) &&
+                (!advFilters.agency || r['Contracting Department Name'] === advFilters.agency) &&
+                (!advFilters.state || r['Principal Place of Performance State Code'] === advFilters.state)
+            );
+        }
+        createStateContractsChart_main(dataToUse, filterType);
     }
 });
-
 
 // --- File Input Handling ---
 csvFileInput.addEventListener('change', function(e) {
@@ -663,7 +702,7 @@ csvFileInput.addEventListener('change', function(e) {
             if (results.errors && results.errors.length > 0) { showErrorMessage('CSV Error: ' + results.errors[0].message); return; }
             if (results.data && results.data.length > 0) {
                 showSuccessMessage('File processed!', false); processAndInitialize(results.data);
-                const s3ErrDiv = document.getElementById('s3LoadError'); if(s3ErrDiv)s3ErrDiv.classList.add('hidden');
+                s3LoadErrorDiv.classList.add('hidden'); // Hide S3 error if manual is successful
             } else showErrorMessage('No data in file.');
         },
         error: error => showErrorMessage('CSV Parse Fail: ' + error.message)
@@ -671,7 +710,7 @@ csvFileInput.addEventListener('change', function(e) {
 });
 
 // --- Event Listeners for Advanced Filters & Page Load ---
-document.getElementById('applyFiltersBtn').addEventListener('click', applyAdvancedFilters);
+document.getElementById('applyFiltersBtn').addEventListener('click', () => applyAdvancedFilters(false)); // Explicitly false
 document.getElementById('clearFiltersBtn').addEventListener('click', clearAdvancedFilters);
 document.addEventListener('DOMContentLoaded', () => loadDataFromS3());
 
