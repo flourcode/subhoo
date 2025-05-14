@@ -1144,23 +1144,21 @@
     <div class="expert-mode-toggle" id="expertModeToggle">
         Expert Mode: Off
     </div>
-
-    <script>
-        // --- DOM Elements ---
-        const processingIndicator = document.getElementById('processingIndicator');
-        const autoloadStatus = document.getElementById('autoload-status');
-        const manualUploadSection = document.getElementById('manual-upload-section');
-        const dashboardContent = document.getElementById('dashboardContent');
-        const csvFileInput = document.getElementById('csvFileInput');
-        const fileNameDisplay = document.getElementById('file-name-display');
-        const errorMessageDiv = document.getElementById('errorMessage');
-        const successMessageDiv = document.getElementById('successMessage');
+<script>
+// --- DOM Elements ---
+const processingIndicator = document.getElementById('processingIndicator');
+const autoloadStatus = document.getElementById('autoload-status');
+const manualUploadSection = document.getElementById('manual-upload-section');
+const dashboardContent = document.getElementById('dashboardContent');
+const csvFileInput = document.getElementById('csvFileInput');
+const fileNameDisplay = document.getElementById('file-name-display');
+const errorMessageDiv = document.getElementById('errorMessage');
+const successMessageDiv = document.getElementById('successMessage');
 
 // --- Global Variables ---
 let parsedData = [];
 const charts = {};
 let activeFilter = null;
-let expertMode = false;
 const S3_CSV_URL = 'https://subhoodata.s3.us-east-1.amazonaws.com/data/sbaall.csv';
 
 // --- State Coordinates for Map (approximate centers) ---
@@ -1211,9 +1209,6 @@ function formatDate(dateStr) {
 }
 
 function showProcessing(message) {
-    const processingIndicator = document.getElementById('processingIndicator');
-    const autoloadStatus = document.getElementById('autoload-status');
-    
     processingIndicator.classList.remove('hidden');
     processingIndicator.querySelector('span').textContent = message || 'Processing data...';
     autoloadStatus.textContent = message || 'Processing data...';
@@ -1222,15 +1217,10 @@ function showProcessing(message) {
 }
 
 function hideProcessing() {
-    document.getElementById('processingIndicator').classList.add('hidden');
+    processingIndicator.classList.add('hidden');
 }
 
 function showErrorMessage(message, isAutoloadError = false) {
-    const autoloadStatus = document.getElementById('autoload-status');
-    const manualUploadSection = document.getElementById('manual-upload-section');
-    const errorMessageDiv = document.getElementById('errorMessage');
-    const successMessageDiv = document.getElementById('successMessage');
-    
     if (isAutoloadError) {
         autoloadStatus.textContent = `Error: ${message}`;
         autoloadStatus.style.color = '#e74c3c'; // Red for error
@@ -1245,10 +1235,6 @@ function showErrorMessage(message, isAutoloadError = false) {
 }
 
 function showSuccessMessage(message, isAutoloadSuccess = false) {
-    const autoloadStatus = document.getElementById('autoload-status');
-    const successMessageDiv = document.getElementById('successMessage');
-    const errorMessageDiv = document.getElementById('errorMessage');
-    
     if (isAutoloadSuccess) {
         autoloadStatus.textContent = message;
         autoloadStatus.style.color = '#27ae60'; // Green for success
@@ -1260,279 +1246,21 @@ function showSuccessMessage(message, isAutoloadSuccess = false) {
     hideProcessing();
 }
 
-// --- Custom Export Functions ---
-function exportToCsv(data, filename) {
-    // Convert JSON data to CSV string
-    const csvRows = [];
-    
-    // Get the headers
-    const headers = Object.keys(data[0]);
-    csvRows.push(headers.join(','));
-    
-    // Add the data rows
-    for (const row of data) {
-        const values = headers.map(header => {
-            const val = row[header];
-            // Handle commas, quotes, etc.
-            return `"${String(val).replace(/"/g, '""')}"`;
-        });
-        csvRows.push(values.join(','));
-    }
-    
-    // Create CSV content and download
-    const csvString = csvRows.join('\n');
-    const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
-    
-    // Create download link
-    const link = document.createElement('a');
-    if (link.download !== undefined) {
-        // Feature detection
-        const url = URL.createObjectURL(blob);
-        link.setAttribute('href', url);
-        link.setAttribute('download', filename);
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    }
-}
-
-function exportDashboardToPdf() {
-    // Using jsPDF library
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF({
-        orientation: 'landscape',
-        unit: 'px',
-        format: [1100, 800]
-    });
-    
-    // Add title
-    doc.setFontSize(22);
-    doc.text('Federal Business Development Dashboard Report', 40, 40);
-    
-    // Add date
-    doc.setFontSize(12);
-    const today = new Date();
-    doc.text(`Generated on: ${today.toLocaleDateString()}`, 40, 60);
-    
-    // Add filter info
-    if (activeFilter) {
-        doc.text(`Filtered by: ${activeFilter}`, 40, 80);
-    }
-    
-    // Add statistics
-    doc.setFontSize(16);
-    doc.text('Key Statistics', 40, 110);
-    
-    doc.setFontSize(12);
-    doc.text(`Total Contracts: ${document.getElementById('totalContractsValue').textContent}`, 40, 130);
-    doc.text(`Total Value: ${document.getElementById('totalValueValue').textContent}`, 40, 150);
-    doc.text(`Average Contract: ${document.getElementById('avgContractValue').textContent}`, 40, 170);
-    doc.text(`Unique Primes: ${document.getElementById('uniquePrimesValue').textContent}`, 40, 190);
-    
-    // Convert charts to images and add them
-    let yPosition = 220;
-    
-    // Use html2canvas to capture charts
-    const chartIds = ['primeContractorsChart', 'departmentChart', 'naicsChart', 'stateChart'];
-    
-    // Unfortunately, async operations can't be easily captured in this sequence
-    // In real implementation, we'd use Promise.all and async/await
-    doc.text('Note: Charts would be included in the actual PDF export', 40, yPosition);
-    
-    // Save the PDF
-    doc.save('federal-bd-dashboard-report.pdf');
-}
-
-// --- Advanced Data Analysis Functions ---
-function calculateGrowthTrends(data) {
-    // Group contracts by year
-    const yearlyContracts = {};
-    
-    data.forEach(record => {
-        if (record['Period of Performance Start Date']) {
-            const date = new Date(record['Period of Performance Start Date']);
-            if (!isNaN(date.getTime())) {
-                const year = date.getFullYear();
-                
-                if (!yearlyContracts[year]) {
-                    yearlyContracts[year] = {
-                        count: 0,
-                        value: 0,
-                        naics: {}
-                    };
-                }
-                
-                const value = parseCurrencyValue(record['Base and All Options Value (Total Contract Value)']);
-                yearlyContracts[year].count++;
-                yearlyContracts[year].value += value;
-                
-                // Track NAICS code
-                if (record['NAICS Code']) {
-                    const naicsCode = record['NAICS Code'];
-                    
-                    if (!yearlyContracts[year].naics[naicsCode]) {
-                        yearlyContracts[year].naics[naicsCode] = {
-                            count: 0,
-                            value: 0
-                        };
-                    }
-                    
-                    yearlyContracts[year].naics[naicsCode].count++;
-                    yearlyContracts[year].naics[naicsCode].value += value;
-                }
-            }
-        }
-    });
-    
-    // Sort years
-    const sortedYears = Object.keys(yearlyContracts).sort();
-    
-    // Calculate year-over-year growth
-    const growthData = [];
-    
-    for (let i = 1; i < sortedYears.length; i++) {
-        const currentYear = sortedYears[i];
-        const previousYear = sortedYears[i-1];
-        
-        const currentValue = yearlyContracts[currentYear].value;
-        const previousValue = yearlyContracts[previousYear].value;
-        
-        const valueGrowth = previousValue > 0 ? 
-            ((currentValue - previousValue) / previousValue) * 100 : 0;
-        
-        const currentCount = yearlyContracts[currentYear].count;
-        const previousCount = yearlyContracts[previousYear].count;
-        
-        const countGrowth = previousCount > 0 ? 
-            ((currentCount - previousCount) / previousCount) * 100 : 0;
-        
-        growthData.push({
-            yearFrom: previousYear,
-            yearTo: currentYear,
-            previousValue,
-            currentValue,
-            valueGrowth,
-            previousCount,
-            currentCount,
-            countGrowth
-        });
-    }
-    
-    return {
-        yearlyContracts,
-        growthData
-    };
-}
-
-function analyzeCompetitivePosition(data, primeName) {
-    // Find the prime's data
-    const primeData = data.filter(record => record['Legal Business Name'] === primeName);
-    
-    // Get the prime's departments and NAICS codes
-    const primeDepts = new Set();
-    const primeNaics = new Set();
-    
-    primeData.forEach(record => {
-        if (record['Contracting Department Name']) {
-            primeDepts.add(record['Contracting Department Name']);
-        }
-        
-        if (record['NAICS Code']) {
-            primeNaics.add(record['NAICS Code']);
-        }
-    });
-    
-    // Find competitors in the same departments and NAICS codes
-    const competitors = {};
-    
-    data.forEach(record => {
-        const recordPrime = record['Legal Business Name'];
-        
-        if (recordPrime !== primeName) {
-            let isCompetitor = false;
-            
-            // Check if competitor operates in same department
-            if (record['Contracting Department Name'] && 
-                primeDepts.has(record['Contracting Department Name'])) {
-                isCompetitor = true;
-            }
-            
-            // Check if competitor operates in same NAICS
-            if (record['NAICS Code'] && 
-                primeNaics.has(record['NAICS Code'])) {
-                isCompetitor = true;
-            }
-            
-            if (isCompetitor) {
-                if (!competitors[recordPrime]) {
-                    competitors[recordPrime] = {
-                        name: recordPrime,
-                        contracts: 0,
-                        totalValue: 0,
-                        departments: new Set(),
-                        naics: new Set(),
-                        sharedDepartments: new Set(),
-                        sharedNaics: new Set()
-                    };
-                }
-                
-                const value = parseCurrencyValue(record['Base and All Options Value (Total Contract Value)']);
-                competitors[recordPrime].contracts++;
-                competitors[recordPrime].totalValue += value;
-                
-                if (record['Contracting Department Name']) {
-                    competitors[recordPrime].departments.add(record['Contracting Department Name']);
-                    
-                    if (primeDepts.has(record['Contracting Department Name'])) {
-                        competitors[recordPrime].sharedDepartments.add(record['Contracting Department Name']);
-                    }
-                }
-                
-                if (record['NAICS Code']) {
-                    competitors[recordPrime].naics.add(record['NAICS Code']);
-                    
-                    if (primeNaics.has(record['NAICS Code'])) {
-                        competitors[recordPrime].sharedNaics.add(record['NAICS Code']);
-                    }
-                }
-            }
-        }
-    });
-    
-    // Sort competitors by total value
-    const sortedCompetitors = Object.values(competitors)
-        .sort((a, b) => b.totalValue - a.totalValue);
-    
-    return {
-        prime: {
-            name: primeName,
-            contracts: primeData.length,
-            totalValue: primeData.reduce((sum, record) => 
-                sum + parseCurrencyValue(record['Base and All Options Value (Total Contract Value)']), 0),
-            departments: Array.from(primeDepts),
-            naics: Array.from(primeNaics)
-        },
-        competitors: sortedCompetitors
-    };
-}
-
-// --- Data Loading and Initialization ---
+// --- Data Processing and Chart Initialization ---
 function processAndInitialize(data) {
     if (!data || data.length === 0) {
         // If autoload was attempted and failed, the message is already set by showErrorMessage
         // If manual upload resulted in no data, show message in manual section
-        const isAutoloadAttempted = !document.getElementById('manual-upload-section').classList.contains('hidden');
+        const isAutoloadAttempted = !manualUploadSection.classList.contains('hidden');
         showErrorMessage('No data to display.', isAutoloadAttempted);
         return;
     }
-    
     parsedData = data;
     activeFilter = null; 
     document.getElementById('activeFilterIndicator').classList.add('hidden');
     
-    document.getElementById('dashboardContent').classList.remove('hidden');
-    document.getElementById('manual-upload-section').classList.remove('highlight-section'); 
+    dashboardContent.classList.remove('hidden');
+    manualUploadSection.classList.remove('highlight-section'); 
 
     // Populate filter dropdowns
     populateFilterOptions();
@@ -1545,6 +1273,7 @@ function processAndInitialize(data) {
     hideProcessing();
 }
 
+// --- S3 Data Loading using Fetch API ---
 function loadDataFromS3() {
     showProcessing('Attempting to load data from S3...');
     console.log('Attempting to load data from S3 (using fetch):', S3_CSV_URL);
@@ -1617,291 +1346,2407 @@ function loadDataFromS3() {
     });
 }
 
-// --- Additional Export Functionality ---
-window.exportCurrentView = function() {
-    const activeTab = document.querySelector('.tab.active');
-    const tabId = activeTab.getAttribute('data-tab');
+// --- Populate Filter Dropdowns ---
+function populateFilterOptions() {
+    // Collect unique values for each filter
+    const naicsCodes = new Set();
+    const agencies = new Set();
+    const states = new Set();
+    const contractTypes = new Set();
+    const subcontractPlans = new Set();
     
-    let exportData = [];
-    let filename = 'federal-bd-export.csv';
-    
-    switch (tabId) {
-        case 'naics-analysis':
-            // Export NAICS data
-            const naicsCode = document.getElementById('naicsDetailSelector').value;
-            if (naicsCode) {
-                const naicsData = parsedData.filter(record => record['NAICS Code'] == naicsCode);
-                
-                exportData = naicsData.map(record => ({
-                    'Prime Contractor': record['Legal Business Name'],
-                    'Contract ID': record['Procurement Instrument Identifier'],
-                    'Agency': record['Contracting Department Name'],
-                    'Value': parseCurrencyValue(record['Base and All Options Value (Total Contract Value)']),
-                    'Start Date': formatDate(record['Period of Performance Start Date']),
-                    'End Date': formatDate(record['Completion Date'])
-                }));
-                
-                filename = `naics-${naicsCode}-export.csv`;
-            } else {
-                // Export NAICS summary
-                const naicsSummary = {};
-                
-                parsedData.forEach(record => {
-                    const naicsCode = record['NAICS Code'];
-                    if (naicsCode) {
-                        if (!naicsSummary[naicsCode]) {
-                            naicsSummary[naicsCode] = {
-                                'NAICS Code': naicsCode,
-                                'NAICS Description': record['NAICS Description'] || '',
-                                'Contract Count': 0,
-                                'Total Value': 0
-                            };
-                        }
-                        
-                        naicsSummary[naicsCode]['Contract Count']++;
-                        naicsSummary[naicsCode]['Total Value'] += parseCurrencyValue(record['Base and All Options Value (Total Contract Value)']);
-                    }
-                });
-                
-                exportData = Object.values(naicsSummary);
-                filename = 'naics-summary-export.csv';
-            }
-            break;
-            
-        case 'recompete-calendar':
-            // Export upcoming contract completions
-            const nextYear = new Date();
-            nextYear.setFullYear(nextYear.getFullYear() + 1);
-            
-            exportData = parsedData
-                .filter(record => {
-                    if (!record['Completion Date']) return false;
-                    
-                    const completionDate = new Date(record['Completion Date']);
-                    const now = new Date();
-                    
-                    return !isNaN(completionDate.getTime()) && 
-                           completionDate >= now && 
-                           completionDate <= nextYear;
-                })
-                .map(record => ({
-                    'Prime Contractor': record['Legal Business Name'],
-                    'Contract ID': record['Procurement Instrument Identifier'],
-                    'Agency': record['Contracting Department Name'],
-                    'Value': parseCurrencyValue(record['Base and All Options Value (Total Contract Value)']),
-                    'End Date': formatDate(record['Completion Date']),
-                    'NAICS Code': record['NAICS Code']
-                }));
-                
-            filename = 'upcoming-recompetes-export.csv';
-            break;
-            
-        case 'prime-profiles':
-            // Export prime contractor summary
-            const primeContracts = {};
-            
-            parsedData.forEach(record => {
-                const prime = record['Legal Business Name'];
-                if (prime) {
-                    if (!primeContracts[prime]) {
-                        primeContracts[prime] = {
-                            'Prime Contractor': prime,
-                            'Contract Count': 0,
-                            'Total Value': 0,
-                            'Average Contract Value': 0,
-                            'Agencies': new Set(),
-                            'NAICS Codes': new Set()
-                        };
-                    }
-                    
-                    const value = parseCurrencyValue(record['Base and All Options Value (Total Contract Value)']);
-                    primeContracts[prime]['Contract Count']++;
-                    primeContracts[prime]['Total Value'] += value;
-                    
-                    if (record['Contracting Department Name']) {
-                        primeContracts[prime]['Agencies'].add(record['Contracting Department Name']);
-                    }
-                    
-                    if (record['NAICS Code']) {
-                        primeContracts[prime]['NAICS Codes'].add(record['NAICS Code']);
-                    }
-                }
-            });
-            
-            // Calculate average and convert sets to strings
-            exportData = Object.values(primeContracts).map(prime => {
-                prime['Average Contract Value'] = prime['Contract Count'] > 0 ? 
-                    prime['Total Value'] / prime['Contract Count'] : 0;
-                    
-                prime['Agencies'] = Array.from(prime['Agencies']).join(', ');
-                prime['NAICS Codes'] = Array.from(prime['NAICS Codes']).join(', ');
-                
-                return prime;
-            });
-                
-            filename = 'prime-contractors-export.csv';
-            break;
-            
-        case 'region-finder':
-            // Export regional data
-            const stateFilter = document.getElementById('stateFilter').value;
-            
-            if (stateFilter) {
-                // Export specific state data
-                exportData = parsedData
-                    .filter(record => record['Principal Place of Performance State Code'] === stateFilter)
-                    .map(record => ({
-                        'Prime Contractor': record['Legal Business Name'],
-                        'Contract ID': record['Procurement Instrument Identifier'],
-                        'Agency': record['Contracting Department Name'],
-                        'Value': parseCurrencyValue(record['Base and All Options Value (Total Contract Value)']),
-                        'Start Date': formatDate(record['Period of Performance Start Date']),
-                        'End Date': formatDate(record['Completion Date']),
-                        'NAICS Code': record['NAICS Code']
-                    }));
-                    
-                filename = `${stateFilter}-contracts-export.csv`;
-            } else {
-                // Export state summary
-                const stateSummary = {};
-                
-                parsedData.forEach(record => {
-                    const state = record['Principal Place of Performance State Code'];
-                    if (state) {
-                        if (!stateSummary[state]) {
-                            stateSummary[state] = {
-                                'State': state,
-                                'Contract Count': 0,
-                                'Total Value': 0
-                            };
-                        }
-                        
-                        stateSummary[state]['Contract Count']++;
-                        stateSummary[state]['Total Value'] += parseCurrencyValue(record['Base and All Options Value (Total Contract Value)']);
-                    }
-                });
-                
-                exportData = Object.values(stateSummary);
-                filename = 'state-summary-export.csv';
-            }
-            break;
-            
-        case 'subplan-explorer':
-            // Export subcontracting plan data
-            const subplanPrimes = {};
-            
-            parsedData.forEach(record => {
-                const prime = record['Legal Business Name'];
-                const subplan = record['Subcontract Plan'];
-                
-                if (prime && subplan && subplan !== 'Not Specified' && subplan !== 'No subcontracting') {
-                    if (!subplanPrimes[prime]) {
-                        subplanPrimes[prime] = {
-                            'Prime Contractor': prime,
-                            'Subcontract Plan Type': subplan,
-                            'Contract Count': 0,
-                            'Total Value': 0,
-                            'NAICS Codes': new Set()
-                        };
-                    }
-                    
-                    const value = parseCurrencyValue(record['Base and All Options Value (Total Contract Value)']);
-                    subplanPrimes[prime]['Contract Count']++;
-                    subplanPrimes[prime]['Total Value'] += value;
-                    
-                    if (record['NAICS Code']) {
-                        subplanPrimes[prime]['NAICS Codes'].add(record['NAICS Code']);
-                    }
-                }
-            });
-            
-            // Convert sets to strings
-            exportData = Object.values(subplanPrimes).map(prime => {
-                prime['NAICS Codes'] = Array.from(prime['NAICS Codes']).join(', ');
-                return prime;
-            });
-                
-            filename = 'subcontracting-plans-export.csv';
-            break;
-            
-        default:
-            // Default export - current filtered data
-            exportData = parsedData.map(record => ({
-                'Prime Contractor': record['Legal Business Name'],
-                'Contract ID': record['Procurement Instrument Identifier'],
-                'Agency': record['Contracting Department Name'],
-                'Value': parseCurrencyValue(record['Base and All Options Value (Total Contract Value)']),
-                'Start Date': formatDate(record['Period of Performance Start Date']),
-                'End Date': formatDate(record['Completion Date']),
-                'NAICS Code': record['NAICS Code'],
-                'Subcontract Plan': record['Subcontract Plan']
-            }));
-                
-            filename = 'federal-bd-export.csv';
-    }
-    
-    if (exportData.length > 0) {
-        exportToCsv(exportData, filename);
-    } else {
-        alert('No data available to export.');
-    }
-};
-
-// --- Add Export Button to Each Tab ---
-function addExportButtons() {
-    const tabPages = document.querySelectorAll('.tab-page');
-    
-    tabPages.forEach(page => {
-        const exportBtn = document.createElement('button');
-        exportBtn.className = 'filter-btn-apply';
-        exportBtn.style.position = 'absolute';
-        exportBtn.style.top = '15px';
-        exportBtn.style.right = '15px';
-        exportBtn.textContent = 'Export Data';
-        exportBtn.onclick = window.exportCurrentView;
+    parsedData.forEach(record => {
+        if (record['NAICS Code']) {
+            const naicsCode = record['NAICS Code'];
+            const naicsDesc = record['NAICS Description'] || '';
+            naicsCodes.add(`${naicsCode}|${naicsDesc.substring(0, 30)}`);
+        }
         
-        // Make sure the page has position relative for absolute positioning
-        page.style.position = 'relative';
+        if (record['Contracting Department Name']) {
+            agencies.add(record['Contracting Department Name']);
+        }
         
-        page.appendChild(exportBtn);
+        if (record['Principal Place of Performance State Code']) {
+            states.add(record['Principal Place of Performance State Code']);
+        }
+        
+        if (record['Award or Indefinite Delivery Vehicle Type']) {
+            contractTypes.add(record['Award or Indefinite Delivery Vehicle Type']);
+        }
+        
+        if (record['Subcontract Plan']) {
+            subcontractPlans.add(record['Subcontract Plan']);
+        }
+    });
+    
+    // Populate NAICS filter
+    const naicsFilter = document.getElementById('naicsFilter');
+    naicsFilter.innerHTML = '<option value="">All NAICS Codes</option>';
+    Array.from(naicsCodes).sort().forEach(naicsCode => {
+        const [code, desc] = naicsCode.split('|');
+        const option = document.createElement('option');
+        option.value = code;
+        option.textContent = `${code} - ${desc}`;
+        naicsFilter.appendChild(option);
+    });
+    
+    // Populate NAICS detail selector
+    const naicsDetailSelector = document.getElementById('naicsDetailSelector');
+    naicsDetailSelector.innerHTML = '<option value="">Select a NAICS Code</option>';
+    Array.from(naicsCodes).sort().forEach(naicsCode => {
+        const [code, desc] = naicsCode.split('|');
+        const option = document.createElement('option');
+        option.value = code;
+        option.textContent = `${code} - ${desc}`;
+        naicsDetailSelector.appendChild(option);
+    });
+    
+    // Populate agency filter
+    const agencyFilter = document.getElementById('agencyFilter');
+    agencyFilter.innerHTML = '<option value="">All Departments/Agencies</option>';
+    Array.from(agencies).sort().forEach(agency => {
+        const option = document.createElement('option');
+        option.value = agency;
+        option.textContent = agency;
+        agencyFilter.appendChild(option);
+    });
+    
+    // Populate state filter
+    const stateFilter = document.getElementById('stateFilter');
+    stateFilter.innerHTML = '<option value="">All States</option>';
+    Array.from(states).sort().forEach(state => {
+        const option = document.createElement('option');
+        option.value = state;
+        option.textContent = state;
+        stateFilter.appendChild(option);
+    });
+    
+    // Populate contract type filter
+    const contractTypeFilter = document.getElementById('contractTypeFilter');
+    contractTypeFilter.innerHTML = '<option value="">All Contract Types</option>';
+    Array.from(contractTypes).sort().forEach(type => {
+        const option = document.createElement('option');
+        option.value = type;
+        option.textContent = type;
+        contractTypeFilter.appendChild(option);
+    });
+    
+    // Populate subcontract plan filter
+    const subcontractPlanFilter = document.getElementById('subcontractPlanFilter');
+    subcontractPlanFilter.innerHTML = '<option value="">All Subcontract Plans</option>';
+    Array.from(subcontractPlans).sort().forEach(plan => {
+        const option = document.createElement('option');
+        option.value = plan;
+        option.textContent = plan || 'Not Specified';
+        subcontractPlanFilter.appendChild(option);
     });
 }
 
-// Call this function when the DOM is loaded
+// --- Apply Advanced Filters ---
+function applyAdvancedFilters() {
+    const naicsFilter = document.getElementById('naicsFilter').value;
+    const agencyFilter = document.getElementById('agencyFilter').value;
+    const stateFilter = document.getElementById('stateFilter').value;
+    const contractTypeFilter = document.getElementById('contractTypeFilter').value;
+    const subcontractPlanFilter = document.getElementById('subcontractPlanFilter').value;
+    const valueRangeFilter = document.getElementById('valueRangeFilter').value;
+    
+    let filteredData = parsedData;
+    
+    if (naicsFilter) {
+        filteredData = filteredData.filter(record => record['NAICS Code'] == naicsFilter);
+    }
+    
+    if (agencyFilter) {
+        filteredData = filteredData.filter(record => record['Contracting Department Name'] === agencyFilter);
+    }
+    
+    if (stateFilter) {
+        filteredData = filteredData.filter(record => record['Principal Place of Performance State Code'] === stateFilter);
+    }
+    
+    if (contractTypeFilter) {
+        filteredData = filteredData.filter(record => record['Award or Indefinite Delivery Vehicle Type'] === contractTypeFilter);
+    }
+    
+    if (subcontractPlanFilter) {
+        filteredData = filteredData.filter(record => record['Subcontract Plan'] === subcontractPlanFilter);
+    }
+    
+    if (valueRangeFilter) {
+        const [min, max] = valueRangeFilter.split('-').map(v => v ? parseInt(v) : null);
+        filteredData = filteredData.filter(record => {
+            const value = parseCurrencyValue(record['Base and All Options Value (Total Contract Value)']);
+            if (min !== null && max !== null) {
+                return value >= min && value < max;
+            } else if (min !== null) {
+                return value >= min;
+            } else if (max !== null) {
+                return value < max;
+            }
+            return true;
+        });
+    }
+    
+    // Reinitialize charts with filtered data
+    initializeCharts(filteredData);
+    
+    // Update filter indicator
+    const filterIndicator = document.getElementById('activeFilterIndicator');
+    if (filteredData.length < parsedData.length) {
+        filterIndicator.innerHTML = `Filtered: ${filteredData.length.toLocaleString()} of ${parsedData.length.toLocaleString()} contracts <button class="clear-filter-btn" onclick="clearAdvancedFilters()">Clear Filters</button>`;
+        filterIndicator.classList.remove('hidden');
+    } else {
+        filterIndicator.classList.add('hidden');
+    }
+}
+
+// --- Clear Advanced Filters ---
+function clearAdvancedFilters() {
+    document.getElementById('naicsFilter').value = '';
+    document.getElementById('agencyFilter').value = '';
+    document.getElementById('stateFilter').value = '';
+    document.getElementById('contractTypeFilter').value = '';
+    document.getElementById('subcontractPlanFilter').value = '';
+    document.getElementById('valueRangeFilter').value = '';
+    
+    document.getElementById('activeFilterIndicator').classList.add('hidden');
+    
+    // Reinitialize charts with all data
+    initializeCharts(parsedData);
+}
+
+// --- Initialize All Charts and Features ---
+function initializeCharts(data) {
+    updateStatistics(data);
+    createPrimeContractorsChart(data);
+    createDepartmentChart(data);
+    createNAICSChart(data); 
+    createStateChart(data);   
+    createContractTypeChart(data);
+    createValueRangeChart(data);
+    createTimelineChart(data);
+    setupPrimeSearch(data);
+    
+    // Initialize enhanced features
+    createNaicsTreemap(data);
+    initializeRecompeteCalendar(data);
+    createPrimeProfiles(data);
+    initializeRegionalFocusFinder(data);
+    initializeSubcontractPlanExplorer(data);
+}
+
+// --- Base Dashboard Charts (Kept from Original Implementation) ---
+
+// Update dashboard statistics
+function updateStatistics(data) {
+    if (!data || data.length === 0) {
+        document.getElementById('totalContractsValue').textContent = '0';
+        document.getElementById('totalValueValue').textContent = '$0';
+        document.getElementById('avgContractValue').textContent = '$0';
+        document.getElementById('uniquePrimesValue').textContent = '0';
+        return;
+    }
+    
+    document.getElementById('totalContractsValue').textContent = data.length.toLocaleString();
+    
+    let totalValue = 0;
+    let contractsWithValue = 0;
+    
+    data.forEach(record => {
+        const value = parseCurrencyValue(record['Base and All Options Value (Total Contract Value)']);
+        if (value > 0) {
+            totalValue += value;
+            contractsWithValue++;
+        }
+    });
+    
+    document.getElementById('totalValueValue').textContent = formatCurrency(totalValue);
+    const avgValue = contractsWithValue > 0 ? totalValue / contractsWithValue : 0;
+    document.getElementById('avgContractValue').textContent = formatCurrency(avgValue);
+    
+    const uniquePrimes = new Set(data.map(r => r['Legal Business Name']).filter(Boolean));
+    document.getElementById('uniquePrimesValue').textContent = uniquePrimes.size.toLocaleString();
+}
+
+// Create Top Prime Contractors chart
+function createPrimeContractorsChart(data) {
+    const primeValues = {};
+    data.forEach(record => {
+        const prime = record['Legal Business Name'];
+        if (prime) {
+            const value = parseCurrencyValue(record['Base and All Options Value (Total Contract Value)']);
+            primeValues[prime] = (primeValues[prime] || 0) + value;
+        }
+    });
+    
+    let sortedPrimes;
+    if (activeFilter) { 
+        const primeDepts = new Set(data.filter(r => r['Legal Business Name'] === activeFilter && r['Contracting Department Name']).map(r => r['Contracting Department Name']));
+        
+        const relatedPrimes = {};
+        parsedData.forEach(record => { 
+            const prime = record['Legal Business Name'];
+            const dept = record['Contracting Department Name'];
+            if (prime && prime !== activeFilter && dept && primeDepts.has(dept)) {
+                const value = parseCurrencyValue(record['Base and All Options Value (Total Contract Value)']);
+                relatedPrimes[prime] = (relatedPrimes[prime] || 0) + value;
+            }
+        });
+        const sortedRelatedPrimes = Object.entries(relatedPrimes).sort((a, b) => b[1] - a[1]).slice(0, 9);
+        sortedPrimes = [[activeFilter, primeValues[activeFilter] || 0], ...sortedRelatedPrimes];
+    } else {
+        sortedPrimes = Object.entries(primeValues).sort((a, b) => b[1] - a[1]).slice(0, 10);
+    }
+    
+    const labels = sortedPrimes.map(item => item[0]);
+    const values = sortedPrimes.map(item => item[1]);
+    const backgroundColors = labels.map(label => label === activeFilter ? 'rgba(231, 76, 60, 0.7)' : 'rgba(54, 162, 235, 0.7)');
+    const borderColors = labels.map(label => label === activeFilter ? 'rgba(231, 76, 60, 1)' : 'rgba(54, 162, 235, 1)');
+    
+    const ctx = document.getElementById('primeContractorsChart').getContext('2d');
+    if (charts.primeContractorsChart) charts.primeContractorsChart.destroy();
+    charts.primeContractorsChart = new Chart(ctx, {
+        type: 'bar',
+        data: { labels, datasets: [{ label: 'Contract Value', data: values, backgroundColor: backgroundColors, borderColor: borderColors, borderWidth: 1 }] },
+        options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => formatCurrency(ctx.raw) } } }, scales: { x: { ticks: { callback: val => formatCurrency(val) } }, y: { ticks: { callback: function(val) { const label = this.getLabelForValue(val); return label.length > 20 ? label.substring(0, 20) + '...' : label; } } } } }
+    });
+}
+
+// Create Department Contract Distribution chart
+function createDepartmentChart(data) {
+    const deptValues = {};
+    data.forEach(record => {
+        const dept = record['Contracting Department Name'];
+        if (dept) {
+            const value = parseCurrencyValue(record['Base and All Options Value (Total Contract Value)']);
+            deptValues[dept] = (deptValues[dept] || 0) + value;
+        }
+    });
+    const sortedDepts = Object.entries(deptValues).sort((a, b) => b[1] - a[1]).slice(0, 10);
+    const labels = sortedDepts.map(item => item[0]);
+    const values = sortedDepts.map(item => item[1]);
+    
+    const ctx = document.getElementById('departmentChart').getContext('2d');
+    if (charts.departmentChart) charts.departmentChart.destroy();
+    charts.departmentChart = new Chart(ctx, {
+        type: 'pie',
+        data: { labels, datasets: [{ data: values, backgroundColor: ['rgba(255, 99, 132, 0.7)','rgba(54, 162, 235, 0.7)','rgba(255, 206, 86, 0.7)','rgba(75, 192, 192, 0.7)','rgba(153, 102, 255, 0.7)','rgba(255, 159, 64, 0.7)','rgba(199, 199, 199, 0.7)','rgba(83, 102, 255, 0.7)','rgba(40, 159, 64, 0.7)','rgba(210, 99, 132, 0.7)'], borderWidth: 1 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { boxWidth: 15, font: { size: 10 } } }, tooltip: { callbacks: { label: ctx => `${ctx.label || ''}: ${formatCurrency(ctx.raw)}` } } } }
+    });
+}
+
+// Create NAICS Code Distribution chart
+function createNAICSChart(data, filterType = 'count') {
+    const naicsCounts = {}, naicsValues = {}, naicsDescriptions = {};
+    data.forEach(record => {
+        const naics = record['NAICS Code'], naicsDesc = record['NAICS Description'];
+        if (naics) {
+            if (naicsDesc && !naicsDescriptions[naics]) naicsDescriptions[naics] = naicsDesc;
+            naicsCounts[naics] = (naicsCounts[naics] || 0) + 1;
+            naicsValues[naics] = (naicsValues[naics] || 0) + parseCurrencyValue(record['Base and All Options Value (Total Contract Value)']);
+        }
+    });
+    const sortedNAICS = Object.entries(filterType === 'count' ? naicsCounts : naicsValues).sort((a, b) => b[1] - a[1]).slice(0, 10);
+    const labels = sortedNAICS.map(item => `${item[0]} - ${(naicsDescriptions[item[0]] || '').substring(0,20)}${(naicsDescriptions[item[0]] || '').length > 20 ? '...' : ''}`);
+    const values = sortedNAICS.map(item => item[1]);
+    
+    const ctx = document.getElementById('naicsChart').getContext('2d');
+    if (charts.naicsChart) charts.naicsChart.destroy();
+    charts.naicsChart = new Chart(ctx, {
+        type: 'bar',
+        data: { labels, datasets: [{ label: filterType === 'count' ? 'Number of Contracts' : 'Contract Value', data: values, backgroundColor: 'rgba(75, 192, 192, 0.7)', borderColor: 'rgba(75, 192, 192, 1)', borderWidth: 1 }] },
+        options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => filterType === 'count' ? `Contracts: ${ctx.raw.toLocaleString()}` : `Value: ${formatCurrency(ctx.raw)}` } } }, scales: { x: { ticks: { callback: val => filterType === 'count' ? val.toLocaleString() : formatCurrency(val) } } } }
+    });
+}
+
+// Create Geographic Contract Distribution chart (State Chart)
+function createStateChart(data, filterType = 'count') {
+    const stateCounts = {}, stateValues = {};
+    data.forEach(record => {
+        const state = record['Principal Place of Performance State Code'];
+        if (state) {
+            stateCounts[state] = (stateCounts[state] || 0) + 1;
+            stateValues[state] = (stateValues[state] || 0) + parseCurrencyValue(record['Base and All Options Value (Total Contract Value)']);
+        }
+    });
+    const sortedStates = Object.entries(filterType === 'count' ? stateCounts : stateValues).sort((a, b) => b[1] - a[1]).slice(0, 10);
+    const labels = sortedStates.map(item => item[0]);
+    const values = sortedStates.map(item => item[1]);
+
+    const ctx = document.getElementById('stateChart').getContext('2d');
+    if (charts.stateChart) charts.stateChart.destroy();
+    charts.stateChart = new Chart(ctx, {
+        type: 'bar',
+        data: { labels, datasets: [{ label: filterType === 'count' ? 'Number of Contracts' : 'Contract Value', data: values, backgroundColor: 'rgba(153, 102, 255, 0.7)', borderColor: 'rgba(153, 102, 255, 1)', borderWidth: 1 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => filterType === 'count' ? `Contracts: ${ctx.raw.toLocaleString()}` : `Value: ${formatCurrency(ctx.raw)}` } } }, scales: { y: { ticks: { callback: val => filterType === 'count' ? val.toLocaleString() : formatCurrency(val) } } } }
+    });
+}
+
+// Create Contract Type Breakdown chart
+function createContractTypeChart(data) {
+    const contractTypes = {};
+    data.forEach(record => {
+        const type = record['Award or Indefinite Delivery Vehicle Type'];
+        if (type) contractTypes[type] = (contractTypes[type] || 0) + 1;
+    });
+    const labels = Object.keys(contractTypes);
+    const values = Object.values(contractTypes);
+
+    const ctx = document.getElementById('contractTypeChart').getContext('2d');
+    if (charts.contractTypeChart) charts.contractTypeChart.destroy();
+    charts.contractTypeChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: { labels, datasets: [{ data: values, backgroundColor: ['rgba(255, 99, 132, 0.7)','rgba(54, 162, 235, 0.7)','rgba(255, 206, 86, 0.7)','rgba(75, 192, 192, 0.7)'], borderWidth: 1 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' }, tooltip: { callbacks: { label: ctx => { const total = ctx.dataset.data.reduce((a,b) => a+b, 0); return `${ctx.label || ''}: ${ctx.raw.toLocaleString()} (${Math.round((ctx.raw/total)*100)}%)`;}}}}}
+    });
+}
+
+// Create Contract Value Range Distribution chart
+function createValueRangeChart(data) {
+    const ranges = [ { min: 0, max: 100000, label: '< $100K' }, { min: 100000, max: 1000000, label: '$100K-$1M' }, { min: 1000000, max: 10000000, label: '$1M-$10M' }, { min: 10000000, max: 100000000, label: '$10M-$100M' }, { min: 100000000, max: 1000000000, label: '$100M-$1B' }, { min: 1000000000, max: Infinity, label: '> $1B' } ];
+    const rangeCounts = Array(ranges.length).fill(0);
+    data.forEach(record => {
+        const value = parseCurrencyValue(record['Base and All Options Value (Total Contract Value)']);
+        for (let i = 0; i < ranges.length; i++) if (value >= ranges[i].min && value < ranges[i].max) { rangeCounts[i]++; break; }
+    });
+    const labels = ranges.map(range => range.label);
+
+    const ctx = document.getElementById('valueRangeChart').getContext('2d');
+    if (charts.valueRangeChart) charts.valueRangeChart.destroy();
+    charts.valueRangeChart = new Chart(ctx, {
+        type: 'bar',
+        data: { labels, datasets: [{ label: 'Number of Contracts', data: rangeCounts, backgroundColor: 'rgba(255, 159, 64, 0.7)', borderColor: 'rgba(255, 159, 64, 1)', borderWidth: 1 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `Contracts: ${ctx.raw.toLocaleString()}` } } }, scales: { y: { beginAtZero: true, ticks: { callback: val => val.toLocaleString() } } } }
+    });
+}
+
+// Create Contract Timeline Forecast chart
+function createTimelineChart(data) {
+    const startYears = {}, endYears = {};
+    data.forEach(record => {
+        if (record['Period of Performance Start Date']) { const d = new Date(record['Period of Performance Start Date']); if (!isNaN(d.getTime())) { const y = d.getFullYear(); startYears[y] = (startYears[y] || 0) + 1; }}
+        if (record['Completion Date']) { const d = new Date(record['Completion Date']); if (!isNaN(d.getTime())) { const y = d.getFullYear(); if (y <= 2035) endYears[y] = (endYears[y] || 0) + 1; }}
+    });
+    const allYears = new Set([...Object.keys(startYears), ...Object.keys(endYears)].map(Number));
+    const sortedYears = Array.from(allYears).sort((a,b) => a-b);
+    const labels = [], startCounts = [], endCounts = [];
+    sortedYears.forEach(year => { labels.push(year.toString()); startCounts.push(startYears[year] || 0); endCounts.push(endYears[year] || 0); });
+
+    const ctx = document.getElementById('timelineChart').getContext('2d');
+    if (charts.timelineChart) charts.timelineChart.destroy();
+    charts.timelineChart = new Chart(ctx, {
+        type: 'line',
+        data: { labels, datasets: [ { label: 'Contracts Starting', data: startCounts, borderColor: 'rgba(54, 162, 235, 1)', backgroundColor: 'rgba(54, 162, 235, 0.2)', fill: true, tension: 0.1 }, { label: 'Contracts Ending', data: endCounts, borderColor: 'rgba(255, 99, 132, 1)', backgroundColor: 'rgba(255, 99, 132, 0.2)', fill: true, tension: 0.1 } ] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { tooltip: { callbacks: { label: ctx => `${ctx.dataset.label || ''}: ${ctx.parsed.y.toLocaleString()}` } } }, scales: { y: { beginAtZero: true, ticks: { callback: val => val.toLocaleString() } } } }
+    });
+}
+
+// --- Search and Filtering (Original Implementation) ---
+function setupPrimeSearch(allData) { 
+    const searchInput = document.getElementById('primeSearchInput');
+    const resultsContainer = document.getElementById('searchResults');
+    const filterIndicator = document.getElementById('activeFilterIndicator');
+    
+    window.clearPrimeFilter = function() {
+        activeFilter = null;
+        filterIndicator.classList.add('hidden');
+        processAndInitialize(parsedData); 
+        searchInput.value = '';
+        resultsContainer.innerHTML = '';
+    };
+    
+    window.applyPrimeFilter = function(primeName) {
+        const primeData = parsedData.filter(record => record['Legal Business Name'] === primeName);
+        activeFilter = primeName;
+        filterIndicator.innerHTML = `Filtered by: <strong>${primeName}</strong> <button class="clear-filter-btn" onclick="clearPrimeFilter()">Clear Filter</button>`;
+        filterIndicator.classList.remove('hidden');
+        processAndInitialize(primeData); 
+        resultsContainer.innerHTML = '';
+        searchInput.value = primeName; 
+    };
+    
+    searchInput.addEventListener('input', _.debounce(function() { 
+        const searchTerm = this.value.toLowerCase().trim();
+        if (searchTerm.length < 2) {
+            resultsContainer.innerHTML = '';
+            return;
+        }
+        const matches = new Map();
+        parsedData.forEach(record => { 
+            const prime = record['Legal Business Name'];
+            if (prime && prime.toLowerCase().includes(searchTerm)) {
+                if (!matches.has(prime)) matches.set(prime, { name: prime, contracts: 0, totalValue: 0, agencies: new Set(), naics: new Set() });
+                const primeData = matches.get(prime);
+                primeData.contracts++;
+                primeData.totalValue += parseCurrencyValue(record['Base and All Options Value (Total Contract Value)']);
+                if (record['Contracting Agency Name']) primeData.agencies.add(record['Contracting Agency Name']);
+                if (record['NAICS Code']) primeData.naics.add(record['NAICS Code']);
+            }
+        });
+        const sortedMatches = Array.from(matches.values()).sort((a, b) => b.totalValue - a.totalValue).slice(0, 10);
+        
+        if (sortedMatches.length > 0) {
+            resultsContainer.innerHTML = sortedMatches.map(match => `
+                <div class="result-item" onclick="applyPrimeFilter('${match.name.replace(/'/g, "\\'")}')">
+                    <strong>${match.name}</strong><br>
+                    Contracts: ${match.contracts.toLocaleString()} | Value: ${formatCurrency(match.totalValue)}<br>
+                    <small>Agencies: ${Array.from(match.agencies).slice(0,2).join(', ')}${match.agencies.size > 2 ? '...' : ''} | NAICS: ${Array.from(match.naics).slice(0,2).join(', ')}${match.naics.size > 2 ? '...' : ''}</small>
+                    <div class="view-details-btn">View Details</div>
+                </div>
+            `).join('');
+        } else {
+            resultsContainer.innerHTML = '<div class="result-item">No matching prime contractors found.</div>';
+        }
+    }, 300)); 
+}
+
+// --- Event Listeners for Filters ---
+function setupFilters() {
+    document.getElementById('naicsFilters').addEventListener('click', function(e) {
+        if (e.target.classList.contains('filter-btn')) {
+            const filterType = e.target.dataset.filter;
+            this.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            e.target.classList.add('active');
+            createNAICSChart(activeFilter ? parsedData.filter(r => r['Legal Business Name'] === activeFilter) : parsedData, filterType);
+        }
+    });
+    
+    document.getElementById('stateFilters').addEventListener('click', function(e) {
+        if (e.target.classList.contains('filter-btn')) {
+            const filterType = e.target.dataset.filter;
+            this.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            e.target.classList.add('active');
+            createStateChart(activeFilter ? parsedData.filter(r => r['Legal Business Name'] === activeFilter) : parsedData, filterType);
+        }
+    });
+}
+
+// --- File Input Handling ---
+csvFileInput.addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (!file) {
+        fileNameDisplay.textContent = 'No file selected';
+        return;
+    }
+    fileNameDisplay.textContent = file.name;
+    showProcessing('Processing manually uploaded file...');
+    
+    Papa.parse(file, {
+        header: true,
+        dynamicTyping: true,
+        skipEmptyLines: true,
+        complete: function(results) {
+            if (results.errors && results.errors.length > 0) {
+                console.error('Manual CSV parsing errors:', results.errors);
+                showErrorMessage('Error parsing CSV file: ' + results.errors[0].message);
+                return;
+            }
+            if (results.data && results.data.length > 0) {
+                showSuccessMessage('File processed successfully!');
+                processAndInitialize(results.data);
+                autoloadStatus.classList.add('hidden'); // Hide S3 status if manual is successful
+            } else {
+                showErrorMessage('No data found in the uploaded file or file is empty.');
+            }
+        },
+        error: function(error) {
+            console.error('PapaParse manual error:', error);
+            showErrorMessage('CSV parsing failed: ' + error.message);
+        }
+    });
+});
+
+// --- ENHANCED FEATURE 1: NAICS Code Drill-Down Analysis ---
+function createNaicsTreemap(data) {
+    // Group data by NAICS Code, then by Legal Business Name
+    const naicsGroups = {};
+    
+    data.forEach(record => {
+        const naicsCode = record['NAICS Code'];
+        const naicsDesc = record['NAICS Description'];
+        const businessName = record['Legal Business Name'];
+        const contractValue = parseCurrencyValue(record['Base and All Options Value (Total Contract Value)']);
+        
+        if (!naicsCode || !businessName || contractValue <= 0) return;
+        
+        // Format key as "Code - Description" for display
+        const naicsKey = `${naicsCode} - ${(naicsDesc || '').substring(0, 30)}`;
+        
+        if (!naicsGroups[naicsKey]) {
+            naicsGroups[naicsKey] = {
+                name: naicsKey,
+                code: naicsCode,
+                description: naicsDesc || '',
+                children: {},
+                totalValue: 0,
+                contractCount: 0
+            };
+        }
+        
+        if (!naicsGroups[naicsKey].children[businessName]) {
+            naicsGroups[naicsKey].children[businessName] = {
+                name: businessName,
+                value: 0,
+                contractCount: 0
+            };
+        }
+        
+        naicsGroups[naicsKey].children[businessName].value += contractValue;
+        naicsGroups[naicsKey].children[businessName].contractCount++;
+        naicsGroups[naicsKey].totalValue += contractValue;
+        naicsGroups[naicsKey].contractCount++;
+    });
+    
+    // Convert to array and sort by total value (descending)
+    const sortedNaics = Object.values(naicsGroups)
+        .sort((a, b) => b.totalValue - a.totalValue)
+        .slice(0, 10); // Top 10 NAICS codes
+    
+    // Prepare data for the NAICS detail selector
+    const naicsDetailSelector = document.getElementById('naicsDetailSelector');
+    naicsDetailSelector.innerHTML = '<option value="">Select a NAICS Code</option>';
+    
+    Object.values(naicsGroups).sort((a, b) => a.code - b.code).forEach(naicsGroup => {
+        const option = document.createElement('option');
+        option.value = naicsGroup.code;
+        option.textContent = `${naicsGroup.code} - ${naicsGroup.description.substring(0, 30)}`;
+        naicsDetailSelector.appendChild(option);
+    });
+    
+    // Set up NAICS detail selector event
+    naicsDetailSelector.addEventListener('change', function() {
+        const selectedCode = this.value;
+        const detailContent = document.getElementById('naicsDetailContent');
+        
+        if (!selectedCode) {
+            detailContent.innerHTML = '<p class="status-message">Select a NAICS code to view details</p>';
+            return;
+        }
+        
+        const selectedNaics = Object.values(naicsGroups).find(n => n.code == selectedCode);
+        if (!selectedNaics) {
+            detailContent.innerHTML = '<p class="status-message">No data available for this NAICS code</p>';
+            return;
+        }
+        
+        const sortedContractors = Object.entries(selectedNaics.children)
+            .sort((a, b) => b[1].value - a[1].value)
+            .slice(0, 15);
+        
+        let html = `
+            <h4 style="margin-bottom: 10px;">${selectedNaics.code} - ${selectedNaics.description}</h4>
+            <div style="margin-bottom: 15px;">
+                <strong>Total Contracts:</strong> ${selectedNaics.contractCount.toLocaleString()} | 
+                <strong>Total Value:</strong> ${formatCurrency(selectedNaics.totalValue)}
+            </div>
+            <h5 style="margin-bottom: 10px;">Top Contractors</h5>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Contractor</th>
+                        <th>Contracts</th>
+                        <th>Total Value</th>
+                        <th>Avg. Contract</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+        
+        sortedContractors.forEach(([name, data]) => {
+            const avgValue = data.value / data.contractCount;
+            html += `
+                <tr>
+                    <td>${name}</td>
+                    <td>${data.contractCount.toLocaleString()}</td>
+                    <td>${formatCurrency(data.value)}</td>
+                    <td>${formatCurrency(avgValue)}</td>
+                </tr>
+            `;
+        });
+        
+        html += `
+                </tbody>
+            </table>
+            <div style="margin-top: 15px;">
+                <button class="filter-btn-apply" onclick="applyNaicsFilter('${selectedCode}')">Filter Dashboard to This NAICS</button>
+            </div>
+        `;
+        
+        detailContent.innerHTML = html;
+    });
+    
+    // Define filter function in window scope
+    window.applyNaicsFilter = function(naicsCode) {
+        document.getElementById('naicsFilter').value = naicsCode;
+        applyAdvancedFilters();
+        // Switch to dashboard tab
+        document.querySelector('.tab[data-tab="dashboard"]').click();
+    };
+    
+    // Check if we have data to render the treemap
+    if (sortedNaics.length === 0) {
+        document.getElementById('naicsTreemapChart').innerHTML = 
+            '<div style="height: 100%; display: flex; align-items: center; justify-content: center; text-align: center; color: #7f8c8d;">No NAICS code data available</div>';
+        return;
+    }
+    
+    // Prepare the treemap data
+    const treemapData = [];
+    
+    sortedNaics.forEach(naicsGroup => {
+        // Convert children object to array and sort by value
+        const sortedChildren = Object.entries(naicsGroup.children)
+            .sort((a, b) => b[1].value - a[1].value)
+            .slice(0, 8) // Top 8 contractors per NAICS
+            .map(([name, data]) => ({
+                name: name,
+                value: data.value,
+                contractCount: data.contractCount,
+                naicsCode: naicsGroup.code,
+                naicsDesc: naicsGroup.description,
+                group: 'contractor'
+            }));
+        
+        // Add NAICS node
+        treemapData.push({
+            name: naicsGroup.name,
+            value: naicsGroup.totalValue,
+            contractCount: naicsGroup.contractCount,
+            code: naicsGroup.code,
+            description: naicsGroup.description,
+            group: 'naics',
+            children: sortedChildren
+        });
+    });
+    
+    // Create the treemap chart
+    const ctx = document.getElementById('naicsTreemapChart').getContext('2d');
+    
+    if (charts.naicsTreemapChart) {
+        charts.naicsTreemapChart.destroy();
+    }
+    
+    try {
+        charts.naicsTreemapChart = new Chart(ctx, {
+            type: 'treemap',
+            data: {
+                datasets: [{
+                    tree: treemapData,
+                    key: 'value',
+                    groups: ['group'],
+                    spacing: 2,
+                    borderWidth: 1,
+                    borderColor: '#fff',
+                    backgroundColor: (ctx) => {
+                        // Color by group
+                        const group = ctx.raw._data ? ctx.raw._data.group : '';
+                        return group === 'naics' ? 'rgba(54, 162, 235, 0.8)' : 
+                               group === 'contractor' ? 'rgba(255, 99, 132, 0.8)' : 
+                               'rgba(0, 0, 0, 0)';
+                    },
+                    color: '#fff',
+                    labels: {
+                        display: true,
+                        align: 'center',
+                        formatter: (ctx) => {
+                            const item = ctx.raw._data;
+                            if (!item) return '';
+                            
+                            if (item.group === 'naics') {
+                                // NAICS title with code
+                                return item.code + ' - ' + (item.description ? item.description.substring(0, 20) + '...' : '');
+                            } else if (item.group === 'contractor') {
+                                // Contractor name and value
+                                return item.name.length > 20 ? item.name.substring(0, 17) + '...' : item.name;
+                            }
+                            
+                            return '';
+                        },
+                        font: {
+                            weight: 'bold',
+                            size: function(ctx) {
+                                return ctx.raw._data && ctx.raw._data.group === 'naics' ? 14 : 12;
+                            }
+                        }
+                    }
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            title: (tooltipItems) => {
+                                const item = tooltipItems[0].raw._data;
+                                if (!item) return '';
+                                
+                                if (item.group === 'naics') {
+                                    return `NAICS ${item.code}`;
+                                } else if (item.group === 'contractor') {
+                                    return item.name;
+                                }
+                                
+                                return '';
+                            },
+                            label: (tooltipItem) => {
+                                const item = tooltipItem.raw._data;
+                                if (!item) return [];
+                                
+                                const lines = [];
+                                
+                                if (item.group === 'naics') {
+                                    lines.push(`Description: ${item.description}`);
+                                    lines.push(`Contracts: ${item.contractCount.toLocaleString()}`);
+                                    lines.push(`Total Value: ${formatCurrency(item.value)}`);
+                                } else if (item.group === 'contractor') {
+                                    lines.push(`NAICS: ${item.naicsCode}`);
+                                    lines.push(`Contracts: ${item.contractCount.toLocaleString()}`);
+                                    lines.push(`Total Value: ${formatCurrency(item.value)}`);
+                                }
+                                
+                                return lines;
+                            }
+                        }
+                    },
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        });
+        
+        // Create a simple legend
+        document.getElementById('naicsTreemapLegend').innerHTML = `
+            <div style="display: flex; justify-content: center; margin-top: 10px; gap: 20px;">
+                <div style="display: flex; align-items: center;">
+                    <span style="display: inline-block; width: 15px; height: 15px; background-color: rgba(54, 162, 235, 0.8); margin-right: 5px;"></span>
+                    <span>NAICS Codes</span>
+                </div>
+                <div style="display: flex; align-items: center;">
+                    <span style="display: inline-block; width: 15px; height: 15px; background-color: rgba(255, 99, 132, 0.8); margin-right: 5px;"></span>
+                    <span>Prime Contractors</span>
+                </div>
+            </div>
+        `;
+    } catch (error) {
+        console.error("Error creating NAICS treemap:", error);
+        document.getElementById('naicsTreemapChart').innerHTML = 
+            '<div class="error-message">Could not create treemap visualization. Chart.js Treemap plugin may be missing.</div>';
+    }
+}
+
+// --- ENHANCED FEATURE 2: Recompete Opportunity Calendar ---
+function initializeRecompeteCalendar(data) {
+    // Process contract completion dates
+    const contractEvents = [];
+    
+    data.forEach(record => {
+        if (record['Completion Date']) {
+            const completionDate = new Date(record['Completion Date']);
+            if (!isNaN(completionDate.getTime())) {
+                contractEvents.push({
+                    date: completionDate,
+                    type: 'completion',
+                    prime: record['Legal Business Name'],
+                    agency: record['Contracting Department Name'] || record['Contracting Agency Name'],
+                    value: parseCurrencyValue(record['Base and All Options Value (Total Contract Value)']),
+                    naics: record['NAICS Code'],
+                    naicsDesc: record['NAICS Description'],
+                    id: record['Procurement Instrument Identifier']
+                });
+            }
+        }
+    });
+    
+    // Sort events by date
+    contractEvents.sort((a, b) => a.date - b.date);
+    
+    // Set up calendar variables
+    let currentDate = new Date();
+    currentDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1); // First day of current month
+    let currentView = 'month';
+    
+    // Calendar navigation functions
+    document.getElementById('calendarPrevBtn').addEventListener('click', function() {
+        if (currentView === 'month') {
+            currentDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
+        } else if (currentView === 'quarter') {
+            currentDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 3, 1);
+        } else if (currentView === 'year') {
+            currentDate = new Date(currentDate.getFullYear() - 1, currentDate.getMonth(), 1);
+        }
+        renderCalendar();
+    });
+    
+    document.getElementById('calendarNextBtn').addEventListener('click', function() {
+        if (currentView === 'month') {
+            currentDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1);
+        } else if (currentView === 'quarter') {
+            currentDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 3, 1);
+        } else if (currentView === 'year') {
+            currentDate = new Date(currentDate.getFullYear() + 1, currentDate.getMonth(), 1);
+        }
+        renderCalendar();
+    });
+    
+    // Calendar view change
+    document.getElementById('calendarViewSelector').addEventListener('change', function() {
+        currentView = this.value;
+        renderCalendar();
+    });
+    
+    // Render calendar function
+    function renderCalendar() {
+        const calendarGrid = document.getElementById('calendarGrid');
+        const calendarTitle = document.getElementById('calendarTitle');
+        
+        if (currentView === 'month') {
+            renderMonthView();
+        } else if (currentView === 'quarter') {
+            renderQuarterView();
+        } else if (currentView === 'year') {
+            renderYearView();
+        }
+        
+        // Function to render month view
+        function renderMonthView() {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            const monthName = new Intl.DateTimeFormat('en-US', { month: 'long' }).format(currentDate);
+            
+            calendarTitle.textContent = `${monthName} ${year}`;
+            
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const daysInMonth = lastDay.getDate();
+            
+            // Get the day of the week (0-6) of the first day
+            const firstDayOfWeek = firstDay.getDay();
+            
+            // Create the calendar grid with day headers
+            let html = '';
+            
+            // Add day headers
+            const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            dayNames.forEach(day => {
+                html += `<div class="calendar-day-header">${day}</div>`;
+            });
+            
+            // Add blank cells for days before the first day of the month
+            for (let i = 0; i < firstDayOfWeek; i++) {
+                html += '<div class="calendar-day" style="background-color: #f1f1f1;"></div>';
+            }
+            
+            // Add days of the month
+            for (let day = 1; day <= daysInMonth; day++) {
+                const date = new Date(year, month, day);
+                
+                // Find events for this day
+                const dayEvents = contractEvents.filter(event => {
+                    return event.date.getFullYear() === year && 
+                           event.date.getMonth() === month && 
+                           event.date.getDate() === day;
+                });
+                
+                html += `
+                    <div class="calendar-day">
+                        <div class="calendar-date">${day}</div>
+                        <div class="calendar-events">
+                `;
+                
+                // Add up to 3 events, with a "more" indicator if needed
+                const displayEvents = dayEvents.slice(0, 3);
+                displayEvents.forEach(event => {
+                    html += `
+                        <div class="calendar-event" data-event='${JSON.stringify({
+                            date: formatDate(event.date),
+                            prime: event.prime,
+                            agency: event.agency,
+                            value: formatCurrency(event.value),
+                            naics: event.naics,
+                            naicsDesc: event.naicsDesc,
+                            id: event.id
+                        }).replace(/'/g, "&apos;")}'>
+                            ${event.prime ? event.prime.substring(0, 15) + (event.prime.length > 15 ? '...' : '') : 'Unknown Contractor'}
+                        </div>
+                    `;
+                });
+                
+                if (dayEvents.length > 3) {
+                    html += `<div class="calendar-event" style="background-color: #7f8c8d;">${dayEvents.length - 3} more...</div>`;
+                }
+                
+                html += `
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Add blank cells for days after the last day of the month
+            const lastDayOfWeek = lastDay.getDay();
+            for (let i = lastDayOfWeek; i < 6; i++) {
+                html += '<div class="calendar-day" style="background-color: #f1f1f1;"></div>';
+            }
+            
+            calendarGrid.innerHTML = html;
+        }
+        
+        // Function to render quarter view
+        function renderQuarterView() {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            const quarterStart = Math.floor(month / 3) * 3;
+            
+            const quarterMap = {0: '1st', 3: '2nd', 6: '3rd', 9: '4th'};
+            calendarTitle.textContent = `${quarterMap[quarterStart]} Quarter ${year}`;
+            
+            // Create the calendar grid
+            let html = '';
+            
+            // For each month in the quarter
+            for (let m = quarterStart; m < quarterStart + 3; m++) {
+                const monthName = new Intl.DateTimeFormat('en-US', { month: 'long' }).format(new Date(year, m, 1));
+                
+                html += `
+                    <div class="calendar-day" style="height: auto; grid-column: span 7;">
+                        <h3 style="margin-bottom: 10px; text-align: center;">${monthName}</h3>
+                        <table style="width: 100%;">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Contracts</th>
+                                    <th>Value</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+                
+                // Group events by date within this month
+                const monthEvents = {};
+                contractEvents.forEach(event => {
+                    if (event.date.getFullYear() === year && event.date.getMonth() === m) {
+                        const dateStr = event.date.getDate();
+                        if (!monthEvents[dateStr]) {
+                            monthEvents[dateStr] = { count: 0, value: 0, events: [] };
+                        }
+                        monthEvents[dateStr].count++;
+                        monthEvents[dateStr].value += event.value;
+                        monthEvents[dateStr].events.push(event);
+                    }
+                });
+                
+                // Create a table row for each date with events
+                const sortedDates = Object.entries(monthEvents)
+                    .sort((a, b) => parseInt(a[0]) - parseInt(b[0]));
+                
+                if (sortedDates.length > 0) {
+                    sortedDates.forEach(([day, data]) => {
+                        html += `
+                            <tr class="calendar-event" style="background: none; color: inherit;" data-events='${JSON.stringify(data.events.map(e => ({
+                                date: formatDate(e.date),
+                                prime: e.prime,
+                                agency: e.agency,
+                                value: formatCurrency(e.value),
+                                naics: e.naics,
+                                naicsDesc: e.naicsDesc,
+                                id: e.id
+                            }))).replace(/'/g, "&apos;")}'>
+                                <td>${monthName} ${day}</td>
+                                <td>${data.count}</td>
+                                <td>${formatCurrency(data.value)}</td>
+                            </tr>
+                        `;
+                    });
+                } else {
+                    html += `
+                        <tr>
+                            <td colspan="3" style="text-align: center; color: #7f8c8d;">No contracts ending this month</td>
+                        </tr>
+                    `;
+                }
+                
+                html += `
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            }
+            
+            calendarGrid.innerHTML = html;
+        }
+        
+        // Function to render year view
+        function renderYearView() {
+            const year = currentDate.getFullYear();
+            calendarTitle.textContent = `Year ${year}`;
+            
+            // Create the calendar grid
+            let html = '';
+            
+            // For each quarter
+            for (let q = 0; q < 4; q++) {
+                const quarterStart = q * 3;
+                const quarterName = `Q${q+1}`;
+                
+                html += `
+                    <div class="calendar-day" style="height: auto; grid-column: span 7; margin-bottom: 20px;">
+                        <h3 style="margin-bottom: 10px; text-align: center;">${quarterName} ${year}</h3>
+                        <table style="width: 100%;">
+                            <thead>
+                                <tr>
+                                    <th>Month</th>
+                                    <th>Contracts</th>
+                                    <th>Value</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+                
+                // For each month in the quarter
+                for (let m = quarterStart; m < quarterStart + 3; m++) {
+                    const monthName = new Intl.DateTimeFormat('en-US', { month: 'long' }).format(new Date(year, m, 1));
+                    
+                    // Count events for this month
+                    const monthEvents = contractEvents.filter(event => {
+                        return event.date.getFullYear() === year && event.date.getMonth() === m;
+                    });
+                    
+                    const totalValue = monthEvents.reduce((sum, event) => sum + event.value, 0);
+                    
+                    html += `
+                        <tr class="calendar-event" style="background: none; color: inherit;" data-month="${year}-${m+1}">
+                            <td>${monthName}</td>
+                            <td>${monthEvents.length}</td>
+                            <td>${formatCurrency(totalValue)}</td>
+                        </tr>
+                    `;
+                }
+                
+                html += `
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            }
+            
+            calendarGrid.innerHTML = html;
+            
+            // Add click handlers for months to drill down
+            document.querySelectorAll('[data-month]').forEach(el => {
+                el.addEventListener('click', function() {
+                    const [year, month] = this.dataset.month.split('-').map(Number);
+                    currentDate = new Date(year, month - 1, 1);
+                    document.getElementById('calendarViewSelector').value = 'month';
+                    currentView = 'month';
+                    renderCalendar();
+                });
+            });
+        }
+        
+        // Set up event tooltips
+        setupEventTooltips();
+    }
+    
+    // Set up event tooltips
+    function setupEventTooltips() {
+        // Create tooltip element if it doesn't exist
+        let tooltip = document.querySelector('.event-tooltip');
+        if (!tooltip) {
+            tooltip = document.createElement('div');
+            tooltip.className = 'event-tooltip';
+            document.body.appendChild(tooltip);
+        }
+        
+        // Add event listeners to calendar events
+        document.querySelectorAll('.calendar-event').forEach(el => {
+            el.addEventListener('mouseenter', function(e) {
+                const eventData = this.dataset.event ? JSON.parse(this.dataset.event) : null;
+                const eventsData = this.dataset.events ? JSON.parse(this.dataset.events) : null;
+                
+                if (eventData) {
+                    // Single event tooltip
+                    tooltip.innerHTML = `
+                        <div style="font-weight: 600; margin-bottom: 5px;">${eventData.prime || 'Unknown Contractor'}</div>
+                        <div><strong>Contract ID:</strong> ${eventData.id || 'N/A'}</div>
+                        <div><strong>Completion:</strong> ${eventData.date}</div>
+                        <div><strong>Agency:</strong> ${eventData.agency || 'N/A'}</div>
+                        <div><strong>Value:</strong> ${eventData.value}</div>
+                        <div><strong>NAICS:</strong> ${eventData.naics || 'N/A'}</div>
+                        <div><strong>Description:</strong> ${eventData.naicsDesc || 'N/A'}</div>
+                    `;
+                } else if (eventsData && eventsData.length) {
+                    // Multiple events tooltip
+                    let html = `<div style="font-weight: 600; margin-bottom: 5px;">${eventsData.length} Contracts Ending</div>`;
+                    
+                    eventsData.slice(0, 5).forEach(event => {
+                        html += `
+                            <div style="margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid #eee;">
+                                <div style="font-weight: 600;">${event.prime || 'Unknown Contractor'}</div>
+                                <div><strong>Value:</strong> ${event.value}</div>
+                                <div><strong>Agency:</strong> ${event.agency || 'N/A'}</div>
+                            </div>
+                        `;
+                    });
+                    
+                    if (eventsData.length > 5) {
+                        html += `<div style="text-align: center; font-style: italic;">And ${eventsData.length - 5} more...</div>`;
+                    }
+                    
+                    tooltip.innerHTML = html;
+                } else {
+                    return; // No data to show
+                }
+                
+                // Position the tooltip
+                const rect = this.getBoundingClientRect();
+                const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+                const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+                
+                tooltip.style.top = (rect.top + scrollTop - tooltip.offsetHeight - 10) + 'px';
+                tooltip.style.left = (rect.left + scrollLeft + (rect.width / 2) - (tooltip.offsetWidth / 2)) + 'px';
+                tooltip.style.display = 'block';
+            });
+            
+            el.addEventListener('mouseleave', function() {
+                tooltip.style.display = 'none';
+            });
+        });
+    }
+    
+    // Initial render
+    renderCalendar();
+}
+
+// --- ENHANCED FEATURE 3: Prime Contractor Profile Cards ---
+function createPrimeProfiles(data) {
+    // Process data to create prime contractor profiles
+    const primeProfiles = {};
+    
+    data.forEach(record => {
+        const primeName = record['Legal Business Name'];
+        const primeId = record['Unique Entity ID'];
+        const parentName = record['Ultimate Parent Legal Business Name'];
+        const parentId = record['Ultimate Parent Unique Entity ID'];
+        
+        if (!primeName) return;
+        
+        // Create or update prime profile
+        if (!primeProfiles[primeName]) {
+            primeProfiles[primeName] = {
+                name: primeName,
+                id: primeId,
+                parentName: parentName,
+                parentId: parentId,
+                contracts: 0,
+                totalValue: 0,
+                avgValue: 0,
+                agencies: new Set(),
+                naics: {},
+                states: {},
+                contractTypes: {},
+                subcontractPlans: {},
+                endingContracts: 0,
+                upcomingValue: 0
+            };
+        }
+        
+        const profile = primeProfiles[primeName];
+        const value = parseCurrencyValue(record['Base and All Options Value (Total Contract Value)']);
+        
+        // Update profile data
+        profile.contracts++;
+        profile.totalValue += value;
+        
+        if (record['Contracting Department Name']) {
+            profile.agencies.add(record['Contracting Department Name']);
+        } else if (record['Contracting Agency Name']) {
+            profile.agencies.add(record['Contracting Agency Name']);
+        }
+        
+        if (record['NAICS Code']) {
+            const naicsCode = record['NAICS Code'];
+            const naicsDesc = record['NAICS Description'] || '';
+            
+            if (!profile.naics[naicsCode]) {
+                profile.naics[naicsCode] = {
+                    code: naicsCode,
+                    description: naicsDesc,
+                    count: 0,
+                    value: 0
+                };
+            }
+            
+            profile.naics[naicsCode].count++;
+            profile.naics[naicsCode].value += value;
+        }
+        
+        if (record['Principal Place of Performance State Code']) {
+            const state = record['Principal Place of Performance State Code'];
+            
+            if (!profile.states[state]) {
+                profile.states[state] = {
+                    count: 0,
+                    value: 0
+                };
+            }
+            
+            profile.states[state].count++;
+            profile.states[state].value += value;
+        }
+        
+        if (record['Award or Indefinite Delivery Vehicle Type']) {
+            const type = record['Award or Indefinite Delivery Vehicle Type'];
+            
+            if (!profile.contractTypes[type]) {
+                profile.contractTypes[type] = {
+                    count: 0,
+                    value: 0
+                };
+            }
+            
+            profile.contractTypes[type].count++;
+            profile.contractTypes[type].value += value;
+        }
+        
+        if (record['Subcontract Plan']) {
+            const plan = record['Subcontract Plan'] || 'Not Specified';
+            
+            if (!profile.subcontractPlans[plan]) {
+                profile.subcontractPlans[plan] = {
+                    count: 0,
+                    value: 0
+                };
+            }
+            
+            profile.subcontractPlans[plan].count++;
+            profile.subcontractPlans[plan].value += value;
+        }
+        
+        // Check for upcoming ending contracts (within the next 12 months)
+        if (record['Completion Date']) {
+            const completionDate = new Date(record['Completion Date']);
+            const now = new Date();
+            const monthsAway = (completionDate.getFullYear() - now.getFullYear()) * 12 + (completionDate.getMonth() - now.getMonth());
+            
+            if (monthsAway >= 0 && monthsAway <= 12) {
+                profile.endingContracts++;
+                profile.upcomingValue += value;
+            }
+        }
+    });
+    
+    // Calculate average values and sort NAICS codes
+    Object.values(primeProfiles).forEach(profile => {
+        profile.avgValue = profile.contracts > 0 ? profile.totalValue / profile.contracts : 0;
+        
+        // Convert to arrays and sort
+        profile.topNaics = Object.values(profile.naics).sort((a, b) => b.value - a.value);
+        profile.topStates = Object.entries(profile.states).sort((a, b) => b[1].value - a[1].value);
+        profile.topAgencies = Array.from(profile.agencies);
+        profile.hasSubcontractPlan = Object.keys(profile.subcontractPlans).some(plan => 
+            plan !== 'Not Specified' && plan !== 'No subcontracting');
+    });
+    
+    // Convert to array and prepare for rendering
+    let profilesArray = Object.values(primeProfiles);
+    
+    // Render prime contractor cards
+    renderPrimeCards(profilesArray);
+    
+    // Set up sorting and filtering
+    document.getElementById('primeCardSortBy').addEventListener('change', function() {
+        const sortBy = this.value;
+        const searchTerm = document.getElementById('primeCardSearch').value.toLowerCase();
+        
+        // Filter and sort prime profiles
+        const filteredProfiles = filterPrimeProfiles(profilesArray, searchTerm);
+        sortPrimeProfiles(filteredProfiles, sortBy);
+        
+        // Render the updated list
+        renderPrimeCards(filteredProfiles);
+    });
+    
+    document.getElementById('primeCardSearch').addEventListener('input', function() {
+        const sortBy = document.getElementById('primeCardSortBy').value;
+        const searchTerm = this.value.toLowerCase();
+        
+        // Filter and sort prime profiles
+        const filteredProfiles = filterPrimeProfiles(profilesArray, searchTerm);
+        sortPrimeProfiles(filteredProfiles, sortBy);
+        
+        // Render the updated list
+        renderPrimeCards(filteredProfiles);
+    });
+    
+    // Function to filter prime profiles by search term
+    function filterPrimeProfiles(profiles, searchTerm) {
+        if (!searchTerm) return profiles;
+        
+        return profiles.filter(profile => {
+            // Search in name
+            if (profile.name.toLowerCase().includes(searchTerm)) return true;
+            
+            // Search in parent name
+            if (profile.parentName && profile.parentName.toLowerCase().includes(searchTerm)) return true;
+            
+            // Search in NAICS codes and descriptions
+            for (const naics of profile.topNaics) {
+                if (naics.code.toString().includes(searchTerm)) return true;
+                if (naics.description && naics.description.toLowerCase().includes(searchTerm)) return true;
+            }
+            
+            // Search in agencies
+            for (const agency of profile.topAgencies) {
+                if (agency.toLowerCase().includes(searchTerm)) return true;
+            }
+            
+            return false;
+        });
+    }
+    
+    // Function to sort prime profiles
+    function sortPrimeProfiles(profiles, sortBy) {
+        switch (sortBy) {
+            case 'value':
+                profiles.sort((a, b) => b.totalValue - a.totalValue);
+                break;
+            case 'count':
+                profiles.sort((a, b) => b.contracts - a.contracts);
+                break;
+            case 'avg':
+                profiles.sort((a, b) => b.avgValue - a.avgValue);
+                break;
+            case 'name':
+                profiles.sort((a, b) => a.name.localeCompare(b.name));
+                break;
+            default:
+                profiles.sort((a, b) => b.totalValue - a.totalValue);
+        }
+    }
+    
+    // Function to render prime contractor cards
+    function renderPrimeCards(profiles) {
+        const container = document.getElementById('primeCardContainer');
+        
+        if (profiles.length === 0) {
+            container.innerHTML = '<div style="text-align: center; padding: 20px; color: #7f8c8d;">No prime contractors match your search criteria</div>';
+            return;
+        }
+        
+        // Limit to first 100 for performance
+        const displayProfiles = profiles.slice(0, 100);
+        
+        let html = '';
+        
+        displayProfiles.forEach(profile => {
+            // Prepare top NAICS codes
+            const topNaicsHtml = profile.topNaics.slice(0, 3).map(naics => 
+                `<span class="prime-card-tag">${naics.code}</span>`
+            ).join('');
+            
+            // Prepare top states
+            const topStatesHtml = profile.topStates.slice(0, 3).map(([state]) => 
+                `<span class="prime-card-tag">${state}</span>`
+            ).join('');
+            
+            // Prepare subcontract plan indicator
+            const hasSubplanHtml = profile.hasSubcontractPlan ? 
+                '<span class="prime-card-tag" style="background-color: #d5f5e3;">Has Subcontract Plan</span>' : '';
+            
+            html += `
+                <div class="prime-card">
+                    <div class="prime-card-header">
+                        <div class="prime-card-name">${profile.name}</div>
+                        <div class="prime-card-actions">
+                            <button class="prime-card-action" onclick="applyPrimeFilter('${profile.name.replace(/'/g, "\\'")}')">Filter</button>
+                            <button class="prime-card-action" onclick="showPrimeDetails('${profile.name.replace(/'/g, "\\'")}')">Details</button>
+                        </div>
+                    </div>
+                    <div class="prime-card-body">
+                        <div class="prime-card-stat">
+                            <span>Contract Count:</span>
+                            <strong>${profile.contracts.toLocaleString()}</strong>
+                        </div>
+                        <div class="prime-card-stat">
+                            <span>Total Value:</span>
+                            <strong>${formatCurrency(profile.totalValue)}</strong>
+                        </div>
+                        <div class="prime-card-stat">
+                            <span>Avg Contract:</span>
+                            <strong>${formatCurrency(profile.avgValue)}</strong>
+                        </div>
+                        <div class="prime-card-stat">
+                            <span>Agencies:</span>
+                            <strong>${profile.agencies.size}</strong>
+                        </div>
+                        ${profile.endingContracts > 0 ? `
+                        <div class="prime-card-stat" style="color: #e74c3c;">
+                            <span>Ending Contracts (12mo):</span>
+                            <strong>${profile.endingContracts}</strong>
+                        </div>
+                        ` : ''}
+                    </div>
+                    <div class="prime-card-tags">
+                        ${topNaicsHtml}
+                        ${topStatesHtml}
+                        ${hasSubplanHtml}
+                    </div>
+                    <div class="prime-card-footer">
+                        ${profile.parentName && profile.parentName !== profile.name ? `Parent: ${profile.parentName}` : ''}
+                    </div>
+                </div>
+            `;
+        });
+        
+        container.innerHTML = html;
+    }
+    
+    // Define a function to show prime contractor details
+    window.showPrimeDetails = function(primeName) {
+        const profile = primeProfiles[primeName];
+        if (!profile) return;
+        
+        const modal = document.getElementById('detailModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalBody = document.getElementById('modalBody');
+        
+        modalTitle.textContent = profile.name;
+        
+        // Prepare contract type breakdown chart data
+        const contractTypeLabels = Object.keys(profile.contractTypes);
+        const contractTypeValues = contractTypeLabels.map(type => profile.contractTypes[type].count);
+        
+        // Prepare NAICS code breakdown chart data
+        const naicsLabels = profile.topNaics.slice(0, 5).map(naics => naics.code);
+        const naicsValues = profile.topNaics.slice(0, 5).map(naics => naics.value);
+        
+        modalBody.innerHTML = `
+            <div class="flex-row" style="margin-bottom: 15px;">
+                <div style="flex: 1;">
+                    <h4 style="margin-bottom: 10px;">Overview</h4>
+                    <div style="margin-bottom: 5px;"><strong>Unique Entity ID:</strong> ${profile.id || 'N/A'}</div>
+                    <div style="margin-bottom: 5px;"><strong>Parent Company:</strong> ${profile.parentName || 'N/A'}</div>
+                    <div style="margin-bottom: 5px;"><strong>Total Contracts:</strong> ${profile.contracts.toLocaleString()}</div>
+                    <div style="margin-bottom: 5px;"><strong>Total Value:</strong> ${formatCurrency(profile.totalValue)}</div>
+                    <div style="margin-bottom: 5px;"><strong>Average Contract:</strong> ${formatCurrency(profile.avgValue)}</div>
+                    <div style="margin-bottom: 5px;"><strong>Agency Count:</strong> ${profile.agencies.size}</div>
+                    <div style="margin-bottom: 5px;"><strong>Ending Contracts (12mo):</strong> ${profile.endingContracts}</div>
+                    <div style="margin-bottom: 5px;"><strong>Ending Value (12mo):</strong> ${formatCurrency(profile.upcomingValue)}</div>
+                </div>
+                <div style="flex: 1;">
+                    <h4 style="margin-bottom: 10px;">Contract Types</h4>
+                    <canvas id="primeContractTypeChart" style="height: 200px;"></canvas>
+                </div>
+            </div>
+            
+            <div class="flex-row" style="margin-bottom: 15px;">
+                <div style="flex: 1;">
+                    <h4 style="margin-bottom: 10px;">Top NAICS Codes</h4>
+                    <canvas id="primeNaicsChart" style="height: 200px;"></canvas>
+                </div>
+                <div style="flex: 1;">
+                    <h4 style="margin-bottom: 10px;">Top Agencies</h4>
+                    <ul style="list-style-type: none; padding: 0;">
+                        ${Array.from(profile.agencies).slice(0, 5).map(agency => 
+                            `<li style="margin-bottom: 5px; padding: 5px; background-color: #f8f9fa; border-radius: 4px;">${agency}</li>`
+                        ).join('')}
+                    </ul>
+                </div>
+            </div>
+            
+            <h4 style="margin-bottom: 10px;">Subcontracting Plans</h4>
+            <div style="margin-bottom: 15px;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Plan Type</th>
+                            <th>Contract Count</th>
+                            <th>Total Value</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${Object.entries(profile.subcontractPlans).map(([plan, data]) => `
+                            <tr>
+                                <td>${plan}</td>
+                                <td>${data.count.toLocaleString()}</td>
+                                <td>${formatCurrency(data.value)}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+            
+            <div style="text-align: center; margin-top: 15px;">
+                <button class="filter-btn-apply" onclick="applyPrimeFilter('${primeName.replace(/'/g, "\\'")}')">Filter Dashboard to This Prime</button>
+            </div>
+        `;
+        
+        // Display the modal
+        modal.style.display = 'flex';
+        
+        // Render the contract type chart
+        const contractTypeCtx = document.getElementById('primeContractTypeChart').getContext('2d');
+        new Chart(contractTypeCtx, {
+            type: 'doughnut',
+            data: {
+                labels: contractTypeLabels,
+                datasets: [{
+                    data: contractTypeValues,
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.7)',
+                        'rgba(54, 162, 235, 0.7)',
+                        'rgba(255, 206, 86, 0.7)',
+                        'rgba(75, 192, 192, 0.7)',
+                        'rgba(153, 102, 255, 0.7)',
+                        'rgba(255, 159, 64, 0.7)'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: { font: { size: 10 } }
+                    }
+                }
+            }
+        });
+        
+        // Render the NAICS chart
+        const naicsCtx = document.getElementById('primeNaicsChart').getContext('2d');
+        new Chart(naicsCtx, {
+            type: 'bar',
+            data: {
+                labels: naicsLabels,
+                datasets: [{
+                    label: 'Contract Value',
+                    data: naicsValues,
+                    backgroundColor: 'rgba(54, 162, 235, 0.7)'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: {
+                        ticks: { callback: value => formatCurrency(value) }
+                    }
+                }
+            }
+        });
+    };
+}
+
+// --- ENHANCED FEATURE 4: Regional Focus Finder ---
+function initializeRegionalFocusFinder(data) {
+    // Process the data by state
+    const stateData = {};
+    
+    // Define map view type (count or value)
+    let mapViewType = 'count';
+    
+    // Process data by state
+    data.forEach(record => {
+        const state = record['Principal Place of Performance State Code'];
+        if (!state) return;
+        
+        if (!stateData[state]) {
+            stateData[state] = {
+                state: state,
+                count: 0,
+                value: 0,
+                primes: {},
+                naics: {}
+            };
+        }
+        
+        const value = parseCurrencyValue(record['Base and All Options Value (Total Contract Value)']);
+        stateData[state].count++;
+        stateData[state].value += value;
+        
+        // Track prime contractors in this state
+        const prime = record['Legal Business Name'];
+        if (prime) {
+            if (!stateData[state].primes[prime]) {
+                stateData[state].primes[prime] = {
+                    count: 0,
+                    value: 0
+                };
+            }
+            
+            stateData[state].primes[prime].count++;
+            stateData[state].primes[prime].value += value;
+        }
+        
+        // Track NAICS codes in this state
+        const naics = record['NAICS Code'];
+        if (naics) {
+            if (!stateData[state].naics[naics]) {
+                stateData[state].naics[naics] = {
+                    code: naics,
+                    description: record['NAICS Description'] || '',
+                    count: 0,
+                    value: 0
+                };
+            }
+            
+            stateData[state].naics[naics].count++;
+            stateData[state].naics[naics].value += value;
+        }
+    });
+    
+    // Calculate the max value for scaling markers
+    const maxCount = Math.max(...Object.values(stateData).map(state => state.count));
+    const maxValue = Math.max(...Object.values(stateData).map(state => state.value));
+    
+    // Render the map
+    renderMap();
+    
+    // Render the region table
+    renderRegionTable();
+    
+    // Set up map view selector
+    document.getElementById('mapViewSelector').addEventListener('change', function() {
+        mapViewType = this.value;
+        renderMap();
+    });
+    
+    // Function to render the map
+    function renderMap() {
+        const mapBase = document.getElementById('mapBase');
+        
+        // Clear existing markers
+        const existingMarkers = mapBase.querySelectorAll('.map-marker');
+        existingMarkers.forEach(marker => marker.remove());
+        
+        // Add markers for each state
+        Object.entries(stateData).forEach(([stateCode, data]) => {
+            const coords = stateCoordinates[stateCode];
+            if (!coords) return; // Skip if we don't have coordinates
+            
+            // Scale marker size based on count or value
+            const maxSize = 20; // Maximum marker size in pixels
+            const minSize = 5;  // Minimum marker size in pixels
+            
+            let size;
+            if (mapViewType === 'count') {
+                size = minSize + (maxSize - minSize) * (data.count / maxCount);
+            } else {
+                size = minSize + (maxSize - minSize) * (data.value / maxValue);
+            }
+            
+            // Create marker
+            const marker = document.createElement('div');
+            marker.className = 'map-marker';
+            marker.style.width = `${size}px`;
+            marker.style.height = `${size}px`;
+            marker.style.left = `${coords.x}px`;
+            marker.style.top = `${coords.y}px`;
+            
+            // Add tooltip data
+            marker.setAttribute('data-state', stateCode);
+            marker.setAttribute('data-count', data.count);
+            marker.setAttribute('data-value', formatCurrency(data.value));
+            
+            // Add to map
+            mapBase.appendChild(marker);
+            
+            // Add click event to show details
+            marker.addEventListener('click', function() {
+                showStateDetails(stateCode);
+            });
+            
+            // Add hover tooltip
+            marker.addEventListener('mouseenter', function(e) {
+                const tooltip = document.createElement('div');
+                tooltip.className = 'event-tooltip';
+                tooltip.innerHTML = `
+                    <div style="font-weight: 600; margin-bottom: 5px;">${stateCode}</div>
+                    <div><strong>Contracts:</strong> ${data.count.toLocaleString()}</div>
+                    <div><strong>Total Value:</strong> ${formatCurrency(data.value)}</div>
+                    <div><strong>Click for details</strong></div>
+                `;
+                
+                document.body.appendChild(tooltip);
+                
+                // Position the tooltip
+                const rect = this.getBoundingClientRect();
+                const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+                const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+                
+                tooltip.style.top = (rect.top + scrollTop - tooltip.offsetHeight - 10) + 'px';
+                tooltip.style.left = (rect.left + scrollLeft + (rect.width / 2) - (tooltip.offsetWidth / 2)) + 'px';
+                tooltip.style.display = 'block';
+                
+                // Store tooltip reference
+                this._tooltip = tooltip;
+            });
+            
+            marker.addEventListener('mouseleave', function() {
+                if (this._tooltip) {
+                    this._tooltip.remove();
+                    this._tooltip = null;
+                }
+            });
+        });
+        
+        // Update legend
+        const mapLegend = document.getElementById('mapLegend');
+        mapLegend.innerHTML = `
+            <div style="margin-bottom: 5px; font-weight: 600;">Legend</div>
+            <div style="display: flex; align-items: center; margin-bottom: 5px;">
+                <div style="width: 10px; height: 10px; background-color: #e74c3c; border-radius: 50%; margin-right: 5px;"></div>
+                <span>Contract ${mapViewType === 'count' ? 'Count' : 'Value'}</span>
+            </div>
+            <div style="font-size: 11px;">
+                <div>• Size represents ${mapViewType === 'count' ? 'number of contracts' : 'contract value'}</div>
+                <div>• Click a state for details</div>
+            </div>
+        `;
+    }
+    
+    // Function to render the region table
+    function renderRegionTable() {
+        const tableBody = document.getElementById('regionTableBody');
+        
+        // Sort states by contract count (descending)
+        const sortedStates = Object.values(stateData).sort((a, b) => b.count - a.count);
+        
+        let html = '';
+        
+        sortedStates.forEach(state => {
+            // Find top prime contractor
+            const topPrime = Object.entries(state.primes)
+                .sort((a, b) => b[1].value - a[1].value)[0];
+            
+            // Find top NAICS code
+            const topNaics = Object.values(state.naics)
+                .sort((a, b) => b.value - a[1].value)[0];
+            
+            html += `
+                <tr data-state="${state.state}" style="cursor: pointer;">
+                    <td>${state.state}</td>
+                    <td>${state.count.toLocaleString()}</td>
+                    <td>${formatCurrency(state.value)}</td>
+                    <td>${topPrime ? topPrime[0] : 'N/A'}</td>
+                    <td>${topNaics ? topNaics.code : 'N/A'}</td>
+                </tr>
+            `;
+        });
+        
+        tableBody.innerHTML = html;
+        
+        // Add click event to show details
+        tableBody.querySelectorAll('tr[data-state]').forEach(row => {
+            row.addEventListener('click', function() {
+                const stateCode = this.getAttribute('data-state');
+                showStateDetails(stateCode);
+            });
+        });
+    }
+    
+    // Function to show state details
+    function showStateDetails(stateCode) {
+        const stateInfo = stateData[stateCode];
+        if (!stateInfo) return;
+        
+        const modal = document.getElementById('detailModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalBody = document.getElementById('modalBody');
+        
+        modalTitle.textContent = `${stateCode} - Regional Analysis`;
+        
+        // Prepare prime contractor data
+        const topPrimes = Object.entries(stateInfo.primes)
+            .sort((a, b) => b[1].value - a[1].value)
+            .slice(0, 10);
+        
+        const primeLabels = topPrimes.map(([name]) => name);
+        const primeValues = topPrimes.map(([, data]) => data.value);
+        
+        // Prepare NAICS code data
+        const topNaics = Object.values(stateInfo.naics)
+            .sort((a, b) => b.value - a.value)
+            .slice(0, 10);
+        
+        const naicsLabels = topNaics.map(naics => naics.code);
+        const naicsValues = topNaics.map(naics => naics.value);
+        
+        modalBody.innerHTML = `
+            <div style="margin-bottom: 15px;">
+                <strong>Total Contracts:</strong> ${stateInfo.count.toLocaleString()} | 
+                <strong>Total Value:</strong> ${formatCurrency(stateInfo.value)}
+            </div>
+            
+            <div class="flex-row" style="margin-bottom: 15px;">
+                <div style="flex: 1;">
+                    <h4 style="margin-bottom: 10px;">Top Prime Contractors in ${stateCode}</h4>
+                    <canvas id="stateTopPrimesChart" style="height: 300px;"></canvas>
+                </div>
+                <div style="flex: 1;">
+                    <h4 style="margin-bottom: 10px;">Top NAICS Codes in ${stateCode}</h4>
+                    <canvas id="stateTopNaicsChart" style="height: 300px;"></canvas>
+                </div>
+            </div>
+            
+            <h4 style="margin-bottom: 10px;">Prime Contractors in ${stateCode}</h4>
+            <div style="max-height: 300px; overflow-y: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Prime Contractor</th>
+                            <th>Contracts</th>
+                            <th>Total Value</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${Object.entries(stateInfo.primes)
+                            .sort((a, b) => b[1].value - a[1].value)
+                            .map(([name, data]) => `
+                                <tr>
+                                    <td>${name}</td>
+                                    <td>${data.count.toLocaleString()}</td>
+                                    <td>${formatCurrency(data.value)}</td>
+                                    <td>
+                                        <button class="view-details-btn" onclick="applyPrimeFilter('${name.replace(/'/g, "\\'")}')">Filter</button>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                    </tbody>
+                </table>
+            </div>
+            
+            <div style="text-align: center; margin-top: 15px;">
+                <button class="filter-btn-apply" onclick="applyStateFilter('${stateCode}')">Filter Dashboard to This State</button>
+            </div>
+        `;
+        
+        // Display the modal
+        modal.style.display = 'flex';
+        
+        // Render the prime contractors chart
+        const primesCtx = document.getElementById('stateTopPrimesChart').getContext('2d');
+        new Chart(primesCtx, {
+            type: 'bar',
+            data: {
+                labels: primeLabels.map(label => label.length > 15 ? label.substring(0, 12) + '...' : label),
+                datasets: [{
+                    label: 'Contract Value',
+                    data: primeValues,
+                    backgroundColor: 'rgba(54, 162, 235, 0.7)'
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            title: (tooltipItems) => {
+                                return primeLabels[tooltipItems[0].dataIndex];
+                            },
+                            label: (tooltipItem) => {
+                                return formatCurrency(tooltipItem.raw);
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: { callback: value => formatCurrency(value) }
+                    }
+                }
+            }
+        });
+        
+        // Render the NAICS codes chart
+        const naicsCtx = document.getElementById('stateTopNaicsChart').getContext('2d');
+        new Chart(naicsCtx, {
+            type: 'bar',
+            data: {
+                labels: naicsLabels,
+                datasets: [{
+                    label: 'Contract Value',
+                    data: naicsValues,
+                    backgroundColor: 'rgba(75, 192, 192, 0.7)'
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            title: (tooltipItems) => {
+                                const naics = topNaics[tooltipItems[0].dataIndex];
+                                return `${naics.code} - ${naics.description ? naics.description.substring(0, 30) : ''}`;
+                            },
+                            label: (tooltipItem) => {
+                                return formatCurrency(tooltipItem.raw);
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: { callback: value => formatCurrency(value) }
+                    }
+                }
+            }
+        });
+    }
+    
+    // Define filter function in window scope
+    window.applyStateFilter = function(stateCode) {
+        document.getElementById('stateFilter').value = stateCode;
+        applyAdvancedFilters();
+        // Close the modal
+        document.getElementById('detailModal').style.display = 'none';
+    };
+}
+
+// --- ENHANCED FEATURE 5: Subcontracting Plan Explorer ---
+function initializeSubcontractPlanExplorer(data) {
+    // Process data for subcontracting plans
+    const subplans = {};
+    const subplanDepartments = {};
+    const primeSubplans = {};
+    
+    data.forEach(record => {
+        const subplan = record['Subcontract Plan'] || 'Not Specified';
+        const dept = record['Contracting Department Name'];
+        const prime = record['Legal Business Name'];
+        const value = parseCurrencyValue(record['Base and All Options Value (Total Contract Value)']);
+        
+        // Track subplan types
+        if (!subplans[subplan]) {
+            subplans[subplan] = {
+                count: 0,
+                value: 0
+            };
+        }
+        
+        subplans[subplan].count++;
+        subplans[subplan].value += value;
+        
+        // Track departments with subplans
+        if (dept && subplan !== 'Not Specified' && subplan !== 'No subcontracting') {
+            if (!subplanDepartments[dept]) {
+                subplanDepartments[dept] = {
+                    count: 0,
+                    value: 0
+                };
+            }
+            
+            subplanDepartments[dept].count++;
+            subplanDepartments[dept].value += value;
+        }
+        
+        // Track primes with subplans
+        if (prime) {
+            if (!primeSubplans[prime]) {
+                primeSubplans[prime] = {
+                    name: prime,
+                    subplans: {},
+                    totalCount: 0,
+                    totalValue: 0,
+                    naics: {}
+                };
+            }
+            
+            if (!primeSubplans[prime].subplans[subplan]) {
+                primeSubplans[prime].subplans[subplan] = {
+                    count: 0,
+                    value: 0
+                };
+            }
+            
+            primeSubplans[prime].subplans[subplan].count++;
+            primeSubplans[prime].subplans[subplan].value += value;
+            primeSubplans[prime].totalCount++;
+            primeSubplans[prime].totalValue += value;
+            
+            // Track NAICS codes
+            if (record['NAICS Code']) {
+                const naicsCode = record['NAICS Code'];
+                
+                if (!primeSubplans[prime].naics[naicsCode]) {
+                    primeSubplans[prime].naics[naicsCode] = {
+                        code: naicsCode,
+                        description: record['NAICS Description'] || '',
+                        count: 0,
+                        value: 0
+                    };
+                }
+                
+                primeSubplans[prime].naics[naicsCode].count++;
+                primeSubplans[prime].naics[naicsCode].value += value;
+            }
+        }
+    });
+    
+    // Create charts
+    createSubplanTypeChart();
+    createSubplanDepartmentChart();
+    
+    // Render subplan table
+    renderSubplanTable();
+    
+    // Function to create subplan type chart
+    function createSubplanTypeChart() {
+        const labels = Object.keys(subplans);
+        const values = labels.map(type => subplans[type].count);
+        
+        const ctx = document.getElementById('subplanTypesChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels,
+                datasets: [{
+                    data: values,
+                    backgroundColor: [
+                        'rgba(54, 162, 235, 0.7)',
+                        'rgba(255, 99, 132, 0.7)',
+                        'rgba(255, 206, 86, 0.7)',
+                        'rgba(75, 192, 192, 0.7)',
+                        'rgba(153, 102, 255, 0.7)',
+                        'rgba(255, 159, 64, 0.7)'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: { font: { size: 10 } }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: (tooltipItem) => {
+                                const type = tooltipItem.label;
+                                const count = subplans[type].count;
+                                const value = subplans[type].value;
+                                return [`Contracts: ${count.toLocaleString()}`, `Value: ${formatCurrency(value)}`];
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    // Function to create subplan department chart
+    function createSubplanDepartmentChart() {
+        // Sort departments by contract value
+        const sortedDepts = Object.entries(subplanDepartments)
+            .sort((a, b) => b[1].value - a[1].value)
+            .slice(0, 8);
+        
+        const labels = sortedDepts.map(([dept]) => dept);
+        const values = sortedDepts.map(([, data]) => data.value);
+        
+        const ctx = document.getElementById('subplanDepartmentsChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels.map(label => label.length > 20 ? label.substring(0, 17) + '...' : label),
+                datasets: [{
+                    label: 'Contract Value',
+                    data: values,
+                    backgroundColor: 'rgba(75, 192, 192, 0.7)'
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            title: (tooltipItems) => {
+                                return labels[tooltipItems[0].dataIndex];
+                            },
+                            label: (tooltipItem) => {
+                                const dept = labels[tooltipItem.dataIndex];
+                                const count = subplanDepartments[dept].count;
+                                const value = tooltipItem.raw;
+                                return [`Contracts: ${count.toLocaleString()}`, `Value: ${formatCurrency(value)}`];
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: { callback: value => formatCurrency(value) }
+                    }
+                }
+            }
+        });
+    }
+    
+    // Function to render subplan table
+    function renderSubplanTable() {
+        const tableBody = document.getElementById('subplanTableBody');
+        
+        // Filter primes with subcontracting plans (not just 'Not Specified' or 'No subcontracting')
+        const primesWithSubplans = Object.values(primeSubplans).filter(prime => {
+            return Object.keys(prime.subplans).some(plan => 
+                plan !== 'Not Specified' && plan !== 'No subcontracting'
+            );
+        });
+        
+        // Sort by total contract value
+        primesWithSubplans.sort((a, b) => b.totalValue - a.totalValue);
+        
+        let html = '';
+        
+        primesWithSubplans.forEach(prime => {
+            // Find dominant subplan type
+            const dominantSubplan = Object.entries(prime.subplans)
+                .filter(([plan]) => plan !== 'Not Specified' && plan !== 'No subcontracting')
+                .sort((a, b) => b[1].count - a[1].count)[0];
+            
+            // Find top NAICS code
+            const topNaics = Object.values(prime.naics)
+                .sort((a, b) => b.value - a.value)[0];
+            
+            html += `
+                <tr>
+                    <td>${prime.name}</td>
+                    <td>${dominantSubplan ? dominantSubplan[0] : 'N/A'}</td>
+                    <td>${prime.totalCount.toLocaleString()}</td>
+                    <td>${formatCurrency(prime.totalValue)}</td>
+                    <td>${topNaics ? topNaics.code : 'N/A'}</td>
+                    <td>
+                        <button class="view-details-btn" onclick="showSubplanDetails('${prime.name.replace(/'/g, "\\'")}')">Details</button>
+                    </td>
+                </tr>
+            `;
+        });
+        
+        tableBody.innerHTML = html;
+    }
+    
+    // Define a function to show subplan details
+    window.showSubplanDetails = function(primeName) {
+        const prime = primeSubplans[primeName];
+        if (!prime) return;
+        
+        const modal = document.getElementById('detailModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalBody = document.getElementById('modalBody');
+        
+        modalTitle.textContent = `${primeName} - Subcontracting Plans`;
+        
+        // Prepare subplan chart data
+        const subplanLabels = Object.keys(prime.subplans);
+        const subplanValues = subplanLabels.map(type => prime.subplans[type].value);
+        
+        // Prepare NAICS code data
+        const topNaics = Object.values(prime.naics)
+            .sort((a, b) => b.value - a.value)
+            .slice(0, 5);
+        
+        const naicsLabels = topNaics.map(naics => naics.code);
+        const naicsValues = topNaics.map(naics => naics.value);
+        
+        modalBody.innerHTML = `
+            <div style="margin-bottom: 15px;">
+                <strong>Total Contracts:</strong> ${prime.totalCount.toLocaleString()} | 
+                <strong>Total Value:</strong> ${formatCurrency(prime.totalValue)}
+            </div>
+            
+            <div class="flex-row" style="margin-bottom: 15px;">
+                <div style="flex: 1;">
+                    <h4 style="margin-bottom: 10px;">Subcontracting Plan Types</h4>
+                    <canvas id="primeSubplanChart" style="height: 250px;"></canvas>
+                </div>
+                <div style="flex: 1;">
+                    <h4 style="margin-bottom: 10px;">Top NAICS Codes</h4>
+                    <canvas id="primeSubplanNaicsChart" style="height: 250px;"></canvas>
+                </div>
+            </div>
+            
+            <h4 style="margin-bottom: 10px;">Subcontracting Plan Details</h4>
+            <div style="margin-bottom: 15px;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Plan Type</th>
+                            <th>Contract Count</th>
+                            <th>Total Value</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${Object.entries(prime.subplans).map(([plan, data]) => `
+                            <tr>
+                                <td>${plan}</td>
+                                <td>${data.count.toLocaleString()}</td>
+                                <td>${formatCurrency(data.value)}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="subplan-info">
+                <strong>About Subcontracting Plans:</strong> When a prime contractor has a subcontracting plan, they are required to make a good faith effort to provide subcontracting opportunities to small businesses. Small businesses can leverage this requirement to establish relationships with prime contractors. For contracts with Individual Subcontracting Plans, the prime must specifically identify the dollar values and percentages to be subcontracted to various socioeconomic categories.
+            </div>
+            
+            <div style="text-align: center; margin-top: 15px;">
+                <button class="filter-btn-apply" onclick="applyPrimeFilter('${primeName.replace(/'/g, "\\'")}')">Filter Dashboard to This Prime</button>
+            </div>
+        `;
+        
+        // Display the modal
+        modal.style.display = 'flex';
+        
+        // Render the subplan chart
+        const subplanCtx = document.getElementById('primeSubplanChart').getContext('2d');
+        new Chart(subplanCtx, {
+            type: 'doughnut',
+            data: {
+                labels: subplanLabels,
+                datasets: [{
+                    data: subplanValues,
+                    backgroundColor: [
+                        'rgba(54, 162, 235, 0.7)',
+                        'rgba(255, 99, 132, 0.7)',
+                        'rgba(255, 206, 86, 0.7)',
+                        'rgba(75, 192, 192, 0.7)',
+                        'rgba(153, 102, 255, 0.7)',
+                        'rgba(255, 159, 64, 0.7)'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: { font: { size: 10 } }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: (tooltipItem) => {
+                                const type = tooltipItem.label;
+                                const count = prime.subplans[type].count;
+                                const value = prime.subplans[type].value;
+                                return [`Contracts: ${count.toLocaleString()}`, `Value: ${formatCurrency(value)}`];
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Render the NAICS chart
+        const naicsCtx = document.getElementById('primeSubplanNaicsChart').getContext('2d');
+        new Chart(naicsCtx, {
+            type: 'bar',
+            data: {
+                labels: naicsLabels,
+                datasets: [{
+                    label: 'Contract Value',
+                    data: naicsValues,
+                    backgroundColor: 'rgba(75, 192, 192, 0.7)'
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            title: (tooltipItems) => {
+                                const naics = topNaics[tooltipItems[0].dataIndex];
+                                return `${naics.code} - ${naics.description ? naics.description.substring(0, 30) : ''}`;
+                            },
+                            label: (tooltipItem) => {
+                                return formatCurrency(tooltipItem.raw);
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: { callback: value => formatCurrency(value) }
+                    }
+                }
+            }
+        });
+    };
+}
+
+// --- Event Listeners and UI Functionality ---
+
+// Tab Navigation
+document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', function() {
+        // Remove active class from all tabs
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        
+        // Add active class to clicked tab
+        this.classList.add('active');
+        
+        // Get tab ID
+        const tabId = this.getAttribute('data-tab');
+        
+        // Hide all tab pages
+        document.querySelectorAll('.tab-page').forEach(page => page.classList.remove('active'));
+        
+        // Show selected tab page
+        document.getElementById(`${tabId}-tab`).classList.add('active');
+    });
+});
+
+// Modal Close Button
+document.querySelectorAll('#modalClose, #modalCloseBtn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        document.getElementById('detailModal').style.display = 'none';
+    });
+});
+
+// Close modal when clicking outside of it
+window.addEventListener('click', function(e) {
+    const modal = document.getElementById('detailModal');
+    if (e.target === modal) {
+        modal.style.display = 'none';
+    }
+});
+
+// Apply Filters Button
+document.getElementById('applyFiltersBtn').addEventListener('click', function() {
+    applyAdvancedFilters();
+});
+
+// Clear Filters Button
+document.getElementById('clearFiltersBtn').addEventListener('click', function() {
+    clearAdvancedFilters();
+});
+
+// --- Page Load ---
 document.addEventListener('DOMContentLoaded', function() {
     setupFilters();
     loadDataFromS3();
-    
-    // Add export buttons to tabs
-    addExportButtons();
-    
-    // Check for URL parameters
-    const urlParams = new URLSearchParams(window.location.search);
-    const naicsParam = urlParams.get('naics');
-    const primeParam = urlParams.get('prime');
-    const stateParam = urlParams.get('state');
-    
-    // Handle URL parameters after data is loaded
-    if (naicsParam || primeParam || stateParam) {
-        // Set up a timer to check if data is loaded
-        const checkDataInterval = setInterval(() => {
-            if (parsedData.length > 0) {
-                clearInterval(checkDataInterval);
-                
-                if (naicsParam) {
-                    document.getElementById('naicsFilter').value = naicsParam;
-                    document.querySelector('.tab[data-tab="naics-analysis"]').click();
-                } else if (primeParam) {
-                    applyPrimeFilter(primeParam);
-                } else if (stateParam) {
-                    document.getElementById('stateFilter').value = stateParam;
-                    document.querySelector('.tab[data-tab="region-finder"]').click();
-                }
-                
-                applyAdvancedFilters();
-            }
-        }, 500);
-    }
 });
 </script>
 </body>
