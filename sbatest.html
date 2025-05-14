@@ -465,12 +465,12 @@
         const csvFileInput = document.getElementById('csvFileInput');
         const fileNameDisplay = document.getElementById('file-name-display');
         const errorMessageDiv = document.getElementById('errorMessage');
-        const successMessageDiv = document.getElementById('successMessage'); // Added for manual upload success
+        const successMessageDiv = document.getElementById('successMessage');
 
         // --- Global Variables ---
         let parsedData = [];
         const charts = {};
-        let activeFilter = null; // Stores the name of the currently filtered prime contractor
+        let activeFilter = null;
         const S3_CSV_URL = 'https://subhoodata.s3.us-east-1.amazonaws.com/data/sbaall.csv';
 
         // --- Utility Functions ---
@@ -493,6 +493,7 @@
             processingIndicator.querySelector('span').textContent = message || 'Processing data...';
             autoloadStatus.textContent = message || 'Processing data...';
             autoloadStatus.classList.remove('hidden');
+            autoloadStatus.style.color = '#7f8c8d'; // Default color
         }
 
         function hideProcessing() {
@@ -501,10 +502,10 @@
 
         function showErrorMessage(message, isAutoloadError = false) {
             if (isAutoloadError) {
-                autoloadStatus.textContent = `Error: ${message}. Please try manual upload.`;
-                autoloadStatus.style.color = '#e74c3c';
+                autoloadStatus.textContent = `Error: ${message}`;
+                autoloadStatus.style.color = '#e74c3c'; // Red for error
                 manualUploadSection.classList.remove('hidden');
-                manualUploadSection.classList.add('highlight-section'); // Highlight manual section
+                manualUploadSection.classList.add('highlight-section');
             } else {
                 errorMessageDiv.textContent = message;
                 errorMessageDiv.classList.remove('hidden');
@@ -517,8 +518,6 @@
             if (isAutoloadSuccess) {
                 autoloadStatus.textContent = message;
                 autoloadStatus.style.color = '#27ae60'; // Green for success
-                // Optionally hide manual upload if S3 load is successful
-                // manualUploadSection.classList.add('hidden'); 
             } else {
                 successMessageDiv.textContent = message;
                 successMessageDiv.classList.remove('hidden');
@@ -527,86 +526,112 @@
             hideProcessing();
         }
 
-
         // --- Data Processing and Chart Initialization ---
         function processAndInitialize(data) {
             if (!data || data.length === 0) {
-                showErrorMessage('No data to display.', dashboardContent.classList.contains('hidden'));
+                // If autoload was attempted and failed, the message is already set by showErrorMessage
+                // If manual upload resulted in no data, show message in manual section
+                const isAutoloadAttempted = !manualUploadSection.classList.contains('hidden');
+                showErrorMessage('No data to display.', isAutoloadAttempted);
                 return;
             }
             parsedData = data;
-            activeFilter = null; // Reset filter
+            activeFilter = null; 
             document.getElementById('activeFilterIndicator').classList.add('hidden');
             
             dashboardContent.classList.remove('hidden');
-            manualUploadSection.classList.remove('highlight-section'); // Remove highlight if it was added
+            manualUploadSection.classList.remove('highlight-section'); 
 
             initializeCharts(parsedData);
-            hideProcessing(); // Ensure processing is hidden after charts are up
+            // Do not hide processing here, success message will handle it or it's already hidden by error
         }
         
-        // --- S3 Data Loading ---
+        // --- S3 Data Loading using Fetch API ---
         function loadDataFromS3() {
             showProcessing('Attempting to load data from S3...');
-            console.log('Attempting to load data from S3:', S3_CSV_URL);
+            console.log('Attempting to load data from S3 (using fetch):', S3_CSV_URL);
 
-            Papa.parse(S3_CSV_URL, {
-                download: true, // Important for remote files
-                header: true,
-                dynamicTyping: true,
-                skipEmptyLines: true,
-                complete: function(results) {
-                    console.log('S3 CSV parsing complete, rows:', results.data.length);
-                    if (results.errors && results.errors.length > 0) {
-                        console.error('S3 CSV parsing errors:', results.errors);
-                        showErrorMessage('Error parsing CSV from S3: ' + results.errors[0].message, true);
-                        return;
-                    }
-                    if (results.data && results.data.length > 0) {
-                        showSuccessMessage('Data loaded successfully from S3!', true);
-                        processAndInitialize(results.data);
-                    } else {
-                        showErrorMessage('No data found in the S3 file or file is empty.', true);
-                    }
-                },
-                error: function(error, file) {
-                    console.error('PapaParse S3 error:', error);
-                    let errorMsg = 'Failed to load data from S3. ';
-                    if (error && error.message) {
-                        errorMsg += error.message;
-                    } else if (typeof error === 'string') {
-                         errorMsg += error;
-                    } else {
-                        errorMsg += "Unknown error occurred."
-                    }
-                    
-                    // Check for potential CORS issues (though PapaParse might not give specific CORS errors)
-                    if (error && (error.message?.includes('No 'Access-Control-Allow-Origin' header') || error.message?.includes('CORS'))) {
-                        errorMsg += " This might be a CORS issue. The S3 bucket needs to allow requests from this origin.";
-                    } else if (navigator.onLine === false) {
-                        errorMsg += " You appear to be offline. Please check your internet connection.";
-                    } else {
-                        errorMsg += " Please check the S3 URL and bucket permissions (CORS).";
-                    }
-                    showErrorMessage(errorMsg, true);
+            fetch(S3_CSV_URL, {
+                method: 'GET',
+                mode: 'cors', // Important for cross-origin requests
+                cache: 'no-cache', // Ensures fresh data
+                headers: {
+                    'Accept': 'text/csv',
                 }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    // Construct a detailed error message
+                    let errorDetail = `HTTP error ${response.status} (${response.statusText || 'Status text not available'})`;
+                    if (response.status === 0) {
+                        errorDetail = "Network error or CORS issue. Check browser console and S3 bucket CORS configuration.";
+                    } else if (response.status === 403) {
+                        errorDetail = "Access Forbidden (403). Check S3 bucket permissions and CORS.";
+                    } else if (response.status === 404) {
+                        errorDetail = "File Not Found (404) at the S3 URL.";
+                    }
+                    // Throw an error to be caught by the .catch block
+                    throw new Error(`Failed to fetch data from S3. ${errorDetail}`);
+                }
+                return response.text(); // Get the CSV content as text
+            })
+            .then(csvText => {
+                if (!csvText || csvText.trim() === '') {
+                    console.warn('S3 file is empty or contains no data.');
+                    showErrorMessage('S3 file is empty or contains no data.', true);
+                    return; // Stop further processing
+                }
+
+                console.log('CSV text received from S3, parsing with PapaParse...');
+                showProcessing('Parsing CSV data from S3...'); // Update status
+
+                Papa.parse(csvText, {
+                    header: true,
+                    dynamicTyping: true,
+                    skipEmptyLines: true,
+                    complete: function(results) {
+                        console.log('S3 CSV parsing complete, rows:', results.data ? results.data.length : 0);
+                        if (results.errors && results.errors.length > 0) {
+                            console.error('S3 CSV parsing errors:', results.errors);
+                            showErrorMessage('Error parsing CSV from S3: ' + results.errors[0].message, true);
+                            return;
+                        }
+                        if (results.data && results.data.length > 0) {
+                            showSuccessMessage('Data loaded and parsed successfully from S3!', true);
+                            processAndInitialize(results.data);
+                        } else {
+                            showErrorMessage('No data could be parsed from the S3 file.', true);
+                        }
+                    },
+                    error: function(error) { // This error is for PapaParse itself if csvText is malformed
+                        console.error('PapaParse error on S3 CSV text:', error);
+                        showErrorMessage('Error parsing CSV data from S3: ' + error.message, true);
+                    }
+                });
+            })
+            .catch(error => { // Catches errors from fetch() or the .then() chain (e.g., network, CORS, HTTP errors)
+                console.error('Fetch or S3 data processing error:', error);
+                let errorMsg = error.message; 
+                if (navigator.onLine === false && !errorMsg.includes("offline")) {
+                    errorMsg += " You also appear to be offline. Please check your internet connection.";
+                }
+                showErrorMessage(errorMsg, true);
             });
         }
 
-
-        // --- Chart Creation Functions (Copied from original, ensure they use 'parsedData' or passed data) ---
+        // --- Chart Creation Functions (No changes needed here from previous version) ---
         
         // Initialize charts
         function initializeCharts(data) {
             updateStatistics(data);
             createPrimeContractorsChart(data);
             createDepartmentChart(data);
-            createNAICSChart(data); // Uses global parsedData by default, but better to pass
-            createStateChart(data);   // Same as above
+            createNAICSChart(data); 
+            createStateChart(data);   
             createContractTypeChart(data);
             createValueRangeChart(data);
             createTimelineChart(data);
-            setupPrimeSearch(data); // Uses global parsedData
+            setupPrimeSearch(data); 
         }
         
         // Update dashboard statistics
@@ -652,11 +677,10 @@
             });
             
             let sortedPrimes;
-            if (activeFilter) { // If a prime is selected via search
+            if (activeFilter) { 
                 const primeDepts = new Set(data.filter(r => r['Legal Business Name'] === activeFilter && r['Contracting Department Name']).map(r => r['Contracting Department Name']));
                 
                 const relatedPrimes = {};
-                // Use the original full dataset (parsedData) to find competitors, not the already filtered 'data'
                 parsedData.forEach(record => { 
                     const prime = record['Legal Business Name'];
                     const dept = record['Contracting Department Name'];
@@ -814,8 +838,8 @@
             });
         }
 
-        // --- Search and Filtering ---
-        function setupPrimeSearch(allData) { // Renamed parameter to avoid confusion with global 'parsedData'
+        // --- Search and Filtering (No changes needed here from previous version) ---
+        function setupPrimeSearch(allData) { 
             const searchInput = document.getElementById('primeSearchInput');
             const resultsContainer = document.getElementById('searchResults');
             const filterIndicator = document.getElementById('activeFilterIndicator');
@@ -823,7 +847,7 @@
             window.clearPrimeFilter = function() {
                 activeFilter = null;
                 filterIndicator.classList.add('hidden');
-                processAndInitialize(parsedData); // Re-initialize with the full original dataset
+                processAndInitialize(parsedData); 
                 searchInput.value = '';
                 resultsContainer.innerHTML = '';
             };
@@ -833,19 +857,18 @@
                 activeFilter = primeName;
                 filterIndicator.innerHTML = `Filtered by: <strong>${primeName}</strong> <button class="clear-filter-btn" onclick="clearPrimeFilter()">Clear Filter</button>`;
                 filterIndicator.classList.remove('hidden');
-                processAndInitialize(primeData); // Re-initialize charts with filtered data
+                processAndInitialize(primeData); 
                 resultsContainer.innerHTML = '';
-                searchInput.value = primeName; // Optionally fill search bar
+                searchInput.value = primeName; 
             };
             
-            searchInput.addEventListener('input', _.debounce(function() { // Added debounce
+            searchInput.addEventListener('input', _.debounce(function() { 
                 const searchTerm = this.value.toLowerCase().trim();
                 if (searchTerm.length < 2) {
                     resultsContainer.innerHTML = '';
                     return;
                 }
                 const matches = new Map();
-                // Search in the full original dataset (parsedData)
                 parsedData.forEach(record => { 
                     const prime = record['Legal Business Name'];
                     if (prime && prime.toLowerCase().includes(searchTerm)) {
@@ -871,17 +894,16 @@
                 } else {
                     resultsContainer.innerHTML = '<div class="result-item">No matching prime contractors found.</div>';
                 }
-            }, 300)); // Debounce for 300ms
+            }, 300)); 
         }
         
-        // --- Event Listeners for Filters and File Input ---
+        // --- Event Listeners for Filters and File Input (No changes needed here from previous version) ---
         function setupFilters() {
             document.getElementById('naicsFilters').addEventListener('click', function(e) {
                 if (e.target.classList.contains('filter-btn')) {
                     const filterType = e.target.dataset.filter;
                     this.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
                     e.target.classList.add('active');
-                    // Use 'parsedData' if no active filter, otherwise use the currently filtered data for the active prime.
                     createNAICSChart(activeFilter ? parsedData.filter(r => r['Legal Business Name'] === activeFilter) : parsedData, filterType);
                 }
             });
@@ -891,7 +913,6 @@
                     const filterType = e.target.dataset.filter;
                     this.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
                     e.target.classList.add('active');
-                     // Use 'parsedData' if no active filter, otherwise use the currently filtered data for the active prime.
                     createStateChart(activeFilter ? parsedData.filter(r => r['Legal Business Name'] === activeFilter) : parsedData, filterType);
                 }
             });
@@ -919,8 +940,7 @@
                     if (results.data && results.data.length > 0) {
                         showSuccessMessage('File processed successfully!');
                         processAndInitialize(results.data);
-                         // Clear S3 autoload status if manual upload is successful
-                        autoloadStatus.classList.add('hidden');
+                        autoloadStatus.classList.add('hidden'); // Hide S3 status if manual is successful
                     } else {
                         showErrorMessage('No data found in the uploaded file or file is empty.');
                     }
@@ -935,7 +955,7 @@
         // --- Page Load ---
         document.addEventListener('DOMContentLoaded', function() {
             setupFilters();
-            loadDataFromS3(); // Attempt to load data from S3 when the page loads
+            loadDataFromS3(); 
         });
 
     </script>
