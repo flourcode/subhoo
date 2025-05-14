@@ -1,6 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
+<html lang="en" class=""> <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Streamlined Federal Business Dashboard</title>
@@ -10,6 +9,43 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
     <style>
+        /* Basic styles for dark mode - will be expanded */
+        .dark body {
+            background-color: #1f2937; /* Tailwind gray-800 */
+            color: #d1d5db; /* Tailwind gray-300 */
+        }
+        .dark .bg-white {
+            background-color: #374151; /* Tailwind gray-700 */
+        }
+        .dark .bg-gray-50 {
+            background-color: #4b5563; /* Tailwind gray-600 */
+        }
+        .dark .text-gray-800 { color: #f3f4f6; /* Tailwind gray-100 */ }
+        .dark .text-gray-700 { color: #d1d5db; /* Tailwind gray-300 */ }
+        .dark .text-gray-600 { color: #9ca3af; /* Tailwind gray-400 */ }
+        .dark .text-gray-500 { color: #6b7280; /* Tailwind gray-500 */ }
+        .dark .border-gray-200 { border-color: #4b5563; /* Tailwind gray-600 */ }
+        .dark .border-gray-300 { border-color: #6b7280; /* Tailwind gray-500 */ }
+        .dark .hover\:bg-gray-100:hover { background-color: #4b5563; /* Tailwind gray-600 */}
+        .dark .activeFilterIndicatorCustom { /* Custom class for indicator in dark mode */
+            background-color: #1e3a8a; /* Darker blue */
+            color: #bfdbfe; /* Lighter blue text */
+        }
+        .dark .calendar-day-cell:hover:not(.bg-gray-50) { 
+             background-color: #374151 !important; /* Darker hover for calendar */
+        }
+        .dark .calendar-day-cell.bg-blue-50 { background-color: #2563eb !important; } /* Darker blue for events */
+        .dark .calendar-day-cell.bg-blue-100 { background-color: #1d4ed8 !important; }
+        .dark .calendar-day-cell.bg-blue-200 { background-color: #1e3a8a !important; }
+        .dark .calendar-day-header { background-color: #1e40af; } /* Darker blue for header */
+        .dark .suggestion-item:hover { background-color: #4b5563; }
+        .dark #unifiedSearchSuggestions { background-color: #374151; border-color: #4b5563;}
+        .dark .table-responsive thead th { background-color: #374151; } /* Sticky header dark */
+        .dark .table-responsive tbody { background-color: #4b5563; }
+        .dark .table-responsive .divide-y > :not([hidden]) ~ :not([hidden]) { border-color: #6b7280; }
+
+
+        /* Other existing styles */
         body {
             font-family: 'Inter', sans-serif;
         }
@@ -18,25 +54,27 @@
             height: 300px; 
             width: 100%;
         }
-        /* .chart-container-detail-view was removed as charts are no longer in prime detail view */
         .chart-no-data {
             display: flex;
             flex-direction: column; 
             align-items: center;
             justify-content: center;
             height: 100%;
-            color: #6b7280; 
-            background-color: #f9fafb; 
+            /* color is handled by dark mode classes */
+            /* background-color is handled by dark mode classes */
             border: 1px dashed #d1d5db; 
             border-radius: 0.375rem; 
             text-align: center;
             padding: 1rem;
         }
+        .dark .chart-no-data {
+             border-color: #4b5563;
+        }
         .chart-no-data svg { 
             width: 3rem; 
             height: 3rem; 
             margin-bottom: 0.5rem; 
-            color: #9ca3af; 
+            /* color is handled by dark mode classes */
         }
         .spinner { 
             border: 4px solid rgba(0, 0, 0, 0.1);
@@ -52,15 +90,7 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-        .calendar-day-header {
-            font-weight: 600;
-            text-align: center;
-            padding: 5px 0;
-            background-color: #2980b9; 
-            color: white;
-            border-radius: 4px;
-        }
-         .calendar-event {
+        .calendar-event {
             padding: 3px 5px;
             background-color: #3498db;
             color: white;
@@ -77,9 +107,6 @@
             transition: background-color 0.2s;
             min-width: 60px; 
         }
-        .calendar-day-cell:hover:not(.bg-gray-50) { 
-             background-color: #eff6ff !important; 
-        }
         .calendar-grid-wrapper { 
             overflow-x: auto;
             -webkit-overflow-scrolling: touch; 
@@ -90,7 +117,7 @@
 
         .event-tooltip {
             position: absolute;
-            background-color: white;
+            background-color: white; /* Light mode default */
             border: 1px solid #ddd;
             border-radius: 4px;
             padding: 10px;
@@ -98,6 +125,11 @@
             z-index: 1000;
             max-width: 300px;
             display: none;
+        }
+        .dark .event-tooltip {
+            background-color: #374151; /* Dark mode background */
+            border-color: #4b5563;
+            color: #d1d5db;
         }
         .metric-filters {
             display: flex;
@@ -113,11 +145,22 @@
             cursor: pointer;
             font-size: 12px; 
             transition: background-color 0.2s, box-shadow 0.2s;
+            color: #374151; /* Default text color for light mode */
+        }
+        .dark .filter-btn {
+            background-color: #4b5563;
+            border-color: #6b7280;
+            color: #d1d5db;
         }
         .filter-btn.active {
             background-color: #2980b9; 
-            color: white;
+            color: white !important; /* Ensure text is white on active */
             border-color: #2980b9; 
+        }
+        .dark .filter-btn.active {
+            background-color: #3b82f6; /* A slightly lighter blue for dark mode active */
+            border-color: #3b82f6;
+            color: white !important;
         }
         .filter-btn:focus, button:focus, input[type="text"]:focus, select:focus { 
             outline: none;
@@ -128,7 +171,7 @@
         }
         #unifiedSearchSuggestions {
             position: absolute;
-            background-color: white;
+            /* background-color handled by dark mode */
             border: 1px solid #d1d5db; 
             border-top: none;
             border-radius: 0 0 0.375rem 0.375rem; 
@@ -142,14 +185,11 @@
             padding: 0.5rem 0.75rem; 
             cursor: pointer;
         }
-        .suggestion-item:hover {
-            background-color: #f3f4f6; 
-        }
         .suggestion-item .type-label {
             font-size: 0.75rem; 
-            color: #6b7280; 
+            /* color handled by dark mode */
             margin-left: 0.5rem; 
-            background-color: #e5e7eb; 
+            /* background-color handled by dark mode */
             padding: 0.125rem 0.375rem; 
             border-radius: 0.25rem; 
         }
@@ -164,7 +204,7 @@
             padding: 1rem;
         }
         .modal-content {
-            background-color: white;
+            /* background-color handled by dark mode */
             border-radius: 0.5rem; 
             box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05); 
             padding: 1.5rem; 
@@ -184,12 +224,9 @@
             background: none;
             border: none;
             font-size: 1.5rem; 
-            color: #9ca3af; 
+            /* color handled by dark mode */
             cursor: pointer;
             padding: 0.25rem; 
-        }
-        .modal-close-btn:hover {
-            color: #374151; 
         }
         .table-responsive {
             display: block;
@@ -201,13 +238,13 @@
             position: sticky;
             top: 0;
             z-index: 10; 
-            background-color: #f9fafb; 
+            /* background-color handled by dark mode */
         }
         .table-responsive th { 
             cursor: pointer;
         }
-        .table-responsive th:hover {
-            background-color: #e5e7eb; 
+        .dark .table-responsive th:hover {
+            background-color: #374151; 
         }
         .dashboard-card {
             transition: box-shadow 0.3s ease-in-out;
@@ -215,103 +252,144 @@
         .dashboard-card:hover {
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); 
         }
+         /* Specific dark mode for active filter indicator */
+        .dark #activeFilterIndicator {
+            background-color: #1e3a8a; /* A darker blue for dark mode */
+            color: #bfdbfe; /* A lighter blue text for contrast */
+        }
+        .dark #activeFilterIndicator button {
+            background-color: #ef4444; /* Tailwind red-500 */
+            color: white;
+        }
+        .dark #activeFilterIndicator button:hover {
+            background-color: #dc2626; /* Tailwind red-600 */
+        }
     </style>
 </head>
-<body class="bg-gray-100 p-2 sm:p-4 md:p-8">
+<body class="bg-gray-100 dark:bg-gray-900 p-2 sm:p-4 md:p-8"> <div id="globalProcessingIndicator" class="hidden">
+        <div class="global-spinner"></div>
+        <span class="text-sm text-gray-700 dark:text-gray-300">Processing...</span>
+    </div>
+
     <div class="dashboard-container max-w-7xl mx-auto">
-        <header class="mb-4 md:mb-6">
-            <h1 class="text-2xl sm:text-3xl font-bold text-gray-800">Federal Business Development Dashboard</h1>
+        <header class="mb-4 md:mb-6 flex justify-between items-center">
+            <h1 class="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-gray-100">Federal Business Development Dashboard</h1>
+            <div class="flex items-center space-x-2">
+                <button id="shareViewBtn" title="Share Current View" class="p-2 rounded-md bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600 dark:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
+                    </svg>
+                </button>
+                <button id="themeToggleBtn" title="Toggle Light/Dark Mode" class="p-2 rounded-md bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <svg id="themeIconSun" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600 dark:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                    <svg id="themeIconMoon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600 dark:text-gray-300 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                    </svg>
+                </button>
+            </div>
         </header>
 
         <section id="explainerSection" class="bg-white p-4 md:p-6 rounded-lg shadow-md mb-4 md:mb-6">
-            <h2 class="text-xl md:text-2xl font-semibold text-gray-700 mb-3">Welcome!</h2>
-            <p class="text-sm md:text-base text-gray-600 mb-2">
+            <h2 class="text-xl md:text-2xl font-semibold text-gray-700 dark:text-gray-200 mb-3">Welcome!</h2>
+            <p class="text-sm md:text-base text-gray-600 dark:text-gray-400 mb-2">
                 This dashboard helps you explore federal contracting data to identify potential teaming opportunities. 
                 Data is automatically loaded.
             </p>
-            <p class="text-sm md:text-base text-gray-600 mb-2">
+            <p class="text-sm md:text-base text-gray-600 dark:text-gray-400 mb-2">
                 <strong>How to Use:</strong> Use the <strong>Search & Filter</strong> bar below. As you type, suggestions for Prime Names, NAICS, Agencies, etc., will appear. Click a suggestion to filter the dashboard, or press Enter to search with your typed term(s).
             </p>
-            <p class="text-xs md:text-sm text-gray-600">
+            <p class="text-xs md:text-sm text-gray-600 dark:text-gray-400">
                 If data fails to load, a manual upload option will appear. Source CSV:
-                <a href="https://subhoodata.s3.us-east-1.amazonaws.com/data/sbaall.csv" download class="text-blue-500 hover:text-blue-600 hover:underline">sbaall.csv</a>.
+                <a href="https://subhoodata.s3.us-east-1.amazonaws.com/data/sbaall.csv" download class="text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 hover:underline">sbaall.csv</a>.
             </p>
-            <div id="processingIndicator" class="hidden items-center text-gray-700 mt-4">
+            <div id="processingIndicator" class="hidden items-center text-gray-700 dark:text-gray-300 mt-4">
                 <div class="spinner"></div>
                 <span class="ml-2 text-sm">Processing data...</span>
             </div>
-            <div id="s3LoadError" class="text-red-600 bg-red-100 p-3 rounded-md mt-3 hidden text-sm"></div>
-            <div id="manual-upload-section" class="hidden mt-4 border-t pt-4">
-                <h3 class="text-lg font-semibold text-gray-700 mb-2">Manual CSV Upload</h3>
+            <div id="s3LoadError" class="text-red-600 bg-red-100 dark:bg-red-900 dark:text-red-300 p-3 rounded-md mt-3 hidden text-sm"></div>
+            <div id="manual-upload-section" class="hidden mt-4 border-t pt-4 dark:border-gray-700">
+                <h3 class="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-2">Manual CSV Upload</h3>
                 <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 mb-4">
                     <input type="file" id="csvFileInput" accept=".csv" class="hidden">
                     <label for="csvFileInput" class="w-full sm:w-auto px-4 py-2 bg-blue-500 text-white rounded-md cursor-pointer hover:bg-blue-600 transition-colors duration-150 ease-in-out focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none">Choose CSV File</label>
-                    <span id="file-name-display" class="text-sm text-gray-700 p-2 border border-gray-300 rounded-md min-w-[200px] w-full sm:w-auto">No file selected</span>
+                    <span id="file-name-display" class="text-sm text-gray-700 dark:text-gray-300 p-2 border border-gray-300 dark:border-gray-600 rounded-md min-w-[200px] w-full sm:w-auto">No file selected</span>
                 </div>
-                <div id="errorMessage" class="text-red-600 bg-red-100 p-3 rounded-md hidden mb-2 text-sm"></div>
-                <div id="successMessage" class="text-green-600 bg-green-100 p-3 rounded-md hidden mb-2 text-sm"></div>
+                <div id="errorMessage" class="text-red-600 bg-red-100 dark:bg-red-900 dark:text-red-300 p-3 rounded-md hidden mb-2 text-sm"></div>
+                <div id="successMessage" class="text-green-600 bg-green-100 dark:bg-green-900 dark:text-green-300 p-3 rounded-md hidden mb-2 text-sm"></div>
             </div>
         </section>
 
         <main id="dashboardContent" class="hidden">
             <section id="statisticsSection" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-4 md:mb-6">
                 <div class="stat-card bg-white p-3 md:p-4 rounded-lg shadow hover:shadow-lg transition-shadow duration-150">
-                    <div class="text-2xl md:text-3xl font-bold text-blue-600" id="totalContractsValue">0</div>
-                    <div class="text-xs md:text-sm text-gray-500">Total Contracts</div>
+                    <div class="text-2xl md:text-3xl font-bold text-blue-600 dark:text-blue-400" id="totalContractsValue">0</div>
+                    <div class="text-xs md:text-sm text-gray-500 dark:text-gray-400">Total Contracts</div>
                 </div>
                 <div class="stat-card bg-white p-3 md:p-4 rounded-lg shadow hover:shadow-lg transition-shadow duration-150">
-                    <div class="text-2xl md:text-3xl font-bold text-blue-600" id="totalValueValue">$0</div>
-                    <div class="text-sm text-gray-500">Total Contract Value</div>
+                    <div class="text-2xl md:text-3xl font-bold text-blue-600 dark:text-blue-400" id="totalValueValue">$0</div>
+                    <div class="text-sm text-gray-500 dark:text-gray-400">Total Contract Value</div>
                 </div>
                 <div class="stat-card bg-white p-3 md:p-4 rounded-lg shadow hover:shadow-lg transition-shadow duration-150">
-                    <div class="text-2xl md:text-3xl font-bold text-blue-600" id="avgContractValue">$0</div>
-                    <div class="text-sm text-gray-500">Average Contract Value</div>
+                    <div class="text-2xl md:text-3xl font-bold text-blue-600 dark:text-blue-400" id="avgContractValue">$0</div>
+                    <div class="text-sm text-gray-500 dark:text-gray-400">Average Contract Value</div>
                 </div>
                 <div class="stat-card bg-white p-3 md:p-4 rounded-lg shadow hover:shadow-lg transition-shadow duration-150">
-                    <div class="text-2xl md:text-3xl font-bold text-blue-600" id="uniquePrimesValue">0</div>
-                    <div class="text-sm text-gray-500">Unique Prime Contractors</div>
+                    <div class="text-2xl md:text-3xl font-bold text-blue-600 dark:text-blue-400" id="uniquePrimesValue">0</div>
+                    <div class="text-sm text-gray-500 dark:text-gray-400">Unique Prime Contractors</div>
                 </div>
             </section>
             
             <section id="searchAndFilterSection" class="bg-white p-4 md:p-6 rounded-lg shadow-md mb-4 md:mb-6">
-                <h2 class="text-lg md:text-xl font-semibold text-gray-700 mb-3">Search & Filter Contracts</h2>
+                <h2 class="text-lg md:text-xl font-semibold text-gray-700 dark:text-gray-200 mb-3">Search & Filter Contracts</h2>
                 <div class="relative">
-                    <input type="text" id="unifiedSearchInput" class="w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-400 focus:border-blue-400" placeholder="Search by Prime, NAICS, Department, Agency, Office, State...">
-                    <div id="unifiedSearchSuggestions" class="hidden">
+                    <input type="text" id="unifiedSearchInput" class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-2 focus:ring-blue-400 focus:border-blue-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" placeholder="Search by Prime, NAICS, Department, Agency, Office, State...">
+                    <div id="unifiedSearchSuggestions" class="hidden dark:bg-gray-700 dark:border-gray-600">
                         </div>
                 </div>
                                 
-                <div id="activeFilterIndicator" class="bg-blue-100 text-blue-700 p-3 rounded-md mt-4 hidden flex flex-col sm:flex-row justify-between items-center text-sm">
+                <div id="activeFilterIndicator" class="bg-blue-100 text-blue-700 dark:activeFilterIndicatorCustom p-3 rounded-md mt-4 hidden flex flex-col sm:flex-row justify-between items-center text-sm">
                     </div>
             </section>
 
+            <section id="primeDetailViewSection" class="bg-white p-4 md:p-6 rounded-lg shadow-md mb-4 md:mb-6 hidden">
+                <h2 id="primeDetailTitle" class="text-xl md:text-2xl font-bold text-blue-700 dark:text-blue-400 mb-4">Prime Contractor Details</h2>
+                <div id="primeDetailStats" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 text-sm md:text-base">
+                    </div>
+                <h3 class="text-lg font-semibold text-gray-700 dark:text-gray-200 mt-6 mb-2">Contracts List for this Prime</h3>
+                <div id="primeDetailContractsTableContainer" class="table-responsive max-h-96 overflow-y-auto">
+                    </div>
+            </section>
+
+
             <section id="coreChartsSection" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6 mb-4 md:mb-6">
                 <div id="primeContractorsChartCard" class="dashboard-card bg-white p-4 md:p-6 rounded-lg shadow">
-                    <h2 class="text-md md:text-lg font-semibold text-gray-700 mb-3 text-center">Top Prime Contractors by Value</h2>
+                    <h2 class="text-md md:text-lg font-semibold text-gray-700 dark:text-gray-200 mb-3 text-center">Top Prime Contractors by Value</h2>
                     <div class="chart-container">
                         <canvas id="primeContractorsChart"></canvas>
                     </div>
                 </div>
                 <div class="dashboard-card bg-white p-4 md:p-6 rounded-lg shadow">
-                    <h2 class="text-md md:text-lg font-semibold text-gray-700 mb-3 text-center">Department Contract Distribution</h2>
+                    <h2 class="text-md md:text-lg font-semibold text-gray-700 dark:text-gray-200 mb-3 text-center">Department Contract Distribution</h2>
                     <div class="chart-container">
                         <canvas id="departmentChart"></canvas>
                     </div>
                 </div>
                 <div class="dashboard-card bg-white p-4 md:p-6 rounded-lg shadow">
-                    <h2 class="text-md md:text-lg font-semibold text-gray-700 mb-3 text-center">Top NAICS by Contract Value</h2>
+                    <h2 class="text-md md:text-lg font-semibold text-gray-700 dark:text-gray-200 mb-3 text-center">Top NAICS by Contract Value</h2>
                     <div class="chart-container">
                         <canvas id="naicsChart_main"></canvas>
                     </div>
                 </div>
                 <div class="dashboard-card bg-white p-4 md:p-6 rounded-lg shadow">
-                    <h2 class="text-md md:text-lg font-semibold text-gray-700 mb-3 text-center">Contract Type Breakdown</h2>
+                    <h2 class="text-md md:text-lg font-semibold text-gray-700 dark:text-gray-200 mb-3 text-center">Contract Type Breakdown</h2>
                     <div class="chart-container">
                         <canvas id="contractTypeChart_main"></canvas>
                     </div>
                 </div>
                 <div class="dashboard-card bg-white p-4 md:p-6 rounded-lg shadow"> 
-                    <h2 class="text-md md:text-lg font-semibold text-gray-700 mb-1 text-center">Contract Distribution by State</h2>
+                    <h2 class="text-md md:text-lg font-semibold text-gray-700 dark:text-gray-200 mb-1 text-center">Contract Distribution by State</h2>
                     <div class="metric-filters" id="stateChartFilters_main">
                         <button class="filter-btn active" data-filter="count" data-chart="stateContractsChart_main">By Count</button>
                         <button class="filter-btn" data-filter="value" data-chart="stateContractsChart_main">By Value</button>
@@ -321,19 +399,19 @@
                     </div>
                 </div>
                 <div class="dashboard-card bg-white p-4 md:p-6 rounded-lg shadow">
-                    <h2 class="text-md md:text-lg font-semibold text-gray-700 mb-3 text-center">Top Contracting Agencies by Value</h2>
+                    <h2 class="text-md md:text-lg font-semibold text-gray-700 dark:text-gray-200 mb-3 text-center">Top Contracting Agencies by Value</h2>
                     <div class="chart-container">
                         <canvas id="topAgenciesChart"></canvas>
                     </div>
                 </div>
                 <div class="dashboard-card bg-white p-4 md:p-6 rounded-lg shadow md:col-span-2 xl:col-span-1"> 
-                     <h2 class="text-md md:text-lg font-semibold text-gray-700 mb-3 text-center">Contract Timeline Forecast</h2>
+                     <h2 class="text-md md:text-lg font-semibold text-gray-700 dark:text-gray-200 mb-3 text-center">Contract Timeline Forecast</h2>
                     <div class="chart-container">
                         <canvas id="timelineChart"></canvas> 
                     </div>
                 </div>
                  <div id="marketShareChartCard" class="dashboard-card bg-white p-4 md:p-6 rounded-lg shadow md:col-span-2 xl:col-span-2"> 
-                    <h2 class="text-md md:text-lg font-semibold text-gray-700 mb-3 text-center">Prime Market Share (for current filter)</h2>
+                    <h2 class="text-md md:text-lg font-semibold text-gray-700 dark:text-gray-200 mb-3 text-center">Prime Market Share (for current filter)</h2>
                     <div class="chart-container">
                         <canvas id="marketShareChart"></canvas>
                     </div>
@@ -341,40 +419,29 @@
             </section>
             
             <section id="primeProfilesSection" class="bg-white p-4 md:p-6 rounded-lg shadow-md mb-4 md:mb-6">
-                <h2 class="text-lg md:text-xl font-semibold text-gray-700 mb-3">Prime Contractor Profiles</h2>
-                 <p class="text-xs md:text-sm text-gray-500 mb-3">Displaying profiles based on current search/filter. Click a prime name to filter the entire dashboard to that prime. Use search below to refine this list.</p>
+                <h2 class="text-lg md:text-xl font-semibold text-gray-700 dark:text-gray-200 mb-3">Prime Contractor Profiles</h2>
+                 <p class="text-xs md:text-sm text-gray-500 dark:text-gray-400 mb-3">Displaying profiles based on current search/filter. Click a prime name to filter the entire dashboard to that prime. Use search below to refine this list.</p>
                 <div class="mb-4">
-                    <input type="text" id="primeProfilesSearchInput" class="w-full md:w-1/2 lg:w-1/3 p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-400 focus:border-blue-400" placeholder="Filter displayed profiles by name...">
+                    <input type="text" id="primeProfilesSearchInput" class="w-full md:w-1/2 lg:w-1/3 p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-400 focus:border-blue-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" placeholder="Filter displayed profiles by name...">
                 </div>
                 <div id="primeProfilesContainer" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 md:gap-4 max-h-[70vh] overflow-y-auto"></div>
             </section>
 
-            <section id="primeDetailViewSection" class="bg-white p-4 md:p-6 rounded-lg shadow-md mb-4 md:mb-6 hidden">
-                <h2 id="primeDetailTitle" class="text-xl md:text-2xl font-bold text-blue-700 mb-4">Prime Contractor Details</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 text-sm md:text-base">
-                    <div id="primeDetailStats">
-                        </div>
-                    </div>
-                <h3 class="text-lg font-semibold text-gray-700 mt-6 mb-2">Contracts List for this Prime</h3>
-                <div id="primeDetailContractsTableContainer" class="table-responsive max-h-96 overflow-y-auto">
-                    </div>
-            </section>
-
             <section id="contractExpirationCalendarSection" class="bg-white p-4 md:p-6 rounded-lg shadow-md mb-4 md:mb-6">
-                <h2 class="text-lg md:text-xl font-semibold text-gray-700 mb-3">Contract Expiration Calendar</h2>
-                 <p class="text-xs md:text-sm text-gray-500 mb-3">Displaying calendar based on current search/filter. Click a day with events for details.</p>
-                <div class="calendar-container min-h-[400px] border border-gray-200 rounded-md p-2 md:p-4">
+                <h2 class="text-lg md:text-xl font-semibold text-gray-700 dark:text-gray-200 mb-3">Contract Expiration Calendar</h2>
+                 <p class="text-xs md:text-sm text-gray-500 dark:text-gray-400 mb-3">Displaying calendar based on current search/filter. Click a day with events for details.</p>
+                <div class="calendar-container min-h-[400px] border border-gray-200 dark:border-gray-700 rounded-md p-2 md:p-4">
                     <div class="flex flex-wrap justify-between items-center mb-4 gap-2">
                         <div class="flex items-center gap-1">
-                            <button id="calendarPrevBtn" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 transition-colors duration-150 ease-in-out focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none">&lt;</button>
+                            <button id="calendarPrevBtn" class="px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors duration-150 ease-in-out focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none">&lt;</button>
                             <h3 id="calendarTitle" class="text-md md:text-lg font-semibold mx-2">Month Year</h3>
-                            <button id="calendarNextBtn" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 transition-colors duration-150 ease-in-out focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none">&gt;</button>
+                            <button id="calendarNextBtn" class="px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors duration-150 ease-in-out focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none">&gt;</button>
                         </div>
                         <div class="flex items-center gap-2 text-xs md:text-sm">
                             <label for="calendarMonthSelect" class="sr-only">Month</label>
-                            <select id="calendarMonthSelect" class="p-1 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-400 focus:border-blue-400"></select>
+                            <select id="calendarMonthSelect" class="p-1 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-400 focus:border-blue-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"></select>
                             <label for="calendarYearSelect" class="sr-only">Year</label>
-                            <select id="calendarYearSelect" class="p-1 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-400 focus:border-blue-400"></select>
+                            <select id="calendarYearSelect" class="p-1 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-400 focus:border-blue-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"></select>
                         </div>
                     </div>
                     <div class="calendar-grid-wrapper">
@@ -386,15 +453,19 @@
     </div>
 
     <div id="genericModal" class="modal-backdrop hidden">
-        <div id="genericModalContent" class="modal-content">
-            <button id="genericModalCloseBtn" class="modal-close-btn">&times;</button>
-            <h2 id="genericModalTitle" class="text-xl font-semibold text-gray-800 mb-4">Modal Title</h2>
-            <div id="genericModalBody" class="text-gray-700">
+        <div id="genericModalContent" class="modal-content dark:bg-gray-800">
+            <button id="genericModalCloseBtn" class="modal-close-btn dark:text-gray-400 dark:hover:text-gray-200">&times;</button>
+            <h2 id="genericModalTitle" class="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Modal Title</h2>
+            <div id="genericModalBody" class="text-gray-700 dark:text-gray-300">
                 </div>
         </div>
     </div>
 
     <div class="event-tooltip"></div>
+
+    <div id="shareToast" class="fixed bottom-5 right-5 bg-green-500 text-white py-2 px-4 rounded-md shadow-lg hidden transition-opacity duration-300">
+        Link copied to clipboard!
+    </div>
 
 <script>
 // --- DOM Elements ---
@@ -433,6 +504,13 @@ const primeDetailViewSection = document.getElementById('primeDetailViewSection')
 const primeDetailTitle = document.getElementById('primeDetailTitle');
 const primeDetailStats = document.getElementById('primeDetailStats');
 const primeDetailContractsTableContainer = document.getElementById('primeDetailContractsTableContainer');
+
+// Theme Toggle and Share Buttons
+const themeToggleBtn = document.getElementById('themeToggleBtn');
+const themeIconSun = document.getElementById('themeIconSun');
+const themeIconMoon = document.getElementById('themeIconMoon');
+const shareViewBtn = document.getElementById('shareViewBtn');
+const shareToast = document.getElementById('shareToast');
 
 
 // --- Global Variables ---
@@ -476,7 +554,7 @@ function createAwardLink(piid) {
         return piid || 'N/A'; 
     }
     const encodedPiid = encodeURIComponent(piid.trim());
-    return `<a href="https://www.fpds.gov/ezsearch/fpdsportal?indexName=awardfull&templateName=1.5.3&s=FPDS&q=${encodedPiid}&x=18&y=15" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 hover:underline">${piid}</a>`;
+    return `<a href="https://www.fpds.gov/ezsearch/fpdsportal?indexName=awardfull&templateName=1.5.3&s=FPDS&q=${encodedPiid}&x=18&y=15" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 hover:underline">${piid}</a>`;
 }
 
 function createEntityLink(entityId, entityName) {
@@ -484,10 +562,9 @@ function createEntityLink(entityId, entityName) {
         return entityName || entityId || 'N/A'; 
     }
     const encodedEntityId = encodeURIComponent(entityId.trim());
-    return `<a href="https://www.fpds.gov/ezsearch/fpdsportal?s=FPDS&q=${encodedEntityId}&x=0&y=0" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 hover:underline">${entityName || entityId}</a>`;
+    return `<a href="https://www.fpds.gov/ezsearch/fpdsportal?s=FPDS&q=${encodedEntityId}&x=0&y=0" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 hover:underline">${entityName || entityId}</a>`;
 }
 
-// Removed showGlobalLoader and hideGlobalLoader
 
 function showProcessingBriefly() { processingIndicator.classList.remove('hidden'); processingIndicator.classList.add('flex'); }
 function hideProcessing() { processingIndicator.classList.add('hidden'); processingIndicator.classList.remove('flex');}
@@ -518,7 +595,7 @@ function showSuccessMessage(message, isAutoloadSuccess = false) {
 function openModal(title, contentHTML, sizeClass = 'modal-content-md') {
     genericModalTitle.textContent = title;
     genericModalBody.innerHTML = contentHTML;
-    genericModalContent.className = `modal-content ${sizeClass}`; 
+    genericModalContent.className = `modal-content ${sizeClass} dark:bg-gray-800`; // Add dark mode class here too
     genericModal.classList.remove('hidden');
     genericModal.classList.add('flex');
 }
@@ -535,6 +612,7 @@ genericModal.addEventListener('click', (event) => {
     }
 });
 
+
 // --- Data Processing and Chart Initialization ---
 function cleanupCharts() { Object.keys(charts).forEach(key => { if (charts[key]) { charts[key].destroy(); charts[key] = null; } }); }
 
@@ -542,7 +620,6 @@ function processAndInitialize(data) {
     try {
         if (!data || data.length === 0) { 
             showErrorMessage('No data to display. Please try manual upload or check the S3 source.', true); 
-            // showErrorMessage already calls hideProcessing(), so we are covered here.
             return; 
         }
         parsedData = data; 
@@ -550,22 +627,23 @@ function processAndInitialize(data) {
         dashboardContent.classList.remove('hidden');
         manualUploadSection.classList.add('hidden'); 
         s3LoadErrorDiv.classList.add('hidden'); 
-        primeDetailViewSection.classList.add('hidden'); // Ensure prime detail is hidden initially
+        primeDetailViewSection.classList.add('hidden'); 
 
         cleanupCharts(); 
         initializeCoreVisuals(parsedData);
         setupUnifiedSearch(); 
         initializePrimeProfilesSection(parsedData); 
         initializeContractExpirationCalendarSection(parsedData); 
-        showSuccessMessage('Data loaded and dashboard initialized.', true); // This calls hideProcessing()
+        showSuccessMessage('Data loaded and dashboard initialized.', true); 
+        // Apply theme from localStorage after data is processed and elements are ready
+        applyInitialTheme(); 
+        // Check for URL params to apply filters
+        applyFiltersFromURL();
+
     } catch (error) {
         console.error("Error during processAndInitialize:", error);
-        // Show a generic error to the user and ensure the S3 spinner is hidden.
         showErrorMessage("An error occurred while initializing the dashboard. Please try refreshing.", false); 
     } finally {
-        // This finally block ensures hideProcessing is called even if an unexpected error 
-        // occurred that wasn't caught and handled by showErrorMessage within the try block,
-        // or if showSuccessMessage wasn't reached.
         hideProcessing(); 
     }
 }
@@ -607,14 +685,12 @@ function loadDataFromS3() {
 
 // --- Unified Search, Suggestions, and Filtering Logic ---
 function applyFilter(searchTerm, filterType = null, filterValue = null) { 
-    // showGlobalLoader(); // Removed
     setTimeout(() => { 
         try {
             let filteredData;
             let displaySearchTerm = searchTerm; 
             let isPrimeSpecificFilter = false;
 
-            // Control visibility of general charts that don't make sense for a single prime view
             const marketShareCard = document.getElementById('marketShareChartCard');
             const primeContractorsCard = document.getElementById('primeContractorsChartCard');
 
@@ -625,7 +701,6 @@ function applyFilter(searchTerm, filterType = null, filterValue = null) {
                 displaySearchTerm = `Prime: ${primeToFilter}`;
                 renderPrimeDetailView(primeToFilter, filteredData); 
                 primeDetailViewSection.classList.remove('hidden');
-                // Hide general prime charts when a specific prime is selected
                 if(marketShareCard) marketShareCard.classList.add('hidden');
                 if(primeContractorsCard) primeContractorsCard.classList.add('hidden');
 
@@ -677,7 +752,7 @@ function applyFilter(searchTerm, filterType = null, filterValue = null) {
                 if(primeContractorsCard) primeContractorsCard.classList.remove('hidden');
             }
 
-            initializeCoreVisuals(filteredData, isPrimeSpecificFilter); // Pass flag
+            initializeCoreVisuals(filteredData, isPrimeSpecificFilter); 
             initializePrimeProfilesSection(filteredData); 
             initializeContractExpirationCalendarSection(filteredData);
             updateActiveFilterIndicator(displaySearchTerm, filteredData.length);
@@ -685,15 +760,12 @@ function applyFilter(searchTerm, filterType = null, filterValue = null) {
             unifiedSearchSuggestions.classList.add('hidden');
         } catch (error) {
             console.error("Error during filter application:", error);
-        } finally {
-            // hideGlobalLoader(); // Removed
-        }
+        } 
     }, 10); 
 }
 
 
 function clearAllFilters() {
-    // showGlobalLoader(); // Removed
     setTimeout(() => {
         try {
             unifiedSearchInput.value = '';
@@ -702,19 +774,16 @@ function clearAllFilters() {
             unifiedSearchSuggestions.classList.add('hidden');
             primeDetailViewSection.classList.add('hidden'); 
             
-            // Ensure general charts are visible when all filters are cleared
             const marketShareCard = document.getElementById('marketShareChartCard');
             const primeContractorsCard = document.getElementById('primeContractorsChartCard');
             if(marketShareCard) marketShareCard.classList.remove('hidden');
             if(primeContractorsCard) primeContractorsCard.classList.remove('hidden');
 
-            initializeCoreVisuals(parsedData, false); // Pass false for isPrimeSpecificFilter
+            initializeCoreVisuals(parsedData, false); 
             initializePrimeProfilesSection(parsedData); 
             initializeContractExpirationCalendarSection(parsedData); 
         } catch (error) {
             console.error("Error during clearing filters:", error);
-        } finally {
-            // hideGlobalLoader(); // Removed
         }
     }, 10);
 }
@@ -792,11 +861,11 @@ function setupUnifiedSearch() {
             unifiedSearchSuggestions.classList.remove('hidden');
             Array.from(suggestions.values()).forEach(sugg => {
                 const item = document.createElement('div');
-                item.className = 'suggestion-item';
+                item.className = 'suggestion-item dark:hover:bg-gray-600'; // Added dark mode hover
                 item.innerHTML = (typeof sugg.termForDisplayHTML === 'string' && sugg.termForDisplayHTML.length > 60 ? sugg.termForDisplayHTML.substring(0, 57) + '...' : sugg.termForDisplayHTML);
                 
                 const typeLabel = document.createElement('span');
-                typeLabel.className = 'type-label';
+                typeLabel.className = 'type-label dark:bg-gray-500 dark:text-gray-200'; // Added dark mode label style
                 let displayType = sugg.type;
                 if (sugg.type === 'primeName') displayType = 'Prime';
                 else if (sugg.type === 'naicsCode') displayType = 'NAICS';
@@ -813,7 +882,7 @@ function setupUnifiedSearch() {
             });
         } else {
             unifiedSearchSuggestions.classList.remove('hidden'); 
-            unifiedSearchSuggestions.innerHTML = `<div class="p-2 text-sm text-gray-500">No specific suggestions. Press Enter to search all fields.</div>`;
+            unifiedSearchSuggestions.innerHTML = `<div class="p-2 text-sm text-gray-500 dark:text-gray-400">No specific suggestions. Press Enter to search all fields.</div>`;
         }
     }, 300));
 
@@ -837,18 +906,24 @@ function setupUnifiedSearch() {
 function initializeCoreVisuals(data, isPrimeSpecificView = false) { 
     updateStatistics(data);
     
-    // Conditionally render or clear these charts based on the view
     const marketShareCard = document.getElementById('marketShareChartCard');
     const primeContractorsCard = document.getElementById('primeContractorsChartCard');
 
     if (isPrimeSpecificView) {
         if (charts.marketShareChart) { charts.marketShareChart.destroy(); charts.marketShareChart = null; }
-        if (marketShareCard) marketShareCard.querySelector('.chart-container').innerHTML = `<div class="chart-no-data">Market share not applicable for single prime view.</div>`;
+        if (marketShareCard && marketShareCard.querySelector('.chart-container')) marketShareCard.querySelector('.chart-container').innerHTML = `<div class="chart-no-data">Market share not applicable for single prime view.</div>`;
         
         if (charts.primeContractorsChart) { charts.primeContractorsChart.destroy(); charts.primeContractorsChart = null; }
-        if (primeContractorsCard) primeContractorsCard.querySelector('.chart-container').innerHTML = `<div class="chart-no-data">Top primes not applicable for single prime view.</div>`;
+        if (primeContractorsCard && primeContractorsCard.querySelector('.chart-container')) primeContractorsCard.querySelector('.chart-container').innerHTML = `<div class="chart-no-data">Top primes not applicable for single prime view.</div>`;
     } else {
+        if (marketShareCard && !marketShareCard.querySelector('canvas#marketShareChart')) { 
+            marketShareCard.querySelector('.chart-container').innerHTML = `<canvas id="marketShareChart"></canvas>`;
+        }
         createMarketShareChart(data); 
+        
+        if (primeContractorsCard && !primeContractorsCard.querySelector('canvas#primeContractorsChart')) { 
+            primeContractorsCard.querySelector('.chart-container').innerHTML = `<canvas id="primeContractorsChart"></canvas>`;
+        }
         createPrimeContractorsChart(data);
     }
     
@@ -876,11 +951,11 @@ function updateStatistics(data) {
 
 // --- Chart Creation Functions ---
 function createChart(canvasId, type, data, options, noDataMessage = "No data available for current selection.") { 
-    const chartContainer = document.getElementById(canvasId)?.parentElement; // Added optional chaining
-    if (!chartContainer) {
-        // console.warn(`Chart container for ${canvasId} not found.`);
-        return; // Exit if canvas container doesn't exist (e.g. if chart card is hidden)
+    const canvasElement = document.getElementById(canvasId);
+    if (!canvasElement) {
+        return; 
     }
+    const chartContainer = canvasElement.parentElement; 
     
     let isEmpty = true;
     if (data && data.datasets && data.datasets.length > 0) {
@@ -916,7 +991,7 @@ function createChart(canvasId, type, data, options, noDataMessage = "No data ava
 
 function createPrimeContractorsChart(data) { 
     const canvasElement = document.getElementById('primeContractorsChart');
-    if (!canvasElement) return; // Don't try to create if element is hidden/gone
+    if (!canvasElement) return; 
 
     const primeValues = {};
     data.forEach(r => { if (r['Legal Business Name']) primeValues[r['Legal Business Name']] = (primeValues[r['Legal Business Name']] || 0) + parseCurrencyValue(r['Base and All Options Value (Total Contract Value)']); });
@@ -1091,7 +1166,7 @@ function createTimelineChart(data) {
 
 function createMarketShareChart(data) {
     const canvasElement = document.getElementById('marketShareChart');
-    if (!canvasElement) return; // Don't try to create if element is hidden/gone
+    if (!canvasElement) return; 
 
     const primeValues = {};
     data.forEach(r => {
@@ -1135,9 +1210,9 @@ function initializePrimeProfilesSection(data) {
             .forEach(p => { 
                 count++;
                 const card = document.createElement('div');
-                card.className = 'p-3 md:p-4 bg-gray-50 rounded-lg border shadow hover:shadow-lg transition-shadow duration-150'; 
+                card.className = 'p-3 md:p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border dark:border-gray-600 shadow hover:shadow-lg transition-shadow duration-150'; 
                 card.innerHTML = `
-                    <h4 class="font-semibold text-blue-700 truncate cursor-pointer hover:underline" title="${p.name}" onclick="setUnifiedSearchTerm('${p.name.replace(/'/g, "\\'")}', 'primeName')">${p.name}</h4>
+                    <h4 class="font-semibold text-blue-700 dark:text-blue-400 truncate cursor-pointer hover:underline" title="${p.name}" onclick="setUnifiedSearchTerm('${p.name.replace(/'/g, "\\'")}', 'primeName')">${p.name}</h4>
                     <p class="text-xs md:text-sm">Contracts: ${p.contracts.toLocaleString()}</p>
                     <p class="text-xs md:text-sm">Value: ${formatCurrency(p.totalValue)}</p>
                     <p class="text-xs mt-1 truncate" title="Top NAICS: ${Array.from(p.naics).slice(0,3).join(', ')}">Top NAICS: ${Array.from(p.naics).slice(0,3).join(', ')}</p>
@@ -1145,7 +1220,7 @@ function initializePrimeProfilesSection(data) {
                     <button class="mt-2 text-xs bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 transition-colors duration-150 ease-in-out focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none" onclick="setUnifiedSearchTerm('${p.name.replace(/'/g, "\\'")}', 'primeName')">Filter Dashboard by this Prime</button>`; 
                 primeProfilesContainer.appendChild(card);
         });
-        if(count === 0) primeProfilesContainer.innerHTML = `<p class="p-4 col-span-full text-center text-gray-500">No primes match current filters or profile search.</p>`;
+        if(count === 0) primeProfilesContainer.innerHTML = `<p class="p-4 col-span-full text-center text-gray-500 dark:text-gray-400">No primes match current filters or profile search.</p>`;
     }
     primeProfilesSearchInput.addEventListener('input', _.debounce(() => renderCards(primeProfilesSearchInput.value), 300));
     renderCards(); 
@@ -1169,22 +1244,17 @@ function renderPrimeDetailView(primeName, primeSpecificData) {
     });
 
     primeDetailStats.innerHTML = `
-        <h4 class="font-semibold text-gray-600">Key Stats</h4>
-        <p>UEI: ${createEntityLink(primeUEI, primeUEI)}</p> 
-        ${parentName && parentName !== 'N/A' ? `<p>Parent: ${createEntityLink(parentUEI, parentName)}</p>` : ''}
-        <p>Total Contracts (in current filter): ${primeSpecificData.length.toLocaleString()}</p>
-        <p>Total Value (in current filter): ${formatCurrency(totalValue)}</p>
-        <p>Avg. Contract Value (in current filter): ${formatCurrency(primeSpecificData.length > 0 ? totalValue / primeSpecificData.length : 0)}</p>
+        <p><strong>UEI:</strong> ${createEntityLink(primeUEI, primeUEI)}</p> 
+        ${parentName && parentName !== 'N/A' ? `<p><strong>Parent:</strong> ${createEntityLink(parentUEI, parentName)}</p>` : ''}
+        <p><strong>Total Contracts (current view):</strong> ${primeSpecificData.length.toLocaleString()}</p>
+        <p><strong>Total Value (current view):</strong> ${formatCurrency(totalValue)}</p>
+        <p><strong>Avg. Contract Value (current view):</strong> ${formatCurrency(primeSpecificData.length > 0 ? totalValue / primeSpecificData.length : 0)}</p>
     `;
     
-    // Clear previous charts if they exist in the detail view (they were removed, but good practice if re-added)
+    // Clear previous charts if they exist in the detail view 
     if(charts.primeDetailNaicsChart) { charts.primeDetailNaicsChart.destroy(); delete charts.primeDetailNaicsChart;}
     if(charts.primeDetailAgenciesChart) { charts.primeDetailAgenciesChart.destroy(); delete charts.primeDetailAgenciesChart;}
-    // Ensure the canvas containers are empty or re-created if charts were removed
-    document.getElementById('primeDetailNaicsChart').parentElement.innerHTML = '<canvas id="primeDetailNaicsChart"></canvas>';
-    document.getElementById('primeDetailAgenciesChart').parentElement.innerHTML = '<canvas id="primeDetailAgenciesChart"></canvas>';
-
-
+    
     currentPrimeDetailViewPage = 1; 
     renderPrimeDetailContractsTable(primeSpecificData, currentPrimeDetailViewPage); 
     primeDetailViewSection.classList.remove('hidden');
@@ -1195,14 +1265,14 @@ function renderPrimeDetailContractsTable(contracts, page) {
     const end = start + ITEMS_PER_PAGE_MODAL_TABLE;
     const pageContracts = contracts.slice(start, end);
     
-    let tableHTML = `<div class="table-responsive"><table class="min-w-full divide-y divide-gray-200 text-xs">
-        <thead class="bg-gray-50"><tr>
-            <th class="px-2 py-2 text-left font-medium">PIID</th>
-            <th class="px-2 py-2 text-left font-medium">Agency</th>
-            <th class="px-2 py-2 text-left font-medium">NAICS</th>
-            <th class="px-2 py-2 text-left font-medium">Value</th>
-            <th class="px-2 py-2 text-left font-medium">End Date</th>
-        </tr></thead><tbody class="bg-white divide-y divide-gray-200">`;
+    let tableHTML = `<div class="table-responsive"><table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-xs">
+        <thead class="bg-gray-50 dark:bg-gray-700"><tr>
+            <th class="px-2 py-2 text-left font-medium text-gray-500 dark:text-gray-300">PIID</th>
+            <th class="px-2 py-2 text-left font-medium text-gray-500 dark:text-gray-300">Agency</th>
+            <th class="px-2 py-2 text-left font-medium text-gray-500 dark:text-gray-300">NAICS</th>
+            <th class="px-2 py-2 text-left font-medium text-gray-500 dark:text-gray-300">Value</th>
+            <th class="px-2 py-2 text-left font-medium text-gray-500 dark:text-gray-300">End Date</th>
+        </tr></thead><tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">`;
     
     pageContracts.forEach(c => {
         tableHTML += `<tr>
@@ -1218,9 +1288,9 @@ function renderPrimeDetailContractsTable(contracts, page) {
     const totalPages = Math.ceil(contracts.length / ITEMS_PER_PAGE_MODAL_TABLE);
     if (totalPages > 1) {
          tableHTML += `<div class="mt-3 flex justify-between items-center text-xs">
-            <button id="prevPageBtnPrimeDetailView" class="px-2 py-1 border rounded ${page === 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100 transition-colors'}" ${page === 1 ? 'disabled' : ''}>Previous</button>
+            <button id="prevPageBtnPrimeDetailView" class="px-2 py-1 border dark:border-gray-600 rounded ${page === 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors'}" ${page === 1 ? 'disabled' : ''}>Previous</button>
             <span>Page ${page} of ${totalPages}</span>
-            <button id="nextPageBtnPrimeDetailView" class="px-2 py-1 border rounded ${page === totalPages ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100 transition-colors'}" ${page === totalPages ? 'disabled' : ''}>Next</button>
+            <button id="nextPageBtnPrimeDetailView" class="px-2 py-1 border dark:border-gray-600 rounded ${page === totalPages ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors'}" ${page === totalPages ? 'disabled' : ''}>Next</button>
         </div>`;
     }
     
@@ -1302,19 +1372,19 @@ function initializeContractExpirationCalendarSection(data) {
         const daysInM = lastD.getDate(), firstDOW = firstD.getDay();
         let html = ''; const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
         dayNames.forEach(d => {html += `<div class="calendar-day-header text-xs sm:text-sm">${d}</div>`;});
-        for(let i=0; i<firstDOW; i++) html+='<div class="p-1 sm:p-2 border bg-gray-50 min-h-[60px] sm:min-h-[80px]"></div>';
+        for(let i=0; i<firstDOW; i++) html+='<div class="p-1 sm:p-2 border bg-gray-50 dark:bg-gray-800 dark:border-gray-700 min-h-[60px] sm:min-h-[80px]"></div>';
         for(let day=1; day<=daysInM; day++) {
             const currentDateObj = new Date(year, month, day);
             const dEvents = events.filter(e=>e.date.getFullYear()===year && e.date.getMonth()===month && e.date.getDate()===day);
-            let dayBgClass = 'bg-white';
-            if (dEvents.length > 0) dayBgClass = 'bg-blue-50';
-            if (dEvents.length > 2) dayBgClass = 'bg-blue-100'; 
-            if (dEvents.length > 5) dayBgClass = 'bg-blue-200'; 
+            let dayBgClass = 'bg-white dark:bg-gray-800 dark:border-gray-700';
+            if (dEvents.length > 0) dayBgClass = 'bg-blue-50 dark:bg-blue-900 dark:border-blue-700';
+            if (dEvents.length > 2) dayBgClass = 'bg-blue-100 dark:bg-blue-800 dark:border-blue-600'; 
+            if (dEvents.length > 5) dayBgClass = 'bg-blue-200 dark:bg-blue-700 dark:border-blue-500'; 
 
-            html += `<div class="calendar-day-cell p-1 sm:p-2 border min-h-[60px] sm:min-h-[80px] relative ${dayBgClass}" 
+            html += `<div class="calendar-day-cell p-1 sm:p-2 border dark:border-gray-700 min-h-[60px] sm:min-h-[80px] relative ${dayBgClass}" 
                          ${dEvents.length > 0 ? `onclick="showCalendarDayDetailsModal(new Date(${year},${month},${day}), JSON.parse(this.dataset.eventsJson))" data-events-json='${JSON.stringify(dEvents).replace(/'/g, "&apos;")}'` : ''}
                          role="button" tabindex="0" aria-label="${dEvents.length > 0 ? dEvents.length + ' contracts ending' : 'No contracts ending'} on ${formatDate(currentDateObj)}">
-                        <div class="font-semibold text-right text-gray-700 text-xs sm:text-sm">${day}</div>`;
+                        <div class="font-semibold text-right text-gray-700 dark:text-gray-300 text-xs sm:text-sm">${day}</div>`;
             dEvents.slice(0,2).forEach(e => {html+=`<div class="calendar-event" title="${e.prime} (${formatCurrency(e.value)}) - ID: ${e.id}">${e.prime?e.prime.substring(0,8)+(e.prime.length>8?'...':''):'Contract'}</div>`;});
             if(dEvents.length>2) html+=`<div class="text-xs mt-1">${dEvents.length-2} more</div>`;
             html += `</div>`;
@@ -1354,14 +1424,14 @@ function showCalendarDayDetailsModal(dateObj, eventsOnDate) {
         const end = start + ITEMS_PER_PAGE_MODAL_TABLE;
         const pageEvents = sortedData.slice(start, end);
 
-        let tableHTML = `<div class="table-responsive"><table class="min-w-full divide-y divide-gray-200 text-xs">
-            <thead class="bg-gray-50"><tr> 
-                <th class="px-2 py-2 text-left font-medium" data-sort="id">PIID ${currentSort.column === 'id' ? (currentSort.order === 'asc' ? '▲' : '▼') : ''}</th>
-                <th class="px-2 py-2 text-left font-medium" data-sort="prime">Prime ${currentSort.column === 'prime' ? (currentSort.order === 'asc' ? '▲' : '▼') : ''}</th>
-                <th class="px-2 py-2 text-left font-medium" data-sort="agency">Agency ${currentSort.column === 'agency' ? (currentSort.order === 'asc' ? '▲' : '▼') : ''}</th>
-                <th class="px-2 py-2 text-left font-medium" data-sort="value">Value ${currentSort.column === 'value' ? (currentSort.order === 'asc' ? '▲' : '▼') : ''}</th>
+        let tableHTML = `<div class="table-responsive"><table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-xs">
+            <thead class="bg-gray-50 dark:bg-gray-700"><tr> 
+                <th class="px-2 py-2 text-left font-medium text-gray-500 dark:text-gray-300" data-sort="id">PIID ${currentSort.column === 'id' ? (currentSort.order === 'asc' ? '▲' : '▼') : ''}</th>
+                <th class="px-2 py-2 text-left font-medium text-gray-500 dark:text-gray-300" data-sort="prime">Prime ${currentSort.column === 'prime' ? (currentSort.order === 'asc' ? '▲' : '▼') : ''}</th>
+                <th class="px-2 py-2 text-left font-medium text-gray-500 dark:text-gray-300" data-sort="agency">Agency ${currentSort.column === 'agency' ? (currentSort.order === 'asc' ? '▲' : '▼') : ''}</th>
+                <th class="px-2 py-2 text-left font-medium text-gray-500 dark:text-gray-300" data-sort="value">Value ${currentSort.column === 'value' ? (currentSort.order === 'asc' ? '▲' : '▼') : ''}</th>
             </tr></thead>
-            <tbody class="bg-white divide-y divide-gray-200">`;
+            <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">`;
         pageEvents.forEach(event => {
             tableHTML += `<tr>
                 <td class="px-2 py-1 whitespace-nowrap">${createAwardLink(event.id)}</td>
@@ -1375,9 +1445,9 @@ function showCalendarDayDetailsModal(dateObj, eventsOnDate) {
         const totalPages = Math.ceil(sortedData.length / ITEMS_PER_PAGE_MODAL_TABLE);
         if (totalPages > 1) { 
             tableHTML += `<div class="mt-3 flex justify-between items-center text-xs">
-                <button id="prevPageBtnCal" class="px-2 py-1 border rounded ${page === 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100 transition-colors'}" ${page === 1 ? 'disabled' : ''}>Previous</button>
+                <button id="prevPageBtnCal" class="px-2 py-1 border dark:border-gray-600 rounded ${page === 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors'}" ${page === 1 ? 'disabled' : ''}>Previous</button>
                 <span>Page ${page} of ${totalPages}</span>
-                <button id="nextPageBtnCal" class="px-2 py-1 border rounded ${page === totalPages ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100 transition-colors'}" ${page === totalPages ? 'disabled' : ''}>Next</button>
+                <button id="nextPageBtnCal" class="px-2 py-1 border dark:border-gray-600 rounded ${page === totalPages ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors'}" ${page === totalPages ? 'disabled' : ''}>Next</button>
             </div>`;
         }
         
@@ -1386,7 +1456,7 @@ function showCalendarDayDetailsModal(dateObj, eventsOnDate) {
             tableContainer.innerHTML = tableHTML;
         } else { 
             genericModalBody.innerHTML = `
-                <p class="mb-3 text-sm text-gray-600">Total Contracts Ending: ${sortedData.length}</p>
+                <p class="mb-3 text-sm text-gray-600 dark:text-gray-400">Total Contracts Ending: ${sortedData.length}</p>
                 <div id="calendarDayTableContainer">${tableHTML}</div>`;
         }
 
@@ -1419,7 +1489,7 @@ function showCalendarDayDetailsModal(dateObj, eventsOnDate) {
     }
     
     const initialModalHTML = `
-        <p class="mb-3 text-sm text-gray-600">Total Contracts Ending: ${eventsOnDate.length}</p>
+        <p class="mb-3 text-sm text-gray-600 dark:text-gray-400">Total Contracts Ending: ${eventsOnDate.length}</p>
         <div id="calendarDayTableContainer">
             </div>`;
 
@@ -1456,8 +1526,89 @@ csvFileInput.addEventListener('change', function(e) {
     });
 });
 
+// --- Theme Toggle & Share View Logic ---
+function applyInitialTheme() {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark') {
+        document.documentElement.classList.add('dark');
+        themeIconSun.classList.add('hidden');
+        themeIconMoon.classList.remove('hidden');
+    } else {
+        document.documentElement.classList.remove('dark');
+        themeIconSun.classList.remove('hidden');
+        themeIconMoon.classList.add('hidden');
+    }
+    // Update chart default colors for the current theme
+    updateChartDefaults();
+}
+
+function updateChartDefaults() {
+    const isDarkMode = document.documentElement.classList.contains('dark');
+    const textColor = isDarkMode ? '#e5e7eb' : '#4b5563'; // Tailwind gray-200 and gray-600
+    const gridColor = isDarkMode ? 'rgba(107, 114, 128, 0.3)' : 'rgba(209, 213, 219, 0.3)'; // gray-500/30 and gray-300/30
+
+    Chart.defaults.color = textColor;
+    Chart.defaults.borderColor = gridColor;
+    
+    // Re-render all charts to apply new defaults
+    // This requires the current filtered data to be accessible or passed appropriately
+    // For simplicity, we'll re-apply the current filter which will re-initialize charts
+    if (parsedData && parsedData.length > 0) { // Ensure data is loaded
+        applyFilter(unifiedSearchInput.value.trim());
+    }
+}
+
+
+themeToggleBtn.addEventListener('click', () => {
+    document.documentElement.classList.toggle('dark');
+    if (document.documentElement.classList.contains('dark')) {
+        localStorage.setItem('theme', 'dark');
+        themeIconSun.classList.add('hidden');
+        themeIconMoon.classList.remove('hidden');
+    } else {
+        localStorage.setItem('theme', 'light');
+        themeIconSun.classList.remove('hidden');
+        themeIconMoon.classList.add('hidden');
+    }
+    updateChartDefaults();
+});
+
+shareViewBtn.addEventListener('click', () => {
+    const currentSearch = unifiedSearchInput.value.trim();
+    const url = new URL(window.location.href);
+    if (currentSearch) {
+        url.searchParams.set('search', currentSearch);
+    } else {
+        url.searchParams.delete('search');
+    }
+    // Add other filter states to URL if needed (e.g., chart specific filters)
+    
+    navigator.clipboard.writeText(url.toString()).then(() => {
+        shareToast.classList.remove('hidden');
+        setTimeout(() => {
+            shareToast.classList.add('hidden');
+        }, 2000);
+    }).catch(err => {
+        console.error('Failed to copy URL: ', err);
+        alert('Failed to copy link. Please copy the URL from your browser bar.');
+    });
+});
+
+function applyFiltersFromURL() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const searchParam = urlParams.get('search');
+    if (searchParam) {
+        unifiedSearchInput.value = searchParam;
+        applyFilter(searchParam);
+    }
+}
+
+
 // --- Page Load ---
-document.addEventListener('DOMContentLoaded', () => loadDataFromS3());
+document.addEventListener('DOMContentLoaded', () => {
+    loadDataFromS3(); 
+    // Initial theme is applied in processAndInitialize after data load
+});
 
 </script>
 </body>
