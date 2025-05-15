@@ -617,7 +617,7 @@ const shareToast = document.getElementById('shareToast');
 // --- Global Variables ---
 let parsedData = [];
 const charts = {}; 
-const S3_CSV_URL = 'https://subhoodata.s3.us-east-1.amazonaws.com/data/sbaall.csv';
+const S3_CSV_URL = 'https://subhoodata.s3.us-east-1.amazonaws.com/data/main.csv';
 let currentMainStateChartFilter = 'count';
 const ITEMS_PER_PAGE_MODAL_TABLE = 10; 
 let currentCalendarDate = new Date(); 
@@ -811,23 +811,6 @@ function loadDataFromS3() {
         showErrorMessage(errorMsg, true); 
     });
 }
-function loadCompanyMapFromS3() {
-  Papa.parse("https://subhoodata.s3.us-east-1.amazonaws.com/data/companies.csv", {
-    header: true,
-    download: true,
-    skipEmptyLines: true,
-    complete: function(results) {
-      if (results && results.data && results.data.length > 0) {
-        initializeContractorMap(results.data);
-      } else {
-        console.error("companies.csv is empty or invalid.");
-      }
-    },
-    error: function(err) {
-      console.error("Failed to load companies.csv from S3:", err);
-    }
-  });
-}
 
 function initializeContractorMap(data) {
   if (!contractorMap) {
@@ -849,14 +832,14 @@ function initializeContractorMap(data) {
 
   // Add markers
   data.forEach(row => {
-    if (row.Location && row["Company Name"]) {
+    if (row.Location && row["Legal Business Name"]) {
       const [latStr, lngStr] = row.Location.split(',').map(s => s.trim());
       const lat = parseFloat(latStr);
       const lng = parseFloat(lngStr);
       if (!isNaN(lat) && !isNaN(lng)) {
         const marker = L.marker([lat, lng]);
-        marker.bindPopup(`<strong>${row["Company Name"]}</strong><br>${row.City}, ${row.State}`);
-        marker.bindTooltip(row["Company Name"], { direction: 'top' });
+        marker.bindPopup(`<strong>${row["Legal Business Name"]}</strong><br>${row.City}, ${row.State}`);
+		marker.bindTooltip(row["Legal Business Name"], { direction: 'top' });
         contractorClusterGroup.addLayer(marker);
       }
     }
