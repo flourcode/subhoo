@@ -356,6 +356,21 @@
         #activeFilterIndicator button:hover {
             background-color: rgba(132, 88, 179, 0.8); 
         }
+		.custom-marker {
+  background-color: var(--accent);
+  border: 2px solid var(--border-level-2);
+  border-radius: 50%;
+  width: 12px;
+  height: 12px;
+  box-shadow: 0 0 0 2px var(--surface-level-1);
+  transition: transform 0.2s ease;
+}
+
+.custom-marker:hover {
+  transform: scale(1.5);
+  box-shadow: 0 0 0 4px var(--accent-secondary);
+}
+
     </style>
 </head>
 <body class="text-[var(--text-primary)] p-2 sm:p-4 md:p-8">
@@ -856,7 +871,7 @@ function initializeContractorMap(data) {
     const tooltipText = `${businessName}${locationText ? ` — ${locationText}` : ""}`;
     const popupText = `<strong>${businessName}</strong>${locationText ? `<br>${locationText}` : ""}`;
 
-    const marker = L.marker([lat, lng]);
+    const marker = createStyledMarker(lat, lng, businessName);
     marker.bindTooltip(tooltipText, { direction: 'top' });
     marker.bindPopup(popupText);
     contractorClusterGroup.addLayer(marker);
@@ -865,6 +880,19 @@ function initializeContractorMap(data) {
   setTimeout(() => {
     contractorMap.invalidateSize();
   }, 200);
+}
+function createStyledMarker(lat, lng, label) {
+  const markerHtml = `
+    <div class="custom-marker" title="${label}"></div>
+  `;
+  return L.marker([lat, lng], {
+    icon: L.divIcon({
+      className: '',
+      html: markerHtml,
+      iconSize: [16, 16],
+      iconAnchor: [8, 8]
+    })
+  });
 }
 
 // --- Unified Search, Suggestions, and Filtering Logic ---
