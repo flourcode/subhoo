@@ -22,36 +22,42 @@
             font-family: Inter, sans-serif;
             font-feature-settings: 'liga' 1, 'calt' 1;
 
-            /* 5-Color Palette */
-            --ice-cold: #a0d2eb;
-            --freeze-purple: #ffffff;
-            --medium-purple: #d0bdf4;
-            --purple-pain: #8458B3;
-            --heavy-purple: #a28089;
+  /* Core Named Colors */
+  --sky-blue:        #a0d2eb;  
+  --white:           #ffffff;  
+  --lavender:        #d0bdf4;  
+  --royal-purple:    #8458B3;  
+  --dusty-rose:      #a28089;   
+  --periwinkle:      #b4a7d6;  
 
-            /* Light Mode Colors (Using the palette) */
-            --background: var(--freeze-purple);
-            --on-accent: #ffffff;
-            --accent: var(--purple-pain);
-            --accent-secondary: rgba(132, 88, 179, 0.15);
-            --gradient-bg-start: rgba(132, 88, 179, 0.08);
-            --gradient-bg-end: rgba(132, 88, 179, 0);
-            --text-primary: #272727;
-            --text-secondary: #272727;
-            --text-tertiary: #272727;
-            --border-level-1: rgba(160, 210, 235, 0.3);
-            --border-level-2: rgba(160, 210, 235, 0.5);
-            --border-level-3: rgba(160, 210, 235, 0.8);
-            --surface-level-1: rgba(229, 234, 245, 0.8);
-            --surface-level-2: rgba(208, 189, 244, 0.15);
-            --surface-level-3: rgba(208, 189, 244, 0.3);
+  /* Light Mode Colors (Using the palette) */
+  --background: var(--white);
+  --on-accent: #ffffff;
+  --accent: var(--royal-purple);
+  --accent-secondary: rgba(132, 88, 179, 0.15);
+  --gradient-bg-start: rgba(132, 88, 179, 0.08);
+  --gradient-bg-end: rgba(132, 88, 179, 0);
 
-            /* Chart Colors */
-            --chart-accent-1: var(--purple-pain);
-            --chart-accent-2: var(--ice-cold);
-            --chart-accent-3: var(--medium-purple);
-            --chart-accent-4: var(--heavy-purple);
-            --chart-accent-5: #b4a7d6;
+  --text-primary: #272727;
+  --text-secondary: #272727;
+  --text-tertiary: #272727;
+
+  --border-level-1: rgba(160, 210, 235, 0.3);
+  --border-level-2: rgba(160, 210, 235, 0.5);
+  --border-level-3: rgba(160, 210, 235, 0.8);
+
+  --surface-level-1: rgba(229, 234, 245, 0.8);
+  --surface-level-2: rgba(208, 189, 244, 0.15);
+  --surface-level-3: rgba(208, 189, 244, 0.3);
+
+  /* Chart Accent Colors */
+  --chart-accent-1: var(--royal-purple);
+  --chart-accent-2: var(--sky-blue);
+  --chart-accent-3: var(--lavender);
+  --chart-accent-4: var(--dusty-rose);
+  --chart-accent-5: var(--periwinkle);
+
+
 
             /* General variables */
             --header-font-weight: 600;
@@ -128,79 +134,49 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-        .calendar-day-header {
-            font-weight: var(--header-font-weight);
-            text-align: center;
-            padding: 5px 0;
-            background-color: var(--accent); 
-            color: var(--on-accent);
-            border-radius: 4px;
-        }
-        .calendar-event {
-            padding: 3px 5px;
-            background-color: var(--accent); 
-            color: var(--on-accent);
-            border-radius: 3px;
-            margin-bottom: 3px;
-            font-size: 0.6875rem; 
-            cursor: default; 
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        html.dark .calendar-event {
-            background-color: var(--accent);
-        }
-        .calendar-day-cell {
-            cursor: pointer;
-            transition: background-color 0.2s;
-            min-width: 60px; 
-            border-color: var(--border-level-1);
-            background-color: var(--background);
-        }
+/* Base calendar day cell */
+.calendar-day-cell {
+  @apply cursor-pointer transition-colors;
+  background-color: var(--background);
+  border-color: var(--border-level-1);
+}
 
-        /* For actual numbered empty days */
-        .calendar-day-cell.bg-white { 
-            background-color: var(--surface-level-1) !important; 
-        }
-        html.dark .calendar-day-cell.bg-white { 
-            background-color: var(--surface-level-1) !important;
-        }
-        
-        /* For FILLER days at the start/end of the month grid */
-        .calendar-day-cell.bg-gray-50 { 
-            background-color: var(--surface-level-1) !important;
-        }
-        html.dark .calendar-day-cell.bg-gray-50 {
-            background-color: var(--surface-level-1) !important;
-        }
-        
-        /* Event day styles - All densities now use the same color */
-        .calendar-day-cell.bg-blue-50,
-        .calendar-day-cell.bg-blue-100,
-        .calendar-day-cell.bg-blue-200 { 
-            background-color: var(--accent-secondary) !important;
-        } 
-        html.dark .calendar-day-cell.bg-blue-50,
-        html.dark .calendar-day-cell.bg-blue-100,
-        html.dark .calendar-day-cell.bg-blue-200 { 
-            background-color: var(--accent-secondary) !important;
-        } 
+/* Filler cells (start/end of month, using bg-gray-50 from Tailwind) */
+.calendar-day-cell.bg-gray-50 {
+  background-color: var(--background) !important;
+}
+html.dark .calendar-day-cell.bg-gray-50 {
+  background-color: var(--surface-level-1) !important;
+}
 
-        .calendar-day-cell:hover:not(.bg-gray-50) {
-            background-color: var(--medium-purple) !important; 
-        }
-        html.dark .calendar-day-cell:hover:not(.bg-gray-50) {
-            background-color: var(--surface-level-3) !important;
-        }
+/* Numbered but empty days (bg-white from Tailwind) */
+.calendar-day-cell.bg-white {
+  background-color: var(--surface-level-1) !important;
+}
+html.dark .calendar-day-cell.bg-white {
+  background-color: var(--surface-level-1) !important;
+}
 
-        .calendar-grid-wrapper { 
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch; 
-        }
-        .calendar-grid-wrapper .grid { 
-            min-width: 450px; 
-        }
+/* Event days (usually marked bg-blue-50 / bg-blue-100 / bg-blue-200 in Tailwind) */
+.calendar-day-cell.bg-blue-50,
+.calendar-day-cell.bg-blue-100,
+.calendar-day-cell.bg-blue-200 {
+  background-color: var(--accent-secondary) !important;
+}
+html.dark .calendar-day-cell.bg-blue-50,
+html.dark .calendar-day-cell.bg-blue-100,
+html.dark .calendar-day-cell.bg-blue-200 {
+  background-color: var(--accent-secondary) !important;
+}
+
+/* Hover behavior */
+.calendar-day-cell:hover:not(.bg-gray-50) {
+  background-color: var(--chart-accent-3) !important; /* lavender */
+}
+html.dark .calendar-day-cell:hover:not(.bg-gray-50) {
+  background-color: var(--surface-level-3) !important;
+}
+
 
         .event-tooltip {
             position: absolute;
@@ -830,10 +806,10 @@ function initializeContractorMap(data) {
   if (!contractorMap) {
     contractorMap = L.map('contractorMap').setView([39.8283, -98.5795], 4);
     L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-      attribution: '&copy; <a href="https://carto.com/">CARTO</a>',
-      subdomains: 'abcd',
-      maxZoom: 19
-    }).addTo(contractorMap);
+  attribution: '&copy; <a href="https://carto.com/">CARTO</a>',
+  subdomains: 'abcd',
+  maxZoom: 19
+}).addTo(contractorMap);
   }
 
   if (contractorClusterGroup) {
