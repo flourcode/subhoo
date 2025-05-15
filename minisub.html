@@ -506,7 +506,10 @@
             </section>
             <section id="contractorMapSection" class="bg-[var(--surface-level-1)] p-4 rounded-lg shadow-md mb-4 border border-[var(--border-level-1)]">
   <h2 class="text-lg font-semibold text-[var(--accent)] mb-2">Contractor Headquarters Map</h2>
-  <div id="contractorMap" style="height: 500px; width: 100%;" class="rounded border border-[var(--border-level-2)]"></div>
+  <div id="contractorMap" style="height: 500px; width: 100%;" class="rounded border border-[var(--border-level-2)]"></div><button id="resetMapBtn" class="mt-3 px-4 py-2 bg-[var(--accent)] text-[var(--on-accent)] rounded hover:bg-opacity-90 transition">
+  Reset Map View
+</button>
+
 </section>
 
             <section id="primeProfilesSection" class="bg-[var(--surface-level-1)] p-4 md:p-6 rounded-lg shadow-md mb-4 md:mb-6 border border-[var(--border-level-1)]">
@@ -623,6 +626,8 @@ let isViewingSpecificPrime = false;
 let specificPrimeName = null;      
 let currentPrimeDetailSort = { column: 'endDate', order: 'desc' }; 
 let currentCalendarModalSort = { column: 'prime', order: 'asc' }; 
+let contractorMap; 
+let contractorClusterGroup;
 
 
 // --- Chart Color Palette (Derived from CSS Variables) ---
@@ -825,15 +830,24 @@ function loadCompanyMapFromS3() {
 }
 
 function initializeContractorMap(data) {
-  const map = L.map('contractorMap').setView([39.8283, -98.5795], 4); // Centered on USA
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-  attribution: '&copy; <a href="https://carto.com/">CARTO</a>',
-  subdomains: 'abcd',
-  maxZoom: 19
-}).addTo(map);
+  if (!contractorMap) {
+    contractorMap = L.map('contractorMap').setView([39.8283, -98.5795], 4);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; <a href="https://carto.com/">CARTO</a>',
+      subdomains: 'abcd',
+      maxZoom: 19
+    }).addTo(contractorMap);
+  }
 
-  const markers = L.markerClusterGroup();
+  // Clear previous clusters
+  if (contractorClusterGroup) {
+    contractorClusterGroup.clearLayers();
+  } else {
+    contractorClusterGroup = L.markerClusterGroup();
+    contractorMap.addLayer(contractorClusterGroup);
+  }
 
+  // Add markers
   data.forEach(row => {
     if (row.Location && row["Company Name"]) {
       const [latStr, lngStr] = row.Location.split(',').map(s => s.trim());
@@ -842,17 +856,34 @@ function initializeContractorMap(data) {
       if (!isNaN(lat) && !isNaN(lng)) {
         const marker = L.marker([lat, lng]);
         marker.bindPopup(`<strong>${row["Company Name"]}</strong><br>${row.City}, ${row.State}`);
-		marker.bindTooltip(row["Company Name"], { permanent: false, direction: 'top' });
-		markers.addLayer(marker);
+        marker.bindTooltip(row["Company Name"], { direction: 'top' });
+        contractorClusterGroup.addLayer(marker);
       }
     }
   });
 
-  map.addLayer(markers);
-	setTimeout(() => {
-    map.invalidateSize();
+  // Auto-zoom to fit all visible markers
+  if (contractorClusterGroup.getLayers().length > 0) {
+    contractorMap.fitBounds(contractorClusterGroup.getBounds(), {
+      padding: [20, 20]
+    });
+  }
+
+  // Fix rendering issues on load
+  setTimeout(() => {
+    contractorMap.invalidateSize();
   }, 200);
 }
+document.getElementById('resetMapBtn').addEventListener('click', () => {
+  if (contractorMap && contractorClusterGroup) {
+    const allBounds = contractorClusterGroup.getBounds();
+    if (allBounds.isValid()) {
+      contractorMap.fitBounds(allBounds, { padding: [20, 20] });
+    }
+  }
+});
+
+
 // --- Unified Search, Suggestions, and Filtering Logic ---
 function applyFilter(searchTerm, filterType = null, filterValue = null) { 
     try {
@@ -927,6 +958,7 @@ function applyFilter(searchTerm, filterType = null, filterValue = null) {
         initializeCoreVisuals(filteredData, isViewingSpecificPrime); 
         initializePrimeProfilesSection(filteredData); 
         initializeContractExpirationCalendarSection(filteredData);
+		initializeContractorMap(filteredData);
         updateActiveFilterIndicator(displaySearchTerm, filteredData.length);
         unifiedSearchSuggestions.innerHTML = ''; 
         unifiedSearchSuggestions.classList.add('hidden');
