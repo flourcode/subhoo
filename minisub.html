@@ -839,7 +839,7 @@ function initializeContractorMap(data) {
     }).addTo(contractorMap);
   }
 
-  // Clear previous clusters
+  // Clear or initialize cluster group
   if (contractorClusterGroup) {
     contractorClusterGroup.clearLayers();
   } else {
@@ -847,41 +847,53 @@ function initializeContractorMap(data) {
     contractorMap.addLayer(contractorClusterGroup);
   }
 
+  let validMarkers = 0;
+
   // Add markers
   data.forEach(row => {
     if (row.Location && row["Company Name"]) {
       const [latStr, lngStr] = row.Location.split(',').map(s => s.trim());
       const lat = parseFloat(latStr);
       const lng = parseFloat(lngStr);
-      if (!isNaN(lat) && !isNaN(lng)) {
+      if (!isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0) {
         const marker = L.marker([lat, lng]);
         marker.bindPopup(`<strong>${row["Company Name"]}</strong><br>${row.City}, ${row.State}`);
         marker.bindTooltip(row["Company Name"], { direction: 'top' });
         contractorClusterGroup.addLayer(marker);
+        validMarkers++;
       }
     }
   });
 
-  // Auto-zoom to fit all visible markers
-  if (contractorClusterGroup.getLayers().length > 0) {
-    contractorMap.fitBounds(contractorClusterGroup.getBounds(), {
-      padding: [20, 20]
-    });
+  // Zoom only if markers are valid
+  if (validMarkers > 0) {
+    const bounds = contractorClusterGroup.getBounds();
+    if (bounds.isValid()) {
+      contractorMap.fitBounds(bounds, { padding: [20, 20] });
+    }
+  } else {
+    // Optional: reset view or show a message
+    contractorMap.setView([39.8283, -98.5795], 4); // fallback view
   }
 
-  // Fix rendering issues on load
+  // Ensure proper rendering
   setTimeout(() => {
     contractorMap.invalidateSize();
   }, 200);
 }
-document.getElementById('resetMapBtn').addEventListener('click', () => {
-  if (contractorMap && contractorClusterGroup) {
-    const allBounds = contractorClusterGroup.getBounds();
-    if (allBounds.isValid()) {
-      contractorMap.fitBounds(allBounds, { padding: [20, 20] });
+
+// Reset button handler
+const resetBtn = document.getElementById('resetMapBtn');
+if (resetBtn) {
+  resetBtn.addEventListener('click', () => {
+    if (contractorMap && contractorClusterGroup) {
+      const allBounds = contractorClusterGroup.getBounds();
+      if (allBounds.isValid()) {
+        contractorMap.fitBounds(allBounds, { padding: [20, 20] });
+      }
     }
-  }
-});
+  });
+}
 
 
 // --- Unified Search, Suggestions, and Filtering Logic ---
