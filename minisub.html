@@ -848,8 +848,10 @@ function initializeContractorMap(data) {
   });
 
   map.addLayer(markers);
+	setTimeout(() => {
+    map.invalidateSize();
+  }, 200);
 }
-
 // --- Unified Search, Suggestions, and Filtering Logic ---
 function applyFilter(searchTerm, filterType = null, filterValue = null) { 
     try {
