@@ -14,22 +14,21 @@
             font-feature-settings: 'liga' 1, 'calt' 1; /* fix for Chrome */
 
             /* Updated Light Mode Colors */
-            --background: oklch(100% 0 210);
+            --background: oklch(100% 0 245);
             --on-accent: oklch(100% 0 0);
-            --accent: oklch(59.86328085930507% 0.13750000000000004 210);
-            /* Assuming 'accent-b' was a typo and meant 'accent-secondary' or similar for a lighter/transparent accent */
-            --accent-secondary: oklch(59.86328085930507% 0.13750000000000004 210 / 16%); /* Renamed from accent-b for clarity */
-            --gradient-bg-start: oklch(59.86328085930507% 0.13750000000000004 210 / 8%);
-            --gradient-bg-end: oklch(59.86328085930507% 0.13750000000000004 210 / 0%);
+            --accent: oklch(59.86328085930507% 0.13750000000000004 245 / 56%);
+            --accent-secondary: oklch(59.86328085930507% 0.13750000000000004 245 / 16%);
+            --gradient-bg-start: oklch(59.86328085930507% 0.13750000000000004 245 / 8%);
+            --gradient-bg-end: oklch(59.86328085930507% 0.13750000000000004 245 / 0%);
             --text-primary: oklch(0% 0 0);
-            --text-secondary: oklch(57.71484337332673% 0 210);
-            --text-tertiary: oklch(74.26757764029605% 0 210);
-            --border-level-1: oklch(71.19140578537257% 0 210 / 8%);
-            --border-level-2: oklch(71.19140578537257% 0 210 / 16%);
-            --border-level-3: oklch(71.19140578537257% 0 210 / 32%);
-            --surface-level-1: oklch(71.19140578537257% 0 210 / 4%);
-            --surface-level-2: oklch(71.19140578537257% 0 210 / 8%);
-            --surface-level-3: oklch(71.19140578537257% 0 210 / 16%);
+            --text-secondary: oklch(57.71484337332673% 0 245);
+            --text-tertiary: oklch(74.26757764029605% 0 245);
+            --border-level-1: oklch(71.19140578537257% 0 245 / 8%);
+            --border-level-2: oklch(71.19140578537257% 0 245 / 16%);
+            --border-level-3: oklch(71.19140578537257% 0 245 / 32%);
+            --surface-level-1: oklch(71.19140578537257% 0 245 / 2%);
+            --surface-level-2: oklch(71.19140578537257% 0 245 / 8%);
+            --surface-level-3: oklch(71.19140578537257% 0 245 / 16%);
 
             /* General variables from user */
             --header-font-weight: 600;
@@ -133,33 +132,50 @@
         html.dark .calendar-event {
              background-color: oklch(from var(--accent) l calc(c * 0.8) h); /* Slightly desaturated accent for dark events */
         }
-        .calendar-day-cell { 
+        .calendar-day-cell {
             cursor: pointer;
             transition: background-color 0.2s;
             min-width: 60px; 
             border-color: var(--border-level-1);
-            background-color: var(--background); /* Default day background */
+            background-color: var(--background); /* Default for actual days, which is white in light mode */
         }
-        .calendar-day-cell.bg-gray-50 { /* For empty days at start/end of month grid */
-             background-color: var(--surface-level-1) !important;
+
+        /* For actual numbered empty days (JavaScript applies 'bg-white' Tailwind class) */
+        /* This rule ensures they are explicitly pure white in light mode */
+        .calendar-day-cell.bg-white { 
+            background-color: #ffffff !important; 
+        }
+        html.dark .calendar-day-cell.bg-white { 
+            background-color: var(--surface-level-1) !important; /* Dark mode style for empty numbered days */
         }
         
-        /* Visual density for calendar days */
-        .calendar-day-cell.has-events-low { background-color: oklch(from var(--accent) calc(l + 0.3) calc(c * 0.3) h / 0.3) !important; }
-        .calendar-day-cell.has-events-medium { background-color: oklch(from var(--accent) calc(l + 0.2) calc(c * 0.5) h / 0.5) !important; }
-        .calendar-day-cell.has-events-high { background-color: oklch(from var(--accent) calc(l + 0.1) calc(c * 0.7) h / 0.7) !important; }
+        /* For FILLER days at the start/end of the month grid (JavaScript applies 'bg-gray-50') */
+        .calendar-day-cell.bg-gray-50 { 
+            background-color: #ffffff !important; /* Make filler days pure white in light mode */
+        }
+        html.dark .calendar-day-cell.bg-gray-50 {
+            background-color: var(--surface-level-1) !important; /* Your existing dark mode style for filler days */
+        }
         
-        html.dark .calendar-day-cell.has-events-low { background-color: oklch(from var(--accent) calc(l - 0.1) c h / 0.25) !important; }
-        html.dark .calendar-day-cell.has-events-medium { background-color: oklch(from var(--accent) calc(l - 0.05) c h / 0.4) !important; }
-        html.dark .calendar-day-cell.has-events-high { background-color: oklch(from var(--accent) l c h / 0.55) !important; }
+        /* Event day styles - All densities now use the same color */
+        .calendar-day-cell.bg-blue-50,
+        .calendar-day-cell.bg-blue-100,
+        .calendar-day-cell.bg-blue-200 { 
+            background-color: var(--surface-level-2) !important; /* Consistent color for any event day in light mode */
+        } 
+        html.dark .calendar-day-cell.bg-blue-50,
+        html.dark .calendar-day-cell.bg-blue-100,
+        html.dark .calendar-day-cell.bg-blue-200 { 
+            background-color: oklch(35% 0.02 245) !important; /* Consistent color for any event day in dark mode */
+        } 
 
-
-        .calendar-day-cell:hover:not(.bg-gray-50) { 
+        .calendar-day-cell:hover:not(.bg-gray-50) { /* Hover for actual days, not filler gray days */
              background-color: var(--surface-level-3) !important; 
         }
-        html.dark .calendar-day-cell:hover:not(.bg-gray-50) {
+        html.dark .calendar-day-cell:hover:not(.bg-gray-50) { /* Hover for actual days in dark mode */
              background-color: oklch(30% 0.01 245) !important;
         }
+
 
         .calendar-grid-wrapper { 
             overflow-x: auto;
@@ -578,19 +594,25 @@ let currentCalendarDate = new Date();
 let currentPrimeDetailViewPage = 1; 
 let isViewingSpecificPrime = false; 
 let specificPrimeName = null;      
-let currentPrimeDetailSort = { column: 'Completion Date', order: 'desc' }; // Default sort for prime detail table
-let currentCalendarModalSort = { column: 'prime', order: 'asc' }; // Default sort for calendar modal table
+let currentPrimeDetailSort = { column: 'endDate', order: 'desc' }; 
+let currentCalendarModalSort = { column: 'prime', order: 'asc' }; 
 
 
 // --- Chart Color Palette (Derived from CSS Variables) ---
 let chartPrimaryColor, chartSecondaryColor, chartTertiaryColor, chartNeutralColor, chartAccentColor;
+let chartGrays = []; 
 
 function getChartColors() {
     const styles = getComputedStyle(document.documentElement);
     chartPrimaryColor = styles.getPropertyValue('--accent').trim() || 'oklch(60.94% 0.198 245)'; 
-    chartSecondaryColor = `oklch(from ${chartPrimaryColor} calc(l + 0.15) c h / 0.7)`; 
-    chartTertiaryColor = `oklch(from ${chartPrimaryColor} calc(l - 0.1) c h)`;      
-    chartNeutralColor = styles.getPropertyValue('--text-tertiary').trim() || 'oklch(74.07% 0.05 245)'; 
+    chartSecondaryColor = `oklch(from ${chartPrimaryColor} calc(l + 0.1) calc(c * 0.85) h)`; 
+    
+    chartNeutralColor = styles.getPropertyValue('--surface-level-3').trim() || 'oklch(80% 0.01 245)'; 
+    chartGrays = [
+        styles.getPropertyValue('--surface-level-3').trim() || 'oklch(80% 0.01 245)', 
+        `oklch(from ${chartNeutralColor} calc(l - 0.1) c h)`, 
+        `oklch(from ${chartNeutralColor} calc(l - 0.2) c h)`  
+    ];
     chartAccentColor = 'oklch(70% 0.25 30)'; 
 }
 
@@ -761,25 +783,25 @@ function applyFilter(searchTerm, filterType = null, filterValue = null) {
     try {
         let filteredData;
         let displaySearchTerm = searchTerm; 
-        // isViewingSpecificPrime is now a global variable, managed here
         
         const marketShareCard = document.getElementById('marketShareChartCard');
         const primeContractorsCard = document.getElementById('primeContractorsChartCard');
 
         if (filterType === 'primeName') {
             isViewingSpecificPrime = true; 
-            specificPrimeName = filterValue || searchTerm; // Store the specific prime name
+            specificPrimeName = filterValue || searchTerm; 
             const primeToFilter = specificPrimeName;
             filteredData = parsedData.filter(record => (record['Legal Business Name']?.toLowerCase() || '') === primeToFilter.toLowerCase());
             displaySearchTerm = `Prime: ${primeToFilter}`;
-            renderPrimeDetailView(primeToFilter, filteredData); 
-            primeDetailViewSection.classList.remove('hidden');
-            if(marketShareCard) marketShareCard.classList.add('hidden');
-            if(primeContractorsCard) primeContractorsCard.classList.add('hidden');
-
+            renderPrimeDetailView(primeToFilter, filteredData); // This will show the section
+            // Visibility of general prime charts handled in initializeCoreVisuals
         } else if (filterType) { 
             isViewingSpecificPrime = false; 
             specificPrimeName = null;
+            primeDetailViewSection.classList.add('hidden'); // Hide prime detail for other filters
+            if(marketShareCard) marketShareCard.classList.remove('hidden');
+            if(primeContractorsCard) primeContractorsCard.classList.remove('hidden');
+
             const termToMatch = (filterValue || searchTerm).toLowerCase(); 
             filteredData = parsedData.filter(record => {
                 let recordValue = '';
@@ -797,12 +819,13 @@ function applyFilter(searchTerm, filterType = null, filterValue = null) {
                 return recordValue.includes(termToMatch); 
             });
             displaySearchTerm = `${filterType.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}: ${filterValue || searchTerm}`; 
-            primeDetailViewSection.classList.add('hidden'); 
-            if(marketShareCard) marketShareCard.classList.remove('hidden');
-            if(primeContractorsCard) primeContractorsCard.classList.remove('hidden');
         } else { // General keyword search 
             isViewingSpecificPrime = false; 
             specificPrimeName = null;
+            primeDetailViewSection.classList.add('hidden');
+            if(marketShareCard) marketShareCard.classList.remove('hidden');
+            if(primeContractorsCard) primeContractorsCard.classList.remove('hidden');
+
             if (!searchTerm || searchTerm.trim() === '') {
                 clearAllFilters(); 
                 return;
@@ -824,9 +847,6 @@ function applyFilter(searchTerm, filterType = null, filterValue = null) {
                            (keyword.length > 2 && stateCode.includes(keyword));
                 });
             });
-            primeDetailViewSection.classList.add('hidden'); 
-            if(marketShareCard) marketShareCard.classList.remove('hidden');
-            if(primeContractorsCard) primeContractorsCard.classList.remove('hidden');
         }
 
         initializeCoreVisuals(filteredData, isViewingSpecificPrime); 
@@ -1072,7 +1092,19 @@ function createPrimeContractorsChart(data) {
     const primeValues = {};
     data.forEach(r => { if (r['Legal Business Name']) primeValues[r['Legal Business Name']] = (primeValues[r['Legal Business Name']] || 0) + parseCurrencyValue(r['Base and All Options Value (Total Contract Value)']); });
     const sorted = Object.entries(primeValues).sort((a,b)=>b[1]-a[1]).slice(0,10);
-    const chartData = { labels: sorted.map(i=>i[0]), datasets: [{ label: 'Contract Value', data: sorted.map(i=>i[1]), backgroundColor: chartPrimaryColor }] };
+    const chartData = { 
+        labels: sorted.map(i=>i[0]), 
+        datasets: [{ 
+            label: 'Contract Value', 
+            data: sorted.map(i=>i[1]), 
+            backgroundColor: (context) => {
+                const index = context.dataIndex;
+                if (index === 0) return chartPrimaryColor;
+                if (index === 1) return chartSecondaryColor;
+                return chartGrays[0] || chartNeutralColor; 
+            }
+        }] 
+    };
     const chartOptions = { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: {display:false}, tooltip:{callbacks:{label:c=>formatCurrency(c.raw)}}}, scales: {x:{ticks:{callback:v=>formatCurrency(v)}}, y:{ticks:{autoSkip:false, callback:function(v){const l=this.getLabelForValue(v); return l.length>18?l.substring(0,15)+'...':l;}}}},
         onClick: (event, elements) => {
             if (elements.length > 0) {
@@ -1089,22 +1121,16 @@ function createDepartmentChart(data) {
     data.forEach(r => { if (r['Contracting Department Name']) deptValues[r['Contracting Department Name']] = (deptValues[r['Contracting Department Name']] || 0) + parseCurrencyValue(r['Base and All Options Value (Total Contract Value)']); });
     const sorted = Object.entries(deptValues).sort((a,b)=>b[1]-a[1]).slice(0,10);
     
+    const departmentColors = [];
+    if (sorted.length > 0) departmentColors.push(chartPrimaryColor);
+    if (sorted.length > 1) departmentColors.push(chartSecondaryColor);
+    for (let i = 2; i < sorted.length; i++) {
+        departmentColors.push(chartGrays[ (i-2) % chartGrays.length ] || chartNeutralColor);
+    }
+
     const chartData = { 
         labels: sorted.map(i=>i[0]), 
-        datasets: [{ data: sorted.map(i=>i[1]), 
-            backgroundColor: [
-                chartPrimaryColor, 
-                chartSecondaryColor, 
-                chartTertiaryColor,
-                `oklch(from ${chartPrimaryColor} l c h / 0.6)`, 
-                `oklch(from ${chartSecondaryColor} l c h / 0.8)`, 
-                chartNeutralColor,
-                `oklch(from ${chartPrimaryColor} calc(l - 0.2) c h)`, 
-                `oklch(from ${chartSecondaryColor} l c h / 0.5)`,
-                `oklch(from ${chartTertiaryColor} calc(l + 0.05) c h)`,
-                `oklch(from ${chartNeutralColor} l c h / 0.8)`
-            ]
-        }] 
+        datasets: [{ data: sorted.map(i=>i[1]), backgroundColor: departmentColors }] 
     };
     const chartOptions = { 
         responsive: true, maintainAspectRatio: false, 
@@ -1132,7 +1158,20 @@ function createNaicsChart_main(data) {
         }
     });
     const sorted = Object.entries(naicsValues).sort((a,b)=>b[1]-a[1]).slice(0,10);
-    const chartData = { labels: sorted.map(i=>i[0]), displayLabels: sorted.map(i=>`${i[0]} - ${naicsDesc[i[0]] ? naicsDesc[i[0]].substring(0,20) : ''}...`), datasets: [{ label: 'Contract Value', data: sorted.map(i=>i[1]), backgroundColor: chartPrimaryColor }] };
+    const chartData = { 
+        labels: sorted.map(i=>i[0]), 
+        displayLabels: sorted.map(i=>`${i[0]} - ${naicsDesc[i[0]] ? naicsDesc[i[0]].substring(0,20) : ''}...`), 
+        datasets: [{ 
+            label: 'Contract Value', 
+            data: sorted.map(i=>i[1]), 
+            backgroundColor: (context) => {
+                const index = context.dataIndex;
+                if (index === 0) return chartPrimaryColor;
+                if (index === 1) return chartSecondaryColor;
+                return chartGrays[0] || chartNeutralColor;
+            }
+        }] 
+    };
     const chartOptions = { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: {display:false}, tooltip:{callbacks:{label:c=>formatCurrency(c.raw)}}}, scales: {x:{ticks:{callback:v=>formatCurrency(v)}}},
         onClick: (event, elements) => {
             if (elements.length > 0) {
@@ -1141,27 +1180,27 @@ function createNaicsChart_main(data) {
             }
         }
     };
-    chartOptions.data = { labels: chartData.displayLabels, datasets: chartData.datasets};
+    chartOptions.data = { labels: chartData.displayLabels, datasets: chartData.datasets}; 
     createChart('naicsChart_main', 'bar', chartOptions.data , chartOptions);
 }
 
 function createContractTypeChart_main(data) { 
     const contractTypes = {};
     data.forEach(r => { if (r['Award or Indefinite Delivery Vehicle Type']) contractTypes[r['Award or Indefinite Delivery Vehicle Type']] = (contractTypes[r['Award or Indefinite Delivery Vehicle Type']] || 0) + 1; });
-    const chartData = { labels: Object.keys(contractTypes), datasets: [{ data: Object.values(contractTypes), 
-        backgroundColor: [
-            chartPrimaryColor, 
-            chartSecondaryColor, 
-            chartTertiaryColor,
-            `oklch(from ${chartPrimaryColor} l c h / 0.6)`,
-            `oklch(from ${chartSecondaryColor} l c h / 0.8)`,
-            chartNeutralColor,
-            `oklch(from ${chartPrimaryColor} calc(l - 0.2) c h)`,
-            `oklch(from ${chartSecondaryColor} l c h / 0.5)`,
-            `oklch(from ${chartTertiaryColor} calc(l + 0.05) c h)`,
-            `oklch(from ${chartNeutralColor} l c h / 0.8)`
-        ].slice(0, Object.keys(contractTypes).length) 
-    }] };
+    
+    const sortedContractTypes = Object.entries(contractTypes).sort((a,b) => b[1] - a[1]);
+
+    const contractTypeColors = [];
+    if (sortedContractTypes.length > 0) contractTypeColors.push(chartPrimaryColor);
+    if (sortedContractTypes.length > 1) contractTypeColors.push(chartSecondaryColor);
+    for (let i = 2; i < sortedContractTypes.length; i++) {
+        contractTypeColors.push(chartGrays[ (i-2) % chartGrays.length ] || chartNeutralColor);
+    }
+
+    const chartData = { 
+        labels: sortedContractTypes.map(item => item[0]), 
+        datasets: [{ data: sortedContractTypes.map(item => item[1]), backgroundColor: contractTypeColors }] 
+    };
     const chartOptions = { responsive: true, maintainAspectRatio: false, plugins: { legend: {position:'right', labels:{boxWidth:12,font:{size:10}}}, tooltip:{callbacks:{label:c=>`${c.label||''}: ${c.raw.toLocaleString()}`}}},
         onClick: (event, elements) => {
             if (elements.length > 0) {
@@ -1184,7 +1223,19 @@ function createStateContractsChart_main(data, filterType = 'count') {
         }
     });
     const sorted = Object.entries(stateData).sort((a,b) => b[1][filterType] - a[1][filterType]).slice(0,10);
-    const chartData = { labels: sorted.map(i=>i[0]), datasets: [{ label: filterType === 'count' ? 'Number of Contracts' : 'Total Contract Value', data: sorted.map(i=>i[1][filterType]), backgroundColor: chartPrimaryColor }] };
+    const chartData = { 
+        labels: sorted.map(i=>i[0]), 
+        datasets: [{ 
+            label: filterType === 'count' ? 'Number of Contracts' : 'Total Contract Value', 
+            data: sorted.map(i=>i[1][filterType]), 
+            backgroundColor: (context) => {
+                const index = context.dataIndex;
+                if (index === 0) return chartPrimaryColor;
+                if (index === 1) return chartSecondaryColor;
+                return chartGrays[0] || chartNeutralColor;
+            }
+        }] 
+    };
     const chartOptions = { responsive: true, maintainAspectRatio: false, plugins: { legend: {display:false}, tooltip:{callbacks:{label:c=> filterType === 'count' ? c.raw.toLocaleString() : formatCurrency(c.raw)}}}, scales: {y:{ticks:{callback:v=> filterType==='count'?v.toLocaleString():formatCurrency(v)}}},
         onClick: (event, elements) => {
             if (elements.length > 0) {
@@ -1205,7 +1256,19 @@ function createTopAgenciesChart(data) {
         }
     });
     const sortedAgencies = Object.entries(agencyValues).sort((a, b) => b[1] - a[1]).slice(0, 10);
-    const chartData = { labels: sortedAgencies.map(item => item[0]), datasets: [{ label: 'Contract Value', data: sortedAgencies.map(item => item[1]), backgroundColor: chartPrimaryColor }] }; 
+    const chartData = { 
+        labels: sortedAgencies.map(item => item[0]), 
+        datasets: [{ 
+            label: 'Contract Value', 
+            data: sortedAgencies.map(item => item[1]), 
+            backgroundColor: (context) => {
+                const index = context.dataIndex;
+                if (index === 0) return chartPrimaryColor;
+                if (index === 1) return chartSecondaryColor;
+                return chartGrays[0] || chartNeutralColor;
+            }
+        }] 
+    }; 
     const chartOptions = { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => formatCurrency(ctx.raw) } } }, scales: { x: { ticks: { callback: val => formatCurrency(val) } }, y: { ticks: { autoSkip: false, callback: function(val) { const label = this.getLabelForValue(val); return label.length > 20 ? label.substring(0, 17) + '...' : label; } } } },
         onClick: (event, elements) => {
             if (elements.length > 0) {
@@ -1253,8 +1316,8 @@ function createTimelineChart(data) {
                 { 
                     label: 'Contracts Starting', 
                     data: startCounts, 
-                    borderColor: chartPrimaryColor, 
-                    backgroundColor: `oklch(from ${chartPrimaryColor} l c h / 0.2)`, 
+                    borderColor: chartNeutralColor, 
+                    backgroundColor: `oklch(from ${chartNeutralColor} l c h / 0.2)`, 
                     fill: true, 
                     tension: 0.4,
                     pointRadius: 0, 
@@ -1264,8 +1327,8 @@ function createTimelineChart(data) {
                 { 
                     label: 'Contracts Ending', 
                     data: endCounts, 
-                    borderColor: chartSecondaryColor, 
-                    backgroundColor: `oklch(from ${chartSecondaryColor} l c h / 0.2)`, 
+                    borderColor: chartPrimaryColor, 
+                    backgroundColor: `oklch(from ${chartPrimaryColor} l c h / 0.2)`, 
                     fill: true, 
                     tension: 0.4,
                     pointRadius: 0,
@@ -1297,27 +1360,39 @@ function createMarketShareChart(data) {
         }
     });
     const sortedPrimes = Object.entries(primeValues).sort((a, b) => b[1] - a[1]);
-    const top5Primes = sortedPrimes.slice(0, 5);
-    const otherPrimesValue = sortedPrimes.slice(5).reduce((sum, item) => sum + item[1], 0);
     
-    const chartLabels = top5Primes.map(item => item[0]);
-    const chartValues = top5Primes.map(item => item[1]);
-    if (otherPrimesValue > 0 && sortedPrimes.length > 5) { 
-        chartLabels.push('Others');
-        chartValues.push(otherPrimesValue);
+    const chartLabels = [];
+    const chartValues = [];
+    const backgroundColors = [];
+
+    sortedPrimes.forEach((item, index) => {
+        if (index < 1) { // Top 1 gets primary accent
+            chartLabels.push(item[0]);
+            chartValues.push(item[1]);
+            backgroundColors.push(chartPrimaryColor);
+        } else if (index < 2) { // Second gets secondary accent
+             chartLabels.push(item[0]);
+             chartValues.push(item[1]);
+             backgroundColors.push(chartSecondaryColor);
+        } else if (index < 5) { // Next 3 get shades of gray
+             chartLabels.push(item[0]);
+             chartValues.push(item[1]);
+             backgroundColors.push(chartGrays[(index-2) % chartGrays.length] || chartNeutralColor);
+        }
+    });
+    
+    if (sortedPrimes.length > 5) {
+        const otherPrimesValue = sortedPrimes.slice(5).reduce((sum, item) => sum + item[1], 0);
+        if (otherPrimesValue > 0) {
+            chartLabels.push('Others');
+            chartValues.push(otherPrimesValue);
+            backgroundColors.push(chartGrays[chartGrays.length -1] || chartNeutralColor); 
+        }
     }
 
+
     createChart('marketShareChart', 'pie',
-        { labels: chartLabels, datasets: [{ data: chartValues, 
-            backgroundColor: [
-                chartPrimaryColor, 
-                chartSecondaryColor, 
-                chartTertiaryColor,
-                `oklch(from ${chartPrimaryColor} l c h / 0.6)`, 
-                `oklch(from ${chartSecondaryColor} l c h / 0.8)`,
-                chartNeutralColor
-            ].slice(0, chartLabels.length)
-        }] }, 
+        { labels: chartLabels, datasets: [{ data: chartValues, backgroundColor: backgroundColors }] }, 
         { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { boxWidth: 12, font: { size: 10 } } }, tooltip: { callbacks: { label: ctx => `${ctx.label || ''}: ${formatCurrency(ctx.raw)} (${((ctx.raw / chartValues.reduce((a,b)=>a+b,0)) * 100).toFixed(1)}%)` } } } }
     );
 }
@@ -1390,7 +1465,10 @@ function renderPrimeDetailView(primeName, primeSpecificData) {
 function renderPrimeDetailContractsTable(contracts, page) {
     const start = (page - 1) * ITEMS_PER_PAGE_MODAL_TABLE;
     const end = start + ITEMS_PER_PAGE_MODAL_TABLE;
-    const pageContracts = contracts.slice(start, end);
+    
+    // Sort contracts before slicing for pagination
+    const sortedContracts = sortPrimeDetailData(contracts, currentPrimeDetailSort.column, currentPrimeDetailSort.order);
+    const pageContracts = sortedContracts.slice(start, end);
     
     let tableHTML = `<div class="table-responsive"><table class="min-w-full divide-y divide-[var(--border-level-1)] text-xs">
         <thead class="bg-[var(--surface-level-2)]"><tr>
@@ -1427,7 +1505,6 @@ function renderPrimeDetailContractsTable(contracts, page) {
     
     primeDetailContractsTableContainer.innerHTML = tableHTML;
 
-    // Add event listeners for sorting prime detail table
     document.querySelectorAll('#primeDetailContractsTableContainer th[data-sort-prime]').forEach(th => {
         th.onclick = () => { 
             const sortColumn = th.dataset.sortPrime;
@@ -1438,24 +1515,36 @@ function renderPrimeDetailContractsTable(contracts, page) {
                 currentPrimeDetailSort.order = 'asc';
             }
             currentPrimeDetailViewPage = 1; 
-            const sortedContracts = sortPrimeDetailData(contracts, currentPrimeDetailSort.column, currentPrimeDetailSort.order);
+            // Re-fetch the original primeSpecificData for sorting, not just the 'contracts' (which might be a page)
+            const primeSpecificDataForSort = parsedData.filter(r => r['Legal Business Name'] === specificPrimeName);
+            const sortedContracts = sortPrimeDetailData(primeSpecificDataForSort, currentPrimeDetailSort.column, currentPrimeDetailSort.order);
             renderPrimeDetailContractsTable(sortedContracts, currentPrimeDetailViewPage);
         };
     });
 
     if (document.getElementById('prevPageBtnPrimeDetailView')) {
         document.getElementById('prevPageBtnPrimeDetailView').onclick = () => {
-            if (currentPrimeDetailViewPage > 1) { currentPrimeDetailViewPage--; renderPrimeDetailContractsTable(contracts, currentPrimeDetailViewPage); }
+            if (currentPrimeDetailViewPage > 1) { 
+                currentPrimeDetailViewPage--; 
+                const primeSpecificDataForSort = parsedData.filter(r => r['Legal Business Name'] === specificPrimeName);
+                const sortedContracts = sortPrimeDetailData(primeSpecificDataForSort, currentPrimeDetailSort.column, currentPrimeDetailSort.order);
+                renderPrimeDetailContractsTable(sortedContracts, currentPrimeDetailViewPage); 
+            }
         };
     }
     if (document.getElementById('nextPageBtnPrimeDetailView')) {
         document.getElementById('nextPageBtnPrimeDetailView').onclick = () => {
-            if (currentPrimeDetailViewPage < totalPages) { currentPrimeDetailViewPage++; renderPrimeDetailContractsTable(contracts, currentPrimeDetailViewPage); }
+            const primeSpecificDataForSort = parsedData.filter(r => r['Legal Business Name'] === specificPrimeName);
+            const totalPagesForButton = Math.ceil(primeSpecificDataForSort.length / ITEMS_PER_PAGE_MODAL_TABLE);
+            if (currentPrimeDetailViewPage < totalPagesForButton) { 
+                currentPrimeDetailViewPage++; 
+                const sortedContracts = sortPrimeDetailData(primeSpecificDataForSort, currentPrimeDetailSort.column, currentPrimeDetailSort.order);
+                renderPrimeDetailContractsTable(sortedContracts, currentPrimeDetailViewPage); 
+            }
         };
     }
 }
 
-// Helper function to sort data for the Prime Detail contracts table
 function sortPrimeDetailData(data, column, order) {
     return [...data].sort((a, b) => {
         let valA, valB;
@@ -1520,7 +1609,7 @@ function initializeContractExpirationCalendarSection(data) {
                 value: parseCurrencyValue(r['Base and All Options Value (Total Contract Value)']), 
                 id: r['Procurement Instrument Identifier'] || 'N/A',
                 agency: r['Contracting Agency Name'] || 'N/A',
-                office: r['Contracting Office Name'] || 'N/A' // Added office
+                office: r['Contracting Office Name'] || 'N/A' 
             });
         }
     });
@@ -1591,9 +1680,9 @@ function initializeContractExpirationCalendarSection(data) {
 function showCalendarDayDetailsModal(dateObj, eventsOnDate) {
     const formattedDate = formatDate(dateObj);
     let currentCalendarPage = 1;
-    // currentCalendarModalSort is already a global variable
+    // currentCalendarModalSort is a global variable
 
-    function sortEvents(events, column, order) { // This helper can be local or global if reused
+    function sortEvents(events, column, order) { 
         return [...events].sort((a, b) => {
             let valA = a[column];
             let valB = b[column];
@@ -1603,7 +1692,7 @@ function showCalendarDayDetailsModal(dateObj, eventsOnDate) {
             } else if (typeof valA === 'string') {
                 valA = valA.toLowerCase();
                 valB = valB.toLowerCase();
-            } else if (valA === null || valA === undefined) { // Handle null/undefined for sorting
+            } else if (valA === null || valA === undefined) { 
                 return order === 'asc' ? -1 : 1;
             } else if (valB === null || valB === undefined) {
                 return order === 'asc' ? 1 : -1;
@@ -1770,6 +1859,7 @@ if (themeToggleBtn) {
             if(themeIconSun) themeIconSun.classList.remove('hidden');
             if(themeIconMoon) themeIconMoon.classList.add('hidden');
         }
+        getChartColors(); 
         updateChartDefaults();
     });
 }
