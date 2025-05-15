@@ -14,21 +14,21 @@
             font-feature-settings: 'liga' 1, 'calt' 1; /* fix for Chrome */
 
             /* Updated Light Mode Colors */
-            --background: oklch(100% 0 245);
+            --background: oklch(100% 0 280);
             --on-accent: oklch(100% 0 0);
-            --accent: oklch(59.86328085930507% 0.13750000000000004 245 / 56%);
-            --accent-secondary: oklch(59.86328085930507% 0.13750000000000004 245 / 16%);
-            --gradient-bg-start: oklch(59.86328085930507% 0.13750000000000004 245 / 8%);
-            --gradient-bg-end: oklch(59.86328085930507% 0.13750000000000004 245 / 0%);
+            --accent: oklch(59.86328085930507% 0.13750000000000004 280 / 86%);
+            --accent-secondary: oklch(59.86328085930507% 0.13750000000000004 280 / 12%);
+            --gradient-bg-start: oklch(59.86328085930507% 0.13750000000000004 280 / 8%);
+            --gradient-bg-end: oklch(59.86328085930507% 0.13750000000000004 280 / 0%);
             --text-primary: oklch(0% 0 0);
-            --text-secondary: oklch(57.71484337332673% 0 245);
-            --text-tertiary: oklch(74.26757764029605% 0 245);
-            --border-level-1: oklch(71.19140578537257% 0 245 / 8%);
-            --border-level-2: oklch(71.19140578537257% 0 245 / 16%);
-            --border-level-3: oklch(71.19140578537257% 0 245 / 32%);
-            --surface-level-1: oklch(71.19140578537257% 0 245 / 2%);
-            --surface-level-2: oklch(71.19140578537257% 0 245 / 8%);
-            --surface-level-3: oklch(71.19140578537257% 0 245 / 16%);
+            --text-secondary: oklch(57.71484337332673% 0 280);
+            --text-tertiary: oklch(74.26757764029605% 0 280);
+            --border-level-1: oklch(71.19140578537257% 0 280 / 8%);
+            --border-level-2: oklch(71.19140578537257% 0 280 / 16%);
+            --border-level-3: oklch(71.19140578537257% 0 280 / 32%);
+            --surface-level-1: oklch(71.19140578537257% 0 280 / 2%);
+            --surface-level-2: oklch(71.19140578537257% 0 280 / 8%);
+            --surface-level-3: oklch(71.19140578537257% 0 280 / 16%);
 
             /* General variables from user */
             --header-font-weight: 600;
@@ -37,21 +37,21 @@
         }
         html.dark {
             /* Dark Mode Colors */
-            --background: oklch(20% 0.005 245); /* Darker background */
+            --background: oklch(20% 0.005 280); /* Darker background */
             --on-accent: oklch(100% 0 0); 
-            --accent: oklch(65% 0.21 245); /* Slightly brighter blue for dark mode */
-            --accent-secondary-bg: oklch(65% 0.21 245 / 24%);
-            --gradient-bg-start: oklch(65% 0.21 245 / 12%);
-            --gradient-bg-end: oklch(65% 0.21 245 / 0%);
-            --text-primary: oklch(95% 0.005 245); /* Lighter primary text */
-            --text-secondary: oklch(80% 0.01 245);
-            --text-tertiary: oklch(65% 0.015 245);
-            --border-level-1: oklch(30% 0.01 245);
-            --border-level-2: oklch(35% 0.015 245);
-            --border-level-3: oklch(40% 0.02 245);
-            --surface-level-1: oklch(25% 0.008 245); /* Darker cards */
-            --surface-level-2: oklch(30% 0.012 245); 
-            --surface-level-3: oklch(35% 0.018 245);
+            --accent: oklch(65% 0.21 280); /* Slightly brighter blue for dark mode */
+            --accent-secondary-bg: oklch(65% 0.21 280 / 24%);
+            --gradient-bg-start: oklch(65% 0.21 280 / 12%);
+            --gradient-bg-end: oklch(65% 0.21 280 / 0%);
+            --text-primary: oklch(95% 0.005 280); /* Lighter primary text */
+            --text-secondary: oklch(80% 0.01 280);
+            --text-tertiary: oklch(65% 0.015 280);
+            --border-level-1: oklch(30% 0.01 280);
+            --border-level-2: oklch(35% 0.015 280);
+            --border-level-3: oklch(40% 0.02 280);
+            --surface-level-1: oklch(25% 0.008 280); /* Darker cards */
+            --surface-level-2: oklch(30% 0.012 280); 
+            --surface-level-3: oklch(35% 0.018 280);
 
             /* Chart Specific Accent Variations (Dark Mode) */
             --chart-accent-1: var(--accent); /* Main Blue (already adjusted for dark) */
@@ -166,14 +166,14 @@
         html.dark .calendar-day-cell.bg-blue-50,
         html.dark .calendar-day-cell.bg-blue-100,
         html.dark .calendar-day-cell.bg-blue-200 { 
-            background-color: oklch(35% 0.02 245) !important; /* Consistent color for any event day in dark mode */
+            background-color: oklch(35% 0.02 280) !important; /* Consistent color for any event day in dark mode */
         } 
 
         .calendar-day-cell:hover:not(.bg-gray-50) { /* Hover for actual days, not filler gray days */
              background-color: var(--surface-level-3) !important; 
         }
         html.dark .calendar-day-cell:hover:not(.bg-gray-50) { /* Hover for actual days in dark mode */
-             background-color: oklch(30% 0.01 245) !important;
+             background-color: oklch(30% 0.01 280) !important;
         }
 
 
@@ -349,7 +349,7 @@
 
     <div class="dashboard-container max-w-7xl mx-auto">
         <header class="mb-4 md:mb-6 flex justify-between items-center">
-            <h1 class="text-2xl sm:text-3xl font-bold text-[var(--text-primary)]" style="font-weight: var(--header-font-weight);">Federal Business Development Dashboard</h1>
+            <h1 class="text-2xl sm:text-3xl font-bold text-[var(--text-primary)]" style="font-weight: var(--header-font-weight);">Prime Finder from Subhoo.com</h1>
             <div class="flex items-center space-x-2">
                 <button id="shareViewBtn" title="Share Current View" class="p-2 rounded-md bg-[var(--surface-level-2)] hover:bg-[var(--surface-level-3)] transition-colors duration-150 focus:outline-none focus:ring-2 ring-[var(--accent)]">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[var(--text-secondary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -367,19 +367,23 @@
             </div>
         </header>
 
-        <section id="explainerSection" class="bg-[var(--surface-level-1)] p-4 md:p-6 rounded-lg shadow-md mb-4 md:mb-6 border border-[var(--border-level-1)]">
-            <h2 class="text-xl md:text-2xl font-semibold text-[var(--text-primary)] mb-3" style="font-weight: var(--header-font-weight);">Welcome!</h2>
-            <p class="text-sm md:text-base text-[var(--text-secondary)] mb-2">
-                This dashboard helps you explore federal contracting data to identify potential teaming opportunities. 
-                Data is automatically loaded.
-            </p>
-            <p class="text-sm md:text-base text-[var(--text-secondary)] mb-2">
-                <strong>How to Use:</strong> Use the <strong>Search & Filter</strong> bar below. As you type, suggestions for Prime Names, NAICS, Agencies, etc., will appear. Click a suggestion to filter the dashboard, or press Enter to search with your typed term(s).
-            </p>
-            <p class="text-xs md:text-sm text-[var(--text-secondary)]">
-                If data fails to load, a manual upload option will appear. Source CSV:
-                <a href="https://subhoodata.s3.us-east-1.amazonaws.com/data/sbaall.csv" download class="text-[var(--accent)] hover:underline">sbaall.csv</a>.
-            </p>
+<section id="explainerSection" class="bg-[var(--surface-level-1)] p-4 md:p-6 rounded-lg shadow-md mb-4 md:mb-6 border border-[var(--border-level-1)]">
+  <h2 class="text-xl md:text-2xl font-semibold text-[var(--text-primary)] mb-3" style="font-weight: var(--header-font-weight);">Welcome!</h2>
+  
+  <p class="text-sm md:text-base text-[var(--text-secondary)] mb-2">
+    This dashboard visualizes data from the SBA’s <em>Directory of Federal Government Prime Contractors with Subcontracting Plans</em>, helping small businesses discover subcontracting opportunities with federal prime contractors.
+  </p>
+  
+  <p class="text-sm md:text-base text-[var(--text-secondary)] mb-2">
+    ✔ <strong>Search & Explore:</strong> Find contractors with small business subcontracting requirements.  
+    <br>✔ <strong>Direct Links:</strong> Access contractor profiles and award details on FPDS.
+    <br>✔ <strong>Contract Calendar:</strong> View upcoming contract expirations to time your outreach.
+    <br>✔ <strong>Detailed Data:</strong> See contractor name, location, agency, NAICS & PSC codes, contract value, and performance dates.
+  </p>
+  
+  <p class="text-sm md:text-base text-[var(--text-secondary)]">
+    Use this tool to identify potential partners, learn their subcontracting processes, and follow their instructions to get involved. All data is sourced from the Federal Procurement Data System (FPDS-NG).
+  </p>
             <div id="processingIndicator" class="hidden items-center text-[var(--text-secondary)] mt-4">
                 <div class="spinner"></div>
                 <span class="ml-2 text-sm">Processing data...</span>
@@ -447,7 +451,7 @@
                         <canvas id="naicsChart_main"></canvas>
                     </div>
                 </div>
-                <div class="dashboard-card p-4 md:p-6">
+                <div class="dashboard-card p-4 md:p-6 hidden">
                     <h2 class="text-md md:text-lg font-semibold text-[var(--text-primary)] mb-3 text-center" style="font-weight: var(--header-font-weight);">Contract Type Breakdown</h2>
                     <div class="chart-container">
                         <canvas id="contractTypeChart_main"></canvas>
@@ -463,22 +467,22 @@
                         <canvas id="stateContractsChart_main"></canvas>
                     </div>
                 </div>
-                <div class="dashboard-card p-4 md:p-6">
+                <div class="dashboard-card p-4 md:p-6 hidden">
                     <h2 class="text-md md:text-lg font-semibold text-[var(--text-primary)] mb-3 text-center" style="font-weight: var(--header-font-weight);">Top Contracting Agencies by Value</h2>
                     <div class="chart-container">
                         <canvas id="topAgenciesChart"></canvas>
-                    </div>
-                </div>
-                <div class="dashboard-card p-4 md:p-6"> 
-                     <h2 class="text-md md:text-lg font-semibold text-[var(--text-primary)] mb-3 text-center" style="font-weight: var(--header-font-weight);">Contract Timeline Forecast</h2>
-                    <div class="chart-container">
-                        <canvas id="timelineChart"></canvas> 
                     </div>
                 </div>
                  <div id="marketShareChartCard" class="dashboard-card p-4 md:p-6"> 
                     <h2 class="text-md md:text-lg font-semibold text-[var(--text-primary)] mb-3 text-center" style="font-weight: var(--header-font-weight);">Prime Market Share (for current filter)</h2>
                     <div class="chart-container">
                         <canvas id="marketShareChart"></canvas>
+                    </div>
+                </div>
+				 <div class="dashboard-card p-4 md:p-6"> 
+                     <h2 class="text-md md:text-lg font-semibold text-[var(--text-primary)] mb-3 text-center" style="font-weight: var(--header-font-weight);">Contract Timeline Forecast</h2>
+                    <div class="chart-container">
+                        <canvas id="timelineChart"></canvas> 
                     </div>
                 </div>
             </section>
@@ -604,12 +608,12 @@ let chartGrays = [];
 
 function getChartColors() {
     const styles = getComputedStyle(document.documentElement);
-    chartPrimaryColor = styles.getPropertyValue('--accent').trim() || 'oklch(60.94% 0.198 245)'; 
+    chartPrimaryColor = styles.getPropertyValue('--accent').trim() || 'oklch(60.94% 0.198 280)'; 
     chartSecondaryColor = `oklch(from ${chartPrimaryColor} calc(l + 0.1) calc(c * 0.85) h)`; 
     
-    chartNeutralColor = styles.getPropertyValue('--surface-level-3').trim() || 'oklch(80% 0.01 245)'; 
+    chartNeutralColor = styles.getPropertyValue('--surface-level-3').trim() || 'oklch(80% 0.01 280)'; 
     chartGrays = [
-        styles.getPropertyValue('--surface-level-3').trim() || 'oklch(80% 0.01 245)', 
+        styles.getPropertyValue('--surface-level-3').trim() || 'oklch(80% 0.01 280)', 
         `oklch(from ${chartNeutralColor} calc(l - 0.1) c h)`, 
         `oklch(from ${chartNeutralColor} calc(l - 0.2) c h)`  
     ];
