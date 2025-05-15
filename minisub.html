@@ -828,25 +828,26 @@ function initializeContractorMap(data) {
     contractorMap.addLayer(contractorClusterGroup);
   }
 
-  const seenEntityLocationPairs = new Set();
+  const seenCoords = new Set();
 
-data.forEach(row => {
-  const entityId = row["Unique Entity ID"];
-  const location = row.Location;
+  data.forEach(row => {
+    const location = row.Location;
+    if (!location || !row["Legal Business Name"]) return;
 
-  if (!entityId || !location) return;
+    const [latStr, lngStr] = location.split(',').map(s => s.trim());
+    const lat = parseFloat(latStr);
+    const lng = parseFloat(lngStr);
 
-  // Unique key: Entity + exact lat/long combo
-  const key = `${entityId}|${location}`;
-  if (seenEntityLocationPairs.has(key)) return;
+    if (isNaN(lat) || isNaN(lng) || lat === 0 || lng === 0) return;
 
-  seenEntityLocationPairs.add(key);
+    // Normalize lat/lng to 4 decimal places
+    const latFixed = lat.toFixed(4);
+    const lngFixed = lng.toFixed(4);
+    const coordKey = `${latFixed}|${lngFixed}`;
 
-  const [latStr, lngStr] = location.split(',').map(s => s.trim());
-  const lat = parseFloat(latStr);
-  const lng = parseFloat(lngStr);
+    if (seenCoords.has(coordKey)) return;
+    seenCoords.add(coordKey);
 
-  if (!isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0) {
     const businessName = row["Legal Business Name"];
     const city = row["Vendor Address City"] || "";
     const state = row["Vendor Address State"] || "";
@@ -859,15 +860,12 @@ data.forEach(row => {
     marker.bindTooltip(tooltipText, { direction: 'top' });
     marker.bindPopup(popupText);
     contractorClusterGroup.addLayer(marker);
-  }
-});
-
+  });
 
   setTimeout(() => {
     contractorMap.invalidateSize();
   }, 200);
 }
-
 
 // --- Unified Search, Suggestions, and Filtering Logic ---
 function applyFilter(searchTerm, filterType = null, filterValue = null) { 
