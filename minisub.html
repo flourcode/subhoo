@@ -806,6 +806,24 @@ function loadDataFromS3() {
         showErrorMessage(errorMsg, true); 
     });
 }
+function loadCompanyMapFromS3() {
+  Papa.parse("https://subhoodata.s3.us-east-1.amazonaws.com/data/companies.csv", {
+    header: true,
+    download: true,
+    skipEmptyLines: true,
+    complete: function(results) {
+      if (results && results.data && results.data.length > 0) {
+        initializeContractorMap(results.data);
+      } else {
+        console.error("companies.csv is empty or invalid.");
+      }
+    },
+    error: function(err) {
+      console.error("Failed to load companies.csv from S3:", err);
+    }
+  });
+}
+
 function initializeContractorMap(data) {
   const map = L.map('contractorMap').setView([39.8283, -98.5795], 4); // Centered on USA
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18 }).addTo(map);
@@ -1966,6 +1984,7 @@ function applyFiltersFromURL() {
 // --- Page Load ---
 document.addEventListener('DOMContentLoaded', () => {
     loadDataFromS3(); 
+	loadCompanyMapFromS3();
 });
 </script>
 </body>
