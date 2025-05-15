@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Company Map with Clusters</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+  <style>
+    #map { height: 100vh; }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+
+  <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+  <script src="https://unpkg.com/papaparse@5.4.1/papaparse.min.js"></script>
+
+  <script>
+    const map = L.map('map').setView([39.8283, -98.5795], 4); // Center on USA
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 18
+    }).addTo(map);
+
+    const markers = L.markerClusterGroup();
+
+    Papa.parse("companies.csv", {
+      header: true,
+      download: true,
+      complete: function(results) {
+        results.data.forEach(row => {
+          const loc = row["Location"]; // assuming column is called "Location"
+          if (loc && loc.includes(',')) {
+            const [latStr, lngStr] = loc.split(',').map(s => s.trim());
+            const lat = parseFloat(latStr);
+            const lng = parseFloat(lngStr);
+            if (!isNaN(lat) && !isNaN(lng)) {
+              const marker = L.marker([lat, lng]);
+              const popup = `<strong>${row["Company Name"]}</strong><br>${row.City}, ${row.State}`;
+              marker.bindPopup(popup);
+              markers.addLayer(marker);
+            }
+          }
+        });
+        map.addLayer(markers);
+      }
+    });
+  </script>
+</body>
+</html>
