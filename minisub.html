@@ -842,7 +842,8 @@ function initializeContractorMap(data) {
       if (!isNaN(lat) && !isNaN(lng)) {
         const marker = L.marker([lat, lng]);
         marker.bindPopup(`<strong>${row["Company Name"]}</strong><br>${row.City}, ${row.State}`);
-        markers.addLayer(marker);
+		marker.bindTooltip(row["Company Name"], { permanent: false, direction: 'top' });
+		markers.addLayer(marker);
       }
     }
   });
