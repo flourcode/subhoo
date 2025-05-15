@@ -811,7 +811,6 @@ function loadDataFromS3() {
         showErrorMessage(errorMsg, true); 
     });
 }
-
 function initializeContractorMap(data) {
   if (!contractorMap) {
     contractorMap = L.map('contractorMap').setView([39.8283, -98.5795], 4);
@@ -822,7 +821,6 @@ function initializeContractorMap(data) {
     }).addTo(contractorMap);
   }
 
-  // Clear previous clusters
   if (contractorClusterGroup) {
     contractorClusterGroup.clearLayers();
   } else {
@@ -830,27 +828,31 @@ function initializeContractorMap(data) {
     contractorMap.addLayer(contractorClusterGroup);
   }
 
-  // Add markers
+  const seenEntityIDs = new Set();
+
   data.forEach(row => {
+    const entityId = row["Unique Entity ID"];
+    if (!entityId || seenEntityIDs.has(entityId)) return;
+
+    seenEntityIDs.add(entityId);
+
     if (row.Location && row["Legal Business Name"]) {
       const [latStr, lngStr] = row.Location.split(',').map(s => s.trim());
       const lat = parseFloat(latStr);
       const lng = parseFloat(lngStr);
-      if (!isNaN(lat) && !isNaN(lng)) {
+      if (!isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0) {
         const marker = L.marker([lat, lng]);
         marker.bindPopup(`<strong>${row["Legal Business Name"]}</strong><br>${row.City}, ${row.State}`);
-		marker.bindTooltip(row["Legal Business Name"], { direction: 'top' });
+        marker.bindTooltip(row["Legal Business Name"], { direction: 'top' });
         contractorClusterGroup.addLayer(marker);
       }
     }
   });
 
-  // Ensure proper rendering
   setTimeout(() => {
     contractorMap.invalidateSize();
   }, 200);
 }
-
 
 // --- Unified Search, Suggestions, and Filtering Logic ---
 function applyFilter(searchTerm, filterType = null, filterValue = null) { 
