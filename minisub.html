@@ -826,7 +826,11 @@ function loadCompanyMapFromS3() {
 
 function initializeContractorMap(data) {
   const map = L.map('contractorMap').setView([39.8283, -98.5795], 4); // Centered on USA
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18 }).addTo(map);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+  attribution: '&copy; <a href="https://carto.com/">CARTO</a>',
+  subdomains: 'abcd',
+  maxZoom: 19
+}).addTo(map);
 
   const markers = L.markerClusterGroup();
 
