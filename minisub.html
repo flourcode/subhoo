@@ -840,10 +840,19 @@ function initializeContractorMap(data) {
       const [latStr, lngStr] = row.Location.split(',').map(s => s.trim());
       const lat = parseFloat(latStr);
       const lng = parseFloat(lngStr);
+
       if (!isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0) {
+        const businessName = row["Legal Business Name"];
+        const city = row["Vendor Address City"] || "";
+        const state = row["Vendor Address State"] || "";
+
+        const locationText = city && state ? `${city}, ${state}` : "";
+        const tooltipText = businessName + (locationText ? ` — ${locationText}` : "");
+        const popupText = `<strong>${businessName}</strong>${locationText ? `<br>${locationText}` : ""}`;
+
         const marker = L.marker([lat, lng]);
-        marker.bindPopup(`<strong>${row["Legal Business Name"]}</strong><br>${row.City}, ${row.State}`);
-        marker.bindTooltip(row["Legal Business Name"], { direction: 'top' });
+        marker.bindTooltip(tooltipText, { direction: 'top' });
+        marker.bindPopup(popupText);
         contractorClusterGroup.addLayer(marker);
       }
     }
@@ -853,6 +862,7 @@ function initializeContractorMap(data) {
     contractorMap.invalidateSize();
   }, 200);
 }
+
 
 // --- Unified Search, Suggestions, and Filtering Logic ---
 function applyFilter(searchTerm, filterType = null, filterValue = null) { 
@@ -1989,19 +1999,13 @@ function applyFiltersFromURL() {
     }
 }
 document.getElementById('resetMapBtn').addEventListener('click', () => {
-  // Clear unified search input
   unifiedSearchInput.value = '';
-
-  // Clear any prime profile search
   primeProfilesSearchInput.value = '';
-
-  // Reset filters and show all data again
   clearAllFilters();
-
-  // Also re-run map with full data set
   initializeContractorMap(parsedData);
-});
 
+  contractorMap.setView([39.8283, -98.5795], 4); // reset zoom to default
+});
 
 // --- Page Load ---
 document.addEventListener('DOMContentLoaded', () => {
