@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Subhoo - Federal Prime Contractor Database</title>
     <script src="https://cdn.tailwindcss.com"></script>
 <!-- JavaScript Libraries -->
@@ -912,49 +912,109 @@ footer img[src*="powered-by-aws"] {
     margin: 1cm;
   }
 }
+/* Add responsive padding adjustments */
+.dashboard-card {
+  padding: 0.75rem;
+}
+
+@media (min-width: 768px) {
+  .dashboard-card {
+    padding: 1.5rem;
+  }
+}
+
+/* Ensure text is readable but not too large on mobile */
+h1 {
+  font-size: 1.5rem;
+}
+
+h2 {
+  font-size: 1.25rem;
+}
+
+@media (min-width: 768px) {
+  h1 {
+    font-size: 2rem;
+  }
+  
+  h2 {
+    font-size: 1.5rem;
+  }
+}
 </style>
 </head>
-<body class="text-[var(--text-primary)] p-2 sm:p-4 md:p-8">
-    <div id="globalProcessingIndicator" class="hidden">
-        <div class="global-spinner"></div>
-        <span class="text-sm text-[var(--text-secondary)]">Processing...</span>
+<body class="text-[var(--text-primary)] p-2 sm:p-4 md:p-8 min-h-screen overflow-x-hidden">
+    <!-- Page Loader -->
+    <div id="page-loader" class="fixed inset-0 z-50 flex items-center justify-center bg-[var(--background)] transition-opacity duration-300">
+        <div class="flex flex-col items-center">
+            <div class="spinner w-16 h-16 border-4 border-[var(--border-level-2)] border-t-[var(--accent)] rounded-full animate-spin"></div>
+            <p class="mt-4 text-[var(--text-primary)]">Loading Subhoo...</p>
+        </div>
     </div>
 
-    <div class="dashboard-container max-w-7xl mx-auto">
-        <!-- Enhanced header with data source info -->
-        <header class="mb-6 md:mb-8">
-    <div class="flex justify-between items-start mb-2">
-        <div class="flex flex-col">
-            <h1 class="text-2xl sm:text-3xl md:text-4xl font-extrabold text-[var(--accent)]" style="letter-spacing: -0.05em;">Subhoo.</h1>
-            <p class="text-xs sm:text-sm text-[var(--text-secondary)] mt-1">Federal Contractor Intelligence</p>
-        </div>
-        <div class="flex items-center space-x-2">
-            <button id="shareViewBtn" title="Share Current View" class="p-2 rounded-md bg-[var(--surface-level-2)] hover:bg-[var(--surface-level-3)] transition-colors duration-150 focus:outline-none focus:ring-2 ring-[var(--accent)]">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[var(--text-secondary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
-                </svg>
-            </button>
-            <button id="themeToggleBtn" title="Toggle Light/Dark Mode" class="p-2 rounded-md bg-[var(--surface-level-2)] hover:bg-[var(--surface-level-3)] transition-colors duration-150 focus:outline-none focus:ring-2 ring-[var(--accent)]">
-                <svg id="themeIconSun" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[var(--text-secondary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-                </svg>
-                <svg id="themeIconMoon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[var(--text-secondary)] hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                </svg>
-            </button>
+    <div id="globalProcessingIndicator" class="hidden fixed inset-0 bg-black bg-opacity-50 z-40 flex items-center justify-center">
+        <div class="bg-[var(--background)] p-6 rounded-lg shadow-lg flex items-center">
+            <div class="spinner mr-3 w-8 h-8 border-4 border-[var(--border-level-2)] border-t-[var(--accent)] rounded-full animate-spin"></div>
+            <span class="text-sm text-[var(--text-secondary)]">Processing...</span>
         </div>
     </div>
-</header>
+
+    <div class="dashboard-container w-full max-w-full sm:max-w-full md:max-w-full lg:max-w-7xl mx-auto">
+        <!-- Enhanced header with data source info -->
+        <header class="mb-6 md:mb-8">
+            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+                <!-- Logo & Tagline - Full width on mobile -->
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h1 class="text-2xl sm:text-3xl md:text-4xl font-extrabold text-[var(--accent)]" style="letter-spacing: -0.05em;">Subhoo.</h1>
+                        <p class="text-xs sm:text-sm text-[var(--text-secondary)] mt-1">Federal Contractor Intelligence</p>
+                    </div>
+                    
+                    <!-- Buttons - Only visible on mobile -->
+                    <div class="flex items-center gap-2 sm:hidden">
+                        <button id="shareViewBtn-mobile" title="Share" class="p-1.5 rounded-md bg-[var(--surface-level-2)] hover:bg-[var(--surface-level-3)] transition-colors focus:outline-none focus:ring-1 ring-[var(--accent)]">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-[var(--text-secondary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
+                            </svg>
+                        </button>
+                        <button id="themeToggleBtn-mobile" title="Theme" class="p-1.5 rounded-md bg-[var(--surface-level-2)] hover:bg-[var(--surface-level-3)] transition-colors focus:outline-none focus:ring-1 ring-[var(--accent)]">
+                            <svg id="themeIconSun-mobile" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-[var(--text-secondary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                            </svg>
+                            <svg id="themeIconMoon-mobile" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-[var(--text-secondary)] hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Buttons - Hidden on mobile, visible on larger screens -->
+                <div class="hidden sm:flex items-center gap-2">
+                    <button id="shareViewBtn" title="Share Current View" class="p-2 rounded-md bg-[var(--surface-level-2)] hover:bg-[var(--surface-level-3)] transition-colors duration-150 focus:outline-none focus:ring-2 ring-[var(--accent)]">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[var(--text-secondary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
+                        </svg>
+                    </button>
+                    <button id="themeToggleBtn" title="Toggle Light/Dark Mode" class="p-2 rounded-md bg-[var(--surface-level-2)] hover:bg-[var(--surface-level-3)] transition-colors duration-150 focus:outline-none focus:ring-2 ring-[var(--accent)]">
+                        <svg id="themeIconSun" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[var(--text-secondary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                        </svg>
+                        <svg id="themeIconMoon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[var(--text-secondary)] hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </header>
 
         <!-- Explainer section -->
         <section id="explainerSection" class="bg-[var(--surface-level-1)] p-4 md:p-6 rounded-lg shadow-md mb-6 border border-[var(--border-level-1)]">
-              <p class="text-sm md:text-base text-[var(--text-secondary)] mb-2">
-                Subhoo helps you visualize data from the SBA’s official Prime Contractors directory, where prime contractors with awards over $750K are required by law to include small business participation in their plans. Search thousands of prime contractors, track funding flows, explore detailed profiles, monitor contract expirations, and access official FPDS records—everything you need to find and connect with the right federal partners. Start your search below.
+            <p class="text-sm md:text-base text-[var(--text-secondary)] mb-2">
+                Subhoo helps you visualize data from the SBA's official Prime Contractors directory, where prime contractors with awards over $750K are required by law to include small business participation in their plans. Search thousands of prime contractors, track funding flows, explore detailed profiles, monitor contract expirations, and access official FPDS records—everything you need to find and connect with the right federal partners. Start your search below.
             </p>
-           
             
             <div id="processingIndicator" class="hidden items-center text-[var(--text-secondary)] mt-4">
-                <div class="spinner"></div>
+                <div class="spinner w-6 h-6 border-2 border-[var(--border-level-2)] border-t-[var(--accent)] rounded-full animate-spin"></div>
                 <span class="ml-2 text-sm">Processing data...</span>
             </div>
             <div id="s3LoadError" class="text-red-600 bg-red-100 dark:bg-red-900 dark:text-red-300 p-3 rounded-md mt-3 hidden text-sm"></div>
@@ -969,286 +1029,291 @@ footer img[src*="powered-by-aws"] {
                 <div id="successMessage" class="text-green-600 bg-green-100 dark:bg-green-900 dark:text-green-300 p-3 rounded-md hidden mb-2 text-sm"></div>
             </div>
         </section>
-<section id="quickstart-guide" class="bg-[var(--surface-level-1)] p-4 md:p-6 rounded-lg shadow-md border border-[var(--border-level-1)] mb-6">
-  <h2 class="text-lg md:text-xl font-semibold text-[var(--accent)] mb-4" style="font-weight: var(--header-font-weight);">Quickstart Guide</h2>
-  
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-    <div class="p-3 bg-[var(--surface-level-2)] rounded-lg border border-[var(--border-level-1)]">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mb-2 text-[var(--accent)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-      </svg>
-      <h4 class="font-semibold text-[var(--text-primary)]">1. Search</h4>
-      <p class="text-sm text-[var(--text-secondary)]">Use the search bar to find prime contractors, NAICS codes, agencies, or locations.</p>
-    </div>
-    
-    <div class="p-3 bg-[var(--surface-level-2)] rounded-lg border border-[var(--border-level-1)]">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mb-2 text-[var(--accent)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-      </svg>
-      <h4 class="font-semibold text-[var(--text-primary)]">2. Explore Visualizations</h4>
-      <p class="text-sm text-[var(--text-secondary)]">Interact with Sankey charts, maps, and data visualizations to understand relationships.</p>
-    </div>
-    
-    <div class="p-3 bg-[var(--surface-level-2)] rounded-lg border border-[var(--border-level-1)]">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mb-2 text-[var(--accent)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-      </svg>
-      <h4 class="font-semibold text-[var(--text-primary)]">3. View Profiles</h4>
-      <p class="text-sm text-[var(--text-secondary)]">Click on prime contractor names to see detailed profiles and their active contracts.</p>
-    </div>
-    
-    <div class="p-3 bg-[var(--surface-level-2)] rounded-lg border border-[var(--border-level-1)]">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mb-2 text-[var(--accent)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-      </svg>
-      <h4 class="font-semibold text-[var(--text-primary)]">4. Track Opportunities</h4>
-      <p class="text-sm text-[var(--text-secondary)]">Use the contract expiration calendar to plan your outreach and follow up at the right time.</p>
-    </div>
-  </div>
-  
-</section>
+
+        <section id="quickstart-guide" class="bg-[var(--surface-level-1)] p-4 md:p-6 rounded-lg shadow-md border border-[var(--border-level-1)] mb-6">
+            <div class="flex justify-between items-center cursor-pointer" onclick="toggleQuickstart()">
+                <h2 class="text-lg md:text-xl font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Quickstart Guide</h2>
+                <svg id="quickstart-toggle" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[var(--accent)] transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+            </div>
+            
+            <div id="quickstart-content" class="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="p-3 bg-[var(--surface-level-2)] rounded-lg border border-[var(--border-level-1)]">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mb-2 text-[var(--accent)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    <h4 class="font-semibold text-[var(--text-primary)]">1. Search</h4>
+                    <p class="text-sm text-[var(--text-secondary)]">Use the search bar to find prime contractors, NAICS codes, agencies, or locations.</p>
+                </div>
+                
+                <div class="p-3 bg-[var(--surface-level-2)] rounded-lg border border-[var(--border-level-1)]">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mb-2 text-[var(--accent)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                    <h4 class="font-semibold text-[var(--text-primary)]">2. Explore Visualizations</h4>
+                    <p class="text-sm text-[var(--text-secondary)]">Interact with Sankey charts, maps, and data visualizations to understand relationships.</p>
+                </div>
+                
+                <div class="p-3 bg-[var(--surface-level-2)] rounded-lg border border-[var(--border-level-1)]">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mb-2 text-[var(--accent)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                    </svg>
+                    <h4 class="font-semibold text-[var(--text-primary)]">3. View Profiles</h4>
+                    <p class="text-sm text-[var(--text-secondary)]">Click on prime contractor names to see detailed profiles and their active contracts.</p>
+                </div>
+                
+                <div class="p-3 bg-[var(--surface-level-2)] rounded-lg border border-[var(--border-level-1)]">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mb-2 text-[var(--accent)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <h4 class="font-semibold text-[var(--text-primary)]">4. Track Opportunities</h4>
+                    <p class="text-sm text-[var(--text-secondary)]">Use the contract expiration calendar to plan your outreach and follow up at the right time.</p>
+                </div>
+            </div>
+        </section>
+
         <!-- Main Dashboard Content -->
         <main id="dashboardContent" class="hidden space-y-6">
             <!-- Control Panel - simplified with just search -->
-            <section id="controlPanel" class="bg-[var(--surface-level-1)] p-4 md:p-6 rounded-lg shadow-md border border-[var(--border-level-1)] sticky top-4 z-10">
-                <div class="flex flex-col md:flex-row gap-4 items-start md:items-center">
+            <section id="controlPanel" class="bg-[var(--surface-level-1)] p-3 sm:p-4 md:p-6 rounded-lg shadow-md border border-[var(--border-level-1)] sticky top-2 sm:top-4 z-10">
+                <div class="flex flex-col md:flex-row gap-3 items-start md:items-center">
                     <!-- Main Search with prominent styling -->
                     <div class="w-full md:w-3/4 relative">
                         <label for="unifiedSearchInput" class="block text-sm font-semibold text-[var(--text-secondary)] mb-1">
                             Search Dashboard
                         </label>
                         <div class="relative">
-                            <input type="text" id="unifiedSearchInput" class="w-full p-3 border border-[var(--border-level-2)] rounded-md shadow-sm focus:ring-2 ring-[var(--accent)] focus:border-[var(--accent)] bg-[var(--background)] text-[var(--text-primary)]" 
-                                placeholder="Search by Prime, NAICS, Department, Agency, Office, State...">
+                            <input type="text" id="unifiedSearchInput" class="w-full p-2 sm:p-3 border border-[var(--border-level-2)] rounded-md shadow-sm focus:ring-2 ring-[var(--accent)] focus:border-[var(--accent)] bg-[var(--background)] text-[var(--text-primary)]" 
+                                placeholder="Search by Prime, NAICS, Agency...">
                             <button id="clearSearchBtn" class="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                                 </svg>
                             </button>
                         </div>
-                        <div id="unifiedSearchSuggestions" class="hidden bg-[var(--background)] border-[var(--border-level-2)] absolute z-20 w-full">
+                        <div id="unifiedSearchSuggestions" class="hidden bg-[var(--background)] border-[var(--border-level-2)] absolute z-20 w-full max-h-60 overflow-y-auto rounded-b-md">
                         </div>
                     </div>
 
                     <!-- Reset Button -->
-                    <div class="flex items-center md:self-end md:mb-1">
-                        <button id="globalResetBtn" class="px-4 py-2 bg-[var(--accent)] text-[var(--on-accent)] rounded hover:bg-opacity-90 transition">
-                            Reset All Filters
+                    <div class="flex items-center w-full md:w-auto">
+                        <button id="globalResetBtn" class="w-full md:w-auto px-4 py-2 bg-[var(--accent)] text-[var(--on-accent)] rounded hover:bg-opacity-90 transition">
+                            Reset Filters
                         </button>
                     </div>
                 </div>
                 
                 <!-- Active Filter Indicator -->
-                <div id="activeFilterIndicator" class="p-3 rounded-md mt-4 hidden flex-col sm:flex-row justify-between items-center text-sm">
+                <div id="activeFilterIndicator" class="p-3 rounded-md mt-3 hidden flex-col sm:flex-row justify-between items-center text-sm">
                 </div>
             </section>
             
-            <!-- Key Stats and Sankey Chart Group -->
-            <div class="space-y-6">
-                <!-- KPI Stats Row -->
-                <section id="statisticsSection" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div class="stat-card bg-[var(--surface-level-1)] p-3 md:p-4 rounded-lg shadow hover:shadow-lg transition-shadow duration-150 border border-[var(--border-level-1)]">
-                        <div class="text-2xl md:text-3xl font-bold text-[var(--accent)]" id="totalContractsValue">0</div>
-                        <div class="text-xs md:text-sm text-[var(--text-secondary)]">Total Contracts</div>
-                    </div>
-                    <div class="stat-card bg-[var(--surface-level-1)] p-3 md:p-4 rounded-lg shadow hover:shadow-lg transition-shadow duration-150 border border-[var(--border-level-1)]">
-                        <div class="text-2xl md:text-3xl font-bold text-[var(--accent)]" id="totalValueValue">$0</div>
-                        <div class="text-sm text-[var(--text-secondary)]">Total Contract Value</div>
-                    </div>
-                    <div class="stat-card bg-[var(--surface-level-1)] p-3 md:p-4 rounded-lg shadow hover:shadow-lg transition-shadow duration-150 border border-[var(--border-level-1)]">
-                        <div class="text-2xl md:text-3xl font-bold text-[var(--accent)]" id="avgContractValue">$0</div>
-                        <div class="text-sm text-[var(--text-secondary)]">Average Contract Value</div>
-                    </div>
-                    <div class="stat-card bg-[var(--surface-level-1)] p-3 md:p-4 rounded-lg shadow hover:shadow-lg transition-shadow duration-150 border border-[var(--border-level-1)]">
-                        <div class="text-2xl md:text-3xl font-bold text-[var(--accent)]" id="uniquePrimesValue">0</div>
-                        <div class="text-sm text-[var(--text-secondary)]">Unique Prime Contractors</div>
-                    </div>
-                </section>
-
-            </div>
-		            <!-- Prime Contractor Profiles -->
-            <section id="primeProfilesSection" class="bg-[var(--surface-level-1)] p-4 md:p-6 rounded-lg shadow-md mb-6 border border-[var(--border-level-1)]">
-                <h2 class="text-lg md:text-xl font-semibold text-[var(--accent)] mb-4" style="font-weight: var(--header-font-weight);">Prime Contractor Profiles</h2>
+            <!-- KPI Stats Row -->
+            <section id="statisticsSection" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                <div class="stat-card bg-[var(--surface-level-1)] p-3 md:p-4 rounded-lg shadow hover:shadow-lg transition-shadow duration-150 border border-[var(--border-level-1)]">
+                    <div class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--accent)]" id="totalContractsValue">0</div>
+                    <div class="text-xs md:text-sm text-[var(--text-secondary)]">Total Contracts</div>
+                </div>
+                <div class="stat-card bg-[var(--surface-level-1)] p-3 md:p-4 rounded-lg shadow hover:shadow-lg transition-shadow duration-150 border border-[var(--border-level-1)]">
+                    <div class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--accent)]" id="totalValueValue">$0</div>
+                    <div class="text-xs md:text-sm text-[var(--text-secondary)]">Total Contract Value</div>
+                </div>
+                <div class="stat-card bg-[var(--surface-level-1)] p-3 md:p-4 rounded-lg shadow hover:shadow-lg transition-shadow duration-150 border border-[var(--border-level-1)]">
+                    <div class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--accent)]" id="avgContractValue">$0</div>
+                    <div class="text-xs md:text-sm text-[var(--text-secondary)]">Average Contract Value</div>
+                </div>
+                <div class="stat-card bg-[var(--surface-level-1)] p-3 md:p-4 rounded-lg shadow hover:shadow-lg transition-shadow duration-150 border border-[var(--border-level-1)]">
+                    <div class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--accent)]" id="uniquePrimesValue">0</div>
+                    <div class="text-xs md:text-sm text-[var(--text-secondary)]">Unique Prime Contractors</div>
+                </div>
+            </section>
+            
+            <!-- Prime Contractor Profiles -->
+            <section id="primeProfilesSection" class="bg-[var(--surface-level-1)] p-3 sm:p-4 md:p-6 rounded-lg shadow-md mb-6 border border-[var(--border-level-1)]">
+                <h2 class="text-lg md:text-xl font-semibold text-[var(--accent)] mb-3 sm:mb-4" style="font-weight: var(--header-font-weight);">Prime Contractor Profiles</h2>
                 
-                <p class="text-xs md:text-sm text-[var(--text-secondary)] mb-3">Displaying profiles based on current search/filter. Click a prime name to filter the entire dashboard to that prime. Use search to refine this list.</p>
-                <div id="primeProfilesContainer" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 md:gap-4 max-h-[70vh] overflow-y-auto"></div>
+                <p class="text-xs md:text-sm text-[var(--text-secondary)] mb-3">Displaying profiles based on current search/filter. Click a prime name to filter the entire dashboard to that prime.</p>
+                <div id="primeProfilesContainer" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 md:gap-4 max-h-[60vh] sm:max-h-[70vh] overflow-y-auto pb-1"></div>
             </section>
 
             <!-- Prime Detail View - hidden until a specific prime is selected -->
-            <section id="primeDetailViewSection" class="bg-[var(--surface-level-1)] p-4 md:p-6 rounded-lg shadow-md mb-6 border border-[var(--border-level-1)] hidden">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 id="primeDetailTitle" class="text-xl md:text-2xl font-bold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Prime Contractor Details</h2>
+            <section id="primeDetailViewSection" class="bg-[var(--surface-level-1)] p-3 sm:p-4 md:p-6 rounded-lg shadow-md mb-6 border border-[var(--border-level-1)] hidden">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-4">
+                    <h2 id="primeDetailTitle" class="text-lg sm:text-xl md:text-2xl font-bold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Prime Contractor Details</h2>
                     <button onclick="clearAllFilters()" class="px-3 py-1 bg-[var(--surface-level-2)] text-[var(--text-secondary)] rounded hover:bg-[var(--surface-level-3)] transition">
                         Back to All Primes
                     </button>
                 </div>
-                <div id="primeDetailStats" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 text-sm md:text-base">
+                <div id="primeDetailStats" class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 mb-4 sm:mb-6 text-sm md:text-base">
                 </div>
-                <h3 class="text-lg font-semibold text-[var(--text-primary)] mt-6 mb-2" style="font-weight: var(--header-font-weight);">Contracts List for this Prime</h3>
-                <div id="primeDetailContractsTableContainer" class="table-responsive max-h-96 overflow-y-auto">
+                <h3 class="text-base sm:text-lg font-semibold text-[var(--text-primary)] mt-4 sm:mt-6 mb-2" style="font-weight: var(--header-font-weight);">Contracts List for this Prime</h3>
+                <div id="primeDetailContractsTableContainer" class="table-responsive max-h-64 sm:max-h-96 overflow-y-auto">
                 </div>
-            </section>	
-<section id="visualizationSection" class="mb-6">
-  <h2 class="text-lg md:text-xl font-semibold text-[var(--accent)] mb-4 px-2" style="font-weight: var(--header-font-weight);">Interactive Visualizations</h2>
-  
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
-    <!-- Sankey Chart -->
-    <div id="sankeySection" class="dashboard-card p-4 md:p-6">
-      <div class="flex justify-between items-center mb-4">
-        <div>
-          <h3 class="text-md md:text-lg font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Funding Flow: Agencies to Primes</h3>
-          <p class="text-xs md:text-sm text-[var(--text-secondary)]">Visualization of contract value flows from top agencies to prime contractors. Click on any agency or contractor to filter the dashboard.</p>
-        </div>
-        <button id="resetSankeyBtn" class="px-3 py-1 bg-[var(--accent)] text-[var(--on-accent)] rounded hover:bg-opacity-90 transition text-sm">
-          Reset
-        </button>
-      </div>
-      <div id="sankeyWrapper" class="w-full rounded-md mt-2">
-        <svg id="sankeyChart" class="w-full h-[500px]" viewBox="0 0 1000 600" preserveAspectRatio="xMidYMid meet"></svg>
-      </div>
-    </div>
-    
-    <!-- Map Section -->
-    <div id="contractorMapSection" class="dashboard-card p-4 md:p-6">
-      <div class="flex justify-between items-center mb-4">
-        <div>
-          <h3 class="text-md md:text-lg font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Prime Contractor Map</h3>
-          <p class="text-xs md:text-sm text-[var(--text-secondary)]">Showing locations of prime contractor awardees. Click markers for details.</p>
-        </div>
-        <button id="resetMapBtn" class="px-3 py-1 bg-[var(--accent)] text-[var(--on-accent)] rounded hover:bg-opacity-90 transition text-sm">
-          Reset
-        </button>
-      </div>
-      <div id="contractorMap" style="height: 500px; width: 100%;" class="rounded border border-[var(--border-level-2)]"></div>
-    </div>
-  </div>
-</section>
+            </section>
+
+            <!-- Interactive Visualizations Section -->
+            <section id="visualizationSection" class="mb-6">
+                <h2 class="text-lg md:text-xl font-semibold text-[var(--accent)] mb-3 sm:mb-4 px-2" style="font-weight: var(--header-font-weight);">Interactive Visualizations</h2>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
+                    <!-- Sankey Chart -->
+                    <div id="sankeySection" class="dashboard-card p-3 sm:p-4 md:p-6">
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-3 sm:mb-4">
+                            <div>
+                                <h3 class="text-base sm:text-md md:text-lg font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Funding Flow: Agencies to Primes</h3>
+                                <p class="text-xs md:text-sm text-[var(--text-secondary)]">Click on any agency or contractor to filter the dashboard.</p>
+                            </div>
+                            <button id="resetSankeyBtn" class="px-3 py-1 bg-[var(--accent)] text-[var(--on-accent)] rounded hover:bg-opacity-90 transition text-sm whitespace-nowrap">
+                                Reset
+                            </button>
+                        </div>
+                        <div id="sankeyWrapper" class="w-full rounded-md mt-2">
+                            <svg id="sankeyChart" class="w-full h-[350px] sm:h-[500px]" viewBox="0 0 1000 600" preserveAspectRatio="xMidYMid meet"></svg>
+                        </div>
+                    </div>
+                    
+                    <!-- Map Section -->
+                    <div id="contractorMapSection" class="dashboard-card p-3 sm:p-4 md:p-6">
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-3 sm:mb-4">
+                            <div>
+                                <h3 class="text-base sm:text-md md:text-lg font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Prime Contractor Map</h3>
+                                <p class="text-xs md:text-sm text-[var(--text-secondary)]">Showing locations of prime contractor awardees.</p>
+                            </div>
+                            <button id="resetMapBtn" class="px-3 py-1 bg-[var(--accent)] text-[var(--on-accent)] rounded hover:bg-opacity-90 transition text-sm whitespace-nowrap">
+                                Reset
+                            </button>
+                        </div>
+                        <div id="contractorMap" style="height: 350px; min-height: 250px; width: 100%;" class="rounded border border-[var(--border-level-2)]"></div>
+                    </div>
+                </div>
+            </section>
             
             <!-- Core Charts Section -->
             <section class="mb-6">
-                <h2 class="text-lg md:text-xl font-semibold text-[var(--accent)] mb-4 px-2" style="font-weight: var(--header-font-weight);">Analysis Charts</h2>
+                <h2 class="text-lg md:text-xl font-semibold text-[var(--accent)] mb-3 sm:mb-4 px-2" style="font-weight: var(--header-font-weight);">Analysis Charts</h2>
                 
-                <div id="coreChartsSection" class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                <div id="coreChartsSection" class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
                     <!-- Prime Contractors Chart -->
-                    <div id="primeContractorsChartCard" class="dashboard-card p-4 md:p-6">
+                    <div id="primeContractorsChartCard" class="dashboard-card p-3 sm:p-4 md:p-6">
                         <div class="flex justify-between items-center mb-3">
-                            <h3 class="text-md md:text-lg font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Top Prime Contractors by Value</h3>
+                            <h3 class="text-base sm:text-md md:text-lg font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Top Prime Contractors by Value</h3>
                             <span class="text-[var(--text-tertiary)] cursor-help" title="Shows the top 10 prime contractors by total contract value">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
                             </span>
                         </div>
-                        <div class="chart-container">
+                        <div class="chart-container" style="height: 300px; min-height: 250px;">
                             <canvas id="primeContractorsChart"></canvas>
                         </div>
                     </div>
                     
                     <!-- Department Chart -->
-                    <div class="dashboard-card p-4 md:p-6">
+                    <div class="dashboard-card p-3 sm:p-4 md:p-6">
                         <div class="flex justify-between items-center mb-3">
-                            <h3 class="text-md md:text-lg font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Department Contract Distribution</h3>
+                            <h3 class="text-base sm:text-md md:text-lg font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Department Contract Distribution</h3>
                             <span class="text-[var(--text-tertiary)] cursor-help" title="Distribution of contract value by department">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
                             </span>
                         </div>
-                        <div class="chart-container">
+                        <div class="chart-container" style="height: 300px; min-height: 250px;">
                             <canvas id="departmentChart"></canvas>
                         </div>
                     </div>
                     
                     <!-- NAICS Chart -->
-                    <div class="dashboard-card p-4 md:p-6">
+                    <div class="dashboard-card p-3 sm:p-4 md:p-6">
                         <div class="flex justify-between items-center mb-3">
-                            <h3 class="text-md md:text-lg font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Top NAICS by Contract Value</h3>
+                            <h3 class="text-base sm:text-md md:text-lg font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Top NAICS by Contract Value</h3>
                             <span class="text-[var(--text-tertiary)] cursor-help" title="Top NAICS codes by total contract value">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
                             </span>
                         </div>
-                        <div class="chart-container">
+                        <div class="chart-container" style="height: 300px; min-height: 250px;">
                             <canvas id="naicsChart_main"></canvas>
                         </div>
                     </div>
                     
-                    <!-- Contract Type Chart - hidden by default in your original code -->
-                    <div class="dashboard-card p-4 md:p-6 hidden">
+                    <!-- Contract Type Chart - hidden by default -->
+                    <div class="dashboard-card p-3 sm:p-4 md:p-6 hidden">
                         <div class="flex justify-between items-center mb-3">
-                            <h3 class="text-md md:text-lg font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Contract Type Breakdown</h3>
+                            <h3 class="text-base sm:text-md md:text-lg font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Contract Type Breakdown</h3>
                             <span class="text-[var(--text-tertiary)] cursor-help" title="Distribution of contracts by type">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
                             </span>
                         </div>
-                        <div class="chart-container">
+                        <div class="chart-container" style="height: 300px; min-height: 250px;">
                             <canvas id="contractTypeChart_main"></canvas>
                         </div>
                     </div>
                     
                     <!-- State Chart -->
-                    <div class="dashboard-card p-4 md:p-6"> 
+                    <div class="dashboard-card p-3 sm:p-4 md:p-6"> 
                         <div class="flex justify-between items-center mb-2">
-                            <h3 class="text-md md:text-lg font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Contract Distribution by State</h3>
+                            <h3 class="text-base sm:text-md md:text-lg font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Contract Distribution by State</h3>
                             <span class="text-[var(--text-tertiary)] cursor-help" title="Contract distribution by state">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
                             </span>
                         </div>
-                        <div class="metric-filters" id="stateChartFilters_main">
-                            <button class="filter-btn active" data-filter="count" data-chart="stateContractsChart_main">By Count</button>
-                            <button class="filter-btn" data-filter="value" data-chart="stateContractsChart_main">By Value</button>
+                        <div class="metric-filters flex flex-wrap justify-center gap-2 mb-3" id="stateChartFilters_main">
+                            <button class="filter-btn active text-xs px-3 py-1" data-filter="count" data-chart="stateContractsChart_main">By Count</button>
+                            <button class="filter-btn text-xs px-3 py-1" data-filter="value" data-chart="stateContractsChart_main">By Value</button>
                         </div>
-                        <div class="chart-container" style="height: 320px;"> 
+                        <div class="chart-container" style="height: 300px; min-height: 250px;"> 
                             <canvas id="stateContractsChart_main"></canvas>
                         </div>
                     </div>
                     
-                    <!-- Top Agencies Chart - hidden by default in your original code -->
-                    <div class="dashboard-card p-4 md:p-6 hidden">
+                    <!-- Top Agencies Chart - hidden by default -->
+                    <div class="dashboard-card p-3 sm:p-4 md:p-6 hidden">
                         <div class="flex justify-between items-center mb-3">
-                            <h3 class="text-md md:text-lg font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Top Contracting Agencies by Value</h3>
+                            <h3 class="text-base sm:text-md md:text-lg font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Top Contracting Agencies by Value</h3>
                             <span class="text-[var(--text-tertiary)] cursor-help" title="Top contracting agencies by value">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
                             </span>
                         </div>
-                        <div class="chart-container">
+                        <div class="chart-container" style="height: 300px; min-height: 250px;">
                             <canvas id="topAgenciesChart"></canvas>
                         </div>
                     </div>
                     
                     <!-- Market Share Chart -->
-                    <div id="marketShareChartCard" class="dashboard-card p-4 md:p-6"> 
+                    <div id="marketShareChartCard" class="dashboard-card p-3 sm:p-4 md:p-6"> 
                         <div class="flex justify-between items-center mb-3">
-                            <h3 class="text-md md:text-lg font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Prime Market Share (for current filter)</h3>
+                            <h3 class="text-base sm:text-md md:text-lg font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Prime Market Share (for current filter)</h3>
                             <span class="text-[var(--text-tertiary)] cursor-help" title="Market share percentage of prime contractors based on current filters">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
                             </span>
                         </div>
-                        <div class="chart-container">
+                        <div class="chart-container" style="height: 300px; min-height: 250px;">
                             <canvas id="marketShareChart"></canvas>
                         </div>
                     </div>
                     
                     <!-- Timeline Chart -->
-                    <div class="dashboard-card p-4 md:p-6"> 
+                    <div class="dashboard-card p-3 sm:p-4 md:p-6"> 
                         <div class="flex justify-between items-center mb-3">
-                            <h3 class="text-md md:text-lg font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Contract Timeline Forecast</h3>
+                            <h3 class="text-base sm:text-md md:text-lg font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Contract Timeline Forecast</h3>
                             <span class="text-[var(--text-tertiary)] cursor-help" title="Timeline of contract starts and endings by year">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
                             </span>
                         </div>
-                        <div class="chart-container">
+                        <div class="chart-container" style="height: 300px; min-height: 250px;">
                             <canvas id="timelineChart"></canvas> 
                         </div>
                     </div>
@@ -1256,166 +1321,210 @@ footer img[src*="powered-by-aws"] {
             </section>
             
             <!-- Contract Expiration Calendar -->
-            <section id="contractExpirationCalendarSection" class="bg-[var(--surface-level-1)] p-4 md:p-6 rounded-lg shadow-md mb-6 border border-[var(--border-level-1)]">
-                <h2 class="text-lg md:text-xl font-semibold text-[var(--accent)] mb-4" style="font-weight: var(--header-font-weight);">Contract Expiration Calendar</h2>
+            <section id="contractExpirationCalendarSection" class="bg-[var(--surface-level-1)] p-3 sm:p-4 md:p-6 rounded-lg shadow-md mb-6 border border-[var(--border-level-1)]">
+                <h2 class="text-lg md:text-xl font-semibold text-[var(--accent)] mb-3 sm:mb-4" style="font-weight: var(--header-font-weight);">Contract Expiration Calendar</h2>
                 
                 <p class="text-xs md:text-sm text-[var(--text-secondary)] mb-3">Displaying calendar based on current search/filter. Click a day with events for details.</p>
-                <div class="calendar-container min-h-[400px] border border-[var(--border-level-2)] rounded-md p-2 md:p-4">
-                    <div class="flex flex-wrap justify-between items-center mb-4 gap-2">
-                        <div class="flex items-center gap-1">
-                            <button id="calendarPrevBtn" class="px-3 py-1 bg-[var(--surface-level-2)] text-[var(--text-secondary)] rounded hover:bg-[var(--surface-level-3)] transition" style="font-weight: var(--button-font-weight);">&lt;</button>
-                            <h3 id="calendarTitle" class="text-md md:text-lg font-semibold mx-2 text-[var(--text-primary)]">Month Year</h3>
-                            <button id="calendarNextBtn" class="px-3 py-1 bg-[var(--surface-level-2)] text-[var(--text-secondary)] rounded hover:bg-[var(--surface-level-3)] transition" style="font-weight: var(--button-font-weight);">&gt;</button>
+                <div class="calendar-container min-h-[350px] sm:min-h-[400px] border border-[var(--border-level-2)] rounded-md p-2 md:p-4">
+                    <div class="flex flex-col sm:flex-row justify-between items-center mb-4 gap-3 sm:gap-2">
+                        <div class="flex items-center gap-1 w-full sm:w-auto justify-center">
+                            <button id="calendarPrevBtn" class="px-2 sm:px-3 py-1 bg-[var(--surface-level-2)] text-[var(--text-secondary)] rounded hover:bg-[var(--surface-level-3)] transition" style="font-weight: var(--button-font-weight);">&lt;</button>
+                            <h3 id="calendarTitle" class="text-base md:text-lg font-semibold mx-2 text-[var(--text-primary)]">Month Year</h3>
+                            <button id="calendarNextBtn" class="px-2 sm:px-3 py-1 bg-[var(--surface-level-2)] text-[var(--text-secondary)] rounded hover:bg-[var(--surface-level-3)] transition" style="font-weight: var(--button-font-weight);">&gt;</button>
                         </div>
-                        <div class="flex items-center gap-2 text-xs md:text-sm">
+                        <div class="flex items-center gap-2 text-xs md:text-sm w-full sm:w-auto justify-center">
                             <label for="calendarMonthSelect" class="sr-only">Month</label>
                             <select id="calendarMonthSelect" class="p-1 border border-[var(--border-level-2)] rounded-md focus:ring-2 ring-[var(--accent)] focus:border-[var(--accent)] bg-[var(--background)] text-[var(--text-primary)]"></select>
                             <label for="calendarYearSelect" class="sr-only">Year</label>
                             <select id="calendarYearSelect" class="p-1 border border-[var(--border-level-2)] rounded-md focus:ring-2 ring-[var(--accent)] focus:border-[var(--accent)] bg-[var(--background)] text-[var(--text-primary)]"></select>
                         </div>
                     </div>
-                    <div class="calendar-grid-wrapper">
-                        <div id="calendarGrid" class="grid grid-cols-7 gap-1 text-xs md:text-sm"></div>
+                    <div class="calendar-grid-wrapper overflow-x-auto pb-2">
+                        <div id="calendarGrid" class="grid grid-cols-7 gap-1 text-xs md:text-sm min-w-[320px]"></div>
                     </div>
                 </div>
             </section>
-			<footer class="mt-12 bg-[var(--surface-level-1)] border-t border-[var(--border-level-2)] text-[var(--text-primary)]">
-  <div class="max-w-7xl mx-auto px-4 py-8">
-    <!-- Main Footer Content -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-      
-      <!-- Connect Card -->
-      <div class="dashboard-card p-4 md:p-5 flex flex-col">
-        <div class="flex items-center mb-4">
-          <img src="markgs.jpg" alt="Mark Profile Picture" class="w-16 h-16 rounded-full mr-4 border-2 border-[var(--accent)]">
-          <div>
-            <h3 class="font-semibold text-lg text-[var(--accent)]">Hi, I'm Mark. Let's Connect!</h3>
-            <p class="text-sm text-[var(--text-secondary)]">Let me hear your suggestions and great ideas.</p>
-          </div>
-        </div>
-        <div class="flex flex-wrap gap-3 mt-auto">
-          <a href="mailto:mark@subhoo.com" class="px-4 py-2 bg-[var(--accent)] text-[var(--on-accent)] rounded-md hover:bg-opacity-90 transition text-sm font-medium">Get in touch</a>
-          <a href="https://www.linkedin.com/in/markflournoy/" class="px-4 py-2 bg-[var(--surface-level-2)] text-[var(--text-secondary)] rounded-md hover:bg-[var(--surface-level-3)] transition text-sm font-medium" target="_blank" rel="noopener noreferrer">LinkedIn</a>
-        </div>
-      </div>
-      
-      <!-- Summary Box -->
-      <div class="dashboard-card p-4 md:p-5">
-        <p class="text-sm mb-4">
-          Subhoo helps small businesses discover federal subcontracting opportunities by visualizing prime contractors with required subcontracting plans. Search, explore, and connect with potential prime partners.
-        </p>
-        
-        <h4 class="font-semibold text-[var(--accent)] mt-4 mb-2">Who it's for:</h4>
-        <div class="w-20 h-1 bg-[var(--border-level-2)] mb-3"></div>
-        <ul class="text-sm space-y-2 text-[var(--text-secondary)]">
-          <li class="flex items-center">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2 text-[var(--accent)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-            </svg>
-            Sales & BD Teams <span class="text-xs opacity-70 ml-1">(Find Opportunities)</span>
-          </li>
-          <li class="flex items-center">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2 text-[var(--accent)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-            </svg>
-            Small Biz <span class="text-xs opacity-70 ml-1">(Target Primes)</span>
-          </li>
-          <li class="flex items-center">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2 text-[var(--accent)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-            </svg>
-            Primes <span class="text-xs opacity-70 ml-1">(Analyze Competition)</span>
-          </li>
-          <li class="flex items-center">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2 text-[var(--accent)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z" />
-            </svg>
-            Feds <span class="text-xs opacity-70 ml-1">(Track Goals)</span>
-          </li>
-        </ul>
-      </div>
-      
-      <!-- Resources Box -->
-      <div class="dashboard-card p-4 md:p-5">
-        <h3 class="font-semibold text-[var(--accent)] mb-3">Resources</h3>
-        <ul class="text-sm space-y-2 mb-6">
-          <li><a href="https://www.usaspending.gov/explorer" class="text-[var(--accent)] hover:underline" target="_blank" rel="noopener noreferrer">USAspending Explorer</a></li>
-          <li><a href="https://sam.gov/content/home" class="text-[var(--accent)] hover:underline" target="_blank" rel="noopener noreferrer">SAM.gov</a></li>
-          <li><a href="https://www.sba.gov/" class="text-[var(--accent)] hover:underline" target="_blank" rel="noopener noreferrer">SBA.gov</a></li>
-          <li><a href="https://orangeslices.ai/" class="text-[var(--accent)] hover:underline" target="_blank" rel="noopener noreferrer">Orange Slices AI</a></li>
-        </ul>
-        
-        <div class="mt-4">
-          <a href="https://aws.amazon.com/what-is-cloud-computing">
-            <img src="https://d0.awsstatic.com/logos/powered-by-aws-white.png" alt="Powered by AWS Cloud Computing" class="h-8">
-          </a>
-        </div>
-      </div>
-    </div>
-    
-    <!-- Footer Bottom -->
-    <div class="mt-8 pt-6 border-t border-[var(--border-level-2)] text-center text-sm text-[var(--text-secondary)]">
 
-      
-      <!-- Shoutouts -->
-      <div class="p-4 rounded-lg mx-auto max-w-3xl" style="background-color: #212529 !important;">
-        <h4 class="font-medium mb-3 text-[var(--text-primary)]">A few Shoutouts</h4>
-        <div class="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs">
-          <div class="flex justify-between items-center p-2 rounded bg-[var(--surface-level-1)]">
-            <span class="font-medium">Dark Mode</span>
-            <a href="#" class="text-[var(--accent)]">@dongkyup</a>
-          </div>
-          <div class="flex justify-between items-center p-2 rounded bg-[var(--surface-level-1)]">
-            <span class="font-medium">So What?!</span>
-            <a href="#" class="text-[var(--accent)]">@rodstedt</a>
-          </div>
-          <div class="flex justify-between items-center p-2 rounded bg-[var(--surface-level-1)]">
-            <span class="font-medium">Why?</span>
-            <a href="#" class="text-[var(--accent)]">@mpben</a>
-          </div>
-          <div class="flex justify-between items-center p-2 rounded bg-[var(--surface-level-1)]">
-            <span class="font-medium">Think Big</span>
-            <a href="#" class="text-[var(--accent)]">@ecbrown</a>
-          </div>
-          <div class="flex justify-between items-center p-2 rounded bg-[var(--surface-level-1)]">
-            <span class="font-medium">Dive Deep</span>
-            <a href="#" class="text-[var(--accent)]">@datkd</a>
-          </div>
-          <div class="flex justify-between items-center p-2 rounded bg-[var(--surface-level-1)]">
-            <span class="font-medium">True Believer</span>
-            <a href="#" class="text-[var(--accent)]">@dave</a>
-          </div>
-        </div>
-      </div>
-	  <p class="mb-2">&copy; 2025 Subhoo | Built on AWS | Data from SBA.gov</p>
-      
-    </div>
-  </div>
-</footer>
+            <!-- Footer -->
+            <footer class="mt-12 bg-[var(--surface-level-1)] border-t border-[var(--border-level-2)] text-[var(--text-primary)] rounded-lg overflow-hidden">
+                <div class="w-full px-4 py-8">
+                    <!-- Main Footer Content -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
+                        
+                        <!-- Connect Card -->
+                        <div class="dashboard-card p-4 md:p-5 flex flex-col">
+                            <div class="flex items-center mb-4">
+                                <img src="markgs.jpg" alt="Mark Profile Picture" class="w-14 h-14 sm:w-16 sm:h-16 rounded-full mr-3 sm:mr-4 border-2 border-[var(--accent)]">
+                                <div>
+                                    <h3 class="font-semibold text-base sm:text-lg text-[var(--accent)]">Hi, I'm Mark. Let's Connect!</h3>
+                                    <p class="text-xs sm:text-sm text-[var(--text-secondary)]">Let me hear your suggestions and great ideas.</p>
+                                </div>
+                            </div>
+                            <div class="flex flex-wrap gap-2 sm:gap-3 mt-auto">
+                                <a href="mailto:mark@subhoo.com" class="px-3 sm:px-4 py-2 bg-[var(--accent)] text-[var(--on-accent)] rounded-md hover:bg-opacity-90 transition text-xs sm:text-sm font-medium">Get in touch</a>
+                                <a href="https://www.linkedin.com/in/markflournoy/" class="px-3 sm:px-4 py-2 bg-[var(--surface-level-2)] text-[var(--text-secondary)] rounded-md hover:bg-[var(--surface-level-3)] transition text-xs sm:text-sm font-medium" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+                            </div>
+                        </div>
+                        
+                        <!-- Summary Box -->
+                        <div class="dashboard-card p-4 md:p-5">
+                            <p class="text-xs sm:text-sm mb-4">
+                                Subhoo helps small businesses discover federal subcontracting opportunities by visualizing prime contractors with required subcontracting plans. Search, explore, and connect with potential prime partners.
+                            </p>
+                            
+                            <h4 class="font-semibold text-[var(--accent)] mt-3 sm:mt-4 mb-2">Who it's for:</h4>
+                            <div class="w-16 sm:w-20 h-1 bg-[var(--border-level-2)] mb-2 sm:mb-3"></div>
+                            <ul class="text-xs sm:text-sm space-y-2 text-[var(--text-secondary)]">
+                                <li class="flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2 text-[var(--accent)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                    </svg>
+                                    Sales & BD Teams <span class="text-xs opacity-70 ml-1">(Find Opportunities)</span>
+                                </li>
+                                <li class="flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2 text-[var(--accent)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                                    </svg>
+                                    Small Biz <span class="text-xs opacity-70 ml-1">(Target Primes)</span>
+                                </li>
+                                <li class="flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2 text-[var(--accent)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                    </svg>
+                                    Primes <span class="text-xs opacity-70 ml-1">(Analyze Competition)</span>
+                                </li>
+                                <li class="flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2 text-[var(--accent)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z" />
+                                    </svg>
+                                    Feds <span class="text-xs opacity-70 ml-1">(Track Goals)</span>
+                                </li>
+                            </ul>
+                        </div>
+                        
+                        <!-- Resources Box -->
+                        <div class="dashboard-card p-4 md:p-5">
+                            <h3 class="font-semibold text-[var(--accent)] mb-3">Resources</h3>
+                            <ul class="text-xs sm:text-sm space-y-2 mb-4 sm:mb-6">
+                                <li><a href="https://www.usaspending.gov/explorer" class="text-[var(--accent)] hover:underline" target="_blank" rel="noopener noreferrer">USAspending Explorer</a></li>
+                                <li><a href="https://sam.gov/content/home" class="text-[var(--accent)] hover:underline" target="_blank" rel="noopener noreferrer">SAM.gov</a></li>
+                                <li><a href="https://www.sba.gov/" class="text-[var(--accent)] hover:underline" target="_blank" rel="noopener noreferrer">SBA.gov</a></li>
+                                <li><a href="https://orangeslices.ai/" class="text-[var(--accent)] hover:underline" target="_blank" rel="noopener noreferrer">Orange Slices AI</a></li>
+                            </ul>
+                            
+                            <div class="mt-3 sm:mt-4">
+                                <a href="https://aws.amazon.com/what-is-cloud-computing">
+                                    <img src="https://d0.awsstatic.com/logos/powered-by-aws-white.png" alt="Powered by AWS Cloud Computing" class="h-6 sm:h-8">
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Footer Bottom -->
+                    <div class="mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-[var(--border-level-2)] text-center text-xs sm:text-sm text-[var(--text-secondary)]">
+                        <!-- Shoutouts -->
+                        <div class="p-3 sm:p-4 rounded-lg mx-auto max-w-3xl" style="background-color: #212529 !important;">
+                            <h4 class="font-medium mb-2 sm:mb-3 text-[var(--text-primary)]">A few Shoutouts</h4>
+                            <div class="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs">
+                                <div class="flex justify-between items-center p-2 rounded bg-[var(--onyx)]">
+                                    <span class="font-medium">Dark Mode</span>
+                                    <a href="#" class="text-[var(--accent)]">@dongkyup</a>
+                                </div>
+                                <div class="flex justify-between items-center p-2 rounded bg-[var(--onyx)]">
+                                    <span class="font-medium">So What?!</span>
+                                    <a href="#" class="text-[var(--accent)]">@rodstedt</a>
+                                </div>
+                                <div class="flex justify-between items-center p-2 rounded bg-[var(--onyx)]">
+                                    <span class="font-medium">Why?</span>
+                                    <a href="#" class="text-[var(--accent)]">@mpben</a>
+                                </div>
+                                <div class="flex justify-between items-center p-2 rounded bg-[var(--onyx)]">
+                                    <span class="font-medium">Think Big</span>
+                                    <a href="#" class="text-[var(--accent)]">@ecbrown</a>
+                                </div>
+                                <div class="flex justify-between items-center p-2 rounded bg-[var(--onyx)]">
+                                    <span class="font-medium">Dive Deep</span>
+                                    <a href="#" class="text-[var(--accent)]">@datkd</a>
+                                </div>
+                                <div class="flex justify-between items-center p-2 rounded bg-[var(--onyx)]">
+                                    <span class="font-medium">True Believer</span>
+                                    <a href="#" class="text-[var(--accent)]">@dave</a>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="mt-4 mb-2">&copy; 2025 Subhoo | Built on AWS | Data from SBA.gov</p>
+                    </div>
+                </div>
+            </footer>
         </main>
-</div>
+    </div>
 
     <!-- Modals and Tooltips -->
     <div id="genericModal" class="modal-backdrop hidden">
-        <div id="genericModalContent" class="modal-content">
+        <div id="genericModalContent" class="modal-content w-full max-w-xs sm:max-w-lg md:max-w-2xl lg:max-w-4xl overflow-auto">
             <button id="genericModalCloseBtn" class="modal-close-btn">&times;</button>
-            <h2 id="genericModalTitle" class="text-xl font-semibold text-[var(--accent)] mb-4" style="font-weight: var(--header-font-weight);">Modal Title</h2>
-            <div id="genericModalBody" class="text-[var(--text-secondary)]">
+            <h2 id="genericModalTitle" class="text-lg sm:text-xl font-semibold text-[var(--accent)] mb-3 sm:mb-4" style="font-weight: var(--header-font-weight);">Modal Title</h2>
+            <div id="genericModalBody" class="text-[var(--text-secondary)] text-sm">
             </div>
         </div>    
     </div>
 
-    <div class="event-tooltip"></div>
+    <div class="event-tooltip hidden"></div>
 
-    <div id="shareToast" class="fixed bottom-5 right-5 bg-[var(--accent)] text-[var(--on-accent)] py-2 px-4 rounded-md shadow-lg hidden transition-opacity duration-300">
+    <div id="shareToast" class="fixed bottom-5 right-5 bg-[var(--accent)] text-[var(--on-accent)] py-2 px-4 rounded-md shadow-lg hidden transition-opacity duration-300 text-sm z-50">
         Link copied to clipboard!
     </div>
-	<div id="page-loader" class="fixed inset-0 z-50 flex items-center justify-center bg-[var(--background)]">
-  <div class="flex flex-col items-center">
-    <div class="spinner w-16 h-16 border-4 border-[var(--border-level-2)] border-t-[var(--accent)] rounded-full animate-spin"></div>
-    <p class="mt-4 text-[var(--text-primary)]">Loading Subhoo...</p>
-  </div>
-</div>
+
+    <!-- Mobile Optimizations -->
+    <script>
+        // Initialize page loader
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                const loader = document.getElementById('page-loader');
+                if (loader) {
+                    loader.style.opacity = '0';
+                    setTimeout(function() {
+                        loader.style.display = 'none';
+                    }, 300);
+                }
+            }, 500);
+        });
+
+        
+            
+            // Quickstart guide toggle
+            window.toggleQuickstart = function() {
+                const content = document.getElementById('quickstart-content');
+                const toggle = document.getElementById('quickstart-toggle');
+                
+                if (content.style.display === 'none') {
+                    content.style.display = 'grid';
+                    toggle.classList.remove('rotate-180');
+                } else {
+                    content.style.display = 'none';
+                    toggle.classList.add('rotate-180');
+                }
+                
+                localStorage.setItem('quickstartCollapsed', content.style.display === 'none');
+            };
+            
+            // Initialize quickstart based on saved preference
+            const wasCollapsed = localStorage.getItem('quickstartCollapsed') === 'true';
+            document.getElementById('quickstart-content').style.display = wasCollapsed ? 'none' : 'grid';
+            if (wasCollapsed) {
+                document.getElementById('quickstart-toggle').classList.add('rotate-180');
+            }
+            
+           
+            
+            // Ensure responsive charts
+            window.addEventListener('resize', function() {
+                if (window.contractorMap) {
+                    window.contractorMap.invalidateSize();
+                }
+            });
+        });
+    </script>
 </body>
 <script>
   window.addEventListener('load', function() {
