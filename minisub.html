@@ -1162,7 +1162,7 @@ h2 {
                         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-3 sm:mb-4">
                             <div>
                                 <h3 class="text-base sm:text-md md:text-lg font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Funding Flow: Agencies to Primes</h3>
-                                <p class="text-xs md:text-sm text-[var(--text-secondary)]">Click on any agency or contractor to filter the dashboard.</p>
+                                <p class="text-xs md:text-sm text-[var(--text-secondary)]">Visualization of contract value flows from top agencies to prime contractors. Click on any agency or contractor to filter the dashboard.</p>
                             </div>
                             <button id="resetSankeyBtn" class="px-3 py-1 bg-[var(--accent)] text-[var(--on-accent)] rounded hover:bg-opacity-90 transition text-sm whitespace-nowrap">
                                 Reset
@@ -1178,7 +1178,7 @@ h2 {
                         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-3 sm:mb-4">
                             <div>
                                 <h3 class="text-base sm:text-md md:text-lg font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Prime Contractor Map</h3>
-                                <p class="text-xs md:text-sm text-[var(--text-secondary)]">Showing locations of prime contractor awardees.</p>
+                                <p class="text-xs md:text-sm text-[var(--text-secondary)]">Showing locations of prime contractor awardees. Click markers for details.</p>
                             </div>
                             <button id="resetMapBtn" class="px-3 py-1 bg-[var(--accent)] text-[var(--on-accent)] rounded hover:bg-opacity-90 transition text-sm whitespace-nowrap">
                                 Reset
@@ -1490,7 +1490,60 @@ h2 {
             }, 500);
         });
 
-        
+        // Initialize theme toggle for mobile
+        document.addEventListener('DOMContentLoaded', function() {
+            // Sync mobile/desktop toggle buttons
+            const syncThemeButtons = () => {
+                // Desktop button
+                const themeToggleBtn = document.getElementById('themeToggleBtn');
+                if (themeToggleBtn) {
+                    themeToggleBtn.addEventListener('click', function() {
+                        document.documentElement.classList.toggle('dark');
+                        const isDark = document.documentElement.classList.contains('dark');
+                        localStorage.setItem('theme', isDark ? 'dark' : 'light');
+                        
+                        // Update icons on both desktop and mobile
+                        document.getElementById('themeIconSun').classList.toggle('hidden', isDark);
+                        document.getElementById('themeIconMoon').classList.toggle('hidden', !isDark);
+                        
+                        if (document.getElementById('themeIconSun-mobile')) {
+                            document.getElementById('themeIconSun-mobile').classList.toggle('hidden', isDark);
+                            document.getElementById('themeIconMoon-mobile').classList.toggle('hidden', !isDark);
+                        }
+                    });
+                }
+                
+                // Mobile button
+                const mobileThemeBtn = document.getElementById('themeToggleBtn-mobile');
+                if (mobileThemeBtn) {
+                    mobileThemeBtn.addEventListener('click', function() {
+                        document.documentElement.classList.toggle('dark');
+                        const isDark = document.documentElement.classList.contains('dark');
+                        localStorage.setItem('theme', isDark ? 'dark' : 'light');
+                        
+                        // Update icons on both desktop and mobile
+                        if (document.getElementById('themeIconSun')) {
+                            document.getElementById('themeIconSun').classList.toggle('hidden', isDark);
+                            document.getElementById('themeIconMoon').classList.toggle('hidden', !isDark);
+                        }
+                        
+                        document.getElementById('themeIconSun-mobile').classList.toggle('hidden', isDark);
+                        document.getElementById('themeIconMoon-mobile').classList.toggle('hidden', !isDark);
+                    });
+                }
+            };
+            
+            // Sync share buttons
+            const syncShareButtons = () => {
+                const mobileShareBtn = document.getElementById('shareViewBtn-mobile');
+                if (mobileShareBtn) {
+                    mobileShareBtn.addEventListener('click', function() {
+                        // Call the same function that desktop share button uses
+                        const event = new Event('click');
+                        document.getElementById('shareViewBtn').dispatchEvent(event);
+                    });
+                }
+            };
             
             // Quickstart guide toggle
             window.toggleQuickstart = function() {
@@ -1515,7 +1568,22 @@ h2 {
                 document.getElementById('quickstart-toggle').classList.add('rotate-180');
             }
             
-           
+            // Apply initial theme
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+                // Update the icons
+                document.getElementById('themeIconSun').classList.add('hidden');
+                document.getElementById('themeIconMoon').classList.remove('hidden');
+                if (document.getElementById('themeIconSun-mobile')) {
+                    document.getElementById('themeIconSun-mobile').classList.add('hidden');
+                    document.getElementById('themeIconMoon-mobile').classList.remove('hidden');
+                }
+            }
+            
+            // Initialize buttons
+            syncThemeButtons();
+            syncShareButtons();
             
             // Ensure responsive charts
             window.addEventListener('resize', function() {
