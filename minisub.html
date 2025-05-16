@@ -1,14 +1,18 @@
 <!DOCTYPE html>
-<html lang="en" class=""> <head>
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Streamlined Federal Business Dashboard</title>
+<title>Subhoo - Federal Prime Contractor Database</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
-	<!-- Leaflet -->
+<!-- JavaScript Libraries -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/d3-sankey@0.12.3/dist/d3-sankey.min.js"></script>
+
+<!-- Leaflet -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
 
@@ -16,8 +20,71 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+<!-- SEO Meta Tags -->
+<meta name="description" content="Subhoo helps small businesses discover federal subcontracting opportunities by visualizing prime contractors with mandatory subcontracting plans from the SBA's official directory.">
+<meta name="keywords" content="federal contracting, subcontractor intelligence, USASpending, government contracts, prime contractors, federal sales, business development, small business">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://subhoo.com/">
 
-    <style>
+<!-- Preconnect to External Domains -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Mono&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://www.googletagmanager.com">
+<link rel="preconnect" href="https://cdnjs.cloudflare.com">
+<link rel="preconnect" href="https://d3js.org">
+<link rel="preconnect" href="https://unpkg.com">
+
+<!-- Favicon -->
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="manifest" href="/site.webmanifest">
+<meta name="theme-color" content="#252327" class="theme-color">
+
+<!-- Open Graph / Facebook -->
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://subhoo.com/" />
+<meta property="og:title" content="Subhoo - Federal Prime Contractor Database" />
+<meta property="og:description" content="Discover federal subcontracting opportunities by visualizing prime contractors with mandatory small business participation plans. Search, explore, and connect with potential prime partners." />
+<meta property="og:image" content="https://subhoo.com/subhoo.png">
+<meta property="og:locale" content="en_US">
+
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Subhoo - Federal Prime Contractor Database" />
+<meta name="twitter:description" content="Discover federal subcontracting opportunities by visualizing prime contractors with mandatory small business participation plans. Search, explore, and connect with potential prime partners." />
+<meta name="twitter:image" content="https://subhoo.com/subhoo.png" />
+
+<!-- Security Headers -->
+<meta http-equiv="X-Content-Type-Options" content="nosniff">
+
+<!-- Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-2W258XTWJG"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-2W258XTWJG');
+</script>
+
+<!-- Structured Data -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "Subhoo",
+  "url": "https://subhoo.com/",
+  "description": "Federal Prime Contractor Database with Subcontracting Plans",
+  "potentialAction": {
+    "@type": "SearchAction",
+    "target": "https://subhoo.com/search?q={search_term_string}",
+    "query-input": "required name=search_term_string"
+  }
+}
+</script>
+<style>
 :root {
   font-family: Inter, sans-serif;
   font-feature-settings: 'liga' 1, 'calt' 1;
@@ -48,8 +115,9 @@
   --border-level-1: rgba(173, 181, 189, 0.3);
   --border-level-2: rgba(173, 181, 189, 0.5);
   --border-level-3: rgba(173, 181, 189, 0.8);
-
-  --surface-level-1: rgba(206, 212, 218, 0.8);
+  
+  /* Surface levels consistently using hardcoded value */
+  --surface-level-1: #e9ecef;
   --surface-level-2: rgba(206, 212, 218, 0.3);
   --surface-level-3: rgba(206, 212, 218, 0.5);
 
@@ -66,301 +134,100 @@
   --space-m: 12px;
 }
 
+/* Dark Mode Improvements */
 html.dark {
+  /* Base colors */
   --background: var(--eerie-black);
   --on-accent: #ffffff;
   --accent: var(--french-gray-2);
   --accent-secondary: rgba(173, 181, 189, 0.3);
-  --gradient-bg-start: rgba(173, 181, 189, 0.12);
+  --gradient-bg-start: rgba(173, 181, 189, 0.15);
   --gradient-bg-end: rgba(173, 181, 189, 0);
 
+  /* Text with improved contrast */
   --text-primary: var(--seasalt);
   --text-secondary: var(--platinum);
   --text-tertiary: var(--french-gray);
 
-  --border-level-1: rgba(173, 181, 189, 0.2);
-  --border-level-2: rgba(173, 181, 189, 0.4);
-  --border-level-3: rgba(173, 181, 189, 0.6);
+  /* Border intensity increased for better visibility */
+  --border-level-1: rgba(173, 181, 189, 0.25);
+  --border-level-2: rgba(173, 181, 189, 0.45);
+  --border-level-3: rgba(173, 181, 189, 0.65);
 
+  /* Surface levels for dark mode */
   --surface-level-1: var(--onyx);
   --surface-level-2: var(--outer-space);
   --surface-level-3: var(--slate-gray);
 
-  --chart-accent-1: var(--french-gray-2);
-  --chart-accent-2: var(--platinum);
+  /* Chart colors with better distinction */
+  --chart-accent-1: var(--platinum);
+  --chart-accent-2: var(--french-gray-2);
   --chart-accent-3: var(--french-gray);
-  --chart-accent-4: var(--antiflash-white);
-  --chart-accent-5: var(--seasalt);
+  --chart-accent-4: var(--outer-space);
+  --chart-accent-5: var(--onyx);
 }
 
-
-        body {
-            background-color: var(--background);
-            color: var(--text-primary);
-            transition: background-color 0.3s ease, color 0.3s ease;
-        }
-        
-        .chart-container {
-            position: relative;
-            height: 300px; 
-            width: 100%;
-        }
-        .chart-no-data {
-            display: flex;
-            flex-direction: column; 
-            align-items: center;
-            justify-content: center;
-            height: 100%;
-            color: var(--text-primary); 
-            background-color: var(--surface-level-1); 
-            border: 1px dashed var(--border-level-2); 
-            border-radius: 0.375rem; 
-            text-align: center;
-            padding: 1rem;
-        }
-        .chart-no-data svg { 
-            width: 3rem; 
-            height: 3rem; 
-            margin-bottom: 0.5rem; 
-            color: var(--text-tertiary); 
-        }
-        .spinner { 
-            border: 4px solid var(--surface-level-3);
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            border-left-color: var(--accent); 
-            animation: spin 1s linear infinite;
-            margin-right: 10px;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-.calendar-day-header {
-            font-weight: var(--header-font-weight);
-            text-align: center;
-            padding: 5px 0;
-            background-color: var(--accent); 
-            color: var(--on-accent);
-            border-radius: 4px;
-        }
-        .calendar-event {
-            padding: 3px 5px;
-            background-color: var(--accent); 
-            color: var(--on-accent);
-            border-radius: 3px;
-            margin-bottom: 3px;
-            font-size: 0.6875rem; 
-            cursor: default; 
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        html.dark .calendar-event {
-            background-color: var(--accent);
-        }
-        .calendar-day-cell {
-            cursor: pointer;
-            transition: background-color 0.2s;
-            min-width: 60px; 
-            border-color: var(--border-level-1);
-             background-color: var(--accent-secondary) !important;
-        }
-
-
-        .calendar-day-cell:empty {
-   background-color: var(--accent-secondary) !important;
+/* ===== Base Styles ===== */
+body {
+  background-color: var(--background);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-        
-        /* Event day styles - All densities now use the same color */
-        .calendar-day-cell.bg-blue-50,
-        .calendar-day-cell.bg-blue-100,
-        .calendar-day-cell.bg-blue-200 { 
-            background-color: var(--accent-secondary) !important;
-        } 
-        html.dark .calendar-day-cell.bg-blue-50,
-        html.dark .calendar-day-cell.bg-blue-100,
-        html.dark .calendar-day-cell.bg-blue-200 { 
-            background-color: var(--accent-secondary) !important;
-        } 
-
-.calendar-filler-cell {
-  background-color: var(--accent-secondary) !important; /* Tailwind's gray-200 */
-  pointer-events: none;
+/* ===== Dashboard Elements ===== */
+.dashboard-card {
+  background-color: var(--surface-level-1) !important;
+  border: 1px solid var(--border-level-1);
+  border-radius: 0.5rem;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-html.dark .calendar-filler-cell {
-  background-color: #1f2937 !important; /* Tailwind's gray-800 */
+.dashboard-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
+/* Section elements */
+section.bg-[var(--surface-level-1)] {
+  background-color: var(--surface-level-1);
+}
 
-        .calendar-grid-wrapper { 
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch; 
-        }
-        .calendar-grid-wrapper .grid { 
-            min-width: 450px; 
-        }
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
 
+/* ===== Charts and Data Visualization ===== */
+.chart-container {
+  position: relative;
+  height: 300px;
+  width: 100%;
+}
 
-        .event-tooltip {
-            position: absolute;
-            background-color: var(--background);
-            border: 1px solid var(--border-level-2);
-            color: var(--text-primary);
-            border-radius: 4px;
-            padding: 10px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            z-index: 1000;
-            max-width: 300px;
-            display: none;
-        }
-        .metric-filters {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 10px;
-            justify-content: center;
-        }
-        .filter-btn {
-            padding: 4px 8px;
-            background-color: var(--surface-level-2); 
-            border: 1px solid var(--border-level-2); 
-            color: var(--text-secondary);
-            border-radius: 4px; 
-            cursor: pointer;
-            font-size: 12px; 
-            transition: background-color 0.2s, box-shadow 0.2s;
-        }
-        .filter-btn.active {
-            background-color: var(--accent) !important; 
-            color: var(--on-accent) !important;
-            border-color: var(--accent) !important; 
-        }
-        .filter-btn:focus, button:focus, input[type="text"]:focus, select:focus { 
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(132, 88, 179, 0.4);
-        }
-        #processingIndicator.flex { 
-            display: flex;
-        }
-        #unifiedSearchSuggestions {
-            position: absolute;
-            background-color: var(--background);
-            border: 1px solid var(--border-level-2); 
-            border-top: none;
-            border-radius: 0 0 0.375rem 0.375rem; 
-            max-height: 240px; 
-            overflow-y: auto;
-            width: calc(100% - 2px); 
-            z-index: 50; 
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06); 
-        }
-        .suggestion-item {
-            padding: 0.5rem 0.75rem; 
-            cursor: pointer;
-            color: var(--text-primary);
-        }
-        .suggestion-item:hover {
-            background-color: var(--surface-level-2); 
-        }
-        .suggestion-item .type-label {
-            font-size: 0.75rem; 
-            color: var(--text-tertiary); 
-            margin-left: 0.5rem; 
-            background-color: var(--surface-level-1); 
-            padding: 0.125rem 0.375rem; 
-            border-radius: 0.25rem; 
-        }
-        .modal-backdrop {
-            position: fixed;
-            inset: 0;
-            background-color: rgba(0,0,0,0.75);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 100;
-            padding: 1rem;
-        }
-        .modal-content {
-            background-color: var(--background);
-            color: var(--text-primary);
-            border-radius: 0.5rem; 
-            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05); 
-            padding: 1.5rem; 
-            max-width: 90vw; 
-            width: 100%;
-            max-height: 90vh;
-            overflow-y: auto;
-            position: relative;
-        }
-        .modal-content-lg { max-width: 60rem; } 
-        .modal-content-md { max-width: 48rem; } 
+.chart-no-data {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text-primary);
+  background-color: var(--surface-level-1) !important;
+  border: 1px dashed var(--border-level-2);
+  border-radius: 0.375rem;
+  text-align: center;
+  padding: 1rem;
+}
 
-        .modal-close-btn {
-            position: absolute;
-            top: 0.75rem; 
-            right: 0.75rem; 
-            background: none;
-            border: none;
-            font-size: 1.5rem; 
-            color: var(--text-tertiary); 
-            cursor: pointer;
-            padding: 0.25rem; 
-        }
-        .modal-close-btn:hover {
-            color: var(--text-primary); 
-        }
-        .table-responsive {
-            display: block;
-            width: 100%;
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-        }
-        .table-responsive thead th { 
-            position: sticky;
-            top: 0;
-            z-index: 10; 
-            background-color: var(--surface-level-1);
-            color: var(--text-secondary);
-            border-bottom: 1px solid var(--border-level-2);
-        }
-        .table-responsive th { 
-            cursor: pointer;
-        }
-        .table-responsive th:hover {
-            background-color: var(--surface-level-2); 
-        }
-        .table-responsive tbody {
-            background-color: var(--background);
-        }
-        .table-responsive td {
-            border-bottom: 1px solid var(--border-level-1);
-        }
-        .dashboard-card {
-            transition: box-shadow 0.3s ease-in-out;
-            background-color: var(--surface-level-1); 
-            border: 1px solid var(--border-level-1);
-            border-radius: 0.5rem;
-        }
-        .dashboard-card:hover {
-            box-shadow: 0 10px 15px -3px rgba(132, 88, 179, 0.1), 0 4px 6px -2px rgba(132, 88, 179, 0.05); 
-        }
-        #activeFilterIndicator {
-            background-color: var(--accent-secondary); 
-            color: var(--accent);
-            border: 1px solid var(--accent);
-        }
-        #activeFilterIndicator button {
-            background-color: var(--accent);
-            color: var(--on-accent);
-        }
-        #activeFilterIndicator button:hover {
-            background-color: rgba(132, 88, 179, 0.8); 
-        }
-		.custom-marker {
+.chart-no-data svg {
+  width: 3rem;
+  height: 3rem;
+  margin-bottom: 0.5rem;
+  color: var(--text-tertiary);
+}
+
+.custom-marker {
   background-color: var(--chart-accent-1);
   border: 2px solid var(--border-level-2);
   border-radius: 50%;
@@ -375,8 +242,677 @@ html.dark .calendar-filler-cell {
   box-shadow: 0 0 0 4px var(--accent-secondary);
 }
 
+/* ===== Loading Indicators ===== */
+.spinner {
+  border: 4px solid var(--surface-level-3);
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border-left-color: var(--accent);
+  animation: spin 1s linear infinite;
+  margin-right: 10px;
+}
 
-    </style>
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+#processingIndicator.flex {
+  display: flex;
+}
+
+/* ===== Calendar Styles ===== */
+.calendar-day-header {
+  font-weight: var(--header-font-weight);
+  text-align: center;
+  padding: 5px 0;
+  background-color: var(--accent);
+  color: var(--on-accent);
+  border-radius: 4px;
+}
+
+.calendar-event {
+  padding: 3px 5px;
+  background-color: var(--accent);
+  color: var(--on-accent);
+  border-radius: 3px;
+  margin-bottom: 3px;
+  font-size: 0.6875rem;
+  cursor: default;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.calendar-day-cell {
+  cursor: pointer;
+  transition: background-color 0.2s;
+  min-width: 60px;
+  border-color: var(--border-level-1);
+  background-color: var(--accent-secondary) !important;
+}
+
+.calendar-day-cell:empty {
+  background-color: var(--accent-secondary) !important;
+}
+
+/* Event day styles - All densities now use the same color */
+.calendar-day-cell.bg-blue-50,
+.calendar-day-cell.bg-blue-100,
+.calendar-day-cell.bg-blue-200 {
+  background-color: var(--accent-secondary) !important;
+}
+
+.calendar-filler-cell {
+  background-color: var(--accent-secondary) !important;
+  pointer-events: none;
+}
+
+.calendar-grid-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.calendar-grid-wrapper .grid {
+  min-width: 450px;
+}
+
+.event-tooltip {
+  position: absolute;
+  background-color: var(--background);
+  border: 1px solid var(--border-level-2);
+  color: var(--text-primary);
+  border-radius: 4px;
+  padding: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  max-width: 300px;
+  display: none;
+}
+
+/* ===== Filter and Button Styles ===== */
+.metric-filters {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+  justify-content: center;
+}
+
+.filter-btn {
+  padding: 4px 8px;
+  background-color: var(--surface-level-2);
+  border: 1px solid var(--border-level-2);
+  color: var(--text-secondary);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background-color 0.2s, box-shadow 0.2s;
+}
+
+.filter-btn.active {
+  background-color: var(--accent) !important;
+  color: var(--on-accent) !important;
+  border-color: var(--accent) !important;
+}
+
+.action-btn {
+  padding: 0.5rem 1rem;
+  background-color: var(--accent);
+  color: var(--on-accent);
+  border-radius: 0.375rem;
+  font-weight: var(--button-font-weight);
+  transition: background-opacity 0.2s;
+}
+
+.action-btn:hover {
+  opacity: 0.9;
+}
+
+.secondary-btn {
+  padding: 0.375rem 0.75rem;
+  background-color: var(--surface-level-2);
+  color: var(--text-secondary);
+  border-radius: 0.375rem;
+  transition: background-color 0.2s;
+}
+
+.secondary-btn:hover {
+  background-color: var(--surface-level-3);
+}
+
+/* Focus styles for interactive elements */
+.filter-btn:focus,
+button:focus,
+input[type="text"]:focus,
+select:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(132, 88, 179, 0.4);
+}
+
+#activeFilterIndicator {
+  background-color: var(--accent-secondary);
+  color: var(--accent);
+  border: 1px solid var(--accent);
+}
+
+#activeFilterIndicator button {
+  background-color: var(--accent);
+  color: var(--on-accent);
+}
+
+#activeFilterIndicator button:hover {
+  background-color: rgba(132, 88, 179, 0.8);
+}
+
+/* ===== Search Suggestions ===== */
+#unifiedSearchSuggestions {
+  position: absolute;
+  background-color: var(--background);
+  border: 1px solid var(--border-level-2);
+  border-top: none;
+  border-radius: 0 0 0.375rem 0.375rem;
+  max-height: 240px;
+  overflow-y: auto;
+  width: calc(100% - 2px);
+  z-index: 50;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+}
+
+.suggestion-item {
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  color: var(--text-primary);
+}
+
+.suggestion-item:hover {
+  background-color: var(--surface-level-2);
+}
+
+.suggestion-item .type-label {
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+  margin-left: 0.5rem;
+  background-color: var(--surface-level-1);
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.25rem;
+}
+
+/* ===== Modal Styles ===== */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0,0,0,0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 1rem;
+}
+
+.modal-content {
+  background-color: var(--background);
+  color: var(--text-primary);
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+  padding: 1.5rem;
+  max-width: 90vw;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+}
+
+.modal-content-lg { max-width: 60rem; }
+.modal-content-md { max-width: 48rem; }
+
+.modal-close-btn {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  padding: 0.25rem;
+}
+
+.modal-close-btn:hover {
+  color: var(--text-primary);
+}
+
+/* ===== Table Styles ===== */
+.table-responsive {
+  display: block;
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-level-2) transparent;
+}
+
+.table-responsive::-webkit-scrollbar {
+  height: 6px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+  background-color: var(--border-level-2);
+  border-radius: 3px;
+}
+
+.table-responsive thead th {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background-color: var(--surface-level-1);
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border-level-2);
+  cursor: pointer;
+}
+
+.table-responsive th:hover {
+  background-color: var(--surface-level-2);
+}
+
+.table-responsive tbody {
+  background-color: var(--background);
+}
+
+.table-responsive td {
+  border-bottom: 1px solid var(--border-level-1);
+}
+
+/* ===== Collapsible sections ===== */
+.collapsible-header {
+  cursor: pointer;
+}
+
+.collapsible-content {
+  transition: max-height 0.3s ease;
+  overflow: hidden;
+}
+
+/* ===== Mobile Optimizations ===== */
+@media (max-width: 640px) {
+  .chart-container {
+    height: 250px;
+  }
+  
+  #sankeyChart {
+    height: 400px !important;
+  }
+  
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .section-header .action-btn {
+    align-self: flex-end;
+  }
+  
+  .table-responsive {
+    margin-left: -1rem;
+    margin-right: -1rem;
+    width: calc(100% + 2rem);
+    padding: 0 1rem;
+  }
+}
+
+/* ===== Dark Mode Specific Component Overrides ===== */
+html.dark .dashboard-card {
+  background-color: var(--surface-level-1) !important;
+  border-color: var(--border-level-2);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+}
+
+html.dark .dashboard-card:hover {
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+}
+
+html.dark .chart-no-data {
+  background-color: var(--surface-level-1) !important;
+  border-color: var(--border-level-2);
+  color: var(--text-secondary);
+}
+
+html.dark .table-responsive thead th {
+  background-color: var(--surface-level-1);
+  color: var(--text-primary);
+  border-bottom-color: var(--border-level-3);
+}
+
+html.dark .table-responsive tbody tr:hover {
+  background-color: rgba(173, 181, 189, 0.05);
+}
+
+html.dark .table-responsive td {
+  border-bottom-color: var(--border-level-1);
+}
+
+html.dark .action-btn {
+  background-color: var(--accent);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+html.dark .secondary-btn {
+  background-color: var(--surface-level-2);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-level-1);
+}
+
+html.dark .filter-btn {
+  background-color: var(--surface-level-2);
+  border-color: var(--border-level-2);
+}
+
+html.dark .filter-btn.active {
+  background-color: var(--accent) !important;
+  border-color: var(--border-level-3) !important;
+}
+
+html.dark .modal-content {
+  background-color: var(--background);
+  border: 1px solid var(--border-level-2);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+}
+
+html.dark .calendar-day-cell {
+  background-color: var(--surface-level-2) !important;
+  border-color: var(--border-level-1);
+}
+
+html.dark .calendar-day-cell.bg-blue-50,
+html.dark .calendar-day-cell.bg-blue-100,
+html.dark .calendar-day-cell.bg-blue-200 {
+  background-color: var(--accent-secondary) !important;
+}
+
+html.dark .calendar-filler-cell {
+  background-color: rgba(33, 37, 41, 0.5) !important;
+}
+
+html.dark .calendar-day-header {
+  background-color: var(--accent);
+  color: var(--on-accent);
+}
+
+html.dark #themeIconSun {
+  display: none;
+}
+
+html.dark #themeIconMoon {
+  display: block;
+}
+
+html.dark .table-responsive::-webkit-scrollbar-thumb {
+  background-color: var(--border-level-3);
+}
+
+html.dark .table-responsive::-webkit-scrollbar-track {
+  background-color: var(--background);
+}
+
+html.dark .filter-btn:focus,
+html.dark button:focus,
+html.dark input[type="text"]:focus,
+html.dark select:focus {
+  box-shadow: 0 0 0 3px rgba(222, 226, 230, 0.3);
+  outline: none;
+}
+
+html.dark #unifiedSearchSuggestions {
+  background-color: var(--background);
+  border-color: var(--border-level-2);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+html.dark .suggestion-item:hover {
+  background-color: var(--surface-level-2);
+}
+
+html.dark .suggestion-item .type-label {
+  background-color: var(--surface-level-2);
+  color: var(--text-secondary);
+}
+
+html.dark section.bg-[var(--surface-level-1)] {
+  background-color: var(--surface-level-1);
+}
+
+/* Theme toggle icon display */
+#themeIconMoon {
+  display: none;
+}
+
+html.dark #themeIconSun {
+  display: none;
+}
+
+html.dark #themeIconMoon {
+  display: block;
+}
+/* Ensure equal height for visualizations */
+#sankeyChart, #contractorMap {
+  height: 500px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1023px) {
+  #sankeyChart {
+    height: 450px;
+  }
+  
+  #contractorMap {
+    height: 450px;
+  }
+}
+
+@media (max-width: 767px) {
+  #sankeyChart, #contractorMap {
+    height: 400px;
+  }
+}
+.highlight-section {
+  animation: pulse-highlight 1.5s ease-in-out;
+}
+
+@keyframes pulse-highlight {
+  0%, 100% { box-shadow: 0 0 0 rgba(108, 117, 125, 0); }
+  50% { box-shadow: 0 0 15px rgba(108, 117, 125, 0.5); }
+}
+/* Footer specific styles */
+html.dark footer img[src*="powered-by-aws-white.png"] {
+  filter: brightness(0.8);
+}
+
+html.dark .dashboard-card {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+}
+
+html.dark .dashboard-card:hover {
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Ensure proper spacing at bottom of page */
+body {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+main {
+  flex: 1;
+}
+
+footer {
+  margin-top: auto;
+}
+/* Add this to your CSS */
+#dashboardContent {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 200px); /* Adjust based on your header height */
+}
+
+#dashboardContent > footer {
+  margin-top: auto;
+  padding-bottom: 2rem;
+}
+
+/* When the dashboard is hidden, ensure footer is hidden too */
+#dashboardContent.hidden > footer {
+  display: none;
+}
+/* Add to your CSS */
+#dashboardContent:not(.data-loaded) {
+  display: none !important;
+}
+/* Footer always in dark mode with rounded corners */
+footer {
+  /* Dark background and text colors - not using CSS variables that change with theme */
+  background-color: #212529 !important; /* eerie-black from your palette */
+  color: #f8f9fa !important; /* seasalt from your palette */
+  border-top: 1px solid #495057 !important; /* outer-space from your palette */
+  border-radius: 0.5rem !important; /* rounded corners to match other sections */
+  overflow: hidden; /* keep content inside rounded corners */
+  margin-top: 1.5rem !important;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Dashboard cards inside footer */
+footer .dashboard-card {
+  background-color: #343a40 !important; /* onyx from your palette */
+  border-color: #495057 !important;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Text colors in footer */
+footer h1, footer h2, footer h3, footer h4, footer h5, footer h6 {
+  color: #adb5bd !important; /* french-gray-2 from your palette */
+}
+
+footer p, footer li, footer div {
+  color: #dee2e6 !important; /* platinum from your palette */
+}
+
+footer .text-[var(--text-secondary)] {
+  color: #ced4da !important; /* french-gray from your palette */
+}
+
+footer .text-[var(--text-tertiary)] {
+  color: #adb5bd !important; /* french-gray-2 from your palette */
+}
+
+footer .text-[var(--accent)] {
+  color: #adb5bd !important; /* french-gray-2 from your palette - for accent text */
+}
+
+/* Links in footer */
+footer a {
+  color: #dee2e6 !important; /* platinum from your palette */
+}
+
+footer a:hover {
+  color: #f8f9fa !important; /* seasalt from your palette */
+  text-decoration: underline;
+}
+
+/* Buttons in footer */
+footer .bg-[var(--accent)] {
+  background-color: #6c757d !important; /* slate-gray from your palette */
+}
+
+footer .bg-[var(--surface-level-2)] {
+  background-color: #495057 !important; /* outer-space from your palette */
+}
+
+footer .bg-[var(--surface-level-1)] {
+  background-color: #343a40 !important; /* onyx from your palette */
+}
+
+/* Footer bottom section */
+footer .border-[var(--border-level-2)] {
+  border-color: #495057 !important; /* outer-space from your palette */
+}
+
+/* ===== FIX FOR SHOUTOUT BOXES ===== */
+/* Main shoutout container - now matching footer background */
+footer .bg-[var(--surface-level-2)] {
+  background-color: #212529 !important; /* eerie-black - same as footer background */
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Individual shoutout boxes */
+footer .grid-cols-2 > div,
+footer .grid-cols-3 > div,
+footer .flex.justify-between {
+  background-color: #343a40 !important; /* onyx from your palette */
+  border: 1px solid #495057 !important; /* outer-space for subtle border */
+}
+
+/* Ensure text in shoutout boxes is readable */
+footer .grid-cols-2 > div span,
+footer .grid-cols-3 > div span,
+footer .flex.justify-between span {
+  color: #dee2e6 !important; /* platinum for main text */
+}
+
+/* Shoutout links */
+footer .grid-cols-2 > div a,
+footer .grid-cols-3 > div a,
+footer .flex.justify-between a {
+  color: #adb5bd !important; /* french-gray-2 for links */
+}
+
+footer .grid-cols-2 > div a:hover,
+footer .grid-cols-3 > div a:hover,
+footer .flex.justify-between a:hover {
+  color: #f8f9fa !important; /* seasalt for hover */
+}
+
+/* AWS logo - ensure visibility in dark mode */
+footer img[src*="powered-by-aws"] {
+  filter: brightness(1) !important;
+}
+/* Additional loading spinner animation */
+@keyframes spinner {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+#page-loader {
+  transition: opacity 0.3s ease-out;
+}
+
+/* Ensure print styles are friendly */
+@media print {
+  .dashboard-card {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  
+  button, .action-btn, .filter-btn, #themeToggleBtn, #shareViewBtn {
+    display: none !important;
+  }
+  
+  body, .dashboard-container {
+    background-color: white !important;
+    color: black !important;
+  }
+  
+  @page {
+    margin: 1cm;
+  }
+}
+</style>
 </head>
 <body class="text-[var(--text-primary)] p-2 sm:p-4 md:p-8">
     <div id="globalProcessingIndicator" class="hidden">
@@ -385,42 +921,38 @@ html.dark .calendar-filler-cell {
     </div>
 
     <div class="dashboard-container max-w-7xl mx-auto">
-        <header class="mb-4 md:mb-6 flex justify-between items-center">
-            <h1 class="text-2xl sm:text-3xl font-bold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Prime Finder from Subhoo.com</h1>
-            <div class="flex items-center space-x-2">
-                <button id="shareViewBtn" title="Share Current View" class="p-2 rounded-md bg-[var(--surface-level-2)] hover:bg-[var(--surface-level-3)] transition-colors duration-150 focus:outline-none focus:ring-2 ring-[var(--accent)]">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[var(--text-secondary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
-                    </svg>
-                </button>
-                <button id="themeToggleBtn" title="Toggle Light/Dark Mode" class="p-2 rounded-md bg-[var(--surface-level-2)] hover:bg-[var(--surface-level-3)] transition-colors duration-150 focus:outline-none focus:ring-2 ring-[var(--accent)] hidden">
-                    <svg id="themeIconSun" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[var(--text-secondary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-                    </svg>
-                    <svg id="themeIconMoon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[var(--text-secondary)] hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                    </svg>
-                </button>
-            </div>
-        </header>
+        <!-- Enhanced header with data source info -->
+        <header class="mb-6 md:mb-8">
+    <div class="flex justify-between items-start mb-2">
+        <div class="flex flex-col">
+            <h1 class="text-2xl sm:text-3xl md:text-4xl font-extrabold text-[var(--accent)]" style="letter-spacing: -0.05em;">Subhoo.</h1>
+            <p class="text-xs sm:text-sm text-[var(--text-secondary)] mt-1">Federal Contractor Intelligence</p>
+        </div>
+        <div class="flex items-center space-x-2">
+            <button id="shareViewBtn" title="Share Current View" class="p-2 rounded-md bg-[var(--surface-level-2)] hover:bg-[var(--surface-level-3)] transition-colors duration-150 focus:outline-none focus:ring-2 ring-[var(--accent)]">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[var(--text-secondary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
+                </svg>
+            </button>
+            <button id="themeToggleBtn" title="Toggle Light/Dark Mode" class="p-2 rounded-md bg-[var(--surface-level-2)] hover:bg-[var(--surface-level-3)] transition-colors duration-150 focus:outline-none focus:ring-2 ring-[var(--accent)]">
+                <svg id="themeIconSun" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[var(--text-secondary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+                <svg id="themeIconMoon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[var(--text-secondary)] hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                </svg>
+            </button>
+        </div>
+    </div>
+</header>
 
-<section id="explainerSection" class="bg-[var(--surface-level-1)] p-4 md:p-6 rounded-lg shadow-md mb-4 md:mb-6 border border-[var(--border-level-1)]">
-  <h2 class="text-xl md:text-2xl font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Welcome!</h2>
-  
-  <p class="text-sm md:text-base text-[var(--text-secondary)] mb-2">
-    This dashboard visualizes data from the SBA's <em>Directory of Federal Government Prime Contractors with Subcontracting Plans</em>, helping small businesses discover subcontracting opportunities with federal prime contractors.
-  </p>
-  
-  <p class="text-sm md:text-base text-[var(--text-secondary)] mb-2">
-    ✔ <strong>Search & Explore:</strong> Find contractors with small business subcontracting requirements.  
-    <br>✔ <strong>Direct Links:</strong> Access contractor profiles and award details on FPDS.
-    <br>✔ <strong>Contract Calendar:</strong> View upcoming contract expirations to time your outreach.
-    <br>✔ <strong>Detailed Data:</strong> See contractor name, location, agency, NAICS & PSC codes, contract value, and performance dates.
-  </p>
-  
-  <p class="text-sm md:text-base text-[var(--text-secondary)]">
-    Use this tool to identify potential partners, learn their subcontracting processes, and follow their instructions to get involved. All data is sourced from the Federal Procurement Data System (FPDS-NG).
-  </p>
+        <!-- Explainer section -->
+        <section id="explainerSection" class="bg-[var(--surface-level-1)] p-4 md:p-6 rounded-lg shadow-md mb-6 border border-[var(--border-level-1)]">
+              <p class="text-sm md:text-base text-[var(--text-secondary)] mb-2">
+                Subhoo helps you visualize data from the SBA’s official Prime Contractors directory, where prime contractors with awards over $750K are required by law to include small business participation in their plans. Search thousands of prime contractors, track funding flows, explore detailed profiles, monitor contract expirations, and access official FPDS records—everything you need to find and connect with the right federal partners. Start your search below.
+            </p>
+           
+            
             <div id="processingIndicator" class="hidden items-center text-[var(--text-secondary)] mt-4">
                 <div class="spinner"></div>
                 <span class="ml-2 text-sm">Processing data...</span>
@@ -437,128 +969,303 @@ html.dark .calendar-filler-cell {
                 <div id="successMessage" class="text-green-600 bg-green-100 dark:bg-green-900 dark:text-green-300 p-3 rounded-md hidden mb-2 text-sm"></div>
             </div>
         </section>
-
-        <main id="dashboardContent" class="hidden">
-            <section id="statisticsSection" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-4 md:mb-6">
-                <div class="stat-card bg-[var(--surface-level-1)] p-3 md:p-4 rounded-lg shadow hover:shadow-lg transition-shadow duration-150 border border-[var(--border-level-1)]">
-                    <div class="text-2xl md:text-3xl font-bold text-[var(--accent)]" id="totalContractsValue">0</div>
-                    <div class="text-xs md:text-sm text-[var(--text-secondary)]">Total Contracts</div>
-                </div>
-                <div class="stat-card bg-[var(--surface-level-1)] p-3 md:p-4 rounded-lg shadow hover:shadow-lg transition-shadow duration-150 border border-[var(--border-level-1)]">
-                    <div class="text-2xl md:text-3xl font-bold text-[var(--accent)]" id="totalValueValue">$0</div>
-                    <div class="text-sm text-[var(--text-secondary)]">Total Contract Value</div>
-                </div>
-                <div class="stat-card bg-[var(--surface-level-1)] p-3 md:p-4 rounded-lg shadow hover:shadow-lg transition-shadow duration-150 border border-[var(--border-level-1)]">
-                    <div class="text-2xl md:text-3xl font-bold text-[var(--accent)]" id="avgContractValue">$0</div>
-                    <div class="text-sm text-[var(--text-secondary)]">Average Contract Value</div>
-                </div>
-                <div class="stat-card bg-[var(--surface-level-1)] p-3 md:p-4 rounded-lg shadow hover:shadow-lg transition-shadow duration-150 border border-[var(--border-level-1)]">
-                    <div class="text-2xl md:text-3xl font-bold text-[var(--accent)]" id="uniquePrimesValue">0</div>
-                    <div class="text-sm text-[var(--text-secondary)]">Unique Prime Contractors</div>
-                </div>
-            </section>
-            
-            <section id="searchAndFilterSection" class="bg-[var(--surface-level-1)] p-4 md:p-6 rounded-lg shadow-md mb-4 md:mb-6 border border-[var(--border-level-1)]">
-                <h2 class="text-lg md:text-xl font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Search & Filter Contracts</h2>
-                <div class="relative">
-                    <input type="text" id="unifiedSearchInput" class="w-full p-3 border border-[var(--border-level-2)] rounded-md shadow-sm focus:ring-2 ring-[var(--accent)] focus:border-[var(--accent)] bg-[var(--background)] text-[var(--text-primary)]" placeholder="Search by Prime, NAICS, Department, Agency, Office, State...">
-                    <div id="unifiedSearchSuggestions" class="hidden bg-[var(--background)] border-[var(--border-level-2)]">
-                    </div>
-                </div>
-                                
-                <div id="activeFilterIndicator" class="p-3 rounded-md mt-4 hidden flex flex-col sm:flex-row justify-between items-center text-sm">
-                </div>
-            </section>
-            
-            <section id="coreChartsSection" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 gap-4 md:gap-6 mb-4 md:mb-6">
-                <div id="primeContractorsChartCard" class="dashboard-card p-4 md:p-6">
-                    <h2 class="text-md md:text-lg font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Top Prime Contractors by Value</h2>
-                    <div class="chart-container">
-                        <canvas id="primeContractorsChart"></canvas>
-                    </div>
-                </div>
-                <div class="dashboard-card p-4 md:p-6">
-                    <h2 class="text-md md:text-lg font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Department Contract Distribution</h2>
-                    <div class="chart-container">
-                        <canvas id="departmentChart"></canvas>
-                    </div>
-                </div>
-                <div class="dashboard-card p-4 md:p-6">
-                    <h2 class="text-md md:text-lg font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Top NAICS by Contract Value</h2>
-                    <div class="chart-container">
-                        <canvas id="naicsChart_main"></canvas>
-                    </div>
-                </div>
-                <div class="dashboard-card p-4 md:p-6 hidden">
-                    <h2 class="text-md md:text-lg font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Contract Type Breakdown</h2>
-                    <div class="chart-container">
-                        <canvas id="contractTypeChart_main"></canvas>
-                    </div>
-                </div>
-                <div class="dashboard-card p-4 md:p-6"> 
-                    <h2 class="text-md md:text-lg font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Contract Distribution by State</h2>
-                    <div class="metric-filters" id="stateChartFilters_main">
-                        <button class="filter-btn active" data-filter="count" data-chart="stateContractsChart_main">By Count</button>
-                        <button class="filter-btn" data-filter="value" data-chart="stateContractsChart_main">By Value</button>
-                    </div>
-                    <div class="chart-container" style="height: 320px;"> 
-                        <canvas id="stateContractsChart_main"></canvas>
-                    </div>
-                </div>
-                <div class="dashboard-card p-4 md:p-6 hidden">
-                    <h2 class="text-md md:text-lg font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Top Contracting Agencies by Value</h2>
-                    <div class="chart-container">
-                        <canvas id="topAgenciesChart"></canvas>
-                    </div>
-                </div>
-                <div id="marketShareChartCard" class="dashboard-card p-4 md:p-6"> 
-                    <h2 class="text-md md:text-lg font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Prime Market Share (for current filter)</h2>
-                    <div class="chart-container">
-                        <canvas id="marketShareChart"></canvas>
-                    </div>
-                </div>
-                <div class="dashboard-card p-4 md:p-6"> 
-                    <h2 class="text-md md:text-lg font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Contract Timeline Forecast</h2>
-                    <div class="chart-container">
-                        <canvas id="timelineChart"></canvas> 
-                    </div>
-                </div>
-            </section>
-            <section id="contractorMapSection" class="bg-[var(--surface-level-1)] p-4 rounded-lg shadow-md mb-4 border border-[var(--border-level-1)]">
-  <h2 class="text-lg font-semibold text-[var(--accent)] mb-2">Contractor Headquarters Map</h2>
-  <div id="contractorMap" style="height: 500px; width: 100%;" class="rounded border border-[var(--border-level-2)]"></div><button id="resetMapBtn" class="mt-3 px-4 py-2 bg-[var(--accent)] text-[var(--on-accent)] rounded hover:bg-opacity-90 transition">
-  Reset Map View
-</button>
-
+<section id="quickstart-guide" class="bg-[var(--surface-level-1)] p-4 md:p-6 rounded-lg shadow-md border border-[var(--border-level-1)] mb-6">
+  <h2 class="text-lg md:text-xl font-semibold text-[var(--accent)] mb-4" style="font-weight: var(--header-font-weight);">Quickstart Guide</h2>
+  
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="p-3 bg-[var(--surface-level-2)] rounded-lg border border-[var(--border-level-1)]">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mb-2 text-[var(--accent)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+      </svg>
+      <h4 class="font-semibold text-[var(--text-primary)]">1. Search</h4>
+      <p class="text-sm text-[var(--text-secondary)]">Use the search bar to find prime contractors, NAICS codes, agencies, or locations.</p>
+    </div>
+    
+    <div class="p-3 bg-[var(--surface-level-2)] rounded-lg border border-[var(--border-level-1)]">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mb-2 text-[var(--accent)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+      </svg>
+      <h4 class="font-semibold text-[var(--text-primary)]">2. Explore Visualizations</h4>
+      <p class="text-sm text-[var(--text-secondary)]">Interact with Sankey charts, maps, and data visualizations to understand relationships.</p>
+    </div>
+    
+    <div class="p-3 bg-[var(--surface-level-2)] rounded-lg border border-[var(--border-level-1)]">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mb-2 text-[var(--accent)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+      </svg>
+      <h4 class="font-semibold text-[var(--text-primary)]">3. View Profiles</h4>
+      <p class="text-sm text-[var(--text-secondary)]">Click on prime contractor names to see detailed profiles and their active contracts.</p>
+    </div>
+    
+    <div class="p-3 bg-[var(--surface-level-2)] rounded-lg border border-[var(--border-level-1)]">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mb-2 text-[var(--accent)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+      </svg>
+      <h4 class="font-semibold text-[var(--text-primary)]">4. Track Opportunities</h4>
+      <p class="text-sm text-[var(--text-secondary)]">Use the contract expiration calendar to plan your outreach and follow up at the right time.</p>
+    </div>
+  </div>
+  
 </section>
+        <!-- Main Dashboard Content -->
+        <main id="dashboardContent" class="hidden space-y-6">
+            <!-- Control Panel - simplified with just search -->
+            <section id="controlPanel" class="bg-[var(--surface-level-1)] p-4 md:p-6 rounded-lg shadow-md border border-[var(--border-level-1)] sticky top-4 z-10">
+                <div class="flex flex-col md:flex-row gap-4 items-start md:items-center">
+                    <!-- Main Search with prominent styling -->
+                    <div class="w-full md:w-3/4 relative">
+                        <label for="unifiedSearchInput" class="block text-sm font-semibold text-[var(--text-secondary)] mb-1">
+                            Search Dashboard
+                        </label>
+                        <div class="relative">
+                            <input type="text" id="unifiedSearchInput" class="w-full p-3 border border-[var(--border-level-2)] rounded-md shadow-sm focus:ring-2 ring-[var(--accent)] focus:border-[var(--accent)] bg-[var(--background)] text-[var(--text-primary)]" 
+                                placeholder="Search by Prime, NAICS, Department, Agency, Office, State...">
+                            <button id="clearSearchBtn" class="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                        <div id="unifiedSearchSuggestions" class="hidden bg-[var(--background)] border-[var(--border-level-2)] absolute z-20 w-full">
+                        </div>
+                    </div>
 
-            <section id="primeProfilesSection" class="bg-[var(--surface-level-1)] p-4 md:p-6 rounded-lg shadow-md mb-4 md:mb-6 border border-[var(--border-level-1)]">
-                <h2 class="text-lg md:text-xl font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Prime Contractor Profiles</h2>
-                <p class="text-xs md:text-sm text-[var(--text-secondary)] mb-3">Displaying profiles based on current search/filter. Click a prime name to filter the entire dashboard to that prime. Use search below to refine this list.</p>
-                <div class="mb-4">
-                    <input type="text" id="primeProfilesSearchInput" class="w-full md:w-1/2 lg:w-1/3 p-2 border border-[var(--border-level-2)] rounded-md focus:ring-2 ring-[var(--accent)] focus:border-[var(--accent)] bg-[var(--background)] text-[var(--text-primary)]" placeholder="Filter displayed profiles by name...">
+                    <!-- Reset Button -->
+                    <div class="flex items-center md:self-end md:mb-1">
+                        <button id="globalResetBtn" class="px-4 py-2 bg-[var(--accent)] text-[var(--on-accent)] rounded hover:bg-opacity-90 transition">
+                            Reset All Filters
+                        </button>
+                    </div>
                 </div>
+                
+                <!-- Active Filter Indicator -->
+                <div id="activeFilterIndicator" class="p-3 rounded-md mt-4 hidden flex-col sm:flex-row justify-between items-center text-sm">
+                </div>
+            </section>
+            
+            <!-- Key Stats and Sankey Chart Group -->
+            <div class="space-y-6">
+                <!-- KPI Stats Row -->
+                <section id="statisticsSection" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="stat-card bg-[var(--surface-level-1)] p-3 md:p-4 rounded-lg shadow hover:shadow-lg transition-shadow duration-150 border border-[var(--border-level-1)]">
+                        <div class="text-2xl md:text-3xl font-bold text-[var(--accent)]" id="totalContractsValue">0</div>
+                        <div class="text-xs md:text-sm text-[var(--text-secondary)]">Total Contracts</div>
+                    </div>
+                    <div class="stat-card bg-[var(--surface-level-1)] p-3 md:p-4 rounded-lg shadow hover:shadow-lg transition-shadow duration-150 border border-[var(--border-level-1)]">
+                        <div class="text-2xl md:text-3xl font-bold text-[var(--accent)]" id="totalValueValue">$0</div>
+                        <div class="text-sm text-[var(--text-secondary)]">Total Contract Value</div>
+                    </div>
+                    <div class="stat-card bg-[var(--surface-level-1)] p-3 md:p-4 rounded-lg shadow hover:shadow-lg transition-shadow duration-150 border border-[var(--border-level-1)]">
+                        <div class="text-2xl md:text-3xl font-bold text-[var(--accent)]" id="avgContractValue">$0</div>
+                        <div class="text-sm text-[var(--text-secondary)]">Average Contract Value</div>
+                    </div>
+                    <div class="stat-card bg-[var(--surface-level-1)] p-3 md:p-4 rounded-lg shadow hover:shadow-lg transition-shadow duration-150 border border-[var(--border-level-1)]">
+                        <div class="text-2xl md:text-3xl font-bold text-[var(--accent)]" id="uniquePrimesValue">0</div>
+                        <div class="text-sm text-[var(--text-secondary)]">Unique Prime Contractors</div>
+                    </div>
+                </section>
+
+            </div>
+		            <!-- Prime Contractor Profiles -->
+            <section id="primeProfilesSection" class="bg-[var(--surface-level-1)] p-4 md:p-6 rounded-lg shadow-md mb-6 border border-[var(--border-level-1)]">
+                <h2 class="text-lg md:text-xl font-semibold text-[var(--accent)] mb-4" style="font-weight: var(--header-font-weight);">Prime Contractor Profiles</h2>
+                
+                <p class="text-xs md:text-sm text-[var(--text-secondary)] mb-3">Displaying profiles based on current search/filter. Click a prime name to filter the entire dashboard to that prime. Use search to refine this list.</p>
                 <div id="primeProfilesContainer" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 md:gap-4 max-h-[70vh] overflow-y-auto"></div>
             </section>
 
-            <section id="primeDetailViewSection" class="bg-[var(--surface-level-1)] p-4 md:p-6 rounded-lg shadow-md mb-4 md:mb-6 hidden border border-[var(--border-level-1)]">
-                <h2 id="primeDetailTitle" class="text-xl md:text-2xl font-bold text-[var(--accent)] mb-4" style="font-weight: var(--header-font-weight);">Prime Contractor Details</h2>
+            <!-- Prime Detail View - hidden until a specific prime is selected -->
+            <section id="primeDetailViewSection" class="bg-[var(--surface-level-1)] p-4 md:p-6 rounded-lg shadow-md mb-6 border border-[var(--border-level-1)] hidden">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 id="primeDetailTitle" class="text-xl md:text-2xl font-bold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Prime Contractor Details</h2>
+                    <button onclick="clearAllFilters()" class="px-3 py-1 bg-[var(--surface-level-2)] text-[var(--text-secondary)] rounded hover:bg-[var(--surface-level-3)] transition">
+                        Back to All Primes
+                    </button>
+                </div>
                 <div id="primeDetailStats" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 text-sm md:text-base">
                 </div>
                 <h3 class="text-lg font-semibold text-[var(--text-primary)] mt-6 mb-2" style="font-weight: var(--header-font-weight);">Contracts List for this Prime</h3>
                 <div id="primeDetailContractsTableContainer" class="table-responsive max-h-96 overflow-y-auto">
                 </div>
+            </section>	
+<section id="visualizationSection" class="mb-6">
+  <h2 class="text-lg md:text-xl font-semibold text-[var(--accent)] mb-4 px-2" style="font-weight: var(--header-font-weight);">Interactive Visualizations</h2>
+  
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+    <!-- Sankey Chart -->
+    <div id="sankeySection" class="dashboard-card p-4 md:p-6">
+      <div class="flex justify-between items-center mb-4">
+        <div>
+          <h3 class="text-md md:text-lg font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Funding Flow: Agencies to Primes</h3>
+          <p class="text-xs md:text-sm text-[var(--text-secondary)]">Visualization of contract value flows from top agencies to prime contractors. Click on any agency or contractor to filter the dashboard.</p>
+        </div>
+        <button id="resetSankeyBtn" class="px-3 py-1 bg-[var(--accent)] text-[var(--on-accent)] rounded hover:bg-opacity-90 transition text-sm">
+          Reset
+        </button>
+      </div>
+      <div id="sankeyWrapper" class="w-full rounded-md mt-2">
+        <svg id="sankeyChart" class="w-full h-[500px]" viewBox="0 0 1000 600" preserveAspectRatio="xMidYMid meet"></svg>
+      </div>
+    </div>
+    
+    <!-- Map Section -->
+    <div id="contractorMapSection" class="dashboard-card p-4 md:p-6">
+      <div class="flex justify-between items-center mb-4">
+        <div>
+          <h3 class="text-md md:text-lg font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Prime Contractor Map</h3>
+          <p class="text-xs md:text-sm text-[var(--text-secondary)]">Showing locations of prime contractor awardees. Click markers for details.</p>
+        </div>
+        <button id="resetMapBtn" class="px-3 py-1 bg-[var(--accent)] text-[var(--on-accent)] rounded hover:bg-opacity-90 transition text-sm">
+          Reset
+        </button>
+      </div>
+      <div id="contractorMap" style="height: 500px; width: 100%;" class="rounded border border-[var(--border-level-2)]"></div>
+    </div>
+  </div>
+</section>
+            
+            <!-- Core Charts Section -->
+            <section class="mb-6">
+                <h2 class="text-lg md:text-xl font-semibold text-[var(--accent)] mb-4 px-2" style="font-weight: var(--header-font-weight);">Analysis Charts</h2>
+                
+                <div id="coreChartsSection" class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                    <!-- Prime Contractors Chart -->
+                    <div id="primeContractorsChartCard" class="dashboard-card p-4 md:p-6">
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="text-md md:text-lg font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Top Prime Contractors by Value</h3>
+                            <span class="text-[var(--text-tertiary)] cursor-help" title="Shows the top 10 prime contractors by total contract value">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </span>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="primeContractorsChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <!-- Department Chart -->
+                    <div class="dashboard-card p-4 md:p-6">
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="text-md md:text-lg font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Department Contract Distribution</h3>
+                            <span class="text-[var(--text-tertiary)] cursor-help" title="Distribution of contract value by department">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </span>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="departmentChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <!-- NAICS Chart -->
+                    <div class="dashboard-card p-4 md:p-6">
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="text-md md:text-lg font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Top NAICS by Contract Value</h3>
+                            <span class="text-[var(--text-tertiary)] cursor-help" title="Top NAICS codes by total contract value">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </span>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="naicsChart_main"></canvas>
+                        </div>
+                    </div>
+                    
+                    <!-- Contract Type Chart - hidden by default in your original code -->
+                    <div class="dashboard-card p-4 md:p-6 hidden">
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="text-md md:text-lg font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Contract Type Breakdown</h3>
+                            <span class="text-[var(--text-tertiary)] cursor-help" title="Distribution of contracts by type">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </span>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="contractTypeChart_main"></canvas>
+                        </div>
+                    </div>
+                    
+                    <!-- State Chart -->
+                    <div class="dashboard-card p-4 md:p-6"> 
+                        <div class="flex justify-between items-center mb-2">
+                            <h3 class="text-md md:text-lg font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Contract Distribution by State</h3>
+                            <span class="text-[var(--text-tertiary)] cursor-help" title="Contract distribution by state">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </span>
+                        </div>
+                        <div class="metric-filters" id="stateChartFilters_main">
+                            <button class="filter-btn active" data-filter="count" data-chart="stateContractsChart_main">By Count</button>
+                            <button class="filter-btn" data-filter="value" data-chart="stateContractsChart_main">By Value</button>
+                        </div>
+                        <div class="chart-container" style="height: 320px;"> 
+                            <canvas id="stateContractsChart_main"></canvas>
+                        </div>
+                    </div>
+                    
+                    <!-- Top Agencies Chart - hidden by default in your original code -->
+                    <div class="dashboard-card p-4 md:p-6 hidden">
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="text-md md:text-lg font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Top Contracting Agencies by Value</h3>
+                            <span class="text-[var(--text-tertiary)] cursor-help" title="Top contracting agencies by value">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </span>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="topAgenciesChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <!-- Market Share Chart -->
+                    <div id="marketShareChartCard" class="dashboard-card p-4 md:p-6"> 
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="text-md md:text-lg font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Prime Market Share (for current filter)</h3>
+                            <span class="text-[var(--text-tertiary)] cursor-help" title="Market share percentage of prime contractors based on current filters">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </span>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="marketShareChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <!-- Timeline Chart -->
+                    <div class="dashboard-card p-4 md:p-6"> 
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="text-md md:text-lg font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Contract Timeline Forecast</h3>
+                            <span class="text-[var(--text-tertiary)] cursor-help" title="Timeline of contract starts and endings by year">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </span>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="timelineChart"></canvas> 
+                        </div>
+                    </div>
+                </div>
             </section>
             
-            <section id="contractExpirationCalendarSection" class="bg-[var(--surface-level-1)] p-4 md:p-6 rounded-lg shadow-md mb-4 md:mb-6 border border-[var(--border-level-1)]">
-                <h2 class="text-lg md:text-xl font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Contract Expiration Calendar</h2>
+            <!-- Contract Expiration Calendar -->
+            <section id="contractExpirationCalendarSection" class="bg-[var(--surface-level-1)] p-4 md:p-6 rounded-lg shadow-md mb-6 border border-[var(--border-level-1)]">
+                <h2 class="text-lg md:text-xl font-semibold text-[var(--accent)] mb-4" style="font-weight: var(--header-font-weight);">Contract Expiration Calendar</h2>
+                
                 <p class="text-xs md:text-sm text-[var(--text-secondary)] mb-3">Displaying calendar based on current search/filter. Click a day with events for details.</p>
                 <div class="calendar-container min-h-[400px] border border-[var(--border-level-2)] rounded-md p-2 md:p-4">
                     <div class="flex flex-wrap justify-between items-center mb-4 gap-2">
                         <div class="flex items-center gap-1">
-                            <button id="calendarPrevBtn" class="px-3 py-1 bg-[var(--surface-level-2)] rounded hover:bg-[var(--surface-level-3)] transition-colors duration-150 ease-in-out focus:ring-2 ring-offset-2 ring-[var(--accent)] focus:outline-none text-[var(--text-secondary)]" style="font-weight: var(--button-font-weight);">&lt;</button>
+                            <button id="calendarPrevBtn" class="px-3 py-1 bg-[var(--surface-level-2)] text-[var(--text-secondary)] rounded hover:bg-[var(--surface-level-3)] transition" style="font-weight: var(--button-font-weight);">&lt;</button>
                             <h3 id="calendarTitle" class="text-md md:text-lg font-semibold mx-2 text-[var(--text-primary)]">Month Year</h3>
-                            <button id="calendarNextBtn" class="px-3 py-1 bg-[var(--surface-level-2)] rounded hover:bg-[var(--surface-level-3)] transition-colors duration-150 ease-in-out focus:ring-2 ring-offset-2 ring-[var(--accent)] focus:outline-none text-[var(--text-secondary)]" style="font-weight: var(--button-font-weight);">&gt;</button>
+                            <button id="calendarNextBtn" class="px-3 py-1 bg-[var(--surface-level-2)] text-[var(--text-secondary)] rounded hover:bg-[var(--surface-level-3)] transition" style="font-weight: var(--button-font-weight);">&gt;</button>
                         </div>
                         <div class="flex items-center gap-2 text-xs md:text-sm">
                             <label for="calendarMonthSelect" class="sr-only">Month</label>
@@ -572,16 +1279,130 @@ html.dark .calendar-filler-cell {
                     </div>
                 </div>
             </section>
-        </main>
+			<footer class="mt-12 bg-[var(--surface-level-1)] border-t border-[var(--border-level-2)] text-[var(--text-primary)]">
+  <div class="max-w-7xl mx-auto px-4 py-8">
+    <!-- Main Footer Content -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+      
+      <!-- Connect Card -->
+      <div class="dashboard-card p-4 md:p-5 flex flex-col">
+        <div class="flex items-center mb-4">
+          <img src="markgs.jpg" alt="Mark Profile Picture" class="w-16 h-16 rounded-full mr-4 border-2 border-[var(--accent)]">
+          <div>
+            <h3 class="font-semibold text-lg text-[var(--accent)]">Hi, I'm Mark. Let's Connect!</h3>
+            <p class="text-sm text-[var(--text-secondary)]">Let me hear your suggestions and great ideas.</p>
+          </div>
+        </div>
+        <div class="flex flex-wrap gap-3 mt-auto">
+          <a href="mailto:mark@subhoo.com" class="px-4 py-2 bg-[var(--accent)] text-[var(--on-accent)] rounded-md hover:bg-opacity-90 transition text-sm font-medium">Get in touch</a>
+          <a href="https://www.linkedin.com/in/markflournoy/" class="px-4 py-2 bg-[var(--surface-level-2)] text-[var(--text-secondary)] rounded-md hover:bg-[var(--surface-level-3)] transition text-sm font-medium" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+        </div>
+      </div>
+      
+      <!-- Summary Box -->
+      <div class="dashboard-card p-4 md:p-5">
+        <p class="text-sm mb-4">
+          Subhoo helps small businesses discover federal subcontracting opportunities by visualizing prime contractors with required subcontracting plans. Search, explore, and connect with potential prime partners.
+        </p>
+        
+        <h4 class="font-semibold text-[var(--accent)] mt-4 mb-2">Who it's for:</h4>
+        <div class="w-20 h-1 bg-[var(--border-level-2)] mb-3"></div>
+        <ul class="text-sm space-y-2 text-[var(--text-secondary)]">
+          <li class="flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2 text-[var(--accent)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+            Sales & BD Teams <span class="text-xs opacity-70 ml-1">(Find Opportunities)</span>
+          </li>
+          <li class="flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2 text-[var(--accent)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+            </svg>
+            Small Biz <span class="text-xs opacity-70 ml-1">(Target Primes)</span>
+          </li>
+          <li class="flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2 text-[var(--accent)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+            </svg>
+            Primes <span class="text-xs opacity-70 ml-1">(Analyze Competition)</span>
+          </li>
+          <li class="flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2 text-[var(--accent)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z" />
+            </svg>
+            Feds <span class="text-xs opacity-70 ml-1">(Track Goals)</span>
+          </li>
+        </ul>
+      </div>
+      
+      <!-- Resources Box -->
+      <div class="dashboard-card p-4 md:p-5">
+        <h3 class="font-semibold text-[var(--accent)] mb-3">Resources</h3>
+        <ul class="text-sm space-y-2 mb-6">
+          <li><a href="https://www.usaspending.gov/explorer" class="text-[var(--accent)] hover:underline" target="_blank" rel="noopener noreferrer">USAspending Explorer</a></li>
+          <li><a href="https://sam.gov/content/home" class="text-[var(--accent)] hover:underline" target="_blank" rel="noopener noreferrer">SAM.gov</a></li>
+          <li><a href="https://www.sba.gov/" class="text-[var(--accent)] hover:underline" target="_blank" rel="noopener noreferrer">SBA.gov</a></li>
+          <li><a href="https://orangeslices.ai/" class="text-[var(--accent)] hover:underline" target="_blank" rel="noopener noreferrer">Orange Slices AI</a></li>
+        </ul>
+        
+        <div class="mt-4">
+          <a href="https://aws.amazon.com/what-is-cloud-computing">
+            <img src="https://d0.awsstatic.com/logos/powered-by-aws-white.png" alt="Powered by AWS Cloud Computing" class="h-8">
+          </a>
+        </div>
+      </div>
     </div>
+    
+    <!-- Footer Bottom -->
+    <div class="mt-8 pt-6 border-t border-[var(--border-level-2)] text-center text-sm text-[var(--text-secondary)]">
 
+      
+      <!-- Shoutouts -->
+      <div class="p-4 rounded-lg mx-auto max-w-3xl" style="background-color: #212529 !important;">
+        <h4 class="font-medium mb-3 text-[var(--text-primary)]">A few Shoutouts</h4>
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs">
+          <div class="flex justify-between items-center p-2 rounded bg-[var(--surface-level-1)]">
+            <span class="font-medium">Dark Mode</span>
+            <a href="#" class="text-[var(--accent)]">@dongkyup</a>
+          </div>
+          <div class="flex justify-between items-center p-2 rounded bg-[var(--surface-level-1)]">
+            <span class="font-medium">So What?!</span>
+            <a href="#" class="text-[var(--accent)]">@rodstedt</a>
+          </div>
+          <div class="flex justify-between items-center p-2 rounded bg-[var(--surface-level-1)]">
+            <span class="font-medium">Why?</span>
+            <a href="#" class="text-[var(--accent)]">@mpben</a>
+          </div>
+          <div class="flex justify-between items-center p-2 rounded bg-[var(--surface-level-1)]">
+            <span class="font-medium">Think Big</span>
+            <a href="#" class="text-[var(--accent)]">@ecbrown</a>
+          </div>
+          <div class="flex justify-between items-center p-2 rounded bg-[var(--surface-level-1)]">
+            <span class="font-medium">Dive Deep</span>
+            <a href="#" class="text-[var(--accent)]">@datkd</a>
+          </div>
+          <div class="flex justify-between items-center p-2 rounded bg-[var(--surface-level-1)]">
+            <span class="font-medium">True Believer</span>
+            <a href="#" class="text-[var(--accent)]">@dave</a>
+          </div>
+        </div>
+      </div>
+	  <p class="mb-2">&copy; 2025 Subhoo | Built on AWS | Data from SBA.gov</p>
+      
+    </div>
+  </div>
+</footer>
+        </main>
+</div>
+
+    <!-- Modals and Tooltips -->
     <div id="genericModal" class="modal-backdrop hidden">
         <div id="genericModalContent" class="modal-content">
             <button id="genericModalCloseBtn" class="modal-close-btn">&times;</button>
             <h2 id="genericModalTitle" class="text-xl font-semibold text-[var(--accent)] mb-4" style="font-weight: var(--header-font-weight);">Modal Title</h2>
             <div id="genericModalBody" class="text-[var(--text-secondary)]">
             </div>
-        </div>
+        </div>    
     </div>
 
     <div class="event-tooltip"></div>
@@ -589,6 +1410,25 @@ html.dark .calendar-filler-cell {
     <div id="shareToast" class="fixed bottom-5 right-5 bg-[var(--accent)] text-[var(--on-accent)] py-2 px-4 rounded-md shadow-lg hidden transition-opacity duration-300">
         Link copied to clipboard!
     </div>
+	<div id="page-loader" class="fixed inset-0 z-50 flex items-center justify-center bg-[var(--background)]">
+  <div class="flex flex-col items-center">
+    <div class="spinner w-16 h-16 border-4 border-[var(--border-level-2)] border-t-[var(--accent)] rounded-full animate-spin"></div>
+    <p class="mt-4 text-[var(--text-primary)]">Loading Subhoo...</p>
+  </div>
+</div>
+</body>
+<script>
+  window.addEventListener('load', function() {
+    setTimeout(function() {
+      document.getElementById('page-loader').style.opacity = '0';
+      setTimeout(function() {
+        document.getElementById('page-loader').style.display = 'none';
+      }, 300);
+    }, 500);
+  });
+</script>
+
+
 <script>
 // --- DOM Elements ---
 const processingIndicator = document.getElementById('processingIndicator'); 
@@ -744,36 +1584,41 @@ genericModal.addEventListener('click', (event) => {
 function cleanupCharts() { Object.keys(charts).forEach(key => { if (charts[key]) { charts[key].destroy(); charts[key] = null; } }); }
 
 function processAndInitialize(data) {
-    try {
-        if (!data || data.length === 0) { 
-            showErrorMessage('No data to display. Please try manual upload or check the S3 source.', true); 
-            return; 
-        }
-        parsedData = data; 
-        activeFilterIndicator.classList.add('hidden');
-        dashboardContent.classList.remove('hidden');
-        manualUploadSection.classList.add('hidden'); 
-        s3LoadErrorDiv.classList.add('hidden'); 
-        primeDetailViewSection.classList.add('hidden'); 
-
-        getChartColors(); 
-        cleanupCharts(); 
-        initializeCoreVisuals(parsedData); 
-        setupUnifiedSearch(); 
-        initializePrimeProfilesSection(parsedData); 
-        initializeContractExpirationCalendarSection(parsedData); 
-		initializeContractorMap(data);
-        showSuccessMessage('Data loaded and dashboard initialized.', true); 
-        
-        applyInitialTheme(); 
-        applyFiltersFromURL(); 
-
-    } catch (error) {
-        console.error("Error during processAndInitialize:", error);
-        showErrorMessage("An error occurred while initializing the dashboard. Please try refreshing.", false); 
-    } finally {
-        hideProcessing(); 
+  try {
+    if (!data || data.length === 0) { 
+      showErrorMessage('No data to display. Please try manual upload or check the S3 source.', true); 
+      return; 
     }
+    
+    // Make sure these operations happen in the correct order
+    parsedData = data; 
+    activeFilterIndicator.classList.add('hidden');
+    manualUploadSection.classList.add('hidden'); 
+    s3LoadErrorDiv.classList.add('hidden');
+    primeDetailViewSection.classList.add('hidden');
+    
+    // This should happen AFTER all initializations are done
+     dashboardContent.classList.remove('hidden');
+	 dashboardContent.classList.add('data-loaded');
+    
+    // Initialize everything else
+    getChartColors(); 
+    cleanupCharts(); 
+    initializeCoreVisuals(parsedData);
+    setupUnifiedSearch();
+    initializePrimeProfilesSection(parsedData);
+    initializeContractExpirationCalendarSection(parsedData);
+    initializeContractorMap(data);
+    showSuccessMessage('Data loaded and dashboard initialized.', true);
+    
+    applyInitialTheme();
+    applyFiltersFromURL();
+  } catch (error) {
+    console.error("Error during processAndInitialize:", error);
+    showErrorMessage("An error occurred while initializing the dashboard. Please try refreshing.", false);
+  } finally {
+    hideProcessing();
+  }
 }
 
 // --- S3 Data Loading ---
@@ -812,7 +1657,7 @@ function loadDataFromS3() {
 }
 function initializeContractorMap(data) {
   if (!contractorMap) {
-    contractorMap = L.map('contractorMap').setView([39.8283, -98.5795], 4);
+    contractorMap = L.map('contractorMap').setView([39.8283, -98.5795], 3);
     L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', {
   attribution: '&copy; <a href="https://carto.com/">CARTO</a>',
   subdomains: 'abcd',
@@ -860,7 +1705,13 @@ function initializeContractorMap(data) {
     marker.bindPopup(popupText);
     contractorClusterGroup.addLayer(marker);
   });
-
+if (contractorClusterGroup && contractorClusterGroup.getLayers().length > 0) {
+  // This will automatically fit the map to show all markers
+  contractorMap.fitBounds(contractorClusterGroup.getBounds(), {
+    padding: [50, 50], // Add some padding around the bounds
+    maxZoom: 3         // Limit how far it will zoom in when fitting bounds
+  });
+}
   setTimeout(() => {
     contractorMap.invalidateSize();
   }, 200);
@@ -953,6 +1804,7 @@ function applyFilter(searchTerm, filterType = null, filterValue = null) {
         initializePrimeProfilesSection(filteredData); 
         initializeContractExpirationCalendarSection(filteredData);
 		initializeContractorMap(filteredData);
+		renderSankeyChart(filteredData);
         updateActiveFilterIndicator(displaySearchTerm, filteredData.length);
         unifiedSearchSuggestions.innerHTML = ''; 
         unifiedSearchSuggestions.classList.add('hidden');
@@ -979,7 +1831,9 @@ function clearAllFilters() {
 
         initializeCoreVisuals(parsedData, false); 
         initializePrimeProfilesSection(parsedData); 
-        initializeContractExpirationCalendarSection(parsedData); 
+        initializeContractExpirationCalendarSection(parsedData);
+        initializeContractorMap(parsedData);
+        renderSankeyChart(parsedData); 
     } catch (error) {
         console.error("Error during clearing filters:", error);
     }
@@ -987,8 +1841,10 @@ function clearAllFilters() {
 
 function updateActiveFilterIndicator(searchTerm, count) {
     if (searchTerm && searchTerm.trim() !== '') {
-        activeFilterIndicator.innerHTML = `<span>Filtered by: <strong>"${searchTerm}"</strong> (${count.toLocaleString()} results)</span> 
-                                         <button class="bg-[var(--accent)] text-[var(--on-accent)] px-3 py-1 rounded-md text-sm hover:bg-opacity-90 focus:ring-2 focus:ring-offset-2 focus:ring-[var(--accent)] focus:outline-none" onclick="clearAllFilters()">Clear All Filters</button>`;
+        // Just update the content without the button
+        activeFilterIndicator.innerHTML = `
+            <span>Filtered by: <strong>"${searchTerm}"</strong> (${count.toLocaleString()} results)</span>
+        `;
         activeFilterIndicator.classList.remove('hidden');
     } else {
         activeFilterIndicator.classList.add('hidden');
@@ -1099,6 +1955,7 @@ function setupUnifiedSearch() {
 }
 
 
+
 // --- Initialize Core Visualizations ---
 function initializeCoreVisuals(data, isPrimeView = false) { 
     updateStatistics(data);
@@ -1130,6 +1987,7 @@ function initializeCoreVisuals(data, isPrimeView = false) {
     createStateContractsChart_main(data, currentMainStateChartFilter);
     createTopAgenciesChart(data); 
     createTimelineChart(data); 
+	renderSankeyChart(data);
 }
 
 // --- Statistics Update ---
@@ -1170,7 +2028,7 @@ function getChartColors() {
 }
 
 // --- Optional Chart Color Overrides ---
-let overrideChartHighlightColor = '#B9D9EB';  // Override for max value (e.g., desaturated blue)
+let overrideChartHighlightColor = null;   // Override for max value (e.g., desaturated blue)
 let overrideChartNeutralColor = null;         // Optional override for all other bars
 
 // --- CSS Fallback Getter ---
@@ -1818,9 +2676,315 @@ function createMarketShareChart(data) {
 
     createChart('marketShareChart', 'pie', chartData, chartOptions);
 }
+function renderSankeyChart(data) {
+  console.log("Starting Sankey chart rendering with", data.length, "records");
+  
+  // Always make sure processing indicator is hidden after we're done
+  const ensureProcessingHidden = () => {
+    if (processingIndicator) {
+      processingIndicator.classList.add('hidden');
+      processingIndicator.classList.remove('flex');
+    }
+  };
+  
+  // Error display helper
+  const showSankeyError = (errorMsg) => {
+    console.error("Sankey chart error:", errorMsg);
+    const sankeyWrapper = document.getElementById('sankeyWrapper');
+    if (sankeyWrapper) {
+      sankeyWrapper.innerHTML = `
+        <div class="chart-no-data">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+          </svg>
+          <span>${errorMsg}</span>
+        </div>`;
+    }
+    ensureProcessingHidden();
+  };
 
+  // Handle empty data case
+  if (!data || data.length === 0) {
+    showSankeyError("No data available for sankey chart");
+    return;
+  }
+  
+  try {
+    // Reference the SVG element correctly
+    const svg = d3.select("#sankeyChart");
+    svg.selectAll("*").remove();
+    
+    // Get actual container width - VERY IMPORTANT FOR SIZING
+    const sankeyWrapper = document.getElementById('sankeyWrapper');
+    const containerWidth = sankeyWrapper ? sankeyWrapper.clientWidth : 1000;
+    const width = Math.max(containerWidth - 40, 800); // Account for padding
+    const height = 600;
+    
+    console.log("Sankey container width:", containerWidth, "chart width:", width);
+    
+    // Set SVG width and height appropriately
+    svg.attr("width", width)
+       .attr("height", height)
+       .attr("viewBox", `0 0 ${width} ${height}`)
+       .attr("preserveAspectRatio", "xMidYMid meet");
 
-// --- Prime Profiles Section & Detail View ---
+    // AGENCY to CONTRACTOR relationship
+    const agencyTotals = {};
+    const contractorTotals = {};
+    
+    data.forEach(row => {
+      const agency = row["Contracting Agency Name"];
+      const contractor = row["Legal Business Name"];
+      const amount = parseCurrencyValue(row["Base and All Options Value (Total Contract Value)"]);
+      
+      if (agency && amount) {
+        agencyTotals[agency] = (agencyTotals[agency] || 0) + amount;
+      }
+      
+      if (contractor && amount) {
+        contractorTotals[contractor] = (contractorTotals[contractor] || 0) + amount;
+      }
+    });
+    
+    // Get top agencies and contractors by value
+    const getTopEntities = (totals, limit = 12) => {
+      return Object.entries(totals)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, limit)
+        .map(entry => entry[0]);
+    };
+    
+    const topAgencies = getTopEntities(agencyTotals);
+    const topContractors = getTopEntities(contractorTotals, 15);
+    
+    // Filter data to only include top agencies and contractors
+    let processData = data.filter(row => {
+      return topAgencies.includes(row["Contracting Agency Name"]) && 
+             topContractors.includes(row["Legal Business Name"]);
+    });
+    
+    // If we have no data after filtering, show error
+    if (processData.length === 0) {
+      showSankeyError("No significant data flows to display");
+      return;
+    }
+
+    // Create nodes and links
+    const nodeMap = new Map();
+    const links = [];
+
+    // First pass: collect nodes
+    processData.forEach(row => {
+      const agency = row["Contracting Agency Name"];
+      const contractor = row["Legal Business Name"];
+      
+      if (agency) nodeMap.set(agency, { name: agency });
+      if (contractor) nodeMap.set(contractor, { name: contractor });
+    });
+
+    // Convert to array and create index
+    const nodes = Array.from(nodeMap.values());
+    const nodeIndex = new Map();
+    nodes.forEach((node, i) => {
+      node.id = i;
+      nodeIndex.set(node.name, i);
+    });
+
+    // Create links between agencies and contractors and track the raw connections
+    const rawLinks = [];
+    processData.forEach(row => {
+      const agency = row["Contracting Agency Name"];
+      const contractor = row["Legal Business Name"];
+      const amount = parseCurrencyValue(row["Base and All Options Value (Total Contract Value)"]);
+
+      if (agency && contractor && amount > 0 && 
+          nodeIndex.has(agency) && nodeIndex.has(contractor)) {
+        
+        // Store raw connection info for highlighting later
+        rawLinks.push({
+          sourceName: agency,
+          targetName: contractor,
+          value: amount
+        });
+        
+        // Look for existing link
+        const existingLink = links.find(link => 
+          link.source === nodeIndex.get(agency) && 
+          link.target === nodeIndex.get(contractor)
+        );
+        
+        if (existingLink) {
+          existingLink.value += amount;
+        } else {
+          links.push({ 
+            source: nodeIndex.get(agency), 
+            target: nodeIndex.get(contractor), 
+            value: amount 
+          });
+        }
+      }
+    });
+
+    // Find the top value link BEFORE filtering
+    // Sort links by value and find the top one
+    const sortedLinks = [...links].sort((a, b) => b.value - a.value);
+    const topLink = sortedLinks.length > 0 ? sortedLinks[0] : null;
+    
+    // Get the source and target names for the top link
+    let topSourceName = null;
+    let topTargetName = null;
+    
+    if (topLink) {
+      // Find the node names from indices
+      for (const [name, id] of nodeIndex.entries()) {
+        if (id === topLink.source) topSourceName = name;
+        if (id === topLink.target) topTargetName = name;
+      }
+    }
+    
+    console.log("Top link:", topSourceName, "→", topTargetName, "with value:", topLink ? topLink.value : 0);
+
+    // Filter small links to reduce clutter
+    let minLinkValue = 0;
+    if (links.length > 30) {
+      minLinkValue = d3.quantile(links.map(l => l.value).sort(d3.ascending), 0.15);
+    }
+    
+    const filteredLinks = links.filter(link => link.value > minLinkValue);
+
+    // Get highlight color from your existing palette function
+    const highlight = overrideChartHighlightColor || '#e63946';
+
+    // Setup the sankey generator
+    const sankey = d3.sankey()
+      .nodeId(d => d.id)
+      .nodeWidth(20)
+      .nodePadding(10)
+      .extent([[20, 20], [width - 20, height - 20]]);
+
+    // Generate the sankey data
+    const graph = sankey({
+      nodes: nodes,
+      links: filteredLinks.map(d => Object.assign({}, d))
+    });
+
+    // Draw the links with proper highlighting for the top value
+    svg.append("g")
+      .attr("fill", "none")
+      .attr("stroke-opacity", 0.4)
+      .selectAll("path")
+      .data(graph.links)
+      .join("path")
+      .attr("d", d3.sankeyLinkHorizontal())
+      .attr("stroke", d => {
+        // Check if this link corresponds to the top value link
+        if (topSourceName && topTargetName) {
+          const sourceName = d.source.name;
+          const targetName = d.target.name;
+          return (sourceName === topSourceName && targetName === topTargetName) 
+            ? highlight 
+            : getCSSVariable('--chart-accent-1');
+        }
+        return getCSSVariable('--chart-accent-1');
+      })
+      .attr("stroke-width", d => Math.max(1, d.width))
+      .append("title")
+      .text(d => `${d.source.name} → ${d.target.name}\n$${d.value.toLocaleString()}`);
+
+    // Draw the nodes with highlighting for nodes that are part of the top link
+    // Draw the nodes with highlighting
+svg.append("g")
+  .selectAll("rect")
+  .data(graph.nodes)
+  .join("rect")
+  .attr("x", d => d.x0)
+  .attr("y", d => d.y0)
+  .attr("height", d => Math.max(1, d.y1 - d.y0))
+  .attr("width", d => d.x1 - d.x0)
+  .attr("fill", d => {
+    // Highlight nodes that are part of the top value flow
+    if (topSourceName && topTargetName) {
+      return (d.name === topSourceName || d.name === topTargetName) 
+        ? highlight 
+        : getCSSVariable('--chart-accent-1');
+    }
+    return getCSSVariable('--chart-accent-1');
+  })
+  .attr("opacity", 0.8)
+  .style("stroke", "white")
+  .style("stroke-width", 0.5)
+  // Add these three lines right here:
+  .style("cursor", "pointer")
+  .on("click", function(event, d) {
+    // If node is an agency (left side)
+    if (d.x0 < width / 2) {
+      setUnifiedSearchTerm(d.name, 'agencyName');
+    } 
+    // If node is a contractor (right side)
+    else {
+      setUnifiedSearchTerm(d.name, 'primeName');
+    }
+  })
+  // Keep the existing title
+  .append("title")
+  .text(d => `${d.name}\n$${d.value.toLocaleString()}`);
+    
+    // Add node labels
+    svg.append("g")
+      .selectAll("text")
+      .data(graph.nodes)
+      .join("text")
+      .attr("x", d => d.x0 < width / 2 ? d.x1 + 6 : d.x0 - 6)
+      .attr("y", d => (d.y1 + d.y0) / 2)
+      .attr("dy", "0.35em")
+      .attr("text-anchor", d => d.x0 < width / 2 ? "start" : "end")
+      .text(d => d.name.length > 23 ? d.name.substring(0, 20) + "..." : d.name)
+      .attr("font-size", "11px")
+      .attr("fill", getCSSVariable('--text-primary'));
+    
+    console.log("Sankey chart render complete");
+    ensureProcessingHidden();
+
+  } catch (error) {
+    showSankeyError(`Error rendering sankey chart: ${error.message}`);
+    console.error(error);
+  }
+}
+function addResizeListener() {
+  // Debounce function to prevent excessive redraws
+  const debounce = (func, delay) => {
+    let debounceTimer;
+    return function() {
+      const context = this;
+      const args = arguments;
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => func.apply(context, args), delay);
+    };
+  };
+
+  // Handle window resize
+  window.addEventListener('resize', debounce(() => {
+    if (parsedData && parsedData.length > 0) {
+      console.log("Window resized, redrawing visualizations");
+      
+      // Use the currently filtered data if available
+      const currentData = document.getElementById('activeFilterIndicator').classList.contains('hidden') 
+        ? parsedData 
+        : (isViewingSpecificPrime ? parsedData.filter(r => r['Legal Business Name'] === specificPrimeName) : parsedData);
+      
+      // Redraw Sankey chart
+      renderSankeyChart(currentData);
+      
+      // Refresh the map to handle container size changes
+      if (contractorMap) {
+        console.log("Invalidating map size after resize");
+        setTimeout(() => {
+          contractorMap.invalidateSize();
+        }, 100);
+      }
+    }
+  }, 250)); // 250ms debounce
+}
 function initializePrimeProfilesSection(data) { 
     const profiles = {};
     data.forEach(r => {
@@ -1830,10 +2994,16 @@ function initializePrimeProfilesSection(data) {
         if(r['NAICS Code']) profiles[name].naics.add(String(r['NAICS Code'])); 
         if(r['Contracting Agency Name']) profiles[name].agencies.add(r['Contracting Agency Name']);
     });
-    function renderCards(filterTerm = '') {
-        primeProfilesContainer.innerHTML = ''; let count = 0;
+    
+    // Just render the cards with all the data - no filter parameter needed
+    renderCards();
+    
+    function renderCards() {
+        primeProfilesContainer.innerHTML = ''; 
+        let count = 0;
+        
+        // Just use the data passed to the function, which is already filtered by unified search
         Object.values(profiles)
-            .filter(p => filterTerm === '' || p.name.toLowerCase().includes(filterTerm.toLowerCase()))
             .sort((a,b) => b.totalValue - a.totalValue)
             .forEach(p => { 
                 count++;
@@ -1848,10 +3018,8 @@ function initializePrimeProfilesSection(data) {
                     <button class="mt-2 text-xs bg-[var(--accent)] text-[var(--on-accent)] px-2 py-1 rounded hover:bg-opacity-90 transition-colors duration-150 ease-in-out focus:ring-2 focus:ring-offset-2 ring-[var(--accent)] focus:outline-none" style="font-weight: var(--button-font-weight);" onclick="setUnifiedSearchTerm('${p.name.replace(/'/g, "\\'")}', 'primeName')">Filter Dashboard by this Prime</button>`; 
                 primeProfilesContainer.appendChild(card);
         });
-        if(count === 0) primeProfilesContainer.innerHTML = `<p class="p-4 col-span-full text-center text-[var(--text-secondary)]">No primes match current filters or profile search.</p>`;
+        if(count === 0) primeProfilesContainer.innerHTML = `<p class="p-4 col-span-full text-center text-[var(--text-secondary)]">No primes match current filters.</p>`;
     }
-    primeProfilesSearchInput.addEventListener('input', _.debounce(() => renderCards(primeProfilesSearchInput.value), 300));
-    renderCards(); 
 }
 
 function renderPrimeDetailView(primeName, primeSpecificData) {
@@ -2348,21 +3516,50 @@ function applyFiltersFromURL() {
         unifiedSearchInput.value = searchParam;
         applyFilter(searchParam); 
     }
+	if (searchTerm && searchTerm.trim() !== '') {
+  document.getElementById('primeProfilesSection').classList.add('highlight-section');
+} else {
+  document.getElementById('primeProfilesSection').classList.remove('highlight-section');
+}
 }
 document.getElementById('resetMapBtn').addEventListener('click', () => {
+  if (contractorMap) {
+    // Reset the view to default zoom level (using 2 for more zoomed out)
+    contractorMap.setView([39.8283, -98.5795], 3);
+    console.log("Map view reset");
+  }
+});
+document.getElementById('resetSankeyBtn').addEventListener('click', () => {
+  // Clear any active filters
   unifiedSearchInput.value = '';
-  primeProfilesSearchInput.value = '';
   clearAllFilters();
-  initializeContractorMap(parsedData);
+  
+  // Re-render sankey with full dataset
+  renderSankeyChart(parsedData);
+});
+// Clear search button
+document.getElementById('clearSearchBtn').addEventListener('click', () => {
+    unifiedSearchInput.value = '';
+    clearAllFilters();
+});
 
-  contractorMap.setView([39.8283, -98.5795], 4); // reset zoom to default
+// Global reset button
+document.getElementById('globalResetBtn').addEventListener('click', () => {
+    // Clear search input
+    unifiedSearchInput.value = '';
+
+    // Clear all filters and reset views
+    clearAllFilters();
+    
+    // Reset map view
+    contractorMap.setView([39.8283, -98.5795], 4);
 });
 
 // --- Page Load ---
 document.addEventListener('DOMContentLoaded', () => {
     getChartColors();     // Load CSS-based chart colors first
     loadDataFromS3();     // Then load and render your charts
+	addResizeListener();
 });
 </script>
-</body>
 </html>
