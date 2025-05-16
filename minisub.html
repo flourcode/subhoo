@@ -18,77 +18,81 @@
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 
     <style>
-        :root {
-            font-family: Inter, sans-serif;
-            font-feature-settings: 'liga' 1, 'calt' 1;
+:root {
+  font-family: Inter, sans-serif;
+  font-feature-settings: 'liga' 1, 'calt' 1;
 
-  /* Core Named Colors */
-  --sky-blue:        #a0d2eb;  
-  --white:           #ffffff;  
-  --lavender:        #d0bdf4;  
-  --royal-purple:    #8458B3;  
-  --dusty-rose:      #a28089;   
-  --periwinkle:      #b4a7d6;  
+  /* Monochromatic Grayscale Palette */
+  --seasalt: #f8f9fa;
+  --antiflash-white: #e9ecef;
+  --platinum: #dee2e6;
+  --french-gray: #ced4da;
+  --french-gray-2: #adb5bd;
+  --slate-gray: #6c757d;
+  --outer-space: #495057;
+  --onyx: #343a40;
+  --eerie-black: #212529;
 
-  /* Light Mode Colors (Using the palette) */
-  --background: var(--white);
+  /* Light Mode Colors (Using monochromatic theme) */
+  --background: var(--seasalt);
   --on-accent: #ffffff;
-  --accent: var(--royal-purple);
-  --accent-secondary: rgba(132, 88, 179, 0.15);
-  --gradient-bg-start: rgba(132, 88, 179, 0.08);
-  --gradient-bg-end: rgba(132, 88, 179, 0);
+  --accent: var(--slate-gray);
+  --accent-secondary: rgba(108, 117, 125, 0.15);
+  --gradient-bg-start: rgba(108, 117, 125, 0.08);
+  --gradient-bg-end: rgba(108, 117, 125, 0);
 
-  --text-primary: #272727;
-  --text-secondary: #272727;
-  --text-tertiary: #272727;
+  --text-primary: var(--eerie-black);
+  --text-secondary: var(--outer-space);
+  --text-tertiary: var(--french-gray-2);
 
-  --border-level-1: rgba(160, 210, 235, 0.3);
-  --border-level-2: rgba(160, 210, 235, 0.5);
-  --border-level-3: rgba(160, 210, 235, 0.8);
+  --border-level-1: rgba(173, 181, 189, 0.3);
+  --border-level-2: rgba(173, 181, 189, 0.5);
+  --border-level-3: rgba(173, 181, 189, 0.8);
 
-  --surface-level-1: rgba(229, 234, 245, 0.8);
-  --surface-level-2: rgba(208, 189, 244, 0.15);
-  --surface-level-3: rgba(208, 189, 244, 0.3);
+  --surface-level-1: rgba(206, 212, 218, 0.8);
+  --surface-level-2: rgba(206, 212, 218, 0.3);
+  --surface-level-3: rgba(206, 212, 218, 0.5);
 
   /* Chart Accent Colors */
-  --chart-accent-1: var(--royal-purple);
-  --chart-accent-2: var(--sky-blue);
-  --chart-accent-3: var(--lavender);
-  --chart-accent-4: var(--dusty-rose);
-  --chart-accent-5: var(--periwinkle);
+  --chart-accent-1: var(--slate-gray);
+  --chart-accent-2: var(--french-gray-2);
+  --chart-accent-3: var(--french-gray);
+  --chart-accent-4: var(--platinum);
+  --chart-accent-5: var(--antiflash-white);
 
+  /* General variables */
+  --header-font-weight: 600;
+  --button-font-weight: 500;
+  --space-m: 12px;
+}
 
+html.dark {
+  --background: var(--eerie-black);
+  --on-accent: #ffffff;
+  --accent: var(--french-gray-2);
+  --accent-secondary: rgba(173, 181, 189, 0.3);
+  --gradient-bg-start: rgba(173, 181, 189, 0.12);
+  --gradient-bg-end: rgba(173, 181, 189, 0);
 
-            /* General variables */
-            --header-font-weight: 600;
-            --button-font-weight: 500;
-            --space-m: 12px; 
-        }
-        html.dark {
-            /* Dark Mode Colors */
-            --background: #1a202c;
-            --on-accent: #ffffff; 
-            --accent: var(--purple-pain);
-            --accent-secondary: rgba(132, 88, 179, 0.3);
-            --gradient-bg-start: rgba(132, 88, 179, 0.12);
-            --gradient-bg-end: rgba(132, 88, 179, 0);
-            --text-primary: var(--freeze-purple);
-            --text-secondary: var(--ice-cold);
-            --text-tertiary: var(--medium-purple);
-            --border-level-1: rgba(160, 210, 235, 0.2);
-            --border-level-2: rgba(160, 210, 235, 0.3);
-            --border-level-3: rgba(160, 210, 235, 0.5);
-            --surface-level-1: #2d3748;
-            --surface-level-2: #374151; 
-            --surface-level-3: #4a5568;
+  --text-primary: var(--seasalt);
+  --text-secondary: var(--platinum);
+  --text-tertiary: var(--french-gray);
 
-            /* Chart Specific Dark Mode Colors */
-            --chart-accent-1: var(--purple-pain);
-            --chart-accent-2: var(--ice-cold);
-            --chart-accent-3: var(--medium-purple);
-            --chart-accent-4: var(--heavy-purple);
-            --chart-accent-5: #b4a7d6;
-        }
+  --border-level-1: rgba(173, 181, 189, 0.2);
+  --border-level-2: rgba(173, 181, 189, 0.4);
+  --border-level-3: rgba(173, 181, 189, 0.6);
+
+  --surface-level-1: var(--onyx);
+  --surface-level-2: var(--outer-space);
+  --surface-level-3: var(--slate-gray);
+
+  --chart-accent-1: var(--french-gray-2);
+  --chart-accent-2: var(--platinum);
+  --chart-accent-3: var(--french-gray);
+  --chart-accent-4: var(--antiflash-white);
+  --chart-accent-5: var(--seasalt);
+}
+
 
         body {
             background-color: var(--background);
@@ -134,48 +138,72 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-/* Base calendar day cell */
-.calendar-day-cell {
-  @apply cursor-pointer transition-colors;
-  background-color: var(--background);
-  border-color: var(--border-level-1);
+.calendar-day-header {
+            font-weight: var(--header-font-weight);
+            text-align: center;
+            padding: 5px 0;
+            background-color: var(--accent); 
+            color: var(--on-accent);
+            border-radius: 4px;
+        }
+        .calendar-event {
+            padding: 3px 5px;
+            background-color: var(--accent); 
+            color: var(--on-accent);
+            border-radius: 3px;
+            margin-bottom: 3px;
+            font-size: 0.6875rem; 
+            cursor: default; 
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        html.dark .calendar-event {
+            background-color: var(--accent);
+        }
+        .calendar-day-cell {
+            cursor: pointer;
+            transition: background-color 0.2s;
+            min-width: 60px; 
+            border-color: var(--border-level-1);
+             background-color: var(--accent-secondary) !important;
+        }
+
+
+        .calendar-day-cell:empty {
+   background-color: var(--accent-secondary) !important;
 }
 
-/* Filler cells (start/end of month, using bg-gray-50 from Tailwind) */
-.calendar-day-cell.bg-gray-50 {
-  background-color: var(--background) !important;
-}
-html.dark .calendar-day-cell.bg-gray-50 {
-  background-color: var(--surface-level-1) !important;
+        
+        /* Event day styles - All densities now use the same color */
+        .calendar-day-cell.bg-blue-50,
+        .calendar-day-cell.bg-blue-100,
+        .calendar-day-cell.bg-blue-200 { 
+            background-color: var(--accent-secondary) !important;
+        } 
+        html.dark .calendar-day-cell.bg-blue-50,
+        html.dark .calendar-day-cell.bg-blue-100,
+        html.dark .calendar-day-cell.bg-blue-200 { 
+            background-color: var(--accent-secondary) !important;
+        } 
+
+.calendar-filler-cell {
+  background-color: var(--accent-secondary) !important; /* Tailwind's gray-200 */
+  pointer-events: none;
 }
 
-/* Numbered but empty days (bg-white from Tailwind) */
-.calendar-day-cell.bg-white {
-  background-color: var(--surface-level-1) !important;
-}
-html.dark .calendar-day-cell.bg-white {
-  background-color: var(--surface-level-1) !important;
+html.dark .calendar-filler-cell {
+  background-color: #1f2937 !important; /* Tailwind's gray-800 */
 }
 
-/* Event days (usually marked bg-blue-50 / bg-blue-100 / bg-blue-200 in Tailwind) */
-.calendar-day-cell.bg-blue-50,
-.calendar-day-cell.bg-blue-100,
-.calendar-day-cell.bg-blue-200 {
-  background-color: var(--accent-secondary) !important;
-}
-html.dark .calendar-day-cell.bg-blue-50,
-html.dark .calendar-day-cell.bg-blue-100,
-html.dark .calendar-day-cell.bg-blue-200 {
-  background-color: var(--accent-secondary) !important;
-}
 
-/* Hover behavior */
-.calendar-day-cell:hover:not(.bg-gray-50) {
-  background-color: var(--chart-accent-3) !important; /* lavender */
-}
-html.dark .calendar-day-cell:hover:not(.bg-gray-50) {
-  background-color: var(--surface-level-3) !important;
-}
+        .calendar-grid-wrapper { 
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch; 
+        }
+        .calendar-grid-wrapper .grid { 
+            min-width: 450px; 
+        }
 
 
         .event-tooltip {
@@ -333,7 +361,7 @@ html.dark .calendar-day-cell:hover:not(.bg-gray-50) {
             background-color: rgba(132, 88, 179, 0.8); 
         }
 		.custom-marker {
-  background-color: var(--accent);
+  background-color: var(--chart-accent-1);
   border: 2px solid var(--border-level-2);
   border-radius: 50%;
   width: 12px;
@@ -346,6 +374,7 @@ html.dark .calendar-day-cell:hover:not(.bg-gray-50) {
   transform: scale(1.5);
   box-shadow: 0 0 0 4px var(--accent-secondary);
 }
+
 
     </style>
 </head>
@@ -620,27 +649,6 @@ let currentCalendarModalSort = { column: 'prime', order: 'asc' };
 let contractorMap; 
 let contractorClusterGroup;
 
-
-// --- Chart Color Palette (Derived from CSS Variables) ---
-let chartPrimaryColor, chartSecondaryColor, chartTertiaryColor, chartNeutralColor, chartAccentColor;
-let chartGrays = []; 
-
-function getChartColors() {
-    const styles = getComputedStyle(document.documentElement);
-    chartPrimaryColor = styles.getPropertyValue('--purple-pain').trim() || '#8458B3'; 
-    chartSecondaryColor = styles.getPropertyValue('--ice-cold').trim() || '#a0d2eb'; 
-    chartTertiaryColor = styles.getPropertyValue('--medium-purple').trim() || '#d0bdf4';
-    chartNeutralColor = styles.getPropertyValue('--heavy-purple').trim() || '#a28089'; 
-    
-    chartGrays = [
-        styles.getPropertyValue('--medium-purple').trim() || '#d0bdf4',
-        styles.getPropertyValue('--heavy-purple').trim() || '#a28089',
-        '#b4a7d6' // Secondary gray
-    ];
-    chartAccentColor = styles.getPropertyValue('--heavy-purple').trim() || '#a28089'; 
-}
-
-
 // --- Utility Functions ---
 function formatCurrency(value) {
     if (isNaN(parseFloat(value))) { 
@@ -805,7 +813,7 @@ function loadDataFromS3() {
 function initializeContractorMap(data) {
   if (!contractorMap) {
     contractorMap = L.map('contractorMap').setView([39.8283, -98.5795], 4);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', {
   attribution: '&copy; <a href="https://carto.com/">CARTO</a>',
   subdomains: 'abcd',
   maxZoom: 19
@@ -858,18 +866,17 @@ function initializeContractorMap(data) {
   }, 200);
 }
 function createStyledMarker(lat, lng, label) {
-  const markerHtml = `
-    <div class="custom-marker" title="${label}"></div>
-  `;
+  const markerHtml = `<div class="custom-marker" title="${label}"></div>`;
   return L.marker([lat, lng], {
     icon: L.divIcon({
       className: '',
       html: markerHtml,
-      iconSize: [16, 16],
-      iconAnchor: [8, 8]
+      iconSize: [12, 12],
+      iconAnchor: [6, 6]
     })
   });
 }
+
 
 // --- Unified Search, Suggestions, and Filtering Logic ---
 function applyFilter(searchTerm, filterType = null, filterValue = null) { 
@@ -1139,111 +1146,238 @@ function updateStatistics(data) {
     document.getElementById('uniquePrimesValue').textContent = new Set(data.map(r => r['Legal Business Name']).filter(Boolean)).size.toLocaleString();
 }
 
-// --- Chart Creation Functions ---
-function createChart(canvasId, type, data, options, noDataMessage = "No data available for current selection.") { 
-    const canvasElement = document.getElementById(canvasId);
-    if (!canvasElement) {
-        return; 
-    }
-    const chartContainer = canvasElement.parentElement; 
-    
-    let isEmpty = true;
-    if (data && data.datasets && data.datasets.length > 0) {
-        isEmpty = data.datasets.every(ds => !ds.data || ds.data.length === 0 || ds.data.every(val => val === 0 || val === null));
-    } else if (type === 'pie' || type === 'doughnut') { 
-        if (data && data.datasets && data.datasets[0] && data.datasets[0].data) {
-           isEmpty = data.datasets[0].data.every(val => val === 0);
-        }
-    }
-
-    if (isEmpty) {
-        chartContainer.innerHTML = `<div class="chart-no-data">
-                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
-                                        </svg>
-                                        <span>${noDataMessage}</span>
-                                    </div>`;
-        if (charts[canvasId]) {
-            charts[canvasId].destroy();
-            charts[canvasId] = null;
-        }
-        return;
-    } else {
-        if (chartContainer.querySelector('.chart-no-data')) {
-            chartContainer.innerHTML = `<canvas id="${canvasId}"></canvas>`;
-        }
-    }
-    
-    const ctx = document.getElementById(canvasId).getContext('2d');
-    if (charts[canvasId]) charts[canvasId].destroy();
-    charts[canvasId] = new Chart(ctx, { type, data, options });
+function getCSSVariable(name) {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 }
 
+// --- Chart Color Palette (Derived from CSS Variables) ---
+let chartPrimaryColor, chartSecondaryColor, chartTertiaryColor, chartNeutralColor, chartAccentColor;
+let chartGrays = [];
+
+function getChartColors() {
+    const styles = getComputedStyle(document.documentElement);
+    chartPrimaryColor   = styles.getPropertyValue('--chart-accent-1').trim(); 
+    chartSecondaryColor = styles.getPropertyValue('--chart-accent-2').trim(); 
+    chartTertiaryColor  = styles.getPropertyValue('--chart-accent-3').trim(); 
+    chartNeutralColor   = styles.getPropertyValue('--chart-accent-4').trim(); 
+    chartAccentColor    = chartPrimaryColor;
+
+    chartGrays = [
+        styles.getPropertyValue('--chart-accent-5').trim(),
+        styles.getPropertyValue('--border-level-2').trim(),
+        styles.getPropertyValue('--surface-level-2').trim()
+    ];
+}
+
+// --- Optional Chart Color Overrides ---
+let overrideChartHighlightColor = '#B9D9EB';  // Override for max value (e.g., desaturated blue)
+let overrideChartNeutralColor = null;         // Optional override for all other bars
+
+// --- CSS Fallback Getter ---
+function getCSSVariable(name) {
+    return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
+
+// --- Simple Highlight Palette (max = lava or override, others = neutral or fallback)
+function getHighlightColors(dataArray) {
+    const highlight = overrideChartHighlightColor || '#e63946';
+    const neutral = overrideChartNeutralColor || getCSSVariable('--chart-accent-2') || '#adb5bd';
+    const maxVal = Math.max(...dataArray);
+    return dataArray.map(value => value === maxVal ? highlight : neutral);
+}
+
+// --- Rotating Monochrome + Highlight (for pie/donut/bar sets)
+function getRotatingHighlightPalette(values) {
+    const maxVal = Math.max(...values);
+    const baseColors = [
+        chartPrimaryColor,
+        chartSecondaryColor,
+        chartTertiaryColor,
+        chartNeutralColor,
+        chartGrays[0],
+        chartGrays[1],
+        chartGrays[2],
+        '#dee2e6', '#ced4da', '#adb5bd'
+    ];
+    const highlight = overrideChartHighlightColor || '#e63946';
+    return values.map((v, i) => v === maxVal ? highlight : baseColors[i % baseColors.length]);
+}
+
+
+function createChart(canvasId, type, data, options, noDataMessage = "No data available for current selection.") {
+  const canvasElement = document.getElementById(canvasId);
+  if (!canvasElement) return;
+
+  const chartContainer = canvasElement.parentElement;
+
+  let isEmpty = true;
+  if (data?.datasets?.length > 0) {
+    isEmpty = data.datasets.every(ds =>
+      !ds.data || ds.data.length === 0 || ds.data.every(val => val === 0 || val === null)
+    );
+  }
+
+  if (isEmpty) {
+    chartContainer.innerHTML = `
+      <div class="chart-no-data">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+        </svg>
+        <span>${noDataMessage}</span>
+      </div>
+    `;
+    if (charts[canvasId]) {
+      charts[canvasId].destroy();
+      charts[canvasId] = null;
+    }
+    return;
+  } else if (chartContainer.querySelector('.chart-no-data')) {
+    chartContainer.innerHTML = `<canvas id="${canvasId}"></canvas>`;
+  }
+
+  const ctx = document.getElementById(canvasId).getContext('2d');
+  if (charts[canvasId]) charts[canvasId].destroy();
+  charts[canvasId] = new Chart(ctx, { type, data, options });
+}
 function createPrimeContractorsChart(data) { 
     const canvasElement = document.getElementById('primeContractorsChart');
     if (!canvasElement) return; 
 
     const primeValues = {};
-    data.forEach(r => { if (r['Legal Business Name']) primeValues[r['Legal Business Name']] = (primeValues[r['Legal Business Name']] || 0) + parseCurrencyValue(r['Base and All Options Value (Total Contract Value)']); });
-    const sorted = Object.entries(primeValues).sort((a,b)=>b[1]-a[1]).slice(0,10);
-    const chartData = { 
-        labels: sorted.map(i=>i[0]), 
-        datasets: [{ 
-            label: 'Contract Value', 
-            data: sorted.map(i=>i[1]), 
-            backgroundColor: (context) => {
-                const index = context.dataIndex;
-                if (index === 0) return chartPrimaryColor;
-                if (index === 1) return chartSecondaryColor;
-                return chartTertiaryColor;
-            }
-        }] 
-    };
-    const chartOptions = { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: {display:false}, tooltip:{callbacks:{label:c=>formatCurrency(c.raw)}}}, scales: {x:{ticks:{callback:v=>formatCurrency(v)}}, y:{ticks:{autoSkip:false, callback:function(v){const l=this.getLabelForValue(v); return l.length>18?l.substring(0,15)+'...':l;}}}},
-        onClick: (event, elements) => {
-            if (elements.length > 0) {
-                const primeName = chartData.labels[elements[0].index];
-                setUnifiedSearchTerm(primeName, 'primeName'); 
-            }
+    data.forEach(r => {
+        if (r['Legal Business Name']) {
+            const val = parseCurrencyValue(r['Base and All Options Value (Total Contract Value)']);
+            primeValues[r['Legal Business Name']] = (primeValues[r['Legal Business Name']] || 0) + val;
         }
-    };
-    createChart('primeContractorsChart', 'bar', chartData, chartOptions);
-}
+    });
 
-function createDepartmentChart(data) { 
-    const deptValues = {};
-    data.forEach(r => { if (r['Contracting Department Name']) deptValues[r['Contracting Department Name']] = (deptValues[r['Contracting Department Name']] || 0) + parseCurrencyValue(r['Base and All Options Value (Total Contract Value)']); });
-    const sorted = Object.entries(deptValues).sort((a,b)=>b[1]-a[1]).slice(0,10);
-    
-    const departmentColors = [
+    const sorted = Object.entries(primeValues).sort((a, b) => b[1] - a[1]).slice(0, 10);
+    const labels = sorted.map(i => i[0]);
+    const values = sorted.map(i => i[1]);
+
+    const maxVal = Math.max(...values);
+    const baseColors = [
         chartPrimaryColor,
         chartSecondaryColor,
         chartTertiaryColor,
-        chartNeutralColor
+        chartNeutralColor,
+        chartGrays[0],
+        chartGrays[1],
+        chartGrays[2],
+        '#dee2e6',
+        '#ced4da',
+        '#adb5bd'
     ];
-    
-    // Add additional colors if needed
-    while (departmentColors.length < sorted.length) {
-        departmentColors.push(chartGrays[departmentColors.length % chartGrays.length]);
-    }
+    const chartColors = getRotatingHighlightPalette(values);
 
-    const chartData = { 
-        labels: sorted.map(i=>i[0]), 
-        datasets: [{ data: sorted.map(i=>i[1]), backgroundColor: departmentColors }] 
+    const chartData = {
+        labels,
+        datasets: [{
+            label: 'Contract Value',
+            data: values,
+            backgroundColor: chartColors
+        }]
     };
-    const chartOptions = { 
-        responsive: true, maintainAspectRatio: false, 
-        plugins: { 
-            legend: {position:'right', labels:{boxWidth:12,font:{size:10}}}, 
-            tooltip:{callbacks:{label:c=>`${c.label||''}: ${formatCurrency(c.raw)}`}}
+
+    const chartOptions = {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { display: false },
+            tooltip: {
+                callbacks: {
+                    label: c => formatCurrency(c.raw)
+                }
+            }
+        },
+        scales: {
+            x: {
+                ticks: {
+                    callback: val => formatCurrency(val)
+                }
+            },
+            y: {
+                ticks: {
+                    autoSkip: false,
+                    callback: function (val) {
+                        const label = this.getLabelForValue(val);
+                        return label.length > 18 ? label.substring(0, 15) + '...' : label;
+                    }
+                }
+            }
+        },
+        onClick: (event, elements) => {
+            if (elements.length > 0) {
+                const primeName = chartData.labels[elements[0].index];
+                setUnifiedSearchTerm(primeName, 'primeName');
+            }
+        }
+    };
+
+    createChart('primeContractorsChart', 'bar', chartData, chartOptions);
+}
+
+function createDepartmentChart(data) {
+    const deptValues = {};
+    data.forEach(r => {
+        if (r['Contracting Department Name']) {
+            const dept = r['Contracting Department Name'];
+            deptValues[dept] = (deptValues[dept] || 0) + parseCurrencyValue(r['Base and All Options Value (Total Contract Value)']);
+        }
+    });
+
+    const sorted = Object.entries(deptValues).sort((a, b) => b[1] - a[1]).slice(0, 10);
+    const labels = sorted.map(i => i[0]);
+    const values = sorted.map(i => i[1]);
+    const maxVal = Math.max(...values);
+
+    // Use a rotated monochrome palette
+    const baseColors = [
+        chartPrimaryColor,
+        chartSecondaryColor,
+        chartTertiaryColor,
+        chartNeutralColor,
+        chartGrays[0],
+        chartGrays[1],
+        chartGrays[2],
+        '#dee2e6',  // Platinum fallback
+        '#ced4da',  // French gray
+        '#adb5bd'   // Gray
+    ];
+
+    const departmentColors = getRotatingHighlightPalette(values);
+
+    const chartData = {
+        labels,
+        datasets: [{
+            data: values,
+            backgroundColor: departmentColors
+        }]
+    };
+
+    const chartOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'right',
+                labels: { boxWidth: 12, font: { size: 10 } }
+            },
+            tooltip: {
+                callbacks: {
+                    label: c => `${c.label || ''}: ${formatCurrency(c.raw)}`
+                }
+            }
         },
         onClick: (event, elements) => {
             if (elements.length > 0) {
                 const departmentName = chartData.labels[elements[0].index];
-                setUnifiedSearchTerm(departmentName, 'departmentName'); 
+                setUnifiedSearchTerm(departmentName, 'departmentName');
             }
         }
     };
+
     createChart('departmentChart', 'pie', chartData, chartOptions);
 }
 
@@ -1256,56 +1390,118 @@ function createNaicsChart_main(data) {
             if (!naicsDesc[naicsKey]) naicsDesc[naicsKey] = r['NAICS Description'] || '';
         }
     });
-    const sorted = Object.entries(naicsValues).sort((a,b)=>b[1]-a[1]).slice(0,10);
-    const chartData = { 
-        labels: sorted.map(i=>i[0]), 
-        displayLabels: sorted.map(i=>`${i[0]} - ${naicsDesc[i[0]] ? naicsDesc[i[0]].substring(0,20) : ''}...`), 
-        datasets: [{ 
-            label: 'Contract Value', 
-            data: sorted.map(i=>i[1]), 
-            backgroundColor: (context) => {
-                const index = context.dataIndex;
-                if (index === 0) return chartPrimaryColor;
-                if (index === 1) return chartSecondaryColor;
-                return chartTertiaryColor;
-            }
-        }] 
-    };
-    const chartOptions = { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: {display:false}, tooltip:{callbacks:{label:c=>formatCurrency(c.raw)}}}, scales: {x:{ticks:{callback:v=>formatCurrency(v)}}},
-        onClick: (event, elements) => {
-            if (elements.length > 0) {
-                const naicsCode = chartData.labels[elements[0].index]; 
-                setUnifiedSearchTerm(naicsCode, 'naicsCode'); 
-            }
-        }
-    };
-    chartOptions.data = { labels: chartData.displayLabels, datasets: chartData.datasets}; 
-    createChart('naicsChart_main', 'bar', chartOptions.data , chartOptions);
-}
 
-function createContractTypeChart_main(data) { 
-    const contractTypes = {};
-    data.forEach(r => { if (r['Award or Indefinite Delivery Vehicle Type']) contractTypes[r['Award or Indefinite Delivery Vehicle Type']] = (contractTypes[r['Award or Indefinite Delivery Vehicle Type']] || 0) + 1; });
-    
-    const sortedContractTypes = Object.entries(contractTypes).sort((a,b) => b[1] - a[1]);
+    const sorted = Object.entries(naicsValues).sort((a, b) => b[1] - a[1]).slice(0, 10);
+    const labels = sorted.map(i => i[0]);
+    const displayLabels = sorted.map(i => `${i[0]} - ${naicsDesc[i[0]] ? naicsDesc[i[0]].substring(0, 20) : ''}...`);
+    const values = sorted.map(i => i[1]);
 
-    const contractTypeColors = [
+    const maxVal = Math.max(...values);
+    const baseColors = [
         chartPrimaryColor,
         chartSecondaryColor,
         chartTertiaryColor,
-        chartNeutralColor
+        chartNeutralColor,
+        chartGrays[0],
+        chartGrays[1],
+        chartGrays[2],
+        '#dee2e6',
+        '#ced4da',
+        '#adb5bd'
     ];
-    
-    // Add additional colors if needed
-    while (contractTypeColors.length < sortedContractTypes.length) {
-        contractTypeColors.push(chartGrays[contractTypeColors.length % chartGrays.length]);
-    }
+    const chartColors = getRotatingHighlightPalette(values);
 
     const chartData = { 
-        labels: sortedContractTypes.map(item => item[0]), 
-        datasets: [{ data: sortedContractTypes.map(item => item[1]), backgroundColor: contractTypeColors }] 
+        labels, 
+        displayLabels, 
+        datasets: [{ 
+            label: 'Contract Value', 
+            data: values, 
+            backgroundColor: chartColors
+        }] 
     };
-    const chartOptions = { responsive: true, maintainAspectRatio: false, plugins: { legend: {position:'right', labels:{boxWidth:12,font:{size:10}}}, tooltip:{callbacks:{label:c=>`${c.label||''}: ${c.raw.toLocaleString()}`}}},
+
+    const chartOptions = {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { display: false },
+            tooltip: {
+                callbacks: {
+                    label: c => formatCurrency(c.raw)
+                }
+            }
+        },
+        scales: {
+            x: { ticks: { callback: v => formatCurrency(v) } }
+        },
+        onClick: (event, elements) => {
+            if (elements.length > 0) {
+                const naicsCode = chartData.labels[elements[0].index];
+                setUnifiedSearchTerm(naicsCode, 'naicsCode');
+            }
+        }
+    };
+
+    chartOptions.data = {
+        labels: chartData.displayLabels,
+        datasets: chartData.datasets
+    };
+
+    createChart('naicsChart_main', 'bar', chartOptions.data, chartOptions);
+}
+function createContractTypeChart_main(data) { 
+    const contractTypes = {};
+    data.forEach(r => {
+        const type = r['Award or Indefinite Delivery Vehicle Type'];
+        if (type) contractTypes[type] = (contractTypes[type] || 0) + 1;
+    });
+
+    const sortedContractTypes = Object.entries(contractTypes).sort((a, b) => b[1] - a[1]);
+    const labels = sortedContractTypes.map(item => item[0]);
+    const values = sortedContractTypes.map(item => item[1]);
+    const maxVal = Math.max(...values);
+
+    const baseColors = [
+        chartPrimaryColor,
+        chartSecondaryColor,
+        chartTertiaryColor,
+        chartNeutralColor,
+        chartGrays[0],
+        chartGrays[1],
+        chartGrays[2],
+        '#dee2e6',
+        '#ced4da',
+        '#adb5bd'
+    ];
+    const contractTypeColors = getRotatingHighlightPalette(values);
+
+    const chartData = { 
+        labels,
+        datasets: [{
+            data: values,
+            backgroundColor: contractTypeColors
+        }]
+    };
+
+    const chartOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'right',
+                labels: {
+                    boxWidth: 12,
+                    font: { size: 10 }
+                }
+            },
+            tooltip: {
+                callbacks: {
+                    label: c => `${c.label || ''}: ${c.raw.toLocaleString()}`
+                }
+            }
+        },
         onClick: (event, elements) => {
             if (elements.length > 0) {
                 const contractType = chartData.labels[elements[0].index];
@@ -1313,9 +1509,9 @@ function createContractTypeChart_main(data) {
             }
         }
     };
+
     createChart('contractTypeChart_main', 'doughnut', chartData, chartOptions);
 }
-
 function createStateContractsChart_main(data, filterType = 'count') { 
     const stateData = {}; 
     data.forEach(r => {
@@ -1326,21 +1522,59 @@ function createStateContractsChart_main(data, filterType = 'count') {
             stateData[state].value += parseCurrencyValue(r['Base and All Options Value (Total Contract Value)']);
         }
     });
-    const sorted = Object.entries(stateData).sort((a,b) => b[1][filterType] - a[1][filterType]).slice(0,10);
-    const chartData = { 
-        labels: sorted.map(i=>i[0]), 
-        datasets: [{ 
-            label: filterType === 'count' ? 'Number of Contracts' : 'Total Contract Value', 
-            data: sorted.map(i=>i[1][filterType]), 
-            backgroundColor: (context) => {
-                const index = context.dataIndex;
-                if (index === 0) return chartPrimaryColor;
-                if (index === 1) return chartSecondaryColor;
-                return chartTertiaryColor;
-            }
-        }] 
+
+    const sorted = Object.entries(stateData).sort((a, b) => b[1][filterType] - a[1][filterType]).slice(0, 10);
+    const labels = sorted.map(i => i[0]);
+    const values = sorted.map(i => i[1][filterType]);
+    const maxVal = Math.max(...values);
+
+    const baseColors = [
+        chartPrimaryColor,
+        chartSecondaryColor,
+        chartTertiaryColor,
+        chartNeutralColor,
+        chartGrays[0],
+        chartGrays[1],
+        chartGrays[2],
+        '#dee2e6',
+        '#ced4da',
+        '#adb5bd'
+    ];
+    const stateColors = getRotatingHighlightPalette(values);
+
+    const chartData = {
+        labels,
+        datasets: [{
+            label: filterType === 'count' ? 'Number of Contracts' : 'Total Contract Value',
+            data: values,
+            backgroundColor: stateColors
+        }]
     };
-    const chartOptions = { responsive: true, maintainAspectRatio: false, plugins: { legend: {display:false}, tooltip:{callbacks:{label:c=> filterType === 'count' ? c.raw.toLocaleString() : formatCurrency(c.raw)}}}, scales: {y:{ticks:{callback:v=> filterType==='count'?v.toLocaleString():formatCurrency(v)}}},
+
+    const chartOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { display: false },
+            tooltip: {
+                callbacks: {
+                    label: c =>
+                        filterType === 'count'
+                            ? c.raw.toLocaleString()
+                            : formatCurrency(c.raw)
+                }
+            }
+        },
+        scales: {
+            y: {
+                ticks: {
+                    callback: v =>
+                        filterType === 'count'
+                            ? v.toLocaleString()
+                            : formatCurrency(v)
+                }
+            }
+        },
         onClick: (event, elements) => {
             if (elements.length > 0) {
                 const stateCode = chartData.labels[elements[0].index];
@@ -1348,45 +1582,82 @@ function createStateContractsChart_main(data, filterType = 'count') {
             }
         }
     };
+
     createChart('stateContractsChart_main', 'bar', chartData, chartOptions);
 }
 
+
 function createTopAgenciesChart(data) {
-    const agencyValues = {};
+    const agencyValues = {}
     data.forEach(r => {
-        const agency = r['Contracting Agency Name']; 
+        const agency = r['Contracting Agency Name'];
         if (agency) {
             agencyValues[agency] = (agencyValues[agency] || 0) + parseCurrencyValue(r['Base and All Options Value (Total Contract Value)']);
         }
     });
-    const sortedAgencies = Object.entries(agencyValues).sort((a, b) => b[1] - a[1]).slice(0, 10);
-    const chartData = { 
-        labels: sortedAgencies.map(item => item[0]), 
-        datasets: [{ 
-            label: 'Contract Value', 
-            data: sortedAgencies.map(item => item[1]), 
-            backgroundColor: (context) => {
-                const index = context.dataIndex;
-                if (index === 0) return chartPrimaryColor;
-                if (index === 1) return chartSecondaryColor;
-                return chartTertiaryColor;
+
+    const sorted = Object.entries(agencyValues).sort((a, b) => b[1] - a[1]).slice(0, 10);
+    const labels = sorted.map(item => item[0]);
+    const values = sorted.map(item => item[1]);
+
+    const maxVal = Math.max(...values);
+    const baseColors = [
+        chartPrimaryColor,
+        chartSecondaryColor,
+        chartTertiaryColor,
+        chartNeutralColor,
+        chartGrays[0],
+        chartGrays[1],
+        chartGrays[2],
+        '#dee2e6',
+        '#ced4da',
+        '#adb5bd'
+    ];
+    const chartColors = getRotatingHighlightPalette(values);
+
+    const chartData = {
+        labels,
+        datasets: [{
+            label: 'Contract Value',
+            data: values,
+            backgroundColor: chartColors
+        }]
+    };
+
+    const chartOptions = {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { display: false },
+            tooltip: { callbacks: { label: ctx => formatCurrency(ctx.raw) } }
+        },
+        scales: {
+            x: { ticks: { callback: val => formatCurrency(val) } },
+            y: {
+                ticks: {
+                    autoSkip: false,
+                    callback: function (val) {
+                        const label = this.getLabelForValue(val);
+                        return label.length > 20 ? label.substring(0, 17) + '.' : label;
+                    }
+                }
             }
-        }] 
-    }; 
-    const chartOptions = { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => formatCurrency(ctx.raw) } } }, scales: { x: { ticks: { callback: val => formatCurrency(val) } }, y: { ticks: { autoSkip: false, callback: function(val) { const label = this.getLabelForValue(val); return label.length > 20 ? label.substring(0, 17) + '...' : label; } } } },
+        },
         onClick: (event, elements) => {
             if (elements.length > 0) {
                 const agencyName = chartData.labels[elements[0].index];
-                setUnifiedSearchTerm(agencyName, 'agencyName'); 
+                setUnifiedSearchTerm(agencyName, 'agencyName');
             }
         }
     };
+
     createChart('topAgenciesChart', 'bar', chartData, chartOptions);
 }
-
 function createTimelineChart(data) {
     const startYears = {}; 
     const endYears = {};
+
     data.forEach(record => {
         if (record['Period of Performance Start Date']) { 
             const d = new Date(record['Period of Performance Start Date']); 
@@ -1403,8 +1674,9 @@ function createTimelineChart(data) {
             }
         }
     });
+
     const allYears = new Set([...Object.keys(startYears), ...Object.keys(endYears)].map(Number));
-    const sortedYears = Array.from(allYears).sort((a,b) => a-b);
+    const sortedYears = Array.from(allYears).sort((a, b) => a - b);
     
     const labels = [], startCounts = [], endCounts = [];
     sortedYears.forEach(year => { 
@@ -1412,6 +1684,9 @@ function createTimelineChart(data) {
         startCounts.push(startYears[year] || 0); 
         endCounts.push(endYears[year] || 0); 
     });
+
+    const highlight = overrideChartHighlightColor || '#e63946';
+    const highlightFill = highlight + '22'; // low-opacity version for fill
 
     createChart('timelineChart', 'line', 
         { 
@@ -1421,7 +1696,7 @@ function createTimelineChart(data) {
                     label: 'Contracts Starting', 
                     data: startCounts, 
                     borderColor: chartSecondaryColor, 
-                    backgroundColor: `${chartSecondaryColor}33`, /* 20% opacity */
+                    backgroundColor: `${chartSecondaryColor}33`, // 20% opacity
                     fill: true, 
                     tension: 0.4,
                     pointRadius: 0, 
@@ -1431,8 +1706,8 @@ function createTimelineChart(data) {
                 { 
                     label: 'Contracts Ending', 
                     data: endCounts, 
-                    borderColor: chartPrimaryColor, 
-                    backgroundColor: `${chartPrimaryColor}33`, /* 20% opacity */
+                    borderColor: highlight, 
+                    backgroundColor: highlightFill, 
                     fill: true, 
                     tension: 0.4,
                     pointRadius: 0,
@@ -1442,59 +1717,106 @@ function createTimelineChart(data) {
             ] 
         },
         { 
-            responsive: true, maintainAspectRatio: false, 
+            responsive: true,
+            maintainAspectRatio: false,
             plugins: { 
-                legend: { display: true, position: 'top'},
-                tooltip: { callbacks: { label: ctx => `${ctx.dataset.label || ''}: ${ctx.parsed.y.toLocaleString()}` } } 
+                legend: { display: true, position: 'top' },
+                tooltip: { 
+                    callbacks: { 
+                        label: ctx => `${ctx.dataset.label || ''}: ${ctx.parsed.y.toLocaleString()}` 
+                    } 
+                }
             }, 
-            scales: { y: { beginAtZero: true, ticks: { callback: val => val.toLocaleString() } } } 
+            scales: { 
+                y: { 
+                    beginAtZero: true,
+                    ticks: { callback: val => val.toLocaleString() } 
+                } 
+            } 
         }
     );
 }
-
 
 function createMarketShareChart(data) {
     const canvasElement = document.getElementById('marketShareChart');
     if (!canvasElement) return; 
 
-    const primeValues = {};
+    const primeValues = {}
     data.forEach(r => {
         if (r['Legal Business Name']) {
-            primeValues[r['Legal Business Name']] = (primeValues[r['Legal Business Name']] || 0) + parseCurrencyValue(r['Base and All Options Value (Total Contract Value)']);
+            const name = r['Legal Business Name'];
+            primeValues[name] = (primeValues[name] || 0) + parseCurrencyValue(r['Base and All Options Value (Total Contract Value)']);
         }
     });
+
     const sortedPrimes = Object.entries(primeValues).sort((a, b) => b[1] - a[1]);
-    
     const chartLabels = [];
-    const chartValues = [];
-    const backgroundColors = [
-        chartPrimaryColor,
-        chartSecondaryColor,
-        chartTertiaryColor,
-        chartNeutralColor,
-        chartGrays[0]
-    ];
+    const values = [];
 
     sortedPrimes.forEach((item, index) => {
         if (index < 5) {
             chartLabels.push(item[0]);
-            chartValues.push(item[1]);
+            values.push(item[1]);
         }
     });
-    
+
     if (sortedPrimes.length > 5) {
-        const otherPrimesValue = sortedPrimes.slice(5).reduce((sum, item) => sum + item[1], 0);
-        if (otherPrimesValue > 0) {
+        const otherVal = sortedPrimes.slice(5).reduce((sum, item) => sum + item[1], 0);
+        if (otherVal > 0) {
             chartLabels.push('Others');
-            chartValues.push(otherPrimesValue);
+            values.push(otherVal);
         }
     }
 
+    const maxVal = Math.max(...values);
+    const baseColors = [
+        chartPrimaryColor,
+        chartSecondaryColor,
+        chartTertiaryColor,
+        chartNeutralColor,
+        chartGrays[0],
+        chartGrays[1],
+        chartGrays[2],
+        '#dee2e6',
+        '#ced4da',
+        '#adb5bd'
+    ];
+    const chartColors = getRotatingHighlightPalette(values);
 
-    createChart('marketShareChart', 'pie',
-        { labels: chartLabels, datasets: [{ data: chartValues, backgroundColor: backgroundColors }] }, 
-        { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { boxWidth: 12, font: { size: 10 } } }, tooltip: { callbacks: { label: ctx => `${ctx.label || ''}: ${formatCurrency(ctx.raw)} (${((ctx.raw / chartValues.reduce((a,b)=>a+b,0)) * 100).toFixed(1)}%)` } } } }
-    );
+    const chartData = {
+        labels: chartLabels,
+        datasets: [{
+            label: 'Prime Share',
+            data: values,
+            backgroundColor: chartColors
+        }]
+    };
+
+    const chartOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'right',
+                labels: {
+                    boxWidth: 12,
+                    font: { size: 10 }
+                }
+            },
+            tooltip: {
+                callbacks: {
+                    label: ctx => {
+                        const raw = ctx.raw;
+                        const total = values.reduce((a, b) => a + b, 0);
+                        const percent = ((raw / total) * 100).toFixed(1);
+                        return `${ctx.label || ''}: ${formatCurrency(raw)} (${percent}%)`;
+                    }
+                }
+            }
+        }
+    };
+
+    createChart('marketShareChart', 'pie', chartData, chartOptions);
 }
 
 
@@ -1748,35 +2070,57 @@ function initializeContractExpirationCalendarSection(data) {
     }
 
 
-    function renderCalView() {
-        const year = currentCalendarDate.getFullYear(), month = currentCalendarDate.getMonth();
-        calendarTitleEl.textContent = `${new Intl.DateTimeFormat('en-US',{month:'long'}).format(currentCalendarDate)} ${year}`;
-        const firstD = new Date(year,month,1), lastD = new Date(year,month+1,0);
-        const daysInM = lastD.getDate(), firstDOW = firstD.getDay();
-        let html = ''; const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-        dayNames.forEach(d => {html += `<div class="calendar-day-header text-xs sm:text-sm">${d}</div>`;});
-        for(let i=0; i<firstDOW; i++) html+='<div class="p-1 sm:p-2 border bg-gray-50 dark:bg-gray-800 dark:border-gray-700 min-h-[60px] sm:min-h-[80px]"></div>';
-        for(let day=1; day<=daysInM; day++) {
-            const currentDateObj = new Date(year, month, day);
-            const dEvents = events.filter(e=>e.date.getFullYear()===year && e.date.getMonth()===month && e.date.getDate()===day);
-            let dayBgClass = 'bg-white dark:bg-gray-800 dark:border-gray-700';
-            if (dEvents.length > 0) dayBgClass = 'bg-blue-50 dark:bg-blue-900 dark:border-blue-700';
-            if (dEvents.length > 2) dayBgClass = 'bg-blue-100 dark:bg-blue-800 dark:border-blue-600'; 
-            if (dEvents.length > 5) dayBgClass = 'bg-blue-200 dark:bg-blue-700 dark:border-blue-500'; 
+function renderCalView() {
+    const year = currentCalendarDate.getFullYear(), month = currentCalendarDate.getMonth();
+    calendarTitleEl.textContent = `${new Intl.DateTimeFormat('en-US',{month:'long'}).format(currentCalendarDate)} ${year}`;
+    const firstD = new Date(year, month, 1), lastD = new Date(year, month + 1, 0);
+    const daysInM = lastD.getDate(), firstDOW = firstD.getDay();
+    let html = '';
+    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-            html += `<div class="calendar-day-cell p-1 sm:p-2 border dark:border-gray-700 min-h-[60px] sm:min-h-[80px] relative ${dayBgClass}" 
-                         ${dEvents.length > 0 ? `onclick="showCalendarDayDetailsModal(new Date(${year},${month},${day}), JSON.parse(this.dataset.eventsJson))" data-events-json='${JSON.stringify(dEvents).replace(/'/g, "&apos;")}'` : ''}
-                         role="button" tabindex="0" aria-label="${dEvents.length > 0 ? dEvents.length + ' contracts ending' : 'No contracts ending'} on ${formatDate(currentDateObj)}">
-                        <div class="font-semibold text-right text-gray-700 dark:text-gray-300 text-xs sm:text-sm">${day}</div>`;
-            dEvents.slice(0,2).forEach(e => {html+=`<div class="calendar-event" title="${e.prime} (${formatCurrency(e.value)}) - ID: ${e.id}">${e.prime?e.prime.substring(0,8)+(e.prime.length>8?'...':''):'Contract'}</div>`;});
-            if(dEvents.length>2) html+=`<div class="text-xs mt-1">${dEvents.length-2} more</div>`;
-            html += `</div>`;
-        }
-        calendarGridEl.innerHTML = html;
+    // Render weekday headers
+    dayNames.forEach(d => {
+        html += `<div class="calendar-day-header text-xs sm:text-sm">${d}</div>`;
+    });
+
+    // Render filler cells for days before the 1st of the month
+    for (let i = 0; i < firstDOW; i++) {
+        html += `<div class="calendar-filler-cell p-1 sm:p-2 border min-h-[60px] sm:min-h-[80px] relative"
+                role="presentation" aria-hidden="true"></div>`;
+
     }
-    renderCalView(); 
-}
 
+    // Render each day of the current month
+    for (let day = 1; day <= daysInM; day++) {
+        const currentDateObj = new Date(year, month, day);
+        const dEvents = events.filter(e =>
+            e.date.getFullYear() === year &&
+            e.date.getMonth() === month &&
+            e.date.getDate() === day
+        );
+
+        let dayBgClass = '';
+        if (dEvents.length > 0) dayBgClass = 'bg-blue-50 dark:bg-blue-900 dark:border-blue-700';
+        if (dEvents.length > 2) dayBgClass = 'bg-blue-100 dark:bg-blue-800 dark:border-blue-600';
+        if (dEvents.length > 5) dayBgClass = 'bg-blue-200 dark:bg-blue-700 dark:border-blue-500';
+
+        html += `<div class="calendar-day-cell p-1 sm:p-2 border dark:border-gray-700 min-h-[60px] sm:min-h-[80px] relative ${dayBgClass}"
+                     ${dEvents.length > 0 ? `onclick="showCalendarDayDetailsModal(new Date(${year},${month},${day}), JSON.parse(this.dataset.eventsJson))" data-events-json='${JSON.stringify(dEvents).replace(/'/g, "&apos;")}'` : ''}
+                     role="button" tabindex="0" aria-label="${dEvents.length > 0 ? dEvents.length + ' contracts ending' : 'No contracts ending'} on ${formatDate(currentDateObj)}">
+                    <div class="font-semibold text-right text-gray-700 dark:text-gray-300 text-xs sm:text-sm">${day}</div>`;
+        dEvents.slice(0, 2).forEach(e => {
+            html += `<div class="calendar-event" title="${e.prime} (${formatCurrency(e.value)}) - ID: ${e.id}">
+                        ${e.prime ? e.prime.substring(0, 8) + (e.prime.length > 8 ? '...' : '') : 'Contract'}
+                     </div>`;
+        });
+        if (dEvents.length > 2) html += `<div class="text-xs mt-1">${dEvents.length - 2} more</div>`;
+        html += `</div>`;
+    }
+
+    calendarGridEl.innerHTML = html;
+}
+renderCalView();
+}
 function showCalendarDayDetailsModal(dateObj, eventsOnDate) {
     const formattedDate = formatDate(dateObj);
     let currentCalendarPage = 1;
@@ -2016,7 +2360,8 @@ document.getElementById('resetMapBtn').addEventListener('click', () => {
 
 // --- Page Load ---
 document.addEventListener('DOMContentLoaded', () => {
-    loadDataFromS3(); 
+    getChartColors();     // Load CSS-based chart colors first
+    loadDataFromS3();     // Then load and render your charts
 });
 </script>
 </body>
