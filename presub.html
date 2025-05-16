@@ -1,0 +1,3771 @@
+<!DOCTYPE html>
+<head>
+<meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Subhoo - Federal Prime Contractor Database</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+<!-- JavaScript Libraries -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/d3-sankey@0.12.3/dist/d3-sankey.min.js"></script>
+
+<!-- Leaflet -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+
+<!-- MarkerCluster -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+<!-- SEO Meta Tags -->
+<meta name="description" content="Subhoo helps small businesses discover federal subcontracting opportunities by visualizing prime contractors with mandatory subcontracting plans from the SBA's official directory.">
+<meta name="keywords" content="federal contracting, subcontractor intelligence, USASpending, government contracts, prime contractors, federal sales, business development, small business">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://subhoo.com/">
+
+<!-- Preconnect to External Domains -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Mono&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://www.googletagmanager.com">
+<link rel="preconnect" href="https://cdnjs.cloudflare.com">
+<link rel="preconnect" href="https://d3js.org">
+<link rel="preconnect" href="https://unpkg.com">
+
+<!-- Favicon -->
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="manifest" href="/site.webmanifest">
+<meta name="theme-color" content="#252327" class="theme-color">
+
+<!-- Open Graph / Facebook -->
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://subhoo.com/" />
+<meta property="og:title" content="Subhoo - Federal Prime Contractor Database" />
+<meta property="og:description" content="Discover federal subcontracting opportunities by visualizing prime contractors with mandatory small business participation plans. Search, explore, and connect with potential prime partners." />
+<meta property="og:image" content="https://subhoo.com/subhoo.png">
+<meta property="og:locale" content="en_US">
+
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Subhoo - Federal Prime Contractor Database" />
+<meta name="twitter:description" content="Discover federal subcontracting opportunities by visualizing prime contractors with mandatory small business participation plans. Search, explore, and connect with potential prime partners." />
+<meta name="twitter:image" content="https://subhoo.com/subhoo.png" />
+
+<!-- Security Headers -->
+<meta http-equiv="X-Content-Type-Options" content="nosniff">
+
+<!-- Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-2W258XTWJG"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-2W258XTWJG');
+</script>
+
+<!-- Structured Data -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "Subhoo",
+  "url": "https://subhoo.com/",
+  "description": "Federal Prime Contractor Database with Subcontracting Plans",
+  "potentialAction": {
+    "@type": "SearchAction",
+    "target": "https://subhoo.com/search?q={search_term_string}",
+    "query-input": "required name=search_term_string"
+  }
+}
+</script>
+<style>
+:root {
+  font-family: Inter, sans-serif;
+  font-feature-settings: 'liga' 1, 'calt' 1;
+
+  /* Monochromatic Grayscale Palette */
+  --seasalt: #f8f9fa;
+  --antiflash-white: #e9ecef;
+  --platinum: #dee2e6;
+  --french-gray: #ced4da;
+  --french-gray-2: #adb5bd;
+  --slate-gray: #6c757d;
+  --outer-space: #495057;
+  --onyx: #343a40;
+  --eerie-black: #212529;
+
+  /* Light Mode Colors (Using monochromatic theme) */
+  --background: var(--seasalt);
+  --on-accent: #ffffff;
+  --accent: var(--slate-gray);
+  --accent-secondary: rgba(108, 117, 125, 0.15);
+  --gradient-bg-start: rgba(108, 117, 125, 0.08);
+  --gradient-bg-end: rgba(108, 117, 125, 0);
+
+  --text-primary: var(--eerie-black);
+  --text-secondary: var(--outer-space);
+  --text-tertiary: var(--french-gray-2);
+
+  --border-level-1: rgba(173, 181, 189, 0.3);
+  --border-level-2: rgba(173, 181, 189, 0.5);
+  --border-level-3: rgba(173, 181, 189, 0.8);
+  
+  /* Surface levels consistently using hardcoded value */
+  --surface-level-1: #e9ecef;
+  --surface-level-2: rgba(206, 212, 218, 0.3);
+  --surface-level-3: rgba(206, 212, 218, 0.5);
+
+  /* Chart Accent Colors */
+  --chart-accent-1: var(--slate-gray);
+  --chart-accent-2: var(--french-gray-2);
+  --chart-accent-3: var(--french-gray);
+  --chart-accent-4: var(--platinum);
+  --chart-accent-5: var(--antiflash-white);
+
+  /* General variables */
+  --header-font-weight: 600;
+  --button-font-weight: 500;
+  --space-m: 12px;
+}
+
+/* Dark Mode Improvements */
+html.dark {
+  /* Base colors */
+  --background: var(--eerie-black);
+  --on-accent: #ffffff;
+  --accent: var(--french-gray-2);
+  --accent-secondary: rgba(173, 181, 189, 0.3);
+  --gradient-bg-start: rgba(173, 181, 189, 0.15);
+  --gradient-bg-end: rgba(173, 181, 189, 0);
+
+  /* Text with improved contrast */
+  --text-primary: var(--seasalt);
+  --text-secondary: var(--platinum);
+  --text-tertiary: var(--french-gray);
+
+  /* Border intensity increased for better visibility */
+  --border-level-1: rgba(173, 181, 189, 0.25);
+  --border-level-2: rgba(173, 181, 189, 0.45);
+  --border-level-3: rgba(173, 181, 189, 0.65);
+
+  /* Surface levels for dark mode */
+  --surface-level-1: var(--onyx);
+  --surface-level-2: var(--outer-space);
+  --surface-level-3: var(--slate-gray);
+
+  /* Chart colors with better distinction */
+  --chart-accent-1: var(--platinum);
+  --chart-accent-2: var(--french-gray-2);
+  --chart-accent-3: var(--french-gray);
+  --chart-accent-4: var(--outer-space);
+  --chart-accent-5: var(--onyx);
+}
+
+/* ===== Base Styles ===== */
+body {
+  background-color: var(--background);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* ===== Dashboard Elements ===== */
+.dashboard-card {
+  background-color: var(--surface-level-1) !important;
+  border: 1px solid var(--border-level-1);
+  border-radius: 0.5rem;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.dashboard-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Section elements */
+section.bg-[var(--surface-level-1)] {
+  background-color: var(--surface-level-1);
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+/* ===== Charts and Data Visualization ===== */
+.chart-container {
+  position: relative;
+  height: 300px;
+  width: 100%;
+}
+
+.chart-no-data {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text-primary);
+  background-color: var(--surface-level-1) !important;
+  border: 1px dashed var(--border-level-2);
+  border-radius: 0.375rem;
+  text-align: center;
+  padding: 1rem;
+}
+
+.chart-no-data svg {
+  width: 3rem;
+  height: 3rem;
+  margin-bottom: 0.5rem;
+  color: var(--text-tertiary);
+}
+
+.custom-marker {
+  background-color: var(--chart-accent-1);
+  border: 2px solid var(--border-level-2);
+  border-radius: 50%;
+  width: 12px;
+  height: 12px;
+  box-shadow: 0 0 0 2px var(--surface-level-1);
+  transition: transform 0.2s ease;
+}
+
+.custom-marker:hover {
+  transform: scale(1.5);
+  box-shadow: 0 0 0 4px var(--accent-secondary);
+}
+
+/* ===== Loading Indicators ===== */
+.spinner {
+  border: 4px solid var(--surface-level-3);
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border-left-color: var(--accent);
+  animation: spin 1s linear infinite;
+  margin-right: 10px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+#processingIndicator.flex {
+  display: flex;
+}
+
+/* ===== Calendar Styles ===== */
+.calendar-day-header {
+  font-weight: var(--header-font-weight);
+  text-align: center;
+  padding: 5px 0;
+  background-color: var(--accent);
+  color: var(--on-accent);
+  border-radius: 4px;
+}
+
+.calendar-event {
+  padding: 3px 5px;
+  background-color: var(--accent);
+  color: var(--on-accent);
+  border-radius: 3px;
+  margin-bottom: 3px;
+  font-size: 0.6875rem;
+  cursor: default;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.calendar-day-cell {
+  cursor: pointer;
+  transition: background-color 0.2s;
+  min-width: 60px;
+  border-color: var(--border-level-1);
+  background-color: var(--accent-secondary) !important;
+}
+
+.calendar-day-cell:empty {
+  background-color: var(--accent-secondary) !important;
+}
+
+/* Event day styles - All densities now use the same color */
+.calendar-day-cell.bg-blue-50,
+.calendar-day-cell.bg-blue-100,
+.calendar-day-cell.bg-blue-200 {
+  background-color: var(--accent-secondary) !important;
+}
+
+.calendar-filler-cell {
+  background-color: var(--accent-secondary) !important;
+  pointer-events: none;
+}
+
+.calendar-grid-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.calendar-grid-wrapper .grid {
+  min-width: 450px;
+}
+
+.event-tooltip {
+  position: absolute;
+  background-color: var(--background);
+  border: 1px solid var(--border-level-2);
+  color: var(--text-primary);
+  border-radius: 4px;
+  padding: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  max-width: 300px;
+  display: none;
+}
+
+/* ===== Filter and Button Styles ===== */
+.metric-filters {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+  justify-content: center;
+}
+
+.filter-btn {
+  padding: 4px 8px;
+  background-color: var(--surface-level-2);
+  border: 1px solid var(--border-level-2);
+  color: var(--text-secondary);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background-color 0.2s, box-shadow 0.2s;
+}
+
+.filter-btn.active {
+  background-color: var(--accent) !important;
+  color: var(--on-accent) !important;
+  border-color: var(--accent) !important;
+}
+
+.action-btn {
+  padding: 0.5rem 1rem;
+  background-color: var(--accent);
+  color: var(--on-accent);
+  border-radius: 0.375rem;
+  font-weight: var(--button-font-weight);
+  transition: background-opacity 0.2s;
+}
+
+.action-btn:hover {
+  opacity: 0.9;
+}
+
+.secondary-btn {
+  padding: 0.375rem 0.75rem;
+  background-color: var(--surface-level-2);
+  color: var(--text-secondary);
+  border-radius: 0.375rem;
+  transition: background-color 0.2s;
+}
+
+.secondary-btn:hover {
+  background-color: var(--surface-level-3);
+}
+
+/* Focus styles for interactive elements */
+.filter-btn:focus,
+button:focus,
+input[type="text"]:focus,
+select:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(132, 88, 179, 0.4);
+}
+
+#activeFilterIndicator {
+  background-color: var(--accent-secondary);
+  color: var(--accent);
+  border: 1px solid var(--accent);
+}
+
+#activeFilterIndicator button {
+  background-color: var(--accent);
+  color: var(--on-accent);
+}
+
+#activeFilterIndicator button:hover {
+  background-color: rgba(132, 88, 179, 0.8);
+}
+
+/* ===== Search Suggestions ===== */
+#unifiedSearchSuggestions {
+  position: absolute;
+  background-color: var(--background);
+  border: 1px solid var(--border-level-2);
+  border-top: none;
+  border-radius: 0 0 0.375rem 0.375rem;
+  max-height: 240px;
+  overflow-y: auto;
+  width: calc(100% - 2px);
+  z-index: 50;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+}
+
+.suggestion-item {
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  color: var(--text-primary);
+}
+
+.suggestion-item:hover {
+  background-color: var(--surface-level-2);
+}
+
+.suggestion-item .type-label {
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+  margin-left: 0.5rem;
+  background-color: var(--surface-level-1);
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.25rem;
+}
+
+/* ===== Modal Styles ===== */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0,0,0,0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 1rem;
+}
+
+.modal-content {
+  background-color: var(--background);
+  color: var(--text-primary);
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+  padding: 1.5rem;
+  max-width: 90vw;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+}
+
+.modal-content-lg { max-width: 60rem; }
+.modal-content-md { max-width: 48rem; }
+
+.modal-close-btn {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  padding: 0.25rem;
+}
+
+.modal-close-btn:hover {
+  color: var(--text-primary);
+}
+
+/* ===== Table Styles ===== */
+.table-responsive {
+  display: block;
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-level-2) transparent;
+}
+
+.table-responsive::-webkit-scrollbar {
+  height: 6px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+  background-color: var(--border-level-2);
+  border-radius: 3px;
+}
+
+.table-responsive thead th {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background-color: var(--surface-level-1);
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border-level-2);
+  cursor: pointer;
+}
+
+.table-responsive th:hover {
+  background-color: var(--surface-level-2);
+}
+
+.table-responsive tbody {
+  background-color: var(--background);
+}
+
+.table-responsive td {
+  border-bottom: 1px solid var(--border-level-1);
+}
+
+/* ===== Collapsible sections ===== */
+.collapsible-header {
+  cursor: pointer;
+}
+
+.collapsible-content {
+  transition: max-height 0.3s ease;
+  overflow: hidden;
+}
+
+/* ===== Mobile Optimizations ===== */
+@media (max-width: 640px) {
+  .chart-container {
+    height: 250px;
+  }
+  
+  #sankeyChart {
+    height: 400px !important;
+  }
+  
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .section-header .action-btn {
+    align-self: flex-end;
+  }
+  
+  .table-responsive {
+    margin-left: -1rem;
+    margin-right: -1rem;
+    width: calc(100% + 2rem);
+    padding: 0 1rem;
+  }
+}
+
+/* ===== Dark Mode Specific Component Overrides ===== */
+html.dark .dashboard-card {
+  background-color: var(--surface-level-1) !important;
+  border-color: var(--border-level-2);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+}
+
+html.dark .dashboard-card:hover {
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+}
+
+html.dark .chart-no-data {
+  background-color: var(--surface-level-1) !important;
+  border-color: var(--border-level-2);
+  color: var(--text-secondary);
+}
+
+html.dark .table-responsive thead th {
+  background-color: var(--surface-level-1);
+  color: var(--text-primary);
+  border-bottom-color: var(--border-level-3);
+}
+
+html.dark .table-responsive tbody tr:hover {
+  background-color: rgba(173, 181, 189, 0.05);
+}
+
+html.dark .table-responsive td {
+  border-bottom-color: var(--border-level-1);
+}
+
+html.dark .action-btn {
+  background-color: var(--accent);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+html.dark .secondary-btn {
+  background-color: var(--surface-level-2);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-level-1);
+}
+
+html.dark .filter-btn {
+  background-color: var(--surface-level-2);
+  border-color: var(--border-level-2);
+}
+
+html.dark .filter-btn.active {
+  background-color: var(--accent) !important;
+  border-color: var(--border-level-3) !important;
+}
+
+html.dark .modal-content {
+  background-color: var(--background);
+  border: 1px solid var(--border-level-2);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+}
+
+html.dark .calendar-day-cell {
+  background-color: var(--surface-level-2) !important;
+  border-color: var(--border-level-1);
+}
+
+html.dark .calendar-day-cell.bg-blue-50,
+html.dark .calendar-day-cell.bg-blue-100,
+html.dark .calendar-day-cell.bg-blue-200 {
+  background-color: var(--accent-secondary) !important;
+}
+
+html.dark .calendar-filler-cell {
+  background-color: rgba(33, 37, 41, 0.5) !important;
+}
+
+html.dark .calendar-day-header {
+  background-color: var(--accent);
+  color: var(--on-accent);
+}
+
+html.dark #themeIconSun {
+  display: none;
+}
+
+html.dark #themeIconMoon {
+  display: block;
+}
+
+html.dark .table-responsive::-webkit-scrollbar-thumb {
+  background-color: var(--border-level-3);
+}
+
+html.dark .table-responsive::-webkit-scrollbar-track {
+  background-color: var(--background);
+}
+
+html.dark .filter-btn:focus,
+html.dark button:focus,
+html.dark input[type="text"]:focus,
+html.dark select:focus {
+  box-shadow: 0 0 0 3px rgba(222, 226, 230, 0.3);
+  outline: none;
+}
+
+html.dark #unifiedSearchSuggestions {
+  background-color: var(--background);
+  border-color: var(--border-level-2);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+html.dark .suggestion-item:hover {
+  background-color: var(--surface-level-2);
+}
+
+html.dark .suggestion-item .type-label {
+  background-color: var(--surface-level-2);
+  color: var(--text-secondary);
+}
+
+html.dark section.bg-[var(--surface-level-1)] {
+  background-color: var(--surface-level-1);
+}
+
+/* Theme toggle icon display */
+#themeIconMoon {
+  display: none;
+}
+
+html.dark #themeIconSun {
+  display: none;
+}
+
+html.dark #themeIconMoon {
+  display: block;
+}
+/* Ensure equal height for visualizations */
+#sankeyChart, #contractorMap {
+  height: 500px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1023px) {
+  #sankeyChart {
+    height: 450px;
+  }
+  
+  #contractorMap {
+    height: 450px;
+  }
+}
+
+@media (max-width: 767px) {
+  #sankeyChart, #contractorMap {
+    height: 400px;
+  }
+}
+.highlight-section {
+  animation: pulse-highlight 1.5s ease-in-out;
+}
+
+@keyframes pulse-highlight {
+  0%, 100% { box-shadow: 0 0 0 rgba(108, 117, 125, 0); }
+  50% { box-shadow: 0 0 15px rgba(108, 117, 125, 0.5); }
+}
+/* Footer specific styles */
+html.dark footer img[src*="powered-by-aws-white.png"] {
+  filter: brightness(0.8);
+}
+
+html.dark .dashboard-card {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+}
+
+html.dark .dashboard-card:hover {
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Ensure proper spacing at bottom of page */
+body {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+main {
+  flex: 1;
+}
+
+footer {
+  margin-top: auto;
+}
+/* Add this to your CSS */
+#dashboardContent {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 200px); /* Adjust based on your header height */
+}
+
+#dashboardContent > footer {
+  margin-top: auto;
+  padding-bottom: 2rem;
+}
+
+/* When the dashboard is hidden, ensure footer is hidden too */
+#dashboardContent.hidden > footer {
+  display: none;
+}
+/* Add to your CSS */
+#dashboardContent:not(.data-loaded) {
+  display: none !important;
+}
+/* Footer always in dark mode with rounded corners */
+footer {
+  /* Dark background and text colors - not using CSS variables that change with theme */
+  background-color: #212529 !important; /* eerie-black from your palette */
+  color: #f8f9fa !important; /* seasalt from your palette */
+  border-top: 1px solid #495057 !important; /* outer-space from your palette */
+  border-radius: 0.5rem !important; /* rounded corners to match other sections */
+  overflow: hidden; /* keep content inside rounded corners */
+  margin-top: 1.5rem !important;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Dashboard cards inside footer */
+footer .dashboard-card {
+  background-color: #343a40 !important; /* onyx from your palette */
+  border-color: #495057 !important;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Text colors in footer */
+footer h1, footer h2, footer h3, footer h4, footer h5, footer h6 {
+  color: #adb5bd !important; /* french-gray-2 from your palette */
+}
+
+footer p, footer li, footer div {
+  color: #dee2e6 !important; /* platinum from your palette */
+}
+
+footer .text-[var(--text-secondary)] {
+  color: #ced4da !important; /* french-gray from your palette */
+}
+
+footer .text-[var(--text-tertiary)] {
+  color: #adb5bd !important; /* french-gray-2 from your palette */
+}
+
+footer .text-[var(--accent)] {
+  color: #adb5bd !important; /* french-gray-2 from your palette - for accent text */
+}
+
+/* Links in footer */
+footer a {
+  color: #dee2e6 !important; /* platinum from your palette */
+}
+
+footer a:hover {
+  color: #f8f9fa !important; /* seasalt from your palette */
+  text-decoration: underline;
+}
+
+/* Buttons in footer */
+footer .bg-[var(--accent)] {
+  background-color: #6c757d !important; /* slate-gray from your palette */
+}
+
+footer .bg-[var(--surface-level-2)] {
+  background-color: #495057 !important; /* outer-space from your palette */
+}
+
+footer .bg-[var(--surface-level-1)] {
+  background-color: #343a40 !important; /* onyx from your palette */
+}
+
+/* Footer bottom section */
+footer .border-[var(--border-level-2)] {
+  border-color: #495057 !important; /* outer-space from your palette */
+}
+
+/* ===== FIX FOR SHOUTOUT BOXES ===== */
+/* Main shoutout container - now matching footer background */
+footer .bg-[var(--surface-level-2)] {
+  background-color: #212529 !important; /* eerie-black - same as footer background */
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Individual shoutout boxes */
+footer .grid-cols-2 > div,
+footer .grid-cols-3 > div,
+footer .flex.justify-between {
+  background-color: #343a40 !important; /* onyx from your palette */
+  border: 1px solid #495057 !important; /* outer-space for subtle border */
+}
+
+/* Ensure text in shoutout boxes is readable */
+footer .grid-cols-2 > div span,
+footer .grid-cols-3 > div span,
+footer .flex.justify-between span {
+  color: #dee2e6 !important; /* platinum for main text */
+}
+
+/* Shoutout links */
+footer .grid-cols-2 > div a,
+footer .grid-cols-3 > div a,
+footer .flex.justify-between a {
+  color: #adb5bd !important; /* french-gray-2 for links */
+}
+
+footer .grid-cols-2 > div a:hover,
+footer .grid-cols-3 > div a:hover,
+footer .flex.justify-between a:hover {
+  color: #f8f9fa !important; /* seasalt for hover */
+}
+
+/* AWS logo - ensure visibility in dark mode */
+footer img[src*="powered-by-aws"] {
+  filter: brightness(1) !important;
+}
+/* Additional loading spinner animation */
+@keyframes spinner {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+#page-loader {
+  transition: opacity 0.3s ease-out;
+}
+
+/* Ensure print styles are friendly */
+@media print {
+  .dashboard-card {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  
+  button, .action-btn, .filter-btn, #themeToggleBtn, #shareViewBtn {
+    display: none !important;
+  }
+  
+  body, .dashboard-container {
+    background-color: white !important;
+    color: black !important;
+  }
+  
+  @page {
+    margin: 1cm;
+  }
+}
+
+/* ===== MOBILE OPTIMIZATIONS ===== */
+/* Add these media queries to improve visualization sizing on mobile */
+@media (max-width: 767px) {
+  #sankeyChart, #contractorMap {
+    height: 350px !important;
+  }
+  
+  .chart-container {
+    height: 250px !important;
+  }
+  
+  .table-responsive th,
+  .table-responsive td {
+    padding: 4px 6px;
+    font-size: 11px;
+  }
+  
+  .dashboard-card {
+    padding: 1rem !important;
+  }
+  
+  .modal-content {
+    padding: 1rem;
+  }
+  
+  #primeProfilesContainer {
+    max-height: 60vh;
+  }
+  
+  .calendar-grid-wrapper .grid {
+    min-width: 300px;
+  }
+  
+  .calendar-day-cell {
+    min-height: 50px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  #sankeyChart, #contractorMap {
+    height: 300px !important;
+  }
+  
+  .dashboard-card {
+    padding: 0.75rem !important;
+  }
+  
+  #unifiedSearchInput {
+    font-size: 14px;
+    padding: 0.5rem !important;
+  }
+  
+  .stat-card {
+    padding: 0.75rem !important;
+  }
+  
+  .stat-card .text-2xl {
+    font-size: 1.25rem !important;
+  }
+  
+  .calendar-day-header {
+    font-size: 10px;
+    padding: 3px 0;
+  }
+}
+
+/* Better table scrolling on mobile */
+.table-responsive {
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 640px) {
+  .table-responsive {
+    margin-left: -1rem;
+    margin-right: -1rem;
+    width: calc(100% + 2rem);
+    padding: 0 0.5rem;
+  }
+  
+  .table-responsive th,
+  .table-responsive td {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.7rem;
+    white-space: nowrap;
+  }
+}
+
+/* Improve touch targets on mobile */
+@media (max-width: 767px) {
+  button, 
+  .filter-btn, 
+  #themeToggleBtn, 
+  #shareViewBtn,
+  .calendar-day-cell,
+  .suggestion-item {
+    min-height: 44px; /* Minimum height for touch targets */
+  }
+  
+  #clearSearchBtn {
+    height: 44px;
+    width: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .stat-card {
+    margin-bottom: 0.5rem;
+  }
+}
+</style>
+</head>
+<body class="text-[var(--text-primary)] p-2 sm:p-4 md:p-8">
+    <div id="globalProcessingIndicator" class="hidden">
+        <div class="global-spinner"></div>
+        <span class="text-sm text-[var(--text-secondary)]">Processing...</span>
+    </div>
+
+    <div class="dashboard-container max-w-full px-2 sm:px-4 md:px-6 lg:max-w-7xl mx-auto">
+        <!-- Enhanced header with data source info -->
+        <header class="mb-6 md:mb-8">
+    <div class="flex justify-between items-start mb-2">
+        <div class="flex flex-col">
+            <h1 class="text-2xl sm:text-3xl md:text-4xl font-extrabold text-[var(--accent)]" style="letter-spacing: -0.05em;">Subhoo.</h1>
+            <p class="text-xs sm:text-sm text-[var(--text-secondary)] mt-1">Federal Contractor Intelligence</p>
+        </div>
+        <div class="flex items-center space-x-2">
+            <button id="shareViewBtn" title="Share Current View" class="p-2 rounded-md bg-[var(--surface-level-2)] hover:bg-[var(--surface-level-3)] transition-colors duration-150 focus:outline-none focus:ring-2 ring-[var(--accent)]">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[var(--text-secondary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
+                </svg>
+            </button>
+            <button id="themeToggleBtn" title="Toggle Light/Dark Mode" class="p-2 rounded-md bg-[var(--surface-level-2)] hover:bg-[var(--surface-level-3)] transition-colors duration-150 focus:outline-none focus:ring-2 ring-[var(--accent)]">
+                <svg id="themeIconSun" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[var(--text-secondary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+                <svg id="themeIconMoon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[var(--text-secondary)] hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                </svg>
+            </button>
+        </div>
+    </div>
+</header>
+
+        <!-- Explainer section -->
+        <section id="explainerSection" class="bg-[var(--surface-level-1)] p-4 md:p-6 rounded-lg shadow-md mb-6 border border-[var(--border-level-1)]">
+              <p class="text-sm md:text-base text-[var(--text-secondary)] mb-2">
+                Subhoo helps you visualize data from the SBA's official Prime Contractors directory, where prime contractors with awards over $750K are required by law to include small business participation in their plans. Search thousands of prime contractors, track funding flows, explore detailed profiles, monitor contract expirations, and access official FPDS records—everything you need to find and connect with the right federal partners. Start your search below.
+            </p>
+           
+            
+            <div id="processingIndicator" class="hidden items-center text-[var(--text-secondary)] mt-4">
+                <div class="spinner"></div>
+                <span class="ml-2 text-sm">Processing data...</span>
+            </div>
+            <div id="s3LoadError" class="text-red-600 bg-red-100 dark:bg-red-900 dark:text-red-300 p-3 rounded-md mt-3 hidden text-sm"></div>
+            <div id="manual-upload-section" class="hidden mt-4 border-t border-[var(--border-level-1)] pt-4">
+                <h3 class="text-lg font-semibold text-[var(--text-primary)] mb-2" style="font-weight: var(--header-font-weight);">Manual CSV Upload</h3>
+                <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 mb-4">
+                    <input type="file" id="csvFileInput" accept=".csv" class="hidden">
+                    <label for="csvFileInput" class="w-full sm:w-auto px-4 py-2 bg-[var(--accent)] text-[var(--on-accent)] rounded-md cursor-pointer hover:bg-opacity-90 transition-colors duration-150 ease-in-out focus:ring-2 focus:ring-offset-2 ring-[var(--accent)] focus:outline-none" style="font-weight: var(--button-font-weight);">Choose CSV File</label>
+                    <span id="file-name-display" class="text-sm text-[var(--text-secondary)] p-2 border border-[var(--border-level-2)] rounded-md min-w-[200px] w-full sm:w-auto">No file selected</span>
+                </div>
+                <div id="errorMessage" class="text-red-600 bg-red-100 dark:bg-red-900 dark:text-red-300 p-3 rounded-md hidden mb-2 text-sm"></div>
+                <div id="successMessage" class="text-green-600 bg-green-100 dark:bg-green-900 dark:text-green-300 p-3 rounded-md hidden mb-2 text-sm"></div>
+            </div>
+        </section>
+<section id="quickstart-guide" class="bg-[var(--surface-level-1)] p-4 md:p-6 rounded-lg shadow-md border border-[var(--border-level-1)] mb-6">
+  <h2 class="text-lg md:text-xl font-semibold text-[var(--accent)] mb-4" style="font-weight: var(--header-font-weight);">Quickstart Guide</h2>
+  
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="p-3 bg-[var(--surface-level-2)] rounded-lg border border-[var(--border-level-1)]">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mb-2 text-[var(--accent)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+      </svg>
+      <h4 class="font-semibold text-[var(--text-primary)]">1. Search</h4>
+      <p class="text-sm text-[var(--text-secondary)]">Use the search bar to find prime contractors, NAICS codes, agencies, or locations.</p>
+    </div>
+    
+    <div class="p-3 bg-[var(--surface-level-2)] rounded-lg border border-[var(--border-level-1)]">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mb-2 text-[var(--accent)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+      </svg>
+      <h4 class="font-semibold text-[var(--text-primary)]">2. Explore Visualizations</h4>
+      <p class="text-sm text-[var(--text-secondary)]">Interact with Sankey charts, maps, and data visualizations to understand relationships.</p>
+    </div>
+    
+    <div class="p-3 bg-[var(--surface-level-2)] rounded-lg border border-[var(--border-level-1)]">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mb-2 text-[var(--accent)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+      </svg>
+      <h4 class="font-semibold text-[var(--text-primary)]">3. View Profiles</h4>
+      <p class="text-sm text-[var(--text-secondary)]">Click on prime contractor names to see detailed profiles and their active contracts.</p>
+    </div>
+    
+    <div class="p-3 bg-[var(--surface-level-2)] rounded-lg border border-[var(--border-level-1)]">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mb-2 text-[var(--accent)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+      </svg>
+      <h4 class="font-semibold text-[var(--text-primary)]">4. Track Opportunities</h4>
+      <p class="text-sm text-[var(--text-secondary)]">Use the contract expiration calendar to plan your outreach and follow up at the right time.</p>
+    </div>
+  </div>
+  
+</section>
+        <!-- Main Dashboard Content -->
+        <main id="dashboardContent" class="hidden space-y-6">
+            <!-- Control Panel - simplified with just search -->
+            <section id="controlPanel" class="bg-[var(--surface-level-1)] p-4 md:p-6 rounded-lg shadow-md border border-[var(--border-level-1)] sticky top-4 z-10">
+                <div class="flex flex-col md:flex-row gap-4 items-start md:items-center">
+                    <!-- Main Search with prominent styling -->
+                    <div class="w-full md:w-3/4 relative">
+                        <label for="unifiedSearchInput" class="block text-sm font-semibold text-[var(--text-secondary)] mb-1">
+                            Search Dashboard
+                        </label>
+                        <div class="relative">
+                            <input type="text" id="unifiedSearchInput" class="w-full p-3 border border-[var(--border-level-2)] rounded-md shadow-sm focus:ring-2 ring-[var(--accent)] focus:border-[var(--accent)] bg-[var(--background)] text-[var(--text-primary)]" 
+                                placeholder="Search by Prime, NAICS, Department, Agency, Office, State...">
+                            <button id="clearSearchBtn" class="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                        <div id="unifiedSearchSuggestions" class="hidden bg-[var(--background)] border-[var(--border-level-2)] absolute z-20 w-full">
+                        </div>
+                    </div>
+
+                    <!-- Reset Button -->
+                    <div class="flex items-center md:self-end md:mb-1">
+                        <button id="globalResetBtn" class="px-4 py-2 bg-[var(--accent)] text-[var(--on-accent)] rounded hover:bg-opacity-90 transition">
+                            Reset All Filters
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Active Filter Indicator -->
+                <div id="activeFilterIndicator" class="p-3 rounded-md mt-4 hidden flex-col sm:flex-row justify-between items-center text-sm">
+                </div>
+            </section>
+            
+            <!-- Key Stats and Sankey Chart Group -->
+            <div class="space-y-6">
+                <!-- KPI Stats Row -->
+                <section id="statisticsSection" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="stat-card bg-[var(--surface-level-1)] p-3 md:p-4 rounded-lg shadow hover:shadow-lg transition-shadow duration-150 border border-[var(--border-level-1)]">
+                        <div class="text-2xl md:text-3xl font-bold text-[var(--accent)]" id="totalContractsValue">0</div>
+                        <div class="text-xs md:text-sm text-[var(--text-secondary)]">Total Contracts</div>
+                    </div>
+                    <div class="stat-card bg-[var(--surface-level-1)] p-3 md:p-4 rounded-lg shadow hover:shadow-lg transition-shadow duration-150 border border-[var(--border-level-1)]">
+                        <div class="text-2xl md:text-3xl font-bold text-[var(--accent)]" id="totalValueValue">$0</div>
+                        <div class="text-sm text-[var(--text-secondary)]">Total Contract Value</div>
+                    </div>
+                    <div class="stat-card bg-[var(--surface-level-1)] p-3 md:p-4 rounded-lg shadow hover:shadow-lg transition-shadow duration-150 border border-[var(--border-level-1)]">
+                        <div class="text-2xl md:text-3xl font-bold text-[var(--accent)]" id="avgContractValue">$0</div>
+                        <div class="text-sm text-[var(--text-secondary)]">Average Contract Value</div>
+                    </div>
+                    <div class="stat-card bg-[var(--surface-level-1)] p-3 md:p-4 rounded-lg shadow hover:shadow-lg transition-shadow duration-150 border border-[var(--border-level-1)]">
+                        <div class="text-2xl md:text-3xl font-bold text-[var(--accent)]" id="uniquePrimesValue">0</div>
+                        <div class="text-sm text-[var(--text-secondary)]">Unique Prime Contractors</div>
+                    </div>
+                </section>
+
+            </div>
+		            <!-- Prime Contractor Profiles -->
+            <section id="primeProfilesSection" class="bg-[var(--surface-level-1)] p-4 md:p-6 rounded-lg shadow-md mb-6 border border-[var(--border-level-1)]">
+                <h2 class="text-lg md:text-xl font-semibold text-[var(--accent)] mb-4" style="font-weight: var(--header-font-weight);">Prime Contractor Profiles</h2>
+                
+                <p class="text-xs md:text-sm text-[var(--text-secondary)] mb-3">Displaying profiles based on current search/filter. Click a prime name to filter the entire dashboard to that prime. Use search to refine this list.</p>
+                <div id="primeProfilesContainer" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 md:gap-4 max-h-[70vh] overflow-y-auto"></div>
+            </section>
+
+            <!-- Prime Detail View - hidden until a specific prime is selected -->
+            <section id="primeDetailViewSection" class="bg-[var(--surface-level-1)] p-4 md:p-6 rounded-lg shadow-md mb-6 border border-[var(--border-level-1)] hidden">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 id="primeDetailTitle" class="text-xl md:text-2xl font-bold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Prime Contractor Details</h2>
+                    <button onclick="clearAllFilters()" class="px-3 py-1 bg-[var(--surface-level-2)] text-[var(--text-secondary)] rounded hover:bg-[var(--surface-level-3)] transition">
+                        Back to All Primes
+                    </button>
+                </div>
+                <div id="primeDetailStats" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 text-sm md:text-base">
+                </div>
+                <h3 class="text-lg font-semibold text-[var(--text-primary)] mt-6 mb-2" style="font-weight: var(--header-font-weight);">Contracts List for this Prime</h3>
+                <div id="primeDetailContractsTableContainer" class="table-responsive max-h-96 overflow-y-auto">
+                </div>
+            </section>	
+<section id="visualizationSection" class="mb-6">
+  <h2 class="text-lg md:text-xl font-semibold text-[var(--accent)] mb-4 px-2" style="font-weight: var(--header-font-weight);">Interactive Visualizations</h2>
+  
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+    <!-- Sankey Chart -->
+    <div id="sankeySection" class="dashboard-card p-4 md:p-6">
+      <div class="flex justify-between items-center mb-4">
+        <div>
+          <h3 class="text-md md:text-lg font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Funding Flow: Agencies to Primes</h3>
+        </div>
+        <button id="resetSankeyBtn" class="px-3 py-1 bg-[var(--accent)] text-[var(--on-accent)] rounded hover:bg-opacity-90 transition text-sm">
+          Reset
+        </button>
+      </div>
+      <div id="sankeyWrapper" class="w-full rounded-md mt-2">
+        <svg id="sankeyChart" class="w-full h-[500px]" viewBox="0 0 1000 600" preserveAspectRatio="xMidYMid meet"></svg>
+      </div>
+    </div>
+    
+    <!-- Map Section -->
+    <div id="contractorMapSection" class="dashboard-card p-4 md:p-6">
+      <div class="flex justify-between items-center mb-4">
+        <div>
+          <h3 class="text-md md:text-lg font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Prime Contractor Map</h3>
+        </div>
+        <button id="resetMapBtn" class="px-3 py-1 bg-[var(--accent)] text-[var(--on-accent)] rounded hover:bg-opacity-90 transition text-sm">
+          Reset
+        </button>
+      </div>
+      <div id="contractorMap" style="height: 500px; width: 100%;" class="rounded border border-[var(--border-level-2)]"></div>
+    </div>
+  </div>
+</section>
+            
+            <!-- Core Charts Section -->
+            <section class="mb-6">
+                <h2 class="text-lg md:text-xl font-semibold text-[var(--accent)] mb-4 px-2" style="font-weight: var(--header-font-weight);">Analysis Charts</h2>
+                
+                <div id="coreChartsSection" class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                    <!-- Prime Contractors Chart -->
+                    <div id="primeContractorsChartCard" class="dashboard-card p-4 md:p-6">
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="text-md md:text-lg font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Top Prime Contractors by Value</h3>
+                            <span class="text-[var(--text-tertiary)] cursor-help" title="Shows the top 10 prime contractors by total contract value">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </span>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="primeContractorsChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <!-- Department Chart -->
+                    <div class="dashboard-card p-4 md:p-6">
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="text-md md:text-lg font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Department Contract Distribution</h3>
+                            <span class="text-[var(--text-tertiary)] cursor-help" title="Distribution of contract value by department">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </span>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="departmentChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <!-- NAICS Chart -->
+                    <div class="dashboard-card p-4 md:p-6">
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="text-md md:text-lg font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Top NAICS by Contract Value</h3>
+                            <span class="text-[var(--text-tertiary)] cursor-help" title="Top NAICS codes by total contract value">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </span>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="naicsChart_main"></canvas>
+                        </div>
+                    </div>
+                    
+                    <!-- Contract Type Chart - hidden by default in your original code -->
+                    <div class="dashboard-card p-4 md:p-6 hidden">
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="text-md md:text-lg font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Contract Type Breakdown</h3>
+                            <span class="text-[var(--text-tertiary)] cursor-help" title="Distribution of contracts by type">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </span>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="contractTypeChart_main"></canvas>
+                        </div>
+                    </div>
+                    
+                    <!-- State Chart -->
+                    <div class="dashboard-card p-4 md:p-6"> 
+                        <div class="flex justify-between items-center mb-2">
+                            <h3 class="text-md md:text-lg font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Contract Distribution by State</h3>
+                            <span class="text-[var(--text-tertiary)] cursor-help" title="Contract distribution by state">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </span>
+                        </div>
+                        <div class="metric-filters" id="stateChartFilters_main">
+                            <button class="filter-btn active" data-filter="count" data-chart="stateContractsChart_main">By Count</button>
+                            <button class="filter-btn" data-filter="value" data-chart="stateContractsChart_main">By Value</button>
+                        </div>
+                        <div class="chart-container" style="height: 320px;"> 
+                            <canvas id="stateContractsChart_main"></canvas>
+                        </div>
+                    </div>
+                    
+                    <!-- Top Agencies Chart - hidden by default in your original code -->
+                    <div class="dashboard-card p-4 md:p-6 hidden">
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="text-md md:text-lg font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Top Contracting Agencies by Value</h3>
+                            <span class="text-[var(--text-tertiary)] cursor-help" title="Top contracting agencies by value">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </span>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="topAgenciesChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <!-- Market Share Chart -->
+                    <div id="marketShareChartCard" class="dashboard-card p-4 md:p-6"> 
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="text-md md:text-lg font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Prime Market Share (for current filter)</h3>
+                            <span class="text-[var(--text-tertiary)] cursor-help" title="Market share percentage of prime contractors based on current filters">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </span>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="marketShareChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <!-- Timeline Chart -->
+                    <div class="dashboard-card p-4 md:p-6"> 
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="text-md md:text-lg font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Contract Timeline Forecast</h3>
+                            <span class="text-[var(--text-tertiary)] cursor-help" title="Timeline of contract starts and endings by year">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </span>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="timelineChart"></canvas> 
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Contract Expiration Calendar -->
+            <section id="contractExpirationCalendarSection" class="bg-[var(--surface-level-1)] p-4 md:p-6 rounded-lg shadow-md mb-6 border border-[var(--border-level-1)]">
+                <h2 class="text-lg md:text-xl font-semibold text-[var(--accent)] mb-4" style="font-weight: var(--header-font-weight);">Contract Expiration Calendar</h2>
+                
+                <p class="text-xs md:text-sm text-[var(--text-secondary)] mb-3">Displaying calendar based on current search/filter. Click a day with events for details.</p>
+                <div class="calendar-container min-h-[400px] border border-[var(--border-level-2)] rounded-md p-2 md:p-4">
+                    <div class="flex flex-wrap justify-between items-center mb-4 gap-2">
+                        <div class="flex items-center gap-1">
+                            <button id="calendarPrevBtn" class="px-3 py-1 bg-[var(--surface-level-2)] text-[var(--text-secondary)] rounded hover:bg-[var(--surface-level-3)] transition" style="font-weight: var(--button-font-weight);">&lt;</button>
+                            <h3 id="calendarTitle" class="text-md md:text-lg font-semibold mx-2 text-[var(--text-primary)]">Month Year</h3>
+                            <button id="calendarNextBtn" class="px-3 py-1 bg-[var(--surface-level-2)] text-[var(--text-secondary)] rounded hover:bg-[var(--surface-level-3)] transition" style="font-weight: var(--button-font-weight);">&gt;</button>
+                        </div>
+                        <div class="flex items-center gap-2 text-xs md:text-sm">
+                            <label for="calendarMonthSelect" class="sr-only">Month</label>
+                            <select id="calendarMonthSelect" class="p-1 border border-[var(--border-level-2)] rounded-md focus:ring-2 ring-[var(--accent)] focus:border-[var(--accent)] bg-[var(--background)] text-[var(--text-primary)]"></select>
+                            <label for="calendarYearSelect" class="sr-only">Year</label>
+                            <select id="calendarYearSelect" class="p-1 border border-[var(--border-level-2)] rounded-md focus:ring-2 ring-[var(--accent)] focus:border-[var(--accent)] bg-[var(--background)] text-[var(--text-primary)]"></select>
+                        </div>
+                    </div>
+                    <div class="calendar-grid-wrapper">
+                        <div id="calendarGrid" class="grid grid-cols-7 gap-1 text-xs md:text-sm"></div>
+                    </div>
+                </div>
+            </section>
+			<footer class="mt-12 bg-[var(--surface-level-1)] border-t border-[var(--border-level-2)] text-[var(--text-primary)]">
+  <div class="max-w-7xl mx-auto px-4 py-8">
+    <!-- Main Footer Content -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+      
+      <!-- Connect Card -->
+      <div class="dashboard-card p-4 md:p-5 flex flex-col">
+        <div class="flex items-center mb-4">
+          <img src="markgs.jpg" alt="Mark Profile Picture" class="w-16 h-16 rounded-full mr-4 border-2 border-[var(--accent)]">
+          <div>
+            <h3 class="font-semibold text-lg text-[var(--accent)]">Hi, I'm Mark. Let's Connect!</h3>
+            <p class="text-sm text-[var(--text-secondary)]">Let me hear your suggestions and great ideas.</p>
+          </div>
+        </div>
+        <div class="flex flex-wrap gap-3 mt-auto">
+          <a href="mailto:mark@subhoo.com" class="px-4 py-2 bg-[var(--accent)] text-[var(--on-accent)] rounded-md hover:bg-opacity-90 transition text-sm font-medium">Get in touch</a>
+          <a href="https://www.linkedin.com/in/markflournoy/" class="px-4 py-2 bg-[var(--surface-level-2)] text-[var(--text-secondary)] rounded-md hover:bg-[var(--surface-level-3)] transition text-sm font-medium" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+        </div>
+      </div>
+      
+      <!-- Summary Box -->
+      <div class="dashboard-card p-4 md:p-5">
+        <p class="text-sm mb-4">
+          Subhoo helps small businesses discover federal subcontracting opportunities by visualizing prime contractors with required subcontracting plans. Search, explore, and connect with potential prime partners.
+        </p>
+        
+        <h4 class="font-semibold text-[var(--accent)] mt-4 mb-2">Who it's for:</h4>
+        <div class="w-20 h-1 bg-[var(--border-level-2)] mb-3"></div>
+        <ul class="text-sm space-y-2 text-[var(--text-secondary)]">
+          <li class="flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2 text-[var(--accent)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+            Sales & BD Teams <span class="text-xs opacity-70 ml-1">(Find Opportunities)</span>
+          </li>
+          <li class="flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2 text-[var(--accent)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+            </svg>
+            Small Biz <span class="text-xs opacity-70 ml-1">(Target Primes)</span>
+          </li>
+          <li class="flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2 text-[var(--accent)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+            </svg>
+            Primes <span class="text-xs opacity-70 ml-1">(Analyze Competition)</span>
+          </li>
+          <li class="flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2 text-[var(--accent)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z" />
+            </svg>
+            Feds <span class="text-xs opacity-70 ml-1">(Track Goals)</span>
+          </li>
+        </ul>
+      </div>
+      
+      <!-- Resources Box -->
+      <div class="dashboard-card p-4 md:p-5">
+        <h3 class="font-semibold text-[var(--accent)] mb-3">Resources</h3>
+        <ul class="text-sm space-y-2 mb-6">
+          <li><a href="https://www.usaspending.gov/explorer" class="text-[var(--accent)] hover:underline" target="_blank" rel="noopener noreferrer">USAspending Explorer</a></li>
+          <li><a href="https://sam.gov/content/home" class="text-[var(--accent)] hover:underline" target="_blank" rel="noopener noreferrer">SAM.gov</a></li>
+          <li><a href="https://www.sba.gov/" class="text-[var(--accent)] hover:underline" target="_blank" rel="noopener noreferrer">SBA.gov</a></li>
+          <li><a href="https://orangeslices.ai/" class="text-[var(--accent)] hover:underline" target="_blank" rel="noopener noreferrer">Orange Slices AI</a></li>
+        </ul>
+        
+        <div class="mt-4">
+          <a href="https://aws.amazon.com/what-is-cloud-computing">
+            <img src="https://d0.awsstatic.com/logos/powered-by-aws-white.png" alt="Powered by AWS Cloud Computing" class="h-8">
+          </a>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Footer Bottom -->
+    <div class="mt-8 pt-6 border-t border-[var(--border-level-2)] text-center text-sm text-[var(--text-secondary)]">
+
+      
+      <!-- Shoutouts -->
+      <div class="p-4 rounded-lg mx-auto max-w-3xl" style="background-color: #212529 !important;">
+        <h4 class="font-medium mb-3 text-[var(--text-primary)]">A few Shoutouts</h4>
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs">
+          <div class="flex justify-between items-center p-2 rounded bg-[var(--surface-level-1)]">
+            <span class="font-medium">Dark Mode</span>
+            <a href="#" class="text-[var(--accent)]">@dongkyup</a>
+          </div>
+          <div class="flex justify-between items-center p-2 rounded bg-[var(--surface-level-1)]">
+            <span class="font-medium">So What?!</span>
+            <a href="#" class="text-[var(--accent)]">@rodstedt</a>
+          </div>
+          <div class="flex justify-between items-center p-2 rounded bg-[var(--surface-level-1)]">
+            <span class="font-medium">Why?</span>
+            <a href="#" class="text-[var(--accent)]">@mpben</a>
+          </div>
+          <div class="flex justify-between items-center p-2 rounded bg-[var(--surface-level-1)]">
+            <span class="font-medium">Think Big</span>
+            <a href="#" class="text-[var(--accent)]">@ecbrown</a>
+          </div>
+          <div class="flex justify-between items-center p-2 rounded bg-[var(--surface-level-1)]">
+            <span class="font-medium">Dive Deep</span>
+            <a href="#" class="text-[var(--accent)]">@datkd</a>
+          </div>
+          <div class="flex justify-between items-center p-2 rounded bg-[var(--surface-level-1)]">
+            <span class="font-medium">True Believer</span>
+            <a href="#" class="text-[var(--accent)]">@dave</a>
+          </div>
+        </div>
+      </div>
+	  <p class="mb-2">&copy; 2025 Subhoo | Built on AWS | Data from SBA.gov</p>
+      
+    </div>
+  </div>
+</footer>
+        </main>
+</div>
+
+    <!-- Modals and Tooltips -->
+    <div id="genericModal" class="modal-backdrop hidden">
+        <div id="genericModalContent" class="modal-content">
+            <button id="genericModalCloseBtn" class="modal-close-btn">&times;</button>
+            <h2 id="genericModalTitle" class="text-xl font-semibold text-[var(--accent)] mb-4" style="font-weight: var(--header-font-weight);">Modal Title</h2>
+            <div id="genericModalBody" class="text-[var(--text-secondary)]">
+            </div>
+        </div>    
+    </div>
+
+    <div class="event-tooltip"></div>
+
+    <div id="shareToast" class="fixed bottom-5 right-5 bg-[var(--accent)] text-[var(--on-accent)] py-2 px-4 rounded-md shadow-lg hidden transition-opacity duration-300">
+        Link copied to clipboard!
+    </div>
+	<div id="page-loader" class="fixed inset-0 z-50 flex items-center justify-center bg-[var(--background)]">
+  <div class="flex flex-col items-center">
+    <div class="spinner w-16 h-16 border-4 border-[var(--border-level-2)] border-t-[var(--accent)] rounded-full animate-spin"></div>
+    <p class="mt-4 text-[var(--text-primary)]">Loading Subhoo...</p>
+  </div>
+</div>
+</body>
+<script>
+  window.addEventListener('load', function() {
+    setTimeout(function() {
+      document.getElementById('page-loader').style.opacity = '0';
+      setTimeout(function() {
+        document.getElementById('page-loader').style.display = 'none';
+      }, 300);
+    }, 500);
+  });
+</script>
+
+
+<script>
+// --- DOM Elements ---
+const processingIndicator = document.getElementById('processingIndicator'); 
+const manualUploadSection = document.getElementById('manual-upload-section');
+const dashboardContent = document.getElementById('dashboardContent');
+const csvFileInput = document.getElementById('csvFileInput');
+const fileNameDisplay = document.getElementById('file-name-display');
+const errorMessageDiv = document.getElementById('errorMessage');
+const successMessageDiv = document.getElementById('successMessage');
+const s3LoadErrorDiv = document.getElementById('s3LoadError');
+const unifiedSearchInput = document.getElementById('unifiedSearchInput'); 
+const unifiedSearchSuggestions = document.getElementById('unifiedSearchSuggestions'); 
+const activeFilterIndicator = document.getElementById('activeFilterIndicator');
+
+const primeProfilesContainer = document.getElementById('primeProfilesContainer');
+const primeProfilesSearchInput = document.getElementById('primeProfilesSearchInput');
+const calendarPrevBtn = document.getElementById('calendarPrevBtn');
+const calendarNextBtn = document.getElementById('calendarNextBtn');
+const calendarTitleEl = document.getElementById('calendarTitle');
+const calendarGridEl = document.getElementById('calendarGrid');
+const calendarMonthSelect = document.getElementById('calendarMonthSelect');
+const calendarYearSelect = document.getElementById('calendarYearSelect');
+const globalTooltipEl = document.querySelector('.event-tooltip');
+
+// Modal Elements
+const genericModal = document.getElementById('genericModal');
+const genericModalContent = document.getElementById('genericModalContent');
+const genericModalTitle = document.getElementById('genericModalTitle');
+const genericModalBody = document.getElementById('genericModalBody');
+const genericModalCloseBtn = document.getElementById('genericModalCloseBtn');
+
+// Prime Detail View Section Elements
+const primeDetailViewSection = document.getElementById('primeDetailViewSection');
+const primeDetailTitle = document.getElementById('primeDetailTitle');
+const primeDetailStats = document.getElementById('primeDetailStats');
+const primeDetailContractsTableContainer = document.getElementById('primeDetailContractsTableContainer');
+
+// Theme Toggle and Share Buttons
+const themeToggleBtn = document.getElementById('themeToggleBtn');
+const themeIconSun = document.getElementById('themeIconSun');
+const themeIconMoon = document.getElementById('themeIconMoon');
+const shareViewBtn = document.getElementById('shareViewBtn');
+const shareToast = document.getElementById('shareToast');
+
+
+// --- Global Variables ---
+let parsedData = [];
+const charts = {}; 
+const S3_CSV_URL = 'https://subhoodata.s3.us-east-1.amazonaws.com/data/sba24.csv';
+let currentMainStateChartFilter = 'count';
+const ITEMS_PER_PAGE_MODAL_TABLE = 10; 
+let currentCalendarDate = new Date(); 
+let currentPrimeDetailViewPage = 1; 
+let isViewingSpecificPrime = false; 
+let specificPrimeName = null;      
+let currentPrimeDetailSort = { column: 'endDate', order: 'desc' }; 
+let currentCalendarModalSort = { column: 'prime', order: 'asc' }; 
+let contractorMap; 
+let contractorClusterGroup;
+
+// --- Utility Functions ---
+function formatCurrency(value) {
+    if (isNaN(parseFloat(value))) { 
+        return '$0';
+    }
+    const num = parseFloat(value);
+
+    if (Math.abs(num) >= 1.0e+9) { 
+        return '$' + (num / 1.0e+9).toFixed(1) + 'B';
+    }
+    if (Math.abs(num) >= 1.0e+6) { 
+        return '$' + (num / 1.0e+6).toFixed(1) + 'M';
+    }
+    if (Math.abs(num) >= 1.0e+3) { 
+        return '$' + (num / 1.0e+3).toFixed(1) + 'K';
+    }
+    return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0 
+    }).format(num);
+}
+
+function parseCurrencyValue(valueStr) { if (!valueStr) return 0; return parseFloat(String(valueStr).replace(/[$,\s]/g, '')) || 0; }
+function formatDate(dateStr) { if (!dateStr) return ''; const date = new Date(dateStr); return isNaN(date.getTime()) ? '' : new Intl.DateTimeFormat('en-US', { year: 'numeric', month: 'short', day: 'numeric' }).format(date); }
+
+function createAwardLink(piid) {
+    if (!piid || typeof piid !== 'string' || piid.trim() === '' || piid.toLowerCase() === 'n/a') {
+        return piid || 'N/A'; 
+    }
+    const encodedPiid = encodeURIComponent(piid.trim());
+    return `<a href="https://www.fpds.gov/ezsearch/fpdsportal?indexName=awardfull&templateName=1.5.3&s=FPDS&q=${encodedPiid}&x=18&y=15" target="_blank" rel="noopener noreferrer" class="text-[var(--accent)] hover:underline">${piid}</a>`;
+}
+
+function createEntityLink(entityId, entityName) {
+    if (!entityId || typeof entityId !== 'string' || entityId.trim() === '' || entityId.toLowerCase() === 'n/a') {
+        return entityName || entityId || 'N/A'; 
+    }
+    const encodedEntityId = encodeURIComponent(entityId.trim());
+    return `<a href="https://www.fpds.gov/ezsearch/fpdsportal?s=FPDS&q=${encodedEntityId}&x=0&y=0" target="_blank" rel="noopener noreferrer" class="text-[var(--accent)] hover:underline">${entityName || entityId}</a>`;
+}
+
+
+function showProcessingBriefly() { processingIndicator.classList.remove('hidden'); processingIndicator.classList.add('flex'); }
+function hideProcessing() { processingIndicator.classList.add('hidden'); processingIndicator.classList.remove('flex');}
+
+function showErrorMessage(message, isAutoloadError = false) {
+    if (isAutoloadError) {
+        manualUploadSection.classList.remove('hidden');
+        s3LoadErrorDiv.textContent = `S3 Auto-load failed: ${message}. Please use manual upload option above.`;
+        s3LoadErrorDiv.classList.remove('hidden');
+    } else {
+        errorMessageDiv.textContent = message; errorMessageDiv.classList.remove('hidden');
+        successMessageDiv.classList.add('hidden');
+    }
+    hideProcessing(); 
+}
+
+function showSuccessMessage(message, isAutoloadSuccess = false) {
+    if (isAutoloadSuccess) {
+        s3LoadErrorDiv.classList.add('hidden');
+    } else {
+        successMessageDiv.textContent = message; successMessageDiv.classList.remove('hidden');
+        errorMessageDiv.classList.add('hidden');
+    }
+    hideProcessing(); 
+}
+
+// --- Modal Management (Only for Calendar Day Details now) ---
+function openModal(title, contentHTML, sizeClass = 'modal-content-md') {
+    genericModalTitle.textContent = title;
+    genericModalBody.innerHTML = contentHTML;
+    genericModalContent.className = `modal-content ${sizeClass}`; 
+    genericModal.classList.remove('hidden');
+    genericModal.classList.add('flex');
+}
+
+function closeModal() {
+    genericModal.classList.add('hidden');
+    genericModal.classList.remove('flex');
+    genericModalBody.innerHTML = ''; 
+}
+genericModalCloseBtn.addEventListener('click', closeModal);
+genericModal.addEventListener('click', (event) => { 
+    if (event.target === genericModal) {
+        closeModal();
+    }
+});
+
+
+// --- Data Processing and Chart Initialization ---
+function cleanupCharts() { Object.keys(charts).forEach(key => { if (charts[key]) { charts[key].destroy(); charts[key] = null; } }); }
+
+function processAndInitialize(data) {
+  try {
+    if (!data || data.length === 0) { 
+      showErrorMessage('No data to display. Please try manual upload or check the S3 source.', true); 
+      return; 
+    }
+    
+    // Make sure these operations happen in the correct order
+    parsedData = data; 
+    activeFilterIndicator.classList.add('hidden');
+    manualUploadSection.classList.add('hidden'); 
+    s3LoadErrorDiv.classList.add('hidden');
+    primeDetailViewSection.classList.add('hidden');
+    
+    // This should happen AFTER all initializations are done
+     dashboardContent.classList.remove('hidden');
+	 dashboardContent.classList.add('data-loaded');
+    
+    // Initialize everything else
+    getChartColors(); 
+    cleanupCharts(); 
+    initializeChartDefaults(); // Initialize chart defaults for better mobile experience
+    initializeCoreVisuals(parsedData);
+    setupUnifiedSearch();
+    initializePrimeProfilesSection(parsedData);
+    initializeContractExpirationCalendarSection(parsedData);
+    initializeContractorMap(data);
+    showSuccessMessage('Data loaded and dashboard initialized.', true);
+    
+    applyInitialTheme();
+    applyFiltersFromURL();
+  } catch (error) {
+    console.error("Error during processAndInitialize:", error);
+    showErrorMessage("An error occurred while initializing the dashboard. Please try refreshing.", false);
+  } finally {
+    hideProcessing();
+  }
+}
+
+// --- S3 Data Loading ---
+function loadDataFromS3() { 
+    showProcessingBriefly(); 
+    
+    // Add timeout for better error handling
+    const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error("Request timed out")), 20000);
+    });
+    
+    Promise.race([
+        fetch(S3_CSV_URL, { mode: 'cors', cache: 'no-cache', headers: { 'Accept': 'text/csv' } }),
+        timeoutPromise
+    ])
+    .then(response => {
+        if (!response.ok) {
+            let errorDetail = `HTTP error ${response.status}`;
+            if (response.status === 0) errorDetail = "Network error or CORS issue.";
+            else if (response.status === 403) errorDetail = "Access Forbidden (403).";
+            else if (response.status === 404) errorDetail = "File Not Found (404).";
+            throw new Error(`S3 Load Error: ${errorDetail}`);
+        }
+        return response.text();
+    })
+    .then(csvText => {
+        if (!csvText || csvText.trim() === '') { showErrorMessage('S3 file is empty.', true); return; }
+        Papa.parse(csvText, {
+            header: true,
+            dynamicTyping: true, 
+            skipEmptyLines: true,
+            complete: results => {
+                if (results.errors && results.errors.length > 0) { showErrorMessage('Error parsing CSV from S3: ' + results.errors[0].message, true); return; }
+                if (results.data && results.data.length > 0) processAndInitialize(results.data);
+                else showErrorMessage('No data parsed from S3 file.', true);
+            },
+            error: error => showErrorMessage('Error parsing CSV data from S3: ' + error.message, true)
+        });
+    })
+    .catch(error => {
+        let errorMsg = error.message; 
+        if (navigator.onLine === false && !errorMsg.includes("offline")) errorMsg += " You may also be offline.";
+        showErrorMessage(errorMsg, true); 
+    });
+}
+
+// Initialize Chart.js defaults for better mobile experience
+function initializeChartDefaults() {
+  // Better touch handling for all charts
+  Chart.defaults.interaction = {
+    mode: 'nearest',
+    intersect: false,
+    axis: 'xy'
+  };
+  
+  // Adjust font sizes for mobile
+  const isMobile = window.innerWidth < 768;
+  Chart.defaults.font.size = isMobile ? 10 : 12;
+  
+  // Set defaults for better mobile UX
+  Chart.defaults.plugins.tooltip.enabled = true;
+  Chart.defaults.plugins.tooltip.displayColors = true;
+  Chart.defaults.responsive = true;
+  Chart.defaults.maintainAspectRatio = false;
+}
+
+function initializeContractorMap(data) {
+  if (!contractorMap) {
+    contractorMap = L.map('contractorMap').setView([39.8283, -98.5795], 3);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; <a href="https://carto.com/">CARTO</a>',
+      subdomains: 'abcd',
+      maxZoom: 19
+    }).addTo(contractorMap);
+  }
+
+  if (contractorClusterGroup) {
+    contractorClusterGroup.clearLayers();
+  } else {
+    contractorClusterGroup = L.markerClusterGroup({
+      maxClusterRadius: 40, // Smaller clusters on mobile
+      disableClusteringAtZoom: 10
+    });
+    contractorMap.addLayer(contractorClusterGroup);
+  }
+
+  const seenCoords = new Set();
+  
+  // Optimize data processing - limit processing on mobile
+  const isMobile = window.innerWidth < 768;
+  const dataToProcess = isMobile && data.length > 500 ? data.slice(0, 500) : data;
+
+  dataToProcess.forEach(row => {
+    const location = row.Location;
+    if (!location || !row["Legal Business Name"]) return;
+
+    const [latStr, lngStr] = location.split(',').map(s => s.trim());
+    const lat = parseFloat(latStr);
+    const lng = parseFloat(lngStr);
+
+    if (isNaN(lat) || isNaN(lng) || lat === 0 || lng === 0) return;
+
+    // Normalize lat/lng to 4 decimal places
+    const latFixed = lat.toFixed(4);
+    const lngFixed = lng.toFixed(4);
+    const coordKey = `${latFixed}|${lngFixed}`;
+
+    if (seenCoords.has(coordKey)) return;
+    seenCoords.add(coordKey);
+
+    const businessName = row["Legal Business Name"];
+    const city = row["Vendor Address City"] || "";
+    const state = row["Vendor Address State"] || "";
+
+    const locationText = city && state ? `${city}, ${state}` : "";
+    const tooltipText = `${businessName}${locationText ? ` — ${locationText}` : ""}`;
+    const popupText = `<strong>${businessName}</strong>${locationText ? `<br>${locationText}` : ""}`;
+
+    const marker = createStyledMarker(lat, lng, businessName);
+    marker.bindTooltip(tooltipText, { direction: 'top' });
+    marker.bindPopup(popupText);
+    contractorClusterGroup.addLayer(marker);
+  });
+  
+  if (contractorClusterGroup && contractorClusterGroup.getLayers().length > 0) {
+    // This will automatically fit the map to show all markers
+    contractorMap.fitBounds(contractorClusterGroup.getBounds(), {
+      padding: [30, 30], // Smaller padding on mobile
+      maxZoom: 3
+    });
+  }
+  
+  setTimeout(() => {
+    contractorMap.invalidateSize();
+  }, 200);
+}
+
+function createStyledMarker(lat, lng, label) {
+  const markerHtml = `<div class="custom-marker" title="${label}"></div>`;
+  return L.marker([lat, lng], {
+    icon: L.divIcon({
+      className: '',
+      html: markerHtml,
+      iconSize: [12, 12],
+      iconAnchor: [6, 6]
+    })
+  });
+}
+
+
+// --- Unified Search, Suggestions, and Filtering Logic ---
+function applyFilter(searchTerm, filterType = null, filterValue = null) { 
+    try {
+        let filteredData;
+        let displaySearchTerm = searchTerm; 
+        
+        const marketShareCard = document.getElementById('marketShareChartCard');
+        const primeContractorsCard = document.getElementById('primeContractorsChartCard');
+
+        if (filterType === 'primeName') {
+            isViewingSpecificPrime = true; 
+            specificPrimeName = filterValue || searchTerm; 
+            const primeToFilter = specificPrimeName;
+            filteredData = parsedData.filter(record => (record['Legal Business Name']?.toLowerCase() || '') === primeToFilter.toLowerCase());
+            displaySearchTerm = `Prime: ${primeToFilter}`;
+            renderPrimeDetailView(primeToFilter, filteredData); // This will show the section
+            // Visibility of general prime charts handled in initializeCoreVisuals
+        } else if (filterType) { 
+            isViewingSpecificPrime = false; 
+            specificPrimeName = null;
+            primeDetailViewSection.classList.add('hidden'); // Hide prime detail for other filters
+            if(marketShareCard) marketShareCard.classList.remove('hidden');
+            if(primeContractorsCard) primeContractorsCard.classList.remove('hidden');
+
+            const termToMatch = (filterValue || searchTerm).toLowerCase(); 
+            filteredData = parsedData.filter(record => {
+                let recordValue = '';
+                switch (filterType) {
+                    case 'naicsCode': recordValue = String(record['NAICS Code'] || '').toLowerCase(); break;
+                    case 'naicsDesc': recordValue = record['NAICS Description']?.toLowerCase() || ''; break;
+                    case 'departmentName': recordValue = record['Contracting Department Name']?.toLowerCase() || ''; break; 
+                    case 'agencyName': recordValue = record['Contracting Agency Name']?.toLowerCase() || ''; break;
+                    case 'officeName': recordValue = record['Contracting Office Name']?.toLowerCase() || ''; break;
+                    case 'stateCode': recordValue = record['Principal Place of Performance State Code']?.toLowerCase() || ''; break;
+                    case 'contractType': recordValue = record['Award or Indefinite Delivery Vehicle Type']?.toLowerCase() || ''; break; 
+                    default: return false;
+                }
+                if (filterValue) return recordValue === termToMatch; 
+                return recordValue.includes(termToMatch); 
+            });
+            displaySearchTerm = `${filterType.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}: ${filterValue || searchTerm}`; 
+        } else { // General keyword search 
+            isViewingSpecificPrime = false; 
+            specificPrimeName = null;
+            primeDetailViewSection.classList.add('hidden');
+            if(marketShareCard) marketShareCard.classList.remove('hidden');
+            if(primeContractorsCard) primeContractorsCard.classList.remove('hidden');
+
+            if (!searchTerm || searchTerm.trim() === '') {
+                clearAllFilters(); 
+                return;
+            }
+            const keywords = searchTerm.toLowerCase().split(' ').filter(k => k);
+            filteredData = parsedData.filter(record => {
+                return keywords.every(keyword => {
+                    const primeName = record['Legal Business Name']?.toLowerCase() || '';
+                    const naicsCode = String(record['NAICS Code'] || '').toLowerCase();
+                    const naicsDesc = record['NAICS Description']?.toLowerCase() || '';
+                    const departmentName = record['Contracting Department Name']?.toLowerCase() || '';
+                    const agencyName = record['Contracting Agency Name']?.toLowerCase() || '';
+                    const officeName = record['Contracting Office Name']?.toLowerCase() || '';
+                    const stateCode = record['Principal Place of Performance State Code']?.toLowerCase() || '';
+                    return primeName.includes(keyword) || naicsCode.includes(keyword) ||
+                           naicsDesc.includes(keyword) || departmentName.includes(keyword) ||
+                           agencyName.includes(keyword) || officeName.includes(keyword) ||
+                           (keyword.length === 2 && stateCode === keyword) ||
+                           (keyword.length > 2 && stateCode.includes(keyword));
+                });
+            });
+        }
+
+        initializeCoreVisuals(filteredData, isViewingSpecificPrime); 
+        initializePrimeProfilesSection(filteredData); 
+        initializeContractExpirationCalendarSection(filteredData);
+		initializeContractorMap(filteredData);
+		renderSankeyChart(filteredData);
+        updateActiveFilterIndicator(displaySearchTerm, filteredData.length);
+        unifiedSearchSuggestions.innerHTML = ''; 
+        unifiedSearchSuggestions.classList.add('hidden');
+    } catch (error) {
+        console.error("Error during filter application:", error);
+    }
+}
+
+
+function clearAllFilters() {
+    try {
+        unifiedSearchInput.value = '';
+        activeFilterIndicator.classList.add('hidden');
+        unifiedSearchSuggestions.innerHTML = '';
+        unifiedSearchSuggestions.classList.add('hidden');
+        primeDetailViewSection.classList.add('hidden'); 
+        isViewingSpecificPrime = false; 
+        specificPrimeName = null;
+        
+        const marketShareCard = document.getElementById('marketShareChartCard');
+        const primeContractorsCard = document.getElementById('primeContractorsChartCard');
+        if(marketShareCard) marketShareCard.classList.remove('hidden');
+        if(primeContractorsCard) primeContractorsCard.classList.remove('hidden');
+
+        initializeCoreVisuals(parsedData, false); 
+        initializePrimeProfilesSection(parsedData); 
+        initializeContractExpirationCalendarSection(parsedData);
+        initializeContractorMap(parsedData);
+        renderSankeyChart(parsedData); 
+    } catch (error) {
+        console.error("Error during clearing filters:", error);
+    }
+}
+
+function updateActiveFilterIndicator(searchTerm, count) {
+    if (searchTerm && searchTerm.trim() !== '') {
+        // Just update the content without the button
+        activeFilterIndicator.innerHTML = `
+            <span>Filtered by: <strong>"${searchTerm}"</strong> (${count.toLocaleString()} results)</span>
+        `;
+        activeFilterIndicator.classList.remove('hidden');
+    } else {
+        activeFilterIndicator.classList.add('hidden');
+    }
+}
+
+function selectSearchSuggestion(term, type, originalValue) { 
+    unifiedSearchInput.value = originalValue; 
+    applyFilter(originalValue, type, originalValue); 
+    unifiedSearchSuggestions.innerHTML = '';
+    unifiedSearchSuggestions.classList.add('hidden');
+}
+
+function setupUnifiedSearch() {
+  // Use a more efficient debounce for mobile
+  const isMobile = window.innerWidth < 768;
+  const debounceTime = isMobile ? 400 : 300; // Longer debounce on mobile to save resources
+  
+  unifiedSearchInput.addEventListener('input', _.debounce(function() {
+    const searchTerm = this.value.toLowerCase().trim();
+    unifiedSearchSuggestions.innerHTML = '';
+
+    if (searchTerm.length < 2) {
+      unifiedSearchSuggestions.classList.add('hidden');
+      return;
+    }
+
+    const suggestions = new Map();
+    // Fewer suggestions on mobile
+    const maxSuggestions = isMobile ? 8 : 15;
+
+    parsedData.forEach(record => {
+        if (suggestions.size >= maxSuggestions) return;
+
+        const checkAndAdd = (value, type, displayValue = null) => {
+            if (suggestions.size >= maxSuggestions) return;
+            const originalVal = value; 
+            const valStr = String(value || '').toLowerCase();
+            if (valStr.includes(searchTerm)) {
+                const key = `${type}-${originalVal}`; 
+                if (!suggestions.has(key)) {
+                    let highlightedTerm = displayValue || originalVal;
+                    if (typeof highlightedTerm === 'string') {
+                         const index = valStr.indexOf(searchTerm);
+                         if (index !== -1) {
+                             highlightedTerm = highlightedTerm.substring(0, index) +
+                                              `<strong>${highlightedTerm.substring(index, index + searchTerm.length)}</strong>` +
+                                              highlightedTerm.substring(index + searchTerm.length);
+                         }
+                    }
+                    suggestions.set(key, { termForDisplayHTML: highlightedTerm, type: type, originalValue: originalVal });
+                }
+            }
+        };
+        
+        checkAndAdd(record['Legal Business Name'], 'primeName');
+        checkAndAdd(String(record['NAICS Code'] || ''), 'naicsCode');
+        
+        const descWords = (record['NAICS Description'] || '').split(/\s+/); 
+        descWords.forEach(word => {
+            if (word.toLowerCase().includes(searchTerm) && word.length > 2) { 
+                 checkAndAdd(word, 'naicsDesc', word); 
+            }
+        });
+        checkAndAdd(record['Contracting Department Name'], 'departmentName');
+        checkAndAdd(record['Contracting Agency Name'], 'agencyName');
+        checkAndAdd(record['Contracting Office Name'], 'officeName');
+        checkAndAdd(record['Principal Place of Performance State Code'], 'stateCode');
+    });
+
+    if (suggestions.size > 0) {
+        unifiedSearchSuggestions.classList.remove('hidden');
+        Array.from(suggestions.values()).forEach(sugg => {
+            const item = document.createElement('div');
+            item.className = 'suggestion-item hover:bg-[var(--surface-level-2)]'; 
+            item.innerHTML = (typeof sugg.termForDisplayHTML === 'string' && sugg.termForDisplayHTML.length > 60 ? sugg.termForDisplayHTML.substring(0, 57) + '...' : sugg.termForDisplayHTML);
+            
+            const typeLabel = document.createElement('span');
+            typeLabel.className = 'type-label bg-[var(--surface-level-1)] text-[var(--text-tertiary)]'; 
+            let displayType = sugg.type;
+            if (sugg.type === 'primeName') displayType = 'Prime';
+            else if (sugg.type === 'naicsCode') displayType = 'NAICS';
+            else if (sugg.type === 'naicsDesc') displayType = 'NAICS Keyword';
+            else if (sugg.type === 'departmentName') displayType = 'Dept.';
+            else if (sugg.type === 'agencyName') displayType = 'Agency';
+            else if (sugg.type === 'officeName') displayType = 'Office';
+            else if (sugg.type === 'stateCode') displayType = 'State';
+            typeLabel.textContent = displayType;
+            item.appendChild(typeLabel);
+
+            item.onclick = () => selectSearchSuggestion(sugg.termForDisplayHTML, sugg.type, sugg.originalValue); 
+            unifiedSearchSuggestions.appendChild(item);
+        });
+    } else {
+        unifiedSearchSuggestions.classList.remove('hidden'); 
+        unifiedSearchSuggestions.innerHTML = `<div class="p-2 text-sm text-[var(--text-tertiary)]">No specific suggestions. Press Enter to search all fields.</div>`;
+    }
+  }, debounceTime));
+
+  unifiedSearchInput.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+          applyFilter(this.value.trim()); 
+          unifiedSearchSuggestions.innerHTML = '';
+          unifiedSearchSuggestions.classList.add('hidden');
+      }
+  });
+
+  // Add touch-specific event handling
+  if ('ontouchstart' in window) {
+    document.addEventListener('touchstart', function(event) {
+      if (!unifiedSearchInput.contains(event.target) && !unifiedSearchSuggestions.contains(event.target)) {
+        unifiedSearchSuggestions.classList.add('hidden');
+      }
+    });
+  } else {
+    document.addEventListener('click', function(event) {
+      if (!unifiedSearchInput.contains(event.target) && !unifiedSearchSuggestions.contains(event.target)) {
+        unifiedSearchSuggestions.classList.add('hidden');
+      }
+    });
+  }
+}
+
+
+
+// --- Initialize Core Visualizations ---
+function initializeCoreVisuals(data, isPrimeView = false) { 
+    updateStatistics(data);
+    
+    const marketShareCard = document.getElementById('marketShareChartCard');
+    const primeContractorsCard = document.getElementById('primeContractorsChartCard');
+
+    if (isPrimeView) {
+        if (charts.marketShareChart) { charts.marketShareChart.destroy(); charts.marketShareChart = null; }
+        if (marketShareCard && marketShareCard.querySelector('.chart-container')) marketShareCard.querySelector('.chart-container').innerHTML = `<div class="chart-no-data">Market share not applicable for single prime view.</div>`;
+        
+        if (charts.primeContractorsChart) { charts.primeContractorsChart.destroy(); charts.primeContractorsChart = null; }
+        if (primeContractorsCard && primeContractorsCard.querySelector('.chart-container')) primeContractorsCard.querySelector('.chart-container').innerHTML = `<div class="chart-no-data">Top primes not applicable for single prime view.</div>`;
+    } else {
+        if (marketShareCard && !marketShareCard.querySelector('canvas#marketShareChart')) { 
+            marketShareCard.querySelector('.chart-container').innerHTML = `<canvas id="marketShareChart"></canvas>`;
+        }
+        createMarketShareChart(data); 
+        
+        if (primeContractorsCard && !primeContractorsCard.querySelector('canvas#primeContractorsChart')) { 
+            primeContractorsCard.querySelector('.chart-container').innerHTML = `<canvas id="primeContractorsChart"></canvas>`;
+        }
+        createPrimeContractorsChart(data);
+    }
+    
+    createDepartmentChart(data); 
+    createNaicsChart_main(data);
+    createContractTypeChart_main(data);
+    createStateContractsChart_main(data, currentMainStateChartFilter);
+    createTopAgenciesChart(data); 
+    createTimelineChart(data); 
+	renderSankeyChart(data);
+}
+
+// --- Statistics Update ---
+function updateStatistics(data) { 
+    if (!data || data.length === 0) {
+        ['totalContractsValue', 'totalValueValue', 'avgContractValue', 'uniquePrimesValue'].forEach(id => document.getElementById(id).textContent = '0');
+        return;
+    }
+    document.getElementById('totalContractsValue').textContent = data.length.toLocaleString();
+    let totalValue = 0, contractsWithValue = 0;
+    data.forEach(r => { const v = parseCurrencyValue(r['Base and All Options Value (Total Contract Value)']); if (v>0) {totalValue+=v; contractsWithValue++;}});
+    document.getElementById('totalValueValue').textContent = formatCurrency(totalValue);
+    document.getElementById('avgContractValue').textContent = formatCurrency(contractsWithValue > 0 ? totalValue / contractsWithValue : 0);
+    document.getElementById('uniquePrimesValue').textContent = new Set(data.map(r => r['Legal Business Name']).filter(Boolean)).size.toLocaleString();
+}
+
+function getCSSVariable(name) {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
+
+// --- Chart Color Palette (Derived from CSS Variables) ---
+let chartPrimaryColor, chartSecondaryColor, chartTertiaryColor, chartNeutralColor, chartAccentColor;
+let chartGrays = [];
+
+function getChartColors() {
+    const styles = getComputedStyle(document.documentElement);
+    chartPrimaryColor   = styles.getPropertyValue('--chart-accent-1').trim(); 
+    chartSecondaryColor = styles.getPropertyValue('--chart-accent-2').trim(); 
+    chartTertiaryColor  = styles.getPropertyValue('--chart-accent-3').trim(); 
+    chartNeutralColor   = styles.getPropertyValue('--chart-accent-4').trim(); 
+    chartAccentColor    = chartPrimaryColor;
+
+    chartGrays = [
+        styles.getPropertyValue('--chart-accent-5').trim(),
+        styles.getPropertyValue('--border-level-2').trim(),
+        styles.getPropertyValue('--surface-level-2').trim()
+    ];
+}
+
+// --- Optional Chart Color Overrides ---
+let overrideChartHighlightColor = '#ec9393';   // Override for max value (e.g., desaturated blue)
+let overrideChartNeutralColor = null;         // Optional override for all other bars
+
+// --- CSS Fallback Getter ---
+function getCSSVariable(name) {
+    return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
+
+// --- Simple Highlight Palette (max = lava or override, others = neutral or fallback)
+function getHighlightColors(dataArray) {
+    const highlight = overrideChartHighlightColor || '#e63946';
+    const neutral = overrideChartNeutralColor || getCSSVariable('--chart-accent-2') || '#adb5bd';
+    const maxVal = Math.max(...dataArray);
+    return dataArray.map(value => value === maxVal ? highlight : neutral);
+}
+
+// --- Rotating Monochrome + Highlight (for pie/donut/bar sets)
+function getRotatingHighlightPalette(values) {
+    const maxVal = Math.max(...values);
+    const baseColors = [
+        chartPrimaryColor,
+        chartSecondaryColor,
+        chartTertiaryColor,
+        chartNeutralColor,
+        chartGrays[0],
+        chartGrays[1],
+        chartGrays[2],
+        '#dee2e6', '#ced4da', '#adb5bd'
+    ];
+    const highlight = overrideChartHighlightColor || '#e63946';
+    return values.map((v, i) => v === maxVal ? highlight : baseColors[i % baseColors.length]);
+}
+
+
+function createChart(canvasId, type, data, options, noDataMessage = "No data available for current selection.") {
+  const canvasElement = document.getElementById(canvasId);
+  if (!canvasElement) return;
+
+  const chartContainer = canvasElement.parentElement;
+
+  let isEmpty = true;
+  if (data?.datasets?.length > 0) {
+    isEmpty = data.datasets.every(ds =>
+      !ds.data || ds.data.length === 0 || ds.data.every(val => val === 0 || val === null)
+    );
+  }
+
+  if (isEmpty) {
+    chartContainer.innerHTML = `
+      <div class="chart-no-data">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+        </svg>
+        <span>${noDataMessage}</span>
+      </div>
+    `;
+    if (charts[canvasId]) {
+      charts[canvasId].destroy();
+      charts[canvasId] = null;
+    }
+    return;
+  } else if (chartContainer.querySelector('.chart-no-data')) {
+    chartContainer.innerHTML = `<canvas id="${canvasId}"></canvas>`;
+  }
+
+  const ctx = document.getElementById(canvasId).getContext('2d');
+  if (charts[canvasId]) charts[canvasId].destroy();
+  charts[canvasId] = new Chart(ctx, { type, data, options });
+}
+function createPrimeContractorsChart(data) { 
+    const canvasElement = document.getElementById('primeContractorsChart');
+    if (!canvasElement) return; 
+
+    const primeValues = {};
+    data.forEach(r => {
+        if (r['Legal Business Name']) {
+            const val = parseCurrencyValue(r['Base and All Options Value (Total Contract Value)']);
+            primeValues[r['Legal Business Name']] = (primeValues[r['Legal Business Name']] || 0) + val;
+        }
+    });
+
+    const sorted = Object.entries(primeValues).sort((a, b) => b[1] - a[1]).slice(0, 10);
+    const labels = sorted.map(i => i[0]);
+    const values = sorted.map(i => i[1]);
+
+    const maxVal = Math.max(...values);
+    const baseColors = [
+        chartPrimaryColor,
+        chartSecondaryColor,
+        chartTertiaryColor,
+        chartNeutralColor,
+        chartGrays[0],
+        chartGrays[1],
+        chartGrays[2],
+        '#dee2e6',
+        '#ced4da',
+        '#adb5bd'
+    ];
+    const chartColors = getRotatingHighlightPalette(values);
+
+    const chartData = {
+        labels,
+        datasets: [{
+            label: 'Contract Value',
+            data: values,
+            backgroundColor: chartColors
+        }]
+    };
+
+    const chartOptions = {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { display: false },
+            tooltip: {
+                callbacks: {
+                    label: c => formatCurrency(c.raw)
+                }
+            }
+        },
+        scales: {
+            x: {
+                ticks: {
+                    callback: val => formatCurrency(val)
+                }
+            },
+            y: {
+                ticks: {
+                    autoSkip: false,
+                    callback: function (val) {
+                        const label = this.getLabelForValue(val);
+                        return label.length > 18 ? label.substring(0, 15) + '...' : label;
+                    }
+                }
+            }
+        },
+        onClick: (event, elements) => {
+            if (elements.length > 0) {
+                const primeName = chartData.labels[elements[0].index];
+                setUnifiedSearchTerm(primeName, 'primeName');
+            }
+        }
+    };
+
+    createChart('primeContractorsChart', 'bar', chartData, chartOptions);
+}
+
+function createDepartmentChart(data) {
+    const deptValues = {};
+    data.forEach(r => {
+        if (r['Contracting Department Name']) {
+            const dept = r['Contracting Department Name'];
+            deptValues[dept] = (deptValues[dept] || 0) + parseCurrencyValue(r['Base and All Options Value (Total Contract Value)']);
+        }
+    });
+
+    const sorted = Object.entries(deptValues).sort((a, b) => b[1] - a[1]).slice(0, 10);
+    const labels = sorted.map(i => i[0]);
+    const values = sorted.map(i => i[1]);
+    const maxVal = Math.max(...values);
+
+    // Use a rotated monochrome palette
+    const baseColors = [
+        chartPrimaryColor,
+        chartSecondaryColor,
+        chartTertiaryColor,
+        chartNeutralColor,
+        chartGrays[0],
+        chartGrays[1],
+        chartGrays[2],
+        '#dee2e6',  // Platinum fallback
+        '#ced4da',  // French gray
+        '#adb5bd'   // Gray
+    ];
+
+    const departmentColors = getRotatingHighlightPalette(values);
+
+    const chartData = {
+        labels,
+        datasets: [{
+            data: values,
+            backgroundColor: departmentColors
+        }]
+    };
+
+    const chartOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'right',
+                labels: { boxWidth: 12, font: { size: 10 } }
+            },
+            tooltip: {
+                callbacks: {
+                    label: c => `${c.label || ''}: ${formatCurrency(c.raw)}`
+                }
+            }
+        },
+        onClick: (event, elements) => {
+            if (elements.length > 0) {
+                const departmentName = chartData.labels[elements[0].index];
+                setUnifiedSearchTerm(departmentName, 'departmentName');
+            }
+        }
+    };
+
+    createChart('departmentChart', 'pie', chartData, chartOptions);
+}
+
+function createNaicsChart_main(data) { 
+    const naicsValues = {}, naicsDesc = {};
+    data.forEach(r => {
+        if (r['NAICS Code']) {
+            const naicsKey = String(r['NAICS Code']);
+            naicsValues[naicsKey] = (naicsValues[naicsKey] || 0) + parseCurrencyValue(r['Base and All Options Value (Total Contract Value)']);
+            if (!naicsDesc[naicsKey]) naicsDesc[naicsKey] = r['NAICS Description'] || '';
+        }
+    });
+
+    const sorted = Object.entries(naicsValues).sort((a, b) => b[1] - a[1]).slice(0, 10);
+    const labels = sorted.map(i => i[0]);
+    const displayLabels = sorted.map(i => `${i[0]} - ${naicsDesc[i[0]] ? naicsDesc[i[0]].substring(0, 20) : ''}...`);
+    const values = sorted.map(i => i[1]);
+
+    const maxVal = Math.max(...values);
+    const baseColors = [
+        chartPrimaryColor,
+        chartSecondaryColor,
+        chartTertiaryColor,
+        chartNeutralColor,
+        chartGrays[0],
+        chartGrays[1],
+        chartGrays[2],
+        '#dee2e6',
+        '#ced4da',
+        '#adb5bd'
+    ];
+    const chartColors = getRotatingHighlightPalette(values);
+
+    const chartData = { 
+        labels, 
+        displayLabels, 
+        datasets: [{ 
+            label: 'Contract Value', 
+            data: values, 
+            backgroundColor: chartColors
+        }] 
+    };
+
+    const chartOptions = {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { display: false },
+            tooltip: {
+                callbacks: {
+                    label: c => formatCurrency(c.raw)
+                }
+            }
+        },
+        scales: {
+            x: { ticks: { callback: v => formatCurrency(v) } }
+        },
+        onClick: (event, elements) => {
+            if (elements.length > 0) {
+                const naicsCode = chartData.labels[elements[0].index];
+                setUnifiedSearchTerm(naicsCode, 'naicsCode');
+            }
+        }
+    };
+
+    chartOptions.data = {
+        labels: chartData.displayLabels,
+        datasets: chartData.datasets
+    };
+
+    createChart('naicsChart_main', 'bar', chartOptions.data, chartOptions);
+}
+function createContractTypeChart_main(data) { 
+    const contractTypes = {};
+    data.forEach(r => {
+        const type = r['Award or Indefinite Delivery Vehicle Type'];
+        if (type) contractTypes[type] = (contractTypes[type] || 0) + 1;
+    });
+
+    const sortedContractTypes = Object.entries(contractTypes).sort((a, b) => b[1] - a[1]);
+    const labels = sortedContractTypes.map(item => item[0]);
+    const values = sortedContractTypes.map(item => item[1]);
+    const maxVal = Math.max(...values);
+
+    const baseColors = [
+        chartPrimaryColor,
+        chartSecondaryColor,
+        chartTertiaryColor,
+        chartNeutralColor,
+        chartGrays[0],
+        chartGrays[1],
+        chartGrays[2],
+        '#dee2e6',
+        '#ced4da',
+        '#adb5bd'
+    ];
+    const contractTypeColors = getRotatingHighlightPalette(values);
+
+    const chartData = { 
+        labels,
+        datasets: [{
+            data: values,
+            backgroundColor: contractTypeColors
+        }]
+    };
+
+    const chartOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'right',
+                labels: {
+                    boxWidth: 12,
+                    font: { size: 10 }
+                }
+            },
+            tooltip: {
+                callbacks: {
+                    label: c => `${c.label || ''}: ${c.raw.toLocaleString()}`
+                }
+            }
+        },
+        onClick: (event, elements) => {
+            if (elements.length > 0) {
+                const contractType = chartData.labels[elements[0].index];
+                setUnifiedSearchTerm(contractType, 'contractType'); 
+            }
+        }
+    };
+
+    createChart('contractTypeChart_main', 'doughnut', chartData, chartOptions);
+}
+function createStateContractsChart_main(data, filterType = 'count') { 
+    const stateData = {}; 
+    data.forEach(r => {
+        const state = r['Principal Place of Performance State Code'];
+        if (state) {
+            if (!stateData[state]) stateData[state] = { count: 0, value: 0 };
+            stateData[state].count++;
+            stateData[state].value += parseCurrencyValue(r['Base and All Options Value (Total Contract Value)']);
+        }
+    });
+
+    const sorted = Object.entries(stateData).sort((a, b) => b[1][filterType] - a[1][filterType]).slice(0, 10);
+    const labels = sorted.map(i => i[0]);
+    const values = sorted.map(i => i[1][filterType]);
+    const maxVal = Math.max(...values);
+
+    const baseColors = [
+        chartPrimaryColor,
+        chartSecondaryColor,
+        chartTertiaryColor,
+        chartNeutralColor,
+        chartGrays[0],
+        chartGrays[1],
+        chartGrays[2],
+        '#dee2e6',
+        '#ced4da',
+        '#adb5bd'
+    ];
+    const stateColors = getRotatingHighlightPalette(values);
+
+    const chartData = {
+        labels,
+        datasets: [{
+            label: filterType === 'count' ? 'Number of Contracts' : 'Total Contract Value',
+            data: values,
+            backgroundColor: stateColors
+        }]
+    };
+
+    const chartOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { display: false },
+            tooltip: {
+                callbacks: {
+                    label: c =>
+                        filterType === 'count'
+                            ? c.raw.toLocaleString()
+                            : formatCurrency(c.raw)
+                }
+            }
+        },
+        scales: {
+            y: {
+                ticks: {
+                    callback: v =>
+                        filterType === 'count'
+                            ? v.toLocaleString()
+                            : formatCurrency(v)
+                }
+            }
+        },
+        onClick: (event, elements) => {
+            if (elements.length > 0) {
+                const stateCode = chartData.labels[elements[0].index];
+                setUnifiedSearchTerm(stateCode, 'stateCode'); 
+            }
+        }
+    };
+
+    createChart('stateContractsChart_main', 'bar', chartData, chartOptions);
+}
+
+
+function createTopAgenciesChart(data) {
+    const agencyValues = {}
+    data.forEach(r => {
+        const agency = r['Contracting Agency Name'];
+        if (agency) {
+            agencyValues[agency] = (agencyValues[agency] || 0) + parseCurrencyValue(r['Base and All Options Value (Total Contract Value)']);
+        }
+    });
+
+    const sorted = Object.entries(agencyValues).sort((a, b) => b[1] - a[1]).slice(0, 10);
+    const labels = sorted.map(item => item[0]);
+    const values = sorted.map(item => item[1]);
+
+    const maxVal = Math.max(...values);
+    const baseColors = [
+        chartPrimaryColor,
+        chartSecondaryColor,
+        chartTertiaryColor,
+        chartNeutralColor,
+        chartGrays[0],
+        chartGrays[1],
+        chartGrays[2],
+        '#dee2e6',
+        '#ced4da',
+        '#adb5bd'
+    ];
+    const chartColors = getRotatingHighlightPalette(values);
+
+    const chartData = {
+        labels,
+        datasets: [{
+            label: 'Contract Value',
+            data: values,
+            backgroundColor: chartColors
+        }]
+    };
+
+    const chartOptions = {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { display: false },
+            tooltip: { callbacks: { label: ctx => formatCurrency(ctx.raw) } }
+        },
+        scales: {
+            x: { ticks: { callback: val => formatCurrency(val) } },
+            y: {
+                ticks: {
+                    autoSkip: false,
+                    callback: function (val) {
+                        const label = this.getLabelForValue(val);
+                        return label.length > 20 ? label.substring(0, 17) + '.' : label;
+                    }
+                }
+            }
+        },
+        onClick: (event, elements) => {
+            if (elements.length > 0) {
+                const agencyName = chartData.labels[elements[0].index];
+                setUnifiedSearchTerm(agencyName, 'agencyName');
+            }
+        }
+    };
+
+    createChart('topAgenciesChart', 'bar', chartData, chartOptions);
+}
+function createTimelineChart(data) {
+    const startYears = {}; 
+    const endYears = {};
+
+    data.forEach(record => {
+        if (record['Period of Performance Start Date']) { 
+            const d = new Date(record['Period of Performance Start Date']); 
+            if (!isNaN(d.getTime())) { 
+                const y = d.getFullYear(); 
+                if (y > 2000 && y < 2030) startYears[y] = (startYears[y] || 0) + 1; 
+            }
+        }
+        if (record['Completion Date']) { 
+            const d = new Date(record['Completion Date']); 
+            if (!isNaN(d.getTime())) { 
+                const y = d.getFullYear(); 
+                if (y > 2000 && y < 2030) endYears[y] = (endYears[y] || 0) + 1; 
+            }
+        }
+    });
+
+    const allYears = new Set([...Object.keys(startYears), ...Object.keys(endYears)].map(Number));
+    const sortedYears = Array.from(allYears).sort((a, b) => a - b);
+    
+    const labels = [], startCounts = [], endCounts = [];
+    sortedYears.forEach(year => { 
+        labels.push(year.toString()); 
+        startCounts.push(startYears[year] || 0); 
+        endCounts.push(endYears[year] || 0); 
+    });
+
+    const highlight = overrideChartHighlightColor || '#e63946';
+    const highlightFill = highlight + '22'; // low-opacity version for fill
+
+    createChart('timelineChart', 'line', 
+        { 
+            labels, 
+            datasets: [ 
+                { 
+                    label: 'Contracts Starting', 
+                    data: startCounts, 
+                    borderColor: chartSecondaryColor, 
+                    backgroundColor: `${chartSecondaryColor}33`, // 20% opacity
+                    fill: true, 
+                    tension: 0.4,
+                    pointRadius: 0, 
+                    pointHitRadius: 10, 
+                    pointHoverRadius: 5 
+                }, 
+                { 
+                    label: 'Contracts Ending', 
+                    data: endCounts, 
+                    borderColor: highlight, 
+                    backgroundColor: highlightFill, 
+                    fill: true, 
+                    tension: 0.4,
+                    pointRadius: 0,
+                    pointHitRadius: 10,
+                    pointHoverRadius: 5
+                }  
+            ] 
+        },
+        { 
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { 
+                legend: { display: true, position: 'top' },
+                tooltip: { 
+                    callbacks: { 
+                        label: ctx => `${ctx.dataset.label || ''}: ${ctx.parsed.y.toLocaleString()}` 
+                    } 
+                }
+            }, 
+            scales: { 
+                y: { 
+                    beginAtZero: true,
+                    ticks: { callback: val => val.toLocaleString() } 
+                } 
+            } 
+        }
+    );
+}
+
+function createMarketShareChart(data) {
+    const canvasElement = document.getElementById('marketShareChart');
+    if (!canvasElement) return; 
+
+    const primeValues = {}
+    data.forEach(r => {
+        if (r['Legal Business Name']) {
+            const name = r['Legal Business Name'];
+            primeValues[name] = (primeValues[name] || 0) + parseCurrencyValue(r['Base and All Options Value (Total Contract Value)']);
+        }
+    });
+
+    const sortedPrimes = Object.entries(primeValues).sort((a, b) => b[1] - a[1]);
+    const chartLabels = [];
+    const values = [];
+
+    sortedPrimes.forEach((item, index) => {
+        if (index < 5) {
+            chartLabels.push(item[0]);
+            values.push(item[1]);
+        }
+    });
+
+    if (sortedPrimes.length > 5) {
+        const otherVal = sortedPrimes.slice(5).reduce((sum, item) => sum + item[1], 0);
+        if (otherVal > 0) {
+            chartLabels.push('Others');
+            values.push(otherVal);
+        }
+    }
+
+    const maxVal = Math.max(...values);
+    const baseColors = [
+        chartPrimaryColor,
+        chartSecondaryColor,
+        chartTertiaryColor,
+        chartNeutralColor,
+        chartGrays[0],
+        chartGrays[1],
+        chartGrays[2],
+        '#dee2e6',
+        '#ced4da',
+        '#adb5bd'
+    ];
+    const chartColors = getRotatingHighlightPalette(values);
+
+    const chartData = {
+        labels: chartLabels,
+        datasets: [{
+            label: 'Prime Share',
+            data: values,
+            backgroundColor: chartColors
+        }]
+    };
+
+    const chartOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'right',
+                labels: {
+                    boxWidth: 12,
+                    font: { size: 10 }
+                }
+            },
+            tooltip: {
+                callbacks: {
+                    label: ctx => {
+                        const raw = ctx.raw;
+                        const total = values.reduce((a, b) => a + b, 0);
+                        const percent = ((raw / total) * 100).toFixed(1);
+                        return `${ctx.label || ''}: ${formatCurrency(raw)} (${percent}%)`;
+                    }
+                }
+            }
+        }
+    };
+
+    createChart('marketShareChart', 'pie', chartData, chartOptions);
+}
+
+function renderSankeyChart(data) {
+  console.log("Starting Sankey chart rendering with", data.length, "records");
+  
+  // Optimize for mobile
+  const isMobile = window.innerWidth < 768;
+  const entityLimit = isMobile ? 8 : 12; // Fewer entities on mobile
+  
+  // Always make sure processing indicator is hidden after we're done
+  const ensureProcessingHidden = () => {
+    if (processingIndicator) {
+      processingIndicator.classList.add('hidden');
+      processingIndicator.classList.remove('flex');
+    }
+  };
+  
+  // Error display helper
+  const showSankeyError = (errorMsg) => {
+    console.error("Sankey chart error:", errorMsg);
+    const sankeyWrapper = document.getElementById('sankeyWrapper');
+    if (sankeyWrapper) {
+      sankeyWrapper.innerHTML = `
+        <div class="chart-no-data">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+          </svg>
+          <span>${errorMsg}</span>
+        </div>`;
+    }
+    ensureProcessingHidden();
+  };
+
+  // Handle empty data case
+  if (!data || data.length === 0) {
+    showSankeyError("No data available for sankey chart");
+    return;
+  }
+  
+  try {
+    // Reference the SVG element correctly
+    const svg = d3.select("#sankeyChart");
+    svg.selectAll("*").remove();
+    
+    // Get actual container width - VERY IMPORTANT FOR SIZING
+    const sankeyWrapper = document.getElementById('sankeyWrapper');
+    const containerWidth = sankeyWrapper ? sankeyWrapper.clientWidth : 1000;
+    
+    // Adjust height for mobile
+    const height = isMobile ? 350 : 600;
+    const width = Math.max(containerWidth - 40, isMobile ? 300 : 800);
+    
+    console.log("Sankey container width:", containerWidth, "chart width:", width);
+    
+    // Set SVG width and height appropriately
+    svg.attr("width", width)
+       .attr("height", height)
+       .attr("viewBox", `0 0 ${width} ${height}`)
+       .attr("preserveAspectRatio", "xMidYMid meet");
+
+    // AGENCY to CONTRACTOR relationship
+    const agencyTotals = {};
+    const contractorTotals = {};
+    
+    data.forEach(row => {
+      const agency = row["Contracting Agency Name"];
+      const contractor = row["Legal Business Name"];
+      const amount = parseCurrencyValue(row["Base and All Options Value (Total Contract Value)"]);
+      
+      if (agency && amount) {
+        agencyTotals[agency] = (agencyTotals[agency] || 0) + amount;
+      }
+      
+      if (contractor && amount) {
+        contractorTotals[contractor] = (contractorTotals[contractor] || 0) + amount;
+      }
+    });
+    
+    // Get top agencies and contractors by value - LIMIT BASED ON DEVICE
+    const getTopEntities = (totals, limit) => {
+      return Object.entries(totals)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, limit)
+        .map(entry => entry[0]);
+    };
+    
+    const topAgencies = getTopEntities(agencyTotals, entityLimit);
+    const topContractors = getTopEntities(contractorTotals, entityLimit);
+    
+    // Filter data to only include top agencies and contractors
+    let processData = data.filter(row => {
+      return topAgencies.includes(row["Contracting Agency Name"]) && 
+             topContractors.includes(row["Legal Business Name"]);
+    });
+    
+    // If we have no data after filtering, show error
+    if (processData.length === 0) {
+      showSankeyError("No significant data flows to display");
+      return;
+    }
+
+    // Create nodes and links
+    const nodeMap = new Map();
+    const links = [];
+
+    // First pass: collect nodes
+    processData.forEach(row => {
+      const agency = row["Contracting Agency Name"];
+      const contractor = row["Legal Business Name"];
+      
+      if (agency) nodeMap.set(agency, { name: agency });
+      if (contractor) nodeMap.set(contractor, { name: contractor });
+    });
+
+    // Convert to array and create index
+    const nodes = Array.from(nodeMap.values());
+    const nodeIndex = new Map();
+    nodes.forEach((node, i) => {
+      node.id = i;
+      nodeIndex.set(node.name, i);
+    });
+
+    // Create links between agencies and contractors
+    const rawLinks = [];
+    processData.forEach(row => {
+      const agency = row["Contracting Agency Name"];
+      const contractor = row["Legal Business Name"];
+      const amount = parseCurrencyValue(row["Base and All Options Value (Total Contract Value)"]);
+
+      if (agency && contractor && amount > 0 && 
+          nodeIndex.has(agency) && nodeIndex.has(contractor)) {
+        
+        // Store raw connection info for highlighting later
+        rawLinks.push({
+          sourceName: agency,
+          targetName: contractor,
+          value: amount
+        });
+        
+        // Look for existing link
+        const existingLink = links.find(link => 
+          link.source === nodeIndex.get(agency) && 
+          link.target === nodeIndex.get(contractor)
+        );
+        
+        if (existingLink) {
+          existingLink.value += amount;
+        } else {
+          links.push({ 
+            source: nodeIndex.get(agency), 
+            target: nodeIndex.get(contractor), 
+            value: amount 
+          });
+        }
+      }
+    });
+
+    // Find the top value link
+    const sortedLinks = [...links].sort((a, b) => b.value - a[1]);
+    const topLink = sortedLinks.length > 0 ? sortedLinks[0] : null;
+    
+    // Get the source and target names for the top link
+    let topSourceName = null;
+    let topTargetName = null;
+    
+    if (topLink) {
+      // Find the node names from indices
+      for (const [name, id] of nodeIndex.entries()) {
+        if (id === topLink.source) topSourceName = name;
+        if (id === topLink.target) topTargetName = name;
+      }
+    }
+
+    // Filter small links to reduce clutter
+    let minLinkValue = 0;
+    if (links.length > 30) {
+      minLinkValue = d3.quantile(links.map(l => l.value).sort(d3.ascending), 0.15);
+    }
+    
+    const filteredLinks = links.filter(link => link.value > minLinkValue);
+
+    // Get highlight color from your existing palette function
+    const highlight = overrideChartHighlightColor || '#e63946';
+
+    // Setup the sankey generator
+    const sankey = d3.sankey()
+      .nodeId(d => d.id)
+      .nodeWidth(20)
+      .nodePadding(10)
+      .extent([[20, 20], [width - 20, height - 20]]);
+
+    // Generate the sankey data
+    const graph = sankey({
+      nodes: nodes,
+      links: filteredLinks.map(d => Object.assign({}, d))
+    });
+
+    // Draw the links with proper highlighting for the top value
+    svg.append("g")
+      .attr("fill", "none")
+      .attr("stroke-opacity", 0.4)
+      .selectAll("path")
+      .data(graph.links)
+      .join("path")
+      .attr("d", d3.sankeyLinkHorizontal())
+      .attr("stroke", d => {
+        // Check if this link corresponds to the top value link
+        if (topSourceName && topTargetName) {
+          const sourceName = d.source.name;
+          const targetName = d.target.name;
+          return (sourceName === topSourceName && targetName === topTargetName) 
+            ? highlight 
+            : getCSSVariable('--chart-accent-1');
+        }
+        return getCSSVariable('--chart-accent-1');
+      })
+      .attr("stroke-width", d => Math.max(1, d.width))
+      .append("title")
+      .text(d => `${d.source.name} → ${d.target.name}\n$${d.value.toLocaleString()}`);
+
+    // Draw the nodes with highlighting
+    svg.append("g")
+      .selectAll("rect")
+      .data(graph.nodes)
+      .join("rect")
+      .attr("x", d => d.x0)
+      .attr("y", d => d.y0)
+      .attr("height", d => Math.max(1, d.y1 - d.y0))
+      .attr("width", d => d.x1 - d.x0)
+      .attr("fill", d => {
+        // Highlight nodes that are part of the top value flow
+        if (topSourceName && topTargetName) {
+          return (d.name === topSourceName || d.name === topTargetName) 
+            ? highlight 
+            : getCSSVariable('--chart-accent-1');
+        }
+        return getCSSVariable('--chart-accent-1');
+      })
+      .attr("opacity", 0.8)
+      .style("stroke", "white")
+      .style("stroke-width", 0.5)
+      .style("cursor", "pointer")
+      .on("click", function(event, d) {
+        // If node is an agency (left side)
+        if (d.x0 < width / 2) {
+          setUnifiedSearchTerm(d.name, 'agencyName');
+        } 
+        // If node is a contractor (right side)
+        else {
+          setUnifiedSearchTerm(d.name, 'primeName');
+        }
+      })
+      .append("title")
+      .text(d => `${d.name}\n$${d.value.toLocaleString()}`);
+    
+    // Add node labels - with better mobile handling
+    svg.append("g")
+      .selectAll("text")
+      .data(graph.nodes)
+      .join("text")
+      .attr("x", d => d.x0 < width / 2 ? d.x1 + 6 : d.x0 - 6)
+      .attr("y", d => (d.y1 + d.y0) / 2)
+      .attr("dy", "0.35em")
+      .attr("text-anchor", d => d.x0 < width / 2 ? "start" : "end")
+      .text(d => {
+        // Shorter labels on mobile
+        const maxLength = isMobile ? 15 : 23;
+        return d.name.length > maxLength ? 
+          d.name.substring(0, maxLength - 3) + "..." : 
+          d.name;
+      })
+      .attr("font-size", isMobile ? "9px" : "11px")
+      .attr("fill", getCSSVariable('--text-primary'));
+    
+    console.log("Sankey chart render complete");
+    ensureProcessingHidden();
+
+  } catch (error) {
+    showSankeyError(`Error rendering sankey chart: ${error.message}`);
+    console.error(error);
+  }
+}
+
+function addResizeListener() {
+  // Debounce function to prevent excessive redraws
+  const debounce = (func, delay) => {
+    let debounceTimer;
+    return function() {
+      const context = this;
+      const args = arguments;
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => func.apply(context, args), delay);
+    };
+  };
+
+  // Handle window resize
+  window.addEventListener('resize', debounce(() => {
+    if (parsedData && parsedData.length > 0) {
+      console.log("Window resized, redrawing visualizations");
+      
+      // Use the currently filtered data if available
+      const currentData = document.getElementById('activeFilterIndicator').classList.contains('hidden') 
+        ? parsedData 
+        : (isViewingSpecificPrime ? parsedData.filter(r => r['Legal Business Name'] === specificPrimeName) : parsedData);
+      
+      // Only redraw essential visualizations on mobile to improve performance
+      const isMobile = window.innerWidth < 768;
+      
+      // Always redraw the map
+      if (contractorMap) {
+        setTimeout(() => {
+          contractorMap.invalidateSize();
+        }, 100);
+      }
+      
+      // Redraw Sankey only if not on a very small screen
+      if (!isMobile || window.innerWidth > 480) {
+        renderSankeyChart(currentData);
+      }
+    }
+  }, 250)); // 250ms debounce
+}
+
+function initializePrimeProfilesSection(data) { 
+    const profiles = {};
+    data.forEach(r => {
+        const name = r['Legal Business Name']; if (!name) return;
+        if (!profiles[name]) profiles[name] = { name: name, contracts: 0, totalValue: 0, naics: new Set(), agencies: new Set(), uei: r['Unique Entity ID'] }; 
+        profiles[name].contracts++; profiles[name].totalValue += parseCurrencyValue(r['Base and All Options Value (Total Contract Value)']);
+        if(r['NAICS Code']) profiles[name].naics.add(String(r['NAICS Code'])); 
+        if(r['Contracting Agency Name']) profiles[name].agencies.add(r['Contracting Agency Name']);
+    });
+    
+    // Just render the cards with all the data - no filter parameter needed
+    renderCards();
+    
+    function renderCards() {
+        primeProfilesContainer.innerHTML = ''; 
+        let count = 0;
+        
+        // Just use the data passed to the function, which is already filtered by unified search
+        Object.values(profiles)
+            .sort((a,b) => b.totalValue - a.totalValue)
+            .forEach(p => { 
+                count++;
+                const card = document.createElement('div');
+                card.className = 'p-3 md:p-4 bg-[var(--surface-level-2)] rounded-lg border border-[var(--border-level-1)] shadow hover:shadow-lg transition-shadow duration-150'; 
+                card.innerHTML = `
+                    <h4 class="font-semibold text-[var(--accent)] truncate cursor-pointer hover:underline" title="${p.name}" onclick="setUnifiedSearchTerm('${p.name.replace(/'/g, "\\'")}', 'primeName')">${p.name}</h4>
+                    <p class="text-xs md:text-sm">Contracts: ${p.contracts.toLocaleString()}</p>
+                    <p class="text-xs md:text-sm">Value: ${formatCurrency(p.totalValue)}</p>
+                    <p class="text-xs mt-1 truncate" title="Top NAICS: ${Array.from(p.naics).slice(0,3).join(', ')}">Top NAICS: ${Array.from(p.naics).slice(0,3).join(', ')}</p>
+                    <p class="text-xs mt-1 truncate" title="Top Agencies: ${Array.from(p.agencies).slice(0,2).join(', ')}">Top Agencies: ${Array.from(p.agencies).slice(0,2).join(', ')}</p>
+                    <button class="mt-2 text-xs bg-[var(--accent)] text-[var(--on-accent)] px-2 py-1 rounded hover:bg-opacity-90 transition-colors duration-150 ease-in-out focus:ring-2 focus:ring-offset-2 ring-[var(--accent)] focus:outline-none" style="font-weight: var(--button-font-weight);" onclick="setUnifiedSearchTerm('${p.name.replace(/'/g, "\\'")}', 'primeName')">Filter Dashboard by this Prime</button>`; 
+                primeProfilesContainer.appendChild(card);
+        });
+        if(count === 0) primeProfilesContainer.innerHTML = `<p class="p-4 col-span-full text-center text-[var(--text-secondary)]">No primes match current filters.</p>`;
+    }
+}
+
+function renderPrimeDetailView(primeName, primeSpecificData) {
+    if (!primeName || primeSpecificData.length === 0) {
+        primeDetailViewSection.classList.add('hidden');
+        return;
+    }
+
+    primeDetailTitle.textContent = `Details for: ${primeName}`;
+    const primeRecord = primeSpecificData[0]; 
+    const primeUEI = primeRecord ? primeRecord['Unique Entity ID'] : 'N/A';
+    const parentUEI = primeRecord ? primeRecord['Ultimate Parent Unique Entity ID'] : 'N/A';
+    const parentName = primeRecord ? primeRecord['Ultimate Parent Legal Business Name'] : 'N/A';
+
+    let totalValue = 0;
+    primeSpecificData.forEach(c => {
+        totalValue += parseCurrencyValue(c['Base and All Options Value (Total Contract Value)']);
+    });
+
+    primeDetailStats.innerHTML = `
+        <p><strong>UEI:</strong> ${createEntityLink(primeUEI, primeUEI)}</p> 
+        ${parentName && parentName !== 'N/A' ? `<p><strong>Parent:</strong> ${createEntityLink(parentUEI, parentName)}</p>` : ''}
+        <p><strong>Total Contracts (current view):</strong> ${primeSpecificData.length.toLocaleString()}</p>
+        <p><strong>Total Value (current view):</strong> ${formatCurrency(totalValue)}</p>
+        <p><strong>Avg. Contract Value (current view):</strong> ${formatCurrency(primeSpecificData.length > 0 ? totalValue / primeSpecificData.length : 0)}</p>
+    `;
+    
+    currentPrimeDetailViewPage = 1; 
+    renderPrimeDetailContractsTable(primeSpecificData, currentPrimeDetailViewPage); 
+    primeDetailViewSection.classList.remove('hidden');
+}
+
+function renderPrimeDetailContractsTable(contracts, page) {
+    const start = (page - 1) * ITEMS_PER_PAGE_MODAL_TABLE;
+    const end = start + ITEMS_PER_PAGE_MODAL_TABLE;
+    
+    // Sort contracts before slicing for pagination
+    const sortedContracts = sortPrimeDetailData(contracts, currentPrimeDetailSort.column, currentPrimeDetailSort.order);
+    const pageContracts = sortedContracts.slice(start, end);
+    
+    let tableHTML = `<div class="table-responsive"><table class="min-w-full divide-y divide-[var(--border-level-1)] text-xs">
+        <thead class="bg-[var(--surface-level-2)]"><tr>
+            <th class="px-2 py-2 text-left font-medium text-[var(--text-secondary)]" data-sort-prime="id">PIID ${currentPrimeDetailSort.column === 'id' ? (currentPrimeDetailSort.order === 'asc' ? '▲' : '▼') : ''}</th>
+            <th class="px-2 py-2 text-left font-medium text-[var(--text-secondary)]" data-sort-prime="agency">Agency ${currentPrimeDetailSort.column === 'agency' ? (currentPrimeDetailSort.order === 'asc' ? '▲' : '▼') : ''}</th>
+            <th class="px-2 py-2 text-left font-medium text-[var(--text-secondary)]" data-sort-prime="office">Office ${currentPrimeDetailSort.column === 'office' ? (currentPrimeDetailSort.order === 'asc' ? '▲' : '▼') : ''}</th>
+            <th class="px-2 py-2 text-left font-medium text-[var(--text-secondary)]" data-sort-prime="naicsCode">NAICS ${currentPrimeDetailSort.column === 'naicsCode' ? (currentPrimeDetailSort.order === 'asc' ? '▲' : '▼') : ''}</th>
+            <th class="px-2 py-2 text-left font-medium text-[var(--text-secondary)]" data-sort-prime="naicsDesc">NAICS Desc. ${currentPrimeDetailSort.column === 'naicsDesc' ? (currentPrimeDetailSort.order === 'asc' ? '▲' : '▼') : ''}</th>
+            <th class="px-2 py-2 text-left font-medium text-[var(--text-secondary)]" data-sort-prime="value">Value ${currentPrimeDetailSort.column === 'value' ? (currentPrimeDetailSort.order === 'asc' ? '▲' : '▼') : ''}</th>
+            <th class="px-2 py-2 text-left font-medium text-[var(--text-secondary)]" data-sort-prime="endDate">End Date ${currentPrimeDetailSort.column === 'endDate' ? (currentPrimeDetailSort.order === 'asc' ? '▲' : '▼') : ''}</th>
+        </tr></thead><tbody class="bg-[var(--background)] divide-y divide-[var(--border-level-1)]">`;
+    
+    pageContracts.forEach(c => {
+        tableHTML += `<tr>
+            <td class="px-2 py-1 whitespace-nowrap">${createAwardLink(c['Procurement Instrument Identifier'])}</td>
+            <td class="px-2 py-1 whitespace-nowrap">${c['Contracting Agency Name'] || 'N/A'}</td>
+            <td class="px-2 py-1 whitespace-nowrap">${c['Contracting Office Name'] || 'N/A'}</td>
+            <td class="px-2 py-1">${c['NAICS Code'] || 'N/A'}</td>
+            <td class="px-2 py-1 whitespace-normal max-w-xs truncate" title="${c['NAICS Description'] || ''}">${c['NAICS Description'] ? c['NAICS Description'].substring(0,50) + (c['NAICS Description'].length > 50 ? '...' : '') : 'N/A'}</td>
+            <td class="px-2 py-1 whitespace-nowrap">${formatCurrency(parseCurrencyValue(c['Base and All Options Value (Total Contract Value)']))}</td>
+            <td class="px-2 py-1 whitespace-nowrap">${formatDate(c['Completion Date'])}</td>
+        </tr>`;
+    });
+    tableHTML += `</tbody></table></div>`;
+    
+    const totalPages = Math.ceil(contracts.length / ITEMS_PER_PAGE_MODAL_TABLE);
+    if (totalPages > 1) {
+         tableHTML += `<div class="mt-3 flex justify-between items-center text-xs">
+            <button id="prevPageBtnPrimeDetailView" class="px-2 py-1 border border-[var(--border-level-2)] rounded ${page === 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[var(--surface-level-2)] transition-colors'}" ${page === 1 ? 'disabled' : ''}>Previous</button>
+            <span>Page ${page} of ${totalPages}</span>
+            <button id="nextPageBtnPrimeDetailView" class="px-2 py-1 border border-[var(--border-level-2)] rounded ${page === totalPages ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[var(--surface-level-2)] transition-colors'}" ${page === totalPages ? 'disabled' : ''}>Next</button>
+        </div>`;
+    }
+    
+    primeDetailContractsTableContainer.innerHTML = tableHTML;
+
+    document.querySelectorAll('#primeDetailContractsTableContainer th[data-sort-prime]').forEach(th => {
+        th.onclick = () => { 
+            const sortColumn = th.dataset.sortPrime;
+            if (currentPrimeDetailSort.column === sortColumn) {
+                currentPrimeDetailSort.order = currentPrimeDetailSort.order === 'asc' ? 'desc' : 'asc';
+            } else {
+                currentPrimeDetailSort.column = sortColumn;
+                currentPrimeDetailSort.order = 'asc';
+            }
+            currentPrimeDetailViewPage = 1; 
+            // Re-fetch the original primeSpecificData for sorting, not just the 'contracts' (which might be a page)
+            const primeSpecificDataForSort = parsedData.filter(r => r['Legal Business Name'] === specificPrimeName);
+            const sortedContracts = sortPrimeDetailData(primeSpecificDataForSort, currentPrimeDetailSort.column, currentPrimeDetailSort.order);
+            renderPrimeDetailContractsTable(sortedContracts, currentPrimeDetailViewPage);
+        };
+    });
+
+    if (document.getElementById('prevPageBtnPrimeDetailView')) {
+        document.getElementById('prevPageBtnPrimeDetailView').onclick = () => {
+            if (currentPrimeDetailViewPage > 1) { 
+                currentPrimeDetailViewPage--; 
+                const primeSpecificDataForSort = parsedData.filter(r => r['Legal Business Name'] === specificPrimeName);
+                const sortedContracts = sortPrimeDetailData(primeSpecificDataForSort, currentPrimeDetailSort.column, currentPrimeDetailSort.order);
+                renderPrimeDetailContractsTable(sortedContracts, currentPrimeDetailViewPage); 
+            }
+        };
+    }
+    if (document.getElementById('nextPageBtnPrimeDetailView')) {
+        document.getElementById('nextPageBtnPrimeDetailView').onclick = () => {
+            const primeSpecificDataForSort = parsedData.filter(r => r['Legal Business Name'] === specificPrimeName);
+            const totalPagesForButton = Math.ceil(primeSpecificDataForSort.length / ITEMS_PER_PAGE_MODAL_TABLE);
+            if (currentPrimeDetailViewPage < totalPagesForButton) { 
+                currentPrimeDetailViewPage++; 
+                const sortedContracts = sortPrimeDetailData(primeSpecificDataForSort, currentPrimeDetailSort.column, currentPrimeDetailSort.order);
+                renderPrimeDetailContractsTable(sortedContracts, currentPrimeDetailViewPage); 
+            }
+        };
+    }
+}
+
+function sortPrimeDetailData(data, column, order) {
+    return [...data].sort((a, b) => {
+        let valA, valB;
+        switch (column) {
+            case 'id':
+                valA = a['Procurement Instrument Identifier'] || '';
+                valB = b['Procurement Instrument Identifier'] || '';
+                break;
+            case 'agency':
+                valA = a['Contracting Agency Name'] || '';
+                valB = b['Contracting Agency Name'] || '';
+                break;
+            case 'office':
+                valA = a['Contracting Office Name'] || '';
+                valB = b['Contracting Office Name'] || '';
+                break;
+            case 'naicsCode':
+                valA = String(a['NAICS Code'] || '');
+                valB = String(b['NAICS Code'] || '');
+                break;
+            case 'naicsDesc':
+                valA = a['NAICS Description'] || '';
+                valB = b['NAICS Description'] || '';
+                break;
+            case 'value':
+                valA = parseCurrencyValue(a['Base and All Options Value (Total Contract Value)']);
+                valB = parseCurrencyValue(b['Base and All Options Value (Total Contract Value)']);
+                break;
+            case 'endDate':
+                valA = new Date(a['Completion Date'] || 0).getTime();
+                valB = new Date(b['Completion Date'] || 0).getTime();
+                break;
+            default:
+                return 0;
+        }
+
+        if (typeof valA === 'string') valA = valA.toLowerCase();
+        if (typeof valB === 'string') valB = valB.toLowerCase();
+        
+        if (valA < valB) return order === 'asc' ? -1 : 1;
+        if (valA > valB) return order === 'asc' ? 1 : -1;
+        return 0;
+    });
+}
+
+
+function setUnifiedSearchTerm(term, type = 'primeName') { 
+    unifiedSearchInput.value = term;
+    applyFilter(term, type, term); 
+}
+
+
+// --- Contract Expiration Calendar Section --- 
+function initializeContractExpirationCalendarSection(data) { 
+    const events = [];
+    data.forEach(r => {
+        if (r['Completion Date']) {
+            const date = new Date(r['Completion Date']);
+            if (!isNaN(date.getTime())) events.push({
+                date: date, 
+                prime: r['Legal Business Name'], 
+                value: parseCurrencyValue(r['Base and All Options Value (Total Contract Value)']), 
+                id: r['Procurement Instrument Identifier'] || 'N/A',
+                agency: r['Contracting Agency Name'] || 'N/A',
+                office: r['Contracting Office Name'] || 'N/A' 
+            });
+        }
+    });
+    events.sort((a,b) => a.date - b.date);
+    
+    calendarYearSelect.innerHTML = ''; 
+    calendarMonthSelect.innerHTML = ''; 
+    const currentYear = new Date().getFullYear();
+    for (let i = currentYear - 5; i <= currentYear + 5; i++) {
+        const option = document.createElement('option');
+        option.value = i;
+        option.textContent = i;
+        calendarYearSelect.appendChild(option);
+    }
+    const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    monthNames.forEach((month, index) => {
+        const option = document.createElement('option');
+        option.value = index;
+        option.textContent = month;
+        calendarMonthSelect.appendChild(option);
+    });
+
+    currentCalendarDate = new Date(currentCalendarDate.getFullYear(), currentCalendarDate.getMonth(), 1);
+    calendarYearSelect.value = currentCalendarDate.getFullYear();
+    calendarMonthSelect.value = currentCalendarDate.getMonth();
+
+
+    calendarPrevBtn.onclick = () => { currentCalendarDate.setMonth(currentCalendarDate.getMonth()-1); updateCalendarSelectors(); renderCalView(); };
+    calendarNextBtn.onclick = () => { currentCalendarDate.setMonth(currentCalendarDate.getMonth()+1); updateCalendarSelectors(); renderCalView(); };
+    calendarMonthSelect.onchange = () => { currentCalendarDate.setMonth(parseInt(calendarMonthSelect.value)); renderCalView(); };
+    calendarYearSelect.onchange = () => { currentCalendarDate.setFullYear(parseInt(calendarYearSelect.value)); renderCalView(); };
+
+    function updateCalendarSelectors() {
+        calendarYearSelect.value = currentCalendarDate.getFullYear();
+        calendarMonthSelect.value = currentCalendarDate.getMonth();
+    }
+
+
+function renderCalView() {
+    const year = currentCalendarDate.getFullYear(), month = currentCalendarDate.getMonth();
+    calendarTitleEl.textContent = `${new Intl.DateTimeFormat('en-US',{month:'long'}).format(currentCalendarDate)} ${year}`;
+    const firstD = new Date(year, month, 1), lastD = new Date(year, month + 1, 0);
+    const daysInM = lastD.getDate(), firstDOW = firstD.getDay();
+    let html = '';
+    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+    // Render weekday headers
+    dayNames.forEach(d => {
+        html += `<div class="calendar-day-header text-xs sm:text-sm">${d}</div>`;
+    });
+
+    // Render filler cells for days before the 1st of the month
+    for (let i = 0; i < firstDOW; i++) {
+        html += `<div class="calendar-filler-cell p-1 sm:p-2 border min-h-[60px] sm:min-h-[80px] relative"
+                role="presentation" aria-hidden="true"></div>`;
+
+    }
+
+    // Render each day of the current month
+    for (let day = 1; day <= daysInM; day++) {
+        const currentDateObj = new Date(year, month, day);
+        const dEvents = events.filter(e =>
+            e.date.getFullYear() === year &&
+            e.date.getMonth() === month &&
+            e.date.getDate() === day
+        );
+
+        let dayBgClass = '';
+        if (dEvents.length > 0) dayBgClass = 'bg-blue-50 dark:bg-blue-900 dark:border-blue-700';
+        if (dEvents.length > 2) dayBgClass = 'bg-blue-100 dark:bg-blue-800 dark:border-blue-600';
+        if (dEvents.length > 5) dayBgClass = 'bg-blue-200 dark:bg-blue-700 dark:border-blue-500';
+
+        html += `<div class="calendar-day-cell p-1 sm:p-2 border dark:border-gray-700 min-h-[60px] sm:min-h-[80px] relative ${dayBgClass}"
+                     ${dEvents.length > 0 ? `onclick="showCalendarDayDetailsModal(new Date(${year},${month},${day}), JSON.parse(this.dataset.eventsJson))" data-events-json='${JSON.stringify(dEvents).replace(/'/g, "&apos;")}'` : ''}
+                     role="button" tabindex="0" aria-label="${dEvents.length > 0 ? dEvents.length + ' contracts ending' : 'No contracts ending'} on ${formatDate(currentDateObj)}">
+                    <div class="font-semibold text-right text-gray-700 dark:text-gray-300 text-xs sm:text-sm">${day}</div>`;
+        dEvents.slice(0, 2).forEach(e => {
+            html += `<div class="calendar-event" title="${e.prime} (${formatCurrency(e.value)}) - ID: ${e.id}">
+                        ${e.prime ? e.prime.substring(0, 8) + (e.prime.length > 8 ? '...' : '') : 'Contract'}
+                     </div>`;
+        });
+        if (dEvents.length > 2) html += `<div class="text-xs mt-1">${dEvents.length - 2} more</div>`;
+        html += `</div>`;
+    }
+
+    calendarGridEl.innerHTML = html;
+}
+renderCalView();
+}
+function showCalendarDayDetailsModal(dateObj, eventsOnDate) {
+    const formattedDate = formatDate(dateObj);
+    let currentCalendarPage = 1;
+    // currentCalendarModalSort is a global variable
+
+    function sortEvents(events, column, order) { 
+        return [...events].sort((a, b) => {
+            let valA = a[column];
+            let valB = b[column];
+            if (column === 'value') {
+                valA = parseFloat(valA); 
+                valB = parseFloat(valB);
+            } else if (typeof valA === 'string') {
+                valA = valA.toLowerCase();
+                valB = valB.toLowerCase();
+            } else if (valA === null || valA === undefined) { 
+                return order === 'asc' ? -1 : 1;
+            } else if (valB === null || valB === undefined) {
+                return order === 'asc' ? 1 : -1;
+            }
+
+            if (valA < valB) return order === 'asc' ? -1 : 1;
+            if (valA > valB) return order === 'asc' ? 1 : -1;
+            return 0;
+        });
+    }
+    
+    let sortedEvents = sortEvents(eventsOnDate, currentCalendarModalSort.column, currentCalendarModalSort.order);
+
+
+    function renderCalendarDayPage(page, sortedData) {
+        const start = (page - 1) * ITEMS_PER_PAGE_MODAL_TABLE;
+        const end = start + ITEMS_PER_PAGE_MODAL_TABLE;
+        const pageEvents = sortedData.slice(start, end);
+
+        let tableHTML = `<div class="table-responsive"><table class="min-w-full divide-y divide-[var(--border-level-1)] text-xs">
+            <thead class="bg-[var(--surface-level-2)]"><tr> 
+                <th class="px-2 py-2 text-left font-medium text-[var(--text-secondary)]" data-sort-cal="id">PIID ${currentCalendarModalSort.column === 'id' ? (currentCalendarModalSort.order === 'asc' ? '▲' : '▼') : ''}</th>
+                <th class="px-2 py-2 text-left font-medium text-[var(--text-secondary)]" data-sort-cal="prime">Prime ${currentCalendarModalSort.column === 'prime' ? (currentCalendarModalSort.order === 'asc' ? '▲' : '▼') : ''}</th>
+                <th class="px-2 py-2 text-left font-medium text-[var(--text-secondary)]" data-sort-cal="agency">Agency ${currentCalendarModalSort.column === 'agency' ? (currentCalendarModalSort.order === 'asc' ? '▲' : '▼') : ''}</th>
+                <th class="px-2 py-2 text-left font-medium text-[var(--text-secondary)]" data-sort-cal="office">Office ${currentCalendarModalSort.column === 'office' ? (currentCalendarModalSort.order === 'asc' ? '▲' : '▼') : ''}</th>
+                <th class="px-2 py-2 text-left font-medium text-[var(--text-secondary)]" data-sort-cal="value">Value ${currentCalendarModalSort.column === 'value' ? (currentCalendarModalSort.order === 'asc' ? '▲' : '▼') : ''}</th>
+            </tr></thead>
+            <tbody class="bg-[var(--background)] divide-y divide-[var(--border-level-1)]">`;
+        pageEvents.forEach(event => {
+            tableHTML += `<tr>
+                <td class="px-2 py-1 whitespace-nowrap">${createAwardLink(event.id)}</td>
+                <td class="px-2 py-1 whitespace-nowrap">${event.prime || 'N/A'}</td>
+                <td class="px-2 py-1 whitespace-nowrap">${event.agency || 'N/A'}</td>
+                <td class="px-2 py-1 whitespace-nowrap">${event.office || 'N/A'}</td>
+                <td class="px-2 py-1 whitespace-nowrap">${formatCurrency(event.value)}</td>
+            </tr>`;
+        });
+        tableHTML += `</tbody></table></div>`;
+        
+        const totalPages = Math.ceil(sortedData.length / ITEMS_PER_PAGE_MODAL_TABLE);
+        if (totalPages > 1) { 
+            tableHTML += `<div class="mt-3 flex justify-between items-center text-xs">
+                <button id="prevPageBtnCal" class="px-2 py-1 border border-[var(--border-level-2)] rounded ${page === 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[var(--surface-level-2)] transition-colors'}" ${page === 1 ? 'disabled' : ''}>Previous</button>
+                <span>Page ${page} of ${totalPages}</span>
+                <button id="nextPageBtnCal" class="px-2 py-1 border border-[var(--border-level-2)] rounded ${page === totalPages ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[var(--surface-level-2)] transition-colors'}" ${page === totalPages ? 'disabled' : ''}>Next</button>
+            </div>`;
+        }
+        
+        const tableContainer = document.getElementById('calendarDayTableContainer');
+        if (tableContainer) {
+            tableContainer.innerHTML = tableHTML;
+        } else { 
+            genericModalBody.innerHTML = `
+                <p class="mb-3 text-sm text-[var(--text-secondary)]">Total Contracts Ending: ${sortedData.length}</p>
+                <div id="calendarDayTableContainer">${tableHTML}</div>`;
+        }
+
+        document.querySelectorAll('#calendarDayTableContainer th[data-sort-cal]').forEach(th => {
+            th.onclick = () => { 
+                const sortColumn = th.dataset.sortCal;
+                if (currentCalendarModalSort.column === sortColumn) {
+                    currentCalendarModalSort.order = currentCalendarModalSort.order === 'asc' ? 'desc' : 'asc';
+                } else {
+                    currentCalendarModalSort.column = sortColumn;
+                    currentCalendarModalSort.order = 'asc';
+                }
+                currentCalendarPage = 1; 
+                sortedEvents = sortEvents(eventsOnDate, currentCalendarModalSort.column, currentCalendarModalSort.order); 
+                renderCalendarDayPage(currentCalendarPage, sortedEvents);
+				};
+        });
+
+
+        if (document.getElementById('prevPageBtnCal')) {
+            document.getElementById('prevPageBtnCal').onclick = () => {
+                if (currentCalendarPage > 1) { currentCalendarPage--; renderCalendarDayPage(currentCalendarPage, sortedEvents); }
+            };
+        }
+        if (document.getElementById('nextPageBtnCal')) {
+            document.getElementById('nextPageBtnCal').onclick = () => {
+                if (currentCalendarPage < totalPages) { currentCalendarPage++; renderCalendarDayPage(currentCalendarPage, sortedEvents); }
+            };
+        }
+    }
+    
+    const initialModalHTML = `
+        <p class="mb-3 text-sm text-[var(--text-secondary)]">Total Contracts Ending: ${eventsOnDate.length}</p>
+        <div id="calendarDayTableContainer">
+        </div>`;
+
+    openModal(`Contract Expirations for ${formattedDate}`, initialModalHTML, 'modal-content-lg'); 
+    renderCalendarDayPage(currentCalendarPage, sortedEvents); 
+}
+
+
+// --- Event Listeners for Chart Filters ---
+document.getElementById('stateChartFilters_main').addEventListener('click', function(e) { 
+    if (e.target.classList.contains('filter-btn')) {
+        const filterType = e.target.dataset.filter;
+        currentMainStateChartFilter = filterType;
+        this.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+        e.target.classList.add('active');
+        applyFilter(unifiedSearchInput.value.trim()); 
+    }
+});
+
+// --- File Input Handling ---
+csvFileInput.addEventListener('change', function(e) { 
+    const file = e.target.files[0]; if (!file) { fileNameDisplay.textContent = 'No file'; return; }
+    fileNameDisplay.textContent = file.name; showProcessingBriefly();
+    Papa.parse(file, {
+        header: true, dynamicTyping: true, skipEmptyLines: true,
+        complete: results => {
+            if (results.errors && results.errors.length > 0) { showErrorMessage('CSV Error: ' + results.errors[0].message); return; }
+            if (results.data && results.data.length > 0) {
+                showSuccessMessage('File processed!', false); processAndInitialize(results.data);
+                s3LoadErrorDiv.classList.add('hidden'); 
+            } else showErrorMessage('No data in file.');
+        },
+        error: error => showErrorMessage('CSV Parse Fail: ' + error.message)
+    });
+});
+
+// --- Theme Toggle & Share View Logic ---
+function applyInitialTheme() {
+    document.documentElement.classList.remove('dark');
+    localStorage.removeItem('theme'); 
+    
+    if (themeIconSun && themeIconMoon) { 
+        themeIconSun.classList.remove('hidden');
+        themeIconMoon.classList.add('hidden');
+    }
+    updateChartDefaults();
+}
+
+function updateChartDefaults() {
+    const isDarkMode = document.documentElement.classList.contains('dark');
+    const styles = getComputedStyle(document.documentElement);
+    const textColor = styles.getPropertyValue('--text-secondary').trim(); 
+    const gridColor = styles.getPropertyValue('--border-level-2').trim(); 
+
+    Chart.defaults.color = textColor;
+    Chart.defaults.borderColor = gridColor;
+    
+    if (parsedData && parsedData.length > 0) { 
+        if (isViewingSpecificPrime && specificPrimeName) {
+            applyFilter(specificPrimeName, 'primeName', specificPrimeName);
+        } else {
+            applyFilter(unifiedSearchInput.value.trim());
+        }
+    }
+}
+
+
+if (themeToggleBtn) {
+    themeToggleBtn.addEventListener('click', () => {
+        document.documentElement.classList.toggle('dark');
+        if (document.documentElement.classList.contains('dark')) {
+            localStorage.setItem('theme', 'dark');
+            if(themeIconSun) themeIconSun.classList.add('hidden');
+            if(themeIconMoon) themeIconMoon.classList.remove('hidden');
+        } else {
+            localStorage.setItem('theme', 'light');
+            if(themeIconSun) themeIconSun.classList.remove('hidden');
+            if(themeIconMoon) themeIconMoon.classList.add('hidden');
+        }
+        getChartColors(); 
+        updateChartDefaults();
+    });
+}
+
+
+shareViewBtn.addEventListener('click', () => {
+    const url = new URL(window.location.href);
+    url.searchParams.delete('search'); 
+    url.searchParams.delete('filterType'); 
+    url.searchParams.delete('filterValue'); 
+
+    const currentSearchTermInBar = unifiedSearchInput.value.trim();
+
+    if (isViewingSpecificPrime && specificPrimeName) { 
+        url.searchParams.set('filterType', 'primeName');
+        url.searchParams.set('filterValue', specificPrimeName);
+    } else if (currentSearchTermInBar) { 
+        url.searchParams.set('search', currentSearchTermInBar);
+    }
+    
+    navigator.clipboard.writeText(url.toString()).then(() => {
+        shareToast.classList.remove('hidden');
+        setTimeout(() => {
+            shareToast.classList.add('hidden');
+        }, 2000);
+    }).catch(err => {
+        console.error('Failed to copy URL: ', err);
+        alert('Failed to copy link. Please copy the URL from your browser bar.');
+    });
+});
+
+function applyFiltersFromURL() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const searchParam = urlParams.get('search');
+    const filterTypeParam = urlParams.get('filterType');
+    const filterValueParam = urlParams.get('filterValue');
+
+    if (filterTypeParam && filterValueParam) {
+        unifiedSearchInput.value = filterValueParam; 
+        applyFilter(filterValueParam, filterTypeParam, filterValueParam);
+    } else if (searchParam) {
+        unifiedSearchInput.value = searchParam;
+        applyFilter(searchParam); 
+    }
+    
+    // Add highlighting to prime profile section when search is active
+    if (unifiedSearchInput.value && unifiedSearchInput.value.trim() !== '') {
+        document.getElementById('primeProfilesSection').classList.add('highlight-section');
+    } else {
+        document.getElementById('primeProfilesSection').classList.remove('highlight-section');
+    }
+}
+
+document.getElementById('resetMapBtn').addEventListener('click', () => {
+  if (contractorMap) {
+    // Reset the view to default zoom level (using 3 for more zoomed out)
+    contractorMap.setView([39.8283, -98.5795], 3);
+    console.log("Map view reset");
+  }
+});
+
+document.getElementById('resetSankeyBtn').addEventListener('click', () => {
+  // Clear any active filters
+  unifiedSearchInput.value = '';
+  clearAllFilters();
+  
+  // Re-render sankey with full dataset
+  renderSankeyChart(parsedData);
+});
+
+// Clear search button
+document.getElementById('clearSearchBtn').addEventListener('click', () => {
+    unifiedSearchInput.value = '';
+    clearAllFilters();
+});
+
+// Global reset button
+document.getElementById('globalResetBtn').addEventListener('click', () => {
+    // Clear search input
+    unifiedSearchInput.value = '';
+
+    // Clear all filters and reset views
+    clearAllFilters();
+    
+    // Reset map view
+    if (contractorMap) {
+        contractorMap.setView([39.8283, -98.5795], 3);
+    }
+});
+
+// --- Page Load ---
+document.addEventListener('DOMContentLoaded', () => {
+    getChartColors();     // Load CSS-based chart colors first
+    initializeChartDefaults(); // Initialize chart defaults for better mobile experience
+    loadDataFromS3();     // Then load and render your charts
+    addResizeListener();
+
+    // Check for stored theme preference
+    const storedTheme = localStorage.getItem('theme');
+    if (storedTheme === 'dark') {
+        document.documentElement.classList.add('dark');
+        if(themeIconSun) themeIconSun.classList.add('hidden');
+        if(themeIconMoon) themeIconMoon.classList.remove('hidden');
+    }
+
+    // Add touch event listeners for better mobile experience
+    if ('ontouchstart' in window) {
+        // Add any touch-specific initializations here
+        document.querySelectorAll('button, .filter-btn, .calendar-day-cell').forEach(el => {
+            el.addEventListener('touchstart', function() {
+                this.classList.add('active-touch');
+            });
+            el.addEventListener('touchend', function() {
+                this.classList.remove('active-touch');
+            });
+        });
+    }
+});
+</script>
+</html>
