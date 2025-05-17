@@ -1200,10 +1200,10 @@ footer img[src*="powered-by-aws"] {
                 </div>
             </section>	
 <section id="visualizationSection" class="mb-6">
-  <h2 class="text-lg md:text-xl font-semibold text-[var(--accent)] mb-4 px-2" style="font-weight: var(--header-font-weight);">Interactive Visualizations</h2>
+  <h2 class="text-lg md:text-xl font-semibold text-[var(--accent)] mb-4 px-2" style="font-weight: var(--header-font-weight);">Funding Flow Visualization</h2>
   
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
-    <!-- Sankey Chart -->
+  <div class="grid grid-cols-1 gap-4 md:gap-6">
+    <!-- Sankey Chart (now full width) -->
     <div id="sankeySection" class="dashboard-card p-4 md:p-6">
       <div class="flex justify-between items-center mb-4">
         <div>
@@ -1217,153 +1217,97 @@ footer img[src*="powered-by-aws"] {
         <svg id="sankeyChart" class="w-full h-[500px]" viewBox="0 0 1000 600" preserveAspectRatio="xMidYMid meet"></svg>
       </div>
     </div>
-    
-    <!-- Map Section -->
-    <div id="contractorMapSection" class="dashboard-card p-4 md:p-6">
-      <div class="flex justify-between items-center mb-4">
-        <div>
-          <h3 class="text-md md:text-lg font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Prime Contractor Map</h3>
-        </div>
-        <button id="resetMapBtn" class="px-3 py-1 bg-[var(--accent)] text-[var(--on-accent)] rounded hover:bg-opacity-90 transition text-sm">
-          Reset
-        </button>
-      </div>
-      <div id="contractorMap" style="height: 500px; width: 100%;" class="rounded border border-[var(--border-level-2)]"></div>
-    </div>
   </div>
-</section>
-            
+</section>         
             <!-- Core Charts Section -->
-            <section class="mb-6">
-                <h2 class="text-lg md:text-xl font-semibold text-[var(--accent)] mb-4 px-2" style="font-weight: var(--header-font-weight);">Analysis Charts</h2>
+<section class="mb-6">
+                <h2 class="text-lg md:text-xl font-semibold text-[var(--accent)] mb-4 px-2" style="font-weight: var(--header-font-weight);">Key Analysis Charts</h2>
                 
-                <div id="coreChartsSection" class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                    <!-- Prime Contractors Chart -->
-                    <div id="primeContractorsChartCard" class="dashboard-card p-4 md:p-6">
-                        <div class="flex justify-between items-center mb-3">
-                            <h3 class="text-md md:text-lg font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Top Prime Contractors by Value</h3>
-                            <span class="text-[var(--text-tertiary)] cursor-help" title="Shows the top 10 prime contractors by total contract value">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                            </span>
+                <div class="space-y-6"> 
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+                        <div id="primeContractorsChartCard" class="dashboard-card p-4 md:p-6">
+                            <div class="flex justify-between items-center mb-3">
+                                <h3 class="text-md md:text-lg font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Top Prime Contractors</h3>
+                                <span class="text-[var(--text-tertiary)] cursor-help" title="Shows the top 10 prime contractors by total contract value">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                </span>
+                            </div>
+                            <div class="chart-container h-[280px]"><canvas id="primeContractorsChart"></canvas></div>
                         </div>
-                        <div class="chart-container">
-                            <canvas id="primeContractorsChart"></canvas>
+
+                        <div id="marketShareChartCard" class="dashboard-card p-4 md:p-6"> 
+                            <div class="flex justify-between items-center mb-3">
+                                <h3 class="text-md md:text-lg font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Prime Market Share</h3>
+                                <span class="text-[var(--text-tertiary)] cursor-help" title="Market share percentage of prime contractors based on current filters">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                </span>
+                            </div>
+                            <div class="chart-container h-[280px]"><canvas id="marketShareChart"></canvas></div>
                         </div>
-                    </div>
-                    
-                    <!-- Department Chart -->
-                    <div class="dashboard-card p-4 md:p-6">
-                        <div class="flex justify-between items-center mb-3">
-                            <h3 class="text-md md:text-lg font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Department Contract Distribution</h3>
-                            <span class="text-[var(--text-tertiary)] cursor-help" title="Distribution of contract value by department">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                            </span>
-                        </div>
-                        <div class="chart-container">
-                            <canvas id="departmentChart"></canvas>
-                        </div>
-                    </div>
-                    
-                    <!-- NAICS Chart -->
-                    <div class="dashboard-card p-4 md:p-6">
-                        <div class="flex justify-between items-center mb-3">
-                            <h3 class="text-md md:text-lg font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Top NAICS by Contract Value</h3>
-                            <span class="text-[var(--text-tertiary)] cursor-help" title="Top NAICS codes by total contract value">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                            </span>
-                        </div>
-                        <div class="chart-container">
-                            <canvas id="naicsChart_main"></canvas>
+
+                        <div class="dashboard-card p-4 md:p-6">
+                            <div class="flex justify-between items-center mb-3">
+                                <h3 class="text-md md:text-lg font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Top NAICS</h3>
+                                <span class="text-[var(--text-tertiary)] cursor-help" title="Top NAICS codes by total contract value">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                </span>
+                            </div>
+                            <div class="chart-container h-[280px]"><canvas id="naicsChart_main"></canvas></div>
                         </div>
                     </div>
-                    
-                    <!-- Contract Type Chart - hidden by default in your original code -->
-                    <div class="dashboard-card p-4 md:p-6 hidden">
-                        <div class="flex justify-between items-center mb-3">
-                            <h3 class="text-md md:text-lg font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Contract Type Breakdown</h3>
-                            <span class="text-[var(--text-tertiary)] cursor-help" title="Distribution of contracts by type">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                            </span>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+                        <div class="dashboard-card p-4 md:p-6">
+                            <div class="flex justify-between items-center mb-3">
+                                <h3 class="text-md md:text-lg font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Dept. Distribution</h3>
+                                <span class="text-[var(--text-tertiary)] cursor-help" title="Distribution of contract value by department">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                </span>
+                            </div>
+                            <div class="chart-container h-[280px]"><canvas id="departmentChart"></canvas></div>
                         </div>
-                        <div class="chart-container">
-                            <canvas id="contractTypeChart_main"></canvas>
+                        
+                        <div class="dashboard-card p-4 md:p-6"> 
+                            <div class="flex justify-between items-center mb-2">
+                                <h3 class="text-md md:text-lg font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Contracts by State</h3>
+                                <span class="text-[var(--text-tertiary)] cursor-help" title="Contract distribution by state">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                </span>
+                            </div>
+                            <div class="metric-filters" id="stateChartFilters_main">
+                                <button class="filter-btn active" data-filter="count" data-chart="stateContractsChart_main">By Count</button>
+                                <button class="filter-btn" data-filter="value" data-chart="stateContractsChart_main">By Value</button>
+                            </div>
+                            <div class="chart-container h-[280px]"><canvas id="stateContractsChart_main"></canvas></div>
                         </div>
-                    </div>
-                    
-                    <!-- State Chart -->
-                    <div class="dashboard-card p-4 md:p-6"> 
-                        <div class="flex justify-between items-center mb-2">
-                            <h3 class="text-md md:text-lg font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Contract Distribution by State</h3>
-                            <span class="text-[var(--text-tertiary)] cursor-help" title="Contract distribution by state">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                            </span>
-                        </div>
-                        <div class="metric-filters" id="stateChartFilters_main">
-                            <button class="filter-btn active" data-filter="count" data-chart="stateContractsChart_main">By Count</button>
-                            <button class="filter-btn" data-filter="value" data-chart="stateContractsChart_main">By Value</button>
-                        </div>
-                        <div class="chart-container" style="height: 320px;"> 
-                            <canvas id="stateContractsChart_main"></canvas>
-                        </div>
-                    </div>
-                    
-                    <!-- Top Agencies Chart - hidden by default in your original code -->
-                    <div class="dashboard-card p-4 md:p-6 hidden">
-                        <div class="flex justify-between items-center mb-3">
-                            <h3 class="text-md md:text-lg font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Top Contracting Agencies by Value</h3>
-                            <span class="text-[var(--text-tertiary)] cursor-help" title="Top contracting agencies by value">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                            </span>
-                        </div>
-                        <div class="chart-container">
-                            <canvas id="topAgenciesChart"></canvas>
-                        </div>
-                    </div>
-                    
-                    <!-- Market Share Chart -->
-                    <div id="marketShareChartCard" class="dashboard-card p-4 md:p-6"> 
-                        <div class="flex justify-between items-center mb-3">
-                            <h3 class="text-md md:text-lg font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Prime Market Share (for current filter)</h3>
-                            <span class="text-[var(--text-tertiary)] cursor-help" title="Market share percentage of prime contractors based on current filters">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                            </span>
-                        </div>
-                        <div class="chart-container">
-                            <canvas id="marketShareChart"></canvas>
-                        </div>
-                    </div>
-                    
-                    <!-- Timeline Chart -->
-                    <div class="dashboard-card p-4 md:p-6"> 
-                        <div class="flex justify-between items-center mb-3">
-                            <h3 class="text-md md:text-lg font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Contract Timeline Forecast</h3>
-                            <span class="text-[var(--text-tertiary)] cursor-help" title="Timeline of contract starts and endings by year">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                            </span>
-                        </div>
-                        <div class="chart-container">
-                            <canvas id="timelineChart"></canvas> 
+
+                        <div class="dashboard-card p-4 md:p-6"> 
+                            <div class="flex justify-between items-center mb-3">
+                                <h3 class="text-md md:text-lg font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Contract Timeline</h3>
+                                <span class="text-[var(--text-tertiary)] cursor-help" title="Timeline of contract starts and endings by year">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                </span>
+                            </div>
+                            <div class="chart-container h-[280px]"><canvas id="timelineChart"></canvas></div>
                         </div>
                     </div>
                 </div>
             </section>
-            
+<section id="mapVisualizationSection" class="mb-6">
+  <h2 class="text-lg md:text-xl font-semibold text-[var(--accent)] mb-4 px-2" style="font-weight: var(--header-font-weight);">Geographic Distribution</h2>
+  
+  <div class="dashboard-card p-4 md:p-6">
+    <div class="flex justify-between items-center mb-4">
+      <div>
+        <h3 class="text-md md:text-lg font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Prime Contractor Map</h3>
+      </div>
+      <button id="resetMapBtn" class="px-3 py-1 bg-[var(--accent)] text-[var(--on-accent)] rounded hover:bg-opacity-90 transition text-sm">
+        Reset
+      </button>
+    </div>
+    <div id="contractorMap" style="height: 500px; width: 100%;" class="rounded border border-[var(--border-level-2)]"></div>
+  </div>
+</section>
             <!-- Contract Expiration Calendar -->
             <section id="contractExpirationCalendarSection" class="bg-[var(--surface-level-1)] p-4 md:p-6 rounded-lg shadow-md mb-6 border border-[var(--border-level-1)]">
                 <h2 class="text-lg md:text-xl font-semibold text-[var(--accent)] mb-4" style="font-weight: var(--header-font-weight);">Contract Expiration Calendar</h2>
@@ -2402,40 +2346,39 @@ function createDepartmentChart(data) {
 
     createChart('departmentChart', 'pie', chartData, chartOptions);
 }
-
 function createNaicsChart_main(data) { 
-    const naicsValues = {}, naicsDesc = {};
+    const naicsValues = {};
+    const naicsDesc = {}; // To store full descriptions for tooltips or richer interactions if needed
     data.forEach(r => {
         if (r['NAICS Code']) {
             const naicsKey = String(r['NAICS Code']);
             naicsValues[naicsKey] = (naicsValues[naicsKey] || 0) + parseCurrencyValue(r['Base and All Options Value (Total Contract Value)']);
-            if (!naicsDesc[naicsKey]) naicsDesc[naicsKey] = r['NAICS Description'] || '';
+            if (!naicsDesc[naicsKey]) {
+                naicsDesc[naicsKey] = r['NAICS Description'] || 'N/A';
+            }
         }
     });
 
     const sorted = Object.entries(naicsValues).sort((a, b) => b[1] - a[1]).slice(0, 10);
-    const labels = sorted.map(i => i[0]);
-    const displayLabels = sorted.map(i => `${i[0]} - ${naicsDesc[i[0]] ? naicsDesc[i[0]].substring(0, 20) : ''}...`);
+    
+    // Store the original NAICS codes for click events
+    const originalNaicsCodes = sorted.map(i => i[0]); 
+    
+    // Create display labels (NAICS Code - Short Description)
+    // This part creates the labels that will be fed to the chart.
+    // We will then apply a similar truncation logic as the primeContractorsChart in the ticks callback.
+    const displayLabels = sorted.map(i => {
+        const code = i[0];
+        const description = naicsDesc[code] || '';
+        // Initial short form for the data label, further truncation in ticks if needed
+        return `${code} - ${description.substring(0, 30)}${description.length > 30 ? '...' : ''}`; 
+    });
     const values = sorted.map(i => i[1]);
 
-    const maxVal = Math.max(...values);
-    const baseColors = [
-        chartPrimaryColor,
-        chartSecondaryColor,
-        chartTertiaryColor,
-        chartNeutralColor,
-        chartGrays[0],
-        chartGrays[1],
-        chartGrays[2],
-        '#dee2e6',
-        '#ced4da',
-        '#adb5bd'
-    ];
-    const chartColors = getRotatingHighlightPalette(values);
+    const chartColors = getRotatingHighlightPalette(values); // Assuming this function is defined and works
 
     const chartData = { 
-        labels, 
-        displayLabels, 
+        labels: displayLabels, // Use the formatted displayLabels
         datasets: [{ 
             label: 'Contract Value', 
             data: values, 
@@ -2448,30 +2391,65 @@ function createNaicsChart_main(data) {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-            legend: { display: false },
+            legend: { display: false }, // Consistent with primeContractorsChart
             tooltip: {
                 callbacks: {
-                    label: c => formatCurrency(c.raw)
+                    label: function(context) { // Consistent tooltip formatting
+                        let label = context.dataset.label || '';
+                        if (label) {
+                            label += ': ';
+                        }
+                        if (context.parsed.x !== null) { // For horizontal bar chart, value is on x-axis
+                            label += formatCurrency(context.parsed.x);
+                        }
+                        // Optionally, add full NAICS description to tooltip
+                        // const originalLabel = context.label; // This is the displayLabel "CODE - DESC..."
+                        // const code = originalLabel.split(' - ')[0];
+                        // if (naicsDesc[code]) {
+                        //    label += `\n${naicsDesc[code]}`; // Add full description on a new line
+                        // }
+                        return label;
+                    }
                 }
             }
         },
         scales: {
-            x: { ticks: { callback: v => formatCurrency(v) } }
+            x: { 
+                ticks: { 
+                    callback: v => formatCurrency(v), // Consistent with primeContractorsChart
+                font: {
+                        size: 10 // Adjust this size as needed (e.g., 10, 9)
+                    },
+                    maxRotation: 0, // Prevent label rotation
+                    minRotation: 0, // Prevent label rotation
+                    autoSkipPadding: 10 // Optional: Adjust padding if autoSkip is on
+                    // END: Added/Modified for X-axis font and rotation
+                } 
+            },
+            y: { 
+                ticks: {
+                    autoSkip: false,
+                    font: { size: 10 },
+                    callback: function (val) {
+                        const label = this.getLabelForValue(val);
+                        const maxLength = 28; 
+                        return label.length > maxLength ? label.substring(0, maxLength - 3) + '...' : label;
+                    }
+                }
+            }
         },
         onClick: (event, elements) => {
             if (elements.length > 0) {
-                const naicsCode = chartData.labels[elements[0].index];
-                setUnifiedSearchTerm(naicsCode, 'naicsCode');
+                const dataIndex = elements[0].index;
+                const naicsCode = originalNaicsCodes[dataIndex]; 
+                if (naicsCode) {
+                    setUnifiedSearchTerm(naicsCode, 'naicsCode'); 
+                }
             }
         }
     };
 
-    chartOptions.data = {
-        labels: chartData.displayLabels,
-        datasets: chartData.datasets
-    };
-
-    createChart('naicsChart_main', 'bar', chartOptions.data, chartOptions);
+    createChart('naicsChart_main', 'bar', chartData, chartOptions); // Ensure createChart is defined
 }
 function createContractTypeChart_main(data) { 
     const contractTypes = {};
@@ -2707,58 +2685,77 @@ function createTimelineChart(data) {
         endCounts.push(endYears[year] || 0); 
     });
 
-    const highlight = overrideChartHighlightColor || '#e63946';
+    // Ensure these color variables are defined in your script, e.g., from getChartColors()
+    // For demonstration, using fallbacks if not globally defined for some reason.
+    const currentChartSecondaryColor = typeof chartSecondaryColor !== 'undefined' ? chartSecondaryColor : '#adb5bd';
+    const currentOverrideChartHighlightColor = typeof overrideChartHighlightColor !== 'undefined' ? overrideChartHighlightColor : '#e63946';
+
+    const highlight = currentOverrideChartHighlightColor;
     const highlightFill = highlight + '22'; // low-opacity version for fill
 
-    createChart('timelineChart', 'line', 
-        { 
-            labels, 
-            datasets: [ 
-                { 
-                    label: 'Contracts Starting', 
-                    data: startCounts, 
-                    borderColor: chartSecondaryColor, 
-                    backgroundColor: `${chartSecondaryColor}33`, // 20% opacity
-                    fill: true, 
-                    tension: 0.4,
-                    pointRadius: 0, 
-                    pointHitRadius: 10, 
-                    pointHoverRadius: 5 
-                }, 
-                { 
-                    label: 'Contracts Ending', 
-                    data: endCounts, 
-                    borderColor: highlight, 
-                    backgroundColor: highlightFill, 
-                    fill: true, 
-                    tension: 0.4,
-                    pointRadius: 0,
-                    pointHitRadius: 10,
-                    pointHoverRadius: 5
-                }  
-            ] 
-        },
-        { 
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { 
-                legend: { display: true, position: 'top' },
-                tooltip: { 
-                    callbacks: { 
-                        label: ctx => `${ctx.dataset.label || ''}: ${ctx.parsed.y.toLocaleString()}` 
-                    } 
-                }
+    const chartData = { 
+        labels, 
+        datasets: [ 
+            { 
+                label: 'Contracts Starting', 
+                data: startCounts, 
+                borderColor: currentChartSecondaryColor, 
+                backgroundColor: `${currentChartSecondaryColor}33`, // 20% opacity
+                fill: true, 
+                tension: 0.4,
+                pointRadius: 0, 
+                pointHitRadius: 10, 
+                pointHoverRadius: 5 
             }, 
-            scales: { 
-                y: { 
-                    beginAtZero: true,
-                    ticks: { callback: val => val.toLocaleString() } 
-                } 
-            } 
-        }
-    );
-}
+            { 
+                label: 'Contracts Ending', 
+                data: endCounts, 
+                borderColor: highlight, 
+                backgroundColor: highlightFill, 
+                fill: true, 
+                tension: 0.4,
+                pointRadius: 0,
+                pointHitRadius: 10,
+                pointHoverRadius: 5
+            }  
+        ] 
+    };
 
+    const chartOptions = { 
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { 
+            legend: { display: true, position: 'top' },
+            tooltip: { 
+                callbacks: { 
+                    label: ctx => `${ctx.dataset.label || ''}: ${ctx.parsed.y.toLocaleString()}` 
+                } 
+            }
+        }, 
+        scales: { 
+            y: { 
+                beginAtZero: true,
+                ticks: { callback: val => val.toLocaleString() } 
+            },
+            x: { // X-axis for the years
+                ticks: {
+                    callback: function(value, index, ticks) {
+                        // 'value' is the index here, 'this.getLabelForValue(value)' gets the actual label (year string)
+                        const yearLabel = this.getLabelForValue(value);
+                        if (yearLabel && typeof yearLabel === 'string' && yearLabel.length === 4 && !isNaN(yearLabel)) {
+                            return "'" + yearLabel.substring(2); // Get last two digits, e.g., '22
+                        }
+                        return yearLabel; // Fallback for other labels if any
+                    },
+                    maxRotation: 0, // Prevent label rotation
+                    minRotation: 0  // Prevent label rotation
+                }
+            }
+        } 
+    };
+
+    createChart('timelineChart', 'line', chartData, chartOptions);
+}
 function createMarketShareChart(data) {
     const canvasElement = document.getElementById('marketShareChart');
     if (!canvasElement) return; 
@@ -3192,7 +3189,17 @@ function initializePrimeProfilesSection(data) {
                     <p class="text-xs md:text-sm">Value: ${formatCurrency(p.totalValue)}</p>
                     <p class="text-xs mt-1 truncate" title="Top NAICS: ${Array.from(p.naics).slice(0,3).join(', ')}">Top NAICS: ${Array.from(p.naics).slice(0,3).join(', ')}</p>
                     <p class="text-xs mt-1 truncate" title="Top Agencies: ${Array.from(p.agencies).slice(0,2).join(', ')}">Top Agencies: ${Array.from(p.agencies).slice(0,2).join(', ')}</p>
-                    <button class="mt-2 text-xs bg-[var(--accent)] text-[var(--on-accent)] px-2 py-1 rounded hover:bg-opacity-90 transition-colors duration-150 ease-in-out focus:ring-2 focus:ring-offset-2 ring-[var(--accent)] focus:outline-none" style="font-weight: var(--button-font-weight);" onclick="setUnifiedSearchTerm('${p.name.replace(/'/g, "\\'")}', 'primeName')">Filter Dashboard by this Prime</button>`; 
+                    <a href="https://www.google.com/search?q=${encodeURIComponent(p.name + ' official website')}" target="_blank" rel="noopener noreferrer" 
+                       class="mt-2 mr-1 text-xs bg-[var(--surface-level-3)] text-[var(--text-primary)] px-2 py-1 rounded hover:bg-[var(--surface-level-3)_hover] transition-colors duration-150 ease-in-out focus:ring-2 focus:ring-offset-2 ring-[var(--accent)] focus:outline-none inline-block"
+                       style="font-weight: var(--button-font-weight); text-decoration: none;">
+                       Find Website
+                    </a>
+                    <button class="mt-2 text-xs bg-[var(--accent)] text-[var(--on-accent)] px-2 py-1 rounded hover:bg-opacity-90 transition-colors duration-150 ease-in-out focus:ring-2 focus:ring-offset-2 ring-[var(--accent)] focus:outline-none" 
+                            style="font-weight: var(--button-font-weight);" 
+                            onclick="setUnifiedSearchTerm('${p.name.replace(/'/g, "\\'")}', 'primeName')">
+                        Filter Dashboard by this Prime
+                    </button>
+                `; 
                 primeProfilesContainer.appendChild(card);
         });
         if(count === 0) primeProfilesContainer.innerHTML = `<p class="p-4 col-span-full text-center text-[var(--text-secondary)]">No primes match current filters.</p>`;
@@ -3222,6 +3229,12 @@ function renderPrimeDetailView(primeName, primeSpecificData) {
         <p><strong>Total Contracts (current view):</strong> ${primeSpecificData.length.toLocaleString()}</p>
         <p><strong>Total Value (current view):</strong> ${formatCurrency(totalValue)}</p>
         <p><strong>Avg. Contract Value (current view):</strong> ${formatCurrency(primeSpecificData.length > 0 ? totalValue / primeSpecificData.length : 0)}</p>
+		<p class="mt-2">
+            <a href="https://www.google.com/search?q=${encodeURIComponent(primeName + ' official website')}" target="_blank" rel="noopener noreferrer" 
+               class="text-[var(--accent)] hover:underline font-medium">
+               Search for ${primeName} Website
+            </a>
+        </p>
     `;
     
     currentPrimeDetailViewPage = 1; 
