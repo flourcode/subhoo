@@ -1423,17 +1423,24 @@ html.dark #contractExpirationTableBody td {
     flex-direction: column;
   }
 }
-/* Main Layout Changes for Stacking */
+/* Improved Mobile Layout */
 @media (max-width: 1024px) {
-  /* Overall page structure */
+  /* Enable scrolling on the entire page */
+  html, body {
+    height: auto;
+    overflow-y: auto !important;
+  }
+  
+  /* Fix overall container layout */
   .app-wrapper, .dashboard-container {
     flex-direction: column;
     height: auto;
     min-height: unset;
     overflow: visible;
+    max-height: none;
   }
   
-  /* Make sidebar not fixed and just flow normally */
+  /* Make sidebar not fixed and properly scrollable */
   .sidebar {
     position: static;
     width: 100%;
@@ -1445,9 +1452,10 @@ html.dark #contractExpirationTableBody td {
     background-color: var(--background);
     overflow: visible;
     z-index: 10;
+    max-height: none;
   }
   
-  /* Make main content full width and flow normally */
+  /* Make main content full width and scrollable */
   .main-content {
     margin-left: 0 !important;
     width: 100% !important;
@@ -1455,12 +1463,9 @@ html.dark #contractExpirationTableBody td {
     height: auto;
   }
   
-  /* Ensure sidebar doesn't have fixed dimensions or positioning */
-  #dashboardSidebar {
-    position: static;
-    width: 100% !important;
-    height: auto !important;
-    min-height: unset;
+  /* Ensure sidebar content scrolls properly */
+  .sidebar-content {
+    max-height: none;
     overflow: visible;
   }
   
@@ -1469,47 +1474,93 @@ html.dark #contractExpirationTableBody td {
     display: none !important;
   }
   
-  /* Fix "Quick Pick" button containers to stack properly */
-  .sidebar-content .flex.flex-wrap {
-    flex-direction: column;
-    gap: 0.75rem;
+  /* STREAMLINE: Limit number of Quick Pick buttons */
+  /* First, hide all buttons */
+  .sidebar-content .flex.flex-wrap button {
+    display: none;
   }
   
-  /* Each button category should be its own block */
+  /* Then only show the first 5 buttons in each category */
+  .sidebar-content .flex.flex-wrap button:nth-child(-n+5) {
+    display: inline-flex;
+  }
+  
+  /* Make buttons more compact */
+  .sidebar-content .flex.flex-wrap button {
+    font-size: 0.7rem;
+    padding: 0.25rem 0.5rem;
+    white-space: nowrap;
+  }
+  
+  /* Make Quick Pick rows more compact */
   .sidebar-content > div {
-    width: 100%;
+    margin-bottom: 0.5rem;
   }
   
-  /* Make the buttons wrap better */
-  .sidebar-content .flex.flex-wrap .gap-1\\.5 {
-    display: flex;
-    flex-wrap: wrap;
-    width: 100%;
-  }
-}
-
-/* Fix for very small screens */
-@media (max-width: 640px) {
-  /* Ensure all sidebar sections are full width */
-  .sidebar-content > div,
-  .sidebar-search,
-  .sidebar-header,
-  .sidebar-footer {
-    width: 100%;
-    box-sizing: border-box;
+  .sidebar-content h3 {
+    font-size: 0.75rem;
+    margin-bottom: 0.25rem;
   }
   
-  /* Make buttons slightly bigger for touch */
-  .sidebar button, 
-  .sidebar .filter-btn {
-    padding: 0.5rem 0.75rem;
+  /* Add "More" button at the end of each category */
+  .sidebar-content .flex.flex-wrap::after {
+    content: "More...";
+    display: inline-block;
+    font-size: 0.7rem;
+    padding: 0.25rem 0.5rem;
+    background-color: var(--surface-level-2);
+    color: var(--text-secondary);
+    border-radius: 0.375rem;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  
+  /* Better search input sizing */
+  .sidebar .search-input {
+    height: 40px;
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+  
+  /* Compact reset button */
+  #globalResetBtn {
+    padding: 0.5rem;
+    margin-bottom: 0.5rem;
     font-size: 0.8rem;
   }
   
-  /* Increase button size for better touch targets */
-  #globalResetBtn {
-    padding: 0.75rem 1rem;
-    margin-bottom: 1rem;
+  /* Hide less important elements */
+  .shoutouts, 
+  .connect-card,
+  #activeFilterIndicator:empty,
+  .sidebar-footer {
+    display: none;
+  }
+}
+
+/* Further optimizations for very small screens */
+@media (max-width: 640px) {
+  /* Make buttons horizontal */
+  .sidebar-content .flex.flex-wrap {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+  }
+  
+  /* Increase density */
+  .sidebar-content {
+    padding: 0.5rem;
+  }
+  
+  .sidebar-search {
+    margin-bottom: 0.5rem;
+    padding: 0 0.5rem;
+  }
+  
+  /* Ensure header is compact */
+  .sidebar-header {
+    padding: 0.5rem;
+    height: auto;
   }
 }
 </style>
@@ -6668,6 +6719,51 @@ document.addEventListener('DOMContentLoaded', function() {
       }, 300);
     }
   }, 3000);
+});
+// Add after your DOM ready function
+function setupMobileQuickPicks() {
+  // Only run on mobile
+  if (window.innerWidth > 1024) return;
+  
+  // Get all Quick Pick sections
+  const quickPickSections = document.querySelectorAll('.sidebar-content > div');
+  
+  quickPickSections.forEach(section => {
+    const buttonContainer = section.querySelector('.flex.flex-wrap');
+    if (!buttonContainer) return;
+    
+    // Add click handler to the "More..." text
+    const moreButtonArea = document.createElement('span');
+    moreButtonArea.className = 'text-xs px-2 py-1 bg-[var(--surface-level-2)] hover:bg-[var(--surface-level-3)] rounded text-[var(--text-secondary)] cursor-pointer';
+    moreButtonArea.textContent = 'More...';
+    moreButtonArea.style.whiteSpace = 'nowrap';
+    
+    moreButtonArea.addEventListener('click', function() {
+      // Toggle visibility of all buttons
+      const buttons = buttonContainer.querySelectorAll('button');
+      let showing = false;
+      
+      buttons.forEach((btn, index) => {
+        if (index >= 5) {
+          btn.style.display = btn.style.display === 'none' ? 'inline-flex' : 'none';
+          showing = btn.style.display !== 'none';
+        }
+      });
+      
+      // Update the text based on state
+      this.textContent = showing ? 'Less...' : 'More...';
+    });
+    
+    buttonContainer.appendChild(moreButtonArea);
+  });
+}
+
+// Call this function after DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+  // Your existing code...
+  
+  // Add this at the end
+  setupMobileQuickPicks();
 });
 </script>
 </html>
