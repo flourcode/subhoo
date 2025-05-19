@@ -1,449 +1,721 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Subhoo.com - Federal Prime-to-Sub Contractor Relationships</title>
-    
-    <!-- SEO Meta Tags -->
-    <meta name="description" content="Subhoo provides 100% free teaming intelligence for federal sales and BD professionals. Explore active subcontracting relationships and total deal flow data from USASpending.gov.">
-    <meta name="keywords" content="federal contracting, subcontractor intelligence, USASpending, government contracts, prime contractors, federal sales, business development">
-    <meta name="robots" content="index, follow">
-    <link rel="canonical" href="https://subhoo.com/">
-    
-    <!-- Preconnect to External Domains -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="preconnect" href="https://www.googletagmanager.com">
-    <link rel="preconnect" href="https://d3js.org">
-    <link rel="preconnect" href="https://cdn.jsdelivr.net">
-    <link rel="preconnect" href="https://unpkg.com">
-    
-    <!-- Preload Critical Resources -->
-    <link rel="preload" href="style.css" as="style">
-    
-    <!-- Favicon -->
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
-    <link rel="manifest" href="/site.webmanifest">
-    <meta name="theme-color" content="#252327" class="theme-color">
-    
-    <!-- Open Graph / Facebook -->
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://subhoo.com/" />
-    <meta property="og:title" content="Subhoo - Federal SubContractor Intelligence" />
-    <meta property="og:description" content="100% free teaming intelligence for federal sales and BD professionals. Explore active subcontracting relationships and total deal flow data from USASpending.gov." />
-    <meta property="og:image" content="https://subhoo.com/subhoo.png">
-    <meta property="og:locale" content="en_US">
-    
-    <!-- Twitter -->
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Subhoo - Federal SubContractor Intelligence" />
-    <meta name="twitter:description" content="100% free teaming intelligence for federal sales and BD professionals. Explore active subcontracting relationships and total deal flow." />
-    <meta name="twitter:image" content="https://subhoo.com/subhoo.png" />
-    
-    <!-- Security Headers -->
-    <meta http-equiv="X-Content-Type-Options" content="nosniff">
-    
-    <!-- Stylesheets -->
-    <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Outfit:wght@700;800&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono&display=swap" rel="stylesheet">
-	<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined&text=dark_mode%0Alight_mode%0Ashare%0Aclose%0Aopen_in_new%0Agroups%0Astorefront%0Acorporate_fare%0Aaccount_balance%0Adomain%0Avisibility%0Afilter_alt%0Atravel_explore&display=swap" rel="stylesheet">
+<meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Subhoo - Federal Prime Contractor Database</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+<!-- JavaScript Libraries -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/d3-sankey@0.12.3/dist/d3-sankey.min.js"></script>
 
-<!-- Google tag (gtag.js) -->
+<!-- Leaflet -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+
+<!-- MarkerCluster -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+<!-- SEO Meta Tags -->
+<meta name="description" content="Subhoo helps small businesses discover federal subcontracting opportunities by visualizing prime contractors with mandatory subcontracting plans from the SBA's official directory.">
+<meta name="keywords" content="federal contracting, subcontractor intelligence, USASpending, government contracts, prime contractors, federal sales, business development, small business">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://subhoo.com/">
+
+<!-- Preconnect to External Domains -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Mono&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://www.googletagmanager.com">
+<link rel="preconnect" href="https://cdnjs.cloudflare.com">
+<link rel="preconnect" href="https://d3js.org">
+<link rel="preconnect" href="https://unpkg.com">
+
+<!-- Favicon -->
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="manifest" href="/site.webmanifest">
+<meta name="theme-color" content="#252327" class="theme-color">
+
+<!-- Open Graph / Facebook -->
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://subhoo.com/" />
+<meta property="og:title" content="Subhoo - Federal Prime Contractor Database" />
+<meta property="og:description" content="Discover federal subcontracting opportunities by visualizing prime contractors with mandatory small business participation plans. Search, explore, and connect with potential prime partners." />
+<meta property="og:image" content="https://subhoo.com/subhoo.png">
+<meta property="og:locale" content="en_US">
+
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Subhoo - Federal Prime Contractor Database" />
+<meta name="twitter:description" content="Discover federal subcontracting opportunities by visualizing prime contractors with mandatory small business participation plans. Search, explore, and connect with potential prime partners." />
+<meta name="twitter:image" content="https://subhoo.com/subhoo.png" />
+
+<!-- Security Headers -->
+<meta http-equiv="X-Content-Type-Options" content="nosniff">
+
+<!-- Google Analytics -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-2W258XTWJG"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
-
   gtag('config', 'G-2W258XTWJG');
 </script>
-    
-    <!-- Structured Data -->
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "WebSite",
-      "name": "Subhoo",
-      "url": "https://subhoo.com/",
-      "description": "Federal Prime-to-Sub Contractor Relationships",
-      "potentialAction": {
-        "@type": "SearchAction",
-        "target": "https://subhoo.com/search?q={search_term_string}",
-        "query-input": "required name=search_term_string"
-      }
-    }
-    </script>
-    
-    <!-- JavaScript Libraries (Deferred) -->
-    <script src="https://d3js.org/d3.v7.min.js" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/d3-sankey@0.12.3/dist/d3-sankey.min.js" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js" defer></script>
-    <script src="https://unpkg.com/topojson@3" defer></script>
-    <script src="script.js" defer></script>
+
+<!-- Structured Data -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "Subhoo",
+  "url": "https://subhoo.com/",
+  "description": "Federal Prime Contractor Database with Subcontracting Plans",
+  "potentialAction": {
+    "@type": "SearchAction",
+    "target": "https://subhoo.com/search?q={search_term_string}",
+    "query-input": "required name=search_term_string"
+  }
+}
+</script>
+<style>
+:root,html.dark{--surface-level-1:var(--content-background);--chart-accent-2:var(--french-gray-2);--chart-accent-3:var(--french-gray)}.app-wrapper,.dashboard-container{overflow:hidden;border-radius:12px;display:flex}:root{font-family:Inter,sans-serif;font-feature-settings:'liga' 1,'calt' 1;--seasalt:#f8f9fa;--antiflash-white:#e9ecef;--platinum:#dee2e6;--french-gray:#ced4da;--french-gray-2:#adb5bd;--slate-gray:#6c757d;--outer-space:#495057;--onyx:#343a40;--eerie-black:#212529;--background:var(--antiflash-white);--content-background:var(--seasalt);--on-accent:#ffffff;--accent:var(--slate-gray);--accent-secondary:rgba(108, 117, 125, 0.15);--gradient-bg-start:rgba(108, 117, 125, 0.08);--gradient-bg-end:rgba(108, 117, 125, 0);--text-primary:var(--eerie-black);--text-secondary:var(--outer-space);--text-tertiary:var(--french-gray-2);--border-level-1:rgba(173, 181, 189, 0.3);--border-level-2:rgba(173, 181, 189, 0.5);--border-level-3:rgba(173, 181, 189, 0.8);--surface-level-2:rgba(206, 212, 218, 0.3);--surface-level-3:rgba(206, 212, 218, 0.5);--chart-accent-1:var(--slate-gray);--chart-accent-4:var(--platinum);--chart-accent-5:var(--antiflash-white);--header-font-weight:600;--button-font-weight:500;--space-m:12px;--sidebar-width:280px;--sidebar-width-collapsed:60px;--topbar-height:60px}html.dark{--background:var(--eerie-black);--content-background:var(--onyx);--accent:var(--french-gray-2);--accent-secondary:rgba(173, 181, 189, 0.3);--gradient-bg-start:rgba(173, 181, 189, 0.15);--gradient-bg-end:rgba(173, 181, 189, 0);--text-primary:var(--seasalt);--text-secondary:var(--platinum);--text-tertiary:var(--french-gray);--border-level-1:rgba(173, 181, 189, 0.25);--border-level-2:rgba(173, 181, 189, 0.45);--border-level-3:rgba(173, 181, 189, 0.65);--surface-level-2:var(--outer-space);--surface-level-3:var(--slate-gray);--chart-accent-1:var(--platinum);--chart-accent-4:var(--outer-space);--chart-accent-5:var(--onyx)}body{background-color:var(--surface-level-1) color: var(--text-primary);transition:background-color .3s,color .3s;margin:0;padding:0;height:100vh;overflow:hidden;min-height:100vh;display:flex;flex-direction:column}.app-wrapper{max-width:1600px;margin:20px auto;box-shadow:0 10px 30px rgba(0,0,0,.1);height:calc(100vh - 40px);position:relative;background-color:var(--background)}.filter-group,.sidebar-search{margin-bottom:1.5rem}.dashboard-container{width:100%;height:100%}.main-content{margin-left:var(--sidebar-width);width:calc(100% - var(--sidebar-width));height:100%;overflow-y:auto;transition:margin-left .3s,width .3s;padding:1rem;border-radius:0 12px 12px 0;flex:1}.main-content-expanded{margin-left:var(--sidebar-width-collapsed);width:calc(100% - var(--sidebar-width-collapsed))}.sidebar{width:var(--sidebar-width);height:100%;background-color:var(--surface-level-1);border-right:1px solid var(--border-level-2);transition:width .3s;overflow-y:auto;overflow-x:hidden;position:absolute;top:0;left:0;z-index:40;display:flex;flex-direction:column}.sidebar-collapsed{width:var(--sidebar-width-collapsed)}.sidebar-header{padding:1rem;border-bottom:1px solid var(--border-level-2);display:flex;align-items:center;justify-content:space-between;height:var(--topbar-height)}.sidebar-content{padding:1rem;flex:1;overflow-y:auto}.suggestion-item,.toggle-sidebar{display:flex;align-items:center;cursor:pointer}.sidebar-footer{padding:1rem;border-top:1px solid var(--border-level-2);font-size:.75rem}.toggle-sidebar{background:0 0;border:none;color:var(--text-primary);padding:.5rem;justify-content:center}.sidebar-collapsed .sidebar-header{justify-content:center;padding:1rem .5rem}#themeIconMoon,.sidebar-collapsed .sidebar-header .flex,html.dark #themeIconSun{display:none}.sidebar-collapsed .toggle-sidebar{margin-left:0}.sidebar-collapsed .sidebar-footer{padding:.5rem;text-align:center;font-size:0}.sidebar-collapsed .sidebar-content{padding:.5rem}#page-loader.timeout .timeout-message,.sidebar-collapsed~.main-content #expandSidebarBtn,html.dark #themeIconMoon{display:block}.dashboard-card{background-color:var(--surface-level-1)!important;border:1px solid var(--border-level-1);border-radius:.5rem;transition:transform .3s,box-shadow .3s;padding:1rem}.dashboard-card:hover{transform:translateY(-2px);box-shadow:0 10px 15px -3px rgba(0,0,0,.1),0 4px 6px -2px rgba(0,0,0,.05)}.sidebar-search{position:relative}.search-input{width:100%;padding:.75rem 2.5rem .75rem .75rem;border:1px solid var(--border-level-2);border-radius:.375rem;background-color:var(--background);color:var(--text-primary);font-size:.875rem}.search-clear-btn{position:absolute;right:.5rem;top:50%;transform:translateY(-50%);background:0 0;border:none;color:var(--text-tertiary);cursor:pointer}.search-suggestions,.table-responsive tbody{background-color:var(--background)}.search-suggestions{position:absolute;width:100%;max-height:240px;overflow-y:auto;border:1px solid var(--border-level-2);border-top:none;border-radius:0 0 .375rem .375rem;z-index:50;box-shadow:0 4px 6px rgba(0,0,0,.1);padding:.25rem 0}.active-filter-tag span,.suggestion-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.table-responsive thead th,.type-label{background-color:var(--surface-level-1)}.suggestion-item{padding:.5rem .75rem;color:var(--text-secondary);justify-content:space-between;font-size:.85rem;border-bottom:1px solid var(--border-level-1)}.suggestion-item:last-child{border-bottom:none}.suggestion-item:hover,.table-responsive th:hover,html.dark .table-responsive tbody tr:hover{background-color:var(--surface-level-2)}.suggestion-text{max-width:70%}.type-label{padding:.15rem .4rem;border-radius:.25rem;font-size:.65rem;color:var(--text-primary);display:inline-block;font-weight:500;text-align:center;min-width:45px}.filter-btn,.filter-label{color:var(--text-secondary);font-size:.75rem}.filter-group-title{font-weight:var(--header-font-weight);margin-bottom:.5rem;display:flex;align-items:center;justify-content:space-between}.filter-label{margin-bottom:.25rem}.filter-btn-group{display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:.5rem}.filter-btn{padding:.375rem .75rem;border-radius:.25rem;background-color:var(--surface-level-2);border:1px solid var(--border-level-2);cursor:pointer;transition:.2s}.action-btn,.active-filters,.secondary-btn{border-radius:.375rem}.filter-btn.active{background-color:var(--accent)!important;color:var(--on-accent)!important;border-color:var(--accent)!important}.filter-btn:hover,.secondary-btn:hover{background-color:var(--surface-level-3)}.action-btn{padding:.5rem 1rem;background-color:var(--accent);color:var(--on-accent);font-weight:var(--button-font-weight);transition:background-opacity .2s}.action-btn:hover{opacity:.9}.secondary-btn{padding:.375rem .75rem;background-color:var(--surface-level-2);color:var(--text-secondary);transition:background-color .2s}#activeFilterIndicator,.active-filters{background-color:var(--accent-secondary)}.filter-btn:focus,a:focus,button:focus,input[type=text]:focus,select:focus{outline:0;box-shadow:0 0 0 2px var(--background),0 0 0 4px var(--chart-accent-1)!important}.active-filters{padding:.75rem;margin-bottom:1rem;display:flex;flex-direction:column;gap:.5rem}#activeFilterIndicator button,.active-filter-tag{background-color:var(--accent);color:var(--on-accent)}.active-filter-tag{display:flex;align-items:center;padding:.25rem .5rem;border-radius:.25rem;font-size:.75rem;max-width:100%}.active-filter-tag span{flex:1}.clear-filter-btn{background:0 0;border:none;color:var(--on-accent);margin-left:.5rem;cursor:pointer;display:flex;align-items:center;justify-content:center}.chart-no-data,html.dark .chart-no-data{background-color:var(--surface-level-1)!important}#activeFilterIndicator{color:var(--accent);border:1px solid var(--accent)}#activeFilterIndicator button:hover{background-color:rgba(132,88,179,.8)}.chart-container{position:relative;height:300px;width:100%}.chart-no-data{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--text-primary);border:1px dashed var(--border-level-2);border-radius:.375rem;text-align:center;padding:1rem}.chart-no-data svg{width:3rem;height:3rem;margin-bottom:.5rem;color:var(--text-tertiary)}.custom-marker{background-color:var(--chart-accent-1);border:2px solid var(--border-level-2);border-radius:50%;width:12px;height:12px;box-shadow:0 0 0 2px var(--surface-level-1);transition:transform .2s}.custom-marker:hover{transform:scale(1.5);box-shadow:0 0 0 4px var(--accent-secondary)}.custom-cluster{background-color:transparent;border:none}.cluster-icon{background:#6c757d;color:#fff;border-radius:50%;text-align:center;line-height:30px;width:30px;height:30px;font-size:14px;font-weight:700}#contractExpirationTableBody td,#contractExpirationTableBody th,#primeDetailContractsTableContainer td,#primeDetailContractsTableContainer th,#specializationContractsTable td,#specializationContractsTable th,.modal-close-btn:hover,.modal-content,.table-responsive td,.table-responsive th,html.dark #contractExpirationTableBody td,html.dark #primeDetailContractsTableContainer td,html.dark #specializationContractsTable td,html.dark .table-responsive td,html.dark .table-responsive th{color:var(--text-primary)}.cluster-icon.medium{width:40px;height:40px;line-height:40px}.cluster-icon.large{width:50px;height:50px;line-height:50px;background:#6c757d}.leaflet-tile{filter:grayscale(100%) brightness(95%) contrast(105%)}#contractorMap,#sankeyChart{height:500px}.table-responsive{display:block;width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:var(--border-level-2) transparent}.table-responsive::-webkit-scrollbar{height:6px}.table-responsive::-webkit-scrollbar-track{background:0 0}.table-responsive::-webkit-scrollbar-thumb{background-color:var(--border-level-2);border-radius:3px}.table-responsive thead th{position:sticky;top:0;z-index:10;color:var(--text-secondary);border-bottom:1px solid var(--border-level-2);cursor:pointer}.table-responsive td{border-bottom:1px solid var(--border-level-1)}.modal-backdrop{position:fixed;inset:0;background-color:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;z-index:100;padding:1rem}.modal-content{background-color:var(--background);border-radius:.5rem;box-shadow:0 10px 15px -3px rgba(0,0,0,.1),0 4px 6px -2px rgba(0,0,0,.05);padding:1.5rem;max-width:90vw;width:100%;max-height:90vh;overflow-y:auto;position:relative}#sankeySection,#sankeyWrapper,.full-width-viz{overflow:hidden}.modal-content-lg{max-width:60rem}.modal-content-md{max-width:48rem}.modal-close-btn{position:absolute;top:.75rem;right:.75rem;background:0 0;border:none;font-size:1.5rem;color:var(--text-tertiary);cursor:pointer;padding:.25rem}.table-responsive th,html.dark #contractExpirationTableBody th,html.dark #primeDetailContractsTableContainer th,html.dark #specializationContractsTable th,html.dark .chart-no-data{color:var(--text-secondary)}.spinner{border:4px solid var(--surface-level-3);width:24px;height:24px;border-radius:50%;border-left-color:var(--accent);animation:1s linear infinite spin;margin-right:10px}@keyframes spin{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}#processingIndicator.flex{display:flex}.highlight-section{animation:1.5s ease-in-out pulse-highlight}@keyframes pulse-highlight{0%,100%{box-shadow:0 0 0 rgba(108,117,125,0)}50%{box-shadow:0 0 15px rgba(108,117,125,.5)}}#page-loader{transition:opacity .3s ease-out}.timeout-message{display:none;text-align:center;margin-top:1rem;padding:.5rem 1rem;background-color:var(--accent-secondary);border-radius:.375rem;font-size:.875rem}#manual-upload-section.timeout-show{display:block!important}#dashboardContent{display:flex;flex-direction:column;min-height:calc(100vh - 200px)}.mobile-sidebar-toggle{display:none;position:fixed;bottom:1rem;right:1rem;z-index:50;background-color:var(--accent);color:var(--on-accent);border-radius:50%;width:3rem;height:3rem;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.2)}.full-width-viz{max-width:100%;width:100%;margin-left:0;margin-right:0}#sankeyChart{max-width:100%}@media (max-width:1023px){#contractorMap,#sankeyChart{height:450px}}@media (max-width:1024px){.sidebar{width:var(--sidebar-width-collapsed)}.main-content{margin-left:var(--sidebar-width-collapsed);width:calc(100% - var(--sidebar-width-collapsed))}.sidebar.expanded{width:var(--sidebar-width);box-shadow:0 0 20px rgba(0,0,0,.2)}.mobile-sidebar-toggle{display:flex}}@media (max-width:767px){#contractorMap,#sankeyChart{height:350px!important}.chart-container{height:250px!important}.table-responsive td,.table-responsive th{padding:4px 6px;font-size:11px}.dashboard-card{padding:1rem!important}.modal-content{padding:1rem}#primeProfilesContainer{max-height:60vh}#shareViewBtn,#themeToggleBtn,.filter-btn,.suggestion-item,button{min-height:44px}#clearSearchBtn{height:44px;width:44px;display:flex;align-items:center;justify-content:center}.stat-card{margin-bottom:.5rem}}@media (max-width:640px){.app-wrapper{margin:0;border-radius:0;height:100vh}.sidebar{width:0;border-right:none}.main-content{margin-left:0;width:100%;padding:.5rem}.sidebar.expanded{width:100%;box-shadow:0 0 20px rgba(0,0,0,.5)}.dashboard-cards{grid-template-columns:1fr}.chart-container{height:250px}#sankeyChart{height:400px!important}.section-header{flex-direction:column;align-items:flex-start;gap:.5rem}.section-header .action-btn{align-self:flex-end}.table-responsive{margin-left:-1rem;margin-right:-1rem;width:calc(100% + 2rem);padding:0 .5rem}.table-responsive td,.table-responsive th{padding:.25rem .5rem;font-size:.7rem;white-space:nowrap}}@media (max-width:480px){#contractorMap,#sankeyChart{height:300px!important}.dashboard-card,.stat-card{padding:.75rem!important}#unifiedSearchInput{font-size:14px;padding:.5rem!important}.stat-card .text-2xl{font-size:1.25rem!important}}@media print{.dashboard-card{break-inside:avoid;page-break-inside:avoid}#shareViewBtn,#themeToggleBtn,.action-btn,.filter-btn,button{display:none!important}.dashboard-container,body{background-color:#fff!important;color:#000!important}@page{margin:1cm}}html.dark body{background-color:#121212}html.dark .dashboard-card{box-shadow:0 4px 6px rgba(0,0,0,.2)}html.dark .dashboard-card:hover{box-shadow:0 6px 12px rgba(0,0,0,.3)}html.dark .chart-no-data{border-color:var(--border-level-2)}html.dark .table-responsive::-webkit-scrollbar-thumb{background-color:var(--border-level-3)}html.dark .table-responsive::-webkit-scrollbar-track{background-color:var(--background)}html.dark .filter-btn:focus,html.dark button:focus,html.dark input[type=text]:focus,html.dark select:focus{box-shadow:0 0 0 3px rgba(222,226,230,.3);outline:0}#currentViewTitle,#primeDetailViewSection,#primeProfilesSection,.stat-card,html.dark section.bg-[var(--surface-level-1)],section.bg-[var(--surface-level-1)]{background-color:var(--surface-level-1)}html.dark footer img[src*="powered-by-aws-white.png"]{filter:brightness(.8)}.app-wrapper,.main-content,.sidebar{background-color:var(--background)}.chart-no-data,.dashboard-card{background-color:var(--surface-level-1)!important}.welcome-title{line-height:1.4;animation:.5s ease-in-out fadeIn}.welcome-title .greeting{color:var(--chart-accent-1);font-weight:700;display:inline}.welcome-title .description{font-weight:400;font-size:.9em;opacity:.85;display:inline;margin-left:.25rem}@keyframes fadeIn{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:translateY(0)}}#currentViewTitle{background-color:#5f7a9e!important;border-color:rgba(255,255,255,.1)!important}#currentFilterDescription,#currentViewTitle,#currentViewTitle *,html:not(.dark) #currentViewTitle #currentFilterDescription{color:#fff!important}#currentViewTitle .text-[var(--text-secondary)]{color:rgba(255,255,255,.7)!important}#currentViewTitle .text-[var(--text-tertiary)]{color:rgba(255,255,255,.5)!important}.filter-group:has(#resetMapBtn),.filter-group:has(#resetSankeyBtn){display:none!important}.table-responsive a{color:var(--accent)}@media (min-width:1025px){.sidebar{width:var(--sidebar-width);transform:translateX(0);pointer-events:auto}.main-content{margin-left:var(--sidebar-width);width:calc(100% - var(--sidebar-width))}.mobile-sidebar-toggle,.sidebar-header #toggleSidebarBtn{display:none}}@media (max-width:1024px){.sidebar{transform:translateX(-100%);position:fixed;z-index:50;top:0;left:0;height:100%;width:280px;transition:transform .3s}.sidebar.expanded{transform:translateX(0);box-shadow:0 0 20px rgba(0,0,0,.2)}.main-content{margin-left:0;width:100%}.mobile-sidebar-toggle{display:flex}}#currentFilterDescription{font-weight:900!important;font-size:2.5rem!important;line-height:1.1!important;letter-spacing:-.02em!important;color:#1a1a1a!important;font-family:Inter,-apple-system,BlinkMacSystemFont,sans-serif!important}@media (max-width:768px){#currentFilterDescription{font-size:1.8rem!important}}.sidebar-search input::placeholder{opacity:.7}.sidebar-search button.text-xs{font-weight:500;white-space:nowrap}@keyframes subtle-pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}.sidebar-search button.text-xs:first-of-type{animation:2s ease-in-out subtle-pulse}.sidebar-header button{opacity:.8;transition:opacity .2s,background-color .2s}.sidebar-header button:hover{opacity:1}
+</style>
 </head>
 <body>
-    <div class="container">
-        <header class="app-header">
-            <div class="title-section">
-            <h1><a href="https://subhoo.com" style="color: inherit; text-decoration: none;">Subhoo.</a></h1>
-                <p>Subcontractor Intelligence</p>
-            </div>
-            <div class="controls">
-                 <button id="share-button" class="btn icon-btn" aria-label="Share this page" title="Share">
-                    <span class="material-symbols-outlined" aria-hidden="true">share</span>
-                </button>
-                 <button id="theme-toggle" class="btn icon-btn" aria-label="Switch to Light Mode" aria-pressed="false" title="Switch Theme">
-                     <span class="material-symbols-outlined" aria-hidden="true">light_mode</span> 
-                 </button>
-            </div>
-        </header>
-        <section class="active-filters-display" id="active-filters" aria-labelledby="active-filters-heading" aria-live="polite" aria-atomic="true">
-          <h1 id="active-filters-heading" class="visually-hidden">Currently Applied Filters</h1>
-          <h2 class="agency-filter-title">Loading Agency...</h2>
-          <div class="other-filters">
-              <span class="filter-item"><span class="filter-label">Loading filters...</span></span>
-          </div>
-      </section>
-
-        <nav id="breadcrumb" class="breadcrumb-area visually-hidden" aria-label="Drilldown Path" aria-hidden="true">
-            <a href="#" data-action="reset">All Data</a>
-        </nav>
-
-       <section class="stats-cards" aria-label="Summary Statistics">
-            <div class="stats-card">
-                <h4>Contract Value</h4>
-                <p id="total-value">$0</p>
-            </div>
-            <div class="stats-card">
-                <h4 id="prime-chart-title">Top Primes (Filtered Value)</h4>
-                <div id="top-primes-bar-chart" class="stats-chart-container" role="img" aria-labelledby="prime-chart-title">
-                    <span class="chart-placeholder">Loading...</span>
-                </div>
-            </div>
-            <div class="stats-card">
-                <h4 id="sub-chart-title">Top Subs (Filtered Value)</h4>
-                <div id="top-subs-bar-chart" class="stats-chart-container" role="img" aria-labelledby="sub-chart-title">
-                    <span class="chart-placeholder">Loading...</span>
-                </div>
-            </div>
-            <div class="stats-card">
-                <h4>NAICS Distribution</h4>
-                <div id="naics-donut-chart" class="stats-chart-container" role="img" aria-label="Donut chart showing NAICS distribution">
-                    <span class="chart-placeholder">Loading...</span>
-                </div>
-            </div>
-        </section>
-
-        <main class="dashboard-core">
-            <div class="visualization-container">
-                <div class="visualization">
-                    <div id="chart" class="viz-panel active" data-viz="sankey" role="region" aria-label="Sankey diagram showing contract flows"></div>
-                    <div id="network-chart" class="viz-panel" data-viz="network" role="region" aria-label="Network graph showing entity relationships"></div>
-                    <div id="map-chart" class="viz-panel" data-viz="choropleth" role="region" aria-label="Map showing place of performance"></div>
-                     <div id="loading" class="loading" aria-hidden="true" style="display: none;">
-                        <div class="spinner" role="status" aria-label="Loading data"></div>
-                    </div>
-                </div>
-
-                <div class="legend" id="legend" aria-label="Chart Legend">
-                    </div>
-					<div id="insights-display" class="insights-container" aria-live="polite" aria-atomic="true">
-                    <h4>Quick Insights</h4>
-                    <ul id="insights-list">
-                        <li class="placeholder">Generating insights...</li>
-                    </ul>
-                </div>
-					
-            </div>
-
-<aside class="sidebar" aria-labelledby="filters-heading">
-    <h2 id="filters-heading" class="visually-hidden">Filter Panel</h2>
-    <section class="filter-section">
-        <div class="filter-group viz-section">
-              <h3 id="agency-select-heading">Chart Type</h3>
-             <label id="viz-toggle-label" class="visually-hidden">Visualization type:</label>
-            <nav class="visualization-toggle" aria-labelledby="viz-toggle-label">
-                <button class="viz-toggle-btn active" data-viz="sankey" aria-pressed="true">Contract Flow</button>
-                <button class="viz-toggle-btn" data-viz="network" aria-pressed="false">Network</button>
-                <button class="viz-toggle-btn" data-viz="choropleth" aria-pressed="false">Map</button>
-            </nav>
-        </div>
-	</section>
-    <section class="filter-section" aria-labelledby="agency-select-heading">
-        <h3 id="agency-select-heading">Select Agency</h3>
-        <div class="filter-row">
-            <div class="filter-column">
-                <label for="agency-selector" class="visually-hidden">Agency:</label>
-                <select id="agency-selector" class="filter-select" aria-label="Select Funding Agency">
-                    <option value="">All Funding Agencies</option>
-                </select>
-            </div>
-            <div class="filter-column">
-                <label for="office-filter" class="visually-hidden">Office:</label>
-                <select id="office-filter" class="filter-select" aria-label="Filter by Office">
-                    <option value="">All Offices</option>
-                </select>
-            </div>
-            <div class="filter-column hidden-filter" aria-hidden="true">
-                <label for="subagency-filter">SubAgency:</label>
-                <select id="subagency-filter" class="filter-select" aria-label="Filter by SubAgency" tabindex="-1">
-                    <option value="">All SubAgencies</option>
-                </select>
-            </div>
-        </div>
-    </section>
-
-    <section class="filter-section" aria-labelledby="optional-filters-heading">
-         <div class="filter-row">
-            <div class="filter-column">
-                <label for="prime-filter" class="visually-hidden">Primes:</label>
-                <select id="prime-filter" class="visually-hidden"" aria-label="Filter by Prime Contractor">
-                   
-                </select>
-            </div>
-            <div class="filter-column">
-                <label for="naics-filter" class="visually-hidden">NAICS codes:</label>
-                <select id="naics-filter" class="visually-hidden" aria-label="Filter by NAICS Code">
-                    
-                </select>
-            </div>
-             <div class="filter-column hidden-filter" aria-hidden="true">
-                <label for="sub-filter">Subcontractor:</label>
-                <select id="sub-filter" class="filter-select" aria-label="Filter by Subcontractor" tabindex="-1">
-                    <option value="">All Subs</option>
-                </select>
-            </div>
-        </div>
-    </section>
+    <div id="globalProcessingIndicator" class="hidden">
+        <div class="global-spinner"></div>
+        <span class="text-sm text-[var(--text-secondary)]">Processing...</span>
+    </div>
+<div class="app-wrapper">
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="dashboardSidebar">
+            <!-- Sidebar Header -->
+<!-- Sidebar Header -->
+<div class="sidebar-header">
+    <!-- Logo and Title -->
+    <div class="flex flex-col">
+        <h1 class="text-xl font-extrabold text-[var(--accent)]" style="letter-spacing: -0.05em;">Subhoo.</h1>
+        <p class="text-xs text-[var(--text-secondary)]">Federal Contractor Intelligence</p>
+    </div>
     
-    <section class="filter-section" data-section="search" aria-labelledby="search-filter-heading">
-        <h3 id="search-filter-heading">Search</h3>
-        <div class="filter-row">
-             <div class="filter-column full-width">
-                 <label for="data-search" class="visually-hidden">Keyword search:</label>
-                 <div class="search-container">
-                     <input type="search" id="data-search" class="filter-select" placeholder="Search name, NAICS..." aria-label="Search contract data">
-                 </div>
-             </div>
-         </div>
-    </section>
-	<section class="filter-section">
-        <div class="filter-group viz-section">
-              <h3 id="agency-select-heading">Visible Nodes</h3>
-             <label id="level-filter-label" class="visually-hidden">Agency levels</label>
-            <div class="btn-group" id="level-filters" role="group" aria-labelledby="level-filter-label">
-                <button class="btn active" data-level="agency" aria-pressed="true">Agency</button>
-                <button class="btn active" data-level="subagency" aria-pressed="true">Dept</button>
-                <button class="btn active" data-level="office" aria-pressed="true">Office</button>
-                <button class="btn active" data-level="prime" aria-pressed="true">Prime</button>
-                <button class="btn active" data-level="sub" aria-pressed="true">Sub</button>
-            </div>
-        </div>
-		</section>
-       <section class="filter-section">
-        <div class="filter-group viz-section">
-              <h3 id="agency-select-heading">Min Contract Value</h3>
-             <label for="min-value" class="visually-hidden">Minimum subcontract value:</label>
-            <div class="range-inputs">
-                <input type="range" id="min-value" min="0" max="100000000" step="100000" value="2000000" aria-label="Minimum Subcontract Value">
-                <span class="range-value" id="min-value-display" aria-live="polite">$2,000,000</span>
-            </div>
-        </div>
-    </section>
-<section class="filter-section">
-        <div class="filter-group viz-section">
-    <button id="reset-filters" class="reset-btn btn">Reset all filters</button> 
-	</div>
-	</section>
-</aside>
-        </main>
-        <section id="how-to-guide-section" class="how-to-card" aria-labelledby="how-to-guide-heading">
-             <h2 id="how-to-guide-heading">Quickstart Guide</h2>
-             <div class="how-to-steps">
-                 <div class="how-to-step">
-                     <span class="material-symbols-outlined" aria-hidden="true">domain</span>
-                     <h4>1. Select Agency</h4>
-                     <p>Choose your target agency from the sidebar dropdown.</p>
-                 </div>
-                 <div class="how-to-step">
-                     <span class="material-symbols-outlined" aria-hidden="true">visibility</span>
-                     <h4>2. Choose View</h4>
-                     <p>Pick a chart type (Flow, Network, Map) to visualize data.</p>
-                 </div>
-                 <div class="how-to-step">
-                     <span class="material-symbols-outlined" aria-hidden="true">filter_alt</span>
-                     <h4>3. Filter Data</h4>
-                     <p>Use sliders & dropdowns (Value, Office, Prime, NAICS, Search) to refine.</p>
-                 </div>
-                 <div class="how-to-step">
-                     <span class="material-symbols-outlined" aria-hidden="true">travel_explore</span>
-                     <h4>4. Explore & Export</h4>
-                     <p>Click nodes/states to focus. View details. Export via CSV buttons.</p>
-                 </div>
-             </div>
-         </section>
-
-        <section class="data-table-section" aria-labelledby="data-table-heading">
-            <h2 id="data-table-heading" class="visually-hidden">Detailed Award Data</h2>
-            <div id="data-table-container" class="data-table-container">
-                <span class="chart-placeholder">Loading table data...</span>
-            </div>
-        </section>
-
-        <section class="analysis-section" aria-labelledby="analysis-heading">
-            <h2 id="analysis-heading" class="visually-hidden">Data Analysis Tables</h2>
-<div class="analysis-table-container expiring-contracts">
-                 
-     <div class="expiring-table-header">
-         <h3 id="expiring-title">Expiring Contracts</h3>
-         <button id="export-expiring-csv" class="btn" style="display: none;" title="Export this list to CSV">Download Expiring List (CSV)</button>
-     </div>
-	 <div id="expiring-value-by-month-chart" class="expiring-chart-container" role="img" aria-label="Chart showing total value of contracts potentially expiring each month for the next six months">
-                     <span class="chart-placeholder" style="display: block; text-align: center; padding: 20px; font-style: italic;">Loading expiring value chart...</span>
-                 </div>
-     <p class="expiring-note">
-         Note: Since we update monthly and dates may change, we've provided the link to the contract on USAspending for your verification.
-     </p>
-     <div class="expiring-table-wrapper">
-         <div id="expiring-table-content">
-              <p class="empty-message">Checking for expiring contracts...</p>
-         </div>
-     </div>
-     <div class="load-more-container">
-         <button id="load-more-expiring" class="btn" style="display: none;">Load More</button>
-     </div>
- </div>
-
-        <section class="analysis-section" aria-labelledby="analysis-heading">
-            </section>
-            <div class="analysis-tables-grid">
-                <div class="analysis-table-container" id="top-primes-container" role="region" aria-label="Top Prime Contractors Table">
-                    <span class="chart-placeholder">Loading...</span>
-                </div>
-                <div class="analysis-table-container" id="top-subs-container" role="region" aria-label="Top Subcontractors Table">
-                    <span class="chart-placeholder">Loading...</span>
-                </div>
-                <div class="analysis-table-container" id="naics-container" role="region" aria-label="Top NAICS Codes Table">
-                    <span class="chart-placeholder">Loading...</span>
-                </div>
-            </div>
-        </section>
-    </div> <div class="info-panel" id="info-panel" role="dialog" aria-modal="true" aria-labelledby="info-panel-title" aria-hidden="true" >
-        <button class="info-panel-close icon-btn" id="info-panel-close" aria-label="Close details panel">
-             <span class="material-symbols-outlined" aria-hidden="true">close</span>
+    <!-- Icon Controls -->
+    <div class="flex items-center space-x-2">
+        <!-- Theme Toggle -->
+        <button id="themeToggleBtn" title="Toggle Light/Dark Mode" class="p-1.5 rounded-md hover:bg-[var(--surface-level-2)] transition-colors">
+            <svg id="themeIconSun" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-[var(--text-secondary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+            </svg>
+            <svg id="themeIconMoon" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-[var(--text-secondary)] hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+            </svg>
         </button>
-        <h3 id="info-panel-title">Entity Details</h3>
-        <dl id="info-panel-content">
-             </dl>
-        <a href="#" class="external-link" id="info-panel-link" target="_blank" rel="noopener noreferrer">
-             View on USAspending.gov
-             <span class="material-symbols-outlined" aria-hidden="true">open_in_new</span>
-        </a>
+        
+        <!-- Share Link -->
+        <button id="shareViewBtn" title="Share Current View" class="p-1.5 rounded-md hover:bg-[var(--surface-level-2)] transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-[var(--text-secondary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
+            </svg>
+        </button>
+        
+        <!-- Mobile Toggle (visible only on mobile) -->
+        <button id="toggleSidebarBtn" class="toggle-sidebar lg:hidden p-1.5 rounded-md hover:bg-[var(--surface-level-2)] transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-[var(--text-secondary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+            </svg>
+        </button>
+    </div>
+</div>
+            
+            <!-- Sidebar Content -->
+            <div class="sidebar-content">
+<!-- Search Input -->
+<div class="sidebar-search mb-4">
+  <h3 class="text-md font-bold text-[var(--accent)] mb-2">Search Primes & Agencies</h3>
+  
+  <!-- Enhanced input container -->
+  <div class="relative w-full bg-white dark:bg-[var(--surface-level-2)] rounded-lg shadow-sm overflow-hidden border border-[var(--border-level-2)]">
+    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-[var(--text-tertiary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+      </svg>
+    </div>
+    
+    <!-- Keep your existing ID for functionality -->
+    <input type="text" id="unifiedSearchInput" 
+          class="block w-full py-2.5 pl-10 pr-10 text-sm placeholder-[var(--text-tertiary)] bg-transparent border-0 focus:outline-none focus:ring-0" 
+          placeholder="Prime, NAICS, Agency..." />
+    
+    <!-- Keep your existing clear button -->
+    <button id="clearSearchBtn" class="absolute inset-y-0 right-0 pr-3 flex items-center text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+      </svg>
+    </button>
+  </div>
+ 
+  <!-- Keep your existing suggestions container -->
+  <div id="unifiedSearchSuggestions" class="search-suggestions hidden"></div>
+</div>
+                
+                <!-- Active Filters -->
+                <div id="activeFilterIndicator" class="active-filters hidden">
+                    <div class="text-sm font-medium text-[var(--text-secondary)] mb-2">Active Filters:</div>
+                </div>
+                
+                <!-- Reset Button -->
+                <button id="globalResetBtn" class="w-full mb-4 px-4 py-2 bg-[var(--accent)] text-[var(--on-accent)] rounded hover:bg-opacity-90 transition text-sm font-medium">
+                    Reset All Filters
+                </button>
+                
+                <!-- Map Controls -->
+                <div class="filter-group">
+                    <div class="filter-group-title">
+                        <span>Map Controls</span>
+                    </div>
+                    <button id="resetMapBtn" class="w-full mb-2 px-3 py-1 bg-[var(--surface-level-2)] text-[var(--text-secondary)] rounded hover:bg-[var(--surface-level-3)] transition text-sm">
+                        Reset Map View
+                    </button>
+                </div>
+                
+                <!-- Sankey Chart Controls -->
+                <div class="filter-group">
+                    <div class="filter-group-title">
+                        <span>Sankey Chart</span>
+                    </div>
+                    <button id="resetSankeyBtn" class="w-full mb-2 px-3 py-1 bg-[var(--surface-level-2)] text-[var(--text-secondary)] rounded hover:bg-[var(--surface-level-3)] transition text-sm">
+                        Reset Sankey View
+                    </button>
+                </div>
+				<!-- Quick search suggestions for common primes and agencies -->
+
+  <!-- Prime contractors section -->
+  <div class="mb-3">
+    <h3 class="text-sm font-semibold text-[var(--text-secondary)] mb-2">Top Prime Contractors</h3>
+    <div class="flex flex-wrap gap-1.5">
+      <button onclick="setUnifiedSearchTerm('LOCKHEED MARTIN CORPORATION', 'primeName')" class="text-xs px-2 py-1 bg-[var(--accent-secondary)] text-[var(--accent)] hover:bg-opacity-90 rounded-full transition-colors">Lockheed</button>
+      <button onclick="setUnifiedSearchTerm('RAYTHEON COMPANY', 'primeName')" class="text-xs px-2 py-1 bg-[var(--accent-secondary)] text-[var(--accent)] hover:bg-opacity-90 rounded-full transition-colors">RTX</button>
+      <button onclick="setUnifiedSearchTerm('GENERAL DYNAMICS INFORMATION TECHNOLOGY, INC.', 'primeName')" class="text-xs px-2 py-1 bg-[var(--accent-secondary)] text-[var(--accent)] hover:bg-opacity-90 rounded-full transition-colors">GDIT</button>
+      <button onclick="setUnifiedSearchTerm('NORTHROP GRUMMAN SYSTEMS CORPORATION', 'primeName')" class="text-xs px-2 py-1 bg-[var(--accent-secondary)] text-[var(--accent)] hover:bg-opacity-90 rounded-full transition-colors">NGC</button>
+      <button onclick="setUnifiedSearchTerm('LEIDOS, INC.', 'primeName')" class="text-xs px-2 py-1 bg-[var(--accent-secondary)] text-[var(--accent)] hover:bg-opacity-90 rounded-full transition-colors">Leidos</button>
+      <button onclick="setUnifiedSearchTerm('HUNTINGTON INGALLS INC', 'primeName')" class="text-xs px-2 py-1 bg-[var(--accent-secondary)] text-[var(--accent)] hover:bg-opacity-90 rounded-full transition-colors">HII</button>
+      <button onclick="setUnifiedSearchTerm('BOOZ ALLEN HAMILTON INC.', 'primeName')" class="text-xs px-2 py-1 bg-[var(--accent-secondary)] text-[var(--accent)] hover:bg-opacity-90 rounded-full transition-colors">BAH</button>
+      <button onclick="setUnifiedSearchTerm('SCIENCE APPLICATIONS INTERNATIONAL CORPORATION', 'primeName')" class="text-xs px-2 py-1 bg-[var(--accent-secondary)] text-[var(--accent)] hover:bg-opacity-90 rounded-full transition-colors">SAIC</button>
+      <button onclick="setUnifiedSearchTerm('CACI, INC. - FEDERAL', 'primeName')" class="text-xs px-2 py-1 bg-[var(--accent-secondary)] text-[var(--accent)] hover:bg-opacity-90 rounded-full transition-colors">CACI</button>
+      <button onclick="setUnifiedSearchTerm('PERATON INC.', 'primeName')" class="text-xs px-2 py-1 bg-[var(--accent-secondary)] text-[var(--accent)] hover:bg-opacity-90 rounded-full transition-colors">Peraton</button>
+      <button onclick="setUnifiedSearchTerm('BAE SYSTEMS TECHNOLOGY SOLUTIONS & SERVICES INC.', 'primeName')" class="text-xs px-2 py-1 bg-[var(--accent-secondary)] text-[var(--accent)] hover:bg-opacity-90 rounded-full transition-colors">BAE</button>
+      <button onclick="setUnifiedSearchTerm('ACCENTURE FEDERAL SERVICES LLC', 'primeName')" class="text-xs px-2 py-1 bg-[var(--accent-secondary)] text-[var(--accent)] hover:bg-opacity-90 rounded-full transition-colors">AFS</button>
+      <button onclick="setUnifiedSearchTerm('CGI FEDERAL INC.', 'primeName')" class="text-xs px-2 py-1 bg-[var(--accent-secondary)] text-[var(--accent)] hover:bg-opacity-90 rounded-full transition-colors">CGI</button>
+      <button onclick="setUnifiedSearchTerm('CARAHSOFT TECHNOLOGY CORP.', 'primeName')" class="text-xs px-2 py-1 bg-[var(--accent-secondary)] text-[var(--accent)] hover:bg-opacity-90 rounded-full transition-colors">Carahsoft</button>
+    </div>
+  </div>
+
+  <!-- Agencies section -->
+  <div>
+    <h3 class="text-sm font-semibold text-[var(--text-secondary)] mb-2">Top Agencies</h3>
+    <div class="flex flex-wrap gap-1.5">
+      <button onclick="setUnifiedSearchTerm('DEPT OF DEFENSE', 'departmentName')" class="text-xs px-2 py-1 bg-[var(--surface-level-2)] hover:bg-[var(--surface-level-3)] rounded-full transition-colors text-[var(--text-secondary)]">DoD</button>
+      <button onclick="setUnifiedSearchTerm('DEPT OF THE ARMY', 'agencyName')" class="text-xs px-2 py-1 bg-[var(--surface-level-2)] hover:bg-[var(--surface-level-3)] rounded-full transition-colors text-[var(--text-secondary)]">ARMY</button>
+      <button onclick="setUnifiedSearchTerm('DEPT OF THE NAVY', 'agencyName')" class="text-xs px-2 py-1 bg-[var(--surface-level-2)] hover:bg-[var(--surface-level-3)] rounded-full transition-colors text-[var(--text-secondary)]">USN</button>
+      <button onclick="setUnifiedSearchTerm('DEPT OF THE AIR FORCE', 'agencyName')" class="text-xs px-2 py-1 bg-[var(--surface-level-2)] hover:bg-[var(--surface-level-3)] rounded-full transition-colors text-[var(--text-secondary)]">USAF</button>
+      <button onclick="setUnifiedSearchTerm('HEALTH AND HUMAN SERVICES, DEPARTMENT OF', 'departmentName')" class="text-xs px-2 py-1 bg-[var(--surface-level-2)] hover:bg-[var(--surface-level-3)] rounded-full transition-colors text-[var(--text-secondary)]">HHS</button>
+      <button onclick="setUnifiedSearchTerm('VETERANS AFFAIRS, DEPARTMENT OF', 'departmentName')" class="text-xs px-2 py-1 bg-[var(--surface-level-2)] hover:bg-[var(--surface-level-3)] rounded-full transition-colors text-[var(--text-secondary)]">VA</button>
+      <button onclick="setUnifiedSearchTerm('HOMELAND SECURITY, DEPARTMENT OF', 'departmentName')" class="text-xs px-2 py-1 bg-[var(--surface-level-2)] hover:bg-[var(--surface-level-3)] rounded-full transition-colors text-[var(--text-secondary)]">DHS</button>
+      <button onclick="setUnifiedSearchTerm('ENERGY, DEPARTMENT OF', 'departmentName')" class="text-xs px-2 py-1 bg-[var(--surface-level-2)] hover:bg-[var(--surface-level-3)] rounded-full transition-colors text-[var(--text-secondary)]">ENERGY</button>
+      <button onclick="setUnifiedSearchTerm('TRANSPORTATION, DEPARTMENT OF', 'departmentName')" class="text-xs px-2 py-1 bg-[var(--surface-level-2)] hover:bg-[var(--surface-level-3)] rounded-full transition-colors text-[var(--text-secondary)]">DOT</button>
+      <button onclick="setUnifiedSearchTerm('JUSTICE, DEPARTMENT OF', 'departmentName')" class="text-xs px-2 py-1 bg-[var(--surface-level-2)] hover:bg-[var(--surface-level-3)] rounded-full transition-colors text-[var(--text-secondary)]">DOJ</button>
+      <button onclick="setUnifiedSearchTerm('FEDERAL BUREAU OF INVESTIGATION', 'agencyName')" class="text-xs px-2 py-1 bg-[var(--surface-level-2)] hover:bg-[var(--surface-level-3)] rounded-full transition-colors text-[var(--text-secondary)]">FBI</button>
+      <button onclick="setUnifiedSearchTerm('TREASURY, DEPARTMENT OF THE', 'departmentName')" class="text-xs px-2 py-1 bg-[var(--surface-level-2)] hover:bg-[var(--surface-level-3)] rounded-full transition-colors text-[var(--text-secondary)]">TREAS</button>
+      <button onclick="setUnifiedSearchTerm('NATIONAL AERONAUTICS AND SPACE ADMINISTRATION', 'departmentName')" class="text-xs px-2 py-1 bg-[var(--surface-level-2)] hover:bg-[var(--surface-level-3)] rounded-full transition-colors text-[var(--text-secondary)]">NASA</button>
+      <button onclick="setUnifiedSearchTerm('GENERAL SERVICES ADMINISTRATION', 'departmentName')" class="text-xs px-2 py-1 bg-[var(--surface-level-2)] hover:bg-[var(--surface-level-3)] rounded-full transition-colors text-[var(--text-secondary)]">GSA</button>
+    </div>
+  </div>
+
+
+            </div>
+<!-- Manual Upload Section (Moved from main content) -->
+                <div id="manual-upload-section" class="hidden mb-4 p-3 bg-[var(--surface-level-2)] rounded-lg">
+                    <h3 class="text-sm font-semibold text-[var(--text-primary)] mb-2" style="font-weight: var(--header-font-weight);">Manual CSV Upload</h3>
+                    <div class="flex flex-col items-start gap-2 mb-2">
+                        <input type="file" id="csvFileInput" accept=".csv" class="hidden">
+                        <label for="csvFileInput" class="w-full px-3 py-2 bg-[var(--accent)] text-[var(--on-accent)] rounded-md cursor-pointer hover:bg-opacity-90 text-center text-xs" style="font-weight: var(--button-font-weight);">Choose CSV File</label>
+                        <span id="file-name-display" class="text-xs text-[var(--text-secondary)] p-2 border border-[var(--border-level-2)] rounded-md w-full truncate">No file selected</span>
+                    </div>
+                    <div id="errorMessage" class="text-red-600 bg-red-100 dark:bg-red-900 dark:text-red-300 p-2 rounded-md hidden mb-2 text-xs"></div>
+                    <div id="successMessage" class="text-green-600 bg-green-100 dark:bg-green-900 dark:text-green-300 p-2 rounded-md hidden mb-2 text-xs"></div>
+                </div>
+                
+                <!-- S3 Load Error -->
+                <div id="s3LoadError" class="text-red-600 bg-red-100 dark:bg-red-900 dark:text-red-300 p-2 rounded-md mb-4 hidden text-xs"></div>
+<div class="connect-card mt-4 p-3"> 
+  <!-- Content section with floating image -->
+  <div class="relative mb-2">
+    <!-- Floating image -->
+    <img src="markgs.jpg" alt="Mark Profile Picture" class="w-12 h-12 rounded-full object-cover border-2 border-[var(--accent)] shadow-md float-left mr-3 mb-1">
+    
+    <!-- Text content that wraps around the image -->
+    <p class="text-xs text-[var(--text-secondary)]">
+     Hi, I’m Mark. Federal primes with contracts over $750K must create SBA subcontracting plans. Subhoo helps you find those primes, follow the money, and unlock more opportunities. Reach out if I can help.
+    </p>
+  </div>
+  
+  <!-- Action buttons - LinkedIn as primary -->
+  <div class="flex w-full space-x-2">
+    <a href="https://www.linkedin.com/in/markflournoy/" class="flex-1 px-3 py-1.5 text-center bg-[var(--accent)] text-[var(--on-accent)] rounded hover:bg-opacity-90 transition text-xs font-medium flex items-center justify-center" target="_blank" rel="noopener noreferrer">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="currentColor" viewBox="0 0 24 24">
+        <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+      </svg>
+      Connect
+    </a>
+    <a href="mailto:mark@subhoo.com" class="flex-1 px-3 py-1.5 text-center bg-[var(--surface-level-2)] text-[var(--text-secondary)] rounded hover:bg-[var(--surface-level-3)] transition text-xs font-medium flex items-center justify-center">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+      </svg>
+      Email
+    </a>
+  </div>
+</div>
+
+<!-- Original footer -->
+<div class="sidebar-footer">
+  <p class="text-[var(--text-primary)]">© 2025 Subhoo | All data from <a href="https://www.sba.gov" target="_blank" rel="noopener noreferrer" class="text-[var(--text-primary)] hover:underline">SBA.gov</a></p>
+</div>
+</aside>
+        
+        <!-- Main Content -->
+        <main class="main-content" id="dashboardMainContent">
+            <!-- Main content toggle button - only visible when sidebar is collapsed -->
+            <button id="expandSidebarBtn" class="fixed top-4 left-4 z-30 p-2 rounded-md bg-[var(--accent)] text-[var(--on-accent)] shadow-md hidden">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7" />
+                </svg>
+            </button>
+
+            <!-- KPI STATS SECTION -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6 items-stretch">
+              <!-- Title Block: spans 2/3, top-aligned -->
+              <div id="currentViewTitle" class="bg-[var(--surface-level-1)] p-4 md:p-6 rounded-lg shadow-md border border-[var(--border-level-1)] h-full lg:col-span-2 flex flex-col justify-start">
+                <h1 id="currentFilterDescription" class="text-xl md:text-xl font-bold text-[var(--accent)]">
+                  Try Search.
+                </h1>
+              </div>
+
+              <!-- KPI Block: 1/3 in 2x2 grid -->
+              <section id="statisticsSection" class="grid grid-cols-2 gap-4 h-full">
+                <div class="stat-card bg-[var(--surface-level-1)] p-3 md:p-4 rounded-lg shadow border border-[var(--border-level-1)]">
+                  <div class="text-2xl md:text-3xl font-bold text-[var(--accent)]" id="totalContractsValue">0</div>
+                  <div class="text-xs md:text-sm text-[var(--text-secondary)]">Total Contracts</div>
+                </div>
+                <div class="stat-card bg-[var(--surface-level-1)] p-3 md:p-4 rounded-lg shadow border border-[var(--border-level-1)]">
+                  <div class="text-2xl md:text-3xl font-bold text-[var(--accent)]" id="totalValueValue">$0</div>
+                  <div class="text-xs md:text-sm text-[var(--text-secondary)]">Total Contract Value</div>
+                </div>
+                <div class="stat-card bg-[var(--surface-level-1)] p-3 md:p-4 rounded-lg shadow border border-[var(--border-level-1)]">
+                  <div class="text-2xl md:text-3xl font-bold text-[var(--accent)]" id="avgContractValue">$0</div>
+                  <div class="text-xs md:text-sm text-[var(--text-secondary)]">Average Contract Value</div>
+                </div>
+                <div class="stat-card bg-[var(--surface-level-1)] p-3 md:p-4 rounded-lg shadow border border-[var(--border-level-1)]">
+                  <div class="text-2xl md:text-3xl font-bold text-[var(--accent)]" id="uniquePrimesValue">0</div>
+                  <div class="text-xs md:text-sm text-[var(--text-secondary)]">Total Primes</div>
+                </div>
+              </section>
+			  </div>
+
+            <!-- KEY ANALYSIS CHARTS - NEW 3x3 GRID -->
+            <section class="mb-6">
+              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                <!-- Chart 1: Top Prime Contractors -->
+                <div id="primeContractorsChartCard" class="dashboard-card p-4 md:p-6">
+                  <div class="flex justify-between items-center mb-3">
+                    <h3 class="text-md md:text-lg font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Top Prime Contractors</h3>
+                    <span class="text-[var(--text-tertiary)] cursor-help" title="Shows the top 10 prime contractors by total contract value">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    </span>
+                  </div>
+                  <div class="chart-container h-[280px]"><canvas id="primeContractorsChart"></canvas></div>
+                </div>
+
+                <!-- Chart 2: Prime Market Share -->
+                <div id="marketShareChartCard" class="dashboard-card p-4 md:p-6"> 
+                  <div class="flex justify-between items-center mb-3">
+                    <h3 class="text-md md:text-lg font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Prime Market Share</h3>
+                    <span class="text-[var(--text-tertiary)] cursor-help" title="Market share percentage of prime contractors based on current filters">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    </span>
+                  </div>
+                  <div class="chart-container h-[280px]"><canvas id="marketShareChart"></canvas></div>
+                </div>
+
+                <!-- Chart 3: Top NAICS -->
+                <div class="dashboard-card p-4 md:p-6">
+                  <div class="flex justify-between items-center mb-3">
+                    <h3 class="text-md md:text-lg font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Top NAICS</h3>
+                    <span class="text-[var(--text-tertiary)] cursor-help" title="Top NAICS codes by total contract value">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    </span>
+                  </div>
+                  <div class="chart-container h-[280px]"><canvas id="naicsChart_main"></canvas></div>
+                </div>
+
+                <!-- Chart 4: Dept. Distribution -->
+                <div class="dashboard-card p-4 md:p-6">
+                  <div class="flex justify-between items-center mb-3">
+                    <h3 class="text-md md:text-lg font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Dept. Distribution</h3>
+                    <span class="text-[var(--text-tertiary)] cursor-help" title="Distribution of contract value by department">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    </span>
+                  </div>
+                  <div class="chart-container h-[280px]"><canvas id="departmentChart"></canvas></div>
+                </div>
+                
+                <!-- Chart 5: State Contracts -->
+                <div class="dashboard-card p-4 md:p-6"> 
+                  <div class="flex justify-between items-center mb-2">
+                    <h3 class="text-md md:text-lg font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Contract Values by State</h3>
+                    <span class="text-[var(--text-tertiary)] cursor-help" title="Contract distribution by state">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    </span>
+                  </div>
+                  <div class="chart-container h-[280px]"><canvas id="stateContractsChart_main"></canvas></div>
+                </div>
+
+                <!-- Chart 6: Contract Timeline -->
+                <div class="dashboard-card p-4 md:p-6"> 
+                  <div class="flex justify-between items-center mb-3">
+                    <h3 class="text-md md:text-lg font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Contract Timeline</h3>
+                    <span class="text-[var(--text-tertiary)] cursor-help" title="Timeline of contract starts and endings by year">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    </span>
+                  </div>
+                  <div class="chart-container h-[280px]"><canvas id="timelineChart"></canvas></div>
+                </div>
+                
+                <!-- Chart 7: Contract Types - HIDDEN -->
+                <div class="dashboard-card p-4 md:p-6 hidden">
+                  <div class="flex justify-between items-center mb-3">
+                    <h3 class="text-md md:text-lg font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Contract Types</h3>
+                    <span class="text-[var(--text-tertiary)] cursor-help" title="Distribution of contracts by type">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    </span>
+                  </div>
+                  <div class="chart-container h-[280px]"><canvas id="contractTypeChart_main"></canvas></div>
+                </div>
+                
+                <!-- Chart 8: Top Agencies - HIDDEN -->
+                <div class="dashboard-card p-4 md:p-6 hidden">
+                  <div class="flex justify-between items-center mb-3">
+                    <h3 class="text-md md:text-lg font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Top Agencies</h3>
+                    <span class="text-[var(--text-tertiary)] cursor-help" title="Top contracting agencies by value">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    </span>
+                  </div>
+                  <div class="chart-container h-[280px]"><canvas id="topAgenciesChart"></canvas></div>
+                </div>
+              </div>
+            </section>
+			<!-- SPECIALIZED VISUALIZATIONS ROW - Side by Side -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+  <!-- NAICS Specialization Heatmap - 1st column -->
+  <div class="dashboard-card p-4 md:p-6">
+    <div class="flex justify-between items-center mb-4">
+      <div>
+        <h3 class="text-md md:text-lg font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">NAICS Specialization Heatmap</h3>
+        <p class="text-xs text-[var(--text-secondary)]">Shows which prime contractors specialize in specific NAICS codes</p>
+      </div>
+    </div>
+    <div class="flex justify-center overflow-hidden h-[450px]">
+      <div class="overflow-x-auto w-full">
+        <svg id="primeSpecializationHeatmap" class="w-full h-[450px]" preserveAspectRatio="xMinYMin meet" viewBox="0 0 900 550"></svg>
+      </div>
+    </div>
+    <p class="text-xs text-[var(--text-tertiary)] mt-2 italic">Click on any cell to see detailed contract information below</p>
+  </div>
+  
+  <!-- Upcoming Contract Expirations - 2nd column -->
+  <div class="dashboard-card p-4 md:p-6">
+    <div class="flex justify-between items-center mb-4">
+      <div>
+        <h3 class="text-md md:text-lg font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Upcoming Contract Expirations</h3>
+        <p class="text-xs text-[var(--text-secondary)]">Forecast of contract expirations by month and agency</p>
+      </div>
+    </div>
+    <div class="chart-container h-[450px]">
+      <canvas id="contractOpportunityForecastChart"></canvas>
+    </div>
+    <p class="text-xs text-[var(--text-tertiary)] mt-2 italic">Click on any month to see detailed contract opportunities below</p>
+  </div>
+</div>
+
+<!-- DETAILS SECTION - Initially hidden, appears when user clicks -->
+<div class="mb-6">
+  <!-- Specialization Details Section - Initially hidden -->
+  <div id="specializationDetailsSection" class="dashboard-card p-4 md:p-6 hidden mb-6">
+    <div class="bg-[var(--surface-level-2)] p-4 rounded-md mb-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <p class="text-sm font-semibold">Prime Contractor:</p>
+          <p id="specDetailsPrime" class="text-md font-bold text-[var(--accent)]">-</p>
+        </div>
+        <div>
+          <p class="text-sm font-semibold">NAICS:</p>
+          <p id="specDetailsNaics" class="text-md">-</p>
+        </div>
+        <div>
+          <p class="text-sm font-semibold">Specialization Index:</p>
+          <p id="specDetailsIndex" class="text-md font-bold">-</p>
+          <p id="specDetailsIndexNote" class="text-xs text-[var(--text-secondary)]">-</p>
+        </div>
+        <div>
+          <p class="text-sm font-semibold">Total Value:</p>
+          <p id="specDetailsTotalValue" class="text-md">-</p>
+        </div>
+      </div>
+    </div>
+    
+    <div class="flex justify-between items-center mb-3">
+      <h4 class="font-semibold">Contract Details (<span id="specDetailsContractCount">0</span> contracts)</h4>
+      <div>
+        <button id="filterBySelectionBtn" class="px-3 py-1 bg-[var(--accent)] text-[var(--on-accent)] rounded hover:bg-opacity-90 transition text-xs">
+          Filter Dashboard by Selection
+        </button>
+      </div>
+    </div>
+    
+    <div class="table-responsive max-h-96 overflow-y-auto">
+      <table class="min-w-full divide-y divide-[var(--border-level-1)] text-xs">
+        <thead class="bg-[var(--surface-level-2)]">
+          <tr>
+            <th class="px-2 py-2 text-left font-medium text-[var(--text-secondary)]">PIID</th>
+            <th class="px-2 py-2 text-left font-medium text-[var(--text-secondary)]">Agency</th>
+            <th class="px-2 py-2 text-left font-medium text-[var(--text-secondary)]">Office</th>
+            <th class="px-2 py-2 text-left font-medium text-[var(--text-secondary)]">Value</th>
+            <th class="px-2 py-2 text-left font-medium text-[var(--text-secondary)]">Start Date</th>
+            <th class="px-2 py-2 text-left font-medium text-[var(--text-secondary)]">End Date</th>
+          </tr>
+        </thead>
+        <tbody id="specializationContractsTable" class="bg-[var(--background)] divide-y divide-[var(--border-level-1)]">
+          <!-- Table rows will be populated dynamically -->
+        </tbody>
+      </table>
+    </div>
+    
+    <!-- Pagination Controls -->
+    <div id="specDetailsPagination" class="mt-4 flex justify-between items-center text-xs">
+      <button id="prevSpecPageBtn" class="px-3 py-1 bg-[var(--surface-level-2)] text-[var(--text-secondary)] rounded hover:bg-[var(--surface-level-3)] disabled:opacity-50 disabled:cursor-not-allowed">Previous</button>
+      <span>Page <span id="currentSpecPage">1</span> of <span id="totalSpecPages">1</span></span>
+      <button id="nextSpecPageBtn" class="px-3 py-1 bg-[var(--surface-level-2)] text-[var(--text-secondary)] rounded hover:bg-[var(--surface-level-3)] disabled:opacity-50 disabled:cursor-not-allowed">Next</button>
+    </div>
+  </div>
+
+  <!-- Contract Expiration Details - Initially hidden -->
+  <div id="contractExpirationDetails" class="dashboard-card p-4 md:p-6 hidden">
+    <h4 id="expirationDetailsTitle" class="text-md font-semibold text-[var(--accent)] mb-3">Contract Expirations for <span id="selectedMonth">Month Year</span></h4>
+    <div class="flex justify-between items-center mb-3">
+      <div>
+        <span class="text-sm text-[var(--text-secondary)]">Total opportunities: <span id="totalOpportunities">0</span></span>
+        <span class="text-sm text-[var(--text-secondary)] ml-4">Total value: <span id="totalOpportunitiesValue">$0</span></span>
+      </div>
+      <div>
+        <select id="opportunitySortSelect" class="text-sm border border-[var(--border-level-2)] rounded px-2 py-1 bg-[var(--background)]">
+          <option value="value-desc">Sort by Value (High to Low)</option>
+          <option value="value-asc">Sort by Value (Low to High)</option>
+          <option value="date-asc">Sort by Date (Earliest First)</option>
+          <option value="date-desc">Sort by Date (Latest First)</option>
+          <option value="prime-asc">Sort by Prime (A-Z)</option>
+          <option value="prime-desc">Sort by Prime (Z-A)</option>
+        </select>
+      </div>
+    </div>
+    
+    <div class="table-responsive max-h-96 overflow-y-auto">
+      <table class="min-w-full divide-y divide-[var(--border-level-1)] text-xs">
+        <thead class="bg-[var(--surface-level-2)]">
+          <tr>
+            <th class="px-2 py-2 text-left font-medium text-[var(--text-secondary)]">Prime</th>
+            <th class="px-2 py-2 text-left font-medium text-[var(--text-secondary)]">Agency</th>
+            <th class="px-2 py-2 text-left font-medium text-[var(--text-secondary)]">Office</th>
+            <th class="px-2 py-2 text-left font-medium text-[var(--text-secondary)]">PIID</th>
+            <th class="px-2 py-2 text-left font-medium text-[var(--text-secondary)]">NAICS</th>
+            <th class="px-2 py-2 text-left font-medium text-[var(--text-secondary)]">NAICS Desc.</th>
+            <th class="px-2 py-2 text-left font-medium text-[var(--text-secondary)]">Value</th>
+            <th class="px-2 py-2 text-left font-medium text-[var(--text-secondary)]">End Date</th>
+          </tr>
+        </thead>
+        <tbody id="contractExpirationTableBody" class="bg-[var(--background)] divide-y divide-[var(--border-level-1)]">
+          <!-- Table rows will be populated dynamically -->
+        </tbody>
+      </table>
+    </div>
+    
+    <!-- Pagination Controls -->
+    <div id="opportunityPagination" class="mt-4 flex justify-between items-center text-xs">
+      <button id="prevOpportunityPageBtn" class="px-3 py-1 bg-[var(--surface-level-2)] text-[var(--text-secondary)] rounded hover:bg-[var(--surface-level-3)] disabled:opacity-50 disabled:cursor-not-allowed">Previous</button>
+      <span>Page <span id="currentOpportunityPage">1</span> of <span id="totalOpportunityPages">1</span></span>
+      <button id="nextOpportunityPageBtn" class="px-3 py-1 bg-[var(--surface-level-2)] text-[var(--text-secondary)] rounded hover:bg-[var(--surface-level-3)] disabled:opacity-50 disabled:cursor-not-allowed">Next</button>
+    </div>
+  </div>
+</div>
+
+			        <!-- PRIME PROFILES SECTION -->
+            <section id="primeProfilesSection" class="bg-[var(--surface-level-1)] p-4 md:p-6 rounded-lg shadow-md mb-6 border border-[var(--border-level-1)]">
+              <h2 class="text-lg md:text-xl font-semibold text-[var(--accent)] mb-4" style="font-weight: var(--header-font-weight);">Prime Contractor Profiles</h2>
+              
+              <p class="text-xs md:text-sm text-[var(--text-secondary)] mb-3">Displaying profiles based on current search/filter. Click a prime name to filter the entire dashboard to that prime. Use search to refine this list.</p>
+              <div id="primeProfilesContainer" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 md:gap-4 max-h-[70vh] overflow-y-auto"></div>
+            </section>
+
+            <!-- PRIME DETAIL VIEW SECTION -->
+            <section id="primeDetailViewSection" class="bg-[var(--surface-level-1)] p-4 md:p-6 rounded-lg shadow-md mb-6 border border-[var(--border-level-1)] hidden">
+              <div class="flex justify-between items-center mb-4">
+                <h2 id="primeDetailTitle" class="text-xl md:text-2xl font-bold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Prime Contractor Details</h2>
+                <button onclick="clearAllFilters()" class="px-3 py-1 bg-[var(--surface-level-2)] text-[var(--text-secondary)] rounded hover:bg-[var(--surface-level-3)] transition">
+                  Back to All Primes
+                </button>
+              </div>
+              <div id="primeDetailStats" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 text-sm md:text-base">
+              </div>
+              <h3 class="text-lg font-semibold text-[var(--text-primary)] mt-6 mb-2" style="font-weight: var(--header-font-weight);">Contracts List for this Prime</h3>
+              <div id="primeDetailContractsTableContainer" class="table-responsive max-h-96 overflow-y-auto">
+              </div>
+            </section>
+
+<!-- MAJOR VISUALIZATIONS SECTION - FULL WIDTH ROWS -->
+<section class="mb-6">
+  <!-- Row 1: Funding Flow -->
+  <div class="dashboard-card p-4 md:p-6 mb-6">
+    <div class="flex justify-between items-center mb-4">
+      <div>
+        <h3 class="text-md md:text-lg font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Funding Flow Visualization</h3>
+        <p class="text-xs text-[var(--text-secondary)]">Shows top awards by total contract value from agencies to prime contractors</p>
+      </div>
+    </div>
+    <div id="sankeyWrapper" class="w-full rounded-md mt-2">
+      <svg id="sankeyChart" class="w-full h-[500px]" viewBox="0 0 1000 600" preserveAspectRatio="xMidYMid meet"></svg>
+    </div>
+    <p class="text-xs text-[var(--text-tertiary)] mt-2 italic">Click on any node to filter the dashboard by agency or prime</p>
+  </div>
+  
+    
+  <!-- Row 3: Office-Prime Relationship Network -->
+<div class="dashboard-card p-4 md:p-6 mb-6"> <!-- Added mb-6 here -->
+  <div class="flex justify-between items-center mb-4">
+    <div>
+      <h3 class="text-md md:text-lg font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Office-Prime Relationship Network</h3>
+      <p class="text-xs text-[var(--text-secondary)]">Visualizes connections between contracting offices and prime contractors</p>
+    </div>
+  </div>
+  <div class="overflow-x-auto">
+    <svg id="contractingOfficeRelationshipMap" class="w-full h-[700px]" preserveAspectRatio="xMidYMid meet" viewBox="0 0 900 700"></svg>
+  </div>
+  <p class="text-xs text-[var(--text-tertiary)] mt-2 italic">Drag nodes to reposition. Click on any node to filter the dashboard.</p>
+</div>
+  <!-- Row 2: Prime Contractor Map -->
+  <div class="dashboard-card p-4 md:p-6 mb-6">
+    <div class="flex justify-between items-center mb-4">
+      <div>
+        <h3 class="text-md md:text-lg font-semibold text-[var(--accent)]" style="font-weight: var(--header-font-weight);">Prime Contractor Map</h3>
+        <p class="text-xs text-[var(--text-secondary)]">Geographic distribution of prime contractors</p>
+      </div>
+    </div>
+    <div id="contractorMap" style="height: 500px; width: 100%;" class="rounded border border-[var(--border-level-2)]"></div>
+  </div>
+</section>
+<!-- Footer as a styled card -->
+<footer class="mt-6 mb-6">
+  <div class="dashboard-card p-4 md:p-6 rounded-lg shadow-md border border-[var(--border-level-1)] bg-[var(--surface-level-1)]">
+    <!-- Shoutouts section -->
+    <div class="flex flex-col">
+      <h3 class="text-md font-semibold text-[var(--accent)] mb-3 text-center">A few shoutouts!</h3>
+      
+      <!-- Mobile-friendly grid layout for shoutouts -->
+      <div class="grid grid-cols-2 md:grid-cols-5 gap-3 text-center text-xs">
+        <div class="p-2 bg-[var(--surface-level-2)] rounded">
+          <span class="block text-[var(--accent)]">Dark Mode</span>
+          <span class="text-[var(--text-secondary)]">@dongkyup</span>
+        </div>
+        <div class="p-2 bg-[var(--surface-level-2)] rounded">
+          <span class="block text-[var(--accent)]">So What?!</span>
+          <span class="text-[var(--text-secondary)]">@rodstedt</span>
+        </div>
+        <div class="p-2 bg-[var(--surface-level-2)] rounded">
+          <span class="block text-[var(--accent)]">Why?</span>
+          <span class="text-[var(--text-secondary)]">@mpben</span>
+        </div>
+        <div class="p-2 bg-[var(--surface-level-2)] rounded">
+          <span class="block text-[var(--accent)]">Think Big</span>
+          <span class="text-[var(--text-secondary)]">@ecbrown</span>
+        </div>
+        <div class="p-2 bg-[var(--surface-level-2)] rounded">
+          <span class="block text-[var(--accent)]">Dive Deep</span>
+          <span class="text-[var(--text-secondary)]">@datkd</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+            
+            <div id="processingIndicator" class="hidden items-center text-[var(--text-secondary)] mt-4">
+                <div class="spinner"></div>
+                <span class="ml-2 text-sm">Processing data...</span>
+            </div>
+            
+            <!-- Required containers - Fixed to prevent scrollbar issues -->
+            <div id="s3LoadError" class="text-red-600 bg-red-100 dark:bg-red-900 dark:text-red-300 p-3 rounded-md mt-3 hidden text-sm" style="display: none; height: 0; margin: 0; padding: 0; overflow: hidden;"></div>
+            <div id="dashboardContent" class="hidden" style="display: none; height: 0; margin: 0; padding: 0; overflow: hidden;"></div>
+
+        </main>
+        
+        <!-- Mobile Sidebar Toggle Button -->
+        <!-- Replace the mobile toggle button -->
+<button id="mobileSidebarToggle" class="mobile-sidebar-toggle">
+    <span class="sr-only">Toggle Sidebar</span>
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+    </svg>
+</button>
     </div>
 
-    <div class="tooltip" id="tooltip" role="tooltip" aria-hidden="true"></div>
-    <footer class="footer">
-<div class="footer-content">
-            
-            <div class="connect-card">
-                <div class="connect-card-content">
-                    <img src="markgs.jpg" alt="Mark Profile Picture" class="profile-pic">
-                    <div class="user-info">
-                        <h3 class="user-name">Hi, I'm Mark. Let's Connect!</h3>
-                        <p class="user-skills">Let me hear your suggestions and great ideas.</p>
-                    </div>
-                </div>
-                <div class="action-buttons">
-                    <a href="mailto:mark@subhoo.com" class="btn btn-primary">Get in touch</a>
-                    <a href="https://www.linkedin.com/in/markflournoy/" class="btn" target="_blank" rel="noopener noreferrer">LinkedIn</a>
-                </div>
+    <!-- Modals and Tooltips -->
+    <div id="genericModal" class="modal-backdrop hidden">
+        <div id="genericModalContent" class="modal-content">
+            <button id="genericModalCloseBtn" class="modal-close-btn">&times;</button>
+            <h2 id="genericModalTitle" class="text-xl font-semibold text-[var(--accent)] mb-4" style="font-weight: var(--header-font-weight);">Modal Title</h2>
+            <div id="genericModalBody" class="text-[var(--text-secondary)]">
             </div>
+        </div>    
+    </div>
 
-            <div class="footer-section footer-summary-box">
-                <p class="footer-summary-what">
-                    Subhoo shows hidden partnerships between Federal Primes and Subs. Follow the money, find partners, or track competitors. <strong>Pick an agency above to start.</strong>
-                </p>
-                
-                <h4 class="footer-summary-heading">Who it's for:</h4>
-                <hr class="footer-summary-hr">
-                <ul class="footer-summary-list who-list">
-                    <li><span class="material-symbols-outlined" aria-hidden="true">groups</span> Sales & BD Teams <span class="detail">(Find Opportunities)</span></li>
-                    <li><span class="material-symbols-outlined" aria-hidden="true">storefront</span> Small Biz <span class="detail">(Target Primes)</span></li>
-                    <li><span class="material-symbols-outlined" aria-hidden="true">corporate_fare</span> Primes <span class="detail">(Analyze Competition)</span></li>
-                    <li><span class="material-symbols-outlined" aria-hidden="true">account_balance</span> Feds <span class="detail">(Track Goals)</span></li>
-                </ul>
+    <div class="event-tooltip"></div>
 
-                <h4 class="footer-summary-heading">How to use:</h4>
-                <hr class="footer-summary-hr">
-                <ol class="footer-summary-list how-list">
-                    <li>Select Agency</li>
-                    <li>Choose Visualization</li>
-                    <li>Filter Data</li>
-                    <li>Explore & Export</li>
-                </ol>
-            </div>
-            <div class="footer-section footer-summary-box">
-                <h3>Resources</h3>
-                <ul>
-                    <li><a href="https://www.usaspending.gov/explorer" target="_blank" rel="noopener noreferrer">USAspending Explorer</a></li>
-                    <li><a href="https://sam.gov/content/home" target="_blank" rel="noopener noreferrer">SAM.gov</a></li>
-                    <li><a href="https://www.sba.gov/" target="_blank" rel="noopener noreferrer">SBA.gov</a></li>	
-					<li><a href="https://orangeslices.ai/" target="_blank" rel="noopener noreferrer">Orange Slices AI</a></li>	
-                </ul>
-
-                <h3>On the Shelf</h3>
-                <ul>
-                    <li><a href="https://www.amazon.com/s?k=Fanatical+Prospecting+Jeb+Blount" target="_blank" rel="noopener noreferrer">Fanatical Prospecting</a></li>
-                    <li><a href="https://www.amazon.com/s?k=Little+Red+Book+of+Selling+Jeffrey+Gitomer" target="_blank" rel="noopener noreferrer">Little Red Book of Selling</a></li>
-					<li><a href="https://a.co/d/6FJ4gz9" target="_blank" rel="noopener noreferrer">Storytelling with Data</a></li>
-                </ul>
-				<br>
-				<p>
-				<a href="https://aws.amazon.com/what-is-cloud-computing"><img src="https://d0.awsstatic.com/logos/powered-by-aws-white.png" alt="Powered by AWS Cloud Computing"></a>
-				</p>
-            </div>
-
+    <div id="shareToast" class="fixed bottom-5 right-5 bg-[var(--accent)] text-[var(--on-accent)] py-2 px-4 rounded-md shadow-lg hidden transition-opacity duration-300">
+        Link copied to clipboard!
+    </div>
+    
+    <div id="page-loader" class="fixed inset-0 z-50 flex items-center justify-center bg-[var(--background)]">
+      <div class="flex flex-col items-center">
+        <div class="spinner w-16 h-16 border-4 border-[var(--border-level-2)] border-t-[var(--accent)] rounded-full animate-spin"></div>
+        <p class="mt-4 text-[var(--text-primary)]">Loading Subhoo...</p>
+        <div class="hidden mt-4 p-3 bg-[var(--accent-secondary)] rounded-md text-sm" id="loader-timeout-message">
+          <p class="text-[var(--text-secondary)]">Loading is taking longer than expected.</p>
+          <p class="text-[var(--text-secondary)]">If you're testing locally, you'll need to upload a CSV.</p>
+          <button onclick="forceShowManualUpload()" class="mt-2 px-3 py-1 bg-[var(--accent)] text-[var(--on-accent)] rounded text-sm">
+            Show Upload Option
+          </button>
         </div>
-        <div class="footer-bottom">
-    <p>&copy; 2025 Subhoo | Built on AWS | Data from USAspending.gov</p>
-    <p><a href="https://subhoo.com">Home</a> | <a href="https://subhoo.com/howto.html">How To Subhoo</a> | <a href="https://subhoo.com/privacy.html">Privacy</a> | <a href="https://subhoo.com/about.html">About</a> | <a href="https://subhoo.com/terms.html">Terms</a></p>
-                 <div class="shoutouts-container">
-                 <h4>A few Shoutouts</h4>
-                 <div class="shoutouts-grid">
-                     <div class="shoutout-item">
-                         <span class="shoutout-topic">Dark Mode</span>
-                         <span class="shoutout-attribution"><a href="#">@dongkyup</a></span> 
-                     </div>
-                     <div class="shoutout-item">
-                         <span class="shoutout-topic">So What?!</span>
-                         <span class="shoutout-attribution"><a href="#">@rodstedt</a></span>
-                     </div>
-                     <div class="shoutout-item">
-                         <span class="shoutout-topic">Why?</span>
-                         <span class="shoutout-attribution"><a href="#">@mpben</a></span>
-                     </div>
-                     <div class="shoutout-item">
-                         <span class="shoutout-topic">Think Big</span>
-                         <span class="shoutout-attribution"><a href="#">@ecbrown</a></span>
-                     </div>
-                     <div class="shoutout-item">
-                         <span class="shoutout-topic">Dive Deep</span>
-                         <span class="shoutout-attribution"><a href="#">@datkd</a></span>
-                     </div>
-					 <div class="shoutout-item">
-                         <span class="shoutout-topic">True Believer</span>
-                         <span class="shoutout-attribution"><a href="#">@dave</a></span>
-                     </div>
-                 </div>
-             </div>
+      </div>
+    </div>
 </div>
-    </footer>
-
-    <div id="viz-announcer" class="sr-only" aria-live="polite"></div>
-
 </body>
+<script>
+const processingIndicator=document.getElementById("processingIndicator"),manualUploadSection=document.getElementById("manual-upload-section"),dashboardContent=document.getElementById("dashboardContent"),csvFileInput=document.getElementById("csvFileInput"),fileNameDisplay=document.getElementById("file-name-display"),errorMessageDiv=document.getElementById("errorMessage"),successMessageDiv=document.getElementById("successMessage"),s3LoadErrorDiv=document.getElementById("s3LoadError"),unifiedSearchInput=document.getElementById("unifiedSearchInput"),unifiedSearchSuggestions=document.getElementById("unifiedSearchSuggestions"),activeFilterIndicator=document.getElementById("activeFilterIndicator"),primeProfilesContainer=document.getElementById("primeProfilesContainer"),primeProfilesSearchInput=document.getElementById("primeProfilesSearchInput"),globalTooltipEl=document.querySelector(".event-tooltip"),genericModal=document.getElementById("genericModal"),genericModalContent=document.getElementById("genericModalContent"),genericModalTitle=document.getElementById("genericModalTitle"),genericModalBody=document.getElementById("genericModalBody"),genericModalCloseBtn=document.getElementById("genericModalCloseBtn"),primeDetailViewSection=document.getElementById("primeDetailViewSection"),primeDetailTitle=document.getElementById("primeDetailTitle"),primeDetailStats=document.getElementById("primeDetailStats"),primeDetailContractsTableContainer=document.getElementById("primeDetailContractsTableContainer"),themeToggleBtn=document.getElementById("themeToggleBtn"),themeIconSun=document.getElementById("themeIconSun"),themeIconMoon=document.getElementById("themeIconMoon"),shareViewBtn=document.getElementById("shareViewBtn"),shareToast=document.getElementById("shareToast");function generateWelcomeTitle(e){const t=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][(new Date).getDay()],a=e.length,r=new Set(e.map((e=>e["Legal Business Name"])).filter(Boolean)).size,n=a.toLocaleString(),o=r.toLocaleString(),i=[`Happy ${t}! Welcome to Subhoo.`,`It's ${t}! Ready to explore federal contracts?`,`Yep, it's ${t}!`,`${t}'s a great day for contract intelligence!`],s=[`Search and click to analyze over ${n} contracts across ${o} Federal Prime Contractors.`,`Explore ${n} contracts and ${o} Prime Contractors with required subcontracting plans.`,`Discover subcontracting opportunities among ${o} primes with ${n} active federal contracts.`];return`<span class="greeting">${i[Math.floor(Math.random()*i.length)]}</span> <span class="description">${s[Math.floor(Math.random()*s.length)]}</span>`}function updateDashboardTitle(e,t=!1){const a=document.getElementById("currentFilterDescription"),r=document.getElementById("currentViewTitle");a&&r&&(t||!e||""===e.trim()?(a.innerHTML=generateWelcomeTitle(parsedData),a.classList.add("welcome-title"),r.classList.remove("title-container-default"),r.classList.add("title-container-welcome")):(a.innerHTML=e,a.classList.remove("welcome-title"),r.classList.remove("title-container-welcome"),r.classList.add("title-container-default")))}let parsedData=[];const charts={},S3_CSV_URL="https://subhoodata.s3.us-east-1.amazonaws.com/data/sba24.csv";let currentMainStateChartFilter="value";const ITEMS_PER_PAGE_MODAL_TABLE=10;let contractorMap,contractorClusterGroup,chartPrimaryColor,chartSecondaryColor,chartTertiaryColor,chartNeutralColor,chartAccentColor,currentPrimeDetailViewPage=1,isViewingSpecificPrime=!1,specificPrimeName=null,currentPrimeDetailSort={column:"endDate",order:"desc"};function formatCurrency(e){if(isNaN(parseFloat(e)))return"$0";const t=parseFloat(e);return Math.abs(t)>=1e9?"$"+(t/1e9).toFixed(1)+"B":Math.abs(t)>=1e6?"$"+(t/1e6).toFixed(1)+"M":Math.abs(t)>=1e3?"$"+(t/1e3).toFixed(1)+"K":new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",minimumFractionDigits:0,maximumFractionDigits:0}).format(t)}function parseCurrencyValue(e){return e&&parseFloat(String(e).replace(/[$,\s]/g,""))||0}function formatDate(e){if(!e)return"";const t=new Date(e);return isNaN(t.getTime())?"":new Intl.DateTimeFormat("en-US",{year:"numeric",month:"short",day:"numeric"}).format(t)}function createAwardLink(e){if(!e||"string"!=typeof e||""===e.trim()||"n/a"===e.toLowerCase())return e||"N/A";return`<a href="https://www.fpds.gov/ezsearch/fpdsportal?indexName=awardfull&templateName=1.5.3&s=FPDS&q=${encodeURIComponent(e.trim())}&x=18&y=15" target="_blank" rel="noopener noreferrer" class="text-[var(--accent)] hover:underline">${e}</a>`}function createEntityLink(e,t){if(!e||"string"!=typeof e||""===e.trim()||"n/a"===e.toLowerCase())return t||e||"N/A";return`<a href="https://www.fpds.gov/ezsearch/fpdsportal?s=FPDS&q=${encodeURIComponent(e.trim())}&x=0&y=0" target="_blank" rel="noopener noreferrer" class="text-[var(--accent)] hover:underline">${t||e}</a>`}function showProcessingBriefly(){processingIndicator.classList.remove("hidden"),processingIndicator.classList.add("flex")}function hideProcessing(){processingIndicator.classList.add("hidden"),processingIndicator.classList.remove("flex")}function showErrorMessage(e,t=!1){t?(manualUploadSection.classList.remove("hidden"),s3LoadErrorDiv.textContent=`S3 Auto-load failed: ${e}. Please use manual upload option above.`,s3LoadErrorDiv.classList.remove("hidden")):(errorMessageDiv.textContent=e,errorMessageDiv.classList.remove("hidden"),successMessageDiv.classList.add("hidden")),hideProcessing()}function showSuccessMessage(e,t=!1){t?(s3LoadErrorDiv.classList.add("hidden"),manualUploadSection&&(manualUploadSection.classList.add("hidden"),manualUploadSection.style.display="none")):(successMessageDiv.textContent=e,successMessageDiv.classList.remove("hidden"),errorMessageDiv.classList.add("hidden")),hideProcessing()}function cleanupCharts(){Object.keys(charts).forEach((e=>{charts[e]&&(charts[e].destroy(),charts[e]=null)}))}function processAndInitialize(e){try{if(!e||0===e.length)return void showErrorMessage("No data to display. Please try manual upload or check the S3 source.",!0);parsedData=e,activeFilterIndicator.classList.add("hidden"),manualUploadSection&&(manualUploadSection.classList.add("hidden"),manualUploadSection.style.display="none"),s3LoadErrorDiv.classList.add("hidden"),primeDetailViewSection.classList.add("hidden"),dashboardContent.classList.remove("hidden"),dashboardContent.classList.add("data-loaded");const t=document.getElementById("page-loader");t&&(t.style.opacity="0",t.style.pointerEvents="none",setTimeout((function(){t.style.display="none"}),300)),updateDashboardTitle("",!0),getChartColors(),cleanupCharts(),initializeChartDefaults(),initializeCoreVisuals(parsedData),setupUnifiedSearch(),initializePrimeProfilesSection(parsedData),initializeContractorMap(e),showSuccessMessage("Data loaded and dashboard initialized.",!0),applyInitialTheme(),applyFiltersFromURL()}catch(e){console.error("Error during processAndInitialize:",e),showErrorMessage("An error occurred while initializing the dashboard. Please try refreshing.",!1)}finally{hideProcessing()}}function loadDataFromS3(){showProcessingBriefly();const e=new Promise(((e,t)=>{setTimeout((()=>t(new Error("Request timed out"))),2e4)}));window.s3LoadingComplete=!1,Promise.race([fetch(S3_CSV_URL,{mode:"cors",cache:"no-cache",headers:{Accept:"text/csv"}}),e]).then((e=>{if(!e.ok){let t=`HTTP error ${e.status}`;throw 0===e.status?t="Network error or CORS issue.":403===e.status?t="Access Forbidden (403).":404===e.status&&(t="File Not Found (404)."),new Error(`S3 Load Error: ${t}`)}return e.text()})).then((e=>{if(!e||""===e.trim())return window.s3LoadingComplete=!0,void showErrorMessage("S3 file is empty.",!0);Papa.parse(e,{header:!0,dynamicTyping:!0,skipEmptyLines:!0,complete:e=>{window.s3LoadingComplete=!0,e.errors&&e.errors.length>0?showErrorMessage("Error parsing CSV from S3: "+e.errors[0].message,!0):e.data&&e.data.length>0?processAndInitialize(e.data):showErrorMessage("No data parsed from S3 file.",!0)},error:e=>{window.s3LoadingComplete=!0,showErrorMessage("Error parsing CSV data from S3: "+e.message,!0)}})})).catch((e=>{window.s3LoadingComplete=!0;let t=e.message;!1!==navigator.onLine||t.includes("offline")||(t+=" You may also be offline."),showErrorMessage(t,!0)})),setTimeout((()=>{window.s3LoadingComplete||(window.s3LoadingComplete=!0,showErrorMessage("S3 loading timed out. Please use manual upload.",!0),manualUploadSection.classList.add("timeout-show"))}),12e3)}function initializeChartDefaults(){Chart.defaults.interaction={mode:"nearest",intersect:!1,axis:"xy"};const e=window.innerWidth<768;Chart.defaults.font.size=e?10:12,Chart.defaults.plugins.tooltip.enabled=!0,Chart.defaults.plugins.tooltip.displayColors=!0,Chart.defaults.responsive=!0,Chart.defaults.maintainAspectRatio=!1}function initializeContractorMap(e){contractorMap||(contractorMap=L.map("contractorMap").setView([39.8283,-98.5795],3),L.tileLayer("https://api.maptiler.com/maps/openstreetmap/{z}/{x}/{y}.jpg?key=6aiOr0BMGcTLjUNBbDsy",{attribution:'&copy; <a href="https://www.maptiler.com/">MapTiler</a>',tileSize:512,zoomOffset:-1,maxZoom:18}).addTo(contractorMap)),contractorClusterGroup?contractorClusterGroup.clearLayers():(contractorClusterGroup=L.markerClusterGroup({maxClusterRadius:40,disableClusteringAtZoom:10,iconCreateFunction:function(e){const t=e.getChildCount();let a="small";return t>100?a="large":t>20&&(a="medium"),new L.DivIcon({html:`<div class="cluster-icon ${a}">${t}</div>`,className:"custom-cluster",iconSize:[30,30]})}}),contractorMap.addLayer(contractorClusterGroup));const t=new Set;(window.innerWidth<768&&e.length>500?e.slice(0,500):e).forEach((e=>{const a=e.Location;if(!a||!e["Legal Business Name"])return;const[r,n]=a.split(",").map((e=>e.trim())),o=parseFloat(r),i=parseFloat(n);if(isNaN(o)||isNaN(i)||0===o||0===i)return;const s=`${o.toFixed(4)}|${i.toFixed(4)}`;if(t.has(s))return;t.add(s);const c=e["Legal Business Name"],l=e["Vendor Address City"]||"",d=e["Vendor Address State"]||"",p=l&&d?`${l}, ${d}`:"",u=`<strong>${c}</strong>${p?`<br>${p}`:""}`,m=createStyledMarker(o,i,c);m.bindPopup(u),contractorClusterGroup.addLayer(m)})),contractorClusterGroup&&contractorClusterGroup.getLayers().length>0&&contractorMap.fitBounds(contractorClusterGroup.getBounds(),{padding:[30,30],maxZoom:3}),setTimeout((()=>{contractorMap.invalidateSize()}),200)}function createStyledMarker(e,t,a){const r=`<div class="custom-marker" title="${a}"></div>`;return L.marker([e,t],{icon:L.divIcon({className:"",html:r,iconSize:[12,12],iconAnchor:[6,6]})})}function applyFilter(e,t=null,a=null){try{let r,n=e;const o=document.getElementById("marketShareChartCard"),i=document.getElementById("primeContractorsChartCard"),s=document.querySelector(".grid.grid-cols-1.md\\:grid-cols-2.lg\\:grid-cols-3.gap-4.md\\:gap-6");if("primeName"===t){isViewingSpecificPrime=!0,specificPrimeName=a||e;const t=specificPrimeName;if(r=parsedData.filter((e=>(e["Legal Business Name"]?.toLowerCase()||"")===t.toLowerCase())),n=`Prime: ${t}`,renderPrimeDetailView(t,r),updateDashboardTitle(`Viewing contracts for ${t}`),o&&o.classList.add("hidden"),i&&i.classList.add("hidden"),s){s.classList.remove("lg:grid-cols-3"),s.classList.add("lg:grid-cols-2");Array.from(s.children).filter((e=>!e.classList.contains("hidden"))).forEach(((e,t)=>{e.style.order=t}))}}else if(t){isViewingSpecificPrime=!1,specificPrimeName=null,primeDetailViewSection.classList.add("hidden"),o&&o.classList.remove("hidden"),i&&i.classList.remove("hidden"),s&&(s.classList.remove("lg:grid-cols-2"),s.classList.add("lg:grid-cols-3"),Array.from(s.children).forEach((e=>{e.style.order=""})));const c=(a||e).toLowerCase();r="naicsDesc"===t?parsedData.filter((e=>(e["NAICS Description"]||"").toLowerCase().includes(c))):parsedData.filter((e=>{let r="";switch(t){case"naicsCode":r=String(e["NAICS Code"]||"").toLowerCase();break;case"departmentName":r=e["Contracting Department Name"]?.toLowerCase()||"";break;case"agencyName":r=e["Contracting Agency Name"]?.toLowerCase()||"";break;case"officeName":r=e["Contracting Office Name"]?.toLowerCase()||"";break;case"stateCode":r=e["Principal Place of Performance State Code"]?.toLowerCase()||"";break;case"contractType":r=e["Award or Indefinite Delivery Vehicle Type"]?.toLowerCase()||"";break;default:return!1}return a?r===c:r.includes(c)}));let l="";switch(t){case"naicsCode":l="NAICS Code";break;case"naicsDesc":l="NAICS Keyword";break;case"departmentName":l="Department";break;case"agencyName":l="Agency";break;case"officeName":l="Office";break;case"stateCode":l="State";break;case"contractType":l="Contract Type";break;default:l=t.replace(/([A-Z])/g," $1").replace(/^./,(e=>e.toUpperCase()))}n=`${l}: ${a||e}`,updateDashboardTitle(`Filtered by ${n} (${r.length.toLocaleString()} results)`)}else{if(isViewingSpecificPrime=!1,specificPrimeName=null,primeDetailViewSection.classList.add("hidden"),o&&o.classList.remove("hidden"),i&&i.classList.remove("hidden"),s&&(s.classList.remove("lg:grid-cols-2"),s.classList.add("lg:grid-cols-3"),Array.from(s.children).forEach((e=>{e.style.order=""}))),!e||""===e.trim())return void clearAllFilters();const t=e.toLowerCase().split(" ").filter((e=>e));r=parsedData.filter((e=>t.every((t=>{const a=e["Legal Business Name"]?.toLowerCase()||"",r=String(e["NAICS Code"]||"").toLowerCase(),n=e["NAICS Description"]?.toLowerCase()||"",o=e["Contracting Department Name"]?.toLowerCase()||"",i=e["Contracting Agency Name"]?.toLowerCase()||"",s=e["Contracting Office Name"]?.toLowerCase()||"",c=e["Principal Place of Performance State Code"]?.toLowerCase()||"";return a.includes(t)||r.includes(t)||n.includes(t)||o.includes(t)||i.includes(t)||s.includes(t)||2===t.length&&c===t||t.length>2&&c.includes(t)})))),updateDashboardTitle(`Search results for "${e}" (${r.length.toLocaleString()} results)`)}initializeCoreVisuals(r,isViewingSpecificPrime),initializePrimeProfilesSection(r),initializeContractorMap(r),renderSankeyChart(r),createPrimeSpecializationHeatmap(r),createContractingOfficeRelationshipMap(r),createContractOpportunityForecast(r),updateActiveFilterIndicator(n,r.length),unifiedSearchSuggestions.innerHTML="",unifiedSearchSuggestions.classList.add("hidden")}catch(e){console.error("Error during filter application:",e)}}function recreateChartCanvas(e){let t;if(charts[e]&&charts[e].canvas&&charts[e].canvas.parentElement)t=charts[e].canvas.parentElement;else if(t=document.getElementById(e)?.parentElement,!t){const a=document.querySelectorAll(".chart-container");for(const r of a)if(r.querySelector(".chart-no-data")){t=r,console.log(`Found container with "no data" message that might be for ${e}`);break}}if(!t&&"contractOpportunityForecastChart"===e){const e=document.querySelector('.dashboard-card:has(.chart-container:has(.chart-no-data), h3:contains("Upcoming Contract Expirations"))');e&&(t=e.querySelector(".chart-container"),console.log("Found opportunity chart container through card heading"))}if(!t)return console.error(`Container for ${e} not found using any method`),!1;charts[e]&&(charts[e].destroy(),charts[e]=null),t.innerHTML="";const a=document.createElement("canvas");return a.id=e,t.appendChild(a),console.log(`Canvas ${e} recreated successfully`),!0}function clearAllFilters(){try{if(console.log("Starting filter reset process"),unifiedSearchInput.value="",activeFilterIndicator.classList.add("hidden"),unifiedSearchSuggestions.innerHTML="",unifiedSearchSuggestions.classList.add("hidden"),updateDashboardTitle("",!0),primeDetailViewSection.classList.add("hidden"),isViewingSpecificPrime=!1,specificPrimeName=null,"function"==typeof closeAllDetailSections)closeAllDetailSections();else{const e=document.getElementById("specializationDetailsSection");e&&e.classList.add("hidden");const t=document.getElementById("contractExpirationDetails");t&&t.classList.add("hidden")}currentSpecializationData={prime:null,naics:null,naicsDescription:null,specializationIndex:0,totalValue:0,contracts:[]},currentSpecPage=1,currentOpportunityData=[],currentOpportunityPage=1,currentPrimeDetailViewPage=1,currentPrimeDetailSort={column:"endDate",order:"desc"};const e=document.getElementById("marketShareChartCard"),t=document.getElementById("primeContractorsChartCard");e&&e.classList.remove("hidden"),t&&t.classList.remove("hidden");const a=document.querySelector(".grid.grid-cols-1.md\\:grid-cols-2.lg\\:grid-cols-3.gap-4.md\\:gap-6, .grid.grid-cols-1.md\\:grid-cols-2.lg\\:grid-cols-2.gap-4.md\\:gap-6");if(a){a.classList.remove("lg:grid-cols-2"),a.classList.add("lg:grid-cols-3");a.querySelectorAll(".dashboard-card").forEach((e=>{e.style.order=""}))}updateDashboardTitle("",!0),"undefined"!=typeof relationshipMapSimulation&&relationshipMapSimulation&&(relationshipMapSimulation.stop(),relationshipMapSimulation=null),d3.select("#contractingOfficeRelationshipMap").selectAll("*").remove(),d3.select("#sankeyChart").selectAll("*").remove(),d3.select("#primeSpecializationHeatmap").selectAll("*").remove(),d3.selectAll(".d3-relationship-tooltip").remove(),d3.selectAll(".heatmap-tooltip").remove(),Object.keys(charts).forEach((e=>{charts[e]&&(charts[e].destroy(),charts[e]=null)})),contractorMap&&contractorMap.setView([39.8283,-98.5795],3),console.log("Recreating chart canvases");["primeContractorsChart","marketShareChart","naicsChart_main","stateContractsChart_main","departmentChart","timelineChart","contractTypeChart_main","topAgenciesChart","contractOpportunityForecastChart"].forEach((e=>{recreateChartCanvas(e)})),console.log("All chart canvases recreated, now initializing visualizations"),initializeCoreVisuals(parsedData,!1),initializePrimeProfilesSection(parsedData),initializeContractorMap(parsedData),renderSankeyChart(parsedData),createPrimeSpecializationHeatmap(parsedData),createContractingOfficeRelationshipMap(parsedData);document.getElementById("contractOpportunityForecastChart")||(console.log("Opportunity forecast canvas not found, attempting to recreate"),recreateChartCanvas("contractOpportunityForecastChart")),console.log("Scheduling opportunity forecast chart creation"),setTimeout((()=>{document.getElementById("contractOpportunityForecastChart")?(console.log("Creating opportunity forecast chart"),createContractOpportunityForecast(parsedData)):(console.error("Opportunity forecast canvas not found after timeout"),recreateChartCanvas("contractOpportunityForecastChart"),setTimeout((()=>{document.getElementById("contractOpportunityForecastChart")?(console.log("Final attempt to create opportunity forecast chart"),createContractOpportunityForecast(parsedData)):console.error("Opportunity forecast canvas not found after final attempt")}),500))}),300),setTimeout((()=>{window.dispatchEvent(new Event("resize"))}),100),console.log("All filters and visualizations reset complete")}catch(e){console.error("Error during clearing filters:",e)}}function updateActiveFilterIndicator(e,t){const a=document.getElementById("activeFilterIndicator");e&&""!==e.trim()?(a.innerHTML=`\n          <div class="text-sm font-medium text-[var(--text-secondary)] mb-2">Active Filters:</div>\n          <div class="active-filter-tag">\n            <span>${e}</span>\n            <button onclick="clearAllFilters()" class="clear-filter-btn">\n              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">\n                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />\n              </svg>\n            </button>\n          </div>\n          <div class="text-xs text-[var(--text-secondary)]">${t.toLocaleString()} results</div>\n        `,a.classList.remove("hidden")):(a.classList.add("hidden"),updateDashboardTitle("",!0))}function selectSearchSuggestion(e,t,a){unifiedSearchInput.value=a,applyFilter(a,t,a),unifiedSearchSuggestions.innerHTML="",unifiedSearchSuggestions.classList.add("hidden")}function setupUnifiedSearch(){const e=window.innerWidth<768,t=e?400:300;unifiedSearchInput.addEventListener("input",_.debounce((function(){const t=this.value.toLowerCase().trim();if(unifiedSearchSuggestions.innerHTML="",t.length<2)return void unifiedSearchSuggestions.classList.add("hidden");const a=new Map,r=e?8:15;parsedData.forEach((e=>{if(a.size>=r)return;const n=(e,n,o=null)=>{if(a.size>=r)return;const i=e,s=String(e||"").toLowerCase();if(s.includes(t)){const e=`${n}-${i}`;if(!a.has(e)){let r=o||i;if("string"==typeof r){const e=s.indexOf(t);-1!==e&&(r=r.substring(0,e)+`<strong>${r.substring(e,e+t.length)}</strong>`+r.substring(e+t.length))}a.set(e,{termForDisplayHTML:r,type:n,originalValue:i})}}};n(e["Legal Business Name"],"primeName"),n(String(e["NAICS Code"]||""),"naicsCode");(e["NAICS Description"]||"").split(/\s+/).forEach((e=>{e.toLowerCase().includes(t)&&e.length>2&&n(e,"naicsDesc",e)})),n(e["Contracting Department Name"],"departmentName"),n(e["Contracting Agency Name"],"agencyName"),n(e["Contracting Office Name"],"officeName"),n(e["Principal Place of Performance State Code"],"stateCode")})),a.size>0?(unifiedSearchSuggestions.classList.remove("hidden"),Array.from(a.values()).forEach((e=>{const t=document.createElement("div");t.className="suggestion-item hover:bg-[var(--surface-level-2)]";const a=document.createElement("span");a.className="suggestion-text",a.innerHTML=e.termForDisplayHTML,t.appendChild(a);const r=document.createElement("span");r.className="type-label bg-[var(--surface-level-1)] text-[var(--text-tertiary)]";let n=e.type;"primeName"===e.type?n="Prime":"naicsCode"===e.type?n="NAICS":"naicsDesc"===e.type?n="Desc":"departmentName"===e.type?n="Dept":"agencyName"===e.type?n="Agency":"officeName"===e.type?n="Office":"stateCode"===e.type&&(n="State"),r.textContent=n,t.appendChild(r),t.onclick=()=>selectSearchSuggestion(e.termForDisplayHTML,e.type,e.originalValue),unifiedSearchSuggestions.appendChild(t)}))):(unifiedSearchSuggestions.classList.remove("hidden"),unifiedSearchSuggestions.innerHTML='<div class="p-2 text-sm text-[var(--text-tertiary)]">No specific suggestions. Press Enter to search all fields.</div>')}),t)),unifiedSearchInput.addEventListener("keypress",(function(e){"Enter"===e.key&&(applyFilter(this.value.trim()),unifiedSearchSuggestions.innerHTML="",unifiedSearchSuggestions.classList.add("hidden"))})),"ontouchstart"in window?document.addEventListener("touchstart",(function(e){unifiedSearchInput.contains(e.target)||unifiedSearchSuggestions.contains(e.target)||unifiedSearchSuggestions.classList.add("hidden")})):document.addEventListener("click",(function(e){unifiedSearchInput.contains(e.target)||unifiedSearchSuggestions.contains(e.target)||unifiedSearchSuggestions.classList.add("hidden")}))}function initializeCoreVisuals(e,t=!1){updateStatistics(e);const a=document.getElementById("marketShareChartCard"),r=document.getElementById("primeContractorsChartCard");t?(charts.marketShareChart&&(charts.marketShareChart.destroy(),charts.marketShareChart=null),a&&a.querySelector(".chart-container")&&(a.querySelector(".chart-container").innerHTML='<div class="chart-no-data">Market share not applicable for single prime view.</div>'),charts.primeContractorsChart&&(charts.primeContractorsChart.destroy(),charts.primeContractorsChart=null),r&&r.querySelector(".chart-container")&&(r.querySelector(".chart-container").innerHTML='<div class="chart-no-data">Top primes not applicable for single prime view.</div>')):(a&&!a.querySelector("canvas#marketShareChart")&&(a.querySelector(".chart-container").innerHTML='<canvas id="marketShareChart"></canvas>'),createMarketShareChart(e),r&&!r.querySelector("canvas#primeContractorsChart")&&(r.querySelector(".chart-container").innerHTML='<canvas id="primeContractorsChart"></canvas>'),createPrimeContractorsChart(e)),createDepartmentChart(e),createNaicsChart_main(e),createContractTypeChart_main(e),createStateContractsChart_main(e,currentMainStateChartFilter),createTopAgenciesChart(e),createTimelineChart(e),renderSankeyChart(e),createContractOpportunityForecast(e),createPrimeSpecializationHeatmap(e),createContractingOfficeRelationshipMap(e)}function updateStatistics(e){if(!e||0===e.length)return void["totalContractsValue","totalValueValue","avgContractValue","uniquePrimesValue"].forEach((e=>document.getElementById(e).textContent="0"));document.getElementById("totalContractsValue").textContent=e.length.toLocaleString();let t=0,a=0;e.forEach((e=>{const r=parseCurrencyValue(e["Base and All Options Value (Total Contract Value)"]);r>0&&(t+=r,a++)})),document.getElementById("totalValueValue").textContent=formatCurrency(t),document.getElementById("avgContractValue").textContent=formatCurrency(a>0?t/a:0),document.getElementById("uniquePrimesValue").textContent=new Set(e.map((e=>e["Legal Business Name"])).filter(Boolean)).size.toLocaleString()}function getCSSVariable(e){return getComputedStyle(document.documentElement).getPropertyValue(e).trim()}let chartGrays=[];function getChartColors(){const e=getComputedStyle(document.documentElement);chartPrimaryColor=e.getPropertyValue("--chart-accent-1").trim(),chartSecondaryColor=e.getPropertyValue("--chart-accent-2").trim(),chartTertiaryColor=e.getPropertyValue("--chart-accent-3").trim(),chartNeutralColor=e.getPropertyValue("--chart-accent-4").trim(),chartAccentColor=chartPrimaryColor,chartGrays=[e.getPropertyValue("--chart-accent-5").trim(),e.getPropertyValue("--border-level-2").trim(),e.getPropertyValue("--surface-level-2").trim()]}let overrideChartHighlightColor="#5f7a9e",overrideChartNeutralColor=null;function getCSSVariable(e){return getComputedStyle(document.documentElement).getPropertyValue(e).trim()}function getHighlightColors(e){const t=overrideChartHighlightColor||"#e63946",a=overrideChartNeutralColor||getCSSVariable("--chart-accent-2")||"#adb5bd",r=Math.max(...e);return e.map((e=>e===r?t:a))}function getRotatingHighlightPalette(e){const t=Math.max(...e),a=[chartPrimaryColor,chartSecondaryColor,chartTertiaryColor,chartNeutralColor,chartGrays[0],chartGrays[1],chartGrays[2],"#dee2e6","#ced4da","#adb5bd"],r=overrideChartHighlightColor||"#e63946";return e.map(((e,n)=>e===t?r:a[n%a.length]))}function createChart(e,t,a,r,n="No data available for current selection."){const o=document.getElementById(e);if(!o)return;const i=o.parentElement;let s=!0;if(a?.datasets?.length>0&&(s=a.datasets.every((e=>!e.data||0===e.data.length||e.data.every((e=>0===e||null===e))))),s)return i.innerHTML=`\n      <div class="chart-no-data">\n        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">\n          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />\n        </svg>\n        <span>${n}</span>\n      </div>\n    `,void(charts[e]&&(charts[e].destroy(),charts[e]=null));i.querySelector(".chart-no-data")&&(i.innerHTML=`<canvas id="${e}"></canvas>`);const c=document.getElementById(e).getContext("2d");charts[e]&&charts[e].destroy(),charts[e]=new Chart(c,{type:t,data:a,options:r})}function createPrimeContractorsChart(e){if(!document.getElementById("primeContractorsChart"))return;const t={};e.forEach((e=>{if(e["Legal Business Name"]){const a=parseCurrencyValue(e["Base and All Options Value (Total Contract Value)"]);t[e["Legal Business Name"]]=(t[e["Legal Business Name"]]||0)+a}}));const a=Object.entries(t).sort(((e,t)=>t[1]-e[1])).slice(0,10),r=a.map((e=>e[0])),n=a.map((e=>e[1])),o=(Math.max(...n),chartGrays[0],chartGrays[1],chartGrays[2],{labels:r,datasets:[{label:"Contract Value",data:n,backgroundColor:getRotatingHighlightPalette(n)}]});createChart("primeContractorsChart","bar",o,{indexAxis:"y",responsive:!0,maintainAspectRatio:!1,plugins:{legend:{display:!1},tooltip:{callbacks:{label:e=>formatCurrency(e.raw)}}},scales:{x:{ticks:{callback:e=>formatCurrency(e)}},y:{ticks:{autoSkip:!1,callback:function(e){const t=this.getLabelForValue(e);return t.length>18?t.substring(0,15)+"...":t}}}},onClick:(e,t)=>{if(t.length>0){setUnifiedSearchTerm(o.labels[t[0].index],"primeName")}}})}function createDepartmentChart(e){const t={};e.forEach((e=>{if(e["Contracting Department Name"]){const a=e["Contracting Department Name"];t[a]=(t[a]||0)+parseCurrencyValue(e["Base and All Options Value (Total Contract Value)"])}}));const a=Object.entries(t).sort(((e,t)=>t[1]-e[1])).slice(0,10),r=a.map((e=>e[0])),n=a.map((e=>e[1])),o=(Math.max(...n),chartGrays[0],chartGrays[1],chartGrays[2],{labels:r,datasets:[{data:n,backgroundColor:getRotatingHighlightPalette(n)}]});createChart("departmentChart","pie",o,{responsive:!0,maintainAspectRatio:!1,plugins:{legend:{position:"right",labels:{boxWidth:12,font:{size:10}}},tooltip:{callbacks:{label:e=>`${e.label||""}: ${formatCurrency(e.raw)}`}}},onClick:(e,t)=>{if(t.length>0){setUnifiedSearchTerm(o.labels[t[0].index],"departmentName")}}})}function createNaicsChart_main(e){const t={},a={};e.forEach((e=>{if(e["NAICS Code"]){const r=String(e["NAICS Code"]);t[r]=(t[r]||0)+parseCurrencyValue(e["Base and All Options Value (Total Contract Value)"]),a[r]||(a[r]=e["NAICS Description"]||"N/A")}}));const r=Object.entries(t).sort(((e,t)=>t[1]-e[1])).slice(0,10),n=r.map((e=>e[0])),o=r.map((e=>{const t=e[0],r=a[t]||"";return`${t} - ${r.substring(0,30)}${r.length>30?"...":""}`})),i=r.map((e=>e[1]));createChart("naicsChart_main","bar",{labels:o,datasets:[{label:"Contract Value",data:i,backgroundColor:getRotatingHighlightPalette(i)}]},{indexAxis:"y",responsive:!0,maintainAspectRatio:!1,plugins:{legend:{display:!1},tooltip:{callbacks:{label:function(e){let t=e.dataset.label||"";return t&&(t+=": "),null!==e.parsed.x&&(t+=formatCurrency(e.parsed.x)),t}}}},scales:{x:{ticks:{callback:e=>formatCurrency(e),font:{size:10},maxRotation:0,minRotation:0,autoSkipPadding:10}},y:{ticks:{autoSkip:!1,font:{size:10},callback:function(e){const t=this.getLabelForValue(e);return t.length>28?t.substring(0,25)+"...":t}}}},onClick:(e,t)=>{if(t.length>0){const e=t[0].index,a=n[e];a&&setUnifiedSearchTerm(a,"naicsCode")}}})}function createContractTypeChart_main(e){const t={};e.forEach((e=>{const a=e["Award or Indefinite Delivery Vehicle Type"];a&&(t[a]=(t[a]||0)+1)}));const a=Object.entries(t).sort(((e,t)=>t[1]-e[1])),r=a.map((e=>e[0])),n=a.map((e=>e[1])),o=(Math.max(...n),chartGrays[0],chartGrays[1],chartGrays[2],{labels:r,datasets:[{data:n,backgroundColor:getRotatingHighlightPalette(n)}]});createChart("contractTypeChart_main","doughnut",o,{responsive:!0,maintainAspectRatio:!1,plugins:{legend:{position:"right",labels:{boxWidth:12,font:{size:10}}},tooltip:{callbacks:{label:e=>`${e.label||""}: ${e.raw.toLocaleString()}`}}},onClick:(e,t)=>{if(t.length>0){setUnifiedSearchTerm(o.labels[t[0].index],"contractType")}}})}function createStateContractsChart_main(e,t="count"){const a={};e.forEach((e=>{const t=e["Principal Place of Performance State Code"];t&&(a[t]||(a[t]={count:0,value:0}),a[t].count++,a[t].value+=parseCurrencyValue(e["Base and All Options Value (Total Contract Value)"]))}));const r=Object.entries(a).sort(((e,a)=>a[1][t]-e[1][t])).slice(0,10),n=r.map((e=>e[0])),o=r.map((e=>e[1][t])),i=(Math.max(...o),chartGrays[0],chartGrays[1],chartGrays[2],getRotatingHighlightPalette(o)),s={labels:n,datasets:[{label:"count"===t?"Number of Contracts":"Total Contract Value",data:o,backgroundColor:i}]};createChart("stateContractsChart_main","bar",s,{responsive:!0,maintainAspectRatio:!1,plugins:{legend:{display:!1},tooltip:{callbacks:{label:e=>"count"===t?e.raw.toLocaleString():formatCurrency(e.raw)}}},scales:{y:{ticks:{callback:e=>"count"===t?e.toLocaleString():formatCurrency(e)}}},onClick:(e,t)=>{if(t.length>0){setUnifiedSearchTerm(s.labels[t[0].index],"stateCode")}}})}function createTopAgenciesChart(e){const t={};e.forEach((e=>{const a=e["Contracting Agency Name"];a&&(t[a]=(t[a]||0)+parseCurrencyValue(e["Base and All Options Value (Total Contract Value)"]))}));const a=Object.entries(t).sort(((e,t)=>t[1]-e[1])).slice(0,10),r=a.map((e=>e[0])),n=a.map((e=>e[1])),o=(Math.max(...n),chartGrays[0],chartGrays[1],chartGrays[2],{labels:r,datasets:[{label:"Contract Value",data:n,backgroundColor:getRotatingHighlightPalette(n)}]});createChart("topAgenciesChart","bar",o,{indexAxis:"y",responsive:!0,maintainAspectRatio:!1,plugins:{legend:{display:!1},tooltip:{callbacks:{label:e=>formatCurrency(e.raw)}}},scales:{x:{ticks:{callback:e=>formatCurrency(e)}},y:{ticks:{autoSkip:!1,callback:function(e){const t=this.getLabelForValue(e);return t.length>20?t.substring(0,17)+".":t}}}},onClick:(e,t)=>{if(t.length>0){setUnifiedSearchTerm(o.labels[t[0].index],"agencyName")}}})}function createTimelineChart(e){const t={},a={};e.forEach((e=>{if(e["Period of Performance Start Date"]){const a=new Date(e["Period of Performance Start Date"]);if(!isNaN(a.getTime())){const e=a.getFullYear();e>2e3&&e<2030&&(t[e]=(t[e]||0)+1)}}if(e["Completion Date"]){const t=new Date(e["Completion Date"]);if(!isNaN(t.getTime())){const e=t.getFullYear();e>2e3&&e<2030&&(a[e]=(a[e]||0)+1)}}}));const r=new Set([...Object.keys(t),...Object.keys(a)].map(Number)),n=Array.from(r).sort(((e,t)=>e-t)),o=[],i=[],s=[];n.forEach((e=>{o.push(e.toString()),i.push(t[e]||0),s.push(a[e]||0)}));const c=void 0!==chartSecondaryColor?chartSecondaryColor:"#adb5bd",l=void 0!==overrideChartHighlightColor?overrideChartHighlightColor:"#e63946";createChart("timelineChart","line",{labels:o,datasets:[{label:"Contracts Starting",data:i,borderColor:c,backgroundColor:`${c}33`,fill:!0,tension:.4,pointRadius:0,pointHitRadius:10,pointHoverRadius:5},{label:"Contracts Ending",data:s,borderColor:l,backgroundColor:l+"22",fill:!0,tension:.4,pointRadius:0,pointHitRadius:10,pointHoverRadius:5}]},{responsive:!0,maintainAspectRatio:!1,plugins:{legend:{display:!0,position:"top"},tooltip:{callbacks:{label:e=>`${e.dataset.label||""}: ${e.parsed.y.toLocaleString()}`}}},scales:{y:{beginAtZero:!0,ticks:{callback:e=>e.toLocaleString()}},x:{ticks:{callback:function(e,t,a){const r=this.getLabelForValue(e);return r&&"string"==typeof r&&4===r.length&&!isNaN(r)?"'"+r.substring(2):r},maxRotation:0,minRotation:0}}}})}function createMarketShareChart(e){if(!document.getElementById("marketShareChart"))return;const t={};e.forEach((e=>{if(e["Legal Business Name"]){const a=e["Legal Business Name"];t[a]=(t[a]||0)+parseCurrencyValue(e["Base and All Options Value (Total Contract Value)"])}}));const a=Object.entries(t).sort(((e,t)=>t[1]-e[1])),r=[],n=[];if(a.forEach(((e,t)=>{t<5&&(r.push(e[0]),n.push(e[1]))})),a.length>5){const e=a.slice(5).reduce(((e,t)=>e+t[1]),0);e>0&&(r.push("Others"),n.push(e))}Math.max(...n),chartGrays[0],chartGrays[1],chartGrays[2];const o=getRotatingHighlightPalette(n),i={labels:r,datasets:[{label:"Prime Share",data:n,backgroundColor:o}]};createChart("marketShareChart","pie",i,{responsive:!0,maintainAspectRatio:!1,plugins:{legend:{position:"right",labels:{boxWidth:12,font:{size:10}}},tooltip:{callbacks:{label:e=>{const t=e.raw,a=(t/n.reduce(((e,t)=>e+t),0)*100).toFixed(1);return`${e.label||""}: ${formatCurrency(t)} (${a}%)`}}}},onClick:(e,t)=>{if(t.length>0){const e=i.labels[t[0].index];"Others"!==e?setUnifiedSearchTerm(e,"primeName"):console.log("Clicked 'Others' slice - contains:",a.slice(5).map((e=>e[0])))}}})}function renderSankeyChart(e){if(console.log("Starting Sankey chart rendering with",e?.length||0,"records"),!e||!e.length)return void console.warn("No data available for Sankey chart");if(!document.getElementById("sankeyChart"))return void console.error("Sankey chart container not found");if("undefined"==typeof d3||!d3.sankey)return console.error("Required libraries not loaded: d3 or d3-sankey missing"),void setTimeout((()=>renderSankeyChart(e)),2e3);const t=window.innerWidth<768,a=t?8:12,r=()=>{processingIndicator&&(processingIndicator.classList.add("hidden"),processingIndicator.classList.remove("flex"))},n=e=>{console.error("Sankey chart error:",e);const t=document.getElementById("sankeyWrapper");t&&(t.innerHTML=`\n        <div class="chart-no-data">\n          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">\n            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />\n          </svg>\n          <span>${e}</span>\n        </div>`),r()};if(e&&0!==e.length)try{const o=d3.select("#sankeyChart");o.selectAll("*").remove();const i=document.getElementById("sankeyWrapper"),s=i?i.clientWidth:1e3,c=t?350:600,l=Math.max(s-10,t?300:800);console.log("Sankey container width:",s,"chart width:",l),o.attr("width",l).attr("height",c).attr("viewBox",`0 0 ${l} ${c}`).attr("preserveAspectRatio","xMidYMid meet");const d={},p={};e.forEach((e=>{const t=e["Contracting Agency Name"],a=e["Legal Business Name"],r=parseCurrencyValue(e["Base and All Options Value (Total Contract Value)"]);t&&r&&(d[t]=(d[t]||0)+r),a&&r&&(p[a]=(p[a]||0)+r)}));const u=(e,t)=>Object.entries(e).sort(((e,t)=>t[1]-e[1])).slice(0,t).map((e=>e[0])),m=u(d,a),g=u(p,a);let h=e.filter((e=>m.includes(e["Contracting Agency Name"])&&g.includes(e["Legal Business Name"])));if(0===h.length)return void n("No significant data flows to display");const y=new Map,f=[];h.forEach((e=>{const t=e["Contracting Agency Name"],a=e["Legal Business Name"];t&&y.set(t,{name:t}),a&&y.set(a,{name:a})}));const C=Array.from(y.values()),S=new Map;C.forEach(((e,t)=>{e.id=t,S.set(e.name,t)}));const v=[];h.forEach((e=>{const t=e["Contracting Agency Name"],a=e["Legal Business Name"],r=parseCurrencyValue(e["Base and All Options Value (Total Contract Value)"]);if(t&&a&&r>0&&S.has(t)&&S.has(a)){v.push({sourceName:t,targetName:a,value:r});const e=f.find((e=>e.source===S.get(t)&&e.target===S.get(a)));e?e.value+=r:f.push({source:S.get(t),target:S.get(a),value:r})}}));const b=[...f].sort(((e,t)=>t.value-e.value)),x=b.length>0?b[0]:null;let w=null,L=null;if(x)for(const[e,t]of S.entries())t===x.source&&(w=e),t===x.target&&(L=e);let D=0;f.length>30&&(D=d3.quantile(f.map((e=>e.value)).sort(d3.ascending),.15));const E=f.filter((e=>e.value>D)),P=overrideChartHighlightColor||"#e63946",I=d3.sankey().nodeId((e=>e.id)).nodeWidth(20).nodePadding(10).extent([[10,20],[l-10,c-20]])({nodes:C,links:E.map((e=>Object.assign({},e)))});o.append("g").attr("fill","none").attr("stroke-opacity",.4).selectAll("path").data(I.links).join("path").attr("d",d3.sankeyLinkHorizontal()).attr("stroke",(e=>{if(w&&L){const t=e.source.name,a=e.target.name;return t===w&&a===L?P:getCSSVariable("--chart-accent-1")}return getCSSVariable("--chart-accent-1")})).attr("stroke-width",(e=>Math.max(1,e.width))).append("title").text((e=>`${e.source.name} → ${e.target.name}\n$${e.value.toLocaleString()}`)),o.append("g").selectAll("rect").data(I.nodes).join("rect").attr("x",(e=>e.x0)).attr("y",(e=>e.y0)).attr("height",(e=>Math.max(1,e.y1-e.y0))).attr("width",(e=>e.x1-e.x0)).attr("fill",(e=>w&&L&&(e.name===w||e.name===L)?P:getCSSVariable("--chart-accent-1"))).attr("opacity",.8).style("stroke","white").style("stroke-width",.5).style("cursor","pointer").on("click",(function(e,t){t.x0<l/2?setUnifiedSearchTerm(t.name,"agencyName"):setUnifiedSearchTerm(t.name,"primeName")})).append("title").text((e=>`${e.name}\n$${e.value.toLocaleString()}`)),o.append("g").selectAll("text").data(I.nodes).join("text").attr("x",(e=>e.x0<l/2?e.x1+6:e.x0-6)).attr("y",(e=>(e.y1+e.y0)/2)).attr("dy","0.35em").attr("text-anchor",(e=>e.x0<l/2?"start":"end")).text((e=>{const a=t?15:30;return e.name.length>a?e.name.substring(0,a-3)+"...":e.name})).attr("font-size",t?"9px":"11px").attr("fill",getCSSVariable("--text-primary")),console.log("Sankey chart render complete"),r()}catch(e){n(`Error rendering sankey chart: ${e.message}`),console.error(e)}else n("No data available for sankey chart")}function addResizeListener(){window.addEventListener("resize",((e,t)=>{let a;return function(){const r=this,n=arguments;clearTimeout(a),a=setTimeout((()=>e.apply(r,n)),t)}})((()=>{if(parsedData&&parsedData.length>0){console.log("Window resized, redrawing visualizations");const e=unifiedSearchInput.value.trim();if(!document.getElementById("activeFilterIndicator").classList.contains("hidden")&&e)return;window.innerWidth;contractorMap&&setTimeout((()=>{contractorMap.invalidateSize()}),100)}}),250))}function initializePrimeProfilesSection(e){const t={};e.forEach((e=>{const a=e["Legal Business Name"];a&&(t[a]||(t[a]={name:a,contracts:0,totalValue:0,naics:new Set,agencies:new Set,uei:e["Unique Entity ID"]}),t[a].contracts++,t[a].totalValue+=parseCurrencyValue(e["Base and All Options Value (Total Contract Value)"]),e["NAICS Code"]&&t[a].naics.add(String(e["NAICS Code"])),e["Contracting Agency Name"]&&t[a].agencies.add(e["Contracting Agency Name"]))})),function(){primeProfilesContainer.innerHTML="";let e=0;Object.values(t).sort(((e,t)=>t.totalValue-e.totalValue)).forEach((t=>{e++;const a=document.createElement("div");a.className="p-3 md:p-4 bg-[var(--surface-level-2)] rounded-lg border border-[var(--border-level-1)] shadow hover:shadow-lg transition-shadow duration-150",a.innerHTML=`\n                    <h4 class="font-semibold text-[var(--accent)] truncate cursor-pointer hover:underline" title="${t.name}" onclick="setUnifiedSearchTerm('${t.name.replace(/'/g,"\\'")}', 'primeName')">${t.name}</h4>\n                    <p class="text-xs md:text-sm">Contracts: ${t.contracts.toLocaleString()}</p>\n                    <p class="text-xs md:text-sm">Value: ${formatCurrency(t.totalValue)}</p>\n                    <p class="text-xs mt-1 truncate" title="Top NAICS: ${Array.from(t.naics).slice(0,3).join(", ")}">Top NAICS: ${Array.from(t.naics).slice(0,3).join(", ")}</p>\n                    <p class="text-xs mt-1 truncate" title="Top Agencies: ${Array.from(t.agencies).slice(0,2).join(", ")}">Top Agencies: ${Array.from(t.agencies).slice(0,2).join(", ")}</p>\n                    <a href="https://www.google.com/search?q=${encodeURIComponent(t.name+" official website")}" target="_blank" rel="noopener noreferrer" \n                       class="mt-2 mr-1 text-xs bg-[var(--surface-level-3)] text-[var(--text-primary)] px-2 py-1 rounded hover:bg-[var(--surface-level-3)_hover] transition-colors duration-150 ease-in-out focus:ring-2 focus:ring-offset-2 ring-[var(--accent)] focus:outline-none inline-block"\n                       style="font-weight: var(--button-font-weight); text-decoration: none;">\n                       Find Website\n                    </a>\n                    <button class="mt-2 text-xs bg-[var(--accent)] text-[var(--on-accent)] px-2 py-1 rounded hover:bg-opacity-90 transition-colors duration-150 ease-in-out focus:ring-2 focus:ring-offset-2 ring-[var(--accent)] focus:outline-none" \n                            style="font-weight: var(--button-font-weight);" \n                            onclick="setUnifiedSearchTerm('${t.name.replace(/'/g,"\\'")}', 'primeName')">\n                        Filter Dashboard by this Prime\n                    </button>\n                `,primeProfilesContainer.appendChild(a)})),0===e&&(primeProfilesContainer.innerHTML='<p class="p-4 col-span-full text-center text-[var(--text-secondary)]">No primes match current filters.</p>')}()}function renderPrimeDetailView(e,t){if(!e||0===t.length)return void primeDetailViewSection.classList.add("hidden");primeDetailTitle.textContent=`Details for: ${e}`;const a=t[0],r=a?a["Unique Entity ID"]:"N/A",n=a?a["Ultimate Parent Unique Entity ID"]:"N/A",o=a?a["Ultimate Parent Legal Business Name"]:"N/A";let i=0;t.forEach((e=>{i+=parseCurrencyValue(e["Base and All Options Value (Total Contract Value)"])})),updateDashboardTitle(`Viewing contracts for prime: ${e}`),primeDetailStats.innerHTML=`\n        <p><strong>UEI:</strong> ${createEntityLink(r,r)}</p> \n        ${o&&"N/A"!==o?`<p><strong>Parent:</strong> ${createEntityLink(n,o)}</p>`:""}\n        <p><strong>Total Contracts (current view):</strong> ${t.length.toLocaleString()}</p>\n        <p><strong>Total Value (current view):</strong> ${formatCurrency(i)}</p>\n        <p><strong>Avg. Contract Value (current view):</strong> ${formatCurrency(t.length>0?i/t.length:0)}</p>\n\t\t<p class="mt-2">\n            <a href="https://www.google.com/search?q=${encodeURIComponent(e+" official website")}" target="_blank" rel="noopener noreferrer" \n               class="text-[var(--accent)] hover:underline font-medium">\n               Search for ${e} Website\n            </a>\n        </p>\n    `,currentPrimeDetailViewPage=1,renderPrimeDetailContractsTable(t,currentPrimeDetailViewPage),primeDetailViewSection.classList.remove("hidden")}function renderPrimeDetailContractsTable(e,t){const a=(t-1)*ITEMS_PER_PAGE_MODAL_TABLE,r=a+ITEMS_PER_PAGE_MODAL_TABLE,n=sortPrimeDetailData(e,currentPrimeDetailSort.column,currentPrimeDetailSort.order).slice(a,r);let o=`<div class="table-responsive"><table class="min-w-full divide-y divide-[var(--border-level-1)] text-xs">\n        <thead class="bg-[var(--surface-level-2)]"><tr>\n            <th class="px-2 py-2 text-left font-medium text-[var(--text-secondary)]" data-sort-prime="id">PIID ${"id"===currentPrimeDetailSort.column?"asc"===currentPrimeDetailSort.order?"▲":"▼":""}</th>\n            <th class="px-2 py-2 text-left font-medium text-[var(--text-secondary)]" data-sort-prime="agency">Agency ${"agency"===currentPrimeDetailSort.column?"asc"===currentPrimeDetailSort.order?"▲":"▼":""}</th>\n            <th class="px-2 py-2 text-left font-medium text-[var(--text-secondary)]" data-sort-prime="office">Office ${"office"===currentPrimeDetailSort.column?"asc"===currentPrimeDetailSort.order?"▲":"▼":""}</th>\n            <th class="px-2 py-2 text-left font-medium text-[var(--text-secondary)]" data-sort-prime="naicsCode">NAICS ${"naicsCode"===currentPrimeDetailSort.column?"asc"===currentPrimeDetailSort.order?"▲":"▼":""}</th>\n            <th class="px-2 py-2 text-left font-medium text-[var(--text-secondary)]" data-sort-prime="naicsDesc">NAICS Desc. ${"naicsDesc"===currentPrimeDetailSort.column?"asc"===currentPrimeDetailSort.order?"▲":"▼":""}</th>\n            <th class="px-2 py-2 text-left font-medium text-[var(--text-secondary)]" data-sort-prime="value">Value ${"value"===currentPrimeDetailSort.column?"asc"===currentPrimeDetailSort.order?"▲":"▼":""}</th>\n            <th class="px-2 py-2 text-left font-medium text-[var(--text-secondary)]" data-sort-prime="endDate">End Date ${"endDate"===currentPrimeDetailSort.column?"asc"===currentPrimeDetailSort.order?"▲":"▼":""}</th>\n        </tr></thead><tbody class="bg-[var(--background)] divide-y divide-[var(--border-level-1)]">`;n.forEach((e=>{o+=`<tr>\n            <td class="px-2 py-1 whitespace-nowrap">${createAwardLink(e["Procurement Instrument Identifier"])}</td>\n            <td class="px-2 py-1 whitespace-nowrap">${e["Contracting Agency Name"]||"N/A"}</td>\n            <td class="px-2 py-1 whitespace-nowrap">${e["Contracting Office Name"]||"N/A"}</td>\n            <td class="px-2 py-1">${e["NAICS Code"]||"N/A"}</td>\n            <td class="px-2 py-1 whitespace-normal max-w-xs truncate" title="${e["NAICS Description"]||""}">${e["NAICS Description"]?e["NAICS Description"].substring(0,50)+(e["NAICS Description"].length>50?"...":""):"N/A"}</td>\n            <td class="px-2 py-1 whitespace-nowrap">${formatCurrency(parseCurrencyValue(e["Base and All Options Value (Total Contract Value)"]))}</td>\n            <td class="px-2 py-1 whitespace-nowrap">${formatDate(e["Completion Date"])}</td>\n        </tr>`})),o+="</tbody></table></div>";const i=Math.ceil(e.length/ITEMS_PER_PAGE_MODAL_TABLE);i>1&&(o+=`<div class="mt-3 flex justify-between items-center text-xs">\n            <button id="prevPageBtnPrimeDetailView" class="px-2 py-1 border border-[var(--border-level-2)] rounded ${1===t?"opacity-50 cursor-not-allowed":"hover:bg-[var(--surface-level-2)] transition-colors"}" ${1===t?"disabled":""}>Previous</button>\n            <span>Page ${t} of ${i}</span>\n            <button id="nextPageBtnPrimeDetailView" class="px-2 py-1 border border-[var(--border-level-2)] rounded ${t===i?"opacity-50 cursor-not-allowed":"hover:bg-[var(--surface-level-2)] transition-colors"}" ${t===i?"disabled":""}>Next</button>\n        </div>`),primeDetailContractsTableContainer.innerHTML=o,document.querySelectorAll("#primeDetailContractsTableContainer th[data-sort-prime]").forEach((e=>{e.onclick=()=>{const t=e.dataset.sortPrime;currentPrimeDetailSort.column===t?currentPrimeDetailSort.order="asc"===currentPrimeDetailSort.order?"desc":"asc":(currentPrimeDetailSort.column=t,currentPrimeDetailSort.order="asc"),currentPrimeDetailViewPage=1;renderPrimeDetailContractsTable(sortPrimeDetailData(parsedData.filter((e=>e["Legal Business Name"]===specificPrimeName)),currentPrimeDetailSort.column,currentPrimeDetailSort.order),currentPrimeDetailViewPage)}})),document.getElementById("prevPageBtnPrimeDetailView")&&(document.getElementById("prevPageBtnPrimeDetailView").onclick=()=>{if(currentPrimeDetailViewPage>1){currentPrimeDetailViewPage--;renderPrimeDetailContractsTable(sortPrimeDetailData(parsedData.filter((e=>e["Legal Business Name"]===specificPrimeName)),currentPrimeDetailSort.column,currentPrimeDetailSort.order),currentPrimeDetailViewPage)}}),document.getElementById("nextPageBtnPrimeDetailView")&&(document.getElementById("nextPageBtnPrimeDetailView").onclick=()=>{const e=parsedData.filter((e=>e["Legal Business Name"]===specificPrimeName)),t=Math.ceil(e.length/ITEMS_PER_PAGE_MODAL_TABLE);if(currentPrimeDetailViewPage<t){currentPrimeDetailViewPage++;renderPrimeDetailContractsTable(sortPrimeDetailData(e,currentPrimeDetailSort.column,currentPrimeDetailSort.order),currentPrimeDetailViewPage)}})}function sortPrimeDetailData(e,t,a){return[...e].sort(((e,r)=>{let n,o;switch(t){case"id":n=e["Procurement Instrument Identifier"]||"",o=r["Procurement Instrument Identifier"]||"";break;case"agency":n=e["Contracting Agency Name"]||"",o=r["Contracting Agency Name"]||"";break;case"office":n=e["Contracting Office Name"]||"",o=r["Contracting Office Name"]||"";break;case"naicsCode":n=String(e["NAICS Code"]||""),o=String(r["NAICS Code"]||"");break;case"naicsDesc":n=e["NAICS Description"]||"",o=r["NAICS Description"]||"";break;case"value":n=parseCurrencyValue(e["Base and All Options Value (Total Contract Value)"]),o=parseCurrencyValue(r["Base and All Options Value (Total Contract Value)"]);break;case"endDate":n=new Date(e["Completion Date"]||0).getTime(),o=new Date(r["Completion Date"]||0).getTime();break;default:return 0}return"string"==typeof n&&(n=n.toLowerCase()),"string"==typeof o&&(o=o.toLowerCase()),n<o?"asc"===a?-1:1:n>o?"asc"===a?1:-1:0}))}function setUnifiedSearchTerm(e,t="primeName"){unifiedSearchInput.value=e,applyFilter(e,t,e)}function applyInitialTheme(){document.documentElement.classList.remove("dark"),localStorage.removeItem("theme"),themeIconSun&&themeIconMoon&&(themeIconSun.classList.remove("hidden"),themeIconMoon.classList.add("hidden")),updateChartDefaults()}function updateChartDefaults(){document.documentElement.classList.contains("dark");const e=getComputedStyle(document.documentElement),t=e.getPropertyValue("--text-secondary").trim(),a=e.getPropertyValue("--border-level-2").trim();Chart.defaults.color=t,Chart.defaults.borderColor=a,parsedData&&parsedData.length>0&&(isViewingSpecificPrime&&specificPrimeName?applyFilter(specificPrimeName,"primeName",specificPrimeName):applyFilter(unifiedSearchInput.value.trim()))}function applyFiltersFromURL(){const e=new URLSearchParams(window.location.search),t=e.get("search"),a=e.get("filterType"),r=e.get("filterValue");a&&r?(unifiedSearchInput.value=r,applyFilter(r,a,r)):t&&(unifiedSearchInput.value=t,applyFilter(t)),unifiedSearchInput.value&&""!==unifiedSearchInput.value.trim()?document.getElementById("primeProfilesSection").classList.add("highlight-section"):document.getElementById("primeProfilesSection").classList.remove("highlight-section")}csvFileInput.addEventListener("change",(function(e){const t=e.target.files[0];t?(fileNameDisplay.textContent=t.name,showProcessingBriefly(),Papa.parse(t,{header:!0,dynamicTyping:!0,skipEmptyLines:!0,complete:e=>{e.errors&&e.errors.length>0?showErrorMessage("CSV Error: "+e.errors[0].message):e.data&&e.data.length>0?(showSuccessMessage("File processed!",!1),processAndInitialize(e.data),manualUploadSection&&(manualUploadSection.classList.add("hidden"),manualUploadSection.style.display="none"),s3LoadErrorDiv.classList.add("hidden")):showErrorMessage("No data in file.")},error:e=>showErrorMessage("CSV Parse Fail: "+e.message)})):fileNameDisplay.textContent="No file"})),themeToggleBtn&&themeToggleBtn.addEventListener("click",(()=>{document.documentElement.classList.toggle("dark"),document.documentElement.classList.contains("dark")?(localStorage.setItem("theme","dark"),themeIconSun&&themeIconSun.classList.add("hidden"),themeIconMoon&&themeIconMoon.classList.remove("hidden")):(localStorage.setItem("theme","light"),themeIconSun&&themeIconSun.classList.remove("hidden"),themeIconMoon&&themeIconMoon.classList.add("hidden")),getChartColors(),updateChartDefaults()})),shareViewBtn.addEventListener("click",(()=>{const e=new URL(window.location.href);e.searchParams.delete("search"),e.searchParams.delete("filterType"),e.searchParams.delete("filterValue");const t=unifiedSearchInput.value.trim();isViewingSpecificPrime&&specificPrimeName?(e.searchParams.set("filterType","primeName"),e.searchParams.set("filterValue",specificPrimeName)):t&&e.searchParams.set("search",t),navigator.clipboard.writeText(e.toString()).then((()=>{shareToast.classList.remove("hidden"),setTimeout((()=>{shareToast.classList.add("hidden")}),2e3)})).catch((e=>{console.error("Failed to copy URL: ",e),alert("Failed to copy link. Please copy the URL from your browser bar.")}))})),document.getElementById("resetMapBtn").addEventListener("click",(()=>{contractorMap&&(contractorMap.setView([39.8283,-98.5795],3),console.log("Map view reset"))})),document.getElementById("resetSankeyBtn").addEventListener("click",(()=>{unifiedSearchInput.value="",clearAllFilters(),renderSankeyChart(parsedData)})),document.getElementById("clearSearchBtn").addEventListener("click",(()=>{unifiedSearchInput.value="",clearAllFilters()})),document.getElementById("globalResetBtn").addEventListener("click",(()=>{unifiedSearchInput.value="",clearAllFilters(),contractorMap&&contractorMap.setView([39.8283,-98.5795],3)}));let currentOpportunityData=[],currentOpportunityPage=1;const itemsPerOpportunityPage=10;let currentOpportunitySortConfig={field:"value",order:"desc"};function createContractOpportunityForecast(e){console.log("Creating opportunity forecast chart with",e.length,"records");let t=document.querySelector(".chart-container:has(#contractOpportunityForecastChart)");if(!t){Array.from(document.querySelectorAll(".chart-container")).filter((e=>e.querySelector(".chart-no-data")));if(t=Array.from(document.querySelectorAll(".dashboard-card")).find((e=>e.textContent.includes("Upcoming Contract Expirations")&&e.querySelector(".chart-container")))?.querySelector(".chart-container"),!t)return void console.error("Cannot find opportunity forecast chart container");console.log("Recreating opportunity forecast canvas element"),t.innerHTML='<canvas id="contractOpportunityForecastChart"></canvas>'}if(charts.contractOpportunityForecastChart){try{charts.contractOpportunityForecastChart.destroy()}catch(e){console.warn("Error destroying previous chart:",e)}charts.contractOpportunityForecastChart=null}const a=new Date,r={},n={};for(let e=0;e<24;e++){const t=new Date(a);t.setMonth(a.getMonth()+e);const n=`${t.getFullYear()}-${(t.getMonth()+1).toString().padStart(2,"0")}`;r[n]={total:0,agencies:{},contracts:[]}}e.forEach((e=>{if(!e["Completion Date"])return;const t=new Date(e["Completion Date"]);if(isNaN(t.getTime()))return;if(t<a)return;if(12*(t.getFullYear()-a.getFullYear())+(t.getMonth()-a.getMonth())>24)return;const o=`${t.getFullYear()}-${(t.getMonth()+1).toString().padStart(2,"0")}`;if(!r[o])return;const i=e["Contracting Agency Name"]||"Unknown",s=parseCurrencyValue(e["Base and All Options Value (Total Contract Value)"]);r[o].total+=s,r[o].agencies[i]||(r[o].agencies[i]=0),r[o].agencies[i]+=s,n[i]||(n[i]=0),n[i]+=s,r[o].contracts.push({prime:e["Legal Business Name"],agency:e["Contracting Agency Name"],office:e["Contracting Office Name"],piid:e["Procurement Instrument Identifier"],naics:e["NAICS Code"],naicsDesc:e["NAICS Description"],value:s,endDate:t})}));if(!Object.values(r).some((e=>e.total>0)))return console.log("No expiring contracts to display"),void(t.innerHTML='\n      <div class="chart-no-data">\n        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">\n          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />\n        </svg>\n        <span>No data available for current selection.</span>\n      </div>\n    ');if(!document.getElementById("contractOpportunityForecastChart")&&(console.error("Canvas element still not found after recreation attempts"),t.innerHTML='<canvas id="contractOpportunityForecastChart"></canvas>',!document.getElementById("contractOpportunityForecastChart")))return void console.error("Failed to create canvas element - cannot continue");const o=Object.keys(r).sort(),i=window.innerWidth<=1024?3:5,s=Object.entries(n).sort(((e,t)=>t[1]-e[1])).slice(0,i).map((e=>e[0])),c=s.map(((e,t)=>{const a=o.map((t=>r[t].agencies[e]||0)),n=[chartPrimaryColor||"#6c757d",chartSecondaryColor||"#adb5bd",chartTertiaryColor||"#ced4da",chartNeutralColor||"#dee2e6"];chartGrays&&chartGrays.length?n.push(...chartGrays):n.push("#e9ecef","#f8f9fa");const i=n[t%n.length]||"#6c757d";return{label:e,data:a,backgroundColor:i,borderColor:i,borderWidth:1,borderRadius:4}})),l=o.map((e=>r[e].total-s.reduce(((t,a)=>t+(r[e].agencies[a]||0)),0)));l.some((e=>e>0))&&c.push({label:"Other Agencies",data:l,backgroundColor:"#adb5bd",borderColor:"#adb5bd",borderWidth:1,borderRadius:4});const d={labels:o.map((e=>{const[t,a]=e.split("-");try{return new Date(parseInt(t),parseInt(a)-1,1).toLocaleDateString("en-US",{month:"short",year:"2-digit"})}catch(t){return console.warn("Error formatting date label:",t),e}})),datasets:c},p={responsive:!0,maintainAspectRatio:!1,plugins:{tooltip:{callbacks:{label:function(e){return`${e.dataset.label}: ${formatCurrency(e.raw)}`},footer:function(e){e[0].dataIndex;return`Total Value: ${formatCurrency(e.reduce(((e,t)=>e+t.raw),0))}`}}},title:{display:!1},legend:{position:"bottom",labels:{boxWidth:10,font:{size:9}}}},scales:{x:{stacked:!0,ticks:{maxRotation:45,minRotation:45,font:{size:8}}},y:{stacked:!0,ticks:{callback:function(e){return formatCurrency(e)},font:{size:9}}}},onClick:function(e,t){if(t.length>0){const e=t[0].index,a=o[e];updateOpportunityDetailsTable(a,r[a])}}};try{createChart("contractOpportunityForecastChart","bar",d,p),console.log("Opportunity forecast chart created successfully")}catch(e){console.error("Error creating opportunity forecast chart:",e),t.innerHTML='\n      <div class="chart-no-data">\n        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">\n          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />\n        </svg>\n        <span>Error creating chart. Please try refreshing the page.</span>\n      </div>\n    '}}function initializeOpportunityTableControls(){console.log("Initializing opportunity table controls");const e=document.getElementById("opportunitySortSelect");e?e.addEventListener("change",(function(){try{const[e,t]=this.value.split("-");currentOpportunitySortConfig={field:e,order:t},currentOpportunityPage=1,renderOpportunityTable()}catch(e){console.error("Error handling sort change:",e)}})):console.warn("Sort select element not found");const t=document.getElementById("prevOpportunityPageBtn"),a=document.getElementById("nextOpportunityPageBtn");t?t.addEventListener("click",(function(){currentOpportunityPage>1&&(currentOpportunityPage--,renderOpportunityTable())})):console.warn("Previous page button not found"),a?a.addEventListener("click",(function(){const e=Math.ceil(currentOpportunityData.length/itemsPerOpportunityPage);currentOpportunityPage<e&&(currentOpportunityPage++,renderOpportunityTable())})):console.warn("Next page button not found"),document.addEventListener("refreshOpportunityControls",(function(){console.log("Refreshing opportunity controls due to DOM changes"),initializeOpportunityTableControls()}))}function renderOpportunityTable(){const e=document.getElementById("contractExpirationTableBody");if(!e||!currentOpportunityData.length)return;const t=sortOpportunityData(currentOpportunityData,currentOpportunitySortConfig),a=Math.ceil(t.length/itemsPerOpportunityPage),r=(currentOpportunityPage-1)*itemsPerOpportunityPage,n=r+itemsPerOpportunityPage,o=t.slice(r,n),i=document.getElementById("currentOpportunityPage"),s=document.getElementById("totalOpportunityPages"),c=document.getElementById("prevOpportunityPageBtn"),l=document.getElementById("nextOpportunityPageBtn");i&&(i.textContent=currentOpportunityPage),s&&(s.textContent=a),c&&(c.disabled=currentOpportunityPage<=1),l&&(l.disabled=currentOpportunityPage>=a);const d=document.getElementById("opportunityPagination");d&&(d.style.display=a<=1?"none":"flex");let p="";o.forEach((e=>{p+=`\n      <tr>\n        <td class="px-2 py-1 whitespace-nowrap">${e.prime||"N/A"}</td>\n        <td class="px-2 py-1 whitespace-nowrap">${e.agency||"N/A"}</td>\n        <td class="px-2 py-1 whitespace-nowrap">${e.office||"N/A"}</td>\n        <td class="px-2 py-1 whitespace-nowrap">${createAwardLink(e.piid)}</td>\n        <td class="px-2 py-1 whitespace-nowrap">${e.naics||"N/A"}</td>\n        <td class="px-2 py-1 whitespace-normal max-w-xs truncate" title="${e.naicsDesc||""}">${e.naicsDesc?e.naicsDesc.substring(0,30)+(e.naicsDesc.length>30?"...":""):"N/A"}</td>\n        <td class="px-2 py-1 whitespace-nowrap">${formatCurrency(e.value)}</td>\n        <td class="px-2 py-1 whitespace-nowrap">${formatDate(e.endDate)}</td>\n      </tr>\n    `})),0===o.length&&(p='<tr><td colspan="8" class="px-2 py-4 text-center">No contracts found for this month</td></tr>'),e.innerHTML=p,window.opportunityControlsInitialized||(initializeOpportunityTableControls(),window.opportunityControlsInitialized=!0)}function updateOpportunityDetailsTable(e,t){document.getElementById("specializationDetailsSection").classList.add("hidden");const a=document.getElementById("contractExpirationDetails");a&&a.classList.remove("hidden");const[r,n]=e.split("-"),o=new Date(parseInt(r),parseInt(n)-1,1).toLocaleDateString("en-US",{month:"long"}),i=document.getElementById("selectedMonth");i&&(i.textContent=`${o} ${r}`);const s=document.getElementById("totalOpportunities"),c=document.getElementById("totalOpportunitiesValue");s&&(s.textContent=t.contracts.length.toLocaleString()),c&&(c.textContent=formatCurrency(t.total)),currentOpportunityData=[...t.contracts],currentOpportunityPage=1,0===currentOpportunityData.length&&console.log("No contract data for this month:",e),renderOpportunityTable(),setTimeout((()=>{a.scrollIntoView({behavior:"smooth",block:"start"})}),100)}function initializeOpportunityTableControls(){console.log("Initializing opportunity table controls");const e=document.getElementById("opportunitySortSelect");e?e.addEventListener("change",(function(){const[e,t]=this.value.split("-");currentOpportunitySortConfig={field:e,order:t},currentOpportunityPage=1,renderOpportunityTable()})):console.warn("Sort select element not found");const t=document.getElementById("prevOpportunityPageBtn"),a=document.getElementById("nextOpportunityPageBtn");t?t.addEventListener("click",(function(){currentOpportunityPage>1&&(currentOpportunityPage--,renderOpportunityTable())})):console.warn("Previous page button not found"),a?a.addEventListener("click",(function(){const e=Math.ceil(currentOpportunityData.length/itemsPerOpportunityPage);currentOpportunityPage<e&&(currentOpportunityPage++,renderOpportunityTable())})):console.warn("Next page button not found")}function updateOpportunityDetailsTable(e,t){document.getElementById("specializationDetailsSection").classList.add("hidden");const a=document.getElementById("contractExpirationDetails");a&&a.classList.remove("hidden");const[r,n]=e.split("-"),o=new Date(parseInt(r),parseInt(n)-1,1).toLocaleDateString("en-US",{month:"long"}),i=document.getElementById("selectedMonth");i&&(i.textContent=`${o} ${r}`);const s=document.getElementById("totalOpportunities"),c=document.getElementById("totalOpportunitiesValue");s&&(s.textContent=t.contracts.length.toLocaleString()),c&&(c.textContent=formatCurrency(t.total)),currentOpportunityData=[...t.contracts],currentOpportunityPage=1,renderOpportunityTable(),setTimeout((()=>{a.scrollIntoView({behavior:"smooth",block:"start"})}),100)}function closeAllDetailSections(){document.getElementById("specializationDetailsSection").classList.add("hidden"),document.getElementById("contractExpirationDetails").classList.add("hidden")}function addCloseButtonsToDetailSections(){const e=document.querySelector("#specializationDetailsSection .flex.justify-between");if(e&&!e.querySelector(".detail-close-btn")){const t=document.createElement("button");t.innerHTML="&times;",t.className="detail-close-btn px-2 py-1 bg-[var(--surface-level-2)] text-[var(--text-secondary)] rounded hover:bg-[var(--surface-level-3)] ml-2",t.addEventListener("click",(function(){document.getElementById("specializationDetailsSection").classList.add("hidden")})),e.appendChild(t)}const t=document.querySelector("#expirationDetailsTitle");if(t&&t.parentNode&&!t.parentNode.querySelector(".detail-close-btn")){const e=document.createElement("button");e.innerHTML="&times;",e.className="detail-close-btn px-2 py-1 bg-[var(--surface-level-2)] text-[var(--text-secondary)] rounded hover:bg-[var(--surface-level-3)] absolute top-4 right-4",e.addEventListener("click",(function(){document.getElementById("contractExpirationDetails").classList.add("hidden")})),t.parentNode.style.position="relative",t.parentNode.appendChild(e)}}const handleVisualResizeDebounced=_.debounce((function(){if(document.getElementById("primeSpecializationHeatmap")&&document.getElementById("contractOpportunityForecastChart")){window.innerWidth;document.querySelectorAll("#specializationDetailsSection, #contractExpirationDetails").forEach((e=>{}))}}),250);function initializeResponsiveHeatmap(){const e=_.debounce((function(){if(parsedData&&parsedData.length>0){console.log("Window resized - adjusting heatmap text only if needed");const e=d3.select("#primeSpecializationHeatmap");if(!e.empty()){const t=window.innerWidth<=1024;e.selectAll("text").style("font-size",t?"6px":"7px")}}}),250);window.addEventListener("resize",e)}function sortOpportunityData(e,t){return[...e].sort(((e,a)=>{let r,n;switch(t.field){case"value":r=e.value,n=a.value;break;case"date":r=new Date(e.endDate).getTime(),n=new Date(a.endDate).getTime();break;case"prime":r=e.prime||"",n=a.prime||"";break;default:return 0}return"string"==typeof r&&"string"==typeof n&&(r=r.toLowerCase(),n=n.toLowerCase()),"asc"===t.order?r<n?-1:r>n?1:0:r>n?-1:r<n?1:0}))}window.addEventListener("resize",handleVisualResizeDebounced);let currentSpecializationData={prime:null,naics:null,naicsDescription:null,specializationIndex:0,totalValue:0,contracts:[]},currentSpecPage=1;const itemsPerSpecPage=10;function createPrimeSpecializationHeatmap(e){const t={};e.forEach((e=>{if(e["Legal Business Name"]){const a=parseCurrencyValue(e["Base and All Options Value (Total Contract Value)"]);t[e["Legal Business Name"]]=(t[e["Legal Business Name"]]||0)+a}}));const a=Object.entries(t).sort(((e,t)=>t[1]-e[1])).slice(0,10).map((e=>e[0])),r={};e.forEach((e=>{if(e["NAICS Code"]){const t=String(e["NAICS Code"]);r[t]=(r[t]||0)+parseCurrencyValue(e["Base and All Options Value (Total Contract Value)"])}}));const n=Object.entries(r).sort(((e,t)=>t[1]-e[1])).slice(0,10).map((e=>e[0])),o={};e.forEach((e=>{e["NAICS Code"]&&e["NAICS Description"]&&(o[String(e["NAICS Code"])]=e["NAICS Description"])}));const i=Object.values(t).reduce(((e,t)=>e+t),0),s={};n.forEach((e=>{s[e]=r[e]/i}));const c={};a.forEach((e=>{c[e]={},n.forEach((t=>{c[e][t]=0}))})),e.forEach((e=>{const t=e["Legal Business Name"],r=String(e["NAICS Code"]);if(a.includes(t)&&n.includes(r)){const a=parseCurrencyValue(e["Base and All Options Value (Total Contract Value)"]);c[t][r]+=a}}));const l={},d=[];a.forEach((e=>{l[e]={};const a=t[e];n.forEach((t=>{const r=c[e][t]/a/s[t];l[e][t]=r,d.push({prime:e,naics:t,description:o[t],value:c[e][t],index:r})}))}));const p=5,u=2,m=40,g=90,h=document.getElementById("primeSpecializationHeatmap");if(!h)return;const y=h.parentElement.clientWidth||900,f=h.parentElement.clientHeight||450,C=y-g-u-5,S=f-p-m-5;d3.select(h).selectAll("*").remove();const v=d3.select(h).attr("width","100%").attr("height","100%").attr("viewBox",`0 0 ${y} ${f}`).attr("preserveAspectRatio","none").append("g").attr("transform",`translate(${g},${p})`),b=d3.scaleBand().range([0,C]).domain(n).padding(.02),x=d3.scaleBand().range([0,S]).domain(a).padding(.02),w=d.map((e=>e.index)),L=Math.min(...w)||0,D=Math.max(...w)||3,E=[L,L+.25*(D-L),L+.5*(D-L),L+.75*(D-L),D],P=[getCSSVariable("--surface-level-2")||"#f8f9fa",chartTertiaryColor||"#ced4da",chartSecondaryColor||"#adb5bd",chartPrimaryColor||"#6c757d",overrideChartHighlightColor||"#e63946"],I=d3.scaleLinear().domain(E).range(P);v.append("g").attr("class","x-axis").style("font-size","8px").style("color","var(--text-primary)").attr("transform",`translate(0,${S})`).call(d3.axisBottom(b).tickSize(0)).selectAll("text").style("text-anchor","middle").style("fill","var(--text-primary)").attr("transform","translate(0,5)"),v.append("g").attr("class","y-axis").style("font-size","8px").style("color","var(--text-primary)").call(d3.axisLeft(x).tickSize(0).tickFormat((e=>e.length>10?e.substring(0,10)+"...":e))).selectAll("text").style("fill","var(--text-primary)").attr("dx","-3").select((function(){return this.parentNode.parentNode})).select(".domain").remove(),d3.selectAll(".heatmap-tooltip").remove();const k=d3.select("body").append("div").attr("class","tooltip heatmap-tooltip").style("opacity",0).style("background-color","var(--surface-level-1)").style("border","1px solid var(--border-level-2)").style("border-radius","5px").style("padding","8px").style("color","var(--text-primary)").style("position","absolute").style("z-index",1e3).style("font-size","11px").style("pointer-events","none").style("display","none");v.selectAll().data(d).enter().append("rect").attr("x",(e=>b(e.naics))).attr("y",(e=>x(e.prime))).attr("width",b.bandwidth()).attr("height",x.bandwidth()).style("fill",(e=>I(e.index))).style("stroke","var(--border-level-2)").style("stroke-width",.5).style("opacity",.9).style("cursor","pointer").on("mouseover",(function(e,t){d3.select(this).style("stroke","var(--accent)").style("stroke-width",1.5).style("opacity",1),k.transition().duration(200).style("opacity",.9).style("display","block"),k.html(`\n        <strong>${t.prime}</strong><br/>\n        <span>${t.naics} - ${t.description}</span><br/>\n        <span>Specialization Index: ${t.index.toFixed(2)}</span><br/>\n        <span>Contract Value: ${formatCurrency(t.value)}</span>\n      `).style("left",e.pageX+10+"px").style("top",e.pageY-28+"px")})).on("mouseout",(function(){d3.select(this).style("stroke","var(--border-level-2)").style("stroke-width",.5).style("opacity",.9),k.transition().duration(500).style("opacity",0).on("end",(()=>k.style("display","none")))})).on("click",(function(e,t){showSpecializationDetails(t.prime,t.naics,t.description,t.index,t.value)}));const B=200,N=v.append("g").attr("transform",`translate(${C/2-100}, ${S+35})`),A=d3.scaleLinear().domain([L,D]).range([0,B]),T=d3.axisBottom(A).tickSize(3).ticks(3).tickFormat((e=>e.toFixed(1))).tickPadding(3);N.append("defs").append("linearGradient").attr("id","linear-gradient").selectAll("stop").data([{offset:"0%",color:P[0]},{offset:"25%",color:P[1]},{offset:"50%",color:P[2]},{offset:"75%",color:P[3]},{offset:"100%",color:P[4]}]).enter().append("stop").attr("offset",(e=>e.offset)).attr("stop-color",(e=>e.color)),N.append("rect").attr("width",B).attr("height",10).style("fill","url(#linear-gradient)"),N.append("g").attr("transform","translate(0,10)").style("font-size","7px").call(T),N.append("text").attr("x",0).attr("y",30).attr("text-anchor","start").style("font-size","7px").style("fill","var(--text-primary)").text("Less"),N.append("text").attr("x",B).attr("y",30).attr("text-anchor","end").style("font-size","7px").style("fill","var(--text-primary)").text("More"),v.selectAll(".naics-tooltip").data(n).enter().append("title").attr("class","naics-tooltip").text((e=>`${e} - ${o[e]}`)),v.append("text").attr("x",C/2).attr("y",S+60).attr("text-anchor","middle").style("font-size","7px").style("font-style","italic").style("fill","var(--text-primary)").text("Click any cell for details"),initializeSpecializationControls()}function initializeSpecializationControls(){const e=document.getElementById("filterBySelectionBtn");e&&e.addEventListener("click",(function(){if(currentSpecializationData.prime&&currentSpecializationData.naics){customFilterByPrimeAndNaics(currentSpecializationData.prime,currentSpecializationData.naics)}}));const t=document.getElementById("prevSpecPageBtn"),a=document.getElementById("nextSpecPageBtn");t&&t.addEventListener("click",(function(){currentSpecPage>1&&(currentSpecPage--,renderSpecializationTable())})),a&&a.addEventListener("click",(function(){const e=Math.ceil(currentSpecializationData.contracts.length/itemsPerSpecPage);currentSpecPage<e&&(currentSpecPage++,renderSpecializationTable())}))}function customFilterByPrimeAndNaics(e,t){unifiedSearchInput&&(unifiedSearchInput.value=e);const a=parsedData.filter((a=>a["Legal Business Name"]===e&&String(a["NAICS Code"])===t));if(a.length>0){const r=`Prime: ${e}, NAICS: ${t}`;updateDashboardTitle(`Filtered by ${r} (${a.length.toLocaleString()} results)`),initializeCoreVisuals(a,!0),initializePrimeProfilesSection(a),"function"==typeof initializeContractExpirationCalendarSection&&initializeContractExpirationCalendarSection(a),initializeContractorMap(a),renderSankeyChart(a),updateActiveFilterIndicator(r,a.length),unifiedSearchSuggestions&&(unifiedSearchSuggestions.innerHTML="",unifiedSearchSuggestions.classList.add("hidden"))}}function showSpecializationDetails(e,t,a,r,n){const o=[];parsedData.forEach((a=>{a["Legal Business Name"]===e&&String(a["NAICS Code"])===t&&o.push({piid:a["Procurement Instrument Identifier"],agency:a["Contracting Agency Name"],office:a["Contracting Office Name"],value:parseCurrencyValue(a["Base and All Options Value (Total Contract Value)"]),startDate:formatDate(a["Period of Performance Start Date"]),endDate:formatDate(a["Completion Date"])})})),o.sort(((e,t)=>t.value-e.value)),currentSpecializationData={prime:e,naics:t,naicsDescription:a,specializationIndex:r,totalValue:n,contracts:o},currentSpecPage=1,document.getElementById("contractExpirationDetails").classList.add("hidden");const i=document.getElementById("specializationDetailsSection");i&&i.classList.remove("hidden");const s=document.getElementById("specDetailsPrime"),c=document.getElementById("specDetailsNaics"),l=document.getElementById("specDetailsIndex"),d=document.getElementById("specDetailsIndexNote"),p=document.getElementById("specDetailsTotalValue"),u=document.getElementById("specDetailsContractCount");s&&(s.textContent=e),c&&(c.textContent=`${t} - ${a}`),l&&(l.textContent=r.toFixed(2),l.className=r>1?"text-md font-bold text-[var(--accent)]":"text-md font-bold"),d&&(d.textContent=r>1?"Above average specialization":"Below average specialization"),p&&(p.textContent=formatCurrency(n)),u&&(u.textContent=o.length),renderSpecializationTable(),setTimeout((()=>{i.scrollIntoView({behavior:"smooth",block:"start"})}),100)}function renderSpecializationTable(){const e=document.getElementById("specializationContractsTable");if(!e)return;const t=(currentSpecPage-1)*itemsPerSpecPage,a=t+itemsPerSpecPage,r=currentSpecializationData.contracts.slice(t,a),n=Math.ceil(currentSpecializationData.contracts.length/itemsPerSpecPage),o=document.getElementById("currentSpecPage"),i=document.getElementById("totalSpecPages"),s=document.getElementById("prevSpecPageBtn"),c=document.getElementById("nextSpecPageBtn");o&&(o.textContent=currentSpecPage),i&&(i.textContent=n),s&&(s.disabled=currentSpecPage<=1),c&&(c.disabled=currentSpecPage>=n);const l=document.getElementById("specDetailsPagination");l&&(l.style.display=n<=1?"none":"flex");let d="";r.forEach((e=>{d+=`\n      <tr>\n        <td class="px-2 py-1 whitespace-nowrap">${createAwardLink(e.piid)}</td>\n        <td class="px-2 py-1 whitespace-nowrap">${e.agency||"N/A"}</td>\n        <td class="px-2 py-1 whitespace-nowrap">${e.office||"N/A"}</td>\n        <td class="px-2 py-1 whitespace-nowrap">${formatCurrency(e.value)}</td>\n        <td class="px-2 py-1 whitespace-nowrap">${e.startDate||"N/A"}</td>\n        <td class="px-2 py-1 whitespace-nowrap">${e.endDate||"N/A"}</td>\n      </tr>\n    `})),e.innerHTML=d||'<tr><td colspan="6" class="px-2 py-4 text-center">No contracts found</td></tr>'}function createContractingOfficeRelationshipMap(e){d3.selectAll(".d3-relationship-tooltip").remove(),console.log("Starting relationship map render with",e.length,"records");try{const r={},n={},o={},i={},s={},c={};e.forEach((e=>{const t=e["Contracting Department Name"],a=e["Contracting Agency Name"],l=e["Contracting Office Name"],d=e["Legal Business Name"];if(!d)return;i[d]||(i[d]={id:d,type:"contractor",value:0,connections:0});const p=parseCurrencyValue(e["Base and All Options Value (Total Contract Value)"]);i[d].value+=p,t&&(r[t]||(r[t]={id:t,type:"department",value:0,connections:0}),r[t].value+=p),a&&(n[a]||(n[a]={id:a,type:"agency",value:0,connections:0}),n[a].value+=p,t&&(s[a]=t)),l&&(o[l]||(o[l]={id:l,type:"office",value:0,connections:0}),o[l].value+=p,a&&(c[l]=a))}));const l=5,d=10,p=15,u=15,m=Object.values(r).sort(((e,t)=>t.value-e.value)).slice(0,l),g=Object.values(n).sort(((e,t)=>t.value-e.value)).slice(0,d),h=Object.values(o).sort(((e,t)=>t.value-e.value)).slice(0,p),y=Object.values(i).sort(((e,t)=>t.value-e.value)).slice(0,u),f=[],C=m.map((e=>e.id)),S=g.map((e=>e.id)),v=h.map((e=>e.id)),b=y.map((e=>e.id));S.forEach((e=>{const t=s[e];t&&C.includes(t)&&f.push({source:t,target:e,value:n[e].value,type:"dept-agency"})})),v.forEach((e=>{const t=c[e];t&&S.includes(t)&&f.push({source:t,target:e,value:o[e].value,type:"agency-office"})})),e.forEach((e=>{const t=e["Legal Business Name"],a=e["Contracting Office Name"];if(!t||!b.includes(t))return;if(!a||!v.includes(a))return;const r=parseCurrencyValue(e["Base and All Options Value (Total Contract Value)"]);let n=f.find((e=>e.source===a&&e.target===t));n?n.value+=r:f.push({source:a,target:t,value:r,type:"office-contractor"})}));const x=[...m,...g,...h,...y];if(0===x.length||0===f.length){const F=document.getElementById("contractingOfficeRelationshipMap");if(F)return d3.select(F).selectAll("*").remove(),void d3.select(F).append("text").attr("x","50%").attr("y","50%").attr("text-anchor","middle").attr("dominant-baseline","middle").style("font-size","16px").style("fill",getCSSVariable("--text-secondary")).text("No significant relationships found with current filters")}const w=d3.select("#contractingOfficeRelationshipMap");w.selectAll("*").remove();const L=document.getElementById("contractingOfficeRelationshipMap").parentElement,D=L?L.clientWidth:900,E=window.innerWidth>=1024,P=E?700:600;w.attr("width",D).attr("height",P).attr("viewBox",`0 0 ${D} ${P}`).attr("preserveAspectRatio","xMidYMid meet");const I=w.append("g").attr("class","network-container").attr("transform",`translate(${D/2}, ${P/2})`),k=d3.select("body").append("div").attr("class","tooltip d3-relationship-tooltip").style("opacity",0).style("background-color","var(--surface-level-1)").style("border","1px solid var(--border-level-2)").style("border-radius","5px").style("padding","10px").style("color","var(--text-primary)").style("position","absolute").style("z-index",1e3).style("font-size","12px").style("pointer-events","none").style("display","none"),B=x.map((e=>Object.assign({},e))),N=[];function t(e){switch(e.type){case"department":return getCSSVariable("--chart-accent-1")||"#6c757d";case"agency":return getCSSVariable("--chart-accent-2")||"#adb5bd";case"office":return getCSSVariable("--chart-accent-3")||"#ced4da";case"contractor":return overrideChartHighlightColor||"#e63946";default:return getCSSVariable("--chart-accent-1")}}f.forEach((e=>{const t=B.find((t=>t.id===e.source)),a=B.find((t=>t.id===e.target));t&&a&&N.push({source:t,target:a,value:e.value,type:e.type})}));const A=d3.scaleLinear().domain([0,d3.max(N,(e=>e.value))||1]).range([1,8]),T=d3.scaleSqrt().domain([0,d3.max(B,(e=>e.value))||1]).range([6,20]);relationshipMapSimulation=d3.forceSimulation(B).force("link",d3.forceLink(N).id((e=>e.id)).distance((e=>"dept-agency"===e.type?100:"agency-office"===e.type?130:180)).strength(.5)).force("charge",d3.forceManyBody().strength(-500)).force("center",d3.forceCenter(0,0)).force("collide",d3.forceCollide((e=>T(e.value)+30))).force("x",d3.forceX().strength(.08)).force("y",d3.forceY().strength(.08));const V=I.append("g").attr("class","links").selectAll("line").data(N).enter().append("line").attr("stroke-width",(e=>A(e.value))).attr("stroke",(e=>"dept-agency"===e.type?getCSSVariable("--chart-accent-1"):"agency-office"===e.type?getCSSVariable("--chart-accent-2"):getCSSVariable("--chart-accent-3"))).attr("stroke-opacity",.6).attr("stroke-dasharray",(e=>"dept-agency"===e.type?"5,5":"none")).on("mouseover",(function(e,t){d3.select(this).attr("stroke",getCSSVariable("--accent")).attr("stroke-opacity",1),k.style("display","block").transition().duration(200).style("opacity",.9),k.html(`\n          <strong>${t.source.id}</strong> → <strong>${t.target.id}</strong><br/>\n          <span>Total Value: ${formatCurrency(t.value)}</span>\n        `).style("left",e.pageX+10+"px").style("top",e.pageY-28+"px")})).on("mouseout",(function(e,t){let a=getCSSVariable("--chart-accent-3");"dept-agency"===t.type&&(a=getCSSVariable("--chart-accent-1")),"agency-office"===t.type&&(a=getCSSVariable("--chart-accent-2")),d3.select(this).attr("stroke",a).attr("stroke-opacity",.6),k.transition().duration(200).style("opacity",0).on("end",(()=>k.style("display","none")))})),M=I.append("g").attr("class","nodes").selectAll("g").data(B).enter().append("g").call(d3.drag().on("start",(function(e,t){e.active||relationshipMapSimulation.alphaTarget(.3).restart();t.fx=t.x,t.fy=t.y,k.style("display","none").style("opacity",0)})).on("drag",(function(e,t){t.fx=e.x,t.fy=e.y})).on("end",(function(e,t){e.active||relationshipMapSimulation.alphaTarget(0);t.fx=null,t.fy=null}))).on("click",(function(e,t){k.style("display","none"),k.style("opacity",0),setTimeout((()=>{let e="primeName";"contractor"===t.type?e="primeName":"office"===t.type?e="officeName":"agency"===t.type?e="agencyName":"department"===t.type&&(e="departmentName"),setUnifiedSearchTerm(t.id,e)}),100)}));function a(e,t,a){const r=[];for(let n=0;n<5;n++)r.push([e+a*Math.sin(2*Math.PI*n/5),t-a*Math.cos(2*Math.PI*n/5)]);return r.map((e=>e.join(","))).join(" ")}M.each((function(e){const r=d3.select(this);if("department"===e.type)r.append("polygon").attr("points",(function(){return a(0,0,T(e.value))})).attr("fill",t(e)).attr("stroke","white").attr("stroke-width",1.5);else if("agency"===e.type)r.append("polygon").attr("points",(function(){const t=T(e.value);return`0,${-t} ${.866*t},${.5*t} ${.866*-t},${.5*t}`})).attr("fill",t(e)).attr("stroke","white").attr("stroke-width",1.5);else if("office"===e.type){const a=T(e.value);r.append("rect").attr("x",-a/2).attr("y",-a/2).attr("width",a).attr("height",a).attr("fill",t(e)).attr("stroke","white").attr("stroke-width",1.5)}else r.append("circle").attr("r",T(e.value)).attr("fill",t(e)).attr("stroke","white").attr("stroke-width",1.5)})),M.append("rect").attr("class","text-background").attr("x",(e=>{const t=T(e.value);return"department"===e.type||"agency"===e.type?t+3:t+1})).attr("y",-10).attr("width",0).attr("height",20).attr("fill","var(--background)").attr("opacity",.85).attr("rx",3).attr("ry",3);M.append("text").attr("dx",(e=>{const t=T(e.value);return"department"===e.type||"agency"===e.type?t+5:t+3})).attr("dy",".35em").text((e=>{const t=e.id,a=E?40:25,r=E?37:22;return t.length>a?t.substring(0,r)+"...":t})).style("font-size","10px").style("fill",getCSSVariable("--text-primary")).style("pointer-events","none").each((function(e){const t=this.getComputedTextLength();d3.select(this.parentNode).select("rect.text-background").attr("width",t+6)})),M.on("mouseover",(function(e,t){d3.select(this).select("circle, rect, polygon").attr("stroke",getCSSVariable("--accent")).attr("stroke-width",2),k.style("display","block").transition().duration(200).style("opacity",.9);const a=t.type.charAt(0).toUpperCase()+t.type.slice(1);k.html(`\n        <strong>${a}:</strong> ${t.id}<br/>\n        <span>Total Value: ${formatCurrency(t.value)}</span>\n      `).style("left",e.pageX+10+"px").style("top",e.pageY-28+"px")})).on("mouseout",(function(){d3.select(this).select("circle, rect, polygon").attr("stroke","white").attr("stroke-width",1.5),k.transition().duration(200).style("opacity",0).on("end",(()=>k.style("display","none")))}));const $={top:20,left:20},O=w.append("g").attr("class","legend").attr("transform",`translate(${$.left}, ${$.top})`);[{type:"department",label:"Departments",shape:"pentagon"},{type:"agency",label:"Agencies",shape:"triangle"},{type:"office",label:"Offices",shape:"square"},{type:"contractor",label:"Prime Contractors",shape:"circle"}].forEach(((e,r)=>{const n=25*r,o=O.append("g").attr("transform",`translate(0, ${n})`);"circle"===e.shape?o.append("circle").attr("r",6).attr("cx",6).attr("cy",0).attr("fill",t({type:e.type})):"square"===e.shape?o.append("rect").attr("x",0).attr("y",-6).attr("width",12).attr("height",12).attr("fill",t({type:e.type})):"triangle"===e.shape?o.append("polygon").attr("points","6,0 12,10 0,10").attr("transform","translate(0, -8)").attr("fill",t({type:e.type})):"pentagon"===e.shape&&o.append("polygon").attr("points",a(6,0,6)).attr("fill",t({type:e.type})),o.append("text").attr("x",20).attr("y",4).text(e.label).style("font-size","12px").style("fill",getCSSVariable("--text-primary"))}));const z=w.append("g").attr("class","line-legend").attr("transform",`translate(${$.left}, ${$.top+120})`);z.append("line").attr("x1",0).attr("y1",0).attr("x2",30).attr("y2",0).attr("stroke-width",3).attr("stroke",getCSSVariable("--chart-accent-1")).attr("stroke-dasharray","5,5"),z.append("text").attr("x",40).attr("y",4).text("Dept → Agency").style("font-size","10px").style("fill",getCSSVariable("--text-primary")),z.append("line").attr("x1",0).attr("y1",20).attr("x2",30).attr("y2",20).attr("stroke-width",3).attr("stroke",getCSSVariable("--chart-accent-2")),z.append("text").attr("x",40).attr("y",24).text("Agency → Office").style("font-size","10px").style("fill",getCSSVariable("--text-primary")),z.append("line").attr("x1",0).attr("y1",40).attr("x2",30).attr("y2",40).attr("stroke-width",3).attr("stroke",getCSSVariable("--chart-accent-3")),z.append("text").attr("x",40).attr("y",44).text("Office → Contractor").style("font-size","10px").style("fill",getCSSVariable("--text-primary")),relationshipMapSimulation.on("tick",(()=>{B.forEach((e=>{const t=T(e.value)+40;e.x=Math.max(-D/2+t,Math.min(D/2-t,e.x)),e.y=Math.max(-P/2+t,Math.min(P/2-t,e.y))})),V.attr("x1",(e=>e.source.x)).attr("y1",(e=>e.source.y)).attr("x2",(e=>e.target.x)).attr("y2",(e=>e.target.y)),M.attr("transform",(e=>`translate(${e.x},${e.y})`))})),relationshipMapSimulation.alpha(1).restart()}catch(R){console.error("Error in relationship map:",R);const H=document.getElementById("contractingOfficeRelationshipMap");H&&(d3.select(H).selectAll("*").remove(),d3.select(H).append("text").attr("x","50%").attr("y","50%").attr("text-anchor","middle").attr("dominant-baseline","middle").style("font-size","14px").style("fill","red").text("Error rendering relationship map: "+R.message))}}function adjustChartsVisibility(e=!1){const t=document.getElementById("marketShareChartCard"),a=document.getElementById("primeContractorsChartCard"),r=document.querySelector(".grid.grid-cols-1.md\\:grid-cols-2.lg\\:grid-cols-3.gap-4.md\\:gap-6");if(e){t&&t.classList.add("hidden"),a&&a.classList.add("hidden"),r&&(r.classList.remove("lg:grid-cols-3"),r.classList.add("lg:grid-cols-2"));Array.from(r.children).filter((e=>!e.classList.contains("hidden"))).forEach(((e,t)=>{e.style.order=t}))}else t&&t.classList.remove("hidden"),a&&a.classList.remove("hidden"),r&&(r.classList.remove("lg:grid-cols-2"),r.classList.add("lg:grid-cols-3")),Array.from(r.children).forEach((e=>{e.style.order=""}))}document.addEventListener("DOMContentLoaded",(function(){getChartColors(),initializeChartDefaults();"dark"===localStorage.getItem("theme")&&(document.documentElement.classList.add("dark"),themeIconSun&&themeIconSun.classList.add("hidden"),themeIconMoon&&themeIconMoon.classList.remove("hidden"));const e=document.getElementById("dashboardSidebar"),t=document.getElementById("dashboardMainContent"),a=document.getElementById("toggleSidebarBtn"),r=document.getElementById("mobileSidebarToggle"),n=window.innerWidth>=1025;n||(t.style.marginLeft="0",t.style.width="100%"),a&&a.addEventListener("click",(function(){n||e.classList.toggle("expanded")})),r&&r.addEventListener("click",(function(){e.classList.toggle("expanded")})),window.addEventListener("resize",(function(){window.innerWidth>=1025!==n&&location.reload()})),"function"==typeof addCloseButtonsToDetailSections&&addCloseButtonsToDetailSections(),"function"==typeof closeAllDetailSections&&closeAllDetailSections();document.getElementById("contractExpirationDetails")&&"function"==typeof initializeOpportunityTableControls&&initializeOpportunityTableControls(),"ontouchstart"in window&&document.querySelectorAll("button, .filter-btn").forEach((e=>{e.addEventListener("touchstart",(function(){this.classList.add("active-touch")})),e.addEventListener("touchend",(function(){this.classList.remove("active-touch")}))})),"function"==typeof handleVisualResizeDebounced&&window.addEventListener("resize",handleVisualResizeDebounced),initializeResponsiveHeatmap(),addResizeListener(),document.addEventListener("click",(function(t){!n&&e&&e.classList.contains("expanded")&&!e.contains(t.target)&&t.target!==r&&t.target!==a&&e.classList.remove("expanded")})),document.addEventListener("keydown",(function(t){"Escape"===t.key&&e&&e.classList.contains("expanded")&&e.classList.remove("expanded")})),loadDataFromS3(),setTimeout((function(){var e=document.getElementById("page-loader");e&&(e.style.opacity="0",e.style.pointerEvents="none",setTimeout((function(){e.style.display="none"}),300))}),3e3)}));</script>
 </html>
