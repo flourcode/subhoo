@@ -145,9 +145,186 @@
   --topbar-height: 60px;
 }
 
-/* Dark Mode Improvements */
+/* Smallest screens */
+@media (max-width: 480px) {
+  #sankeyChart, #contractorMap {
+    height: 300px !important;
+  }
+  
+  .dashboard-card {
+    padding: 0.75rem !important;
+  }
+  
+  #unifiedSearchInput {
+    font-size: 14px;
+    padding: 0.5rem !important;
+  }
+  
+  .stat-card {
+    padding: 0.75rem !important;
+  }
+  
+  .stat-card .text-2xl {
+    font-size: 1.25rem !important;
+  }
+}
+
+/* ===== PRINT STYLES ===== */
+@media print {
+  .dashboard-card {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  
+  button, .action-btn, .filter-btn, #themeToggleBtn, #shareViewBtn {
+    display: none !important;
+  }
+  
+  body, .dashboard-container {
+    background-color: white !important;
+    color: black !important;
+  }
+  
+  @page {
+    margin: 1cm;
+  }
+}
+
+/* Mobile breakpoints */
+@media (max-width: 767px) {
+  #sankeyChart, #contractorMap {
+    height: 350px !important;
+  }
+  
+  .chart-container {
+    height: 250px !important;
+  }
+  
+  .table-responsive th,
+  .table-responsive td {
+    padding: 4px 6px;
+    font-size: 11px;
+  }
+  
+  .dashboard-card {
+    padding: 1rem !important;
+  }
+  
+  .modal-content {
+    padding: 1rem;
+  }
+  
+  #primeProfilesContainer {
+    max-height: 60vh;
+  }
+  
+  button, 
+  .filter-btn, 
+  #themeToggleBtn, 
+  #shareViewBtn,
+  .suggestion-item {
+    min-height: 44px; /* Minimum height for touch targets */
+  }
+  
+  #clearSearchBtn {
+    height: 44px;
+    width: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .stat-card {
+    margin-bottom: 0.5rem;
+  }
+  
+  /* Further optimization for mobile */
+  .sidebar-content {
+    padding: 0.5rem;
+  }
+  
+  .sidebar-search {
+    padding: 0 0.5rem;
+  }
+  
+  /* Ensure header is compact */
+  .sidebar-header {
+    padding: 0.5rem;
+    height: auto;
+  }
+}
+
+/* Further optimizations for very small screens */
+@media (max-width: 640px) {
+  /* Make buttons horizontal */
+  .sidebar-content .flex.flex-wrap {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+  }
+  
+  .app-wrapper {
+    margin: 0;
+    border-radius: 0;
+    height: 100vh;
+  }
+  
+  .sidebar {
+    width: 0;
+    border-right: none;
+  }
+  
+  .main-content {
+    margin-left: 0;
+    width: 100%;
+    padding: 0.5rem;
+  }
+  
+  .sidebar.expanded {
+    width: 100%;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+  }
+  
+  .dashboard-cards {
+    grid-template-columns: 1fr;
+  }
+  
+  .chart-container {
+    height: 250px;
+  }
+  
+  #sankeyChart {
+    height: 400px !important;
+  }
+  
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .section-header .action-btn {
+    align-self: flex-end;
+  }
+  
+  .table-responsive {
+    margin-left: -1rem;
+    margin-right: -1rem;
+    width: calc(100% + 2rem);
+    padding: 0 0.5rem;
+  }
+  
+  .table-responsive th,
+  .table-responsive td {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.7rem;
+    white-space: nowrap;
+  }
+}
+
+/* Dark Mode Colors */
 html.dark {
-  /* Base colors */
   --background: var(--eerie-black);
   --content-background: var(--onyx);
   --accent: var(--french-gray-2);
@@ -180,7 +357,7 @@ html.dark {
 
 /* ===== BASE LAYOUT ===== */
 body {
-  background-color: var(--surface-level-1)
+  background-color: var(--surface-level-1);
   color: var(--text-primary);
   transition: background-color 0.3s ease, color 0.3s ease;
   margin: 0;
@@ -192,7 +369,7 @@ body {
   flex-direction: column;
 }
 
-/* App container for the whole dashboard */
+/* App container and dashboard layout */
 .app-wrapper {
   max-width: 1600px;
   margin: 20px auto;
@@ -213,6 +390,12 @@ body {
   border-radius: 12px;
 }
 
+#dashboardContent {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 200px);
+}
+
 /* Main Content */
 .main-content {
   margin-left: var(--sidebar-width);
@@ -223,6 +406,7 @@ body {
   padding: 1rem;
   border-radius: 0 12px 12px 0;
   flex: 1;
+  background-color: var(--background);
 }
 
 .main-content-expanded {
@@ -234,7 +418,7 @@ body {
 .sidebar {
   width: var(--sidebar-width);
   height: 100%;
-  background-color: var(--surface-level-1);
+  background-color: var(--background);
   border-right: 1px solid var(--border-level-2);
   transition: width 0.3s ease;
   overflow-y: auto;
@@ -258,6 +442,15 @@ body {
   align-items: center;
   justify-content: space-between;
   height: var(--topbar-height);
+}
+
+.sidebar-header button {
+  opacity: 0.8;
+  transition: opacity 0.2s, background-color 0.2s;
+}
+
+.sidebar-header button:hover {
+  opacity: 1;
 }
 
 .sidebar-content {
@@ -334,6 +527,15 @@ body {
   margin-bottom: 1.5rem;
 }
 
+.sidebar-search input::placeholder {
+  opacity: 0.7;
+}
+
+.sidebar-search button.text-xs {
+  font-weight: 500;
+  white-space: nowrap;
+}
+
 .search-input {
   width: 100%;
   padding: 0.75rem 2.5rem 0.75rem 0.75rem;
@@ -355,7 +557,7 @@ body {
   cursor: pointer;
 }
 
-/* Improved search suggestions styling */
+/* Search suggestions styling */
 .search-suggestions {
   position: absolute;
   width: 100%;
@@ -407,6 +609,7 @@ body {
   text-align: center;
   min-width: 45px;
 }
+
 /* Filter Elements */
 .filter-group {
   margin-bottom: 1.5rem;
@@ -431,6 +634,12 @@ body {
   flex-wrap: wrap;
   gap: 0.5rem;
   margin-bottom: 0.5rem;
+}
+
+/* Hide specific filter groups */
+.filter-group:has(#resetMapBtn), 
+.filter-group:has(#resetSankeyBtn) {
+  display: none !important;
 }
 
 /* Buttons */
@@ -574,6 +783,27 @@ a:focus {
   color: var(--text-tertiary);
 }
 
+/* Full width visualization */
+.full-width-viz {
+  max-width: 100%;
+  width: 100%;
+  overflow: hidden;
+  margin-left: 0;
+  margin-right: 0;
+}
+
+#sankeySection {
+  overflow: hidden;
+}
+
+#sankeyWrapper {
+  overflow: hidden;
+}
+
+#sankeyChart {
+  max-width: 100%;
+}
+
 /* Maps & Markers */
 .custom-marker {
   background-color: var(--chart-accent-1);
@@ -633,7 +863,6 @@ a:focus {
   height: 500px;
 }
 
-
 /* ===== TABLES ===== */
 .table-responsive {
   display: block;
@@ -677,6 +906,30 @@ a:focus {
 
 .table-responsive td {
   border-bottom: 1px solid var(--border-level-1);
+}
+
+/* Table text colors */
+.table-responsive th,
+.table-responsive td {
+  color: var(--text-primary);
+}
+
+.table-responsive th {
+  color: var(--text-secondary);
+}
+
+.table-responsive a {
+  color: var(--accent);
+}
+
+/* Ensure modal tables follow the same rules */
+#primeDetailContractsTableContainer th,
+#primeDetailContractsTableContainer td,
+#specializationContractsTable th,
+#specializationContractsTable td,
+#contractExpirationTableBody th,
+#contractExpirationTableBody td {
+  color: var(--text-primary);
 }
 
 /* ===== MODALS ===== */
@@ -774,259 +1027,80 @@ a:focus {
   display: block !important;
 }
 
-
-/* Dashboard content layout */
-#dashboardContent {
-  display: flex;
-  flex-direction: column;
-  min-height: calc(100vh - 200px);
+/* ===== WELCOME TITLE STYLES ===== */
+.welcome-title {
+  line-height: 1.4;
+  animation: fadeIn 0.5s ease-in-out;
 }
 
-/* ===== RESPONSIVE LAYOUT ===== */
-/* Mobile sidebar adjustments */
-.mobile-sidebar-toggle {
-  display: none;
-  position: fixed;
-  bottom: 1rem;
-  right: 1rem;
-  z-index: 50;
-  background-color: var(--accent);
-  color: var(--on-accent);
-  border-radius: 50%;
-  width: 3rem;
-  height: 3rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+.welcome-title .greeting {
+  color: var(--chart-accent-1);
+  font-weight: 700;
+  display: inline;
 }
 
-/* Theme toggle icons */
-#themeIconMoon {
-  display: none;
+.welcome-title .description {
+  font-weight: normal;
+  font-size: 0.9em;
+  opacity: 0.85;
+  display: inline;
+  margin-left: 0.25rem;
 }
 
-html.dark #themeIconSun {
-  display: none;
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-html.dark #themeIconMoon {
-  display: block;
+@keyframes subtle-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
 }
 
-/* Full width visualization */
-.full-width-viz {
-  max-width: 100%;
-  width: 100%;
-  overflow: hidden;
-  margin-left: 0;
-  margin-right: 0;
+.sidebar-search button.text-xs:first-of-type {
+  animation: subtle-pulse 2s ease-in-out;
 }
 
-#sankeySection {
-  overflow: hidden;
+/* ===== CURRENT VIEW TITLE ===== */
+/* Make title section consistent across both light and dark modes */
+#currentViewTitle {
+  background-color: #6c757d !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
 }
 
-#sankeyWrapper {
-  overflow: hidden;
+/* Apply dark mode text colors to both modes */
+#currentViewTitle,
+#currentViewTitle * {
+  color: #fff !important;
 }
 
-#sankeyChart {
-  max-width: 100%;
-}
-/* Tablet/Desktop breakpoints */
-@media (max-width: 1023px) {
-  #sankeyChart {
-    height: 450px;
-  }
-  
-  #contractorMap {
-    height: 450px;
-  }
+#currentFilterDescription {
+  color: white !important;
+  font-weight: 900 !important;
+  font-size: 2.5rem !important;
+  line-height: 1.1 !important;
+  letter-spacing: -0.02em !important;
+  color: #1A1A1A !important;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
 }
 
-/* Tablet breakpoints */
-@media (max-width: 1024px) {
-  .sidebar {
-    width: var(--sidebar-width-collapsed);
-  }
-  
-  .main-content {
-    margin-left: var(--sidebar-width-collapsed);
-    width: calc(100% - var(--sidebar-width-collapsed));
-  }
-  
-  .sidebar.expanded {
-    width: var(--sidebar-width);
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
-  }
-  
-  .mobile-sidebar-toggle {
-    display: flex;
-  }
+#currentViewTitle .text-[var(--text-secondary)] {
+  color: rgba(255, 255, 255, 0.7) !important;
 }
 
-/* Mobile breakpoints */
-@media (max-width: 767px) {
-  #sankeyChart, #contractorMap {
-    height: 350px !important;
-  }
-  
-  .chart-container {
-    height: 250px !important;
-  }
-  
-  .table-responsive th,
-  .table-responsive td {
-    padding: 4px 6px;
-    font-size: 11px;
-  }
-  
-  .dashboard-card {
-    padding: 1rem !important;
-  }
-  
-  .modal-content {
-    padding: 1rem;
-  }
-  
-  #primeProfilesContainer {
-    max-height: 60vh;
-  }
-  
-  
-  
-  button, 
-  .filter-btn, 
-  #themeToggleBtn, 
-  #shareViewBtn,
-  .suggestion-item {
-    min-height: 44px; /* Minimum height for touch targets */
-  }
-  
-  #clearSearchBtn {
-    height: 44px;
-    width: 44px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  
-  .stat-card {
-    margin-bottom: 0.5rem;
-  }
+#currentViewTitle .text-[var(--text-tertiary)] {
+  color: rgba(255, 255, 255, 0.5) !important;
 }
 
-/* Smallest screens */
-@media (max-width: 640px) {
-  .app-wrapper {
-    margin: 0;
-    border-radius: 0;
-    height: 100vh;
-  }
-  
-  .sidebar {
-    width: 0;
-    border-right: none;
-  }
-  
-  .main-content {
-    margin-left: 0;
-    width: 100%;
-    padding: 0.5rem;
-  }
-  
-  .sidebar.expanded {
-    width: 100%;
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
-  }
-  
-  .dashboard-cards {
-    grid-template-columns: 1fr;
-  }
-  
-  .chart-container {
-    height: 250px;
-  }
-  
-  #sankeyChart {
-    height: 400px !important;
-  }
-  
-  .section-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.5rem;
-  }
-  
-  .section-header .action-btn {
-    align-self: flex-end;
-  }
-  
-  .table-responsive {
-    margin-left: -1rem;
-    margin-right: -1rem;
-    width: calc(100% + 2rem);
-    padding: 0 0.5rem;
-  }
-  
-  .table-responsive th,
-  .table-responsive td {
-    padding: 0.25rem 0.5rem;
-    font-size: 0.7rem;
-    white-space: nowrap;
-  }
+/* ===== THEME-SPECIFIC OVERRIDES ===== */
+/* Light theme specifics */
+html:not(.dark) #currentViewTitle #currentFilterDescription {
+  color: white !important;
 }
 
-@media (max-width: 480px) {
-  #sankeyChart, #contractorMap {
-    height: 300px !important;
-  }
-  
-  .dashboard-card {
-    padding: 0.75rem !important;
-  }
-  
-  #unifiedSearchInput {
-    font-size: 14px;
-    padding: 0.5rem !important;
-  }
-  
-  .stat-card {
-    padding: 0.75rem !important;
-  }
-  
-  .stat-card .text-2xl {
-    font-size: 1.25rem !important;
-  }
-  
-}
-
-/* ===== PRINT STYLES ===== */
-@media print {
-  .dashboard-card {
-    break-inside: avoid;
-    page-break-inside: avoid;
-  }
-  
-  button, .action-btn, .filter-btn, #themeToggleBtn, #shareViewBtn {
-    display: none !important;
-  }
-  
-  body, .dashboard-container {
-    background-color: white !important;
-    color: black !important;
-  }
-  
-  @page {
-    margin: 1cm;
-  }
-}
-
-/* ===== DARK MODE OVERRIDES ===== */
+/* Dark theme overrides */
 html.dark body {
-  background-color: #121212; /* Dark subtle background */
+  background-color: #121212;
 }
 
 html.dark .dashboard-card {
@@ -1066,131 +1140,6 @@ html.dark section.bg-[var(--surface-level-1)] {
 html.dark footer img[src*="powered-by-aws-white.png"] {
   filter: brightness(0.8);
 }
-/* Update specific element backgrounds */
-.app-wrapper {
-  background-color: var(--background);
-}
-
-.sidebar {
-  background-color: var(--background);
-}
-
-.main-content {
-  background-color: var(--background);
-}
-
-/* Content sections and cards use the lighter background */
-.dashboard-card {
-  background-color: var(--surface-level-1) !important;
-}
-
-#currentViewTitle, 
-.stat-card,
-section.bg-[var(--surface-level-1)],
-#primeDetailViewSection,
-#primeProfilesSection {
-  background-color: var(--surface-level-1);
-}
-
-/* Ensure chart backgrounds match */
-.chart-no-data {
-  background-color: var(--surface-level-1) !important;
-}
-/* Add this to your existing styles */
-.welcome-title {
-  line-height: 1.4;
-  animation: fadeIn 0.5s ease-in-out;
-}
-
-.welcome-title .greeting {
-  color: var(--chart-accent-1);
-  font-weight: 700;
-  display: inline; /* Changed from block to inline */
-}
-
-.welcome-title .description {
-  font-weight: normal;
-  font-size: 0.9em;
-  opacity: 0.85;
-  display: inline; /* Added to ensure inline display */
-  margin-left: 0.25rem; /* Add a small space between greeting and description */
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-5px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-/* Make title section consistent across both light and dark modes */
-#currentViewTitle {
-  background-color: #6c757d !important;
-}
-
-/* Apply dark mode text colors to both modes */
-#currentViewTitle,
-#currentViewTitle * {
-  color: #fff !important;
-}
-
-#currentFilterDescription {
-  color: white !important; /* Force white text for the title */
-}
-
-/* Ensure border is consistent */
-#currentViewTitle {
-  border-color: rgba(255, 255, 255, 0.1) !important;
-}
-
-/* Force the white text color mode instead of waiting for dark mode */
-html:not(.dark) #currentViewTitle #currentFilterDescription {
-  color: white !important;
-}
-
-/* If any other elements inside need specific colors */
-#currentViewTitle .text-[var(--text-secondary)] {
-  color: rgba(255, 255, 255, 0.7) !important;
-}
-
-#currentViewTitle .text-[var(--text-tertiary)] {
-  color: rgba(255, 255, 255, 0.5) !important;
-}
-.filter-group:has(#resetMapBtn), 
-.filter-group:has(#resetSankeyBtn) {
-  display: none !important;
-}
-/* Add to your CSS - Table Dark Mode Fixes */
-.table-responsive th,
-.table-responsive td {
-  color: var(--text-primary);
-}
-
-.table-responsive th {
-  color: var(--text-secondary);
-}
-
-/* Ensure links in tables maintain visibility */
-.table-responsive a {
-  color: var(--accent);
-}
-
-/* Dark mode overrides */
-html.dark .table-responsive th,
-html.dark .table-responsive td {
-  color: var(--text-primary); /* This will be light in dark mode */
-}
-
-html.dark .table-responsive tbody tr:hover {
-  background-color: var(--surface-level-2); /* Hover highlight in dark mode */
-}
-
-/* Ensure modal tables follow the same rules */
-#primeDetailContractsTableContainer th,
-#primeDetailContractsTableContainer td,
-#specializationContractsTable th,
-#specializationContractsTable td,
-#contractExpirationTableBody th,
-#contractExpirationTableBody td {
-  color: var(--text-primary);
-}
 
 html.dark #primeDetailContractsTableContainer th,
 html.dark #specializationContractsTable th,
@@ -1203,7 +1152,43 @@ html.dark #specializationContractsTable td,
 html.dark #contractExpirationTableBody td {
   color: var(--text-primary);
 }
-/* Add/modify these CSS rules */
+
+html.dark .table-responsive tbody tr:hover {
+  background-color: var(--surface-level-2);
+}
+
+/* Theme toggle icons */
+#themeIconMoon {
+  display: none;
+}
+
+html.dark #themeIconSun {
+  display: none;
+}
+
+html.dark #themeIconMoon {
+  display: block;
+}
+
+/* ===== RESPONSIVE LAYOUT ===== */
+/* Mobile sidebar toggle */
+.mobile-sidebar-toggle {
+  display: none;
+  position: fixed;
+  bottom: 1rem;
+  right: 1rem;
+  z-index: 50;
+  background-color: var(--accent);
+  color: var(--on-accent);
+  border-radius: 50%;
+  width: 3rem;
+  height: 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
 
 /* Desktop - sidebar is always visible */
 @media (min-width: 1025px) {
@@ -1218,212 +1203,23 @@ html.dark #contractExpirationTableBody td {
     width: calc(100% - var(--sidebar-width));
   }
   
-  /* Hide mobile toggle on desktop */
   .mobile-sidebar-toggle {
     display: none;
   }
   
-  /* Hide in-sidebar toggle on desktop */
   .sidebar-header #toggleSidebarBtn {
     display: none;
   }
 }
 
-/* Tablet and mobile - sidebar needs toggle */
-@media (max-width: 1024px) {
-  .sidebar {
-    transform: translateX(-100%);
-    position: fixed;
-    z-index: 50;
-    top: 0;
-    left: 0;
-    height: 100%;
-    width: 280px;
-    transition: transform 0.3s ease;
-  }
-  
-  .sidebar.expanded {
-    transform: translateX(0);
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
-  }
-  
-  .main-content {
-    margin-left: 0;
-    width: 100%;
-  }
-  
-  .mobile-sidebar-toggle {
-    display: flex;
-  }
-}
-#currentFilterDescription {
-  font-weight: 900 !important; /* Extra bold */
-  font-size: 2.5rem !important; /* Larger size */
-  line-height: 1.1 !important; /* Tighter line height */
-  letter-spacing: -0.02em !important; /* Slightly tighter letter spacing */
-  color: #1A1A1A !important; /* Very dark, nearly black */
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
-}
-
-/* For mobile responsiveness */
-@media (max-width: 768px) {
-  #currentFilterDescription {
-    font-size: 1.8rem !important;
-  }
-}
-/* Add to your existing CSS */
-.sidebar-search input::placeholder {
-  opacity: 0.7;
-}
-
-.sidebar-search button.text-xs {
-  font-weight: 500;
-  white-space: nowrap;
-}
-
-/* Create a subtle pulse animation for the suggestion buttons when the page loads */
-@keyframes subtle-pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-}
-
-.sidebar-search button.text-xs:first-of-type {
-  animation: subtle-pulse 2s ease-in-out;
-}
-/* Add this to your CSS */
-.sidebar-header button {
-  opacity: 0.8;
-  transition: opacity 0.2s, background-color 0.2s;
-}
-
-.sidebar-header button:hover {
-  opacity: 1;
-}
-/* Main Layout Changes */
-@media (max-width: 1024px) {
-  /* Remove sidebar as a fixed panel */
-  .sidebar {
-    position: static;
-    width: 100%;
-    height: auto;
-    transform: none;
-    border-right: none;
-    border-bottom: 1px solid var(--border-level-2);
-    box-shadow: none;
-    background-color: var(--background); /* Use theme background color */
-  }
-  
-  /* Make main content full width */
-  .main-content {
-    margin-left: 0;
-    width: 100%;
-  }
-  
-  /* Remove any sidebar animations */
-  .sidebar, .main-content {
-    transition: none;
-  }
-  
-  /* Hide the mobile sidebar toggle button */
-  .mobile-sidebar-toggle {
-    display: none;
-  }
-  
-  /* Layout sidebar header inline */
-  .sidebar-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.75rem 1rem;
-  }
-  
-  /* Make the search bar more prominent */
-  .sidebar-search {
-    padding: 0.75rem 1rem;
-  }
-  
-  /* Condense the rest of sidebar content */
-  .sidebar-content {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    padding: 0.75rem 1rem;
-  }
-  
-  /* Hide less essential sidebar elements on mobile */
-  .shoutouts, 
-  .connect-card,
-  #activeFilterIndicator:empty {
-    display: none;
-  }
-  
-  /* Quick pick becomes more compact */
-  .sidebar-content h3 {
-    font-size: 0.8rem;
-    margin-bottom: 0.5rem;
-  }
-  
-  .sidebar-content .filter-group {
-    margin-bottom: 0.75rem;
-  }
-  
-  /* Footer becomes more subtle */
-  .sidebar-footer {
-    padding: 0.5rem 1rem;
-    font-size: 0.7rem;
-    text-align: center;
-    color: var(--text-tertiary); /* Use theme tertiary text color */
-  }
-  
-  /* Use theme colors for text */
-  .sidebar {
-    color: var(--text-primary);
-  }
-  
-  .sidebar h1, 
-  .sidebar .text-xl,
-  .sidebar .font-extrabold {
-    color: var(--accent);
-  }
-  
-  .sidebar p,
-  .sidebar .text-[var(--text-secondary)],
-  .sidebar .text-xs {
-    color: var(--text-secondary);
-  }
-  
-  /* Use theme colors for sidebar elements */
-  .sidebar button, 
-  .sidebar .filter-btn {
-    font-size: 0.75rem;
-    background-color: var(--surface-level-2);
-    color: var(--text-secondary);
-  }
-  
-  .sidebar button:hover, 
-  .sidebar .filter-btn:hover {
-    background-color: var(--surface-level-3);
-  }
-  
-  /* Search input styling */
-  .sidebar .search-input {
-    background-color: var(--surface-level-1);
-    color: var(--text-primary);
-    border-color: var(--border-level-2);
-  }
-  
-  .sidebar .search-input::placeholder {
-    color: var(--text-tertiary);
+/* Tablet/Desktop breakpoints */
+@media (max-width: 1023px) {
+  #sankeyChart, #contractorMap {
+    height: 450px;
   }
 }
 
-/* Very small devices */
-@media (max-width: 640px) {
-  .sidebar-content {
-    flex-direction: column;
-  }
-}
-/* Improved Mobile Layout */
+/* Tablet breakpoints */
 @media (max-width: 1024px) {
   /* Enable scrolling on the entire page */
   html, body {
@@ -1431,7 +1227,7 @@ html.dark #contractExpirationTableBody td {
     overflow-y: auto !important;
   }
   
-  /* Fix overall container layout */
+  /* Fix layout containers */
   .app-wrapper, .dashboard-container {
     flex-direction: column;
     height: auto;
@@ -1455,7 +1251,6 @@ html.dark #contractExpirationTableBody td {
     max-height: none;
   }
   
-  /* Make main content full width and scrollable */
   .main-content {
     margin-left: 0 !important;
     width: 100% !important;
@@ -1463,10 +1258,14 @@ html.dark #contractExpirationTableBody td {
     height: auto;
   }
   
-  /* Ensure sidebar content scrolls properly */
+  /* Make sidebar content sections appropriate */
   .sidebar-content {
     max-height: none;
     overflow: visible;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
   }
   
   /* Hide the mobile sidebar toggle button */
@@ -1515,6 +1314,20 @@ html.dark #contractExpirationTableBody td {
     white-space: nowrap;
   }
   
+  /* Layout sidebar header inline */
+  .sidebar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem;
+  }
+  
+  /* Make the search bar more prominent */
+  .sidebar-search {
+    padding: 0.75rem 1rem;
+    margin-bottom: 0.5rem;
+  }
+  
   /* Better search input sizing */
   .sidebar .search-input {
     height: 40px;
@@ -1535,34 +1348,11 @@ html.dark #contractExpirationTableBody td {
   .sidebar-footer {
     display: none;
   }
-}
-
-/* Further optimizations for very small screens */
-@media (max-width: 640px) {
-  /* Make buttons horizontal */
-  .sidebar-content .flex.flex-wrap {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: 0.25rem;
-  }
   
-  /* Increase density */
-  .sidebar-content {
-    padding: 0.5rem;
+  /* Transition adjustments */
+  .sidebar, .main-content {
+    transition: none;
   }
-  
-  .sidebar-search {
-    margin-bottom: 0.5rem;
-    padding: 0 0.5rem;
-  }
-  
-  /* Ensure header is compact */
-  .sidebar-header {
-    padding: 0.5rem;
-    height: auto;
-  }
-}
 </style>
 </head>
 <body>
@@ -3224,7 +3014,7 @@ function getChartColors() {
 }
 
 // --- Optional Chart Color Overrides ---
-let overrideChartHighlightColor = '#6c757d';   // Override for max value (e.g., desaturated blue)
+let overrideChartHighlightColor = '#8c8a9c';   // Override for max value (e.g., desaturated blue)
 let overrideChartNeutralColor = null;         // Optional override for all other bars
 
 // --- CSS Fallback Getter ---
