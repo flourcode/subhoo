@@ -1435,6 +1435,126 @@ html.dark #themeIconMoon {
     position: relative !important;
   }
 }
+/* Fix search bar width on mobile */
+@media (max-width: 1024px) {
+  /* Full width search input container */
+  .sidebar-search {
+    width: 100% !important;
+    display: block !important;
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+    box-sizing: border-box !important;
+  }
+  
+  /* Full width search input */
+  .sidebar-search .search-input,
+  #unifiedSearchInput {
+    width: 100% !important;
+    display: block !important;
+    box-sizing: border-box !important;
+    min-height: 44px !important; /* Better touch target */
+  }
+  
+  /* Full width search suggestions */
+  #unifiedSearchSuggestions {
+    width: calc(100% - 1rem) !important;
+    max-width: calc(100vw - 1rem) !important;
+    left: 0.5rem !important;
+    right: 0.5rem !important;
+    box-sizing: border-box !important;
+  }
+  
+  /* Fix any related containers */
+  .sidebar-search .relative,
+  .sidebar-search > div {
+    width: 100% !important;
+    display: block !important;
+  }
+  
+  /* Remove any constraints from the container */
+  .sidebar-content {
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+}
+
+/* Very small screens */
+@media (max-width: 640px) {
+  /* Remove padding from sidebar to maximize width */
+  .sidebar-header, 
+  .sidebar-content, 
+  .sidebar-footer {
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+  }
+  
+  /* Ensure search container has no additional margins */
+  .sidebar-search {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+}
+/* Fix search bar icon positioning on mobile */
+@media (max-width: 1024px) {
+  /* Container positioning */
+  .sidebar-search .relative {
+    position: relative !important;
+    display: flex !important;
+    align-items: center !important;
+    width: 100% !important;
+  }
+  
+  /* Search icon positioning (left side) */
+  .sidebar-search .search-input,
+  #unifiedSearchInput {
+    padding-left: 2.5rem !important; /* Space for the icon */
+    padding-right: 2.5rem !important; /* Space for clear button */
+  }
+  
+  /* Fix the left search icon position */
+  .sidebar-search .absolute:first-child,
+  .sidebar-search .inset-y-0.left-0,
+  .search-clear-btn + div,
+  .sidebar-search svg:first-of-type {
+    position: absolute !important;
+    left: 0.75rem !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    right: auto !important;
+    bottom: auto !important;
+  }
+  
+  /* Fix the clear button position (right side) */
+  #clearSearchBtn,
+  .search-clear-btn,
+  .sidebar-search .absolute:last-child,
+  .sidebar-search .inset-y-0.right-0 {
+    position: absolute !important;
+    right: 0.75rem !important;
+    left: auto !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    bottom: auto !important;
+  }
+  
+  /* Ensure buttons have proper tap targets */
+  #clearSearchBtn,
+  .search-clear-btn {
+    min-width: 44px !important;
+    min-height: 44px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  
+  /* Increase icon size slightly for better visibility */
+  .sidebar-search svg {
+    width: 16px !important;
+    height: 16px !important;
+  }
+}
 </style>
 </head>
 <body>
