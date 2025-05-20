@@ -91,48 +91,158 @@
 :root {
   font-family: Inter, sans-serif;
   font-feature-settings: 'liga' 1, 'calt' 1;
+  
+/* Modern Government with Clear Differentiation */
+--deep-blue: #f0f0f0;      /* Dark blue */
+--navy-purple: #003f5c;    /* Navy */
 
-  /* Monochromatic Grayscale Palette */
-  --seasalt: #f8f9fa;
-  --antiflash-white: #e9ecef;
-  --platinum: #dee2e6;
-  --french-gray: #ced4da;
-  --french-gray-2: #adb5bd;
-  --slate-gray: #6c757d;
-  --outer-space: #495057;
-  --onyx: #343a40;
-  --eerie-black: #212529;
-
+--pink: #4b5954;           /* Charcoal */
+--coral: #87431d;          /* Brick */
+--orange: #c9972f;         /* Gold */
+  
+  
+  /* Neutral Gray Palette - slightly cooler to match the blues */
+  --white: #ffffff;
+  --seasalt: #f7f9fc;
+  --antiflash-white: #e9ecf4;
+  --platinum: #dde3ed;
+  --french-gray: #cbd2e0;
+  --french-gray-2: #aab3c5;
+  --slate-gray: #637088;
+  --outer-space: #455066;
+  --onyx: #2c3448;
+  --eerie-black: #1a1f2e;
+  
   /* Light Mode Colors */
-  --background: var(--antiflash-white); 
-  --content-background: var(--seasalt);
+  --background: var(--antiflash-white);
+  --content-background: var(--white);
   --on-accent: #ffffff;
-  --accent: var(--slate-gray);
-  --accent-secondary: rgba(108, 117, 125, 0.15);
-  --gradient-bg-start: rgba(108, 117, 125, 0.08);
-  --gradient-bg-end: rgba(108, 117, 125, 0);
-
+  --accent: var(--navy-purple);
+  --accent-hover: var(--deep-blue);
+  --accent-secondary: rgba(68, 78, 134, 0.15);
+  --gradient-bg-start: rgba(68, 78, 134, 0.08);
+  --gradient-bg-end: rgba(68, 78, 134, 0);
+  
   /* Text colors */
   --text-primary: var(--eerie-black);
   --text-secondary: var(--outer-space);
-  --text-tertiary: var(--french-gray-2);
-
+  --text-tertiary: var(--slate-gray);
+  
   /* Border colors */
-  --border-level-1: rgba(173, 181, 189, 0.3);
-  --border-level-2: rgba(173, 181, 189, 0.5);
-  --border-level-3: rgba(173, 181, 189, 0.8);
+  --border-level-1: rgba(170, 179, 197, 0.3);
+  --border-level-2: rgba(170, 179, 197, 0.5);
+  --border-level-3: rgba(170, 179, 197, 0.8);
   
   /* Surface levels */
   --surface-level-1: var(--content-background);
   --surface-level-2: rgba(206, 212, 218, 0.3);
   --surface-level-3: rgba(206, 212, 218, 0.5);
+  
+  /* Chart colors kept the same as your custom color scale */
+  --chart-accent-1: var(--deep-blue);
+  --chart-accent-2: var(--navy-purple);
+  --chart-accent-3: var(--purple);
+  --chart-accent-4: var(--pink);
+  --chart-accent-5: var(--coral);
+  --chart-highlight: var(--orange);
+  
+  /* UI variables */
+  --header-font-weight: 600;
+  --button-font-weight: 500;
+  --space-m: 12px;
+  
+  /* Layout variables */
+  --sidebar-width: 280px;
+  --sidebar-width-collapsed: 60px;
+  --topbar-height: 60px;
+}
 
-  /* Chart colors */
-  --chart-accent-1: var(--slate-gray);
-  --chart-accent-2: var(--french-gray-2);
-  --chart-accent-3: var(--french-gray);
-  --chart-accent-4: var(--platinum);
-  --chart-accent-5: var(--antiflash-white);
+/* Dark Mode Colors */
+html.dark {
+  --background: var(--eerie-black);
+  --content-background: var(--onyx);
+  --accent: var(--purple);
+  --accent-hover: var(--navy-purple);
+  --accent-secondary: rgba(149, 81, 150, 0.3);
+  --gradient-bg-start: rgba(149, 81, 150, 0.15);
+  --gradient-bg-end: rgba(149, 81, 150, 0);
+  
+  /* Text colors */
+  --text-primary: var(--seasalt);
+  --text-secondary: var(--platinum);
+  --text-tertiary: var(--french-gray);
+  
+  /* Border colors */
+  --border-level-1: rgba(170, 179, 197, 0.25);
+  --border-level-2: rgba(170, 179, 197, 0.45);
+  --border-level-3: rgba(170, 179, 197, 0.65);
+  
+  /* Surface levels */
+  --surface-level-1: var(--content-background);
+  --surface-level-2: rgba(44, 52, 72, 0.8);
+  --surface-level-3: rgba(69, 80, 102, 0.6);
+  
+  /* Chart colors stay the same for consistency */
+  --chart-accent-1: var(--deep-blue);
+  --chart-accent-2: var(--navy-purple);
+  --chart-accent-3: var(--purple);
+  --chart-accent-4: var(--pink);
+  --chart-accent-5: var(--coral);
+  --chart-highlight: var(--orange);
+}
+
+/* ===== BASE LAYOUT ===== */
+body {
+  background-color: var(--surface-level-1);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
+  margin: 0;
+  padding: 0;
+  height: 100vh;
+  overflow: hidden;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+/* App container and dashboard layout */
+.app-wrapper {
+  max-width: 1600px;
+  margin: 20px auto;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 30px rgba(0, 31, 63, 0.1);
+  display: flex;
+  height: calc(100vh - 40px);
+  position: relative;
+  background-color: var(--background);
+}
+
+/* Add these useful button styles that match your chart colors */
+.btn-primary {
+  background-color: var(--accent);
+  color: var(--on-accent);
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  transition: background-color 0.2s;
+}
+
+.btn-primary:hover {
+  background-color: var(--accent-hover);
+}
+
+.btn-secondary {
+  background-color: var(--accent-secondary);
+  color: var(--accent);
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  transition: background-color 0.2s;
+}
+
+.btn-secondary:hover {
+  background-color: rgba(68, 78, 134, 0.25);
+}
 
   /* UI variables */
   --header-font-weight: 600;
@@ -321,65 +431,6 @@
     font-size: 0.7rem;
     white-space: nowrap;
   }
-}
-
-/* Dark Mode Colors */
-html.dark {
-  --background: var(--eerie-black);
-  --content-background: var(--onyx);
-  --accent: var(--french-gray-2);
-  --accent-secondary: rgba(173, 181, 189, 0.3);
-  --gradient-bg-start: rgba(173, 181, 189, 0.15);
-  --gradient-bg-end: rgba(173, 181, 189, 0);
-
-  /* Text colors */
-  --text-primary: var(--seasalt);
-  --text-secondary: var(--platinum);
-  --text-tertiary: var(--french-gray);
-
-  /* Border colors */
-  --border-level-1: rgba(173, 181, 189, 0.25);
-  --border-level-2: rgba(173, 181, 189, 0.45);
-  --border-level-3: rgba(173, 181, 189, 0.65);
-
-  /* Surface levels */
-  --surface-level-1: var(--content-background);
-  --surface-level-2: var(--outer-space);
-  --surface-level-3: var(--slate-gray);
-
-  /* Chart colors */
-  --chart-accent-1: var(--platinum);
-  --chart-accent-2: var(--french-gray-2);
-  --chart-accent-3: var(--french-gray);
-  --chart-accent-4: var(--outer-space);
-  --chart-accent-5: var(--onyx);
-}
-
-/* ===== BASE LAYOUT ===== */
-body {
-  background-color: var(--surface-level-1);
-  color: var(--text-primary);
-  transition: background-color 0.3s ease, color 0.3s ease;
-  margin: 0;
-  padding: 0;
-  height: 100vh;
-  overflow: hidden;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
-
-/* App container and dashboard layout */
-.app-wrapper {
-  max-width: 1600px;
-  margin: 20px auto;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-  display: flex;
-  height: calc(100vh - 40px);
-  position: relative;
-  background-color: var(--background);
 }
 
 .dashboard-container {
@@ -803,60 +854,56 @@ a:focus {
 #sankeyChart {
   max-width: 100%;
 }
-
-/* Maps & Markers */
+.leaflet-tile {
+  filter: grayscale(80%) brightness(95%) contrast(105%);
+}
+/* Custom marker styling */
 .custom-marker {
-  background-color: var(--chart-accent-1);
-  border: 2px solid var(--border-level-2);
   border-radius: 50%;
-  width: 12px;
-  height: 12px;
-  box-shadow: 0 0 0 2px var(--surface-level-1);
-  transition: transform 0.2s ease;
+  width: 100%;
+  height: 100%;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.7), 0 0 0 2px rgba(0, 0, 0, 0.2); /* White inner border, dark outer border */
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .custom-marker:hover {
   transform: scale(1.5);
-  box-shadow: 0 0 0 4px var(--accent-secondary);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.9), 0 0 0 3px rgba(0, 0, 0, 0.3);
+  z-index: 1000 !important;
 }
 
-#contractorMap { 
-  height: 100vh; 
-}
-
+/* Cluster styling */
 .custom-cluster {
   background-color: transparent;
   border: none;
 }
 
 .cluster-icon {
-  background: #6c757d;
   color: #fff;
   border-radius: 50%;
   text-align: center;
   line-height: 30px;
   width: 30px;
   height: 30px;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: bold;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.5);
 }
 
 .cluster-icon.medium {
   width: 40px;
   height: 40px;
   line-height: 40px;
+  font-size: 14px;
 }
 
 .cluster-icon.large {
   width: 50px;
   height: 50px;
   line-height: 50px;
-  background: #6c757d;
+  font-size: 16px;
 }
 
-.leaflet-tile {
-  filter: grayscale(100%) brightness(95%) contrast(105%);
-}
 
 /* Sankey & Maps */
 #sankeyChart, #contractorMap {
@@ -1062,25 +1109,26 @@ a:focus {
 }
 
 /* ===== CURRENT VIEW TITLE ===== */
-/* Make title section consistent across both light and dark modes */
 #currentViewTitle {
-  background-color: #6c757d !important;
-  border-color: rgba(255, 255, 255, 0.1) !important;
+  background-color: var(--accent) !important;
+  border-color: var(--border-level-2) !important;
 }
 
-/* Apply dark mode text colors to both modes */
-#currentViewTitle,
+/* Apply theme text colors */
+#currentViewTitle {
+  color: var(--on-accent) !important;
+}
+
 #currentViewTitle * {
-  color: #fff !important;
+  color: var(--on-accent) !important;
 }
 
 #currentFilterDescription {
-  color: white !important;
   font-weight: 900 !important;
   font-size: 2.5rem !important;
   line-height: 1.1 !important;
   letter-spacing: -0.02em !important;
-  color: #1A1A1A !important;
+  color: var(--on-accent) !important;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
 }
 
@@ -1090,6 +1138,11 @@ a:focus {
 
 #currentViewTitle .text-[var(--text-tertiary)] {
   color: rgba(255, 255, 255, 0.5) !important;
+}
+
+/* Light theme specifics - removed hardcoded color */
+html:not(.dark) #currentViewTitle #currentFilterDescription {
+  color: var(--on-accent) !important;
 }
 
 /* ===== THEME-SPECIFIC OVERRIDES ===== */
@@ -1169,11 +1222,9 @@ html.dark #themeIconSun {
 html.dark #themeIconMoon {
   display: block;
 }
-
-/* ===== RESPONSIVE LAYOUT ===== */
+/* ===== RESPONSIVE LAYOUT OPTIMIZATION ===== */
 /* Mobile sidebar toggle */
 .mobile-sidebar-toggle {
-  display: none;
   position: fixed;
   bottom: 1rem;
   right: 1rem;
@@ -1190,7 +1241,7 @@ html.dark #themeIconMoon {
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
 }
 
-/* Desktop - sidebar is always visible */
+/* Desktop layout (1025px and above) */
 @media (min-width: 1025px) {
   .sidebar {
     width: var(--sidebar-width);
@@ -1203,40 +1254,37 @@ html.dark #themeIconMoon {
     width: calc(100% - var(--sidebar-width));
   }
   
-  .mobile-sidebar-toggle {
-    display: none;
-  }
-  
+  .mobile-sidebar-toggle,
   .sidebar-header #toggleSidebarBtn {
     display: none;
   }
 }
 
-/* Tablet/Desktop breakpoints */
-@media (max-width: 1023px) {
-  #sankeyChart, #contractorMap {
-    height: 450px;
-  }
-}
-
-/* Tablet breakpoints */
+/* Tablet and mobile layout (1024px and below) */
 @media (max-width: 1024px) {
-  /* Enable scrolling on the entire page */
+  /* Document layout fixes */
   html, body {
     height: auto;
+    width: 100% !important;
     overflow-y: auto !important;
+    overflow-x: hidden !important;
+    position: relative !important;
   }
   
-  /* Fix layout containers */
+  /* Container layout fixes */
   .app-wrapper, .dashboard-container {
     flex-direction: column;
     height: auto;
     min-height: unset;
     overflow: visible;
     max-height: none;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    overflow-x: hidden !important;
   }
   
-  /* Make sidebar not fixed and properly scrollable */
+  /* Sidebar optimizations */
   .sidebar {
     position: static;
     width: 100%;
@@ -1251,14 +1299,27 @@ html.dark #themeIconMoon {
     max-height: none;
   }
   
-  .main-content {
-    margin-left: 0 !important;
-    width: 100% !important;
-    overflow: visible;
+  .sidebar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem;
     height: auto;
   }
   
-  /* Make sidebar content sections appropriate */
+  /* Main content fixes */
+  .main-content {
+    margin-left: 0 !important;
+    width: 100% !important;
+    max-width: 100vw !important;
+    overflow-x: hidden !important;
+    box-sizing: border-box !important;
+    overflow: visible;
+    height: auto;
+    padding: 0.5rem !important;
+  }
+  
+  /* Content container optimizations */
   .sidebar-content {
     max-height: none;
     overflow: visible;
@@ -1266,42 +1327,37 @@ html.dark #themeIconMoon {
     flex-wrap: wrap;
     gap: 0.5rem;
     padding: 0.75rem 1rem;
+    max-width: 100% !important;
+    overflow-x: hidden !important;
   }
   
-  /* Hide the mobile sidebar toggle button */
-  .mobile-sidebar-toggle {
+  /* Hide non-essential elements */
+  .mobile-sidebar-toggle,
+  .shoutouts, 
+  .connect-card,
+  #activeFilterIndicator:empty,
+  .sidebar-footer {
     display: none !important;
   }
   
-  /* STREAMLINE: Limit number of Quick Pick buttons */
-  /* First, hide all buttons */
+  /* Disable transitions for better performance */
+  .sidebar, .main-content {
+    transition: none;
+  }
+  
+  /* Quick Pick buttons optimization */
   .sidebar-content .flex.flex-wrap button {
     display: none;
-  }
-  
-  /* Then only show the first 5 buttons in each category */
-  .sidebar-content .flex.flex-wrap button:nth-child(-n+5) {
-    display: inline-flex;
-  }
-  
-  /* Make buttons more compact */
-  .sidebar-content .flex.flex-wrap button {
     font-size: 0.7rem;
     padding: 0.25rem 0.5rem;
     white-space: nowrap;
   }
   
-  /* Make Quick Pick rows more compact */
-  .sidebar-content > div {
-    margin-bottom: 0.5rem;
+  .sidebar-content .flex.flex-wrap button:nth-child(-n+5) {
+    display: inline-flex;
   }
   
-  .sidebar-content h3 {
-    font-size: 0.75rem;
-    margin-bottom: 0.25rem;
-  }
-  
-  /* Add "More" button at the end of each category */
+  /* More button for hidden options */
   .sidebar-content .flex.flex-wrap::after {
     content: "More...";
     display: inline-block;
@@ -1314,191 +1370,15 @@ html.dark #themeIconMoon {
     white-space: nowrap;
   }
   
-  /* Layout sidebar header inline */
-  .sidebar-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.75rem 1rem;
-  }
-  
-  /* Make the search bar more prominent */
+  /* Search bar optimizations */
   .sidebar-search {
     padding: 0.75rem 1rem;
     margin-bottom: 0.5rem;
-  }
-  
-  /* Better search input sizing */
-  .sidebar .search-input {
-    height: 40px;
-    font-size: 16px; /* Prevents zoom on iOS */
-  }
-  
-  /* Compact reset button */
-  #globalResetBtn {
-    padding: 0.5rem;
-    margin-bottom: 0.5rem;
-    font-size: 0.8rem;
-  }
-  
-  /* Hide less important elements */
-  .shoutouts, 
-  .connect-card,
-  #activeFilterIndicator:empty,
-  .sidebar-footer {
-    display: none;
-  }
-  
-  /* Transition adjustments */
-  .sidebar, .main-content {
-    transition: none;
-  }
-  /* Fix mobile content overflow issues */
-@media (max-width: 1024px) {
-  /* Ensure main content respects viewport width */
-  .main-content {
-    width: 100% !important;
-    max-width: 100vw !important;
-    overflow-x: hidden !important;
-    box-sizing: border-box !important;
-    padding-left: 0.5rem !important;
-    padding-right: 0.5rem !important;
-  }
-  
-  /* Fix any card or chart containers that might overflow */
-  .dashboard-card,
-  .chart-container,
-  .grid,
-  .flex,
-  svg,
-  canvas {
-    max-width: 100% !important;
-    width: 100% !important;
-    box-sizing: border-box !important;
-    overflow-x: hidden !important;
-  }
-  
-  /* Prevent SVG elements from overflowing */
-  svg {
-    overflow: visible !important; /* Allow markers/elements to appear outside bounds */
-    min-width: 0 !important; /* Allow SVG to shrink below intrinsic size */
-    max-width: 100% !important;
-  }
-  
-  /* Fix for tables that might overflow */
-  .table-responsive {
-    max-width: 100vw !important;
-    overflow-x: auto !important;
-    -webkit-overflow-scrolling: touch !important;
-  }
-  
-  /* Fix grid layouts */
-  .grid {
-    grid-template-columns: 1fr !important; /* Force single column on mobile */
-  }
-  
-  /* Ensure content containers can't grow beyond viewport */
-  #dashboardContent {
-    max-width: 100vw !important;
-    overflow-x: hidden !important;
-  }
-  
-  /* Remove negative margins that might cause overflow */
-  [class*="mx-"], [class*="ml-"], [class*="mr-"] {
-    margin-left: 0 !important;
-    margin-right: 0 !important;
-  }
-  
-  /* Fix for any absolute positioned elements */
-  .modal-content,
-  .tooltip,
-  .popup,
-  [class*="fixed"],
-  [class*="absolute"] {
-    max-width: 95vw !important;
-  }
-}
-
-/* Ensure the app wrapper itself doesn't overflow */
-@media (max-width: 640px) {
-  .app-wrapper {
-    width: 100% !important;
-    max-width: 100% !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    overflow-x: hidden !important;
-  }
-  
-  body, html {
-    overflow-x: hidden !important;
-    width: 100% !important;
-    position: relative !important;
-  }
-}
-/* Fix search bar width on mobile */
-@media (max-width: 1024px) {
-  /* Full width search input container */
-  .sidebar-search {
-    width: 100% !important;
-    display: block !important;
-    padding-left: 0.5rem !important;
-    padding-right: 0.5rem !important;
-    box-sizing: border-box !important;
-  }
-  
-  /* Full width search input */
-  .sidebar-search .search-input,
-  #unifiedSearchInput {
     width: 100% !important;
     display: block !important;
     box-sizing: border-box !important;
-    min-height: 44px !important; /* Better touch target */
   }
   
-  /* Full width search suggestions */
-  #unifiedSearchSuggestions {
-    width: calc(100% - 1rem) !important;
-    max-width: calc(100vw - 1rem) !important;
-    left: 0.5rem !important;
-    right: 0.5rem !important;
-    box-sizing: border-box !important;
-  }
-  
-  /* Fix any related containers */
-  .sidebar-search .relative,
-  .sidebar-search > div {
-    width: 100% !important;
-    display: block !important;
-  }
-  
-  /* Remove any constraints from the container */
-  .sidebar-content {
-    max-width: 100% !important;
-    overflow-x: hidden !important;
-    padding-left: 0 !important;
-    padding-right: 0 !important;
-  }
-}
-
-/* Very small screens */
-@media (max-width: 640px) {
-  /* Remove padding from sidebar to maximize width */
-  .sidebar-header, 
-  .sidebar-content, 
-  .sidebar-footer {
-    padding-left: 0.5rem !important;
-    padding-right: 0.5rem !important;
-  }
-  
-  /* Ensure search container has no additional margins */
-  .sidebar-search {
-    margin-left: 0 !important;
-    margin-right: 0 !important;
-  }
-}
-/* Fix search bar icon positioning on mobile */
-@media (max-width: 1024px) {
-  /* Container positioning */
   .sidebar-search .relative {
     position: relative !important;
     display: flex !important;
@@ -1506,14 +1386,18 @@ html.dark #themeIconMoon {
     width: 100% !important;
   }
   
-  /* Search icon positioning (left side) */
-  .sidebar-search .search-input,
+  .sidebar .search-input,
   #unifiedSearchInput {
+    height: 44px;
+    font-size: 16px; /* Prevents zoom on iOS */
+    width: 100% !important;
+    display: block !important;
+    box-sizing: border-box !important;
     padding-left: 2.5rem !important; /* Space for the icon */
     padding-right: 2.5rem !important; /* Space for clear button */
   }
   
-  /* Fix the left search icon position */
+  /* Search icon positioning */
   .sidebar-search .absolute:first-child,
   .sidebar-search .inset-y-0.left-0,
   .search-clear-btn + div,
@@ -1526,7 +1410,7 @@ html.dark #themeIconMoon {
     bottom: auto !important;
   }
   
-  /* Fix the clear button position (right side) */
+  /* Clear button positioning */
   #clearSearchBtn,
   .search-clear-btn,
   .sidebar-search .absolute:last-child,
@@ -1537,11 +1421,6 @@ html.dark #themeIconMoon {
     top: 50% !important;
     transform: translateY(-50%) !important;
     bottom: auto !important;
-  }
-  
-  /* Ensure buttons have proper tap targets */
-  #clearSearchBtn,
-  .search-clear-btn {
     min-width: 44px !important;
     min-height: 44px !important;
     display: flex !important;
@@ -1549,11 +1428,450 @@ html.dark #themeIconMoon {
     justify-content: center !important;
   }
   
-  /* Increase icon size slightly for better visibility */
+  /* Search suggestions container */
+  #unifiedSearchSuggestions {
+    width: calc(100% - 1rem) !important;
+    max-width: calc(100vw - 1rem) !important;
+    left: 0.5rem !important;
+    right: 0.5rem !important;
+    box-sizing: border-box !important;
+  }
+  
+  /* Sidebar content styling */
+  .sidebar-content > div {
+    margin-bottom: 0.5rem;
+  }
+  
+  .sidebar-content h3 {
+    font-size: 0.75rem;
+    margin-bottom: 0.25rem;
+  }
+  
+  /* Compact reset button */
+  #globalResetBtn {
+    padding: 0.5rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.8rem;
+  }
+  
+  /* Fix overflow issues for various components */
+  .dashboard-card,
+  .chart-container,
+  .grid,
+  .flex,
+  svg,
+  canvas {
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    overflow-x: hidden !important;
+  }
+  
+  /* SVG specific fixes */
+  svg {
+    overflow: visible !important; /* Allow markers/elements to appear outside bounds */
+    min-width: 0 !important; /* Allow SVG to shrink below intrinsic size */
+  }
+  
+  /* Table responsiveness */
+  .table-responsive {
+    max-width: 100vw !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+  
+  /* Fix grid layouts */
+  .grid {
+    grid-template-columns: 1fr !important; /* Force single column on mobile */
+  }
+  
+  /* Dashboard content container */
+  #dashboardContent {
+    max-width: 100vw !important;
+    overflow-x: hidden !important;
+  }
+  
+  /* Remove margin classes that could cause overflow */
+  [class*="mx-"], [class*="ml-"], [class*="mr-"] {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+  
+  /* Modals and popovers */
+  .modal-content,
+  .tooltip,
+  .popup,
+  [class*="fixed"],
+  [class*="absolute"] {
+    max-width: 95vw !important;
+  }
+  
+  /* Search icon size */
   .sidebar-search svg {
     width: 16px !important;
     height: 16px !important;
   }
+}
+
+/* Tablet/Desktop specific breakpoint */
+@media (max-width: 1023px) {
+  #sankeyChart, #contractorMap {
+    height: 450px;
+  }
+}
+
+/* Mobile specific breakpoint */
+@media (max-width: 767px) {
+  #sankeyChart, #contractorMap {
+    height: 350px !important;
+  }
+  
+  /* Further height optimizations */
+  .chart-container {
+    height: 250px !important;
+  }
+  
+  /* Table text sizing */
+  .table-responsive th,
+  .table-responsive td {
+    padding: 4px 6px;
+    font-size: 11px;
+  }
+  
+  /* Card adjustments */
+  .dashboard-card {
+    padding: 1rem !important;
+  }
+  
+  /* Other mobile-specific adjustments */
+  .modal-content {
+    padding: 1rem;
+  }
+  
+  #primeProfilesContainer {
+    max-height: 60vh;
+  }
+  
+  /* Touch target sizing */
+  button, 
+  .filter-btn, 
+  #themeToggleBtn, 
+  #shareViewBtn,
+  .suggestion-item {
+    min-height: 44px;
+  }
+  
+  /* Other mobile tweaks */
+  .stat-card {
+    margin-bottom: 0.5rem;
+  }
+}
+
+/* Very small screens */
+@media (max-width: 640px) {
+  /* Horizontal button layout */
+  .sidebar-content .flex.flex-wrap {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+  }
+  
+  /* Height adjustments */
+  #sankeyChart {
+    height: 400px !important;
+  }
+  
+  /* Header layout */
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .section-header .action-btn {
+    align-self: flex-end;
+  }
+  
+  /* Table adjustments */
+  .table-responsive {
+    margin-left: -1rem;
+    margin-right: -1rem;
+    width: calc(100% + 2rem);
+    padding: 0 0.5rem;
+  }
+  
+  .table-responsive th,
+  .table-responsive td {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.7rem;
+    white-space: nowrap;
+  }
+  
+  /* Condensed sidebar padding */
+  .sidebar-header, 
+  .sidebar-content, 
+  .sidebar-footer {
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+  }
+  
+  /* Search container margin removal */
+  .sidebar-search {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+}
+
+/* Extra small screens */
+@media (max-width: 480px) {
+  #sankeyChart, #contractorMap {
+    height: 300px !important;
+  }
+  
+  .dashboard-card {
+    padding: 0.75rem !important;
+  }
+  
+  #unifiedSearchInput {
+    font-size: 14px;
+    padding: 0.5rem !important;
+  }
+  
+  .stat-card {
+    padding: 0.75rem !important;
+  }
+  
+  .stat-card .text-2xl {
+    font-size: 1.25rem !important;
+  }
+}
+/* Mobile specific improvements */
+@media (max-width: 767px) {
+  /* Search container enhancements */
+  .sidebar-search {
+    padding: 12px 16px;
+    background-color: var(--surface-level-1);
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    margin: 10px;
+    position: relative;
+    z-index: 100;
+  }
+  
+  /* Search input styling */
+  #unifiedSearchInput,
+  .search-input {
+    width: 100%;
+    height: 44px; /* Larger touch target */
+    font-size: 16px; /* Prevents zoom on iOS */
+    padding: 0 40px; /* Space for icons */
+    border-radius: 8px;
+    border: 1px solid var(--border-level-2);
+    background-color: var(--background);
+    color: var(--text-primary);
+    box-shadow: none;
+    -webkit-appearance: none; /* Removes default styling on iOS */
+  }
+  
+  /* Search icon positioning */
+  .search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    color: var(--accent);
+    pointer-events: none;
+  }
+  
+  /* Clear button positioning and styling */
+  .search-clear-btn,
+  #clearSearchBtn {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    border-radius: 50%;
+  }
+  
+  /* Search suggestions container */
+  #unifiedSearchSuggestions,
+  .search-suggestions {
+    top: 100%;
+    margin-top: 4px;
+    width: 100%;
+    max-height: 60vh; /* Larger on mobile for better scrolling */
+    overflow-y: auto;
+    background-color: var(--surface-level-1);
+    border: 1px solid var(--border-level-2);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+  }
+  
+  /* Search suggestion items */
+  .suggestion-item {
+    padding: 12px 16px; /* Larger touch targets */
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border-level-1);
+  }
+  
+  /* Active filters area */
+  .active-filters {
+    margin: 12px;
+    padding: 12px;
+    border-radius: 8px;
+    background-color: var(--accent-secondary);
+  }
+  
+  /* Filter tags */
+  .active-filter-tag {
+    height: 36px; /* Larger for better touch targets */
+    border-radius: 6px;
+    margin-bottom: 8px;
+  }
+  
+  /* Make buttons more tappable */
+  button, 
+  .filter-btn, 
+  .action-btn,
+  a[role="button"] {
+    min-height: 44px;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    touch-action: manipulation; /* Improves touch responsiveness */
+  }
+  
+  /* Make table cells more readable */
+  .table-responsive td,
+  .table-responsive th {
+    padding: 12px;
+    font-size: 14px;
+    white-space: normal;
+  }
+  
+  /* Improve spacing for cards */
+  .dashboard-card {
+    padding: 16px;
+    margin-bottom: 16px;
+    border-radius: 8px;
+  }
+  
+  /* Improve chart containers */
+  .chart-container {
+    height: 300px;
+    margin-bottom: 16px;
+  }
+  
+  /* Fix map height for better visibility */
+  #contractorMap {
+    height: 350px;
+  }
+}
+
+/* Extra small screens */
+@media (max-width: 375px) {
+  /* Further adjust spacing */
+  .sidebar-search {
+    padding: 8px 12px;
+    margin: 8px;
+  }
+  
+  .dashboard-card {
+    padding: 12px;
+    margin-bottom: 12px;
+  }
+  
+  /* Smaller font sizes for very small screens */
+  body {
+    font-size: 14px;
+  }
+  
+  .table-responsive td,
+  .table-responsive th {
+    padding: 8px;
+    font-size: 12px;
+  }
+}
+/* Search input text color fixes for dark mode */
+html.dark .search-input,
+html.dark #unifiedSearchInput {
+  color: var(--text-primary); /* Uses your dark mode text color variable */
+  background-color: var(--surface-level-1); /* Uses your dark mode surface color */
+  border-color: var(--border-level-2); /* Uses your dark mode border color */
+}
+
+/* Placeholder text color in dark mode */
+html.dark .search-input::placeholder,
+html.dark #unifiedSearchInput::placeholder {
+  color: var(--text-tertiary); /* Use a lighter color for placeholder text */
+  opacity: 0.7;
+}
+
+/* Active state styling in dark mode */
+html.dark .search-input:focus,
+html.dark #unifiedSearchInput:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(149, 81, 150, 0.2); /* Using your purple accent with transparency */
+  outline: none;
+}
+
+/* Ensure search icons are visible in dark mode */
+html.dark .search-icon,
+html.dark .search-clear-btn,
+html.dark #clearSearchBtn {
+  color: var(--text-secondary);
+}
+
+/* Hover state for clear button in dark mode */
+html.dark .search-clear-btn:hover,
+html.dark #clearSearchBtn:hover {
+  color: var(--text-primary);
+  background-color: var(--surface-level-2);
+}
+
+/* Search suggestions styling in dark mode */
+html.dark #unifiedSearchSuggestions,
+html.dark .search-suggestions {
+  background-color: var(--surface-level-1);
+  border-color: var(--border-level-2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+html.dark .suggestion-item {
+  border-bottom-color: var(--border-level-2);
+}
+
+html.dark .suggestion-item:hover {
+  background-color: var(--surface-level-2);
+}
+
+/* Make sure suggestion text is visible */
+html.dark .suggestion-text {
+  color: var(--text-primary);
+}
+
+html.dark .type-label {
+  background-color: var(--surface-level-2);
+  color: var(--text-secondary);
 }
 </style>
 </head>
@@ -1571,7 +1889,7 @@ html.dark #themeIconMoon {
 <div class="sidebar-header">
     <!-- Logo and Title -->
     <div class="flex flex-col">
-        <h1 class="text-xl font-extrabold text-[var(--accent)]" style="letter-spacing: -0.05em;"><span style="color: #8c8a9c;">Subhoo.</span></h1>
+        <h1 class="text-xl font-extrabold text-[var(--accent)]" style="letter-spacing: -0.05em;">Subhoo.</h1>
         <p class="text-xs text-[var(--text-secondary)]">Federal Contractor Intelligence</p>
     </div>
     
@@ -2510,90 +2828,141 @@ function initializeChartDefaults() {
 }
 
 function initializeContractorMap(data) {
-      if (!contractorMap) {
-        contractorMap = L.map('contractorMap').setView([39.8283, -98.5795], 3);
-        L.tileLayer('https://api.maptiler.com/maps/openstreetmap/{z}/{x}/{y}.jpg?key=6aiOr0BMGcTLjUNBbDsy', {
-          attribution: '&copy; <a href="https://www.maptiler.com/">MapTiler</a>',
-          tileSize: 512,
-          zoomOffset: -1,
-          maxZoom: 18
-        }).addTo(contractorMap);
-      }
+  // Define your custom color scale
+  const customColorScale = [
+    '#003f5c',  // Deep blue
+    '#444e86',  // Navy purple
+    '#955196',  // Purple
+    '#dd5182',  // Pink
+    '#ff6e54',  // Coral
+    '#ffa600'   // Orange
+  ];
 
-      if (contractorClusterGroup) {
-        contractorClusterGroup.clearLayers();
-      } else {
-        contractorClusterGroup = L.markerClusterGroup({
-          maxClusterRadius: 40,
-          disableClusteringAtZoom: 10,
-          iconCreateFunction: function (cluster) {
-            const count = cluster.getChildCount();
-            let size = 'small';
-            if (count > 100) size = 'large';
-            else if (count > 20) size = 'medium';
-
-            return new L.DivIcon({
-              html: `<div class="cluster-icon ${size}">${count}</div>`,
-              className: 'custom-cluster',
-              iconSize: [30, 30]
-            });
-          }
-        });
-        contractorMap.addLayer(contractorClusterGroup);
-      }
-
-      const seenCoords = new Set();
-      const isMobile = window.innerWidth < 768;
-      const dataToProcess = isMobile && data.length > 500 ? data.slice(0, 500) : data;
-
-      dataToProcess.forEach(row => {
-        const location = row.Location;
-        if (!location || !row["Legal Business Name"]) return;
-
-        const [latStr, lngStr] = location.split(',').map(s => s.trim());
-        const lat = parseFloat(latStr);
-        const lng = parseFloat(lngStr);
-        if (isNaN(lat) || isNaN(lng) || lat === 0 || lng === 0) return;
-
-        const coordKey = `${lat.toFixed(4)}|${lng.toFixed(4)}`;
-        if (seenCoords.has(coordKey)) return;
-        seenCoords.add(coordKey);
-
-        const businessName = row["Legal Business Name"];
-        const city = row["Vendor Address City"] || "";
-        const state = row["Vendor Address State"] || "";
-        const locationText = city && state ? `${city}, ${state}` : "";
-        const tooltipText = `${businessName}${locationText ? ` — ${locationText}` : ""}`;
-        const popupText = `<strong>${businessName}</strong>${locationText ? `<br>${locationText}` : ""}`;
-
-        const marker = createStyledMarker(lat, lng, businessName);
-        marker.bindPopup(popupText);
-        contractorClusterGroup.addLayer(marker);
-      });
-
-      if (contractorClusterGroup && contractorClusterGroup.getLayers().length > 0) {
-        contractorMap.fitBounds(contractorClusterGroup.getBounds(), {
-          padding: [30, 30],
-          maxZoom: 3
+  if (!contractorMap) {
+    contractorMap = L.map('contractorMap').setView([39.8283, -98.5795], 3);
+    
+    // Use the Streets style from MapTiler instead of OpenStreetMap
+    L.tileLayer('https://api.maptiler.com/maps/openstreetmap/{z}/{x}/{y}.jpg?key=6aiOr0BMGcTLjUNBbDsy', {
+  attribution: '&copy; <a href="https://www.maptiler.com/">MapTiler</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+  tileSize: 512,
+  zoomOffset: -1,
+  maxZoom: 18
+}).addTo(contractorMap);
+  }
+  
+  if (contractorClusterGroup) {
+    contractorClusterGroup.clearLayers();
+  } else {
+    contractorClusterGroup = L.markerClusterGroup({
+      maxClusterRadius: 40,
+      disableClusteringAtZoom: 10,
+      iconCreateFunction: function (cluster) {
+        const count = cluster.getChildCount();
+        let size = 'small';
+        let color = customColorScale[1]; // Navy purple
+        
+        if (count > 100) {
+          size = 'large';
+          color = customColorScale[0]; // Deep blue
+        } else if (count > 20) {
+          size = 'medium';
+          color = customColorScale[2]; // Purple
+        }
+        
+        return new L.DivIcon({
+          html: `<div class="cluster-icon ${size}" style="background-color: ${color};">${count}</div>`,
+          className: 'custom-cluster',
+          iconSize: [30, 30]
         });
       }
-
-      setTimeout(() => {
-        contractorMap.invalidateSize();
-      }, 200);
+    });
+    contractorMap.addLayer(contractorClusterGroup);
+  }
+  
+  const seenCoords = new Set();
+  const isMobile = window.innerWidth < 768;
+  const dataToProcess = isMobile && data.length > 500 ? data.slice(0, 500) : data;
+  
+  dataToProcess.forEach(row => {
+    const location = row.Location;
+    if (!location || !row["Legal Business Name"]) return;
+    
+    const [latStr, lngStr] = location.split(',').map(s => s.trim());
+    const lat = parseFloat(latStr);
+    const lng = parseFloat(lngStr);
+    
+    if (isNaN(lat) || isNaN(lng) || lat === 0 || lng === 0) return;
+    
+    const coordKey = `${lat.toFixed(4)}|${lng.toFixed(4)}`;
+    if (seenCoords.has(coordKey)) return;
+    seenCoords.add(coordKey);
+    
+    const businessName = row["Legal Business Name"];
+    const city = row["Vendor Address City"] || "";
+    const state = row["Vendor Address State"] || "";
+    const locationText = city && state ? `${city}, ${state}` : "";
+    const tooltipText = `${businessName}${locationText ? ` — ${locationText}` : ""}`;
+    const popupText = `<strong>${businessName}</strong>${locationText ? `<br>${locationText}` : ""}`;
+    
+    // Get contract value if available
+    let value = 0;
+    if (row["Base and All Options Value (Total Contract Value)"]) {
+      value = parseCurrencyValue(row["Base and All Options Value (Total Contract Value)"]);
     }
+    
+    // Pass value to determine marker color
+    const marker = createStyledMarker(lat, lng, businessName, value);
+    marker.bindPopup(popupText);
+    contractorClusterGroup.addLayer(marker);
+  });
+  
+  if (contractorClusterGroup && contractorClusterGroup.getLayers().length > 0) {
+    contractorMap.fitBounds(contractorClusterGroup.getBounds(), {
+      padding: [30, 30],
+      maxZoom: 3
+    });
+  }
+  
+  setTimeout(() => {
+    contractorMap.invalidateSize();
+  }, 200);
+}
 
-    function createStyledMarker(lat, lng, label) {
-      const markerHtml = `<div class="custom-marker" title="${label}"></div>`;
-      return L.marker([lat, lng], {
-        icon: L.divIcon({
-          className: '',
-          html: markerHtml,
-          iconSize: [12, 12],
-          iconAnchor: [6, 6]
-        })
-      });
-    }
+function createStyledMarker(lat, lng, label, value) {
+  // Get the appropriate color based on value
+  const color = getMarkerColor(value);
+  
+  const markerHtml = `<div class="custom-marker" title="${label}" style="background-color: ${color};"></div>`;
+  
+  return L.marker([lat, lng], {
+    icon: L.divIcon({
+      className: '',
+      html: markerHtml,
+      iconSize: [12, 12],
+      iconAnchor: [6, 6]
+    })
+  });
+}
+
+function getMarkerColor(value) {
+  // Use your custom color scale to determine marker color based on value
+  if (value > 1000000000) return '#003f5c'; // Deep blue for >$1B
+  if (value > 500000000) return '#444e86';  // Navy purple for >$500M
+  if (value > 100000000) return '#955196';  // Purple for >$100M
+  if (value > 50000000) return '#dd5182';   // Pink for >$50M
+  if (value > 10000000) return '#ff6e54';   // Coral for >$10M
+  return '#ffa600';                        // Orange for the rest
+}
+
+// Helper function to parse currency values
+function parseCurrencyValue(valueStr) {
+  if (!valueStr) return 0;
+  
+  if (typeof valueStr === 'number') return valueStr;
+  
+  // Remove currency symbols and commas, then parse as float
+  return parseFloat(valueStr.toString().replace(/[$,]/g, '')) || 0;
+}
 // --- Unified Search, Suggestions, and Filtering Logic ---
 function applyFilter(searchTerm, filterType = null, filterValue = null) { 
     try {
@@ -3285,252 +3654,628 @@ function createChart(canvasId, type, data, options, noDataMessage = "No data ava
   if (charts[canvasId]) charts[canvasId].destroy();
   charts[canvasId] = new Chart(ctx, { type, data, options });
 }
-function createPrimeContractorsChart(data) { 
-    const canvasElement = document.getElementById('primeContractorsChart');
-    if (!canvasElement) return; 
-
-    const primeValues = {};
-    data.forEach(r => {
-        if (r['Legal Business Name']) {
-            const val = parseCurrencyValue(r['Base and All Options Value (Total Contract Value)']);
-            primeValues[r['Legal Business Name']] = (primeValues[r['Legal Business Name']] || 0) + val;
+function createPrimeContractorsChart(data) {
+  // Define your custom color scale
+  const customColorScale = [
+    '#003f5c',  // Deep blue
+    '#444e86',  // Navy purple
+    '#955196',  // Purple
+    '#dd5182',  // Pink
+    '#ff6e54',  // Coral
+    '#ffa600'   // Orange
+  ];
+  
+  const canvasElement = document.getElementById('primeContractorsChart');
+  if (!canvasElement) return; 
+  
+  const primeValues = {};
+  data.forEach(r => {
+    if (r['Legal Business Name']) {
+      const val = parseCurrencyValue(r['Base and All Options Value (Total Contract Value)']);
+      primeValues[r['Legal Business Name']] = (primeValues[r['Legal Business Name']] || 0) + val;
+    }
+  });
+  
+  const sorted = Object.entries(primeValues).sort((a, b) => b[1] - a[1]).slice(0, 10);
+  const labels = sorted.map(i => i[0]);
+  const values = sorted.map(i => i[1]);
+  const maxVal = Math.max(...values);
+  
+  // Use the custom color scale for the chart
+  // Create a function that generates colors from the custom scale
+  function getCustomChartColors(dataValues) {
+    // Create a copy of the custom color scale that can be repeated if needed
+    const extendedColorScale = [...customColorScale];
+    
+    // If there are more values than colors, repeat the colors
+    while (extendedColorScale.length < dataValues.length) {
+      extendedColorScale.push(...customColorScale);
+    }
+    
+    // Return enough colors for all data points
+    return extendedColorScale.slice(0, dataValues.length);
+  }
+  
+  const chartColors = getCustomChartColors(values);
+  
+  const chartData = {
+    labels,
+    datasets: [{
+      label: 'Contract Value',
+      data: values,
+      backgroundColor: chartColors
+    }]
+  };
+  
+  const chartOptions = {
+    indexAxis: 'y',
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          label: c => formatCurrency(c.raw)
         }
-    });
-
-    const sorted = Object.entries(primeValues).sort((a, b) => b[1] - a[1]).slice(0, 10);
-    const labels = sorted.map(i => i[0]);
-    const values = sorted.map(i => i[1]);
-
-    const maxVal = Math.max(...values);
-    const baseColors = [
-        chartPrimaryColor,
-        chartSecondaryColor,
-        chartTertiaryColor,
-        chartNeutralColor,
-        chartGrays[0],
-        chartGrays[1],
-        chartGrays[2],
-        '#dee2e6',
-        '#ced4da',
-        '#adb5bd'
-    ];
-    const chartColors = getRotatingHighlightPalette(values);
-
-    const chartData = {
-        labels,
-        datasets: [{
-            label: 'Contract Value',
-            data: values,
-            backgroundColor: chartColors
-        }]
-    };
-
-    const chartOptions = {
-        indexAxis: 'y',
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: { display: false },
-            tooltip: {
-                callbacks: {
-                    label: c => formatCurrency(c.raw)
-                }
-            }
+      }
+    },
+    scales: {
+      x: {
+        ticks: {
+          callback: val => formatCurrency(val)
         },
-        scales: {
-            x: {
-                ticks: {
-                    callback: val => formatCurrency(val)
-                }
-            },
-            y: {
-                ticks: {
-                    autoSkip: false,
-                    callback: function (val) {
-                        const label = this.getLabelForValue(val);
-                        return label.length > 18 ? label.substring(0, 15) + '...' : label;
-                    }
-                }
-            }
-        },
-        onClick: (event, elements) => {
-            if (elements.length > 0) {
-                const primeName = chartData.labels[elements[0].index];
-                setUnifiedSearchTerm(primeName, 'primeName');
-            }
+        grid: {
+          display: false // Remove X axis grid lines
         }
-    };
-
-    createChart('primeContractorsChart', 'bar', chartData, chartOptions);
+      },
+      y: {
+        ticks: {
+          autoSkip: false,
+          callback: function (val) {
+            const label = this.getLabelForValue(val);
+            return label.length > 18 ? label.substring(0, 15) + '...' : label;
+          }
+        },
+        grid: {
+          display: false // Remove Y axis grid lines
+        }
+      }
+    },
+    onClick: (event, elements) => {
+      if (elements.length > 0) {
+        const primeName = chartData.labels[elements[0].index];
+        setUnifiedSearchTerm(primeName, 'primeName');
+      }
+    }
+  };
+  
+  createChart('primeContractorsChart', 'bar', chartData, chartOptions);
 }
+function createNaicsChart_main(data) {
+  // Define your custom color scale
+  const customColorScale = [
+    '#003f5c',  // Deep blue
+    '#444e86',  // Navy purple
+    '#955196',  // Purple
+    '#dd5182',  // Pink
+    '#ff6e54',  // Coral
+    '#ffa600'   // Orange
+  ];
+  
+  const naicsValues = {};
+  const naicsDesc = {}; // To store full descriptions for tooltips or richer interactions if needed
+  data.forEach(r => {
+    if (r['NAICS Code']) {
+      const naicsKey = String(r['NAICS Code']);
+      naicsValues[naicsKey] = (naicsValues[naicsKey] || 0) + parseCurrencyValue(r['Base and All Options Value (Total Contract Value)']);
+      if (!naicsDesc[naicsKey]) {
+        naicsDesc[naicsKey] = r['NAICS Description'] || 'N/A';
+      }
+    }
+  });
 
+  const sorted = Object.entries(naicsValues).sort((a, b) => b[1] - a[1]).slice(0, 10);
+  
+  // Store the original NAICS codes for click events
+  const originalNaicsCodes = sorted.map(i => i[0]); 
+  
+  // Create display labels (NAICS Code - Short Description)
+  // This part creates the labels that will be fed to the chart.
+  // We will then apply a similar truncation logic as the primeContractorsChart in the ticks callback.
+  const displayLabels = sorted.map(i => {
+    const code = i[0];
+    const description = naicsDesc[code] || '';
+    // Initial short form for the data label, further truncation in ticks if needed
+    return `${code} - ${description.substring(0, 30)}${description.length > 30 ? '...' : ''}`; 
+  });
+  const values = sorted.map(i => i[1]);
+
+  // Create a function to generate colors from the custom scale
+  function getCustomChartColors(dataValues) {
+    // Create a copy of the custom color scale that can be repeated if needed
+    const extendedColorScale = [...customColorScale];
+    
+    // If there are more values than colors, repeat the colors
+    while (extendedColorScale.length < dataValues.length) {
+      extendedColorScale.push(...customColorScale);
+    }
+    
+    // Return enough colors for all data points
+    return extendedColorScale.slice(0, dataValues.length);
+  }
+  
+  const chartColors = getCustomChartColors(values);
+
+  const chartData = { 
+    labels: displayLabels, // Use the formatted displayLabels
+    datasets: [{ 
+      label: 'Contract Value', 
+      data: values, 
+      backgroundColor: chartColors
+    }] 
+  };
+
+  const chartOptions = {
+    indexAxis: 'y',
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false }, // Consistent with primeContractorsChart
+      tooltip: {
+        callbacks: {
+          label: function(context) { // Consistent tooltip formatting
+            let label = context.dataset.label || '';
+            if (label) {
+              label += ': ';
+            }
+            if (context.parsed.x !== null) { // For horizontal bar chart, value is on x-axis
+              label += formatCurrency(context.parsed.x);
+            }
+            // Optionally, add full NAICS description to tooltip
+            // const originalLabel = context.label; // This is the displayLabel "CODE - DESC..."
+            // const code = originalLabel.split(' - ')[0];
+            // if (naicsDesc[code]) {
+            //    label += `\n${naicsDesc[code]}`; // Add full description on a new line
+            // }
+            return label;
+          }
+        }
+      }
+    },
+    scales: {
+      x: { 
+        ticks: { 
+          callback: v => formatCurrency(v), // Consistent with primeContractorsChart
+          font: {
+            size: 10 // Adjust this size as needed (e.g., 10, 9)
+          },
+          maxRotation: 0, // Prevent label rotation
+          minRotation: 0, // Prevent label rotation
+          autoSkipPadding: 10 // Optional: Adjust padding if autoSkip is on
+        },
+        grid: {
+          display: false // Remove X axis grid lines
+        }
+      },
+      y: { 
+        ticks: {
+          autoSkip: false,
+          font: { size: 10 },
+          callback: function (val) {
+            const label = this.getLabelForValue(val);
+            const maxLength = 28; 
+            return label.length > maxLength ? label.substring(0, maxLength - 3) + '...' : label;
+          }
+        },
+        grid: {
+          display: false // Remove Y axis grid lines
+        }
+      }
+    },
+    onClick: (event, elements) => {
+      if (elements.length > 0) {
+        const dataIndex = elements[0].index;
+        const naicsCode = originalNaicsCodes[dataIndex]; 
+        if (naicsCode) {
+          setUnifiedSearchTerm(naicsCode, 'naicsCode'); 
+        }
+      }
+    }
+  };
+
+  createChart('naicsChart_main', 'bar', chartData, chartOptions); // Ensure createChart is defined
+}
+function createStateContractsChart_main(data, filterType = 'count') { 
+  // Define your custom color scale
+  const customColorScale = [
+    '#003f5c',  // Deep blue
+    '#444e86',  // Navy purple
+    '#955196',  // Purple
+    '#dd5182',  // Pink
+    '#ff6e54',  // Coral
+    '#ffa600'   // Orange
+  ];
+  
+  const stateData = {}; 
+  data.forEach(r => {
+    const state = r['Principal Place of Performance State Code'];
+    if (state) {
+      if (!stateData[state]) stateData[state] = { count: 0, value: 0 };
+      stateData[state].count++;
+      stateData[state].value += parseCurrencyValue(r['Base and All Options Value (Total Contract Value)']);
+    }
+  });
+  
+  const sorted = Object.entries(stateData).sort((a, b) => b[1][filterType] - a[1][filterType]).slice(0, 10);
+  const labels = sorted.map(i => i[0]);
+  const values = sorted.map(i => i[1][filterType]);
+  const maxVal = Math.max(...values);
+  
+  // Create a function to generate colors from the custom scale
+  function getCustomChartColors(dataValues) {
+    // Create a copy of the custom color scale that can be repeated if needed
+    const extendedColorScale = [...customColorScale];
+    
+    // If there are more values than colors, repeat the colors
+    while (extendedColorScale.length < dataValues.length) {
+      extendedColorScale.push(...customColorScale);
+    }
+    
+    // Return enough colors for all data points
+    return extendedColorScale.slice(0, dataValues.length);
+  }
+  
+  const stateColors = getCustomChartColors(values);
+  
+  const chartData = {
+    labels,
+    datasets: [{
+      label: filterType === 'count' ? 'Number of Contracts' : 'Total Contract Value',
+      data: values,
+      backgroundColor: stateColors
+    }]
+  };
+  
+  const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          label: c =>
+            filterType === 'count'
+              ? c.raw.toLocaleString()
+              : formatCurrency(c.raw)
+        }
+      }
+    },
+    scales: {
+      x: {
+        grid: {
+          display: false // Remove X axis grid lines
+        }
+      },
+      y: {
+        ticks: {
+          callback: v =>
+            filterType === 'count'
+              ? v.toLocaleString()
+              : formatCurrency(v)
+        },
+        grid: {
+          display: false // Remove Y axis grid lines
+        }
+      }
+    },
+    onClick: (event, elements) => {
+      if (elements.length > 0) {
+        const stateCode = chartData.labels[elements[0].index];
+        setUnifiedSearchTerm(stateCode, 'stateCode'); 
+      }
+    }
+  };
+  
+  createChart('stateContractsChart_main', 'bar', chartData, chartOptions);
+}
+function createTimelineChart(data) {
+  // Define your custom color scale
+  const customColorScale = [
+    '#003f5c',  // Deep blue
+    '#444e86',  // Navy purple
+    '#955196',  // Purple
+    '#dd5182',  // Pink
+    '#ff6e54',  // Coral
+    '#ffa600'   // Orange
+  ];
+  
+  const startYears = {}; 
+  const endYears = {};
+
+  data.forEach(record => {
+    if (record['Period of Performance Start Date']) { 
+      const d = new Date(record['Period of Performance Start Date']); 
+      if (!isNaN(d.getTime())) { 
+        const y = d.getFullYear(); 
+        if (y > 2000 && y < 2030) startYears[y] = (startYears[y] || 0) + 1; 
+      }
+    }
+    if (record['Completion Date']) { 
+      const d = new Date(record['Completion Date']); 
+      if (!isNaN(d.getTime())) { 
+        const y = d.getFullYear(); 
+        if (y > 2000 && y < 2030) endYears[y] = (endYears[y] || 0) + 1; 
+      }
+    }
+  });
+
+  const allYears = new Set([...Object.keys(startYears), ...Object.keys(endYears)].map(Number));
+  const sortedYears = Array.from(allYears).sort((a, b) => a - b);
+  
+  const labels = [], startCounts = [], endCounts = [];
+  sortedYears.forEach(year => { 
+    labels.push(year.toString()); 
+    startCounts.push(startYears[year] || 0); 
+    endCounts.push(endYears[year] || 0); 
+  });
+
+  // Use the custom color scale instead of the previous colors
+  const startColorBorder = customColorScale[1]; // Navy purple
+  const startColorFill = `${customColorScale[1]}33`; // Navy purple with 20% opacity
+  
+  const endColorBorder = customColorScale[4]; // Coral
+  const endColorFill = `${customColorScale[4]}33`; // Coral with 20% opacity
+
+  const chartData = { 
+    labels, 
+    datasets: [ 
+      { 
+        label: 'Contracts Starting', 
+        data: startCounts, 
+        borderColor: startColorBorder, 
+        backgroundColor: startColorFill,
+        fill: true, 
+        tension: 0.4,
+        pointRadius: 0, 
+        pointHitRadius: 10, 
+        pointHoverRadius: 5 
+      }, 
+      { 
+        label: 'Contracts Ending', 
+        data: endCounts, 
+        borderColor: endColorBorder, 
+        backgroundColor: endColorFill, 
+        fill: true, 
+        tension: 0.4,
+        pointRadius: 0,
+        pointHitRadius: 10,
+        pointHoverRadius: 5
+      }  
+    ] 
+  };
+
+  const chartOptions = { 
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { 
+      legend: { display: true, position: 'top' },
+      tooltip: { 
+        callbacks: { 
+          label: ctx => `${ctx.dataset.label || ''}: ${ctx.parsed.y.toLocaleString()}` 
+        } 
+      }
+    }, 
+    scales: { 
+      y: { 
+        beginAtZero: true,
+        ticks: { callback: val => val.toLocaleString() },
+        grid: {
+          display: false // Remove Y axis grid lines
+        }
+      },
+      x: { // X-axis for the years
+        ticks: {
+          callback: function(value, index, ticks) {
+            // 'value' is the index here, 'this.getLabelForValue(value)' gets the actual label (year string)
+            const yearLabel = this.getLabelForValue(value);
+            if (yearLabel && typeof yearLabel === 'string' && yearLabel.length === 4 && !isNaN(yearLabel)) {
+              return "'" + yearLabel.substring(2); // Get last two digits, e.g., '22
+            }
+            return yearLabel; // Fallback for other labels if any
+          },
+          maxRotation: 0, // Prevent label rotation
+          minRotation: 0  // Prevent label rotation
+        },
+        grid: {
+          display: false // Remove X axis grid lines
+        }
+      }
+    } 
+  };
+
+  createChart('timelineChart', 'line', chartData, chartOptions);
+}
 function createDepartmentChart(data) {
-    const deptValues = {};
-    data.forEach(r => {
-        if (r['Contracting Department Name']) {
-            const dept = r['Contracting Department Name'];
-            deptValues[dept] = (deptValues[dept] || 0) + parseCurrencyValue(r['Base and All Options Value (Total Contract Value)']);
-        }
-    });
-
-    const sorted = Object.entries(deptValues).sort((a, b) => b[1] - a[1]).slice(0, 10);
-    const labels = sorted.map(i => i[0]);
-    const values = sorted.map(i => i[1]);
-    const maxVal = Math.max(...values);
-
-    // Use a rotated monochrome palette
-    const baseColors = [
-        chartPrimaryColor,
-        chartSecondaryColor,
-        chartTertiaryColor,
-        chartNeutralColor,
-        chartGrays[0],
-        chartGrays[1],
-        chartGrays[2],
-        '#dee2e6',  // Platinum fallback
-        '#ced4da',  // French gray
-        '#adb5bd'   // Gray
-    ];
-
-    const departmentColors = getRotatingHighlightPalette(values);
-
-    const chartData = {
-        labels,
-        datasets: [{
-            data: values,
-            backgroundColor: departmentColors
-        }]
-    };
-
-    const chartOptions = {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: {
-                position: 'right',
-                labels: { boxWidth: 12, font: { size: 10 } }
-            },
-            tooltip: {
-                callbacks: {
-                    label: c => `${c.label || ''}: ${formatCurrency(c.raw)}`
-                }
-            }
-        },
-        onClick: (event, elements) => {
-            if (elements.length > 0) {
-                const departmentName = chartData.labels[elements[0].index];
-                setUnifiedSearchTerm(departmentName, 'departmentName');
-            }
-        }
-    };
-
-    createChart('departmentChart', 'pie', chartData, chartOptions);
-}
-function createNaicsChart_main(data) { 
-    const naicsValues = {};
-    const naicsDesc = {}; // To store full descriptions for tooltips or richer interactions if needed
-    data.forEach(r => {
-        if (r['NAICS Code']) {
-            const naicsKey = String(r['NAICS Code']);
-            naicsValues[naicsKey] = (naicsValues[naicsKey] || 0) + parseCurrencyValue(r['Base and All Options Value (Total Contract Value)']);
-            if (!naicsDesc[naicsKey]) {
-                naicsDesc[naicsKey] = r['NAICS Description'] || 'N/A';
-            }
-        }
-    });
-
-    const sorted = Object.entries(naicsValues).sort((a, b) => b[1] - a[1]).slice(0, 10);
+  // Define your custom color scale
+  const customColorScale = [
+    '#003f5c',  // Deep blue
+    '#444e86',  // Navy purple
+    '#955196',  // Purple
+    '#dd5182',  // Pink
+    '#ff6e54',  // Coral
+    '#ffa600'   // Orange
+  ];
+  
+  const deptValues = {};
+  data.forEach(r => {
+    if (r['Contracting Department Name']) {
+      const dept = r['Contracting Department Name'];
+      deptValues[dept] = (deptValues[dept] || 0) + parseCurrencyValue(r['Base and All Options Value (Total Contract Value)']);
+    }
+  });
+  
+  const sorted = Object.entries(deptValues).sort((a, b) => b[1] - a[1]).slice(0, 10);
+  const labels = sorted.map(i => i[0]);
+  const values = sorted.map(i => i[1]);
+  const maxVal = Math.max(...values);
+  
+  // Create a function to generate colors from the custom scale
+  function getCustomChartColors(dataValues) {
+    // Create a copy of the custom color scale that can be repeated if needed
+    const extendedColorScale = [...customColorScale];
     
-    // Store the original NAICS codes for click events
-    const originalNaicsCodes = sorted.map(i => i[0]); 
+    // If there are more values than colors, repeat the colors
+    while (extendedColorScale.length < dataValues.length) {
+      extendedColorScale.push(...customColorScale);
+    }
     
-    // Create display labels (NAICS Code - Short Description)
-    // This part creates the labels that will be fed to the chart.
-    // We will then apply a similar truncation logic as the primeContractorsChart in the ticks callback.
-    const displayLabels = sorted.map(i => {
-        const code = i[0];
-        const description = naicsDesc[code] || '';
-        // Initial short form for the data label, further truncation in ticks if needed
-        return `${code} - ${description.substring(0, 30)}${description.length > 30 ? '...' : ''}`; 
-    });
-    const values = sorted.map(i => i[1]);
-
-    const chartColors = getRotatingHighlightPalette(values); // Assuming this function is defined and works
-
-    const chartData = { 
-        labels: displayLabels, // Use the formatted displayLabels
-        datasets: [{ 
-            label: 'Contract Value', 
-            data: values, 
-            backgroundColor: chartColors
-        }] 
-    };
-
-    const chartOptions = {
-        indexAxis: 'y',
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: { display: false }, // Consistent with primeContractorsChart
-            tooltip: {
-                callbacks: {
-                    label: function(context) { // Consistent tooltip formatting
-                        let label = context.dataset.label || '';
-                        if (label) {
-                            label += ': ';
-                        }
-                        if (context.parsed.x !== null) { // For horizontal bar chart, value is on x-axis
-                            label += formatCurrency(context.parsed.x);
-                        }
-                        // Optionally, add full NAICS description to tooltip
-                        // const originalLabel = context.label; // This is the displayLabel "CODE - DESC..."
-                        // const code = originalLabel.split(' - ')[0];
-                        // if (naicsDesc[code]) {
-                        //    label += `\n${naicsDesc[code]}`; // Add full description on a new line
-                        // }
-                        return label;
-                    }
-                }
-            }
-        },
-        scales: {
-            x: { 
-                ticks: { 
-                    callback: v => formatCurrency(v), // Consistent with primeContractorsChart
-                font: {
-                        size: 10 // Adjust this size as needed (e.g., 10, 9)
-                    },
-                    maxRotation: 0, // Prevent label rotation
-                    minRotation: 0, // Prevent label rotation
-                    autoSkipPadding: 10 // Optional: Adjust padding if autoSkip is on
-                    // END: Added/Modified for X-axis font and rotation
-                } 
-            },
-            y: { 
-                ticks: {
-                    autoSkip: false,
-                    font: { size: 10 },
-                    callback: function (val) {
-                        const label = this.getLabelForValue(val);
-                        const maxLength = 28; 
-                        return label.length > maxLength ? label.substring(0, maxLength - 3) + '...' : label;
-                    }
-                }
-            }
-        },
-        onClick: (event, elements) => {
-            if (elements.length > 0) {
-                const dataIndex = elements[0].index;
-                const naicsCode = originalNaicsCodes[dataIndex]; 
-                if (naicsCode) {
-                    setUnifiedSearchTerm(naicsCode, 'naicsCode'); 
-                }
-            }
+    // Return enough colors for all data points
+    return extendedColorScale.slice(0, dataValues.length);
+  }
+  
+  const departmentColors = getCustomChartColors(values);
+  
+  const chartData = {
+    labels,
+    datasets: [{
+      data: values,
+      backgroundColor: departmentColors
+    }]
+  };
+  
+  const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'right',
+        labels: { boxWidth: 12, font: { size: 10 } }
+      },
+      tooltip: {
+        callbacks: {
+          label: c => `${c.label || ''}: ${formatCurrency(c.raw)}`
         }
-    };
-
-    createChart('naicsChart_main', 'bar', chartData, chartOptions); // Ensure createChart is defined
+      }
+    },
+    onClick: (event, elements) => {
+      if (elements.length > 0) {
+        const departmentName = chartData.labels[elements[0].index];
+        setUnifiedSearchTerm(departmentName, 'departmentName');
+      }
+    }
+  };
+  
+  createChart('departmentChart', 'pie', chartData, chartOptions);
 }
+function createMarketShareChart(data) {
+  // Define your custom color scale
+  const customColorScale = [
+    '#003f5c',  // Deep blue
+    '#444e86',  // Navy purple
+    '#955196',  // Purple
+    '#dd5182',  // Pink
+    '#ff6e54',  // Coral
+    '#ffa600'   // Orange
+  ];
+  
+  const canvasElement = document.getElementById('marketShareChart');
+  if (!canvasElement) return; 
+  
+  const primeValues = {}
+  data.forEach(r => {
+    if (r['Legal Business Name']) {
+      const name = r['Legal Business Name'];
+      primeValues[name] = (primeValues[name] || 0) + parseCurrencyValue(r['Base and All Options Value (Total Contract Value)']);
+    }
+  });
+  
+  const sortedPrimes = Object.entries(primeValues).sort((a, b) => b[1] - a[1]);
+  const chartLabels = [];
+  const values = [];
+  
+  sortedPrimes.forEach((item, index) => {
+    if (index < 5) {
+      chartLabels.push(item[0]);
+      values.push(item[1]);
+    }
+  });
+  
+  if (sortedPrimes.length > 5) {
+    const otherVal = sortedPrimes.slice(5).reduce((sum, item) => sum + item[1], 0);
+    if (otherVal > 0) {
+      chartLabels.push('Others');
+      values.push(otherVal);
+    }
+  }
+  
+  const maxVal = Math.max(...values);
+  
+  // Create a function to generate colors from the custom scale
+  function getCustomChartColors(dataValues) {
+    // Create a copy of the custom color scale that can be repeated if needed
+    const extendedColorScale = [...customColorScale];
+    
+    // If there are more values than colors, repeat the colors
+    while (extendedColorScale.length < dataValues.length) {
+      extendedColorScale.push(...customColorScale);
+    }
+    
+    // Return enough colors for all data points
+    return extendedColorScale.slice(0, dataValues.length);
+  }
+  
+  const chartColors = getCustomChartColors(values);
+  
+  const chartData = {
+    labels: chartLabels,
+    datasets: [{
+      label: 'Prime Share',
+      data: values,
+      backgroundColor: chartColors
+    }]
+  };
+  
+  const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'right',
+        labels: {
+          boxWidth: 12,
+          font: { size: 10 }
+        }
+      },
+      tooltip: {
+        callbacks: {
+          label: ctx => {
+            const raw = ctx.raw;
+            const total = values.reduce((a, b) => a + b, 0);
+            const percent = ((raw / total) * 100).toFixed(1);
+            return `${ctx.label || ''}: ${formatCurrency(raw)} (${percent}%)`;
+          }
+        }
+      }
+    },
+    // ADD THIS CLICK HANDLER
+    onClick: (event, elements) => {
+      if (elements.length > 0) {
+        const primeName = chartData.labels[elements[0].index];
+        // Don't filter if clicking the "Others" slice
+        if (primeName !== 'Others') {
+          setUnifiedSearchTerm(primeName, 'primeName');
+        } else {
+          // Optional: Could show a modal with a list of other primes
+          console.log("Clicked 'Others' slice - contains:", 
+            sortedPrimes.slice(5).map(item => item[0]));
+        }
+      }
+    }
+  };
+  
+  createChart('marketShareChart', 'pie', chartData, chartOptions);
+}
+
 function createContractTypeChart_main(data) { 
     const contractTypes = {};
     data.forEach(r => {
@@ -3592,80 +4337,6 @@ function createContractTypeChart_main(data) {
 
     createChart('contractTypeChart_main', 'doughnut', chartData, chartOptions);
 }
-function createStateContractsChart_main(data, filterType = 'count') { 
-    const stateData = {}; 
-    data.forEach(r => {
-        const state = r['Principal Place of Performance State Code'];
-        if (state) {
-            if (!stateData[state]) stateData[state] = { count: 0, value: 0 };
-            stateData[state].count++;
-            stateData[state].value += parseCurrencyValue(r['Base and All Options Value (Total Contract Value)']);
-        }
-    });
-
-    const sorted = Object.entries(stateData).sort((a, b) => b[1][filterType] - a[1][filterType]).slice(0, 10);
-    const labels = sorted.map(i => i[0]);
-    const values = sorted.map(i => i[1][filterType]);
-    const maxVal = Math.max(...values);
-
-    const baseColors = [
-        chartPrimaryColor,
-        chartSecondaryColor,
-        chartTertiaryColor,
-        chartNeutralColor,
-        chartGrays[0],
-        chartGrays[1],
-        chartGrays[2],
-        '#dee2e6',
-        '#ced4da',
-        '#adb5bd'
-    ];
-    const stateColors = getRotatingHighlightPalette(values);
-
-    const chartData = {
-        labels,
-        datasets: [{
-            label: filterType === 'count' ? 'Number of Contracts' : 'Total Contract Value',
-            data: values,
-            backgroundColor: stateColors
-        }]
-    };
-
-    const chartOptions = {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: { display: false },
-            tooltip: {
-                callbacks: {
-                    label: c =>
-                        filterType === 'count'
-                            ? c.raw.toLocaleString()
-                            : formatCurrency(c.raw)
-                }
-            }
-        },
-        scales: {
-            y: {
-                ticks: {
-                    callback: v =>
-                        filterType === 'count'
-                            ? v.toLocaleString()
-                            : formatCurrency(v)
-                }
-            }
-        },
-        onClick: (event, elements) => {
-            if (elements.length > 0) {
-                const stateCode = chartData.labels[elements[0].index];
-                setUnifiedSearchTerm(stateCode, 'stateCode'); 
-            }
-        }
-    };
-
-    createChart('stateContractsChart_main', 'bar', chartData, chartOptions);
-}
-
 
 function createTopAgenciesChart(data) {
     const agencyValues = {}
@@ -3734,204 +4405,17 @@ function createTopAgenciesChart(data) {
 
     createChart('topAgenciesChart', 'bar', chartData, chartOptions);
 }
-function createTimelineChart(data) {
-    const startYears = {}; 
-    const endYears = {};
-
-    data.forEach(record => {
-        if (record['Period of Performance Start Date']) { 
-            const d = new Date(record['Period of Performance Start Date']); 
-            if (!isNaN(d.getTime())) { 
-                const y = d.getFullYear(); 
-                if (y > 2000 && y < 2030) startYears[y] = (startYears[y] || 0) + 1; 
-            }
-        }
-        if (record['Completion Date']) { 
-            const d = new Date(record['Completion Date']); 
-            if (!isNaN(d.getTime())) { 
-                const y = d.getFullYear(); 
-                if (y > 2000 && y < 2030) endYears[y] = (endYears[y] || 0) + 1; 
-            }
-        }
-    });
-
-    const allYears = new Set([...Object.keys(startYears), ...Object.keys(endYears)].map(Number));
-    const sortedYears = Array.from(allYears).sort((a, b) => a - b);
-    
-    const labels = [], startCounts = [], endCounts = [];
-    sortedYears.forEach(year => { 
-        labels.push(year.toString()); 
-        startCounts.push(startYears[year] || 0); 
-        endCounts.push(endYears[year] || 0); 
-    });
-
-    // Ensure these color variables are defined in your script, e.g., from getChartColors()
-    // For demonstration, using fallbacks if not globally defined for some reason.
-    const currentChartSecondaryColor = typeof chartSecondaryColor !== 'undefined' ? chartSecondaryColor : '#adb5bd';
-    const currentOverrideChartHighlightColor = typeof overrideChartHighlightColor !== 'undefined' ? overrideChartHighlightColor : '#e63946';
-
-    const highlight = currentOverrideChartHighlightColor;
-    const highlightFill = highlight + '22'; // low-opacity version for fill
-
-    const chartData = { 
-        labels, 
-        datasets: [ 
-            { 
-                label: 'Contracts Starting', 
-                data: startCounts, 
-                borderColor: currentChartSecondaryColor, 
-                backgroundColor: `${currentChartSecondaryColor}33`, // 20% opacity
-                fill: true, 
-                tension: 0.4,
-                pointRadius: 0, 
-                pointHitRadius: 10, 
-                pointHoverRadius: 5 
-            }, 
-            { 
-                label: 'Contracts Ending', 
-                data: endCounts, 
-                borderColor: highlight, 
-                backgroundColor: highlightFill, 
-                fill: true, 
-                tension: 0.4,
-                pointRadius: 0,
-                pointHitRadius: 10,
-                pointHoverRadius: 5
-            }  
-        ] 
-    };
-
-    const chartOptions = { 
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { 
-            legend: { display: true, position: 'top' },
-            tooltip: { 
-                callbacks: { 
-                    label: ctx => `${ctx.dataset.label || ''}: ${ctx.parsed.y.toLocaleString()}` 
-                } 
-            }
-        }, 
-        scales: { 
-            y: { 
-                beginAtZero: true,
-                ticks: { callback: val => val.toLocaleString() } 
-            },
-            x: { // X-axis for the years
-                ticks: {
-                    callback: function(value, index, ticks) {
-                        // 'value' is the index here, 'this.getLabelForValue(value)' gets the actual label (year string)
-                        const yearLabel = this.getLabelForValue(value);
-                        if (yearLabel && typeof yearLabel === 'string' && yearLabel.length === 4 && !isNaN(yearLabel)) {
-                            return "'" + yearLabel.substring(2); // Get last two digits, e.g., '22
-                        }
-                        return yearLabel; // Fallback for other labels if any
-                    },
-                    maxRotation: 0, // Prevent label rotation
-                    minRotation: 0  // Prevent label rotation
-                }
-            }
-        } 
-    };
-
-    createChart('timelineChart', 'line', chartData, chartOptions);
-}
-function createMarketShareChart(data) {
-    const canvasElement = document.getElementById('marketShareChart');
-    if (!canvasElement) return; 
-
-    const primeValues = {}
-    data.forEach(r => {
-        if (r['Legal Business Name']) {
-            const name = r['Legal Business Name'];
-            primeValues[name] = (primeValues[name] || 0) + parseCurrencyValue(r['Base and All Options Value (Total Contract Value)']);
-        }
-    });
-
-    const sortedPrimes = Object.entries(primeValues).sort((a, b) => b[1] - a[1]);
-    const chartLabels = [];
-    const values = [];
-
-    sortedPrimes.forEach((item, index) => {
-        if (index < 5) {
-            chartLabels.push(item[0]);
-            values.push(item[1]);
-        }
-    });
-
-    if (sortedPrimes.length > 5) {
-        const otherVal = sortedPrimes.slice(5).reduce((sum, item) => sum + item[1], 0);
-        if (otherVal > 0) {
-            chartLabels.push('Others');
-            values.push(otherVal);
-        }
-    }
-
-    const maxVal = Math.max(...values);
-    const baseColors = [
-        chartPrimaryColor,
-        chartSecondaryColor,
-        chartTertiaryColor,
-        chartNeutralColor,
-        chartGrays[0],
-        chartGrays[1],
-        chartGrays[2],
-        '#dee2e6',
-        '#ced4da',
-        '#adb5bd'
-    ];
-    const chartColors = getRotatingHighlightPalette(values);
-
-    const chartData = {
-        labels: chartLabels,
-        datasets: [{
-            label: 'Prime Share',
-            data: values,
-            backgroundColor: chartColors
-        }]
-    };
-
-    const chartOptions = {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: {
-                position: 'right',
-                labels: {
-                    boxWidth: 12,
-                    font: { size: 10 }
-                }
-            },
-            tooltip: {
-                callbacks: {
-                    label: ctx => {
-                        const raw = ctx.raw;
-                        const total = values.reduce((a, b) => a + b, 0);
-                        const percent = ((raw / total) * 100).toFixed(1);
-                        return `${ctx.label || ''}: ${formatCurrency(raw)} (${percent}%)`;
-                    }
-                }
-            }
-        },
-        // ADD THIS CLICK HANDLER
-        onClick: (event, elements) => {
-            if (elements.length > 0) {
-                const primeName = chartData.labels[elements[0].index];
-                // Don't filter if clicking the "Others" slice
-                if (primeName !== 'Others') {
-                    setUnifiedSearchTerm(primeName, 'primeName');
-                } else {
-                    // Optional: Could show a modal with a list of other primes
-                    console.log("Clicked 'Others' slice - contains:", 
-                        sortedPrimes.slice(5).map(item => item[0]));
-                }
-            }
-        }
-    };
-
-    createChart('marketShareChart', 'pie', chartData, chartOptions);
-}
 function renderSankeyChart(data) {
+  // Define your custom color scale
+  const customColorScale = [
+    '#003f5c',  // Deep blue
+    '#444e86',  // Navy purple
+    '#955196',  // Purple
+    '#dd5182',  // Pink
+    '#ff6e54',  // Coral
+    '#ffa600'   // Orange
+  ];
+  
   console.log("Starting Sankey chart rendering with", data?.length || 0, "records");
   
   // Exit early if no data or container
@@ -4039,8 +4523,8 @@ function renderSankeyChart(data) {
     processData.forEach(row => {
       const agency = row["Contracting Agency Name"];
       const contractor = row["Legal Business Name"];
-      if (agency) nodeMap.set(agency, { name: agency });
-      if (contractor) nodeMap.set(contractor, { name: contractor });
+      if (agency) nodeMap.set(agency, { name: agency, type: "agency" });
+      if (contractor) nodeMap.set(contractor, { name: contractor, type: "contractor" });
     });
     // Convert to array and create index
     const nodes = Array.from(nodeMap.values());
@@ -4098,8 +4582,23 @@ function renderSankeyChart(data) {
       minLinkValue = d3.quantile(links.map(l => l.value).sort(d3.ascending), 0.15);
     }
     const filteredLinks = links.filter(link => link.value > minLinkValue);
-    // Get highlight color from your existing palette function
-    const highlight = overrideChartHighlightColor || '#e63946';
+    
+    // Get colors from custom color scale
+    function getNodeColor(d) {
+      if (d.name === topSourceName || d.name === topTargetName) {
+        return customColorScale[4]; // Coral for highlighting
+      }
+      
+      return d.type === "agency" ? customColorScale[1] : customColorScale[5]; // Navy purple for agencies, Orange for contractors
+    }
+    
+    function getLinkColor(d) {
+      if (d.source.name === topSourceName && d.target.name === topTargetName) {
+        return customColorScale[4]; // Coral for highlighting top link
+      }
+      return customColorScale[2]; // Purple for normal links
+    }
+    
     // Setup the sankey generator
     const sankey = d3.sankey()
       .nodeId(d => d.id)
@@ -4111,30 +4610,80 @@ function renderSankeyChart(data) {
       nodes: nodes,
       links: filteredLinks.map(d => Object.assign({}, d))
     });
+    
+    // Add a legend container with improved positioning
+    // Create a separate group for the legend at the top of the chart
+    const legendHeight = 30;
+    const legendContainer = svg.append("g")
+      .attr("class", "sankey-legend")
+      .attr("transform", `translate(20, 10)`); // Fixed position at top-left
+    
+    // Add background rectangle for the legend to ensure visibility
+    legendContainer.append("rect")
+      .attr("width", width - 40)
+      .attr("height", legendHeight)
+      .attr("fill", "var(--surface-level-1)")
+      .attr("opacity", 0.8)
+      .attr("rx", 4);
+    
+    // Add legend items
+    const legendItems = [
+      { label: "Agencies", color: customColorScale[1], type: "rect" },
+      { label: "Contractors", color: customColorScale[5], type: "rect" },
+      { label: "Top Flow", color: customColorScale[4], type: "line" }
+    ];
+    
+    const legendItemWidth = Math.min(150, (width - 60) / legendItems.length);
+    
+    legendItems.forEach((item, i) => {
+      const g = legendContainer.append("g")
+        .attr("transform", `translate(${20 + i * legendItemWidth}, 7)`);
+      
+      if (item.type === "rect") {
+        g.append("rect")
+          .attr("width", 14)
+          .attr("height", 14)
+          .attr("fill", item.color);
+      } else {
+        g.append("line")
+          .attr("x1", 0)
+          .attr("y1", 7)
+          .attr("x2", 14)
+          .attr("y2", 7)
+          .attr("stroke", item.color)
+          .attr("stroke-width", 3);
+      }
+      
+      g.append("text")
+        .attr("x", 20)
+        .attr("y", 10)
+        .attr("font-size", "10px")
+        .attr("text-anchor", "start")
+        .attr("alignment-baseline", "middle")
+        .attr("fill", "var(--text-primary)")
+        .text(item.label);
+    });
+    
+    // Adjust the starting position of the Sankey chart to make room for the legend
+    const chartTopMargin = legendHeight + 10;
+    
     // Draw the links with proper highlighting for the top value
     svg.append("g")
       .attr("fill", "none")
       .attr("stroke-opacity", 0.4)
+      .attr("transform", `translate(0, ${chartTopMargin})`) // Move down to avoid legend
       .selectAll("path")
       .data(graph.links)
       .join("path")
       .attr("d", d3.sankeyLinkHorizontal())
-      .attr("stroke", d => {
-        // Check if this link corresponds to the top value link
-        if (topSourceName && topTargetName) {
-          const sourceName = d.source.name;
-          const targetName = d.target.name;
-          return (sourceName === topSourceName && targetName === topTargetName) 
-            ? highlight 
-            : getCSSVariable('--chart-accent-1');
-        }
-        return getCSSVariable('--chart-accent-1');
-      })
+      .attr("stroke", d => getLinkColor(d))
       .attr("stroke-width", d => Math.max(1, d.width))
       .append("title")
       .text(d => `${d.source.name} → ${d.target.name}\n$${d.value.toLocaleString()}`);
+    
     // Draw the nodes with highlighting
     svg.append("g")
+      .attr("transform", `translate(0, ${chartTopMargin})`) // Move down to avoid legend
       .selectAll("rect")
       .data(graph.nodes)
       .join("rect")
@@ -4142,15 +4691,7 @@ function renderSankeyChart(data) {
       .attr("y", d => d.y0)
       .attr("height", d => Math.max(1, d.y1 - d.y0))
       .attr("width", d => d.x1 - d.x0)
-      .attr("fill", d => {
-        // Highlight nodes that are part of the top value flow
-        if (topSourceName && topTargetName) {
-          return (d.name === topSourceName || d.name === topTargetName) 
-            ? highlight 
-            : getCSSVariable('--chart-accent-1');
-        }
-        return getCSSVariable('--chart-accent-1');
-      })
+      .attr("fill", d => getNodeColor(d))
       .attr("opacity", 0.8)
       .style("stroke", "white")
       .style("stroke-width", 0.5)
@@ -4167,8 +4708,10 @@ function renderSankeyChart(data) {
       })
       .append("title")
       .text(d => `${d.name}\n$${d.value.toLocaleString()}`);
+      
     // Add node labels - with better mobile handling
     svg.append("g")
+      .attr("transform", `translate(0, ${chartTopMargin})`) // Move down to avoid legend
       .selectAll("text")
       .data(graph.nodes)
       .join("text")
@@ -4185,6 +4728,7 @@ function renderSankeyChart(data) {
       })
       .attr("font-size", isMobile ? "9px" : "11px")
       .attr("fill", getCSSVariable('--text-primary'));
+    
     console.log("Sankey chart render complete");
     ensureProcessingHidden();
   } catch (error) {
@@ -4639,6 +5183,16 @@ let currentOpportunitySortConfig = { field: 'value', order: 'desc' };
 function createContractOpportunityForecast(data) {
   console.log("Creating opportunity forecast chart with", data.length, "records");
   
+  // Define your custom color scale
+  const customColorScale = [
+    '#003f5c',  // Deep blue
+    '#444e86',  // Navy purple
+    '#955196',  // Purple
+    '#dd5182',  // Pink
+    '#ff6e54',  // Coral
+    '#ffa600'   // Orange
+  ];
+  
   // First, ensure we have a valid canvas element to work with
   let chartContainer = document.querySelector('.chart-container:has(#contractOpportunityForecastChart)');
   
@@ -4779,29 +5333,15 @@ function createContractOpportunityForecast(data) {
     .slice(0, topAgencyLimit)
     .map(entry => entry[0]);
   
-  // Create datasets for chart
+  // Create datasets for chart using custom color scale
   const datasets = topAgencies.map((agency, index) => {
     const agencyData = labels.map(month => {
       return nextTwoYears[month].agencies[agency] || 0;
     });
     
-    // Create a local color array with fallbacks
-    const colorPalette = [
-      chartPrimaryColor || '#6c757d',
-      chartSecondaryColor || '#adb5bd',
-      chartTertiaryColor || '#ced4da',
-      chartNeutralColor || '#dee2e6'
-    ];
-    
-    if (chartGrays && chartGrays.length) {
-      colorPalette.push(...chartGrays);
-    } else {
-      // Fallback grays if chartGrays is undefined
-      colorPalette.push('#e9ecef', '#f8f9fa');
-    }
-    
-    // Use the palette with safety check
-    const color = colorPalette[index % colorPalette.length] || '#6c757d';
+    // Use the custom color scale with index modulo to cycle through colors
+    const colorIndex = index % customColorScale.length;
+    const color = customColorScale[colorIndex];
         
     return {
       label: agency,
@@ -4827,8 +5367,8 @@ function createContractOpportunityForecast(data) {
     datasets.push({
       label: 'Other Agencies',
       data: otherData,
-      backgroundColor: '#adb5bd',
-      borderColor: '#adb5bd',
+      backgroundColor: customColorScale[3], // Pink color for "Other"
+      borderColor: customColorScale[3],
       borderWidth: 1,
       borderRadius: 4,
     });
@@ -4852,7 +5392,7 @@ function createContractOpportunityForecast(data) {
     datasets: datasets
   };
   
-  // ADJUSTED: Modified chart options for side-by-side layout
+  // ADJUSTED: Modified chart options for side-by-side layout and removed grid lines
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
@@ -4891,6 +5431,9 @@ function createContractOpportunityForecast(data) {
           font: {
             size: 8 // ADJUSTED: Smaller font
           }
+        },
+        grid: {
+          display: false // Remove X axis grid lines
         }
       },
       y: {
@@ -4902,6 +5445,9 @@ function createContractOpportunityForecast(data) {
           font: {
             size: 9 // ADJUSTED: Smaller font
           }
+        },
+        grid: {
+          display: false // Remove Y axis grid lines
         }
       }
     },
@@ -5334,6 +5880,16 @@ const itemsPerSpecPage = 10;
 
 // Updated heatmap function to maximize space usage
 function createPrimeSpecializationHeatmap(data) {
+  // Define your custom color scale
+  const customColorScale = [
+    '#003f5c',  // Deep blue
+    '#444e86',  // Navy purple
+    '#955196',  // Purple
+    '#dd5182',  // Pink
+    '#ff6e54',  // Coral
+    '#ffa600'   // Orange
+  ];
+
   const primeValues = {};
   data.forEach(r => {
     if (r['Legal Business Name']) {
@@ -5432,22 +5988,22 @@ function createPrimeSpecializationHeatmap(data) {
   const containerHeight = heatmapElement.parentElement.clientHeight || 450;
   
   // Use more of the available space
-	const width = containerWidth - margin.left - margin.right - 5; // Even smaller buffer
-	const height = containerHeight - margin.top - margin.bottom - 5;
+  const width = containerWidth - margin.left - margin.right - 5; // Even smaller buffer
+  const height = containerHeight - margin.top - margin.bottom - 5;
   
-// Clear previous content
-d3.select(heatmapElement).selectAll("*").remove();
+  // Clear previous content
+  d3.select(heatmapElement).selectAll("*").remove();
 
-// Set SVG attributes ONCE (don't repeat this)
-const svgElement = d3.select(heatmapElement)
-  .attr("width", "100%") 
-  .attr("height", "100%")
-  .attr("viewBox", `0 0 ${containerWidth} ${containerHeight}`)
-  .attr("preserveAspectRatio", "none");
+  // Set SVG attributes ONCE (don't repeat this)
+  const svgElement = d3.select(heatmapElement)
+    .attr("width", "100%") 
+    .attr("height", "100%")
+    .attr("viewBox", `0 0 ${containerWidth} ${containerHeight}`)
+    .attr("preserveAspectRatio", "none");
 
-// Then create a group element inside the SVG for the chart content
-const svg = svgElement.append("g")
-  .attr("transform", `translate(${margin.left},${margin.top})`);
+  // Then create a group element inside the SVG for the chart content
+  const svg = svgElement.append("g")
+    .attr("transform", `translate(${margin.left},${margin.top})`);
   
   
   // Create scales
@@ -5475,49 +6031,49 @@ const svg = svgElement.append("g")
     maxIndex
   ];
   
-  // Get theme colors for consistent styling
-  const paletteColors = [
-    getCSSVariable('--surface-level-2') || '#f8f9fa',
-    chartTertiaryColor || '#ced4da',
-    chartSecondaryColor || '#adb5bd',
-    chartPrimaryColor || '#6c757d',
-    overrideChartHighlightColor || '#e63946'
+  // Use custom color scale instead of theme colors
+  const heatmapPalette = [
+    customColorScale[0],  // Deep blue for lowest values
+    customColorScale[1],  // Navy purple
+    customColorScale[2],  // Purple
+    customColorScale[3],  // Pink
+    customColorScale[4]   // Coral for highest values
   ];
   
   // Create a color scale
   const color = d3.scaleLinear()
     .domain(colorDomain)
-    .range(paletteColors);
+    .range(heatmapPalette);
   
   // Add X axis labels - more compact
-svg.append("g")
-  .attr("class", "x-axis")
-  .style("font-size", "8px")
-  .style("color", "var(--text-primary)") // Add this line
-  .attr("transform", `translate(0,${height})`)
-  .call(d3.axisBottom(x).tickSize(0))
-  .selectAll("text")
-  .style("text-anchor", "middle")
-  .style("fill", "var(--text-primary)") // Add this line
-  .attr("transform", "translate(0,5)");
+  svg.append("g")
+    .attr("class", "x-axis")
+    .style("font-size", "8px")
+    .style("color", "var(--text-primary)")
+    .attr("transform", `translate(0,${height})`)
+    .call(d3.axisBottom(x).tickSize(0))
+    .selectAll("text")
+    .style("text-anchor", "middle")
+    .style("fill", "var(--text-primary)")
+    .attr("transform", "translate(0,5)");
 
-// Add Y axis labels with classes for easier selection
-svg.append("g")
-  .attr("class", "y-axis")
-  .style("font-size", "8px")
-  .style("color", "var(--text-primary)") // Add this line
-  .call(d3.axisLeft(y).tickSize(0).tickFormat(d => {
-    const maxLength = 10;
-    return d.length > maxLength ? 
-      d.substring(0, maxLength) + '...' : 
-      d;
-  }))
-  .selectAll("text")
-  .style("fill", "var(--text-primary)") // Add this line
-  .attr("dx", "-3")
-  .select(function() { return this.parentNode.parentNode; })
-  .select(".domain")
-  .remove();
+  // Add Y axis labels with classes for easier selection
+  svg.append("g")
+    .attr("class", "y-axis")
+    .style("font-size", "8px")
+    .style("color", "var(--text-primary)")
+    .call(d3.axisLeft(y).tickSize(0).tickFormat(d => {
+      const maxLength = 10;
+      return d.length > maxLength ? 
+        d.substring(0, maxLength) + '...' : 
+        d;
+    }))
+    .selectAll("text")
+    .style("fill", "var(--text-primary)")
+    .attr("dx", "-3")
+    .select(function() { return this.parentNode.parentNode; })
+    .select(".domain")
+    .remove();
   
   // Create tooltip
   d3.selectAll(".heatmap-tooltip").remove();
@@ -5553,7 +6109,7 @@ svg.append("g")
     .style("cursor", "pointer")
     .on("mouseover", function(event, d) {
       d3.select(this)
-        .style("stroke", "var(--accent)")
+        .style("stroke", customColorScale[5]) // Orange for highlighting
         .style("stroke-width", 1.5)
         .style("opacity", 1);
       
@@ -5611,11 +6167,11 @@ svg.append("g")
   
   linearGradient.selectAll("stop")
     .data([
-      {offset: "0%", color: paletteColors[0]},
-      {offset: "25%", color: paletteColors[1]},
-      {offset: "50%", color: paletteColors[2]},
-      {offset: "75%", color: paletteColors[3]},
-      {offset: "100%", color: paletteColors[4]}
+      {offset: "0%", color: heatmapPalette[0]},
+      {offset: "25%", color: heatmapPalette[1]},
+      {offset: "50%", color: heatmapPalette[2]},
+      {offset: "75%", color: heatmapPalette[3]},
+      {offset: "100%", color: heatmapPalette[4]}
     ])
     .enter().append("stop")
     .attr("offset", d => d.offset)
@@ -5632,21 +6188,21 @@ svg.append("g")
     .call(legendXAxis);
   
   // Minimal legend labels
-legend.append("text")
-  .attr("x", 0)
-  .attr("y", legendHeight + 20)
-  .attr("text-anchor", "start")
-  .style("font-size", "7px")
-  .style("fill", "var(--text-primary)") // Add this line
-  .text("Less");
+  legend.append("text")
+    .attr("x", 0)
+    .attr("y", legendHeight + 20)
+    .attr("text-anchor", "start")
+    .style("font-size", "7px")
+    .style("fill", "var(--text-primary)")
+    .text("Less");
 
-legend.append("text")
-  .attr("x", legendWidth)
-  .attr("y", legendHeight + 20)
-  .attr("text-anchor", "end")
-  .style("font-size", "7px")
-  .style("fill", "var(--text-primary)") // Add this line
-  .text("More");
+  legend.append("text")
+    .attr("x", legendWidth)
+    .attr("y", legendHeight + 20)
+    .attr("text-anchor", "end")
+    .style("font-size", "7px")
+    .style("fill", "var(--text-primary)")
+    .text("More");
   
   // Add NAICS descriptions as tooltips for column headers
   svg.selectAll(".naics-tooltip")
@@ -5658,18 +6214,17 @@ legend.append("text")
   
   // Add a minimal instruction at the bottom
   svg.append("text")
-  .attr("x", width / 2)
-  .attr("y", height + 60)
-  .attr("text-anchor", "middle")
-  .style("font-size", "7px")
-  .style("font-style", "italic")
-  .style("fill", "var(--text-primary)") // Change from text-tertiary to primary
-  .text("Click any cell for details");
+    .attr("x", width / 2)
+    .attr("y", height + 60)
+    .attr("text-anchor", "middle")
+    .style("font-size", "7px")
+    .style("font-style", "italic")
+    .style("fill", "var(--text-primary)")
+    .text("Click any cell for details");
     
   // Initialize the filter button event handler
   initializeSpecializationControls();
 }
-
 
 function initializeSpecializationControls() {
   // Add click handler for the filter button
@@ -5876,6 +6431,16 @@ function createContractingOfficeRelationshipMap(data) {
   d3.selectAll(".d3-relationship-tooltip").remove();
   
   console.log("Starting relationship map render with", data.length, "records");
+  
+  // Define your custom color scale
+  const customColorScale = [
+    '#003f5c',  // Deep blue
+    '#444e86',  // Navy purple
+    '#955196',  // Purple
+    '#dd5182',  // Pink
+    '#ff6e54',  // Coral
+    '#ffa600'   // Orange
+  ];
   
   try {
     // HIERARCHICAL APPROACH: Capture the full government contracting hierarchy
@@ -6127,20 +6692,27 @@ function createContractingOfficeRelationshipMap(data) {
       }
     });
     
-    // Get node color function - use different colors for the hierarchy
+    // Get node color function using custom color scale
     function getNodeColor(d) {
       switch(d.type) {
         case "department":
-          return getCSSVariable('--chart-accent-1') || '#6c757d'; // Darkest
+          return customColorScale[0]; // Deep blue
         case "agency":
-          return getCSSVariable('--chart-accent-2') || '#adb5bd'; // Medium
+          return customColorScale[1]; // Navy purple
         case "office":
-          return getCSSVariable('--chart-accent-3') || '#ced4da'; // Light
+          return customColorScale[2]; // Purple
         case "contractor":
-          return overrideChartHighlightColor || '#e63946'; // Accent color for contractors
+          return customColorScale[5]; // Orange for contractors
         default:
-          return getCSSVariable('--chart-accent-1');
+          return customColorScale[0];
       }
+    }
+    
+    // Get link color function using custom color scale
+    function getLinkColor(d) {
+      if (d.type === "dept-agency") return customColorScale[0]; // Deep blue
+      if (d.type === "agency-office") return customColorScale[1]; // Navy purple
+      return customColorScale[2]; // Purple for office-contractor
     }
     
     // Create link width scale
@@ -6178,17 +6750,12 @@ function createContractingOfficeRelationshipMap(data) {
       .enter()
       .append("line")
       .attr("stroke-width", d => linkWidthScale(d.value))
-      .attr("stroke", d => {
-        // Different colors for different hierarchy levels
-        if (d.type === "dept-agency") return getCSSVariable('--chart-accent-1');
-        if (d.type === "agency-office") return getCSSVariable('--chart-accent-2');
-        return getCSSVariable('--chart-accent-3'); // office-contractor
-      })
+      .attr("stroke", d => getLinkColor(d))
       .attr("stroke-opacity", 0.6)
       .attr("stroke-dasharray", d => d.type === "dept-agency" ? "5,5" : "none")
       .on("mouseover", function(event, d) {
         d3.select(this)
-          .attr("stroke", getCSSVariable('--accent'))
+          .attr("stroke", customColorScale[4]) // Coral for highlighting
           .attr("stroke-opacity", 1);
         
         tooltip.style("display", "block")
@@ -6205,12 +6772,8 @@ function createContractingOfficeRelationshipMap(data) {
       })
       .on("mouseout", function(event, d) {
         // Restore original color
-        let color = getCSSVariable('--chart-accent-3');
-        if (d.type === "dept-agency") color = getCSSVariable('--chart-accent-1');
-        if (d.type === "agency-office") color = getCSSVariable('--chart-accent-2');
-        
         d3.select(this)
-          .attr("stroke", color)
+          .attr("stroke", getLinkColor(d))
           .attr("stroke-opacity", 0.6);
         
         tooltip.transition()
@@ -6362,7 +6925,7 @@ function createContractingOfficeRelationshipMap(data) {
     node.on("mouseover", function(event, d) {
       // Highlight the node
       d3.select(this).select("circle, rect, polygon")
-        .attr("stroke", getCSSVariable('--accent'))
+        .attr("stroke", customColorScale[4]) // Use coral for highlight
         .attr("stroke-width", 2);
       
       // Show tooltip with full entity name
@@ -6399,10 +6962,10 @@ function createContractingOfficeRelationshipMap(data) {
       .attr("transform", `translate(${legendMargin.left}, ${legendMargin.top})`);
     
     const legendItems = [
-      { type: "department", label: "Departments", shape: "pentagon" },
-      { type: "agency", label: "Agencies", shape: "triangle" },
-      { type: "office", label: "Offices", shape: "square" },
-      { type: "contractor", label: "Prime Contractors", shape: "circle" }
+      { type: "department", label: "Departments", shape: "pentagon", color: customColorScale[0] },
+      { type: "agency", label: "Agencies", shape: "triangle", color: customColorScale[1] },
+      { type: "office", label: "Offices", shape: "square", color: customColorScale[2] },
+      { type: "contractor", label: "Prime Contractors", shape: "circle", color: customColorScale[5] }
     ];
     
     legendItems.forEach((item, i) => {
@@ -6414,23 +6977,23 @@ function createContractingOfficeRelationshipMap(data) {
           .attr("r", 6)
           .attr("cx", 6)
           .attr("cy", 0)
-          .attr("fill", getNodeColor({type: item.type}));
+          .attr("fill", item.color);
       } else if (item.shape === "square") {
         g.append("rect")
           .attr("x", 0)
           .attr("y", -6)
           .attr("width", 12)
           .attr("height", 12)
-          .attr("fill", getNodeColor({type: item.type}));
+          .attr("fill", item.color);
       } else if (item.shape === "triangle") {
         g.append("polygon")
           .attr("points", "6,0 12,10 0,10")
           .attr("transform", "translate(0, -8)")
-          .attr("fill", getNodeColor({type: item.type}));
+          .attr("fill", item.color);
       } else if (item.shape === "pentagon") {
         g.append("polygon")
           .attr("points", drawPentagon(6, 0, 6))
-          .attr("fill", getNodeColor({type: item.type}));
+          .attr("fill", item.color);
       }
       
       g.append("text")
@@ -6453,7 +7016,7 @@ function createContractingOfficeRelationshipMap(data) {
       .attr("x2", 30)
       .attr("y2", 0)
       .attr("stroke-width", 3)
-      .attr("stroke", getCSSVariable('--chart-accent-1'))
+      .attr("stroke", customColorScale[0])
       .attr("stroke-dasharray", "5,5");
     
     lineStyleLegend.append("text")
@@ -6470,7 +7033,7 @@ function createContractingOfficeRelationshipMap(data) {
       .attr("x2", 30)
       .attr("y2", 20)
       .attr("stroke-width", 3)
-      .attr("stroke", getCSSVariable('--chart-accent-2'));
+      .attr("stroke", customColorScale[1]);
     
     lineStyleLegend.append("text")
       .attr("x", 40)
@@ -6486,7 +7049,7 @@ function createContractingOfficeRelationshipMap(data) {
       .attr("x2", 30)
       .attr("y2", 40)
       .attr("stroke-width", 3)
-      .attr("stroke", getCSSVariable('--chart-accent-3'));
+      .attr("stroke", customColorScale[2]);
     
     lineStyleLegend.append("text")
       .attr("x", 40)
