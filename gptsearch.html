@@ -1,46 +1,65 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>FPDS Search</title>
+  <title>FPDS Live Search</title>
   <meta charset="UTF-8">
   <style>
-    body { font-family: sans-serif; padding: 1em; }
-    input, button { padding: 0.5em; margin: 0.5em 0; width: 100%; }
-    .results { margin-top: 1em; }
-    .entry { margin-bottom: 1em; padding: 0.5em; border: 1px solid #ccc; border-radius: 4px; }
+    body { font-family: sans-serif; padding: 1em; max-width: 600px; margin: auto; }
+    input, button { width: 100%; padding: 0.5em; margin-top: 0.5em; }
+    .entry { border: 1px solid #ccc; padding: 0.75em; margin: 1em 0; border-radius: 6px; }
   </style>
 </head>
 <body>
-  <h2>FPDS Search (Live Atom Feed)</h2>
-  <input id="searchTerm" placeholder="Enter contractor name (e.g. Lockheed)" />
+  <h2>FPDS.gov Live Award Search</h2>
+  <input id="searchTerm" placeholder="Try 'Lockheed'" />
   <button onclick="searchFPDS()">Search</button>
-  <div class="results" id="results"></div>
+  <div id="results"></div>
 
   <script>
     async function searchFPDS() {
       const term = document.getElementById('searchTerm').value.trim();
+      const resultsDiv = document.getElementById('results');
+      resultsDiv.innerHTML = '';
+
       if (!term) return;
 
-      const url = `https://www.fpds.gov/ezsearch/FEEDS/ATOM?feedName=PUBLIC&q=${encodeURIComponent(term)}&start=1`;
+      const endpoint = `https://corsproxy.io/?https://www.fpds.gov/ezsearch/FEEDS/ATOM?feedName=PUBLIC&q=${encodeURIComponent(term)}&start=1`;
 
       try {
-        const response = await fetch(url);
-        const text = await response.text();
-        const parser = new DOMParser();
-        const xml = parser.parseFromString(text, "text/xml");
+        const response = await fetch(endpoint);
+        const xmlText = await response.text();
+        const xml = new DOMParser().parseFromString(xmlText, "application/xml");
         const entries = xml.getElementsByTagName("entry");
 
-        const container = document.getElementById("results");
-        container.innerHTML = `<p>Found ${entries.length} entries for "${term}":</p>`;
-
-        for (let i = 0; i < entries.length; i++) {
-          const title = entries[i].getElementsByTagName("title")[0]?.textContent || "No Title";
-          const summary = entries[i].getElementsByTagName("summary")[0]?.textContent || "No Summary";
-          container.innerHTML += `<div class="entry"><strong>${title}</strong><p>${summary}</p></div>`;
+        if (entries.length === 0) {
+          resultsDiv.innerHTML = "<p>No results found.</p>";
+          return;
         }
-      } catch (err) {
-        console.error(err);
-        document.getElementById("results").innerHTML = `<p style="color:red;">Error fetching data. May be blocked by CORS.</p>`;
+
+        for (let entry of entries) {
+          const summary = entry.getElementsByTagName("summary")[0]?.textContent || '';
+          const innerXML = new DOMParser().parseFromString(summary, "application/xml");
+
+          const vendorName = innerXML.querySelector("vendorName")?.textContent || "N/A";
+          const contractDesc = innerXML.querySelector("descriptionOfContractRequirement")?.textContent || "N/A";
+          const piid = innerXML.querySelector("awardContractID > PIID")?.textContent || "N/A";
+          const amount = innerXML.querySelector("obligatedAmount")?.textContent || "N/A";
+          const agency = innerXML.querySelector("contractingOfficeAgencyID")?.getAttribute("name") || "N/A";
+
+          const card = `
+            <div class="entry">
+              <strong>Vendor:</strong> ${vendorName}<br/>
+              <strong>PIID:</strong> ${piid}<br/>
+              <strong>Agency:</strong> ${agency}<br/>
+              <strong>Amount:</strong> $${parseFloat(amount).toLocaleString()}<br/>
+              <strong>Description:</strong> ${contractDesc}
+            </div>
+          `;
+          resultsDiv.innerHTML += card;
+        }
+      } catch (error) {
+        console.error(error);
+        resultsDiv.innerHTML = `<p style="color:red;">Failed to load results. CORS might be blocking the request.</p>`;
       }
     }
   </script>
