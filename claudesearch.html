@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FPDS.gov Direct API Search</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            margin-top: 0;
+        }
+        .search-box {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px 0 0 4px;
+            font-size: 16px;
+        }
+        button {
+            padding: 10px 15px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 0 4px 4px 0;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .results {
+            margin-top: 20px;
+        }
+        .loading {
+            text-align: center;
+            display: none;
+            margin: 20px 0;
+        }
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 2s linear infinite;
+            margin: 0 auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .error {
+            color: #e74c3c;
+            display: none;
+            margin: 20px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            font-size: 14px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .result-count {
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        .api-note {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-left: 4px solid #3498db;
+            font-size: 14px;
+        }
+        .xml-display {
+            max-height: 300px;
+            overflow-y: auto;
+            background-color: #f8f9fa;
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-top: 10px;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            display: none;
+        }
+        .toggle-raw {
+            margin-top: 10px;
+            background-color: #f2f2f2;
+            border: 1px solid #ddd;
+            padding: 5px 10px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>FPDS.gov Direct API Search</h1>
+        
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="Enter company name (e.g., Lockheed)" value="Lockheed">
+            <button id="searchButton">Search</button>
+        </div>
+        
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p>Loading data from FPDS.gov...</p>
+        </div>
+        
+        <div id="error" class="error">
+            <p>Error loading data. Please try again.</p>
+        </div>
+        
+        <div id="results" class="results">
+            <div id="resultCount" class="result-count"></div>
+            <button id="toggleRaw" class="toggle-raw">Show/Hide Raw XML</button>
+            <div id="xmlDisplay" class="xml-display"></div>
+            
+            <table id="resultsTable">
+                <thead>
+                    <tr>
+                        <th>Award ID</th>
+                        <th>Agency</th>
+                        <th>Vendor</th>
+                        <th>Award Amount</th>
+                        <th>Date</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody id="resultsBody">
+                    <!-- Results will be inserted here -->
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="api-note">
+            <p>This application uses the direct FPDS.gov ATOM feed API. Note that CORS policies might restrict browser access to this API in some environments.</p>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // DOM elements
+            const searchInput = document.getElementById('searchInput');
+            const searchButton = document.getElementById('searchButton');
+            const loading = document.getElementById('loading');
+            const error = document.getElementById('error');
+            const results = document.getElementById('results');
+            const resultCount = document.getElementById('resultCount');
+            const resultsBody = document.getElementById('resultsBody');
+            const toggleRaw = document.getElementById('toggleRaw');
+            const xmlDisplay = document.getElementById('xmlDisplay');
+            
+            // Event listener for search button
+            searchButton.addEventListener('click', performSearch);
+            
+            // Event listener for Enter key in search input
+            searchInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    performSearch();
+                }
+            });
+            
+            // Event listener for toggle raw XML button
+            toggleRaw.addEventListener('click', function() {
+                if (xmlDisplay.style.display === 'none' || !xmlDisplay.style.display) {
+                    xmlDisplay.style.display = 'block';
+                } else {
+                    xmlDisplay.style.display = 'none';
+                }
+            });
+            
+            // Initial search on page load
+            performSearch();
+            
+            // Function to perform search
+            function performSearch() {
+                const query = searchInput.value.trim();
+                
+                if (!query) {
+                    alert('Please enter a search term');
+                    return;
+                }
+                
+                // Show loading, hide results and error
+                loading.style.display = 'block';
+                results.style.display = 'none';
+                error.style.display = 'none';
+                
+                // Construct FPDS API URL - Direct ATOM feed API
+                // This is the direct FPDS.gov endpoint that returns XML/ATOM format
+                const today = new Date();
+                // Go back 6 months for search
+                const sixMonthsAgo = new Date();
+                sixMonthsAgo.setMonth(today.getMonth() - 6);
+                
+                // Format dates for the API
+                const formatDate = (date) => {
+                    const year = date.getFullYear();
+                    const month = String(date.getMonth() + 1).padStart(2, '0');
+                    const day = String(date.getDate()).padStart(2, '0');
+                    return `${year}/${month}/${day}`;
+                };
+                
+                const startDate = formatDate(sixMonthsAgo);
+                const endDate = formatDate(today);
+                
+                // FPDS.gov ATOM feed - direct access to the API
+                const apiUrl = `https://www.fpds.gov/ezsearch/FEEDS/ATOM?FEEDNAME=PUBLIC&q=vendor_name:${encodeURIComponent(query)}*+AND+signed_date:[${startDate}+TO+${endDate}]&start=0&sortBy=signed_date`;
+                
+                // Create a CORS proxy URL to bypass CORS restrictions
+                // Note: In a production environment, you would need to use a server-side proxy
+                // This is for demonstration purposes only - CORS issues might still occur
+                const corsProxyUrl = `https://cors-anywhere.herokuapp.com/${apiUrl}`;
+                
+                // Use the XML HTTP request to get the ATOM feed
+                const xhr = new XMLHttpRequest();
+                xhr.open('GET', apiUrl, true);
+                xhr.onreadystatechange = function() {
+                    if (xhr.readyState === 4) {
+                        loading.style.display = 'none';
+                        
+                        if (xhr.status === 200) {
+                            results.style.display = 'block';
+                            const xmlDoc = xhr.responseXML;
+                            
+                            // Display raw XML for inspection
+                            xmlDisplay.textContent = xhr.responseText;
+                            
+                            // Process XML and display results
+                            displayResults(xmlDoc);
+                        } else {
+                            // Try the CORS proxy if direct request fails
+                            // This is a fallback method
+                            try {
+                                fetch(corsProxyUrl)
+                                    .then(response => {
+                                        if (!response.ok) {
+                                            throw new Error('Network response was not ok');
+                                        }
+                                        return response.text();
+                                    })
+                                    .then(xmlText => {
+                                        results.style.display = 'block';
+                                        
+                                        // Display raw XML for inspection
+                                        xmlDisplay.textContent = xmlText;
+                                        
+                                        // Parse XML string to DOM
+                                        const parser = new DOMParser();
+                                        const xmlDoc = parser.parseFromString(xmlText, "text/xml");
+                                        
+                                        // Process XML and display results
+                                        displayResults(xmlDoc);
+                                    })
+                                    .catch(err => {
+                                        console.error('Error with CORS proxy:', err);
+                                        showApiError();
+                                    });
+                            } catch (err) {
+                                console.error('Error fetching with CORS proxy:', err);
+                                showApiError();
+                            }
+                        }
+                    }
+                };
+                
+                // Handle network errors
+                xhr.onerror = function() {
+                    console.error('Network error occurred');
+                    showApiError();
+                };
+                
+                // Set timeout
+                xhr.timeout = 10000; // 10 seconds timeout
+                xhr.ontimeout = function() {
+                    console.error('Request timed out');
+                    showApiError();
+                };
+                
+                try {
+                    xhr.send();
+                } catch (err) {
+                    console.error('Error sending request:', err);
+                    showApiError();
+                }
+            }
+            
+            // Function to display error and provide helpful information
+            function showApiError() {
+                loading.style.display = 'none';
+                error.style.display = 'block';
+                error.innerHTML = `
+                    <p>Unable to connect directly to the FPDS.gov API.</p>
+                    <p>This is likely due to CORS (Cross-Origin Resource Sharing) restrictions, which prevent browser-based applications from accessing this API directly.</p>
+                    <p>For a production application, you would need to:</p>
+                    <ul>
+                        <li>Create a server-side proxy to make requests to FPDS.gov</li>
+                        <li>Consider using the System for Award Management (SAM.gov) API which has replaced some FPDS functionality</li>
+                        <li>Explore the FPDS.gov web services at <a href="https://www.fpds.gov/wiki/index.php/FPDS-NG_Web_Services" target="_blank">FPDS-NG Web Services</a></li>
+                    </ul>
+                    <p>In a browser environment without a server, direct API access may be restricted.</p>
+                `;
+            }
+            
+            // Function to display results from XML
+            function displayResults(xmlDoc) {
+                resultsBody.innerHTML = '';
+                
+                if (!xmlDoc) {
+                    resultCount.textContent = 'Error parsing XML response.';
+                    return;
+                }
+                
+                // Get entries from ATOM feed
+                const entries = xmlDoc.getElementsByTagName('entry');
+                
+                if (entries.length === 0) {
+                    resultCount.textContent = 'No results found.';
+                    return;
+                }
+                
+                resultCount.textContent = `Found ${entries.length} results:`;
+                
+                // Process each entry
+                for (let i = 0; i < entries.length; i++) {
+                    const entry = entries[i];
+                    
+                    try {
+                        // Extract award information from the entry
+                        const title = entry.getElementsByTagName('title')[0]?.textContent || 'N/A';
+                        const id = entry.getElementsByTagName('id')[0]?.textContent || 'N/A';
+                        const content = entry.getElementsByTagName('content')[0];
+                        
+                        // Extract values from content
+                        let agency = 'N/A';
+                        let vendorName = 'N/A';
+                        let awardAmount = 'N/A';
+                        let awardDate = 'N/A';
+                        let description = 'N/A';
+                        
+                        if (content) {
+                            // Parse the content which contains the contract details
+                            const agencyElem = content.querySelector('agency_name') || content.querySelector('AgencyName');
+                            if (agencyElem) agency = agencyElem.textContent;
+                            
+                            const vendorElem = content.querySelector('vendor_name') || content.querySelector('VendorName');
+                            if (vendorElem) vendorName = vendorElem.textContent;
+                            
+                            const amountElem = content.querySelector('dollars_obligated') || content.querySelector('DollarsObligated');
+                            if (amountElem) awardAmount = amountElem.textContent;
+                            
+                            const dateElem = content.querySelector('signed_date') || content.querySelector('SignedDate');
+                            if (dateElem) awardDate = dateElem.textContent;
+                            
+                            const descElem = content.querySelector('description_of_requirement') || content.querySelector('DescriptionOfRequirement');
+                            if (descElem) description = descElem.textContent;
+                        }
+                        
+                        // Create table row for this entry
+                        const row = document.createElement('tr');
+                        
+                        row.innerHTML = `
+                            <td>${extractIdFromUrl(id) || 'N/A'}</td>
+                            <td>${agency || 'N/A'}</td>
+                            <td>${vendorName || 'N/A'}</td>
+                            <td>${formatCurrency(awardAmount) || 'N/A'}</td>
+                            <td>${formatDate(awardDate) || 'N/A'}</td>
+                            <td>${description.substring(0, 150) + (description.length > 150 ? '...' : '') || 'N/A'}</td>
+                        `;
+                        
+                        resultsBody.appendChild(row);
+                    } catch (err) {
+                        console.error('Error processing entry:', err);
+                        // Continue to next entry
+                    }
+                }
+            }
+            
+            // Helper function to extract ID from URL
+            function extractIdFromUrl(url) {
+                if (!url) return 'N/A';
+                const parts = url.split('/');
+                return parts[parts.length - 1];
+            }
+            
+            // Helper function to format currency
+            function formatCurrency(amount) {
+                if (!amount || isNaN(parseFloat(amount))) return 'N/A';
+                return new Intl.NumberFormat('en-US', { 
+                    style: 'currency', 
+                    currency: 'USD',
+                    maximumFractionDigits: 0
+                }).format(parseFloat(amount));
+            }
+            
+            // Helper function to format date
+            function formatDate(dateString) {
+                if (!dateString) return 'N/A';
+                // Handle FPDS date format (can be YYYY-MM-DD or YYYY/MM/DD)
+                dateString = dateString.replace(/\//g, '-');
+                const date = new Date(dateString);
+                if (isNaN(date.getTime())) return dateString;
+                return date.toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric'
+                });
+            }
+        });
+    </script>
+</body>
+</html>

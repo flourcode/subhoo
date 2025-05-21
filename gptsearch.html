@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>FPDS Search</title>
+  <meta charset="UTF-8">
+  <style>
+    body { font-family: sans-serif; padding: 1em; }
+    input, button { padding: 0.5em; margin: 0.5em 0; width: 100%; }
+    .results { margin-top: 1em; }
+    .entry { margin-bottom: 1em; padding: 0.5em; border: 1px solid #ccc; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <h2>FPDS Search (Live Atom Feed)</h2>
+  <input id="searchTerm" placeholder="Enter contractor name (e.g. Lockheed)" />
+  <button onclick="searchFPDS()">Search</button>
+  <div class="results" id="results"></div>
+
+  <script>
+    async function searchFPDS() {
+      const term = document.getElementById('searchTerm').value.trim();
+      if (!term) return;
+
+      const url = `https://www.fpds.gov/ezsearch/FEEDS/ATOM?feedName=PUBLIC&q=${encodeURIComponent(term)}&start=1`;
+
+      try {
+        const response = await fetch(url);
+        const text = await response.text();
+        const parser = new DOMParser();
+        const xml = parser.parseFromString(text, "text/xml");
+        const entries = xml.getElementsByTagName("entry");
+
+        const container = document.getElementById("results");
+        container.innerHTML = `<p>Found ${entries.length} entries for "${term}":</p>`;
+
+        for (let i = 0; i < entries.length; i++) {
+          const title = entries[i].getElementsByTagName("title")[0]?.textContent || "No Title";
+          const summary = entries[i].getElementsByTagName("summary")[0]?.textContent || "No Summary";
+          container.innerHTML += `<div class="entry"><strong>${title}</strong><p>${summary}</p></div>`;
+        }
+      } catch (err) {
+        console.error(err);
+        document.getElementById("results").innerHTML = `<p style="color:red;">Error fetching data. May be blocked by CORS.</p>`;
+      }
+    }
+  </script>
+</body>
+</html>
