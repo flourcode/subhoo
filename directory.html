@@ -1,0 +1,1654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Federal Contractor Directory | Subhoo</title>
+    <!-- Use your existing CSS -->
+    <link rel="stylesheet" href="/css/main.css">
+    <style>
+	<style>
+:root {
+  font-family: Inter, sans-serif;
+  font-feature-settings: 'liga' 1, 'calt' 1;
+  /* Modern Government with Clear Differentiation */
+  --deep-blue: #211c26;      /* Very dark purple */
+  --navy-purple: #342f3a;    /* Dark purple */
+  --purple: #49434e;         /* Deep purple */
+  --pink: #5f5864;           /* Medium purple */
+  --coral: #756f7b;          /* Purple-gray */
+  --orange: #8c8692;         /* Medium lavender-gray */
+  
+  /* Additional colors from the palette */
+  --lavender-1: #a49daa;     /* Lavender-gray */
+  --lavender-2: #bdb6c3;     /* Light lavender */
+  --lavender-3: #d6cfdc;     /* Pale lavender */
+  
+  /* Neutral Gray Palette - updated to use the lavender tints */
+  --white: #ffffff;
+  --seasalt: #f7f7fa;           /* Very pale lavender-white */
+  --antiflash-white: #f0eef4;   /* Pale lavender-white */
+  --platinum: #e4e1e9;          /* Light lavender */
+  --french-gray: #d6cfdc;       /* Pale lavender */
+  --french-gray-2: #bdb6c3;     /* Light lavender */
+  --slate-gray: #a49daa;        /* Lavender-gray */
+  --outer-space: #8c8692;       /* Medium lavender-gray */
+  --onyx: #49434e;              /* Deep purple */
+  --eerie-black: #342f3a;       /* Dark purple */
+  
+  /* Light Mode Colors - updated to use your new palette */
+  --background: var(--antiflash-white);      /* Pale lavender-white */
+  --content-background: var(--white);        /* White */
+  --on-accent: #ffffff;                      /* White text on accent */
+  --accent: var(--navy-purple);              /* Dark purple */
+  --accent-hover: var(--deep-blue);          /* Very dark purple */
+  --accent-secondary: rgba(52, 47, 58, 0.15);  /* Dark purple with opacity */
+  --gradient-bg-start: rgba(52, 47, 58, 0.08); /* Dark purple with less opacity */
+  --gradient-bg-end: rgba(52, 47, 58, 0);      /* Transparent dark purple */
+  
+  /* Text colors */
+  --text-primary: var(--eerie-black);        /* Dark purple */
+  --text-secondary: var(--onyx);             /* Deep purple */
+  --text-tertiary: var(--slate-gray);        /* Lavender-gray */
+  
+  /* Border colors - updated to better match your palette */
+  --border-level-1: rgba(189, 182, 195, 0.3); /* Light lavender with opacity */
+  --border-level-2: rgba(189, 182, 195, 0.5); /* Light lavender with more opacity */
+  --border-level-3: rgba(189, 182, 195, 0.8); /* Light lavender with high opacity */
+  
+  /* Surface levels - updated to match your palette */
+  --surface-level-1: var(--content-background);
+  --surface-level-2: rgba(214, 207, 220, 0.3); /* Pale lavender with opacity */
+  --surface-level-3: rgba(214, 207, 220, 0.5); /* Pale lavender with more opacity */
+  
+  /* Chart colors updated to your 9-color palette */
+  --chart-accent-1: #211c26;  /* Very dark purple */
+  --chart-accent-2: #342f3a;  /* Dark purple */
+  --chart-accent-3: #49434e;  /* Deep purple */
+  --chart-accent-4: #5f5864;  /* Medium purple */
+  --chart-accent-5: #756f7b;  /* Purple-gray */
+  --chart-highlight: #8c8692; /* Medium lavender-gray */
+  --chart-extra-1: #a49daa;   /* Lavender-gray */
+  --chart-extra-2: #bdb6c3;   /* Light lavender */
+  --chart-extra-3: #d6cfdc;   /* Pale lavender */
+  
+  /* UI variables */
+  --header-font-weight: 600;
+  --button-font-weight: 500;
+  --space-m: 12px;
+  
+  /* Layout variables */
+  --sidebar-width: 280px;
+  --sidebar-width-collapsed: 60px;
+  --topbar-height: 60px;
+}
+
+/* Dark Mode Colors - completely revised for the purple palette */
+html.dark {
+  /* Background colors */
+  --background: #1a171e;              /* Nearly black-purple background */
+  --content-background: #26212d;      /* Very dark purple content area */
+  
+  /* Accent colors - using lighter colors from the palette for better visibility */
+  --accent: #a49daa;                  /* Lavender-gray */ 
+  --accent-hover: #bdb6c3;            /* Light lavender */
+  --accent-secondary: rgba(164, 157, 170, 0.3);   /* Lavender-gray with opacity */
+  --gradient-bg-start: rgba(164, 157, 170, 0.15); /* Lavender-gray with less opacity */
+  --gradient-bg-end: rgba(164, 157, 170, 0);      /* Transparent lavender-gray */
+  
+  /* Text colors - explicitly light for dark mode */
+  --text-primary: #f0eef4;            /* Pale lavender-white */
+  --text-secondary: #d6cfdc;          /* Pale lavender */
+  --text-tertiary: #bdb6c3;           /* Light lavender */
+  
+  /* Border colors */
+  --border-level-1: rgba(95, 88, 100, 0.35);    /* Medium purple with opacity */
+  --border-level-2: rgba(95, 88, 100, 0.55);    /* Medium purple with more opacity */
+  --border-level-3: rgba(117, 111, 123, 0.75);  /* Purple-gray with high opacity */
+  
+  /* Surface levels for cards, etc. */
+  --surface-level-1: var(--content-background);  /* Very dark purple */
+  --surface-level-2: rgba(52, 47, 58, 0.8);      /* Dark purple with high opacity */
+  --surface-level-3: rgba(73, 67, 78, 0.6);      /* Deep purple with medium opacity */
+  
+  /* Chart colors match the exact palette */
+  --chart-accent-1: #211c26;  /* Very dark purple */
+  --chart-accent-2: #342f3a;  /* Dark purple */
+  --chart-accent-3: #49434e;  /* Deep purple */
+  --chart-accent-4: #5f5864;  /* Medium purple */
+  --chart-accent-5: #756f7b;  /* Purple-gray */
+  --chart-highlight: #8c8692; /* Medium lavender-gray */
+  --chart-extra-1: #a49daa;   /* Lavender-gray */
+  --chart-extra-2: #bdb6c3;   /* Light lavender */
+  --chart-extra-3: #d6cfdc;   /* Pale lavender */
+}
+
+/* Force sidebar and content backgrounds in dark mode */
+html.dark .sidebar,
+html.dark .sidebar-header,
+html.dark .sidebar-content,
+html.dark .sidebar-footer {
+  background-color: var(--background) !important;
+  border-color: var(--border-level-2) !important;
+}
+
+html.dark .main-content,
+html.dark .dashboard-card,
+html.dark .chart-container,
+html.dark .section-header {
+  background-color: var(--content-background) !important;
+}
+
+/* Force lighter text colors in dark mode */
+html.dark .text-[var(--text-primary)],
+html.dark .text-[var(--accent)],
+html.dark h1, html.dark h2, html.dark h3, html.dark h4,
+html.dark .font-bold, html.dark .font-semibold, html.dark .font-extrabold,
+html.dark #currentFilterDescription,
+html.dark #totalContractsValue,
+html.dark #totalValueValue,
+html.dark #avgContractValue,
+html.dark #uniquePrimesValue {
+  color: var(--text-primary) !important;
+}
+
+/* Force accent color on buttons */
+html.dark .btn-primary,
+html.dark .action-btn,
+html.dark button.bg-[var(--accent)] {
+  background-color: var(--accent) !important;
+  color: var(--onyx) !important; /* Dark text on light buttons for contrast */
+}
+/* ===== BASE LAYOUT ===== */
+body {
+  background-color: var(--surface-level-1);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
+  margin: 0;
+  padding: 0;
+  height: 100vh;
+  overflow: hidden;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+/* App container and dashboard layout */
+.app-wrapper {
+    max-width: 1600px;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  margin-top: 20px;
+  margin-bottom: 20px;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 30px rgba(0, 31, 63, 0.1);
+  display: flex;
+  height: calc(100vh - 40px);
+  position: relative;
+  background-color: var(--background);
+}
+/* Add these useful button styles that match your chart colors */
+.btn-primary {
+  background-color: var(--accent);
+  color: var(--on-accent);
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  transition: background-color 0.2s;
+}
+.btn-primary:hover {
+  background-color: var(--accent-hover);
+}
+.btn-secondary {
+  background-color: var(--accent-secondary);
+  color: var(--accent);
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  transition: background-color 0.2s;
+}
+.btn-secondary:hover {
+  background-color: rgba(68, 78, 134, 0.25);
+}
+  /* UI variables */
+  --header-font-weight: 600;
+  --button-font-weight: 500;
+  --space-m: 12px;
+  /* Layout variables */
+  --sidebar-width: 280px;
+  --sidebar-width-collapsed: 60px;
+  --topbar-height: 60px;
+}
+/* Smallest screens */
+@media (max-width: 480px) {
+  #sankeyChart, #contractorMap {
+    height: 300px !important;
+  }
+  .dashboard-card {
+    padding: 0.75rem !important;
+  }
+  #unifiedSearchInput {
+    font-size: 14px;
+    padding: 0.5rem !important;
+  }
+  .stat-card {
+    padding: 0.75rem !important;
+  }
+  .stat-card .text-2xl {
+    font-size: 1.25rem !important;
+  }
+}
+/* ===== PRINT STYLES ===== */
+@media print {
+  .dashboard-card {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  button, .action-btn, .filter-btn, #themeToggleBtn, #shareViewBtn {
+    display: none !important;
+  }
+  body, .dashboard-container {
+    background-color: white !important;
+    color: black !important;
+  }
+  @page {
+    margin: 1cm;
+  }
+}
+/* Mobile breakpoints */
+@media (max-width: 767px) {
+  #sankeyChart, #contractorMap {
+    height: 350px !important;
+  }
+  .chart-container {
+    height: 250px !important;
+  }
+  .table-responsive th,
+  .table-responsive td {
+    padding: 4px 6px;
+    font-size: 11px;
+  }
+  .dashboard-card {
+    padding: 1rem !important;
+  }
+  .modal-content {
+    padding: 1rem;
+  }
+  #primeProfilesContainer {
+    max-height: 60vh;
+  }
+  button, 
+  .filter-btn, 
+  #themeToggleBtn, 
+  #shareViewBtn,
+  .suggestion-item {
+    min-height: 44px; /* Minimum height for touch targets */
+  }
+  #clearSearchBtn {
+    height: 44px;
+    width: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .stat-card {
+    margin-bottom: 0.5rem;
+  }
+  /* Further optimization for mobile */
+  .sidebar-content {
+    padding: 0.5rem;
+  }
+  .sidebar-search {
+    padding: 0 0.5rem;
+  }
+  /* Ensure header is compact */
+  .sidebar-header {
+    padding: 0.5rem;
+    height: auto;
+  }
+}
+/* Further optimizations for very small screens */
+@media (max-width: 640px) {
+  /* Make buttons horizontal */
+  .sidebar-content .flex.flex-wrap {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+  }
+  .app-wrapper {
+    margin: 0;
+    border-radius: 0;
+    height: 100vh;
+  }
+  .sidebar {
+    width: 0;
+    border-right: none;
+  }
+  .main-content {
+    margin-left: 0;
+    width: 100%;
+    padding: 0.5rem;
+  }
+  .sidebar.expanded {
+    width: 100%;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+  }
+  .dashboard-cards {
+    grid-template-columns: 1fr;
+  }
+  .chart-container {
+    height: 250px;
+  }
+  #sankeyChart {
+    height: 400px !important;
+  }
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  .section-header .action-btn {
+    align-self: flex-end;
+  }
+  .table-responsive {
+    margin-left: -1rem;
+    margin-right: -1rem;
+    width: calc(100% + 2rem);
+    padding: 0 0.5rem;
+  }
+  .table-responsive th,
+  .table-responsive td {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.7rem;
+    white-space: nowrap;
+  }
+}
+.dashboard-container {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 12px;
+}
+#dashboardContent {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 200px);
+}
+/* Main Content */
+.main-content {
+  margin-left: var(--sidebar-width);
+  width: calc(100% - var(--sidebar-width));
+  height: 100%;
+  overflow-y: auto;
+  transition: margin-left 0.3s ease, width 0.3s ease;
+  padding: 1rem;
+  border-radius: 0 12px 12px 0;
+  flex: 1;
+  background-color: var(--background);
+}
+.main-content-expanded {
+  margin-left: var(--sidebar-width-collapsed);
+  width: calc(100% - var(--sidebar-width-collapsed));
+}
+/* Sidebar Styles */
+.sidebar {
+  width: var(--sidebar-width);
+  height: 100%;
+  background-color: var(--background);
+  border-right: 1px solid var(--border-level-2);
+  transition: width 0.3s ease;
+  overflow-y: auto;
+  overflow-x: hidden;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+}
+.sidebar-collapsed {
+  width: var(--sidebar-width-collapsed);
+}
+.sidebar-header {
+  padding: 1rem;
+  border-bottom: 1px solid var(--border-level-2);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: var(--topbar-height);
+}
+.sidebar-header button {
+  opacity: 0.8;
+  transition: opacity 0.2s, background-color 0.2s;
+}
+.sidebar-header button:hover {
+  opacity: 1;
+}
+.sidebar-content {
+  padding: 1rem;
+  flex: 1;
+  overflow-y: auto;
+}
+.sidebar-footer {
+  padding: 1rem;
+  border-top: 1px solid var(--border-level-2);
+  font-size: 0.75rem;
+}
+/* Toggle Button for Sidebar */
+.toggle-sidebar {
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  cursor: pointer;
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+/* Collapsed Sidebar Adjustments */
+.sidebar-collapsed .sidebar-header {
+  justify-content: center;
+  padding: 1rem 0.5rem;
+}
+.sidebar-collapsed .sidebar-header .flex {
+  display: none;
+}
+.sidebar-collapsed .toggle-sidebar {
+  margin-left: 0;
+}
+.sidebar-collapsed .sidebar-footer {
+  padding: 0.5rem;
+  text-align: center;
+  font-size: 0;
+}
+.sidebar-collapsed .sidebar-content {
+  padding: 0.5rem;
+}
+/* Toggle Button in Main Content */
+.sidebar-collapsed ~ .main-content #expandSidebarBtn {
+  display: block;
+}
+/* ===== COMPONENTS ===== */
+/* Cards */
+.dashboard-card {
+  background-color: var(--surface-level-1) !important;
+  border: 1px solid var(--border-level-1);
+  border-radius: 0.5rem;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  padding: 1rem;
+}
+.dashboard-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+/* Search Input */
+.sidebar-search {
+  position: relative;
+  margin-bottom: 1.5rem;
+}
+.sidebar-search input::placeholder {
+  opacity: 0.7;
+}
+.sidebar-search button.text-xs {
+  font-weight: 500;
+  white-space: nowrap;
+}
+.search-input {
+  width: 100%;
+  padding: 0.75rem 2.5rem 0.75rem 0.75rem;
+  border: 1px solid var(--border-level-2);
+  border-radius: 0.375rem;
+  background-color: var(--background);
+  color: var(--text-primary);
+  font-size: 0.875rem;
+}
+.search-clear-btn {
+  position: absolute;
+  right: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+}
+/* Search suggestions styling */
+.search-suggestions {
+  position: absolute;
+  width: 100%;
+  max-height: 240px;
+  overflow-y: auto;
+  background-color: var(--background);
+  border: 1px solid var(--border-level-2);
+  border-top: none;
+  border-radius: 0 0 0.375rem 0.375rem;
+  z-index: 50;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 0.25rem 0;
+}
+.suggestion-item {
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  display: flex;
+  color: var(--text-secondary);
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  border-bottom: 1px solid var(--border-level-1);
+}
+.suggestion-item:last-child {
+  border-bottom: none;
+}
+.suggestion-item:hover {
+  background-color: var(--surface-level-2);
+}
+.suggestion-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 70%;
+}
+.type-label {
+  padding: 0.15rem 0.4rem;
+  border-radius: 0.25rem;
+  font-size: 0.65rem;
+  background-color: var(--surface-level-1);
+  color: var(--text-primary);
+  display: inline-block;
+  font-weight: 500;
+  text-align: center;
+  min-width: 45px;
+}
+/* Filter Elements */
+.filter-group {
+  margin-bottom: 1.5rem;
+}
+.filter-group-title {
+  font-weight: var(--header-font-weight);
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.filter-label {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.25rem;
+}
+.filter-btn-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+/* Hide specific filter groups */
+.filter-group:has(#resetMapBtn), 
+.filter-group:has(#resetSankeyBtn) {
+  display: none !important;
+}
+/* Buttons */
+.filter-btn {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.75rem;
+  border-radius: 0.25rem;
+  background-color: var(--surface-level-2);
+  border: 1px solid var(--border-level-2);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.filter-btn.active {
+  background-color: var(--accent) !important;
+  color: var(--on-accent) !important;
+  border-color: var(--accent) !important;
+}
+.filter-btn:hover {
+  background-color: var(--surface-level-3);
+}
+.action-btn {
+  padding: 0.5rem 1rem;
+  background-color: var(--accent);
+  color: var(--on-accent);
+  border-radius: 0.375rem;
+  font-weight: var(--button-font-weight);
+  transition: background-opacity 0.2s;
+}
+.action-btn:hover {
+  opacity: 0.9;
+}
+.secondary-btn {
+  padding: 0.375rem 0.75rem;
+  background-color: var(--surface-level-2);
+  color: var(--text-secondary);
+  border-radius: 0.375rem;
+  transition: background-color 0.2s;
+}
+.secondary-btn:hover {
+  background-color: var(--surface-level-3);
+}
+/* Focus styles */
+.filter-btn:focus,
+button:focus,
+input[type="text"]:focus,
+select:focus,
+a:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--background), 0 0 0 4px var(--chart-accent-1) !important;
+}
+/* Active Filter Indicators */
+.active-filters {
+  padding: 0.75rem;
+  border-radius: 0.375rem;
+  background-color: var(--accent-secondary);
+  margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.active-filter-tag {
+  display: flex;
+  align-items: center;
+  background-color: var(--accent);
+  color: var(--on-accent);
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  max-width: 100%;
+}
+.active-filter-tag span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+}
+.clear-filter-btn {
+  background: none;
+  border: none;
+  color: var(--on-accent);
+  margin-left: 0.5rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#activeFilterIndicator {
+  background-color: var(--accent-secondary);
+  color: var(--accent);
+  border: 1px solid var(--accent);
+}
+#activeFilterIndicator button {
+  background-color: var(--accent);
+  color: var(--on-accent);
+}
+#activeFilterIndicator button:hover {
+  background-color: rgba(132, 88, 179, 0.8);
+}
+/* ===== VISUALIZATION COMPONENTS ===== */
+/* Charts & Visualizations */
+.chart-container {
+  position: relative;
+  height: 300px;
+  width: 100%;
+}
+.chart-no-data {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text-primary);
+  background-color: var(--surface-level-1) !important;
+  border: 1px dashed var(--border-level-2);
+  border-radius: 0.375rem;
+  text-align: center;
+  padding: 1rem;
+}
+.chart-no-data svg {
+  width: 3rem;
+  height: 3rem;
+  margin-bottom: 0.5rem;
+  color: var(--text-tertiary);
+}
+/* Full width visualization */
+.full-width-viz {
+  max-width: 100%;
+  width: 100%;
+  overflow: hidden;
+  margin-left: 0;
+  margin-right: 0;
+}
+#sankeySection {
+  overflow: hidden;
+}
+#sankeyWrapper {
+  overflow: hidden;
+}
+#sankeyChart {
+  max-width: 100%;
+}
+.leaflet-tile {
+  filter: grayscale(80%) brightness(95%) contrast(105%);
+}
+/* Custom marker styling */
+.custom-marker {
+  border-radius: 50%;
+  width: 100%;
+  height: 100%;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.7), 0 0 0 2px rgba(0, 0, 0, 0.2); /* White inner border, dark outer border */
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.custom-marker:hover {
+  transform: scale(1.5);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.9), 0 0 0 3px rgba(0, 0, 0, 0.3);
+  z-index: 1000 !important;
+}
+/* Cluster styling */
+.custom-cluster {
+  background-color: transparent;
+  border: none;
+}
+.cluster-icon {
+  color: #fff;
+  border-radius: 50%;
+  text-align: center;
+  line-height: 30px;
+  width: 30px;
+  height: 30px;
+  font-size: 12px;
+  font-weight: bold;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.5);
+}
+.cluster-icon.medium {
+  width: 40px;
+  height: 40px;
+  line-height: 40px;
+  font-size: 14px;
+}
+.cluster-icon.large {
+  width: 50px;
+  height: 50px;
+  line-height: 50px;
+  font-size: 16px;
+}
+/* Sankey & Maps */
+#sankeyChart, #contractorMap {
+  height: 700px;
+}
+/* ===== TABLES ===== */
+.table-responsive {
+  display: block;
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-level-2) transparent;
+}
+.table-responsive::-webkit-scrollbar {
+  height: 6px;
+}
+.table-responsive::-webkit-scrollbar-track {
+  background: transparent;
+}
+.table-responsive::-webkit-scrollbar-thumb {
+  background-color: var(--border-level-2);
+  border-radius: 3px;
+}
+.table-responsive thead th {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background-color: var(--surface-level-1);
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border-level-2);
+  cursor: pointer;
+}
+.table-responsive th:hover {
+  background-color: var(--surface-level-2);
+}
+.table-responsive tbody {
+  background-color: var(--background);
+}
+.table-responsive td {
+  border-bottom: 1px solid var(--border-level-1);
+}
+/* Table text colors */
+.table-responsive th,
+.table-responsive td {
+  color: var(--text-primary);
+}
+.table-responsive th {
+  color: var(--text-secondary);
+}
+.table-responsive a {
+  color: var(--accent);
+}
+/* Ensure modal tables follow the same rules */
+#primeDetailContractsTableContainer th,
+#primeDetailContractsTableContainer td,
+#specializationContractsTable th,
+#specializationContractsTable td,
+#contractExpirationTableBody th,
+#contractExpirationTableBody td {
+  color: var(--text-primary);
+}
+/* ===== MODALS ===== */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0,0,0,0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 1rem;
+}
+.modal-content {
+  background-color: var(--background);
+  color: var(--text-primary);
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+  padding: 1.5rem;
+  max-width: 90vw;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+}
+.modal-content-lg { max-width: 60rem; }
+.modal-content-md { max-width: 48rem; }
+.modal-close-btn {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  padding: 0.25rem;
+}
+.modal-close-btn:hover {
+  color: var(--text-primary);
+}
+/* ===== UTILITIES ===== */
+.spinner {
+  border: 4px solid var(--surface-level-3);
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border-left-color: var(--accent);
+  animation: spin 1s linear infinite;
+  margin-right: 10px;
+}
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+#processingIndicator.flex {
+  display: flex;
+}
+.highlight-section {
+  animation: pulse-highlight 1.5s ease-in-out;
+}
+@keyframes pulse-highlight {
+  0%, 100% { box-shadow: 0 0 0 rgba(108, 117, 125, 0); }
+  50% { box-shadow: 0 0 15px rgba(108, 117, 125, 0.5); }
+}
+#page-loader {
+  transition: opacity 0.3s ease-out;
+}
+.timeout-message {
+  display: none;
+  text-align: center;
+  margin-top: 1rem;
+  padding: 0.5rem 1rem;
+  background-color: var(--accent-secondary);
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+}
+#page-loader.timeout .timeout-message {
+  display: block;
+}
+#manual-upload-section.timeout-show {
+  display: block !important;
+}
+/* ===== WELCOME TITLE STYLES ===== */
+.welcome-title {
+  line-height: 1.4;
+  animation: fadeIn 0.5s ease-in-out;
+}
+.welcome-title .greeting {
+  color: var(--chart-accent-1);
+  font-weight: 700;
+  display: inline;
+}
+.welcome-title .description {
+  font-weight: normal;
+  font-size: 0.9em;
+  opacity: 0.85;
+  display: inline;
+  margin-left: 0.25rem;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes subtle-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+.sidebar-search button.text-xs:first-of-type {
+  animation: subtle-pulse 2s ease-in-out;
+}
+/* ===== CURRENT VIEW TITLE ===== */
+#currentViewTitle {
+  /* Use the deep purple consistently across both themes */
+  background-color: var(--navy-purple) !important; /* Deep purple */
+  border: none !important; /* Remove the border */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important; /* Optional: add shadow for depth */
+}
+
+/* Apply consistent text colors regardless of theme */
+#currentViewTitle {
+  color: #ffffff !important; /* White text for contrast on purple */
+}
+
+#currentViewTitle * {
+  color: #ffffff !important;
+}
+
+#currentFilterDescription {
+  font-weight: 900 !important;
+  font-size: 2.5rem !important;
+  line-height: 1.1 !important;
+  letter-spacing: -0.02em !important;
+  color: #ffffff !important;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
+}
+
+/* Secondary and tertiary text with consistent opacity */
+#currentViewTitle .text-[var(--text-secondary)] {
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+
+#currentViewTitle .text-[var(--text-tertiary)] {
+  color: rgba(255, 255, 255, 0.5) !important;
+}
+
+/* Force the same appearance in both light and dark mode */
+html.dark #currentViewTitle,
+html:not(.dark) #currentViewTitle {
+  background-color: var(--navy-purple) !important;
+  border: none !important;
+}
+
+html.dark #currentFilterDescription,
+html:not(.dark) #currentFilterDescription {
+  color: #ffffff !important;
+}
+
+/* Remove any theme-specific overrides that might interfere */
+html:not(.dark) #currentViewTitle #currentFilterDescription {
+  color: #ffffff !important;
+}
+/* ===== THEME-SPECIFIC OVERRIDES ===== */
+/* Light theme specifics */
+html:not(.dark) #currentViewTitle #currentFilterDescription {
+  color: white !important;
+}
+/* Dark theme overrides */
+html.dark body {
+  background-color: #121212;
+}
+html.dark .dashboard-card {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+}
+html.dark .dashboard-card:hover {
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+}
+html.dark .chart-no-data {
+  background-color: var(--surface-level-1) !important;
+  border-color: var(--border-level-2);
+  color: var(--text-secondary);
+}
+html.dark .table-responsive::-webkit-scrollbar-thumb {
+  background-color: var(--border-level-3);
+}
+html.dark .table-responsive::-webkit-scrollbar-track {
+  background-color: var(--background);
+}
+html.dark .filter-btn:focus,
+html.dark button:focus,
+html.dark input[type="text"]:focus,
+html.dark select:focus {
+  box-shadow: 0 0 0 3px rgba(222, 226, 230, 0.3);
+  outline: none;
+}
+html.dark section.bg-[var(--surface-level-1)] {
+  background-color: var(--surface-level-1);
+}
+html.dark footer img[src*="powered-by-aws-white.png"] {
+  filter: brightness(0.8);
+}
+html.dark #primeDetailContractsTableContainer th,
+html.dark #specializationContractsTable th,
+html.dark #contractExpirationTableBody th {
+  color: var(--text-secondary);
+}
+html.dark #primeDetailContractsTableContainer td,
+html.dark #specializationContractsTable td,
+html.dark #contractExpirationTableBody td {
+  color: var(--text-primary);
+}
+html.dark .table-responsive tbody tr:hover {
+  background-color: var(--surface-level-2);
+}
+/* Theme toggle icons */
+#themeIconMoon {
+  display: none;
+}
+html.dark #themeIconSun {
+  display: none;
+}
+html.dark #themeIconMoon {
+  display: block;
+}
+/* ===== RESPONSIVE LAYOUT OPTIMIZATION ===== */
+/* Mobile sidebar toggle */
+.mobile-sidebar-toggle {
+  position: fixed;
+  bottom: 1rem;
+  right: 1rem;
+  z-index: 50;
+  background-color: var(--accent);
+  color: var(--on-accent);
+  border-radius: 50%;
+  width: 3rem;
+  height: 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+/* Add any additional styling needed for the directory */
+.contractor-card {
+    background-color: var(--surface-level-1);
+    border: 1px solid var(--border-level-1);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.contractor-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+#searchInput {
+    width: 100%;
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+    border: 1px solid var(--border-level-2);
+    border-radius: 0.375rem;
+}
+
+.contractor-filters {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+}
+
+.contractor-filters select {
+    padding: 0.5rem;
+    border: 1px solid var(--border-level-2);
+    border-radius: 0.375rem;
+}
+
+#contractorsContainer {
+    margin-top: 2rem;
+}
+
+.loading {
+    text-align: center;
+    padding: 2rem;
+    font-style: italic;
+}
+
+#pagination {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 2rem;
+}
+
+.page-button {
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--border-level-2);
+    border-radius: 0.375rem;
+    cursor: pointer;
+}
+
+.page-button.active {
+    background-color: var(--accent);
+    color: white;
+}
+
+/* Modal styles */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background-color: var(--surface-level-1);
+    padding: 2rem;
+    border-radius: 0.5rem;
+    max-width: 90%;
+    max-height: 90%;
+    overflow-y: auto;
+    position: relative;
+}
+
+.close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    font-size: 1.5rem;
+    cursor: pointer;
+}
+
+.table-responsive {
+    overflow-x: auto;
+    margin: 1rem 0;
+}
+
+.table-responsive table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.table-responsive th,
+.table-responsive td {
+    padding: 0.75rem;
+    border-bottom: 1px solid var(--border-level-1);
+    text-align: left;
+}
+
+.table-responsive th {
+    background-color: var(--surface-level-2);
+    font-weight: 600;
+}
+
+.view-details {
+    margin-top: 1rem;
+    padding: 0.5rem 1rem;
+    background-color: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 0.25rem;
+    cursor: pointer;
+}
+
+.view-details:hover {
+    opacity: 0.9;
+}
+    </style>
+</head>
+<body>
+    <div id="app-wrapper">
+        <!-- Your existing header/navigation -->
+        
+        <main class="main-content">
+            <div class="container">
+                <h1>Federal Contractor Directory</h1>
+                <p>Browse our database of federal prime contractors with active subcontracting plans.</p>
+                
+                <div class="search-section">
+                    <input type="text" id="searchInput" placeholder="Search by contractor name, NAICS, agency, etc.">
+                    
+                    <div class="contractor-filters">
+                        <select id="naicsFilter">
+                            <option value="">All NAICS Codes</option>
+                            <!-- Will be populated by JavaScript -->
+                        </select>
+                        
+                        <select id="agencyFilter">
+                            <option value="">All Agencies</option>
+                            <!-- Will be populated by JavaScript -->
+                        </select>
+                        
+                        <select id="stateFilter">
+                            <option value="">All States</option>
+                            <!-- Will be populated by JavaScript -->
+                        </select>
+                    </div>
+                </div>
+                
+                <div id="contractorsContainer">
+                    <div class="loading">Loading contractors...</div>
+                </div>
+                
+                <div id="pagination"></div>
+            </div>
+        </main>
+        
+        <!-- Your existing footer -->
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <script>
+        // JavaScript for the contractor directory
+        document.addEventListener('DOMContentLoaded', function() {
+            loadContractorData();
+        });
+        
+        // Global variables
+        let allContractors = [];
+        let filteredContractors = [];
+        let currentPage = 1;
+        const contractorsPerPage = 20;
+        
+        // Load CSV data from S3
+        async function loadContractorData() {
+            try {
+                // Define the S3 URL for the CSV file
+                const S3_CSV_URL = 'https://subhoodata.s3.us-east-1.amazonaws.com/data/sba24.csv';
+                
+                // Fetch data from S3
+                const response = await fetch(S3_CSV_URL);
+                
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch data: ${response.status} ${response.statusText}`);
+                }
+                
+                const csvText = await response.text();
+                
+                Papa.parse(csvText, {
+                    header: true,
+                    dynamicTyping: true,
+                    skipEmptyLines: true,
+                    complete: function(results) {
+                        console.log("CSV data loaded successfully:", results.data.length, "rows");
+                        processContractorData(results.data);
+                    },
+                    error: function(error) {
+                        document.getElementById('contractorsContainer').innerHTML = 
+                            `<div class="error">Error parsing CSV data: ${error.message}</div>`;
+                        console.error("CSV parsing error:", error);
+                    }
+                });
+            } catch (error) {
+                document.getElementById('contractorsContainer').innerHTML = 
+                    `<div class="error">Error loading data: ${error.message}</div>`;
+                console.error("Data loading error:", error);
+            }
+        }
+        
+        // Process and display data
+        function processContractorData(data) {
+            // Aggregate by contractor
+            const contractorsMap = {};
+            
+            data.forEach(contract => {
+                const contractorName = contract['Legal Business Name'];
+                if (!contractorName) return;
+                
+                if (!contractorsMap[contractorName]) {
+                    contractorsMap[contractorName] = {
+                        name: contractorName,
+                        uei: contract['Unique Entity ID'],
+                        contracts: [],
+                        totalValue: 0,
+                        naicsCodes: new Set(),
+                        agencies: new Set(),
+                        locations: new Set()
+                    };
+                }
+                
+                // Add contract
+                contractorsMap[contractorName].contracts.push(contract);
+                
+                // Update contractor stats
+                const value = parseFloat(contract['Base and All Options Value (Total Contract Value)']) || 0;
+                contractorsMap[contractorName].totalValue += value;
+                
+                if (contract['NAICS Code']) {
+                    contractorsMap[contractorName].naicsCodes.add(contract['NAICS Code']);
+                }
+                
+                if (contract['Contracting Agency Name']) {
+                    contractorsMap[contractorName].agencies.add(contract['Contracting Agency Name']);
+                }
+                
+                if (contract['Principal Place of Performance State Code']) {
+                    contractorsMap[contractorName].locations.add(contract['Principal Place of Performance State Code']);
+                }
+            });
+            
+            // Convert to array and sort by total value
+            allContractors = Object.values(contractorsMap).sort((a, b) => b.totalValue - a.totalValue);
+            
+            // Initially show all contractors
+            filteredContractors = [...allContractors];
+            
+            // Populate filters
+            populateFilters(data);
+            
+            // Display first page
+            displayContractors();
+            
+            // Set up event listeners for filters and search
+            setupEventListeners();
+        }
+        
+        // Populate filter dropdowns
+        function populateFilters(data) {
+            const naicsCodes = new Set();
+            const agencies = new Set();
+            const states = new Set();
+            
+            data.forEach(contract => {
+                if (contract['NAICS Code'] && contract['NAICS Description']) {
+                    naicsCodes.add(`${contract['NAICS Code']} - ${contract['NAICS Description']}`);
+                }
+                
+                if (contract['Contracting Agency Name']) {
+                    agencies.add(contract['Contracting Agency Name']);
+                }
+                
+                if (contract['Principal Place of Performance State Code']) {
+                    states.add(contract['Principal Place of Performance State Code']);
+                }
+            });
+            
+            // Populate NAICS dropdown
+            const naicsFilter = document.getElementById('naicsFilter');
+            Array.from(naicsCodes).sort().forEach(naics => {
+                const option = document.createElement('option');
+                option.value = naics.split(' - ')[0]; // Just the code part
+                option.textContent = naics;
+                naicsFilter.appendChild(option);
+            });
+            
+            // Populate agency dropdown
+            const agencyFilter = document.getElementById('agencyFilter');
+            Array.from(agencies).sort().forEach(agency => {
+                const option = document.createElement('option');
+                option.value = agency;
+                option.textContent = agency;
+                agencyFilter.appendChild(option);
+            });
+            
+            // Populate state dropdown
+            const stateFilter = document.getElementById('stateFilter');
+            Array.from(states).sort().forEach(state => {
+                const option = document.createElement('option');
+                option.value = state;
+                option.textContent = state;
+                stateFilter.appendChild(option);
+            });
+        }
+        
+        // Display contractors with pagination
+        function displayContractors() {
+            const container = document.getElementById('contractorsContainer');
+            
+            // Calculate page range
+            const startIndex = (currentPage - 1) * contractorsPerPage;
+            const endIndex = Math.min(startIndex + contractorsPerPage, filteredContractors.length);
+            
+            // Create HTML
+            let html = '';
+            
+            if (filteredContractors.length === 0) {
+                html = '<div class="no-results">No contractors match your search criteria.</div>';
+            } else {
+                for (let i = startIndex; i < endIndex; i++) {
+                    const contractor = filteredContractors[i];
+                    html += `
+                        <div class="contractor-card">
+                            <h3>${contractor.name}</h3>
+                            <p><strong>Total Contract Value:</strong> $${contractor.totalValue.toLocaleString()}</p>
+                            <p><strong>Contract Count:</strong> ${contractor.contracts.length}</p>
+                            <p><strong>NAICS Codes:</strong> ${Array.from(contractor.naicsCodes).join(', ')}</p>
+                            <p><strong>Agencies:</strong> ${Array.from(contractor.agencies).join(', ')}</p>
+                            <p><strong>Locations:</strong> ${Array.from(contractor.locations).join(', ')}</p>
+                            <button class="view-details" data-contractor="${encodeURIComponent(contractor.name)}">
+                                View Details
+                            </button>
+                        </div>
+                    `;
+                }
+            }
+            
+            container.innerHTML = html;
+            
+            // Create pagination
+            createPagination();
+            
+            // Add event listeners to detail buttons
+            document.querySelectorAll('.view-details').forEach(button => {
+                button.addEventListener('click', function() {
+                    const contractorName = decodeURIComponent(this.getAttribute('data-contractor'));
+                    showContractorDetails(contractorName);
+                });
+            });
+        }
+        
+        // Create pagination controls
+        function createPagination() {
+            const paginationDiv = document.getElementById('pagination');
+            const totalPages = Math.ceil(filteredContractors.length / contractorsPerPage);
+            
+            let paginationHtml = '';
+            
+            // Previous button
+            paginationHtml += `<button class="page-button ${currentPage === 1 ? 'disabled' : ''}" 
+                               ${currentPage === 1 ? 'disabled' : ''} data-page="prev">Previous</button>`;
+            
+            // Page numbers
+            const maxPageButtons = 5;
+            let startPage = Math.max(1, currentPage - Math.floor(maxPageButtons / 2));
+            let endPage = Math.min(totalPages, startPage + maxPageButtons - 1);
+            
+            if (endPage - startPage + 1 < maxPageButtons) {
+                startPage = Math.max(1, endPage - maxPageButtons + 1);
+            }
+            
+            for (let i = startPage; i <= endPage; i++) {
+                paginationHtml += `<button class="page-button ${i === currentPage ? 'active' : ''}" data-page="${i}">${i}</button>`;
+            }
+            
+            // Next button
+            paginationHtml += `<button class="page-button ${currentPage === totalPages ? 'disabled' : ''}" 
+                               ${currentPage === totalPages ? 'disabled' : ''} data-page="next">Next</button>`;
+            
+            paginationDiv.innerHTML = paginationHtml;
+            
+            // Add event listeners to pagination buttons
+            document.querySelectorAll('.page-button').forEach(button => {
+                button.addEventListener('click', function() {
+                    if (this.disabled) return;
+                    
+                    const page = this.getAttribute('data-page');
+                    
+                    if (page === 'prev') {
+                        currentPage--;
+                    } else if (page === 'next') {
+                        currentPage++;
+                    } else {
+                        currentPage = parseInt(page);
+                    }
+                    
+                    displayContractors();
+                    window.scrollTo(0, 0);
+                });
+            });
+        }
+        
+        // Show detailed contractor information
+        function showContractorDetails(contractorName) {
+            const contractor = allContractors.find(c => c.name === contractorName);
+            
+            if (!contractor) return;
+            
+            // Create a modal with detailed information
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            
+            // Sort contracts by value
+            const sortedContracts = [...contractor.contracts].sort((a, b) => {
+                const valueA = parseFloat(a['Base and All Options Value (Total Contract Value)']) || 0;
+                const valueB = parseFloat(b['Base and All Options Value (Total Contract Value)']) || 0;
+                return valueB - valueA;
+            });
+            
+            let contractsHtml = '';
+            sortedContracts.forEach(contract => {
+                contractsHtml += `
+                    <tr>
+                        <td>${contract['Procurement Instrument Identifier'] || 'N/A'}</td>
+                        <td>${contract['Contracting Agency Name'] || 'N/A'}</td>
+                        <td>${contract['NAICS Code'] || 'N/A'} - ${contract['NAICS Description'] || 'N/A'}</td>
+                        <td>$${(parseFloat(contract['Base and All Options Value (Total Contract Value)']) || 0).toLocaleString()}</td>
+                        <td>${formatDate(contract['Period of Performance Start Date'])} - ${formatDate(contract['Completion Date'])}</td>
+                    </tr>
+                `;
+            });
+            
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <span class="close">&times;</span>
+                    <h2>${contractor.name}</h2>
+                    <div class="contractor-details">
+                        <p><strong>UEI:</strong> ${contractor.uei || 'N/A'}</p>
+                        <p><strong>Total Contract Value:</strong> $${contractor.totalValue.toLocaleString()}</p>
+                        <p><strong>Contract Count:</strong> ${contractor.contracts.length}</p>
+                        <p><strong>NAICS Codes:</strong> ${Array.from(contractor.naicsCodes).join(', ')}</p>
+                        <p><strong>Agencies:</strong> ${Array.from(contractor.agencies).join(', ')}</p>
+                    </div>
+                    
+                    <h3>Active Contracts</h3>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Contract ID</th>
+                                    <th>Agency</th>
+                                    <th>NAICS</th>
+                                    <th>Value</th>
+                                    <th>Period of Performance</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${contractsHtml}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Add event listener to close the modal
+            modal.querySelector('.close').addEventListener('click', function() {
+                document.body.removeChild(modal);
+            });
+            
+            // Close modal when clicking outside content
+            modal.addEventListener('click', function(event) {
+                if (event.target === modal) {
+                    document.body.removeChild(modal);
+                }
+            });
+        }
+        
+        // Helper function to format date
+        function formatDate(dateStr) {
+            if (!dateStr) return 'N/A';
+            
+            try {
+                const date = new Date(dateStr);
+                return date.toLocaleDateString();
+            } catch (e) {
+                return dateStr;
+            }
+        }
+        
+        // Set up event listeners for search and filters
+        function setupEventListeners() {
+            const searchInput = document.getElementById('searchInput');
+            const naicsFilter = document.getElementById('naicsFilter');
+            const agencyFilter = document.getElementById('agencyFilter');
+            const stateFilter = document.getElementById('stateFilter');
+            
+            // Function to apply all filters
+            function applyFilters() {
+                const searchTerm = searchInput.value.toLowerCase();
+                const naicsCode = naicsFilter.value;
+                const agency = agencyFilter.value;
+                const state = stateFilter.value;
+                
+                filteredContractors = allContractors.filter(contractor => {
+                    // Search term
+                    if (searchTerm) {
+                        const searchMatch = 
+                            contractor.name.toLowerCase().includes(searchTerm) ||
+                            Array.from(contractor.naicsCodes).some(code => code.toString().toLowerCase().includes(searchTerm)) ||
+                            Array.from(contractor.agencies).some(a => a.toLowerCase().includes(searchTerm)) ||
+                            contractor.contracts.some(c => c['NAICS Description']?.toLowerCase().includes(searchTerm));
+                        
+                        if (!searchMatch) return false;
+                    }
+                    
+                    // NAICS filter
+                    if (naicsCode && !contractor.naicsCodes.has(parseInt(naicsCode))) {
+                        return false;
+                    }
+                    
+                    // Agency filter
+                    if (agency && !contractor.agencies.has(agency)) {
+                        return false;
+                    }
+                    
+                    // State filter
+                    if (state && !contractor.locations.has(state)) {
+                        return false;
+                    }
+                    
+                    return true;
+                });
+                
+                // Reset to first page and display
+                currentPage = 1;
+                displayContractors();
+            }
+            
+            // Add event listeners with debounce for search
+            let debounceTimeout;
+            searchInput.addEventListener('input', function() {
+                clearTimeout(debounceTimeout);
+                debounceTimeout = setTimeout(applyFilters, 300);
+            });
+            
+            // Add change listeners for dropdowns
+            naicsFilter.addEventListener('change', applyFilters);
+            agencyFilter.addEventListener('change', applyFilters);
+            stateFilter.addEventListener('change', applyFilters);
+        }
+    </script>
+</body>
+</html>
