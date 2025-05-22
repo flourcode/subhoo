@@ -2578,6 +2578,16 @@ function processAndInitialize(data) {
   } finally {
     hideProcessing();
   }
+  setTimeout(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const searchParam = urlParams.get('search');
+    
+    if (searchParam && unifiedSearchInput) {
+        const decodedSearch = decodeURIComponent(searchParam.replace(/\+/g, ' '));
+        unifiedSearchInput.value = decodedSearch;
+        applyFilter(decodedSearch);
+    }
+}, 1000);
 }
 // --- S3 Data Loading ---
 function loadDataFromS3() { 
