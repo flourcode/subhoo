@@ -2530,11 +2530,9 @@ function processAndInitialize(data) {
       return; 
     }
     
-    // Make sure these operations happen in the correct order
     parsedData = data; 
     activeFilterIndicator.classList.add('hidden');
     
-    // Ensure manual upload is completely hidden
     if (manualUploadSection) {
       manualUploadSection.classList.add('hidden');
       manualUploadSection.style.display = 'none';
@@ -2542,12 +2540,9 @@ function processAndInitialize(data) {
     
     s3LoadErrorDiv.classList.add('hidden');
     primeDetailViewSection.classList.add('hidden');
-    
-    // This should happen AFTER all initializations are done
     dashboardContent.classList.remove('hidden');
     dashboardContent.classList.add('data-loaded');
     
-    // Completely hide the loader
     const pageLoader = document.getElementById('page-loader');
     if (pageLoader) {
       pageLoader.style.opacity = '0';
@@ -2557,37 +2552,50 @@ function processAndInitialize(data) {
       }, 300);
     }
     
-    // Set the initial dashboard title
     updateDashboardTitle('', true);
-    
-    // Initialize everything else
     getChartColors(); 
     cleanupCharts(); 
-    initializeChartDefaults(); // Initialize chart defaults for better mobile experience
+    initializeChartDefaults();
     initializeCoreVisuals(parsedData);
     setupUnifiedSearch();
     initializePrimeProfilesSection(parsedData);
     initializeContractorMap(data);
     showSuccessMessage('Data loaded and dashboard initialized.', true);
-    
     applyInitialTheme();
-    applyFiltersFromURL();
+    
+    // REMOVED: applyFiltersFromURL(); 
+    
+    // DIRECT URL handling with debug logs
+    setTimeout(() => {
+      console.log('Checking URL for filters...');
+      const urlParams = new URLSearchParams(window.location.search);
+      const searchParam = urlParams.get('search');
+      const filterTypeParam = urlParams.get('filterType');
+      const filterValueParam = urlParams.get('filterValue');
+      
+      console.log('URL params found:', { searchParam, filterTypeParam, filterValueParam });
+      
+      if (filterTypeParam && filterValueParam) {
+        const decodedValue = decodeURIComponent(filterValueParam.replace(/\+/g, ' '));
+        console.log('Applying filter type with value:', decodedValue);
+        if (unifiedSearchInput) unifiedSearchInput.value = decodedValue;
+        applyFilter(decodedValue, filterTypeParam, decodedValue);
+      } else if (searchParam) {
+        const decodedSearch = decodeURIComponent(searchParam.replace(/\+/g, ' '));
+        console.log('Applying search with term:', decodedSearch);
+        if (unifiedSearchInput) unifiedSearchInput.value = decodedSearch;
+        applyFilter(decodedSearch);
+      } else {
+        console.log('No URL parameters to apply');
+      }
+    }, 1000);
+    
   } catch (error) {
     console.error("Error during processAndInitialize:", error);
     showErrorMessage("An error occurred while initializing the dashboard. Please try refreshing.", false);
   } finally {
     hideProcessing();
   }
-  setTimeout(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const searchParam = urlParams.get('search');
-    
-    if (searchParam && unifiedSearchInput) {
-        const decodedSearch = decodeURIComponent(searchParam.replace(/\+/g, ' '));
-        unifiedSearchInput.value = decodedSearch;
-        applyFilter(decodedSearch);
-    }
-}, 1000);
 }
 // --- S3 Data Loading ---
 function loadDataFromS3() { 
