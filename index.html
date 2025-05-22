@@ -5227,21 +5227,16 @@ shareViewBtn.addEventListener('click', () => {
     url.searchParams.delete('filterType'); 
     url.searchParams.delete('filterValue'); 
     
-    // Get current search state
-    const currentSearchTermInBar = unifiedSearchInput.value.trim();
+    // Get current search state - SIMPLIFIED approach
+    const currentSearchTerm = unifiedSearchInput.value.trim();
     
-    // Check if we're viewing a specific prime
-    if (isViewingSpecificPrime && specificPrimeName) { 
-        url.searchParams.set('filterType', 'primeName');
-        url.searchParams.set('filterValue', specificPrimeName);
-    } else if (currentSearchTermInBar) { 
-        // For general searches, use the search parameter
-        url.searchParams.set('search', currentSearchTermInBar);
+    if (currentSearchTerm) {
+        // Always use the 'search' parameter for consistency
+        url.searchParams.set('search', currentSearchTerm);
     }
     
     // Copy to clipboard with error handling
     if (navigator.clipboard && navigator.clipboard.writeText) {
-        // Modern clipboard API
         navigator.clipboard.writeText(url.toString()).then(() => {
             showShareToast('Link copied to clipboard!');
         }).catch(err => {
@@ -5249,10 +5244,10 @@ shareViewBtn.addEventListener('click', () => {
             fallbackCopyToClipboard(url.toString());
         });
     } else {
-        // Fallback for older browsers
         fallbackCopyToClipboard(url.toString());
     }
 });
+
 
 // ADD these helper functions:
 function showShareToast(message) {
