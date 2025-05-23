@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>FPDS Contracts - NAICS 511210</title>
+  <style>
+    body { font-family: Arial; padding: 2rem; }
+    .result { border-bottom: 1px solid #ccc; padding: 1rem 0; }
+  </style>
+</head>
+<body>
+  <h1>Live FPDS Contracts (NAICS 511210)</h1>
+  <div id="results">Loading...</div>
+
+  <script>
+    fetch('fpds-proxy.php')
+      .then(response => response.json())
+      .then(data => {
+        const container = document.getElementById('results');
+        container.innerHTML = '';
+        data.forEach(item => {
+          const div = document.createElement('div');
+          div.className = 'result';
+          div.innerHTML = `
+            <strong>Award ID:</strong> ${item.award_id}<br>
+            <strong>Agency:</strong> ${item.agency}<br>
+            <strong>Office:</strong> ${item.office}<br>
+            <strong>Vendor:</strong> ${item.vendor}<br>
+            <strong>Signed:</strong> ${item.signed}<br>
+            <strong>Amount:</strong> ${item.amount}<br>
+            <strong>Description:</strong> ${item.desc}
+          `;
+          container.appendChild(div);
+        });
+      })
+      .catch(err => {
+        document.getElementById('results').innerText = 'Error loading data.';
+        console.error(err);
+      });
+  </script>
+</body>
+</html>
