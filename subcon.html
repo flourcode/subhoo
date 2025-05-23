@@ -4,35 +4,111 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>ISV Subcontract Dashboard with Charts</title>
+  <title>ISV Opportunity Radar</title>
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; background-color: #f4f4f9; }
-    h1 { text-align: center; color: #333; }
-    input[type="text"] { padding: 8px; width: 100%; max-width: 400px; margin-bottom: 20px; }
-    table { border-collapse: collapse; width: 100%; background-color: white; margin-top: 30px; }
-    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-    th { background-color: #005EA2; color: white; position: sticky; top: 0; }
-    tr:hover { background-color: #f1f1f1; }
-    canvas { margin: 30px 0; }
+    :root {
+      --primary: #1E3A8A;
+      --bg: #F9FAFB;
+      --card-bg: #FFFFFF;
+      --text: #111827;
+      --muted: #6B7280;
+      --accent: #3B82F6;
+    }
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+    }
+    header {
+      background: var(--primary);
+      color: white;
+      padding: 1.5rem;
+      text-align: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    header h1 {
+      margin: 0;
+      font-size: 1.75rem;
+    }
+    main {
+      padding: 2rem;
+      max-width: 1200px;
+      margin: auto;
+    }
+    .search-container {
+      margin-bottom: 2rem;
+      display: flex;
+      justify-content: center;
+    }
+    input[type="text"] {
+      padding: 0.75rem;
+      width: 100%;
+      max-width: 600px;
+      border: 1px solid #D1D5DB;
+      border-radius: 8px;
+      font-size: 1rem;
+    }
+    .card {
+      background-color: var(--card-bg);
+      border: 1px solid #E5E7EB;
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    }
+    canvas {
+      width: 100%;
+      max-height: 400px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+    th, td {
+      padding: 0.75rem;
+      text-align: left;
+      border-bottom: 1px solid #E5E7EB;
+    }
+    th {
+      background-color: var(--primary);
+      color: white;
+      position: sticky;
+      top: 0;
+    }
+    tr:hover {
+      background-color: #F3F4F6;
+    }
   </style>
 </head>
 <body>
-  <h1>ISV Subcontract Dashboard</h1>
-  <input type="text" id="searchBox" placeholder="Filter by any keyword..." oninput="filterTable()" />
+  <header>
+    <h1>ISV Opportunity Radar</h1>
+    <p style="margin-top: 0.5rem; font-weight: 300;">Follow the money. Spot teaming opportunities. Activate your ISVs.</p>
+  </header>
+  <main>
+    <div class="search-container">
+      <input type="text" id="searchBox" placeholder="Search by agency, prime, ISV, or keyword…" oninput="filterTable()" />
+    </div>
 
-  <canvas id="agencyChart"></canvas>
-  <canvas id="primeChart"></canvas>
-  <canvas id="timelineChart"></canvas>
-  <canvas id="subChart"></canvas>
+    <div class="card"><canvas id="agencyChart"></canvas></div>
+    <div class="card"><canvas id="primeChart"></canvas></div>
+    <div class="card"><canvas id="timelineChart"></canvas></div>
+    <div class="card"><canvas id="subChart"></canvas></div>
 
-  <div style="overflow-x:auto;">
-    <table id="dataTable">
-      <thead></thead>
-      <tbody></tbody>
-    </table>
-  </div>
+    <div class="card">
+      <h2 style="margin-top: 0;">Subcontract Records</h2>
+      <div style="overflow-x:auto;">
+        <table id="dataTable">
+          <thead></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
 
 <script>
   const table = document.getElementById('dataTable');
@@ -63,7 +139,7 @@
       type: 'bar',
       data: {
         labels: labels,
-        datasets: [{ label: title, data: values, backgroundColor: '#005EA2' }]
+        datasets: [{ label: title, data: values, backgroundColor: '#3B82F6' }]
       },
       options: {
         indexAxis: 'y',
@@ -87,8 +163,8 @@
         datasets: [{
           label: title,
           data: values,
-          borderColor: '#005EA2',
-          backgroundColor: '#D2E3F3',
+          borderColor: '#1E3A8A',
+          backgroundColor: '#DBEAFE',
           fill: true
         }]
       },
