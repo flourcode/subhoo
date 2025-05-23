@@ -4,21 +4,29 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>ISV Subcontract Dashboard</title>
+  <title>ISV Subcontract Dashboard with Charts</title>
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body { font-family: Arial, sans-serif; padding: 20px; background-color: #f4f4f9; }
     h1 { text-align: center; color: #333; }
     input[type="text"] { padding: 8px; width: 100%; max-width: 400px; margin-bottom: 20px; }
-    table { border-collapse: collapse; width: 100%; background-color: white; }
+    table { border-collapse: collapse; width: 100%; background-color: white; margin-top: 30px; }
     th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
     th { background-color: #005EA2; color: white; position: sticky; top: 0; }
     tr:hover { background-color: #f1f1f1; }
+    canvas { margin: 30px 0; }
   </style>
 </head>
 <body>
   <h1>ISV Subcontract Dashboard</h1>
   <input type="text" id="searchBox" placeholder="Filter by any keyword..." oninput="filterTable()" />
+
+  <canvas id="agencyChart"></canvas>
+  <canvas id="primeChart"></canvas>
+  <canvas id="timelineChart"></canvas>
+  <canvas id="subChart"></canvas>
+
   <div style="overflow-x:auto;">
     <table id="dataTable">
       <thead></thead>
@@ -26,48 +34,130 @@
     </table>
   </div>
 
-  <script>
-    const table = document.getElementById('dataTable');
-    const thead = table.querySelector('thead');
-    const tbody = table.querySelector('tbody');
+<script>
+  const table = document.getElementById('dataTable');
+  const thead = table.querySelector('thead');
+  const tbody = table.querySelector('tbody');
 
-    Papa.parse('isv_subcon_data.csv', {
-      download: true,
-      header: true,
-      complete: function(results) {
-        const data = results.data;
-        const headers = results.meta.fields;
+  function parseValue(value) {
+    return parseFloat(value.replace(/[$,]/g, '')) || 0;
+  }
 
-        // Build table headers
-        const headerRow = document.createElement('tr');
-        headers.forEach(h => {
-          const th = document.createElement('th');
-          th.textContent = h;
-          headerRow.appendChild(th);
-        });
-        thead.appendChild(headerRow);
+  function groupAndSum(data, groupKey) {
+    const map = {};
+    data.forEach(row => {
+      const key = row[groupKey];
+      const val = parseValue(row["Total Contract Value"]);
+      map[key] = (map[key] || 0) + val;
+    });
+    return Object.entries(map)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10);
+  }
 
-        // Build table body
-        data.forEach(row => {
-          const tr = document.createElement('tr');
-          headers.forEach(h => {
-            const td = document.createElement('td');
-            td.textContent = row[h] || '';
-            tr.appendChild(td);
-          });
-          tbody.appendChild(tr);
-        });
+  function plotBarChart(canvasId, labels, values, title) {
+    new Chart(document.getElementById(canvasId), {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{ label: title, data: values, backgroundColor: '#005EA2' }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        plugins: {
+          legend: { display: false },
+          title: { display: true, text: title }
+        }
       }
     });
+  }
 
-    function filterTable() {
-      const keyword = document.getElementById('searchBox').value.toLowerCase();
-      const rows = tbody.querySelectorAll('tr');
-      rows.forEach(row => {
-        const text = row.textContent.toLowerCase();
-        row.style.display = text.includes(keyword) ? '' : 'none';
+  function plotLineChart(canvasId, dateMap, title) {
+    const dates = Object.keys(dateMap).sort();
+    const values = dates.map(d => dateMap[d]);
+
+    new Chart(document.getElementById(canvasId), {
+      type: 'line',
+      data: {
+        labels: dates,
+        datasets: [{
+          label: title,
+          data: values,
+          borderColor: '#005EA2',
+          backgroundColor: '#D2E3F3',
+          fill: true
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: false },
+          title: { display: true, text: title }
+        }
+      }
+    });
+  }
+
+  Papa.parse("isv_subcon_data.csv", {
+    download: true,
+    header: true,
+    complete: function(results) {
+      const data = results.data;
+      const headers = results.meta.fields;
+
+      // Build table
+      const headerRow = document.createElement('tr');
+      headers.forEach(h => {
+        const th = document.createElement('th');
+        th.textContent = h;
+        headerRow.appendChild(th);
       });
+      thead.appendChild(headerRow);
+
+      data.forEach(row => {
+        const tr = document.createElement('tr');
+        headers.forEach(h => {
+          const td = document.createElement('td');
+          td.textContent = row[h] || '';
+          tr.appendChild(td);
+        });
+        tbody.appendChild(tr);
+      });
+
+      // Chart 1: Top Agencies
+      const topAgencies = groupAndSum(data, "Contracting Subtier");
+      plotBarChart("agencyChart", topAgencies.map(a => a[0]), topAgencies.map(a => a[1]), "Top Agencies Feeding ISVs");
+
+      // Chart 2: Top Primes
+      const topPrimes = groupAndSum(data, "Prime Contractor");
+      plotBarChart("primeChart", topPrimes.map(a => a[0]), topPrimes.map(a => a[1]), "Top Prime Contractors Using ISVs");
+
+      // Chart 3: Timeline (Monthly)
+      const timelineMap = {};
+      data.forEach(row => {
+        const date = new Date(row["Subcontract Date"]);
+        if (!isNaN(date)) {
+          const month = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}`;
+          timelineMap[month] = (timelineMap[month] || 0) + parseValue(row["Total Contract Value"]);
+        }
+      });
+      plotLineChart("timelineChart", timelineMap, "Subcontract Spending Over Time");
+
+      // Chart 4: Top Subcontractors
+      const topSubs = groupAndSum(data, "Subcontractor");
+      plotBarChart("subChart", topSubs.map(a => a[0]), topSubs.map(a => a[1]), "Top ISV Subcontract Recipients");
     }
-  </script>
+  });
+
+  function filterTable() {
+    const keyword = document.getElementById("searchBox").value.toLowerCase();
+    const rows = tbody.querySelectorAll("tr");
+    rows.forEach(row => {
+      const text = row.textContent.toLowerCase();
+      row.style.display = text.includes(keyword) ? "" : "none";
+    });
+  }
+</script>
 </body>
 </html>
