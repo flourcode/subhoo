@@ -1,0 +1,73 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ISV Subcontract Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; background-color: #f4f4f9; }
+    h1 { text-align: center; color: #333; }
+    input[type="text"] { padding: 8px; width: 100%; max-width: 400px; margin-bottom: 20px; }
+    table { border-collapse: collapse; width: 100%; background-color: white; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+    th { background-color: #005EA2; color: white; position: sticky; top: 0; }
+    tr:hover { background-color: #f1f1f1; }
+  </style>
+</head>
+<body>
+  <h1>ISV Subcontract Dashboard</h1>
+  <input type="text" id="searchBox" placeholder="Filter by any keyword..." oninput="filterTable()" />
+  <div style="overflow-x:auto;">
+    <table id="dataTable">
+      <thead></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <script>
+    const table = document.getElementById('dataTable');
+    const thead = table.querySelector('thead');
+    const tbody = table.querySelector('tbody');
+
+    Papa.parse('isv_subcon_data.csv', {
+      download: true,
+      header: true,
+      complete: function(results) {
+        const data = results.data;
+        const headers = results.meta.fields;
+
+        // Build table headers
+        const headerRow = document.createElement('tr');
+        headers.forEach(h => {
+          const th = document.createElement('th');
+          th.textContent = h;
+          headerRow.appendChild(th);
+        });
+        thead.appendChild(headerRow);
+
+        // Build table body
+        data.forEach(row => {
+          const tr = document.createElement('tr');
+          headers.forEach(h => {
+            const td = document.createElement('td');
+            td.textContent = row[h] || '';
+            tr.appendChild(td);
+          });
+          tbody.appendChild(tr);
+        });
+      }
+    });
+
+    function filterTable() {
+      const keyword = document.getElementById('searchBox').value.toLowerCase();
+      const rows = tbody.querySelectorAll('tr');
+      rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(keyword) ? '' : 'none';
+      });
+    }
+  </script>
+</body>
+</html>
