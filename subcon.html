@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>ISV Subcontract Dashboard with Charts</title>
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <style>
     body { font-family: Arial, sans-serif; padding: 20px; background-color: #f4f4f9; }
     h1 { text-align: center; color: #333; }
@@ -40,6 +40,7 @@
   const tbody = table.querySelector('tbody');
 
   function parseValue(value) {
+    if (!value) return 0;
     return parseFloat(value.replace(/[$,]/g, '')) || 0;
   }
 
@@ -48,7 +49,9 @@
     data.forEach(row => {
       const key = row[groupKey];
       const val = parseValue(row["Total Contract Value"]);
-      map[key] = (map[key] || 0) + val;
+      if (key) {
+        map[key] = (map[key] || 0) + val;
+      }
     });
     return Object.entries(map)
       .sort((a, b) => b[1] - a[1])
@@ -106,7 +109,6 @@
       const data = results.data;
       const headers = results.meta.fields;
 
-      // Build table
       const headerRow = document.createElement('tr');
       headers.forEach(h => {
         const th = document.createElement('th');
@@ -125,15 +127,12 @@
         tbody.appendChild(tr);
       });
 
-      // Chart 1: Top Agencies
       const topAgencies = groupAndSum(data, "Contracting Subtier");
       plotBarChart("agencyChart", topAgencies.map(a => a[0]), topAgencies.map(a => a[1]), "Top Agencies Feeding ISVs");
 
-      // Chart 2: Top Primes
       const topPrimes = groupAndSum(data, "Prime Contractor");
       plotBarChart("primeChart", topPrimes.map(a => a[0]), topPrimes.map(a => a[1]), "Top Prime Contractors Using ISVs");
 
-      // Chart 3: Timeline (Monthly)
       const timelineMap = {};
       data.forEach(row => {
         const date = new Date(row["Subcontract Date"]);
@@ -144,7 +143,6 @@
       });
       plotLineChart("timelineChart", timelineMap, "Subcontract Spending Over Time");
 
-      // Chart 4: Top Subcontractors
       const topSubs = groupAndSum(data, "Subcontractor");
       plotBarChart("subChart", topSubs.map(a => a[0]), topSubs.map(a => a[1]), "Top ISV Subcontract Recipients");
     }
