@@ -617,68 +617,31 @@
             throw new Error('All CORS proxies failed');
         }
 
-        async function loadOpportunities() {
-        showToast('Refreshing opportunities...', 2000);
-        
-        try {
-            // Fetch from multiple sources in parallel, now including SBA CSV
-            const [newsData, contractData, githubData, sbaCsvData] = await Promise.all([
-                fetchNewsFeeds(),
-                fetchContractData(), // This is your existing SAM.gov, USASpending, etc.
-                fetchGitHubActivity(),
-                fetchSBAContracts() // Add the new S3 CSV data source
-            ]);
-            
-            // Process and score opportunities
-            opportunities = processOpportunities([
-                ...newsData,
-                ...contractData,
-                ...githubData,
-                ...sbaCsvData // Include SBA CSV data here
-            ]);
-            
-            // Update UI
-            updateStats();
-            renderOpportunities();
-            
-            showToast(`Loaded ${opportunities.length} opportunities`, 3000);
-        } catch (error) {
-            console.error('Error loading opportunities:', error);
-            showToast('Error loading some data sources', 3000);
-            // Still try to render whatever might have been partially loaded or cached
-            if (opportunities && opportunities.length > 0) {
-                updateStats();
-                renderOpportunities();
-            } else {
-                 document.getElementById('opportunitiesGrid').innerHTML = '<div class="loading"><p>Could not load opportunities. Please check console for errors.</p></div>';
-            }
-        }
-    }
-
-    async function fetchSBAContracts() {
+async function fetchSBAContracts() {
         const s3CsvUrl = 'https://subhoodata.s3.us-east-1.amazonaws.com/data/sba24.csv';
         const sbaContracts = [];
         console.log('Attempting to fetch SBA contracts from S3...');
 
-        try { // This is the try block that might be referenced by "opened at line 662"
+        try {
             let csvText;
-            try { // Inner try for direct fetch
+            try {
                 const response = await fetch(s3CsvUrl);
                 if (!response.ok) {
-                    throw new Error(`S3 Load Error: HTTP error ${response.status}`);
+                    throw new Error(`S3 Load Error for ${s3CsvUrl}: HTTP error ${response.status}`);
                 }
                 csvText = await response.text();
-            } catch (fetchError) { // Catch for inner try
+            } catch (fetchError) {
                 console.warn(`Direct fetch for ${s3CsvUrl} failed, trying with CORS proxy. Error: ${fetchError.message}`);
-                csvText = await fetchWithCORS(s3CsvUrl); // Ensure fetchWithCORS is robust
-            } // Inner try-catch block correctly closed
-
-            if (!csvText || csvText.trim() === '') {
-                console.warn('SBA CSV file from S3 is empty.');
-                return sbaContracts; // Exits function if no CSV text
+                // Assuming fetchWithCORS is defined elsewhere in your script and handles proxies
+                // If fetchWithCORS also fails, this will throw, caught by the outer catch.
+                csvText = await fetchWithCORS(s3CsvUrl);
             }
 
-            // Parse CSV data using PapaParse
+            if (!csvText || csvText.trim() === '') {
+                console.warn('SBA CSV file from S3 is empty or could not be fetched.');
+                return sbaContracts;
+            }
+
             const parseResult = Papa.parse(csvText, {
                 header: true,
                 dynamicTyping: true,
@@ -687,54 +650,54 @@
 
             if (parseResult.errors && parseResult.errors.length > 0) {
                 console.error('Error parsing CSV from S3:', parseResult.errors);
-                return sbaContracts; // Exits function on parse error
+                // Provide more specific error feedback to the user if possible
+                showToast('CSV parsing error. Check console.', 3000);
+                return sbaContracts;
             }
 
             if (parseResult.data && parseResult.data.length > 0) {
                 parseResult.data.forEach((row, index) => {
-                    // Helper to parse currency, defined inside forEach for scope, or can be outside.
-                    // Line 685 character 133 error MIGHT be related to how this line or the one before it is parsed
-                    // if there's an extremely subtle syntax issue.
                     const parseCurrency = (valueStr) => {
-                        if (!valueStr) return 0;
-                        // Ensure valueStr is treated as a string before replace
+                        if (valueStr === null || typeof valueStr === 'undefined') return 0;
                         return parseFloat(String(valueStr).replace(/[$,\s]/g, '')) || 0;
                     };
 
-                    const piid = row['Procurement Instrument Identifier'] || `sba-csv-${Date.now()}-${index}`;
+                    // --- FIX for piid.startsWith error ---
+                    // Ensure piid is treated as a string.
+                    let piidFromRow = row['Procurement Instrument Identifier'];
+                    const piid = piidFromRow !== null && typeof piidFromRow !== 'undefined' ? String(piidFromRow) : `sba-csv-${Date.now()}-${index}`;
+                    // --- End of FIX ---
+
                     const agencyName = row['Contracting Agency Name'] || row['Contracting Department Name'] || 'Federal Agency';
                     const contractorName = row['Legal Business Name'] || 'N/A';
                     const naicsDesc = row['NAICS Description'] || 'Federal Contract';
-                    // Ensure column names are exact matches for your CSV
                     const contractValueStr = row['Base and All Options Value (Total Contract Value)'] || row['Total Contract Value'];
                     const contractValue = parseCurrency(contractValueStr);
+                    const title = `${naicsDesc} for ${agencyName} (CSV)`; // Added (CSV) for clarity
 
-                    const title = `${naicsDesc} for ${agencyName}`;
-                    // Careful with template literals and complex expressions on a single line.
                     const description = `Contract opportunity for ${contractorName} with ${agencyName}. NAICS: ${row['NAICS Code'] || 'N/A'}. Value: ${contractValue ? '$' + contractValue.toLocaleString() : 'N/A'}. PIID: ${piid}.`;
 
                     let oppDate;
-                    // Check date validity explicitly
                     const startDateVal = row['Period of Performance Start Date'];
                     const completionDateVal = row['Completion Date'];
-
                     if (startDateVal && !isNaN(new Date(startDateVal).getTime())) {
                         oppDate = new Date(startDateVal);
                     } else if (completionDateVal && !isNaN(new Date(completionDateVal).getTime())) {
                         oppDate = new Date(completionDateVal);
                     } else {
-                        oppDate = new Date(); // Fallback
+                        oppDate = new Date();
                     }
 
+                    // Check if piid is the generated fallback before attempting trim()
                     const fpdsLink = piid.startsWith('sba-csv-') ? '#' : `https://www.fpds.gov/ezsearch/fpdsportal?indexName=awardfull&templateName=1.5.3&s=FPDS&q=${encodeURIComponent(piid.trim())}`;
 
                     const sbaOpp = {
-                        id: `sba-csv-${piid}-${index}`,
+                        id: `sba-csv-${piid.replace(/\s+/g, '-')}-${index}`, // Sanitize piid for ID
                         title: title,
                         link: fpdsLink,
                         description: description.substring(0, 400) + (description.length > 400 ? '...' : ''),
                         date: oppDate,
-                        source: 'SBA sba24.csv',
+                        source: 'sba24.csv (S3)',
                         type: 'contract-csv',
                         agency: agencyName,
                         value: contractValue ? `${Math.round(contractValue / 1000000)}M` : null,
@@ -744,57 +707,234 @@
                     if (containsKeywords(sbaOpp.title + ' ' + sbaOpp.description)) {
                         sbaContracts.push(sbaOpp);
                     }
-                }); // forEach correctly closed
-
-                console.log(`Successfully parsed ${sbaContracts.length} relevant SBA contracts from S3.`);
+                });
+                console.log(`Successfully parsed and filtered ${sbaContracts.length} relevant SBA contracts from S3.`);
             } else {
-                console.warn('No data parsed from SBA CSV file.');
-            } // if-else correctly closed
-
-        } catch (error) { // Catch for the outer try block
-            console.error('Error fetching or processing SBA contracts from S3:', error);
-            showToast('Error loading SBA contract data from S3', 3000);
-        } // Outer try-catch block correctly closed
-        return sbaContracts;
-    } // fetchSBAContracts function correctly closed
-
-
-    // Modified loadOpportunities function
-    async function loadOpportunities() {
-        showToast('Refreshing opportunities...', 2000);
-        
-        try {
-            const [newsData, contractData, githubData, sbaCsvData] = await Promise.all([
-                fetchNewsFeeds(),
-                fetchContractData(),
-                fetchGitHubActivity(),
-                fetchSBAContracts()
-            ]);
-            
-            opportunities = processOpportunities([
-                ...newsData,
-                ...contractData,
-                ...githubData,
-                ...sbaCsvData
-            ]);
-            
-            updateStats();
-            renderOpportunities();
-            
-            showToast(`Loaded ${opportunities.length} opportunities`, 3000);
-        } catch (error) {
-            console.error('Error loading opportunities:', error);
-            showToast('Error loading some data sources', 3000);
-            if (opportunities && opportunities.length > 0) {
-                updateStats();
-                renderOpportunities();
-            } else {
-                 document.getElementById('opportunitiesGrid').innerHTML = '<div class="loading"><p>Could not load opportunities. Please check console for errors.</p></div>';
+                console.warn('No data rows parsed from SBA CSV file.');
             }
+
+        } catch (error) { // Outer catch for the entire function
+            console.error('Error in fetchSBAContracts:', error);
+            showToast('Failed to load SBA contracts. Check console.', 3000);
         }
+        return sbaContracts;
     }
 
+// Modified loadOpportunities function to FOCUS ON CSV
+    async function loadOpportunities() {
+        showToast('Loading opportunities (CSV Only)...', 2000);
+        // Clear the grid and show loading spinner
+        const grid = document.getElementById('opportunitiesGrid');
+        grid.innerHTML = `<div class="loading"><div class="spinner"></div><p>Loading opportunities from CSV...</p></div>`;
+        opportunities = []; // Reset opportunities at the start
 
+        try {
+            const sbaCsvData = await fetchSBAContracts(); // This should now return deduplicated data
+
+            console.log(`Data received from fetchSBAContracts: ${sbaCsvData ? sbaCsvData.length : 'undefined/null'} items`);
+
+            if (!Array.isArray(sbaCsvData)) {
+                console.error("fetchSBAContracts did not return an array. Received:", sbaCsvData);
+                // opportunities array is already reset
+            } else {
+                // Ensure processOpportunities can handle an empty array gracefully
+                opportunities = processOpportunities(sbaCsvData);
+            }
+            
+            console.log(`Opportunities after processOpportunities (deduplication and keyword filtering): ${opportunities.length} items`);
+            
+            updateStats(); // Update header stats like "Total Opps"
+            renderOpportunities(); // This will render cards based on the final 'opportunities' list
+            
+            // The toast should reflect the final count after all processing
+            if (opportunities.length > 0) {
+                showToast(`Loaded ${opportunities.length} unique opportunities from CSV.`, 3000);
+            } else {
+                showToast('No relevant opportunities found or loaded from CSV after processing.', 3000);
+            }
+
+        } catch (error) {
+            console.error('Error in loadOpportunities (CSV focused):', error);
+            showToast('Error loading CSV opportunities. Check console.', 3000);
+            grid.innerHTML = '<div class="loading"><p>Could not load opportunities from CSV. Please check console for errors.</p></div>';
+            // opportunities array is already reset
+            updateStats(); 
+            renderOpportunities(); // Render empty/error state
+        }
+    }
+    // Make sure the DOM is loaded before trying to load opportunities
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initial load
+        loadOpportunities();
+        // You might want to disable or adjust the interval for now
+        // setInterval(loadOpportunities, CONFIG.refreshInterval); 
+        
+        document.getElementById('searchInput').addEventListener('keyup', function(e) {
+            if (e.key === 'Enter') applyFilters();
+        });
+    });
+// Updated function to fetch SBA contracts from S3 CSV with extensive logging
+async function fetchSBAContracts() {
+    const s3CsvUrl = 'https://subhoodata.s3.us-east-1.amazonaws.com/data/sba24.csv';
+    const rawSbaOpportunities = [];
+    console.log('LOG: Starting fetchSBAContracts...');
+
+    try {
+        let csvText;
+        try {
+            console.log(`LOG: Attempting direct fetch from ${s3CsvUrl}`);
+            const response = await fetch(s3CsvUrl);
+            if (!response.ok) {
+                console.warn(`LOG: Direct fetch failed - Status: ${response.status}`);
+                throw new Error(`S3 Load Error for ${s3CsvUrl}: HTTP error ${response.status}`);
+            }
+            csvText = await response.text();
+            console.log(`LOG: Direct fetch successful. CSV text length: ${csvText ? csvText.length : 'N/A'}`);
+        } catch (fetchError) {
+            console.warn(`LOG: Direct fetch error: ${fetchError.message}. Trying with CORS proxy.`);
+            csvText = await fetchWithCORS(s3CsvUrl); // Assumes fetchWithCORS is defined
+            console.log(`LOG: Fetch via CORS proxy. CSV text length: ${csvText ? csvText.length : 'N/A'}`);
+        }
+
+        if (!csvText || csvText.trim() === '') {
+            console.warn('LOG: SBA CSV file is empty or could not be fetched. Returning empty array.');
+            return [];
+        }
+        console.log('LOG: CSV text successfully retrieved. First 500 chars:', csvText.substring(0, 500));
+
+
+        const parseResult = Papa.parse(csvText, {
+            header: true,
+            dynamicTyping: true,
+            skipEmptyLines: true
+        });
+        console.log('LOG: Papa.parse completed.');
+
+        if (parseResult.errors && parseResult.errors.length > 0) {
+            console.error('LOG: Error parsing CSV from S3:', parseResult.errors);
+            showToast('CSV parsing error. Check console.', 3000);
+            return [];
+        }
+
+        console.log(`LOG: Papa.parse successful. Number of data rows: ${parseResult.data ? parseResult.data.length : 'N/A'}`);
+
+        if (parseResult.data && parseResult.data.length > 0) {
+            parseResult.data.forEach((row, index) => {
+                // Log first few rows to inspect their structure
+                if (index < 3) {
+                    console.log(`LOG: CSV Row ${index} data:`, JSON.stringify(row));
+                }
+
+                const parseCurrency = (valueStr) => {
+                    if (valueStr === null || typeof valueStr === 'undefined') return 0;
+                    return parseFloat(String(valueStr).replace(/[$,\s]/g, '')) || 0;
+                };
+
+                let piidFromRow = row['Procurement Instrument Identifier'];
+                const originalPiid = piidFromRow !== null && typeof piidFromRow !== 'undefined' ? String(piidFromRow).trim() : `temp-row-id-${Date.now()}-${index}`;
+                const opportunityId = `sba-csv-${originalPiid.replace(/\s+/g, '-')}`;
+
+                const agencyName = row['Contracting Agency Name'] || row['Contracting Department Name'] || 'Federal Agency (CSV)';
+                const contractorName = row['Legal Business Name'] || 'N/A (CSV)';
+                const naicsDesc = row['NAICS Description'] || 'Federal Contract (CSV)';
+                const contractValueStr = row['Base and All Options Value (Total Contract Value)'] || row['Total Contract Value'];
+                const contractValue = parseCurrency(contractValueStr);
+                const title = `${naicsDesc} for ${agencyName}`;
+                const description = `Contract for ${contractorName} with ${agencyName}. NAICS: ${row['NAICS Code'] || 'N/A'}. Value: ${contractValue ? '$' + contractValue.toLocaleString() : 'N/A'}. PIID: ${originalPiid}.`;
+
+                let oppDate;
+                // ... (date logic remains the same) ...
+                const startDateVal = row['Period of Performance Start Date'];
+                const completionDateVal = row['Completion Date'];
+                if (startDateVal && !isNaN(new Date(startDateVal).getTime())) {
+                    oppDate = new Date(startDateVal);
+                } else if (completionDateVal && !isNaN(new Date(completionDateVal).getTime())) {
+                    oppDate = new Date(completionDateVal);
+                } else {
+                    oppDate = new Date();
+                }
+
+
+                const fpdsLink = originalPiid.startsWith('temp-row-id-') ? '#' : `https://www.fpds.gov/ezsearch/fpdsportal?indexName=awardfull&templateName=1.5.3&s=FPDS&q=${encodeURIComponent(originalPiid)}`;
+
+                const sbaOpp = {
+                    id: opportunityId,
+                    originalPiid: originalPiid,
+                    title: title,
+                    link: fpdsLink,
+                    description: description.substring(0, 400) + (description.length > 400 ? '...' : ''),
+                    date: oppDate,
+                    source: 'sba24.csv (S3)',
+                    type: 'contract-csv',
+                    agency: agencyName,
+                    value: contractValue ? `${Math.round(contractValue / 1000000)}M` : null,
+                    rawRowData: row
+                };
+
+                const textForKeywords = sbaOpp.title + ' ' + sbaOpp.description;
+                const passesKeywords = containsKeywords(textForKeywords);
+
+                if (index < 5) { // Log keyword check for first 5 items
+                    console.log(`LOG: Row ${index} - PIID: ${originalPiid} - Text for keywords: "${textForKeywords.substring(0,100)}..." - Passes Keywords: ${passesKeywords}`);
+                }
+
+                if (passesKeywords) {
+                    rawSbaOpportunities.push(sbaOpp);
+                }
+            });
+            console.log(`LOG: Parsed and keyword-filtered ${rawSbaOpportunities.length} initial rows from SBA CSV.`);
+
+            // Deduplication step
+            if (rawSbaOpportunities.length === 0) {
+                console.log("LOG: No opportunities passed keyword filtering. Deduplication skipped.");
+                return [];
+            }
+
+            const uniqueSbaOpportunitiesBuilder = []; // To hold items with temporary IDs
+            const seenPiids = new Map(); // To hold items with real PIIDs
+
+            for (const opp of rawSbaOpportunities) {
+                if (opp.originalPiid.startsWith('temp-row-id-')) {
+                    uniqueSbaOpportunitiesBuilder.push(opp);
+                    continue;
+                }
+                
+                if (!seenPiids.has(opp.originalPiid)) {
+                    seenPiids.set(opp.originalPiid, opp);
+                } else {
+                    const existingOpp = seenPiids.get(opp.originalPiid);
+                    const currentOppRawValue = opp.rawRowData['Base and All Options Value (Total Contract Value)'] || opp.rawRowData['Total Contract Value'];
+                    const existingOppRawValue = existingOpp.rawRowData['Base and All Options Value (Total Contract Value)'] || existingOpp.rawRowData['Total Contract Value'];
+
+                    const currentOppMonetaryValue = parseCurrency(currentOppRawValue);
+                    const existingOppMonetaryValue = parseCurrency(existingOppRawValue);
+                    
+                    if (currentOppMonetaryValue > existingOppMonetaryValue) {
+                        seenPiids.set(opp.originalPiid, opp);
+                    }
+                }
+            }
+            
+            // Combine temp ID items and unique PIID items
+            const combinedOpportunities = [...uniqueSbaOpportunitiesBuilder, ...Array.from(seenPiids.values())];
+            
+            // Final deduplication by the `id` field (which is `sba-csv-${originalPiid}`)
+            // This handles any edge cases, e.g. if a temp-id item somehow had an id matching a real one.
+            const finalUniqueOpportunities = Array.from(new Map(combinedOpportunities.map(op => [op.id, op])).values());
+
+            console.log(`LOG: Deduplicated to ${finalUniqueOpportunities.length} unique SBA opportunities.`);
+            return finalUniqueOpportunities;
+
+        } else {
+            console.warn('LOG: No data rows found after parsing SBA CSV file.');
+            return [];
+        }
+    } catch (error) {
+        console.error('LOG: Error in fetchSBAContracts:', error);
+        showToast('Failed to load SBA contracts. Check console.', 3000);
+        return [];
+    }
+}
         async function fetchNewsFeeds() {
             const items = [];
             
