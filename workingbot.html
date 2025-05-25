@@ -1,0 +1,2636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FedViz - Federal Contract Intelligence</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+  <style>
+    :root {
+      --primary: #4F46E5;
+      --primary-dark: #4338CA;
+      --primary-light: #6366F1;
+      --secondary: #7C3AED;
+      --accent: #EC4899;
+      --success: #10B981;
+      --warning: #F59E0B;
+      --danger: #EF4444;
+      --text-primary: #111827;
+      --text-secondary: #6B7280;
+      --text-tertiary: #9CA3AF;
+      --bg-primary: #FFFFFF;
+      --bg-secondary: #F9FAFB;
+      --bg-tertiary: #F3F4F6;
+      --bg-dark: #1F2937;
+      --border: #E5E7EB;
+      --border-light: #F3F4F6;
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      --radius: 0.5rem;
+      --radius-lg: 0.75rem;
+      --sidebar-width: 280px;
+      --header-height: 64px;
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Dark mode variables */
+    [data-theme="dark"] {
+      --text-primary: #F9FAFB;
+      --text-secondary: #D1D5DB;
+      --text-tertiary: #9CA3AF;
+      --bg-primary: #111827;
+      --bg-secondary: #1F2937;
+      --bg-tertiary: #374151;
+      --bg-dark: #030712;
+      --border: #374151;
+      --border-light: #1F2937;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: var(--bg-secondary);
+      color: var(--text-primary);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      overflow-x: hidden;
+    }
+
+    /* Scrollbar styling */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--bg-tertiary);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--text-tertiary);
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--text-secondary);
+    }
+
+    /* Layout Structure */
+    .app-container {
+      display: flex;
+      min-height: 100vh;
+      position: relative;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: var(--sidebar-width);
+      height: 100vh;
+      background: var(--bg-primary);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      transition: var(--transition);
+      z-index: 40;
+      transform: translateX(0);
+    }
+
+    .sidebar.collapsed {
+      transform: translateX(-100%);
+    }
+
+    @media (min-width: 1024px) {
+      .sidebar.collapsed {
+        transform: translateX(0);
+        width: 64px;
+      }
+    }
+
+    .sidebar-header {
+      padding: 1.5rem;
+      border-bottom: 1px solid var(--border-light);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: var(--header-height);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      text-decoration: none;
+      color: var(--text-primary);
+      font-weight: 700;
+      font-size: 1.25rem;
+      transition: var(--transition);
+    }
+
+    .logo-icon {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+      border-radius: var(--radius);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 1.25rem;
+      flex-shrink: 0;
+    }
+
+    .logo-text {
+      transition: opacity 0.3s, transform 0.3s;
+    }
+
+    .sidebar.collapsed .logo-text {
+      opacity: 0;
+      transform: translateX(-10px);
+    }
+
+    .sidebar-toggle {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      padding: 0.5rem;
+      border-radius: var(--radius);
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+    }
+
+    .sidebar-toggle:hover {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+    }
+
+    /* Mobile menu backdrop */
+    .sidebar-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 30;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .sidebar-backdrop.active {
+      display: block;
+      opacity: 1;
+    }
+
+    @media (max-width: 1023px) {
+      .sidebar {
+        box-shadow: var(--shadow-xl);
+      }
+
+      .sidebar.collapsed {
+        transform: translateX(-100%);
+      }
+    }
+
+    .sidebar-nav {
+      flex: 1;
+      padding: 1rem;
+      overflow-y: auto;
+    }
+
+    .nav-section {
+      margin-bottom: 1.5rem;
+    }
+
+    .nav-section-title {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-tertiary);
+      margin-bottom: 0.5rem;
+      padding: 0 0.75rem;
+    }
+
+    .sidebar.collapsed .nav-section-title {
+      opacity: 0;
+      height: 0;
+      margin: 0;
+      overflow: hidden;
+    }
+
+    .upload-container {
+      background: var(--bg-tertiary);
+      border-radius: var(--radius);
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .upload-title {
+      font-size: 0.875rem;
+      font-weight: 600;
+      margin-bottom: 0.75rem;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .form-label {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: 0.5rem;
+      display: block;
+    }
+
+    .form-control {
+      padding: 0.625rem 0.875rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-size: 0.875rem;
+      transition: var(--transition);
+      width: 100%;
+      margin-bottom: 1rem;
+    }
+
+    .form-control:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.625rem 1.25rem;
+      border: none;
+      border-radius: var(--radius);
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: var(--transition);
+      width: 100%;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-dark);
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .btn-secondary {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+    }
+
+    .btn-secondary:hover {
+      background: var(--border);
+      transform: translateY(-1px);
+    }
+
+    /* Status message */
+    .status-message {
+      margin-top: 1rem;
+      padding: 0.75rem;
+      border-radius: var(--radius);
+      background: var(--bg-tertiary);
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+
+    /* Main Content Area */
+    .main-wrapper {
+      flex: 1;
+      margin-left: var(--sidebar-width);
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      transition: margin-left 0.3s;
+    }
+
+    .sidebar.collapsed + .main-wrapper {
+      margin-left: 64px;
+    }
+
+    @media (max-width: 1023px) {
+      .main-wrapper {
+        margin-left: 0;
+      }
+
+      .sidebar.collapsed + .main-wrapper {
+        margin-left: 0;
+      }
+    }
+
+    /* Header */
+    .header {
+      background: var(--bg-primary);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      height: var(--header-height);
+      display: flex;
+      align-items: center;
+      padding: 0 1.5rem;
+      gap: 1rem;
+    }
+
+    .mobile-menu-toggle {
+      display: none;
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      padding: 0.5rem;
+      border-radius: var(--radius);
+      transition: var(--transition);
+      font-size: 1.25rem;
+    }
+
+    @media (max-width: 1023px) {
+      .mobile-menu-toggle {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+    }
+
+    .mobile-menu-toggle:hover {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+    }
+
+    .header-content {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .header-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .header-button {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      padding: 0.5rem;
+      border-radius: var(--radius);
+      transition: var(--transition);
+      position: relative;
+      font-size: 1.125rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .header-button:hover {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+    }
+
+    /* Main Content */
+    .main-content {
+      flex: 1;
+      padding: 1.5rem;
+      overflow-y: auto;
+    }
+
+    /* Global search */
+    .search-container {
+      background: var(--bg-primary);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border-light);
+    }
+
+    .search-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+
+    .search-title {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    /* Dashboard Grid */
+    .dashboard-grid {
+      display: grid;
+      gap: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    /* Cards */
+    .card {
+      background: var(--bg-primary);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border-light);
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card:hover {
+      box-shadow: var(--shadow-md);
+      transform: translateY(-1px);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+
+    .card-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .card-icon {
+      width: 32px;
+      height: 32px;
+      background: var(--bg-tertiary);
+      border-radius: var(--radius);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--primary);
+      font-size: 1rem;
+    }
+
+    /* Stat Cards */
+    .stat-card {
+      background: var(--bg-primary);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border-light);
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-card:hover {
+      box-shadow: var(--shadow-md);
+      transform: translateY(-1px);
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
+    }
+
+    .stat-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+
+    .stat-info {
+      flex: 1;
+    }
+
+    .stat-label {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: 0.25rem;
+    }
+
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1.2;
+    }
+
+    .stat-icon {
+      width: 48px;
+      height: 48px;
+      background: var(--bg-tertiary);
+      border-radius: var(--radius);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+    }
+
+    .stat-icon.primary {
+      background: rgba(79, 70, 229, 0.1);
+      color: var(--primary);
+    }
+
+    .stat-icon.success {
+      background: rgba(16, 185, 129, 0.1);
+      color: var(--success);
+    }
+
+    .stat-icon.warning {
+      background: rgba(245, 158, 11, 0.1);
+      color: var(--warning);
+    }
+
+    /* Charts */
+    .chart-container {
+      position: relative;
+      height: 300px;
+      margin-top: 1rem;
+    }
+
+    /* Data Tables */
+    .table-container {
+      background: var(--bg-primary);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border-light);
+      overflow: hidden;
+      margin-bottom: 1.5rem;
+    }
+
+    .table-header {
+      padding: 1.5rem;
+      border-bottom: 1px solid var(--border-light);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .table-title {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .table-wrapper {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th {
+      background: var(--bg-tertiary);
+      padding: 0.75rem 1rem;
+      text-align: left;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-secondary);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    td {
+      padding: 1rem;
+      border-bottom: 1px solid var(--border-light);
+      font-size: 0.875rem;
+      color: var(--text-primary);
+    }
+
+    tr:hover td {
+      background: var(--bg-tertiary);
+    }
+
+    /* Filter controls */
+    .filter-container {
+      margin-bottom: 1rem;
+    }
+
+    .filter-group {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .filter-actions {
+      display: flex;
+      justify-content: flex-start;
+      margin-top: 1rem;
+    }
+
+    /* Alert Messages */
+    .alert {
+      padding: 1rem 1.25rem;
+      border-radius: var(--radius);
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+    }
+
+    .alert-info {
+      background: rgba(79, 70, 229, 0.1);
+      color: var(--primary);
+      border: 1px solid rgba(79, 70, 229, 0.2);
+    }
+
+    .alert-success {
+      background: rgba(16, 185, 129, 0.1);
+      color: var(--success);
+      border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    .alert-error {
+      background: rgba(239, 68, 68, 0.1);
+      color: var(--danger);
+      border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+
+    /* Responsive layouts */
+    @media (min-width: 1024px) {
+      .dashboard-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    @media (min-width: 768px) and (max-width: 1023px) {
+      .dashboard-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 767px) {
+      .dashboard-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .filter-group {
+        grid-template-columns: 1fr;
+      }
+
+      .header-title {
+        font-size: 1.25rem;
+      }
+
+      .stat-value {
+        font-size: 1.5rem;
+      }
+
+      .table-wrapper {
+        font-size: 0.75rem;
+      }
+
+      th, td {
+        padding: 0.5rem;
+      }
+
+      .card, .search-container {
+        padding: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <a href="#" class="logo">
+          <div class="logo-icon">
+            <i class="fas fa-chart-line"></i>
+          </div>
+          <span class="logo-text">FedViz</span>
+        </a>
+        <button class="sidebar-toggle" id="sidebarToggle">
+          <i class="fas fa-chevron-left"></i>
+        </button>
+      </div>
+      
+      <div class="sidebar-nav">
+        <div class="nav-section">
+          <div class="nav-section-title">DATA INPUT</div>
+          
+		          <!-- Search and Filters -->
+        <div class="search-container">
+          <div class="search-header">
+            <h2 class="search-title">Search & Filter</h2>
+          </div>
+          
+          <div class="filter-container">
+            <div class="form-group">
+              <label class="form-label" for="unifiedSearch">Global Search</label>
+              <input type="text" id="unifiedSearch" placeholder="Search across all contract fields..." class="form-control">
+            </div>
+            <div class="filter-group" id="dynamicFiltersContainer">
+              <!-- Dynamic filters will be populated here -->
+            </div>
+            
+            <div class="filter-actions">
+              <button class="btn btn-secondary" id="resetFiltersBtn">
+                <i class="fas fa-redo"></i>
+                Reset Filters
+              </button>
+            </div>
+          </div>
+        </div>
+		<div class="upload-container">
+            <div class="upload-title">
+              <i class="fas fa-file-csv"></i>
+              Upload FPDS CSV Data
+            </div>
+            
+            <form id="uploadForm">
+              <label class="form-label" for="csvFileInput">Select CSV file</label>
+              <input type="file" id="csvFileInput" accept=".csv" class="form-control">
+              
+              <button type="button" id="loadBtn" class="btn btn-primary">
+                <i class="fas fa-upload"></i>
+                Load Data
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </aside>
+    
+    <!-- Sidebar backdrop for mobile -->
+    <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+    
+    <!-- Main Content -->
+    <div class="main-wrapper">
+      <!-- Header -->
+      <header class="header">
+        <button class="mobile-menu-toggle" id="mobileMenuToggle">
+          <i class="fas fa-bars"></i>
+        </button>
+        
+        <div class="header-content">
+          <h1 class="header-title">Federal Contract Intelligence</h1>
+          
+          <div class="header-actions">
+            <button class="header-button" id="themeToggle">
+              <i class="fas fa-moon"></i>
+            </button>
+          </div>
+        </div>
+      </header>
+      
+      <!-- Main Content Area -->
+      <main class="main-content">
+
+        <h2><div id="statusMessage" class="status-message">
+              Select a CSV file to begin analysis.
+            </div></h2>
+        <!-- Stats Cards -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-header">
+              <div class="stat-info">
+                <div class="stat-label">Total Contracts</div>
+                <div class="stat-value" id="totalContracts">0</div>
+              </div>
+              <div class="stat-icon primary">
+                <i class="fas fa-file-contract"></i>
+              </div>
+            </div>
+          </div>
+          
+          <div class="stat-card">
+            <div class="stat-header">
+              <div class="stat-info">
+                <div class="stat-label">Total Contract Value</div>
+                <div class="stat-value" id="totalValue">$0</div>
+              </div>
+              <div class="stat-icon success">
+                <i class="fas fa-dollar-sign"></i>
+              </div>
+            </div>
+          </div>
+          
+          <div class="stat-card">
+            <div class="stat-header">
+              <div class="stat-info">
+                <div class="stat-label">Active Vendors</div>
+                <div class="stat-value" id="activeVendors">0</div>
+              </div>
+              <div class="stat-icon warning">
+                <i class="fas fa-building"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Charts Grid -->
+        <div class="dashboard-grid">
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">
+                <div class="card-icon">
+                  <i class="fas fa-university"></i>
+                </div>
+                Top Agencies by Value
+              </h3>
+            </div>
+            <div class="chart-container">
+              <canvas id="agencyChart"></canvas>
+            </div>
+          </div>
+          
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">
+                <div class="card-icon">
+                  <i class="fas fa-building"></i>
+                </div>
+                Top Vendors by Value
+              </h3>
+            </div>
+            <div class="chart-container">
+              <canvas id="vendorChart"></canvas>
+            </div>
+          </div>
+          
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">
+                <div class="card-icon">
+                  <i class="fas fa-briefcase"></i>
+                </div>
+                Contract Offices
+              </h3>
+            </div>
+            <div class="chart-container">
+              <canvas id="officeChart"></canvas>
+            </div>
+          </div>
+          
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">
+                <div class="card-icon">
+                  <i class="fas fa-chart-bar"></i>
+                </div>
+                Contract Size Distribution
+              </h3>
+            </div>
+            <div class="chart-container">
+              <canvas id="sizeChart"></canvas>
+            </div>
+          </div>
+          
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">
+                <div class="card-icon">
+                  <i class="fas fa-tags"></i>
+                </div>
+                Contract Types
+              </h3>
+            </div>
+            <div class="chart-container">
+              <canvas id="contractTypeChart"></canvas>
+            </div>
+          </div>
+          
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">
+                <div class="card-icon">
+                  <i class="fas fa-calendar-alt"></i>
+                </div>
+                Monthly Trends
+              </h3>
+            </div>
+            <div class="chart-container">
+              <canvas id="monthlyChart"></canvas>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Tables -->
+        <div class="table-container">
+          <div class="table-header">
+            <h3 class="table-title">Top Contracting Offices</h3>
+          </div>
+          <div class="table-wrapper">
+            <table class="sortable" id="officeTable">
+              <thead>
+                <tr>
+                  <th data-sort="string">Agency <span class="sort-icon"></span></th>
+                  <th data-sort="string">Contracting Office <span class="sort-icon"></span></th>
+                  <th data-sort="number">Total Value <span class="sort-icon"></span></th>
+                  <th data-sort="number">Contracts <span class="sort-icon"></span></th>
+                  <th data-sort="number">Target ISV Activity <span class="sort-icon"></span></th>
+                  <th data-sort="number">Largest Contract <span class="sort-icon"></span></th>
+                </tr>
+              </thead>
+              <tbody id="officeTableBody">
+                <!-- Data will be populated here -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+        
+        <div class="table-container">
+          <div class="table-header">
+            <h3 class="table-title">Target ISVs Analysis</h3>
+          </div>
+          <div class="table-wrapper">
+            <table class="sortable" id="targetTable">
+              <thead>
+                <tr>
+                  <th data-sort="string">Vendor <span class="sort-icon"></span></th>
+                  <th data-sort="number">Total Value <span class="sort-icon"></span></th>
+                  <th data-sort="number">Market Share <span class="sort-icon"></span></th>
+                  <th data-sort="number">Contracts <span class="sort-icon"></span></th>
+                  <th data-sort="number">Avg Deal Size <span class="sort-icon"></span></th>
+                </tr>
+              </thead>
+              <tbody id="targetTableBody">
+                <!-- Data will be populated here -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+        
+        <div class="table-container">
+          <div class="table-header">
+            <h3 class="table-title">Recent Contract Awards</h3>
+          </div>
+          <div class="table-wrapper">
+            <table class="sortable" id="contractsTable">
+              <thead>
+                <tr>
+                  <th data-sort="date">Award Date <span class="sort-icon"></span></th>
+                  <th data-sort="string">Vendor <span class="sort-icon"></span></th>
+                  <th data-sort="string">Agency <span class="sort-icon"></span></th>
+                  <th data-sort="string">Description <span class="sort-icon"></span></th>
+                  <th data-sort="number">Value <span class="sort-icon"></span></th>
+                  <th data-sort="string">Type <span class="sort-icon"></span></th>
+                  <th data-sort="string">Status <span class="sort-icon"></span></th>
+                </tr>
+              </thead>
+              <tbody id="contractsTableBody">
+                <!-- Data will be populated here -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+  
+  <script>
+    // Sidebar toggle functionality
+    const sidebar = document.getElementById('sidebar');
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+    const sidebarBackdrop = document.getElementById('sidebarBackdrop');
+    
+    function toggleSidebar() {
+      sidebar.classList.toggle('collapsed');
+      
+      // Update toggle icon
+      const icon = sidebarToggle.querySelector('i');
+      if (sidebar.classList.contains('collapsed')) {
+        icon.classList.remove('fa-chevron-left');
+        icon.classList.add('fa-chevron-right');
+      } else {
+        icon.classList.remove('fa-chevron-right');
+        icon.classList.add('fa-chevron-left');
+      }
+    }
+    
+    function toggleMobileSidebar() {
+      sidebar.classList.toggle('collapsed');
+      sidebarBackdrop.classList.toggle('active');
+    }
+    
+    sidebarToggle.addEventListener('click', toggleSidebar);
+    mobileMenuToggle.addEventListener('click', toggleMobileSidebar);
+    sidebarBackdrop.addEventListener('click', toggleMobileSidebar);
+    
+    // Theme toggle
+    const themeToggle = document.getElementById('themeToggle');
+    const currentTheme = localStorage.getItem('theme') || 'light';
+    document.documentElement.setAttribute('data-theme', currentTheme);
+    
+    themeToggle.addEventListener('click', () => {
+      const theme = document.documentElement.getAttribute('data-theme');
+      const newTheme = theme === 'light' ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', newTheme);
+      localStorage.setItem('theme', newTheme);
+      
+      // Update icon
+      const icon = themeToggle.querySelector('i');
+      if (newTheme === 'dark') {
+        icon.classList.remove('fa-moon');
+        icon.classList.add('fa-sun');
+      } else {
+        icon.classList.remove('fa-sun');
+        icon.classList.add('fa-moon');
+      }
+    });
+
+    // Global variables
+    var allData = [];
+    var filteredData = [];
+    var charts = {};
+
+    // ISVs for targeting
+    var targetVendors = [
+        'CANONICAL', 'CISCO', 'COMMVAULT', 'DATABRICKS', 'NERDIO', 
+        'NETAPP', 'ONESTREAM', 'PROCENTRIX', 'PROJECT HOSTS', 'RED HAT', 
+        'SERVICENOW', 'VMWARE', 'SECOND FRONT', 'CITRIX', 'ESRI',
+        'F5', 'HPE', 'PALO ALTO', 'RUBRIK', 'VEEM', 'BIGBEAR',
+        'CHECK POINT', 'FORTINET', 'ORACLE', 'TERADATA', 'MONGODB', 'PRIMERAI'
+    ];
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add event listeners to buttons
+        document.getElementById('loadBtn').addEventListener('click', loadCSVFile);
+        document.getElementById('resetFiltersBtn').addEventListener('click', resetAllFilters);
+        
+        // Set up unified search input
+        var unifiedSearch = document.getElementById('unifiedSearch');
+        if (unifiedSearch) {
+            unifiedSearch.addEventListener('input', function() {
+                clearTimeout(unifiedSearch.timer);
+                unifiedSearch.timer = setTimeout(function() {
+                    applyAllFilters();
+                }, 300);
+            });
+            unifiedSearch.addEventListener('keypress', function(event) {
+                if (event.key === 'Enter') {
+                    applyAllFilters();
+                }
+            });
+        }
+        
+        // Initialize empty charts
+        initCharts();
+    });
+
+    function initCharts() {
+        // Destroy any existing charts first
+        for (var key in charts) {
+            if (charts[key] instanceof Chart) {
+                charts[key].destroy();
+            }
+        }
+        
+        // Reset charts object
+        charts = {};
+        
+        // Define chart options with modern styling
+        Chart.defaults.font.family = "'Inter', -apple-system, BlinkMacSystemFont, sans-serif";
+        Chart.defaults.color = '#6B7280';
+        
+        // Define a standardized doughnut chart configuration
+        function createDoughnutChart(canvasId, title) {
+            var ctx = document.getElementById(canvasId).getContext('2d');
+            return new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['No Data'],
+                    datasets: [{
+                        data: [1],
+                        backgroundColor: ['#E5E7EB']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '65%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            align: 'start',
+                            labels: {
+                                boxWidth: 12,
+                                padding: 10,
+                                usePointStyle: true,
+                                font: {
+                                    size: 11,
+                                    weight: 500
+                                }
+                            },
+                            maxHeight: 80
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(17, 24, 39, 0.95)',
+                            titleColor: '#F9FAFB',
+                            bodyColor: '#D1D5DB',
+                            borderColor: '#374151',
+                            borderWidth: 1,
+                            padding: 12,
+                            cornerRadius: 8,
+                            callbacks: {
+                                label: function(context) {
+                                    var label = context.label || '';
+                                    var value = context.raw || 0;
+                                    return label + ': ' + formatCurrency(value);
+                                }
+                            }
+                        }
+                    },
+                    layout: {
+                        padding: {
+                            bottom: 10
+                        }
+                    }
+                }
+            });
+        }
+        
+        try {
+            // Monthly chart (line chart)
+            var monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
+            charts.monthly = new Chart(monthlyCtx, {
+                type: 'line',
+                data: {
+                    labels: ['No Data'],
+                    datasets: [{
+                        label: 'Contract Awards',
+                        data: [0],
+                        borderColor: '#4F46E5',
+                        backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        pointBackgroundColor: '#4F46E5',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(17, 24, 39, 0.95)',
+                            titleColor: '#F9FAFB',
+                            bodyColor: '#D1D5DB',
+                            borderColor: '#374151',
+                            borderWidth: 1,
+                            padding: 12,
+                            cornerRadius: 8
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                font: {
+                                    size: 11
+                                }
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(107, 114, 128, 0.1)',
+                                drawBorder: false
+                            },
+                            ticks: {
+                                font: {
+                                    size: 11
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Create the three doughnut charts
+            charts.agency = createDoughnutChart('agencyChart', 'Top Agencies');
+            charts.vendor = createDoughnutChart('vendorChart', 'Top Vendors');
+            charts.office = createDoughnutChart('officeChart', 'Top Offices');
+            
+            // Contract Type chart
+            var typeCtx = document.getElementById('contractTypeChart').getContext('2d');
+            charts.contractType = new Chart(typeCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['No Data'],
+                    datasets: [{
+                        label: 'Count',
+                        data: [0],
+                        backgroundColor: '#4F46E5',
+                        borderRadius: 6,
+                        barThickness: 'flex',
+                        maxBarThickness: 50
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(17, 24, 39, 0.95)',
+                            titleColor: '#F9FAFB',
+                            bodyColor: '#D1D5DB',
+                            borderColor: '#374151',
+                            borderWidth: 1,
+                            padding: 12,
+                            cornerRadius: 8
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                font: {
+                                    size: 11
+                                }
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(107, 114, 128, 0.1)',
+                                drawBorder: false
+                            },
+                            ticks: {
+                                font: {
+                                    size: 11
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Size chart
+            var sizeCtx = document.getElementById('sizeChart').getContext('2d');
+            charts.size = new Chart(sizeCtx, {
+                type: 'pie',
+                data: {
+                    labels: ['No Data'],
+                    datasets: [{
+                        data: [1],
+                        backgroundColor: ['#E5E7EB']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                boxWidth: 12,
+                                padding: 10,
+                                usePointStyle: true,
+                                font: {
+                                    size: 11,
+                                    weight: 500
+                                }
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(17, 24, 39, 0.95)',
+                            titleColor: '#F9FAFB',
+                            bodyColor: '#D1D5DB',
+                            borderColor: '#374151',
+                            borderWidth: 1,
+                            padding: 12,
+                            cornerRadius: 8
+                        }
+                    }
+                }
+            });
+        } catch (error) {
+            console.error("Error initializing charts:", error);
+        }
+    }
+
+    function loadCSVFile() {
+        var fileInput = document.getElementById('csvFileInput');
+        var file = fileInput.files[0];
+        
+        if (!file) {
+            showMessage("Please select a CSV file first.", "error");
+            return;
+        }
+        
+        console.log("Loading file:", file.name, "Size:", file.size, "Type:", file.type);
+        showMessage("Loading file: " + file.name + ". Please wait...", "info");
+        
+        // Reset data arrays
+        allData = [];
+        filteredData = [];
+        
+        // Reinitialize charts
+        initCharts();
+        
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            console.log("File loaded successfully");
+            var csvContent = e.target.result;
+            parseCSV(csvContent);
+        };
+        reader.onerror = function(e) {
+            console.error("File reading error:", e);
+            showMessage("Error reading file: " + e.message, "error");
+        };
+        reader.readAsText(file);
+    }
+
+    // Parse CSV data
+    function parseCSV(csvText) {
+        try {
+            showMessage("Parsing CSV data...", "info");
+            console.log("CSV length:", csvText.length);
+            
+            // Split into lines
+            var lines = csvText.split(/\r?\n/);
+            console.log("Number of lines:", lines.length);
+            
+            if (lines.length <= 1) {
+                showMessage("Could not parse CSV. Check format.", "error");
+                return;
+            }
+            
+            // Parse headers and data
+            var headers = parseCSVLine(lines[0]);
+            console.log("Headers:", headers);
+            
+            var rawData = [];
+            
+            // Parse data rows
+            for (var i = 1; i < lines.length; i++) {
+                if (lines[i].trim()) {
+                    try {
+                        var values = parseCSVLine(lines[i]);
+                        
+                        if (values.length >= 5) {
+                            var row = {};
+                            for (var j = 0; j < Math.min(headers.length, values.length); j++) {
+                                if (headers[j]) {
+                                    row[headers[j]] = values[j] || '';
+                                }
+                            }
+                            rawData.push(row);
+                        }
+                    } catch (e) {
+                        console.error("Error parsing line " + i + ":", e);
+                    }
+                }
+            }
+            
+            console.log("Parsed " + rawData.length + " data rows");
+            
+            if (rawData.length > 0) {
+                processData(rawData);
+            } else {
+                showMessage("No valid data rows found in the CSV.", "error");
+            }
+        } catch (error) {
+            showMessage("Error parsing CSV: " + error.message, "error");
+            console.error(error);
+        }
+    }
+
+    // Parse a single CSV line
+    function parseCSVLine(line) {
+        if (!line) return [];
+        
+        var result = [];
+        var current = "";
+        var inQuotes = false;
+        
+        for (var i = 0; i < line.length; i++) {
+            var char = line[i];
+            var next = line[i + 1] || '';
+            
+            if (char === '"') {
+                if (inQuotes && next === '"') {
+                    current += '"';
+                    i++;
+                } else {
+                    inQuotes = !inQuotes;
+                }
+            } else if (char === ',' && !inQuotes) {
+                result.push(current.trim());
+                current = "";
+            } else {
+                current += char;
+            }
+        }
+        
+        result.push(current.trim());
+        return result;
+    }
+
+    // Process the raw data
+// Process the raw data into a more usable format
+function processData(rawData) {
+    showMessage("Processing data...");
+    
+    console.log("Processing data with " + rawData.length + " rows");
+    if (rawData.length > 0) {
+        console.log("First row keys:", Object.keys(rawData[0]));
+        console.log("Sample row:", rawData[0]);
+    }
+    
+    // Transform data for our dashboard
+    allData = [];
+    for (var i = 0; i < rawData.length; i++) {
+        var row = rawData[i];
+        
+        // Extract vendor name
+        var vendor = row['Legal Business Name'] || '';
+        
+        // Debug information
+        if (i === 0) {
+            console.log("Vendor name from first row:", vendor);
+            console.log("Action Obligation value:", row['Action Obligation ($)']);
+            console.log("Parsed money value:", parseMoneyValue(row['Action Obligation ($)']));
+        }
+        
+        // Check if it's a target vendor
+        var isTarget = isTargetVendor(vendor);
+        
+        try {
+            allData.push({
+                id: row['Contract ID'] || '',
+                reference: row['Reference IDV'] || '',
+                vendor: vendor,
+                parentCompany: row['Ultimate Parent Legal Business Name'] || '',
+                agency: row['Contracting Agency'] || '',
+                office: row['Contracting Office Name'] || '',
+                date: row['Date Signed'] || '',
+                value: parseMoneyValue(row['Action Obligation ($)']),
+                type: row['Award/IDV Type'] || '',
+                description: row['PSC Description'] || '',
+                location: (row['Entity City'] || '') + ', ' + (row['Entity State'] || ''),
+                naics: row['NAICS'] || '',
+                naicsDescription: row['NAICS Description'] || '',
+                isTarget: isTarget
+            });
+        } catch (error) {
+            console.error("Error processing row " + i + ":", error);
+            console.log("Problematic row:", row);
+        }
+    }
+    
+    console.log("Processed " + allData.length + " contracts");
+    
+    // Set filtered data to all data initially
+    filteredData = [];
+    for (var i = 0; i < allData.length; i++) {
+        filteredData.push(allData[i]);
+    }
+    
+        // Create dynamic dropdowns after data is loaded
+    try {
+        createDynamicDropdowns();
+        setupAutoFiltering(); // Set up auto-filtering after dropdowns are created
+    } catch (error) {
+        console.error("Error setting up filters:", error);
+    }
+    // Update the dashboard
+    updateDashboard();
+    
+    showMessage("Successfully loaded " + allData.length + " contracts. Ready for analysis.", "success");
+}
+// Check if a vendor is a target vendor
+function isTargetVendor(vendorName) {
+    if (!vendorName) return false;
+    
+    // Normalize vendor name
+    var normalizedName = vendorName.toUpperCase();
+    
+    // Check if the name contains any of our target vendors
+    for (var i = 0; i < targetVendors.length; i++) {
+        if (normalizedName.indexOf(targetVendors[i]) !== -1) {
+            return true;
+        }
+    }
+    
+    return false;
+}
+
+// Parse money values more robustly
+function parseMoneyValue(value) {
+    if (!value) return 0;
+    
+    // Handle various formats
+    var cleanValue = value.toString()
+        .replace(/[$,\s"]/g, '') // Remove $, commas, spaces, quotes
+        .replace(/\s+/g, '')     // Remove any remaining whitespace
+        .trim();                  // Trim any leading/trailing spaces
+        
+    var result = parseFloat(cleanValue) || 0;
+    return result;
+}
+
+// Update the entire dashboard
+function updateDashboard() {
+    updateStats();
+    updateCharts();
+    updateTargetTable();
+    updateOfficeTable();
+    updateContractsTable();
+    initSortableTables(); // Initialize sortable tables
+}
+
+// Update dashboard statistics
+function updateStats() {
+    var totalContracts = filteredData.length;
+    var totalValue = 0;
+    var uniqueVendors = {};
+    var uniqueAgencies = {};
+    
+    for (var i = 0; i < filteredData.length; i++) {
+        totalValue += filteredData[i].value;
+        uniqueVendors[filteredData[i].vendor] = true;
+        uniqueAgencies[filteredData[i].agency] = true;
+    }
+    
+    var vendorCount = Object.keys(uniqueVendors).length;
+    
+    document.getElementById('totalContracts').textContent = totalContracts.toLocaleString();
+    document.getElementById('totalValue').textContent = formatCurrency(totalValue);
+    document.getElementById('activeVendors').textContent = vendorCount.toLocaleString();
+}
+
+// Update all charts
+function updateCharts() {
+    try {
+        updateMonthlyChart();
+        updateAgencyChart();
+        updateContractTypeChart();
+        updateSizeChart();
+        updateVendorChart();
+        updateOfficeChart();
+    } catch (error) {
+        console.error("Error updating charts:", error);
+        showMessage("Error updating charts. Try reloading the page.", "error");
+    }
+}
+
+// Update monthly chart
+function updateMonthlyChart() {
+    // Check if chart exists
+    if (!charts.monthly) {
+        console.error("Monthly chart is not initialized");
+        return;
+    }
+    
+    try {
+        // Group by month
+        var monthlyData = {};
+        
+        for (var i = 0; i < filteredData.length; i++) {
+            if (filteredData[i].date) {
+                var date = parseDate(filteredData[i].date);
+                if (date) {
+                    var monthYear = date.getFullYear() + '-' + (date.getMonth() + 1);
+                    
+                    if (!monthlyData[monthYear]) {
+                        monthlyData[monthYear] = 0;
+                    }
+                    
+                    monthlyData[monthYear]++;
+                }
+            }
+        }
+        
+        // Handle empty data case
+        if (Object.keys(monthlyData).length === 0) {
+            charts.monthly.data.labels = ['No Data'];
+            charts.monthly.data.datasets[0].data = [0];
+            charts.monthly.update();
+            return;
+        }
+        
+        // Convert to arrays and sort by date
+        var sortedMonths = Object.keys(monthlyData).sort();
+        
+        var labels = [];
+        var data = [];
+        
+        for (var i = 0; i < sortedMonths.length; i++) {
+            var parts = sortedMonths[i].split('-');
+            var year = parts[0];
+            var month = parts[1];
+            
+            var date = new Date(year, month - 1);
+            var monthName = date.toLocaleString('default', { month: 'short' });
+            
+            labels.push(monthName + ' ' + year.substr(2));
+            data.push(monthlyData[sortedMonths[i]]);
+        }
+        
+        // Update chart safely
+        charts.monthly.data.labels = labels;
+        charts.monthly.data.datasets[0].data = data;
+        
+        // Ensure chart is rendered
+        charts.monthly.update('none'); // Use 'none' for no animation to improve performance
+    } catch (error) {
+        console.error("Error updating monthly chart:", error);
+        
+        // Try to recover by resetting the chart
+        try {
+            charts.monthly.data.labels = ['Error'];
+            charts.monthly.data.datasets[0].data = [0];
+            charts.monthly.update();
+        } catch (e) {
+            // If all else fails, report the error
+            console.error("Failed to recover monthly chart:", e);
+        }
+    }
+}
+// Update contract type chart
+function updateContractTypeChart() {
+    // Group by contract type
+    var typeData = {};
+    
+    for (var i = 0; i < filteredData.length; i++) {
+        var type = filteredData[i].type || 'Unknown';
+        
+        if (!typeData[type]) {
+            typeData[type] = 0;
+        }
+        
+        typeData[type]++;
+    }
+    
+    // Convert to array and sort
+    var typeArray = [];
+    
+    for (var type in typeData) {
+        typeArray.push({
+            name: type,
+            count: typeData[type]
+        });
+    }
+    
+    typeArray.sort(function(a, b) {
+        return b.count - a.count;
+    });
+    
+    var labels = [];
+    var data = [];
+    
+    for (var i = 0; i < typeArray.length; i++) {
+        var name = typeArray[i].name;
+        
+        if (name.length > 15) {
+            name = name.substring(0, 12) + '...';
+        }
+        
+        labels.push(name);
+        data.push(typeArray[i].count);
+    }
+    
+    var colors = [];
+    for (var i = 0; i < labels.length; i++) {
+        colors.push('#667eea');
+    }
+    
+    // Update chart
+    charts.contractType.data.labels = labels;
+    charts.contractType.data.datasets[0].data = data;
+    charts.contractType.data.datasets[0].backgroundColor = colors;
+    charts.contractType.update();
+}
+
+// Update size chart
+function updateSizeChart() {
+    // Categorize by contract value
+    var sizeCategories = {
+        'Under $100K': 0,
+        '$100K-$500K': 0,
+        '$500K-$1M': 0,
+        '$1M-$5M': 0,
+        'Over $5M': 0
+    };
+    
+    for (var i = 0; i < filteredData.length; i++) {
+        var value = filteredData[i].value;
+        
+        if (value < 100000) {
+            sizeCategories['Under $100K']++;
+        } else if (value < 500000) {
+            sizeCategories['$100K-$500K']++;
+        } else if (value < 1000000) {
+            sizeCategories['$500K-$1M']++;
+        } else if (value < 5000000) {
+            sizeCategories['$1M-$5M']++;
+        } else {
+            sizeCategories['Over $5M']++;
+        }
+    }
+    
+    var labels = Object.keys(sizeCategories);
+    var data = [];
+    
+    for (var i = 0; i < labels.length; i++) {
+        data.push(sizeCategories[labels[i]]);
+    }
+    
+    var colors = ['#667eea', '#764ba2', '#f093fb', '#f5576c', '#4facfe'];
+    
+    // Update chart
+    charts.size.data.labels = labels;
+    charts.size.data.datasets[0].data = data;
+    charts.size.data.datasets[0].backgroundColor = colors;
+    charts.size.update();
+}
+
+// Update target vendor analysis table
+function updateTargetTable() {
+    // Group by vendor
+    var vendorAnalysis = {};
+    var totalMarketValue = 0;
+    
+    for (var i = 0; i < filteredData.length; i++) {
+        var contract = filteredData[i];
+        totalMarketValue += contract.value;
+        
+        var vendor = contract.vendor || 'Unknown';
+        
+        if (!vendorAnalysis[vendor]) {
+            vendorAnalysis[vendor] = {
+                value: 0,
+                count: 0,
+                largest: 0,
+                isTarget: contract.isTarget
+            };
+        }
+        
+        vendorAnalysis[vendor].value += contract.value;
+        vendorAnalysis[vendor].count++;
+        
+        if (contract.value > vendorAnalysis[vendor].largest) {
+            vendorAnalysis[vendor].largest = contract.value;
+        }
+    }
+    
+    // Convert to array and sort
+    var vendorArray = [];
+    
+    for (var vendor in vendorAnalysis) {
+        vendorArray.push({
+            name: vendor,
+            value: vendorAnalysis[vendor].value,
+            count: vendorAnalysis[vendor].count,
+            largest: vendorAnalysis[vendor].largest,
+            isTarget: vendorAnalysis[vendor].isTarget
+        });
+    }
+    
+    vendorArray.sort(function(a, b) {
+        return b.value - a.value;
+    });
+    
+    // Get top vendors and any target vendors
+    var topVendors = [];
+    
+    // First add all target vendors
+    for (var i = 0; i < vendorArray.length; i++) {
+        if (vendorArray[i].isTarget) {
+            topVendors.push(vendorArray[i]);
+        }
+    }
+    
+    // Then add top vendors by value, up to a total of 15
+    for (var i = 0; i < vendorArray.length && topVendors.length < 15; i++) {
+        if (!vendorArray[i].isTarget) {
+            topVendors.push(vendorArray[i]);
+        }
+    }
+    
+    // Update table
+    var tbody = document.getElementById('targetTableBody');
+    tbody.innerHTML = '';
+    
+    for (var i = 0; i < topVendors.length; i++) {
+        var vendor = topVendors[i];
+        var row = document.createElement('tr');
+        
+        if (vendor.isTarget) {
+            row.className = 'target-vendor';
+        }
+        
+        var marketShare = (vendor.value / totalMarketValue) * 100;
+        var avgDealSize = vendor.value / vendor.count;
+        
+        row.innerHTML = 
+            '<td>' + vendor.name + '</td>' +
+            '<td>' + formatCurrency(vendor.value) + '</td>' +
+            '<td>' + marketShare.toFixed(2) + '%</td>' +
+            '<td>' + vendor.count + '</td>' +
+            '<td>' + formatCurrency(avgDealSize) + '</td>';
+        
+        tbody.appendChild(row);
+    }
+}
+
+// Update office table - shows top contracting offices
+function updateOfficeTable() {
+    // Group by office
+    var officeAnalysis = {};
+    
+    for (var i = 0; i < filteredData.length; i++) {
+        var contract = filteredData[i];
+        var office = contract.office || 'Unknown';
+        var agency = contract.agency || '';
+        
+        if (!officeAnalysis[office]) {
+            officeAnalysis[office] = {
+                value: 0,
+                count: 0,
+                largest: 0,
+                targetCount: 0,
+                agency: agency
+            };
+        }
+        
+        officeAnalysis[office].value += contract.value;
+        officeAnalysis[office].count++;
+        
+        if (contract.value > officeAnalysis[office].largest) {
+            officeAnalysis[office].largest = contract.value;
+        }
+        
+        if (contract.isTarget) {
+            officeAnalysis[office].targetCount++;
+        }
+    }
+    
+    // Convert to array and sort
+    var officeArray = [];
+    for (var office in officeAnalysis) {
+        officeArray.push({
+            name: office,
+            value: officeAnalysis[office].value,
+            count: officeAnalysis[office].count,
+            largest: officeAnalysis[office].largest,
+            targetCount: officeAnalysis[office].targetCount,
+            agency: officeAnalysis[office].agency
+        });
+    }
+    
+    officeArray.sort(function(a, b) {
+        return b.value - a.value;
+    });
+    
+    // Get top 15
+    var topOffices = officeArray.slice(0, 15);
+    
+    // Update table
+     var tbody = document.getElementById('officeTableBody');
+    tbody.innerHTML = '';
+    
+    for (var i = 0; i < topOffices.length; i++) {
+        var office = topOffices[i];
+        var row = document.createElement('tr');
+        
+        if (office.targetCount > 0) {
+            row.className = 'target-vendor';
+        }
+        
+        row.innerHTML = 
+            '<td>' + office.agency + '</td>' +
+            '<td>' + office.name + '</td>' +
+            '<td>' + formatCurrency(office.value) + '</td>' +
+            '<td>' + office.count + '</td>' +
+            '<td>' + office.targetCount + ' contracts</td>' +
+            '<td>' + formatCurrency(office.largest) + '</td>';
+        
+        tbody.appendChild(row);
+    }
+}
+
+function updateContractsTable() {
+    // Sort by date (newest first)
+    var sortedContracts = [];
+    for (var i = 0; i < filteredData.length; i++) {
+        sortedContracts.push(filteredData[i]);
+    }
+    
+    sortedContracts.sort(function(a, b) {
+        var dateA = parseDate(a.date) || new Date(0);
+        var dateB = parseDate(b.date) || new Date(0);
+        return dateB - dateA;
+    });
+    
+    // Get most recent contracts
+    var recentContracts = sortedContracts.slice(0, 20);
+    
+    // Update table
+    var tbody = document.getElementById('contractsTableBody');
+    tbody.innerHTML = '';
+    
+    for (var i = 0; i < recentContracts.length; i++) {
+        var contract = recentContracts[i];
+        var row = document.createElement('tr');
+        
+        if (contract.isTarget) {
+            row.className = 'target-vendor';
+        }
+        
+        var statusClass = 'badge-active';
+        var statusText = contract.value > 0 ? 'Funded' : 'Zero Value';
+        
+        if (contract.isTarget) {
+            statusClass = 'badge-target';
+            statusText = 'Target ISV';
+        } else if (contract.value > 1000000) {
+            statusClass = 'badge-target';
+            statusText = 'Large Deal';
+        }
+        
+        // Create FPDS hyperlink for the Contract ID
+        var contractIdLink = '';
+        if (contract.id) {
+            contractIdLink = '<a href="https://www.fpds.gov/ezsearch/fpdsportal?indexName=awardfull&templateName=1.5.3&s=FPDS&q=' + 
+                contract.id + '" target="_blank">' + contract.id + '</a>';
+        }
+        
+        var parentCompanyHtml = '';
+        if (contract.parentCompany && contract.parentCompany !== contract.vendor) {
+            parentCompanyHtml = '<div style="font-size: 0.8em; color: #666;">Parent: ' + contract.parentCompany + '</div>';
+        }
+        
+        var officeHtml = '';
+        if (contract.office) {
+            officeHtml = '<div style="font-size: 0.8em; color: #666;">' + contract.office + '</div>';
+        }
+        
+        var idHtml = '';
+        if (contract.id) {
+            idHtml = '<div style="font-size: 0.8em; color: #666;">ID: ' + contractIdLink + ' | ' + contract.reference + '</div>';
+        }
+        
+        var locationHtml = '';
+        if (contract.location) {
+            locationHtml = '<div style="font-size: 0.8em; color: #666;">' + contract.location + '</div>';
+        }
+        
+        row.innerHTML = 
+            '<td>' + formatDate(contract.date) + '</td>' +
+            '<td>' + contract.vendor + parentCompanyHtml + '</td>' +
+            '<td>' + contract.agency + officeHtml + '</td>' +
+            '<td>' + contract.description + idHtml + '</td>' +
+            '<td class="amount">' + formatCurrency(contract.value) + '</td>' +
+            '<td>' + contract.type + locationHtml + '</td>' +
+            '<td><span class="badge ' + statusClass + '">' + statusText + '</span></td>';
+        
+        tbody.appendChild(row);
+    }
+}
+
+function initSortableTables() {
+    // Find all sortable tables
+    var tables = document.querySelectorAll('table.sortable');
+    
+    // Add click event listeners to all sortable table headers
+    tables.forEach(function(table) {
+        var headers = table.querySelectorAll('th');
+        headers.forEach(function(header, index) {
+            header.addEventListener('click', function() {
+                sortTable(table, index, header.getAttribute('data-sort'));
+            });
+        });
+    });
+}
+
+// Main sort function
+function sortTable(table, columnIndex, dataType) {
+    var tbody = table.querySelector('tbody');
+    var rows = Array.from(tbody.querySelectorAll('tr'));
+    var headers = table.querySelectorAll('th');
+    
+    // Determine sort direction
+    var sortDirection = 'asc';
+    if (headers[columnIndex].classList.contains('sort-asc')) {
+        sortDirection = 'desc';
+    }
+    
+    // Reset all headers
+    headers.forEach(function(header) {
+        header.classList.remove('sort-asc', 'sort-desc');
+    });
+    
+    // Add appropriate class to current header
+    headers[columnIndex].classList.add(sortDirection === 'asc' ? 'sort-asc' : 'sort-desc');
+    
+    // Sort the rows
+    rows.sort(function(rowA, rowB) {
+        var cellA = rowA.querySelectorAll('td')[columnIndex].textContent.trim();
+        var cellB = rowB.querySelectorAll('td')[columnIndex].textContent.trim();
+        
+        var comparison = 0;
+        
+        switch (dataType) {
+            case 'number':
+                // Extract numbers from strings like "$1.2M" or "15%"
+                var numA = parseNumberFromString(cellA);
+                var numB = parseNumberFromString(cellB);
+                comparison = numA - numB;
+                break;
+                
+            case 'date':
+                // Parse dates
+                var dateA = parseDate(cellA) || new Date(0);
+                var dateB = parseDate(cellB) || new Date(0);
+                comparison = dateA - dateB;
+                break;
+                
+            case 'string':
+            default:
+                // Simple string comparison
+                comparison = cellA.localeCompare(cellB);
+                break;
+        }
+        
+        // Reverse if descending
+        return sortDirection === 'asc' ? comparison : -comparison;
+    });
+    
+    // Re-append rows in new order
+    rows.forEach(function(row) {
+        tbody.appendChild(row);
+    });
+}
+
+// Helper function to extract numbers from formatted strings
+function parseNumberFromString(str) {
+    // Handle currency values like "$1.2M", "$500K"
+    if (str.includes('$')) {
+        str = str.replace('$', '');
+        
+        if (str.includes('B')) {
+            return parseFloat(str.replace('B', '')) * 1000000000;
+        } else if (str.includes('M')) {
+            return parseFloat(str.replace('M', '')) * 1000000;
+        } else if (str.includes('K')) {
+            return parseFloat(str.replace('K', '')) * 1000;
+        }
+    }
+    
+    // Handle percentage values
+    if (str.includes('%')) {
+        return parseFloat(str.replace('%', ''));
+    }
+    
+    // Try to parse any other number
+    var num = parseFloat(str.replace(/,/g, ''));
+    return isNaN(num) ? 0 : num;
+}
+
+// Parse date from various formats
+function parseDate(dateStr) {
+    if (!dateStr) return null;
+    
+    // Handle format like "19-Jul-23"
+    if (dateStr.indexOf('-') !== -1) {
+        var parts = dateStr.split('-');
+        if (parts.length === 3) {
+            var day = parseInt(parts[0]);
+            var monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                           'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            var month = monthNames.indexOf(parts[1]);
+            var year = parseInt(parts[2]);
+            
+            // Convert 2-digit year to 4-digit
+            if (year < 50) year += 2000;
+            else if (year < 100) year += 1900;
+            
+            if (month !== -1) {
+                return new Date(year, month, day);
+            }
+        }
+    }
+    
+    // Handle format like "Jan 15, 2024"
+    var dateParts = dateStr.match(/(\w+)\s+(\d+),\s+(\d+)/);
+    if (dateParts) {
+        var monthName = dateParts[1];
+        var day = parseInt(dateParts[2]);
+        var year = parseInt(dateParts[3]);
+        
+        var monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                       'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        var month = monthNames.indexOf(monthName.substr(0, 3));
+        
+        if (month !== -1) {
+            return new Date(year, month, day);
+        }
+    }
+    
+    // Try standard date parsing
+    var date = new Date(dateStr);
+    return isNaN(date.getTime()) ? null : date;
+}
+
+// Format date for display
+function formatDate(dateStr) {
+    var date = parseDate(dateStr);
+    if (!date) return 'N/A';
+    
+    var options = { year: 'numeric', month: 'short', day: 'numeric' };
+    return date.toLocaleDateString('en-US', options);
+}
+
+// Format currency for display
+function formatCurrency(amount) {
+    if (amount >= 1000000000) {
+        return '$' + (amount / 1000000000).toFixed(1) + 'B';
+    } else if (amount >= 1000000) {
+        return '$' + (amount / 1000000).toFixed(1) + 'M';
+    } else if (amount >= 1000) {
+        return '$' + (amount / 1000).toFixed(1) + 'K';
+    }
+    return '$' + amount.toLocaleString();
+}
+
+// Show status message with appropriate styling
+function showMessage(message, type) {
+    var statusElement = document.getElementById('statusMessage');
+    statusElement.textContent = message;
+    
+    // Remove all previous classes
+    statusElement.className = 'message';
+    
+    // Add appropriate class
+    if (type === 'success') {
+        statusElement.className += ' success';
+    } else if (type === 'error') {
+        statusElement.className += ' error';
+    }
+}
+function createDynamicDropdowns() {
+    if (allData.length === 0) {
+        return; // Don't create dropdowns if no data is loaded
+    }
+    
+    // Clear existing dynamic filters container first
+    var dynamicFiltersContainer = document.getElementById('dynamicFiltersContainer');
+    if (dynamicFiltersContainer) {
+        dynamicFiltersContainer.innerHTML = '';
+    } else {
+        console.error("Could not find dynamicFiltersContainer");
+        return;
+    }
+    
+    // Get the fields we want to create dropdowns for
+    var dropdownFields = [
+        { id: 'naicsFilter', field: 'naics', label: 'NAICS Code' },
+        { id: 'agencyFilter', field: 'agency', label: 'Agency' },
+        { id: 'officeFilter', field: 'office', label: 'Contracting Office' },
+        { id: 'vendorFilter', field: 'vendor', label: 'Vendor' }
+    ];
+    
+    // Create and populate each dropdown
+    dropdownFields.forEach(function(dropdownField) {
+        var formGroup = document.createElement('div');
+        formGroup.className = 'form-group';
+        
+        var label = document.createElement('label');
+        label.className = 'form-label';
+        label.textContent = dropdownField.label;
+        label.htmlFor = dropdownField.id;
+        
+        var select = document.createElement('select');
+        select.id = dropdownField.id;
+        select.className = 'form-control';
+        
+        // Add empty option
+        var emptyOption = document.createElement('option');
+        emptyOption.value = '';
+        emptyOption.textContent = 'All ' + dropdownField.label + 's';
+        select.appendChild(emptyOption);
+        
+        // Get unique values for this field
+        var uniqueValues = {};
+        var valuesByTotal = {};
+        
+        for (var i = 0; i < allData.length; i++) {
+            var value = allData[i][dropdownField.field];
+            if (value) {
+                if (!uniqueValues[value]) {
+                    uniqueValues[value] = 0;
+                    valuesByTotal[value] = 0;
+                }
+                uniqueValues[value]++;
+                valuesByTotal[value] += allData[i].value || 0;
+            }
+        }
+        
+        // Convert to array and sort by total value
+        var valueArray = [];
+        for (var value in valuesByTotal) {
+            valueArray.push({
+                value: value,
+                count: uniqueValues[value],
+                total: valuesByTotal[value]
+            });
+        }
+        
+        valueArray.sort(function(a, b) {
+            return b.total - a.total;
+        });
+        
+        // Add top 10 values to dropdown
+        var topValues = valueArray.slice(0, 10);
+        
+        for (var j = 0; j < topValues.length; j++) {
+            var option = document.createElement('option');
+            option.value = topValues[j].value;
+            
+            var displayValue = topValues[j].value;
+            if (displayValue && displayValue.length > 30) {
+                displayValue = displayValue.substring(0, 27) + '...';
+            }
+            
+            var formattedTotal = formatCurrency(topValues[j].total);
+            option.textContent = displayValue + ' (' + formattedTotal + ')';
+            select.appendChild(option);
+        }
+        
+        // Add event listener
+        select.addEventListener('change', applyAllFilters);
+        
+        // Assemble the form group
+        formGroup.appendChild(label);
+        formGroup.appendChild(select);
+        
+        // Add to container
+        dynamicFiltersContainer.appendChild(formGroup);
+    });
+    
+    console.log("Dynamic dropdowns created with " + dropdownFields.length + " filters");
+}
+// Function to create a dropdown for a specific field with top 10 values by dollar amount
+function createTopValueDropdown(id, field, label) {
+    console.log("Creating dropdown for field:", field);
+    
+    // Get the top 10 values by dollar amount
+    var valueMap = {};
+    var totalValue = {};
+    
+    // Try to match field names regardless of case
+    var fieldLower = field.toLowerCase();
+    
+    for (var i = 0; i < allData.length; i++) {
+        var item = allData[i];
+        var value = null;
+        
+        // Check for the field in the item with case insensitivity
+        for (var key in item) {
+            if (key.toLowerCase() === fieldLower || key === field) {
+                value = item[key];
+                break;
+            }
+        }
+        
+        // If no value found by field name, try using our mapped properties
+        if (!value) {
+            // Map CSV field names to our internal property names
+            var fieldMap = {
+                'naics': 'naics',
+                'contracting agency': 'agency',
+                'contracting office name': 'office',
+                'legal business name': 'vendor'
+            };
+            
+            if (fieldMap[fieldLower] && item[fieldMap[fieldLower]]) {
+                value = item[fieldMap[fieldLower]];
+            }
+        }
+        
+        if (value) {
+            if (!valueMap[value]) {
+                valueMap[value] = 0;
+                totalValue[value] = 0;
+            }
+            
+            valueMap[value]++;
+            totalValue[value] += item.value || 0;
+        }
+    }
+    
+    console.log("Found values for " + field + ":", Object.keys(valueMap).length);
+    
+    // Convert to array and sort by total dollar value
+    var valueArray = [];
+    for (var value in totalValue) {
+        valueArray.push({
+            value: value,
+            count: valueMap[value],
+            totalValue: totalValue[value]
+        });
+    }
+    
+    valueArray.sort(function(a, b) {
+        return b.totalValue - a.totalValue;
+    });
+    
+    // Create the dropdown element
+    var dropdown = document.createElement('select');
+    dropdown.id = id;
+    dropdown.style.maxWidth = '250px';
+    
+    // Add empty option
+    var emptyOption = document.createElement('option');
+    emptyOption.value = '';
+    emptyOption.textContent = label + '...';
+    dropdown.appendChild(emptyOption);
+    
+    // Add top 10 options
+    var topValues = valueArray.slice(0, 10);
+    console.log("Top values for " + field + ":", topValues.length);
+    
+    for (var i = 0; i < topValues.length; i++) {
+        var option = document.createElement('option');
+        option.value = topValues[i].value;
+        
+        var displayValue = topValues[i].value;
+        if (displayValue.length > 30) {
+            displayValue = displayValue.substring(0, 27) + '...';
+        }
+        
+        var formattedValue = formatCurrency(topValues[i].totalValue);
+        option.textContent = displayValue + ' (' + formattedValue + ')';
+        dropdown.appendChild(option);
+    }
+    
+    return dropdown;
+}
+// Standard function to update a doughnut chart with top items by value
+
+function updateTopItemsChart(chart, data, field, limit) {
+    // Group by the specified field
+    var itemData = {};
+    
+    for (var i = 0; i < data.length; i++) {
+        var item = data[i][field] || 'Unknown';
+        
+        // Truncate long names
+        if (item.length > 20) {
+            item = item.substring(0, 17) + '...';
+        }
+        
+        if (!itemData[item]) {
+            itemData[item] = 0;
+        }
+        
+        itemData[item] += data[i].value;
+    }
+    
+    // Convert to array and sort
+    var itemArray = [];
+    
+    for (var key in itemData) {
+        itemArray.push({
+            name: key,
+            value: itemData[key]
+        });
+    }
+    
+    itemArray.sort(function(a, b) {
+        return b.value - a.value;
+    });
+    
+    // Get top N items
+    var topItems = itemArray.slice(0, limit);
+    
+    var labels = [];
+    var values = [];
+    
+    for (var i = 0; i < topItems.length; i++) {
+        labels.push(topItems[i].name);
+        values.push(topItems[i].value);
+    }
+    
+    // Define a consistent color palette
+    var colors = [
+        '#667eea', '#764ba2', '#f093fb', '#f5576c', 
+        '#4facfe', '#5a6edf', '#4a59d4', '#3849c9',
+        '#2e3bb3', '#242e9e', '#1a2289', '#101673'
+    ];
+    
+    // Ensure we have enough colors
+    while (colors.length < topItems.length) {
+        colors.push(colors[colors.length % 12]);
+    }
+    
+    // Update chart
+    chart.data.labels = labels;
+    chart.data.datasets[0].data = values;
+    chart.data.datasets[0].backgroundColor = colors.slice(0, topItems.length);
+    chart.update();
+}
+
+// Update agency chart
+function updateAgencyChart() {
+    updateTopItemsChart(charts.agency, filteredData, 'agency', 6);
+}
+
+// Update vendor chart
+function updateVendorChart() {
+    updateTopItemsChart(charts.vendor, filteredData, 'vendor', 6);
+}
+
+// Update office chart
+function updateOfficeChart() {
+    updateTopItemsChart(charts.office, filteredData, 'office', 6);
+}
+// Apply filters automatically when any filter changes
+function setupAutoFiltering() {
+    // Set up event listener for unified search input
+    var unifiedSearch = document.getElementById('unifiedSearch');
+    unifiedSearch.addEventListener('input', function() {
+        // Small delay to avoid filtering on every keystroke
+        clearTimeout(unifiedSearch.timer);
+        unifiedSearch.timer = setTimeout(function() {
+            applyAllFilters();
+        }, 300); // 300ms delay after typing stops
+    });
+    
+    // Set up event listeners for dynamic dropdowns
+    var dropdownIds = ['naicsFilter', 'agencyFilter', 'officeFilter', 'vendorFilter'];
+    dropdownIds.forEach(function(id) {
+        var dropdown = document.getElementById(id);
+        if (dropdown) {
+            dropdown.addEventListener('change', function() {
+                applyAllFilters();
+            });
+        }
+    });
+    
+    // Setup complete message
+    console.log("Auto-filtering setup complete");
+}
+
+// Function to apply all filters
+function applyAllFilters() {
+    var searchText = document.getElementById('unifiedSearch').value.toLowerCase();
+    
+    // Get values from dynamic dropdowns (if they exist)
+    var naicsFilter = document.getElementById('naicsFilter')?.value || '';
+    var agencyFilter = document.getElementById('agencyFilter')?.value || '';
+    var officeFilter = document.getElementById('officeFilter')?.value || '';
+    var vendorFilter = document.getElementById('vendorFilter')?.value || '';
+    
+    // Start with all data
+    filteredData = [];
+    
+    // Apply all filters
+    for (var i = 0; i < allData.length; i++) {
+        var item = allData[i];
+        var includeItem = true;
+        
+        // Check unified search text (if provided)
+        if (searchText) {
+            var matchFound = false;
+            for (var prop in item) {
+                if (typeof item[prop] !== 'string' && typeof item[prop] !== 'number') {
+                    continue;
+                }
+                
+                var fieldValue = String(item[prop]).toLowerCase();
+                if (fieldValue.indexOf(searchText) !== -1) {
+                    matchFound = true;
+                    break;
+                }
+            }
+            
+            if (!matchFound) {
+                includeItem = false;
+            }
+        }
+        
+        // Check dropdown filters
+        if (naicsFilter && item.naics && item.naics.toString() !== naicsFilter) {
+            includeItem = false;
+        }
+        
+        if (agencyFilter && item.agency !== agencyFilter) {
+            includeItem = false;
+        }
+        
+        if (officeFilter && item.office !== officeFilter) {
+            includeItem = false;
+        }
+        
+        if (vendorFilter && item.vendor !== vendorFilter) {
+            includeItem = false;
+        }
+        
+        // Include the item if it passed all filters
+        if (includeItem) {
+            filteredData.push(item);
+        }
+    }
+    
+    updateDashboard();
+    
+    showMessage("Showing " + filteredData.length + " matching contracts.", "success");
+}
+
+// Reset all filters
+function resetAllFilters() {
+    // Clear unified search
+    document.getElementById('unifiedSearch').value = '';
+    
+    // Reset all dropdown filters
+    var dropdownIds = ['naicsFilter', 'agencyFilter', 'officeFilter', 'vendorFilter'];
+    dropdownIds.forEach(function(id) {
+        var dropdown = document.getElementById(id);
+        if (dropdown) {
+            dropdown.value = '';
+        }
+    });
+    
+    // Reset filtered data to all data
+    filteredData = [...allData];
+    updateDashboard();
+    
+    showMessage("All filters reset: showing all " + allData.length + " contracts.", "success");
+}
+</script>
+</body>
+</html>
