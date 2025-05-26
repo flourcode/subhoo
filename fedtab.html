@@ -1,0 +1,4260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>FedViz - Federal Contract Intelligence</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-sankey/0.12.3/d3-sankey.min.js"></script>
+<style>
+:root {
+  --primary: #007AFF;
+  --primary-dark: #0056b3;
+  --primary-light: #58AFFF;
+  --secondary: #8E8E93;
+  --accent: #5AC8FA;
+  --success: #34C759;
+  --warning: #FF9500;
+  --danger: #FF3B30;
+  --text-primary: #1D1D1F;
+  --text-secondary: #8A8A8E;
+  --text-tertiary: #AEAEB2;
+  --bg-primary: #FFFFFF;
+  --bg-secondary: #F2F2F7;
+  --bg-tertiary: #E5E5EA;
+  --bg-dark: #787880;
+  --border: #C6C6C8;
+  --border-light: #D1D1D6;
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.04), 0 2px 4px 0 rgba(0, 0, 0, 0.04);
+  --shadow: 0 3px 5px 0 rgba(0, 0, 0, 0.05), 0 4px 8px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 6px 10px 0 rgba(0, 0, 0, 0.06), 0 4px 12px 0 rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px 0 rgba(0, 0, 0, 0.07), 0 5px 20px 0 rgba(0, 0, 0, 0.07);
+  --shadow-xl: 0 12px 25px 0 rgba(0, 0, 0, 0.08), 0 8px 30px 0 rgba(0, 0, 0, 0.08);
+  --radius: 0.5rem;
+  --radius-lg: 0.75rem;
+  --sidebar-width: 280px;
+  --header-height: 56px;
+  --transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+[data-theme="dark"] {
+  --primary: #0A84FF;
+  --primary-dark: #0060DF;
+  --primary-light: #59AFFF;
+  --secondary: #8E8E93;
+  --accent: #64D2FF;
+  --success: #30D158;
+  --warning: #FF9F0A;
+  --danger: #FF453A;
+  --text-primary: #FFFFFF;
+  --text-secondary: #8E8E93;
+  --text-tertiary: #636366;
+  --bg-primary: #1C1C1E;
+  --bg-secondary: #000000;
+  --bg-tertiary: #2C2C2E;
+  --bg-dark: #030712;
+  --border: #38383A;
+  --border-light: #2C2C2E;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  -webkit-tap-highlight-color: rgba(0,0,0,0);
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  line-height: 1.5;
+  font-size: 1rem;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-tertiary);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--text-tertiary);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}
+
+.app-container {
+  display: flex;
+  min-height: 100vh;
+  position: relative;
+}
+
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: var(--sidebar-width);
+  height: 100vh;
+  background: var(--bg-primary);
+  box-shadow: var(--shadow-md);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  transition: transform var(--transition), width var(--transition);
+  z-index: 200;
+  transform: translateX(0);
+}
+[data-theme="dark"] .sidebar {
+  border-right-color: var(--border);
+}
+
+.sidebar.collapsed {
+  transform: translateX(-100%);
+}
+@media (min-width: 1024px) {
+  .sidebar.collapsed {
+    transform: translateX(0);
+    width: 72px;
+  }
+  .sidebar.collapsed .sidebar-header {
+    padding: 1.5rem 0;
+    justify-content: center;
+  }
+}
+
+.sidebar-header { /* General definition, might be overridden by compact below if user provided it there */
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: var(--header-height); /* Uses the iOS themed variable */
+  flex-shrink: 0;
+}
+
+.logo { /* General definition */
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  text-decoration: none;
+  color: var(--text-primary);
+  font-weight: 700; /* From original code */
+  font-size: 2rem; /* From original code, quite large for iOS logo in sidebar header */
+}
+
+.logo-text {
+  transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;
+}
+.sidebar.collapsed .logo-text {
+  opacity: 0;
+  transform: translateX(-10px);
+  pointer-events: none;
+}
+
+.sidebar-toggle { /* Assuming this is for a main sidebar toggle, not theme toggle */
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 0.625rem;
+  border-radius: var(--radius);
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+}
+.sidebar-toggle:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.sidebar-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 190;
+  opacity: 0;
+  transition: opacity var(--transition);
+}
+.sidebar-backdrop.active {
+  display: block;
+  opacity: 1;
+}
+
+@media (max-width: 1023px) {
+  .sidebar {
+    box-shadow: var(--shadow-lg);
+  }
+  .sidebar.collapsed {
+    transform: translateX(-100%);
+  }
+}
+
+.sidebar-nav { /* General definition */
+  flex: 1;
+  padding: 0.75rem;
+  overflow-y: auto;
+}
+
+.nav-section { /* General definition */
+  margin-bottom: 1rem;
+}
+
+.nav-section-title {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
+  padding: 0 0.75rem;
+}
+.sidebar.collapsed .nav-section-title {
+  opacity: 0;
+  height: 0;
+  margin: 0;
+  overflow: hidden;
+  padding: 0;
+}
+
+.sidebar .upload-container, .sidebar .search-container, .sidebar .target-selection-container {
+  background-color: var(--bg-primary);
+  padding: 1rem; /* General definition for these containers in sidebar */
+  border-radius: var(--radius-lg);
+  margin-bottom: 1rem;
+  border: 1px solid var(--border-light);
+}
+[data-theme="dark"] .sidebar .upload-container,
+[data-theme="dark"] .sidebar .search-container,
+[data-theme="dark"] .sidebar .target-selection-container {
+  background-color: var(--bg-tertiary);
+  border-color: var(--border);
+}
+
+.sidebar .upload-title, .sidebar .search-title { /* General definition for titles in sidebar containers */
+  font-size: 0.9375rem;
+  font-weight: 500;
+  margin-bottom: 0.75rem; /* General */
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.sidebar .upload-title i, .sidebar .search-title i { /* For FA icons if they were re-added */
+  color: var(--secondary);
+}
+
+.form-label { /* General form label */
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: var(--text-secondary);
+  margin-bottom: 0.375rem;
+  display: block;
+}
+
+.form-control { /* General form control */
+  padding: 0.625rem 0.875rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 1rem;
+  transition: border-color var(--transition), box-shadow var(--transition);
+  width: 100%;
+  margin-bottom: 1rem;
+  line-height: 1.4;
+  min-height: 44px;
+}
+[data-theme="dark"] .form-control {
+  background: var(--bg-tertiary);
+  border-color: var(--border);
+}
+.form-control:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 1px var(--primary);
+}
+
+.btn { /* General button */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  min-height: 44px;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  font-size: 1rem;
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: normal;
+  cursor: pointer;
+  transition: background-color var(--transition), border-color var(--transition), opacity var(--transition);
+  width: auto;
+  box-shadow: none;
+  line-height: 1.4;
+}
+.btn:active {
+  opacity: 0.7;
+  transform: none;
+}
+.btn-primary {
+  background-color: var(--primary);
+  color: white;
+}
+.btn-primary:hover {
+  background-color: var(--primary-dark);
+  opacity: 0.9;
+}
+.btn-secondary {
+  background-color: var(--bg-tertiary);
+  color: var(--primary);
+  border: 1px solid transparent;
+}
+.btn-secondary:hover {
+  background-color: var(--border);
+  opacity: 0.9;
+}
+[data-theme="dark"] .btn-secondary {
+  background-color: var(--bg-tertiary);
+  color: var(--primary);
+}
+.btn.active {
+  background-color: var(--primary-dark);
+  color: white;
+  opacity: 1;
+}
+
+.status-message { /* General status message (likely for main content area) */
+  margin-top: 0.5rem;
+  margin-bottom: 1rem;
+  padding: 1rem 1rem; /* Adjusted from 1rem 1.25rem to match user value more closely */
+  border-radius: var(--radius-lg);
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-light);
+  display: flex;
+  flex-direction: column;
+  transition: all 0.3s ease;
+}
+[data-theme="dark"] .status-message {
+  background: var(--bg-tertiary);
+  border-color: var(--border);
+}
+.status-message .primary-message { /* General primary message style */
+  font-size: 0.8rem; /* From user supplied CSS. Was 1.25rem in iOS theme. */
+  font-weight: 500;
+  margin-bottom: 0.5rem; /* From user supplied CSS */
+  display: flex;
+  align-items: center;
+  color: var(--text-primary);
+}
+.status-message .primary-message i { /* For FA icons */
+  margin-right: 0.625rem; /* From user supplied CSS */
+  font-size: 0.7rem; /* From user supplied CSS */
+}
+.status-message.info .primary-message i { color: var(--secondary); }
+.status-message.success .primary-message i { color: var(--success); }
+.status-message.error .primary-message i { color: var(--danger); }
+
+.filter-tags { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem; }
+.filter-tag {
+  display: inline-flex; align-items: center;
+  background-color: var(--border-light);
+  border: none;
+  border-radius: var(--radius);
+  padding: 0.375rem 0.625rem;
+  font-size: 0.7rem; /* From user supplied CSS */
+  color: var(--text-secondary);
+}
+[data-theme="dark"] .filter-tag {
+  background-color: var(--border);
+  color: var(--text-tertiary);
+}
+.filter-tag .tag-label { font-weight: 400; color: var(--text-tertiary); margin-right: 0.25rem; }
+.filter-tag .tag-value { font-weight: 500; color: var(--text-secondary); }
+[data-theme="dark"] .filter-tag .tag-value { color: var(--text-tertiary); }
+
+.main-wrapper {
+  flex: 1;
+  margin-left: var(--sidebar-width);
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  transition: margin-left var(--transition);
+}
+.sidebar.collapsed + .main-wrapper { margin-left: 72px; }
+@media (max-width: 1023px) {
+  .main-wrapper, .sidebar.collapsed + .main-wrapper { margin-left: 0; }
+}
+
+.header { /* This is the header that was removed from HTML, so these styles are orphaned if not used elsewhere. */
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border);
+  box-shadow: none;
+  position: sticky; top: 0; z-index: 100;
+  height: var(--header-height);
+  display: flex; align-items: center;
+  padding: 0 1rem;
+  gap: 0.75rem;
+}
+[data-theme="dark"] .header {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border-bottom-color: var(--border);
+}
+.mobile-menu-toggle { /* Orphaned if button removed from HTML */
+  display: none; background: none; border: none;
+  color: var(--primary);
+  cursor: pointer; padding: 0.625rem; border-radius: var(--radius);
+  font-size: 1.375rem;
+}
+@media (max-width: 1023px) { .mobile-menu-toggle { display: flex; align-items: center; justify-content: center; }}
+.mobile-menu-toggle:hover { background: var(--border-light); }
+[data-theme="dark"] .mobile-menu-toggle:hover { background: var(--border); }
+
+.header-content { flex: 1; display: flex; align-items: center; justify-content: space-between; gap: 1rem; } /* Orphaned with .header */
+.header-title { font-size: 1.0625rem; font-weight: 600; color: var(--text-primary); } /* Orphaned with .header */
+.header-actions { display: flex; align-items: center; gap: 0.25rem; } /* Partially used by theme toggle's new parent if not overridden */
+
+.header-button { /* Used by theme toggle, now in .sidebar-header */
+  background: none; border: none;
+  color: var(--primary);
+  cursor: pointer; padding: 0.625rem; border-radius: var(--radius);
+  font-size: 1.25rem;
+  display: flex; align-items: center; justify-content: center;
+}
+.header-button:hover { background: var(--border-light); }
+[data-theme="dark"] .header-button:hover { background: var(--border); }
+
+.main-content {
+  flex: 1;
+  padding: 1rem;
+  overflow-y: auto;
+  background-color: var(--bg-secondary);
+}
+
+.dashboard-grid, .stats-grid {
+  display: grid;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.card, .stat-card {
+  background: var(--bg-primary);
+  border-radius: var(--radius-lg);
+  padding: 1rem;
+  box-shadow: var(--shadow-sm);
+  border: none;
+  transition: box-shadow var(--transition), transform var(--transition);
+  position: relative;
+  overflow: hidden;
+}
+.card:hover, .stat-card:hover {
+  box-shadow: var(--shadow);
+}
+
+.card-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border-light);
+}
+.card-title {
+  font-size: 1.0625rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  display: flex; align-items: center; gap: 0.5rem;
+}
+.card-icon { /* This class might be orphaned if icons were removed from cards */
+  width: 36px; height: 36px;
+  background: var(--primary-light);
+  border-radius: var(--radius);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--primary);
+  font-size: 1.125rem;
+}
+[data-theme="dark"] .card-icon {
+  background: var(--primary-dark);
+  color: var(--primary-light);
+}
+
+.stat-header {
+  display: flex;
+  justify-content: flex-start;
+  margin-bottom: 0.25rem;
+}
+.stat-info {
+  flex: 1;
+}
+.stat-label {
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: var(--text-secondary);
+  margin-bottom: 0.125rem;
+  text-transform: none;
+  line-height: 1.4;
+}
+.stat-value {
+  font-size: 2.5rem;
+  font-weight: 700; /* User had 700 here, keeping it */
+  color: var(--text-primary);
+  line-height: 1.15;
+  display: block;
+}
+
+.chart-container { position: relative; height: 280px; margin-top: 1rem; }
+
+.table-container {
+  background: var(--bg-primary);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  margin-bottom: 1.5rem;
+}
+.table-header {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border);
+  background-color: var(--bg-tertiary);
+}
+[data-theme="dark"] .table-header { background-color: var(--bg-tertiary); }
+.table-title { font-size: 1rem; font-weight: 500; color: var(--text-primary); }
+.table-wrapper { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+
+th {
+  background: var(--bg-tertiary);
+  padding: 0.75rem 1rem;
+  text-align: left;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  text-transform: none;
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 10;
+}
+[data-theme="dark"] th { background: var(--bg-tertiary); }
+
+td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border-light);
+  font-size: 0.9375rem;
+  color: var(--text-primary);
+  vertical-align: middle;
+}
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: var(--bg-tertiary); }
+[data-theme="dark"] tr:hover td { background: var(--border); }
+
+.alert { /* This class and its variants might be orphaned */
+  padding: 0.875rem 1rem;
+  border-radius: var(--radius);
+  margin-bottom: 1rem;
+  display: flex; align-items: flex-start; gap: 0.625rem;
+  font-size: 0.9375rem;
+  border-left-width: 0;
+  border: 1px solid;
+}
+.alert-info {
+  background: rgba(var(--primary-rgb,0,122,255), 0.1);
+  color: var(--primary-dark);
+  border-color: rgba(var(--primary-rgb,0,122,255), 0.3);
+}
+.alert-success {
+  background: rgba(var(--success-rgb,52,199,89), 0.1);
+  color: #20662F;
+  border-color: rgba(var(--success-rgb,52,199,89), 0.3);
+}
+.alert-error {
+  background: rgba(var(--danger-rgb,255,59,48), 0.1);
+  color: #A62118;
+  border-color: rgba(var(--danger-rgb,255,59,48), 0.3);
+}
+[data-theme="dark"] .alert-info { background: rgba(var(--primary-rgb,10,132,255),0.15); color: var(--primary-light); border-color: rgba(var(--primary-rgb,10,132,255),0.3); }
+[data-theme="dark"] .alert-success { background: rgba(var(--success-rgb,48,209,88),0.15); color: #63E688; border-color: rgba(var(--success-rgb,48,209,88),0.3); }
+[data-theme="dark"] .alert-error { background: rgba(var(--danger-rgb,255,69,58),0.15); color: #FF8880; border-color: rgba(var(--danger-rgb,255,69,58),0.3); }
+
+@media (min-width: 1280px) {
+  .dashboard-grid { grid-template-columns: repeat(3, 1fr); }
+  .stats-grid { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+}
+@media (min-width: 768px) and (max-width: 1023px) {
+  .dashboard-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 767px) {
+  .main-content { padding: 0.75rem; }
+  .dashboard-grid, .stats-grid, .sidebar .filter-group { grid-template-columns: 1fr; gap: 0.75rem; }
+  /* .header { padding: 0 0.75rem; } Orphaned */
+  /* .header-title { font-size: 1rem; } Orphaned */
+  .stat-value { font-size: 1.5rem; } /* Overridden by more specific .stat-value later? Check. No, this is the mobile one. */
+  .card, .stat-card { padding: 0.75rem; }
+  .card-header { margin-bottom: 0.75rem; padding-bottom: 0.5rem;}
+  th, td { padding: 0.625rem 0.75rem; font-size: 0.875rem; }
+  .btn { padding: 0.5rem 1rem; font-size: 0.9375rem; min-height: 40px; }
+}
+
+.node rect { cursor: default; fill-opacity: 0.95; shape-rendering: crispEdges; stroke-width: 0.5px; stroke: var(--bg-primary); }
+[data-theme="dark"] .node rect { stroke: var(--bg-secondary); }
+.node text { pointer-events: none; font-size: 11px; font-weight: 400; fill: var(--text-primary); text-shadow: none !important; }
+[data-theme="dark"] .node text { fill: var(--text-primary) !important; }
+.link { fill: none; stroke-opacity: 0.25; }
+.link:hover { stroke-opacity: 0.5; }
+
+th .sort-icon:after { font-family: "Font Awesome 5 Free"; font-weight: 900; margin-left: 0.4em; opacity: 0.4; color: var(--text-tertiary); }
+th.sort-asc .sort-icon:after { content: "\f0de"; opacity: 1; color: var(--primary); }
+th.sort-desc .sort-icon:after { content: "\f0dd"; opacity: 1; color: var(--primary); }
+
+.badge {
+  display: inline-block;
+  padding: 0.25rem 0.625rem;
+  border-radius: var(--radius);
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.2;
+}
+.badge-active { background-color: rgba(var(--success-rgb,52,199,89), 0.15); color: var(--success); } /* Potentially orphaned */
+.badge-target { background-color: rgba(var(--primary-rgb,0,122,255), 0.15); color: var(--primary); } /* Potentially orphaned */
+.badge-inactive { background-color: var(--border-light); color: var(--text-tertiary); }
+[data-theme="dark"] .badge-active { background-color: rgba(var(--success-rgb,48,209,88),0.2); }
+[data-theme="dark"] .badge-target { background-color: rgba(var(--primary-rgb,10,132,255),0.2); }
+[data-theme="dark"] .badge-inactive { background-color: var(--border); color: var(--text-tertiary); }
+
+.target-vendor td { background-color: rgba(var(--primary-rgb,0,122,255), 0.05) !important; }
+[data-theme="dark"] .target-vendor td { background-color: rgba(var(--primary-rgb,10,132,255), 0.1) !important; }
+
+.message { padding: 0.875rem; border-radius: var(--radius); margin-bottom: 1rem; font-size: 0.9375rem; } /* Potentially orphaned */
+.message.success { background-color: rgba(var(--success-rgb,52,199,89),0.1); color: #20662F; border: 1px solid rgba(var(--success-rgb,52,199,89),0.2); }
+.message.error { background-color: rgba(var(--danger-rgb,255,59,48),0.1); color: #A62118; border: 1px solid rgba(var(--danger-rgb,255,59,48),0.2); }
+[data-theme="dark"] .message.success { background-color: rgba(var(--success-rgb,48,209,88),0.15); color: #63E688; border-color: rgba(var(--success-rgb,48,209,88),0.3); }
+[data-theme="dark"] .message.error { background-color: rgba(var(--danger-rgb,255,69,58),0.15); color: #FF8880; border-color: rgba(var(--danger-rgb,255,69,58),0.3); }
+
+#sankeyChart { width: 100%; height: 450px; position: relative; overflow: hidden; transition: height 0.3s ease; }
+@media (max-width: 768px) { #sankeyChart { height: 350px; }}
+
+#loadBtn, #resetVendorFilterBtn, #resetFiltersBtn,
+#sankeyTop10, #sankeyTop25, #sankeyAll {
+  text-transform: none;
+  box-shadow: none;
+  font-weight: 400;
+}
+#resetVendorFilterBtn, #resetFiltersBtn {
+  background-color: var(--bg-tertiary);
+  color: var(--primary);
+  border: 1px solid var(--border);
+}
+#resetVendorFilterBtn:hover, #resetFiltersBtn:hover {
+  background-color: var(--border); opacity: 0.9;
+}
+#sankeyTop10, #sankeyTop25, #sankeyAll {
+  padding: 0.5rem 0.875rem; font-size: 0.875rem; margin: 0 2px;
+  background-color: var(--bg-tertiary); color: var(--text-primary);
+  border: 1px solid var(--border);
+}
+#sankeyTop10:hover, #sankeyTop25:hover, #sankeyAll:hover { background-color: var(--border); }
+#sankeyTop10.active, #sankeyTop25.active, #sankeyAll.active {
+  background-color: var(--primary); color: white; border-color: var(--primary); opacity: 1;
+}
+
+#contractsTable th:nth-child(1), #contractsTable td:nth-child(1) { min-width: 120px; width: 120px; white-space: nowrap; }
+#contractsTable th:last-child, #contractsTable td:last-child { min-width: 140px; width: 140px; white-space: nowrap; text-align: center; }
+
+.fpds-link {
+  display: inline-flex; align-items: center; gap: 0.375rem;
+  white-space: nowrap; text-decoration: none;
+  padding: 0.5rem 0.875rem;
+  background-color: var(--primary); color: white !important;
+  border-radius: var(--radius);
+  font-size: 0.8125rem; font-weight: 500;
+  transition: background-color 0.2s, opacity 0.2s;
+  text-transform: none; box-shadow: none;
+}
+.fpds-link:hover { background-color: var(--primary-dark); opacity: 0.9; }
+.fpds-link i { margin-right: 4px; }
+
+[data-theme="dark"] .chart-container,
+[data-theme="dark"] .chart-container canvas,
+[data-theme="dark"] .chartjs-legend li span,
+[data-theme="dark"] .chartjs-tooltip,
+[data-theme="dark"] .chartjs-tooltip-header { color: var(--text-primary) !important; }
+[data-theme="dark"] canvas { filter: brightness(1) contrast(1); }
+[data-theme="dark"] .chartjs-tooltip {
+  background-color: rgba(50, 50, 52, 0.9) !important;
+  border-color: rgba(80,80,82,0.8) !important;
+  box-shadow: var(--shadow-md);
+}
+
+/* === COMPACT SIDEBAR STYLES (LATEST ADDITIONS - these should override/be primary for .sidebar elements) === */
+.sidebar .sidebar-nav {
+  padding: 0.5rem;
+}
+.sidebar .nav-section {
+  margin-bottom: 0.75rem;
+}
+.sidebar .sidebar-header {
+  padding: 0.75rem 1rem;
+  height: auto;
+  min-height: 48px;
+  /* Overrides previous .sidebar-header height: var(--header-height); if more specific or later in cascade */
+}
+.sidebar .logo {
+  font-size: 1.8rem; /* Overrides previous .logo font-size */
+  font-weight: 700; /* Ensuring consistency with iOS title feel */
+}
+.sidebar .sidebar-header .header-button { /* Specific to theme toggle in sidebar header */
+  padding: 0.5rem;
+  font-size: 1.125rem; /* Icon size for theme toggle */
+  color: var(--primary); /* Ensure it uses primary color */
+}
+.sidebar .search-container,
+.sidebar .upload-container,
+.sidebar .target-selection-container { /* Added target-selection based on previous discussions */
+  padding: 0.75rem;
+  margin-bottom: 0.75rem;
+  border-radius: var(--radius); /* Use smaller radius for inner sections */
+  background-color: var(--bg-secondary); /* Consistent inner section bg */
+  border: 1px solid var(--border-light); /* More defined sections */
+}
+[data-theme="dark"] .sidebar .search-container,
+[data-theme="dark"] .sidebar .upload-container,
+[data-theme="dark"] .sidebar .target-selection-container {
+  background-color: var(--bg-tertiary);
+  border-color: var(--border);
+}
+
+.sidebar .search-title,
+.sidebar .upload-title {
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-bottom: 0.625rem;
+}
+.sidebar .status-message {
+  padding: 0.625rem 0.875rem;
+  font-size: 0.8125rem;
+  margin-bottom: 0.75rem;
+  border-radius: var(--radius);
+  background-color: var(--bg-tertiary); /* Matches sidebar section bg */
+  border: 1px solid var(--border);
+}
+[data-theme="dark"] .sidebar .status-message {
+    background-color: var(--bg-primary); /* Slightly different from section bg for emphasis */
+    border-color: var(--border-light);
+}
+.sidebar .status-message .primary-message {
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+}
+.sidebar .status-message .primary-message i {
+  font-size: 0.875rem;
+  margin-right: 0.375rem;
+}
+.sidebar .status-message .filter-tags {
+  margin-top: 0.375rem;
+  gap: 0.25rem;
+}
+.sidebar .status-message .filter-tag {
+  padding: 0.125rem 0.375rem;
+  font-size: 0.75rem;
+}
+.sidebar .form-group {
+  margin-bottom: 0.625rem;
+}
+.sidebar .form-label {
+  font-size: 0.75rem;
+  margin-bottom: 0.25rem;
+  font-weight: 400;
+}
+.sidebar .form-control { /* This is the definitive style for form-controls in sidebar */
+  font-size: 0.875rem;
+  padding: 0.5rem 0.75rem;
+  min-height: 36px;
+  height: 36px;
+  border-radius: var(--radius);
+  margin-bottom: 0; /* Individual form-controls don't need margin if parent form-group or grid handles it */
+}
+.sidebar .form-group > .form-control { /* Add margin if form-control is direct child of form-group */
+    margin-bottom: 0; /* Handled by form-group margin or grid gap */
+}
+
+
+.sidebar .btn { /* This is the definitive style for buttons in sidebar */
+  font-size: 0.8125rem;
+  padding: 0.5rem 0.875rem;
+  min-height: 36px;
+  height: 36px;
+  width: 100%; /* Make all sidebar buttons full width */
+}
+.sidebar .filter-actions {
+  margin-top: 0.625rem;
+}
+.sidebar .filter-actions .btn { /* Ensures full width for buttons in filter-actions */
+    width: 100%;
+}
+
+.sidebar .filter-group#dynamicFiltersContainer {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.25rem; /* Very compact */
+  margin-bottom: 0.625rem; /* Space after the group of dropdowns */
+}
+.sidebar .filter-group#dynamicFiltersContainer .form-group {
+  margin-bottom: 0; /* Let parent grid gap control spacing */
+}
+
+.sidebar #dynamicFiltersContainer select.form-control,
+.sidebar input#unifiedSearch.form-control {
+  /* These properties are already set by the general .sidebar .form-control,
+     so this rule is redundant if properties are identical. Kept for specificity if needed. */
+  font-size: 0.875rem;
+  padding: 0.5rem 0.75rem;
+  min-height: 36px;
+  height: 36px;
+}
+
+.sidebar #dynamicFiltersContainer { /* Ensure no extra padding if it's just a class alias for filter-group */
+  padding: 0;
+  overflow: visible;
+}
+.sidebar input[type="file"].form-control {
+  padding: 0; height: 40px; min-height: 40px; /* From file input styling */
+}
+.sidebar input[type="file"]#csvFileInput.form-control::file-selector-button {
+  background-color: var(--primary);
+  color: white;
+  font-weight: 500;
+  text-transform: none;
+  padding: 0 1rem;
+  height: 100%;
+  border:none; /* Added from recent changes */
+  border-right: 1px solid var(--border); /* Added from recent changes */
+  margin-right: 0.625rem;
+}
+[data-theme="dark"] .sidebar input[type="file"]#csvFileInput.form-control::file-selector-button {
+  border-right-color: var(--text-tertiary);
+}
+.sidebar input[type="file"]#csvFileInput.form-control::file-selector-button:hover {
+  background-color: var(--primary-dark);
+}
+
+/* Target Selection Interface in Sidebar (Compact) */
+.sidebar .target-selection-container .search-header { padding: 0.5rem 0; background: transparent; margin-bottom: 0.25rem; cursor: pointer; }
+.sidebar .target-selection-container .search-title { font-size: 0.875rem; font-weight: 500; }
+.sidebar .target-tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 0.25rem; }
+.sidebar .target-tabs .tab-btn {
+  flex: 1; padding: 0.5rem 0.25rem; background: none; border: none;
+  border-bottom: 2px solid transparent; cursor: pointer;
+  color: var(--text-secondary); font-size: 0.75rem; font-weight: 400;
+  transition: color var(--transition), border-color var(--transition);
+}
+.sidebar .target-tabs .tab-btn:hover { color: var(--primary); }
+.sidebar .target-tabs .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); font-weight: 500; }
+.sidebar .tab-content .search-box input.form-control { margin-bottom: 0.25rem; height:32px; min-height:32px; font-size:0.8125rem;}
+.sidebar .selection-list { max-height: 120px; overflow-y: auto; border: 1px solid var(--border); border-radius: var(--radius); padding: 0.125rem 0; font-size: 0.75rem; }
+.sidebar .selection-item { padding: 0.375rem 0.5rem; border-bottom: 1px solid var(--border-light); display: flex; align-items: center; cursor: pointer; transition: background-color var(--transition); }
+.sidebar .selection-item:last-child { border-bottom: none; }
+.sidebar .selection-item:hover { background-color: var(--bg-tertiary); }
+.sidebar .selection-item input[type="checkbox"] { margin-right: 0.375rem; cursor: pointer; accent-color: var(--primary); width: 14px; height: 14px; }
+.sidebar .selection-item span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.8125rem; }
+.sidebar #targetFilterBtn, .sidebar #clearTargetsBtn { flex: 1; font-size: 0.8125rem; padding: 0.5rem; min-height: 32px; height: 32px; }
+
+#targetStatusIndicator {
+  padding: 0.75rem 1rem; border-radius: var(--radius);
+  background-color: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  margin-bottom: 1rem; font-size: 0.875rem;
+  color: var(--text-secondary);
+  display: none; align-items: center; gap: 0.5rem;
+}
+#targetStatusIndicator i { color: var(--secondary); margin-right: 0.375rem; }
+[data-theme="dark"] #targetStatusIndicator {
+  background-color: var(--bg-tertiary);
+  border-color: var(--border);
+  color: var(--text-tertiary);
+}
+[data-theme="dark"] #targetStatusIndicator i { color: var(--text-tertiary); }
+</style>
+</style>
+</head>
+<body>
+  <div class="app-container">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <a href="#" class="logo">
+         <span class="logo-text">FedTab</span>
+        </a>
+        <button class="header-button" id="themeToggle" aria-label="Toggle Theme">
+          <i class="fas fa-moon" aria-hidden="true"></i>
+        </button>
+      </div>
+
+      <div class="sidebar-nav">
+        <div class="nav-section">
+          <div class="search-container">
+		  <div id="statusMessage" class="status-message" role="status" aria-live="polite">
+          Select a CSV file to begin analysis.
+        </div>
+            <div class="search-header">
+              <h2 class="search-title">Search & Filter</h2>
+            </div>
+            <div class="filter-container">
+              <div class="form-group">
+             <input type="text" id="unifiedSearch" placeholder="Search across all contract fields..." class="form-control">
+              </div>
+              <div class="filter-group" id="dynamicFiltersContainer">
+                </div>
+              <div class="filter-actions">
+                <button class="btn btn-secondary" id="resetFiltersBtn">
+                  Reset Filters
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="upload-container">
+            <div class="upload-title">
+              Upload FPDS CSV Data
+            </div>
+            <form id="uploadForm">
+              <label class="form-label" for="csvFileInput">Select CSV file</label>
+              <input type="file" id="csvFileInput" accept=".csv" class="form-control">
+              <button type="button" id="loadBtn" class="btn btn-primary">
+                Load Data
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <div class="main-wrapper">
+      <main class="main-content">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-header">
+              <div class="stat-info">
+                <div class="stat-label">Total Contracts</div>
+                <div class="stat-value" id="totalContracts">0</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-header">
+              <div class="stat-info">
+                <div class="stat-label">Total Contract Value</div>
+                <div class="stat-value" id="totalValue">$0</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-header">
+              <div class="stat-info">
+                <div class="stat-label">Total Vendors</div>
+                <div class="stat-value" id="activeVendors">0</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="dashboard-grid">
+          </div>
+
+        <div class="table-container" id="officeTableContainer">
+          <div class="table-header">
+            <h3 class="table-title">Top Contracting Offices</h3>
+          </div>
+          <div class="table-wrapper">
+            <table class="sortable" id="officeTable" aria-labelledby="officeTableContainer">
+              <thead>
+                <tr>
+                  <th data-sort="string" scope="col">Agency <span class="sort-icon"></span></th>
+                  <th data-sort="string" scope="col">Contracting Office <span class="sort-icon"></span></th>
+                  <th data-sort="number" scope="col">Total Value <span class="sort-icon"></span></th>
+                  <th data-sort="number" scope="col">Contracts <span class="sort-icon"></span></th>
+                  <th data-sort="number" scope="col">Target ISV Activity <span class="sort-icon"></span></th>
+                  <th data-sort="number" scope="col">Largest Contract <span class="sort-icon"></span></th>
+                </tr>
+              </thead>
+              <tbody id="officeTableBody">
+                </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="table-container" id="targetTableContainer">
+          <div class="table-header">
+            <h3 class="table-title">Target ISVs Analysis</h3>
+          </div>
+          <div class="table-wrapper">
+            <table class="sortable" id="targetTable" aria-labelledby="targetTableContainer">
+              <thead>
+                <tr>
+                  <th data-sort="string" scope="col">Vendor <span class="sort-icon"></span></th>
+                  <th data-sort="number" scope="col">Total Value <span class="sort-icon"></span></th>
+                  <th data-sort="number" scope="col">Market Share <span class="sort-icon"></span></th>
+                  <th data-sort="number" scope="col">Contracts <span class="sort-icon"></span></th>
+                  <th data-sort="number" scope="col">Avg Deal Size <span class="sort-icon"></span></th>
+                </tr>
+              </thead>
+              <tbody id="targetTableBody">
+                </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="table-container" id="contractsTableContainer">
+          <div class="table-header">
+            <h3 class="table-title">Recent Contract Awards</h3>
+          </div>
+          <div class="table-wrapper">
+            <table class="sortable" id="contractsTable" aria-labelledby="contractsTableContainer">
+              <thead>
+                <tr>
+                  <th data-sort="date" scope="col">Award Date <span class="sort-icon"></span></th>
+                  <th data-sort="string" scope="col">Vendor <span class="sort-icon"></span></th>
+                  <th data-sort="string" scope="col">Agency <span class="sort-icon"></span></th>
+                  <th data-sort="string" scope="col">Description <span class="sort-icon"></span></th>
+                  <th data-sort="number" scope="col">Value <span class="sort-icon"></span></th>
+                  <th data-sort="string" scope="col">Status <span class="sort-icon"></span></th>
+                </tr>
+              </thead>
+              <tbody id="contractsTableBody">
+                </tbody>
+            </table>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+  </body>
+<script>
+// Global variables
+var allData = [];
+var filteredData = [];
+var charts = {};
+var currentSankeyLimit = 10;
+var vendorColorMap = new Map();
+var targetSelections = {
+    vendors: new Set(),
+    agencies: new Set(),
+    offices: new Set()
+};
+var targetFilterActive = false;
+// Initialize on DOM content loaded
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize the UI components
+    document.getElementById('loadBtn').addEventListener('click', loadCSVFile);
+    document.getElementById('resetFiltersBtn').addEventListener('click', resetAllFilters);
+    
+    // Set up unified search input
+    var unifiedSearch = document.getElementById('unifiedSearch');
+    if (unifiedSearch) {
+        unifiedSearch.addEventListener('input', function() {
+            clearTimeout(unifiedSearch.timer);
+            unifiedSearch.timer = setTimeout(function() {
+                applyAllFilters();
+            }, 300);
+        });
+        unifiedSearch.addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                applyAllFilters();
+            }
+        });
+    }
+    
+    // Set up dashboard layout
+    setupDashboardGrid();
+    
+    // Apply compact styles
+    applyCompactSidebarStyles();
+    updateUploadContainerLayout();
+    updateSearchContainer();
+    updateUploadContainer();
+    
+    // Add target functionality (new code)
+    createTargetSelectionInterface();
+    createTargetStatusIndicator();
+    
+    // Theme initialization
+    const themeToggle = document.getElementById('themeToggle');
+    const currentTheme = localStorage.getItem('theme') || 'light'; // Default to light mode
+    document.documentElement.setAttribute('data-theme', currentTheme);
+    
+    // Update icon to match current theme
+    if (themeToggle) {
+        const icon = themeToggle.querySelector('i');
+        if (icon) {
+            if (currentTheme === 'dark') {
+                icon.classList.remove('fa-moon');
+                icon.classList.add('fa-sun');
+            } else {
+                icon.classList.remove('fa-sun');
+                icon.classList.add('fa-moon');
+            }
+        }
+        
+        // Set up theme toggle with chart color updates
+        themeToggle.addEventListener('click', function() {
+            const theme = document.documentElement.getAttribute('data-theme');
+            const newTheme = theme === 'light' ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            
+            // Update icon
+            const icon = themeToggle.querySelector('i');
+            if (newTheme === 'dark') {
+                icon.classList.remove('fa-moon');
+                icon.classList.add('fa-sun');
+            } else {
+                icon.classList.remove('fa-sun');
+                icon.classList.add('fa-moon');
+            }
+            
+            // Update Chart.js colors specifically for dark mode
+            updateChartJsColors();
+        });
+    }
+    
+    // Modify the loadCSVFile function to add interactivity after loading
+    const originalLoadCSVFile = loadCSVFile;
+    loadCSVFile = function() {
+        originalLoadCSVFile();
+        
+        // Add interactivity after a short delay to ensure charts are initialized
+        setTimeout(function() {
+            initInteractivity();
+            
+            // Apply chart colors based on current theme
+            updateChartJsColors();
+        }, 1000);
+    };
+    
+    // Show initial message
+    showMessage("Select a CSV file to begin analysis.", "info");
+});
+// Add CSS for dark mode text in Sankey chart
+function addDarkModeSankeyStyles() {
+    const styleElement = document.createElement('style');
+    styleElement.textContent = `
+        /* Remove text shadow from Sankey chart text */
+        .node text {
+            text-shadow: none !important;
+            font-weight: 500;
+        }
+        
+        /* Improve Sankey diagram dark mode text */
+        [data-theme="dark"] .node text {
+            fill: #e2e8f0 !important; /* Light color for dark mode */
+        }
+    `;
+    document.head.appendChild(styleElement);
+}
+
+// Call this during initialization
+addDarkModeSankeyStyles();
+
+// Function to update Chart.js colors for dark mode
+function updateChartJsColors() {
+    const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
+    const textColor = isDarkMode ? '#e2e8f0' : '#6B7280';
+    const gridColor = isDarkMode ? 'rgba(74, 85, 104, 0.2)' : 'rgba(107, 114, 128, 0.1)';
+    
+    console.log("Updating chart colors for theme:", isDarkMode ? "dark" : "light");
+    
+    // Update each chart's text colors
+    if (charts.monthly) {
+        charts.monthly.options.scales.x.ticks.color = textColor;
+        charts.monthly.options.scales.y.ticks.color = textColor;
+        charts.monthly.update();
+    }
+    
+    if (charts.vendor) {
+        charts.vendor.options.scales.x.ticks.color = textColor;
+        charts.vendor.options.scales.y.ticks.color = textColor;
+        charts.vendor.update();
+    }
+    
+    if (charts.contractType) {
+        charts.contractType.options.scales.x.ticks.color = textColor;
+        charts.contractType.options.scales.y.ticks.color = textColor;
+        charts.contractType.update();
+    }
+    
+    if (charts.size && charts.size.options.plugins && charts.size.options.plugins.legend) {
+        if (!charts.size.options.plugins.legend.labels) {
+            charts.size.options.plugins.legend.labels = {};
+        }
+        charts.size.options.plugins.legend.labels.color = textColor;
+        charts.size.update();
+    }
+}
+// Reset all filters and return to showing all data
+function resetAllFilters() {
+    // Reset the global search input
+    document.getElementById('unifiedSearch').value = '';
+    
+    // Reset all dropdown filters
+    var filterSelects = document.querySelectorAll('#dynamicFiltersContainer select');
+    filterSelects.forEach(function(select) {
+        select.selectedIndex = 0;
+    });
+    
+    // Reset target filter state but don't clear selections
+    targetFilterActive = false;
+    const targetBtn = document.getElementById('targetFilterBtn');
+    if (targetBtn) {
+        targetBtn.classList.remove('btn-primary');
+        targetBtn.classList.add('btn-secondary');
+    }
+    
+    // Reset filtered data to all data
+    filteredData = [...allData];
+    
+    // Update status indicators
+    updateTargetStatusIndicator();
+    
+    // Calculate totals
+    var totalContracts = filteredData.length;
+    var totalValue = filteredData.reduce((sum, item) => sum + item.value, 0);
+    
+    // Update the status message
+    var primaryMessage = `Showing all ${totalContracts.toLocaleString()} contracts`;
+    var filters = {
+        "Total Value": formatCurrency(totalValue)
+    };
+    
+    showMessage(primaryMessage, "info", filters);
+    
+    // Update the dashboard
+    updateDashboard();
+    
+    // Update Sankey diagram with all data
+    if (document.getElementById('sankeyChart')) {
+        updateSankeyDiagramWithFilteredData();
+    }
+}
+function getVendorColor(vendorName, index) {
+  // Use existing color if already assigned
+  if (vendorColorMap.has(vendorName)) {
+    return vendorColorMap.get(vendorName);
+  }
+  
+  // Default chart colors (already in your code)
+  const chartColors = [
+    '#667eea', '#764ba2', '#f093fb', '#f5576c', 
+    '#4facfe', '#43e97b', '#a8eb12', '#ebbf12'
+  ];
+  
+  // Assign a new color and store it
+  const color = chartColors[index % chartColors.length];
+  vendorColorMap.set(vendorName, color);
+  return color;
+}
+function applyAllFilters() {
+    // Start with all data
+    filteredData = [...allData];
+    
+    // Track applied filters for status message
+    var appliedFilters = {};
+    
+    // Apply unified search if there's a search term
+    var searchTerm = document.getElementById('unifiedSearch').value.toLowerCase().trim();
+    if (searchTerm) {
+        filteredData = filteredData.filter(function(item) {
+            // Search across all string properties
+            for (var key in item) {
+                if (typeof item[key] === 'string' && 
+                    item[key].toLowerCase().indexOf(searchTerm) !== -1) {
+                    return true;
+                }
+            }
+            return false;
+        });
+        
+        appliedFilters["Search"] = searchTerm;
+    }
+    
+    // Apply dropdown filters
+    var dropdowns = {
+        'naicsFilter': 'NAICS',
+        'agencyFilter': 'Agency',
+        'officeFilter': 'Office',
+        'vendorFilter': 'Vendor'
+    };
+    
+    for (var id in dropdowns) {
+        var dropdown = document.getElementById(id);
+        if (dropdown && dropdown.value) {
+            var field = id.replace('Filter', '').toLowerCase();
+            var label = dropdowns[id];
+            
+            filteredData = filteredData.filter(function(item) {
+                return item[field] === dropdown.value;
+            });
+            
+            appliedFilters[label] = dropdown.value;
+        }
+    }
+    
+    // Apply target filter if active
+    if (targetFilterActive) {
+        // Only filter if we have targets selected
+        const hasTargets = 
+            targetSelections.vendors.size > 0 || 
+            targetSelections.agencies.size > 0 || 
+            targetSelections.offices.size > 0;
+            
+        if (hasTargets) {
+            filteredData = filteredData.filter(isTargetItem);
+            
+            // Add to applied filters
+            if (targetSelections.vendors.size > 0)
+                appliedFilters["Target Vendors"] = targetSelections.vendors.size;
+            if (targetSelections.agencies.size > 0)
+                appliedFilters["Target Agencies"] = targetSelections.agencies.size;
+            if (targetSelections.offices.size > 0)
+                appliedFilters["Target Offices"] = targetSelections.offices.size;
+        } else {
+            // No targets selected, disable the filter
+            targetFilterActive = false;
+            const targetBtn = document.getElementById('targetFilterBtn');
+            if (targetBtn) {
+                targetBtn.classList.remove('btn-primary');
+                targetBtn.classList.add('btn-secondary');
+            }
+        }
+    }
+    
+    // Update the target status indicator
+    updateTargetStatusIndicator();
+    
+    // Update the dashboard with filtered data
+    updateDashboard();
+    
+    // Generate natural language message
+    var totalContracts = filteredData.length;
+    var totalValue = filteredData.reduce((sum, item) => sum + item.value, 0);
+    
+    // Create primary message based on results
+    var primaryMessage = "";
+    if (Object.keys(appliedFilters).length > 0) {
+        primaryMessage = `Showing ${totalContracts.toLocaleString()} filtered contracts with a total value of ${formatCurrency(totalValue)}`;
+    } else {
+        primaryMessage = `Showing all ${totalContracts.toLocaleString()} contracts with a total value of ${formatCurrency(totalValue)}`;
+    }
+    
+    showMessage(primaryMessage, 'info', appliedFilters);
+    
+    if (document.getElementById('sankeyChart')) {
+        updateSankeyDiagramWithFilteredData();
+    }
+}
+// Update filterByVendorName function to not use a separate reset button
+function filterByVendorName(vendorName) {
+    // Start with all data
+    filteredData = [...allData];
+    
+    // Convert the vendor name to uppercase for case-insensitive comparison
+    const nameUpper = vendorName.toUpperCase();
+    
+    // Filter to include only this vendor
+    filteredData = filteredData.filter(function(item) {
+        // Look for the vendor name in the item's vendor field
+        return item.vendor && 
+               (item.vendor.toUpperCase().includes(nameUpper) || 
+                nameUpper.includes(item.vendor.toUpperCase().split(' ')[0]));
+    });
+    
+    // Check if we have any data after filtering
+    if (filteredData.length === 0) {
+        showMessage(`No data found for vendor: ${vendorName}`, "error");
+        // Reset to all data if no matches
+        filteredData = [...allData];
+        return;
+    }
+    
+    // Calculate total contract value and counts
+    var totalValue = filteredData.reduce((sum, item) => sum + item.value, 0);
+    var totalContracts = filteredData.length;
+    var avgContractValue = totalValue / totalContracts;
+    
+    // Update with natural language messaging
+    var primaryMessage = `Showing ${totalContracts.toLocaleString()} contracts for ${vendorName}`;
+    var filters = {
+        "Vendor": vendorName,
+        "Total Value": formatCurrency(totalValue),
+        "Avg Contract": formatCurrency(avgContractValue)
+    };
+    
+    showMessage(primaryMessage, "success", filters);
+    
+    // Update the dashboard with filtered data
+    updateDashboard();
+    
+    // Update Sankey diagram with filtered data
+    if (document.getElementById('sankeyChart')) {
+        updateSankeyDiagramWithFilteredData();
+    }
+}
+// Setup the dashboard grid with our desired layout
+function setupDashboardGrid() {
+    const dashboardGrid = document.querySelector('.dashboard-grid');
+    if (!dashboardGrid) {
+        console.error("Dashboard grid not found");
+        return;
+    }
+    
+    // Clear the grid
+    dashboardGrid.innerHTML = '';
+    
+    // Use standard CSS Grid (not flexbox) for the main layout
+    dashboardGrid.style.display = 'grid';
+    dashboardGrid.style.gridTemplateColumns = 'repeat(3, 1fr)';
+    dashboardGrid.style.gridTemplateRows = 'auto auto';
+    dashboardGrid.style.gap = '1.5rem';
+    
+    const CHART_HEIGHT = '550px'; // Consistent height for top row charts
+    
+    // First row: Vendor Chart (1/3) + Sankey Chart placeholder (2/3)
+    // Create Vendor Chart (1/3 width)
+    const vendorCard = createChartCard('vendorChart', 'Top Vendors by Value');
+    vendorCard.style.gridColumn = '1 / 2'; // First column
+    vendorCard.style.gridRow = '1 / 2';    // First row
+    vendorCard.style.height = CHART_HEIGHT; // Fixed height
+    dashboardGrid.appendChild(vendorCard);
+    
+    // Create Sankey placeholder (2/3 width)
+    const sankeyPlaceholder = document.createElement('div');
+    sankeyPlaceholder.id = 'sankeyPlaceholder';
+    sankeyPlaceholder.style.gridColumn = '2 / 4'; // Span columns 2-3
+    sankeyPlaceholder.style.gridRow = '1 / 2';    // First row
+    sankeyPlaceholder.style.height = CHART_HEIGHT; // Same fixed height
+    dashboardGrid.appendChild(sankeyPlaceholder);
+    
+    // Second row: Three equal charts
+    // Size Chart (1/3)
+    const sizeCard = createChartCard('sizeChart', 'Contract Size Distribution');
+    sizeCard.style.gridColumn = '1 / 2'; // First column
+    sizeCard.style.gridRow = '2 / 3';    // Second row
+    dashboardGrid.appendChild(sizeCard);
+    
+    // Type Chart (1/3)
+    const typeCard = createChartCard('contractTypeChart', 'Contract Types');
+    typeCard.style.gridColumn = '2 / 3'; // Second column
+    typeCard.style.gridRow = '2 / 3';    // Second row
+    dashboardGrid.appendChild(typeCard);
+    
+    // Monthly Chart (1/3)
+    const monthlyCard = createChartCard('monthlyChart', 'Monthly Trends');
+    monthlyCard.style.gridColumn = '3 / 4'; // Third column
+    monthlyCard.style.gridRow = '2 / 3';    // Second row
+    dashboardGrid.appendChild(monthlyCard);
+}
+
+// Helper function to create a chart card
+function createChartCard(chartId, title, icon) {
+    const card = document.createElement('div');
+    card.className = 'card';
+    
+    // Card header
+    const header = document.createElement('div');
+    header.className = 'card-header';
+    
+    // Card title
+    const titleElement = document.createElement('h3');
+    titleElement.className = 'card-title';
+    titleElement.innerHTML = `
+        ${title}
+    `;
+    
+    header.appendChild(titleElement);
+    card.appendChild(header);
+    
+    // Chart container
+    const chartContainer = document.createElement('div');
+    chartContainer.className = 'chart-container';
+    
+    // Special handling for vendor chart to anchor it to the bottom
+    if (chartId === 'vendorChart') {
+        chartContainer.style.height = 'calc(100% - 62px)'; // Subtract header height
+        chartContainer.style.display = 'flex';
+        chartContainer.style.flexDirection = 'column';
+        chartContainer.style.justifyContent = 'flex-end'; // Align to bottom
+    }
+    
+    // Canvas for chart
+    const canvas = document.createElement('canvas');
+    canvas.id = chartId;
+    
+    chartContainer.appendChild(canvas);
+    card.appendChild(chartContainer);
+    
+    return card;
+}
+// Initialize charts
+function initCharts() {
+    console.log("Initializing charts...");
+    
+    // Destroy any existing charts first
+    for (var key in charts) {
+        if (charts[key] instanceof Chart) {
+            charts[key].destroy();
+        }
+    }
+    
+    // Reset charts object
+    charts = {};
+    
+    // Define chart options with modern styling
+    Chart.defaults.font.family = "'Inter', -apple-system, BlinkMacSystemFont, sans-serif";
+    Chart.defaults.color = '#6B7280';
+    
+    try {
+        // Initialize charts
+        initMonthlyChart();
+        initVendorChart();
+        initSizeChart();
+        initContractTypeChart();
+        
+        console.log("Charts initialized successfully");
+    } catch (error) {
+        console.error("Error initializing charts:", error);
+    }
+}
+
+// Function to initialize Monthly chart
+function initMonthlyChart() {
+    var canvas = document.getElementById('monthlyChart');
+    if (!canvas) {
+        console.error("Monthly chart canvas not found");
+        return;
+    }
+    
+    var ctx = canvas.getContext('2d');
+    charts.monthly = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: ['No Data'],
+            datasets: [{
+                label: 'Contract Awards',
+                data: [0],
+                borderColor: '#4F46E5',
+                backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                tension: 0.4,
+                fill: true,
+                pointBackgroundColor: '#4F46E5',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2,
+                pointRadius: 4,
+                pointHoverRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(17, 24, 39, 0.95)',
+                    titleColor: '#F9FAFB',
+                    bodyColor: '#D1D5DB',
+                    borderColor: '#374151',
+                    borderWidth: 1,
+                    padding: 12,
+                    cornerRadius: 8
+                }
+            },
+            scales: {
+                x: {
+                    grid: {
+                        display: false
+                    },
+                    ticks: {
+                        font: {
+                            size: 11
+                        }
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(107, 114, 128, 0.1)',
+                        drawBorder: false
+                    },
+                    ticks: {
+                        font: {
+                            size: 11
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+// Function to initialize Vendor chart (vertical bar chart aligned to bottom)
+function initVendorChart() {
+    var canvas = document.getElementById('vendorChart');
+    if (!canvas) {
+        console.error("Vendor chart canvas not found");
+        return;
+    }
+    
+    var ctx = canvas.getContext('2d');
+    charts.vendor = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['No Data'],
+            datasets: [{
+                label: 'Contract Value',
+                data: [0],
+                backgroundColor: [
+                    '#667eea', '#764ba2', '#f093fb', '#f5576c', 
+                    '#4facfe', '#43e97b', '#a8eb12', '#ebbf12'
+                ],
+                borderWidth: 0,
+                borderRadius: {
+                    topLeft: 4,
+                    topRight: 4,
+                    bottomLeft: 0,
+                    bottomRight: 0
+                },
+                barPercentage: 0.8,
+                categoryPercentage: 0.9
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(17, 24, 39, 0.95)',
+                    titleColor: '#F9FAFB',
+                    bodyColor: '#D1D5DB',
+                    borderColor: '#374151',
+                    borderWidth: 1,
+                    padding: 12,
+                    cornerRadius: 8,
+                    callbacks: {
+                        label: function(context) {
+                            return formatCurrency(context.raw);
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: {
+                        display: false
+                    },
+                    ticks: {
+                        font: {
+                            size: 10
+                        },
+                        maxRotation: 45,
+                        minRotation: 45
+                    }
+                },
+                y: {
+                    beginAtZero: true, // Always start from zero
+                    grid: {
+                        color: 'rgba(107, 114, 128, 0.1)',
+                        drawBorder: false
+                    },
+                    position: 'left',
+                    ticks: {
+                        font: {
+                            size: 10
+                        },
+                        callback: function(value) {
+                            return formatCurrency(value);
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Function to initialize Size chart
+function initSizeChart() {
+    var canvas = document.getElementById('sizeChart');
+    if (!canvas) {
+        console.error("Size chart canvas not found");
+        return;
+    }
+    
+    var ctx = canvas.getContext('2d');
+    charts.size = new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: ['No Data'],
+            datasets: [{
+                data: [1],
+                backgroundColor: ['#E5E7EB']
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        boxWidth: 12,
+                        padding: 10,
+                        usePointStyle: true,
+                        font: {
+                            size: 11,
+                            weight: 500
+                        }
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(17, 24, 39, 0.95)',
+                    titleColor: '#F9FAFB',
+                    bodyColor: '#D1D5DB',
+                    borderColor: '#374151',
+                    borderWidth: 1,
+                    padding: 12,
+                    cornerRadius: 8
+                }
+            }
+        }
+    });
+}
+
+// Function to initialize Contract Type chart
+function initContractTypeChart() {
+    var canvas = document.getElementById('contractTypeChart');
+    if (!canvas) {
+        console.error("Contract type chart canvas not found");
+        return;
+    }
+    
+    var ctx = canvas.getContext('2d');
+    charts.contractType = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['No Data'],
+            datasets: [{
+                label: 'Count',
+                data: [0],
+                backgroundColor: '#4F46E5',
+                borderRadius: 6,
+                barThickness: 'flex',
+                maxBarThickness: 50
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(17, 24, 39, 0.95)',
+                    titleColor: '#F9FAFB',
+                    bodyColor: '#D1D5DB',
+                    borderColor: '#374151',
+                    borderWidth: 1,
+                    padding: 12,
+                    cornerRadius: 8
+                }
+            },
+            scales: {
+                x: {
+                    grid: {
+                        display: false
+                    },
+                    ticks: {
+                        font: {
+                            size: 11
+                        }
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(107, 114, 128, 0.1)',
+                        drawBorder: false
+                    },
+                    ticks: {
+                        font: {
+                            size: 11
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+function loadCSVFile() {
+    var fileInput = document.getElementById('csvFileInput');
+    var file = fileInput.files[0];
+    
+    if (!file) {
+        showMessage("Please select a CSV file first.", "error");
+        return;
+    }
+    
+    console.log("Loading file:", file.name, "Size:", file.size, "Type:", file.type);
+    showMessage("Loading file: " + file.name + ". Please wait...", "info");
+    
+    // Reset data arrays
+    allData = [];
+    filteredData = [];
+    
+    // Reinitialize charts
+    initCharts();
+    
+    var reader = new FileReader();
+    reader.onload = function(e) {
+        console.log("File loaded successfully");
+        var csvContent = e.target.result;
+        parseCSV(csvContent);
+    };
+    reader.onerror = function(e) {
+        console.error("File reading error:", e);
+        showMessage("Error reading file: " + e.message, "error");
+    };
+    reader.readAsText(file);
+}
+
+// Parse CSV data
+function parseCSV(csvText) {
+    try {
+        showMessage("Parsing CSV data...", "info");
+        console.log("CSV length:", csvText.length);
+        
+        // Split into lines
+        var lines = csvText.split(/\r?\n/);
+        console.log("Number of lines:", lines.length);
+        
+        if (lines.length <= 1) {
+            showMessage("Could not parse CSV. Check format.", "error");
+            return;
+        }
+        
+        // Parse headers and data
+        var headers = parseCSVLine(lines[0]);
+        console.log("Headers:", headers);
+        
+        var rawData = [];
+        
+        // Parse data rows
+        for (var i = 1; i < lines.length; i++) {
+            if (lines[i].trim()) {
+                try {
+                    var values = parseCSVLine(lines[i]);
+                    
+                    if (values.length >= 5) {
+                        var row = {};
+                        for (var j = 0; j < Math.min(headers.length, values.length); j++) {
+                            if (headers[j]) {
+                                row[headers[j]] = values[j] || '';
+                            }
+                        }
+                        rawData.push(row);
+                    }
+                } catch (e) {
+                    console.error("Error parsing line " + i + ":", e);
+                }
+            }
+        }
+        
+        console.log("Parsed " + rawData.length + " data rows");
+        
+        if (rawData.length > 0) {
+            processData(rawData);
+        } else {
+            showMessage("No valid data rows found in the CSV.", "error");
+        }
+    } catch (error) {
+        showMessage("Error parsing CSV: " + error.message, "error");
+        console.error(error);
+    }
+}
+
+// Parse a single CSV line
+function parseCSVLine(line) {
+    if (!line) return [];
+    
+    var result = [];
+    var current = "";
+    var inQuotes = false;
+    
+    for (var i = 0; i < line.length; i++) {
+        var char = line[i];
+        var next = line[i + 1] || '';
+        
+        if (char === '"') {
+            if (inQuotes && next === '"') {
+                current += '"';
+                i++;
+            } else {
+                inQuotes = !inQuotes;
+            }
+        } else if (char === ',' && !inQuotes) {
+            result.push(current.trim());
+            current = "";
+        } else {
+            current += char;
+        }
+    }
+    
+    result.push(current.trim());
+    return result;
+}
+
+// Process the raw data into a more usable format
+function processData(rawData) {
+    showMessage("Processing data...");
+    
+    console.log("Processing data with " + rawData.length + " rows");
+    if (rawData.length > 0) {
+        console.log("First row keys:", Object.keys(rawData[0]));
+        console.log("Sample row:", rawData[0]);
+    }
+    
+    // Transform data for our dashboard
+    allData = [];
+    for (var i = 0; i < rawData.length; i++) {
+        var row = rawData[i];
+        
+        // Extract vendor name
+        var vendor = row['Legal Business Name'] || '';
+        
+        // Debug information
+        if (i === 0) {
+            console.log("Vendor name from first row:", vendor);
+            console.log("Action Obligation value:", row['Action Obligation ($)']);
+            console.log("Parsed money value:", parseMoneyValue(row['Action Obligation ($)']));
+        }
+        
+        try {
+            allData.push({
+                id: row['Contract ID'] || '',
+                reference: row['Reference IDV'] || '',
+                vendor: vendor,
+                parentCompany: row['Ultimate Parent Legal Business Name'] || '',
+                agency: row['Contracting Agency'] || '',
+                office: row['Contracting Office Name'] || '',
+                date: row['Date Signed'] || '',
+                value: parseMoneyValue(row['Action Obligation ($)']),
+                type: row['Award/IDV Type'] || '',
+                description: row['PSC Description'] || '',
+                location: (row['Entity City'] || '') + ', ' + (row['Entity State'] || ''),
+                naics: row['NAICS'] || '',
+                naicsDescription: row['NAICS Description'] || '',
+            });
+        } catch (error) {
+            console.error("Error processing row " + i + ":", error);
+            console.log("Problematic row:", row);
+        }
+    }
+    
+    console.log("Processed " + allData.length + " contracts");
+    
+    // Set filtered data to all data initially
+    filteredData = [...allData];
+    
+    // Reset target selections
+    targetSelections.vendors.clear();
+    targetSelections.agencies.clear();
+    targetSelections.offices.clear();
+    targetFilterActive = false;
+    
+    // Create dynamic dropdowns after data is loaded
+    try {
+        createDynamicDropdowns();
+        setupAutoFiltering();
+        populateTargetSelectionLists(); // Populate target selection lists
+    } catch (error) {
+        console.error("Error setting up filters:", error);
+    }
+    
+    // Update the dashboard with filtered data
+    updateDashboard();
+    
+    // Create and update Sankey diagram
+    setTimeout(function() {
+        createSankeyDiagram();
+    }, 500);
+    
+    showMessage("Successfully loaded " + allData.length + " contracts. Ready for analysis.", "success");
+}
+// Parse money values more robustly
+function parseMoneyValue(value) {
+    if (!value) return 0;
+    
+    // Handle various formats
+    var cleanValue = value.toString()
+        .replace(/[$,\s"]/g, '') // Remove $, commas, spaces, quotes
+        .replace(/\s+/g, '')     // Remove any remaining whitespace
+        .trim();                  // Trim any leading/trailing spaces
+        
+    var result = parseFloat(cleanValue) || 0;
+    return result;
+}
+
+// Update the entire dashboard
+function updateDashboard() {
+    updateStats();
+    updateCharts();
+    updateTargetTable();
+    updateOfficeTable();
+    updateContractsTable();
+    initSortableTables(); // Initialize sortable tables
+}
+
+// Update dashboard statistics
+function updateStats() {
+    var totalContracts = filteredData.length;
+    var totalValue = 0;
+    var uniqueVendors = {};
+    var uniqueAgencies = {};
+    
+    for (var i = 0; i < filteredData.length; i++) {
+        totalValue += filteredData[i].value;
+        uniqueVendors[filteredData[i].vendor] = true;
+        uniqueAgencies[filteredData[i].agency] = true;
+    }
+    
+    var vendorCount = Object.keys(uniqueVendors).length;
+    
+    document.getElementById('totalContracts').textContent = totalContracts.toLocaleString();
+    document.getElementById('totalValue').textContent = formatCurrency(totalValue);
+    document.getElementById('activeVendors').textContent = vendorCount.toLocaleString();
+}
+
+// Update all charts
+function updateCharts() {
+    try {
+        updateMonthlyChart();
+        updateContractTypeChart();
+        updateSizeChart();
+        updateVendorChart();
+    } catch (error) {
+        console.error("Error updating charts:", error);
+        showMessage("Error updating charts. Try reloading the page.", "error");
+    }
+}
+
+// Update monthly chart
+function updateMonthlyChart() {
+    // Check if chart exists
+    if (!charts.monthly) {
+        console.error("Monthly chart is not initialized");
+        return;
+    }
+    
+    try {
+        // Group by month
+        var monthlyData = {};
+        
+        for (var i = 0; i < filteredData.length; i++) {
+            if (filteredData[i].date) {
+                var date = parseDate(filteredData[i].date);
+                if (date) {
+                    var monthYear = date.getFullYear() + '-' + (date.getMonth() + 1);
+                    
+                    if (!monthlyData[monthYear]) {
+                        monthlyData[monthYear] = 0;
+                    }
+                    
+                    monthlyData[monthYear]++;
+                }
+            }
+        }
+        
+        // Handle empty data case
+        if (Object.keys(monthlyData).length === 0) {
+            charts.monthly.data.labels = ['No Data'];
+            charts.monthly.data.datasets[0].data = [0];
+            charts.monthly.update();
+            return;
+        }
+        
+        // Convert to arrays and sort by date
+        var sortedMonths = Object.keys(monthlyData).sort();
+        
+        var labels = [];
+        var data = [];
+        
+        for (var i = 0; i < sortedMonths.length; i++) {
+            var parts = sortedMonths[i].split('-');
+            var year = parts[0];
+            var month = parts[1];
+            
+            var date = new Date(year, month - 1);
+            var monthName = date.toLocaleString('default', { month: 'short' });
+            
+            labels.push(monthName + ' ' + year.substr(2));
+            data.push(monthlyData[sortedMonths[i]]);
+        }
+        
+        // Update chart safely
+        charts.monthly.data.labels = labels;
+        charts.monthly.data.datasets[0].data = data;
+        
+        // Ensure chart is rendered
+        charts.monthly.update('none'); // Use 'none' for no animation to improve performance
+    } catch (error) {
+        console.error("Error updating monthly chart:", error);
+        
+        // Try to recover by resetting the chart
+        try {
+            charts.monthly.data.labels = ['Error'];
+            charts.monthly.data.datasets[0].data = [0];
+            charts.monthly.update();
+        } catch (e) {
+            // If all else fails, report the error
+            console.error("Failed to recover monthly chart:", e);
+        }
+    }
+}
+
+// Update contract type chart
+function updateContractTypeChart() {
+    // Group by contract type
+    var typeData = {};
+    
+    for (var i = 0; i < filteredData.length; i++) {
+        var type = filteredData[i].type || 'Unknown';
+        
+        if (!typeData[type]) {
+            typeData[type] = 0;
+        }
+        
+        typeData[type]++;
+    }
+    
+    // Convert to array and sort
+    var typeArray = [];
+    
+    for (var type in typeData) {
+        typeArray.push({
+            name: type,
+            count: typeData[type]
+        });
+    }
+    
+    typeArray.sort(function(a, b) {
+        return b.count - a.count;
+    });
+    
+    var labels = [];
+    var data = [];
+    
+    for (var i = 0; i < typeArray.length; i++) {
+        var name = typeArray[i].name;
+        
+        if (name.length > 15) {
+            name = name.substring(0, 12) + '...';
+        }
+        
+        labels.push(name);
+        data.push(typeArray[i].count);
+    }
+    
+    var colors = [];
+    for (var i = 0; i < labels.length; i++) {
+        colors.push('#667eea');
+    }
+    
+    // Update chart
+    charts.contractType.data.labels = labels;
+    charts.contractType.data.datasets[0].data = data;
+    charts.contractType.data.datasets[0].backgroundColor = colors;
+    charts.contractType.update();
+}
+
+// Update size chart
+function updateSizeChart() {
+    // Categorize by contract value
+    var sizeCategories = {
+        'Under $100K': 0,
+        '$100K-$500K': 0,
+        '$500K-$1M': 0,
+        '$1M-$5M': 0,
+        'Over $5M': 0
+    };
+    
+    for (var i = 0; i < filteredData.length; i++) {
+        var value = filteredData[i].value;
+        
+        if (value < 100000) {
+            sizeCategories['Under $100K']++;
+        } else if (value < 500000) {
+            sizeCategories['$100K-$500K']++;
+        } else if (value < 1000000) {
+            sizeCategories['$500K-$1M']++;
+        } else if (value < 5000000) {
+            sizeCategories['$1M-$5M']++;
+        } else {
+            sizeCategories['Over $5M']++;
+        }
+    }
+    
+    var labels = Object.keys(sizeCategories);
+    var data = [];
+    
+    for (var i = 0; i < labels.length; i++) {
+        data.push(sizeCategories[labels[i]]);
+    }
+    
+    var colors = ['#667eea', '#764ba2', '#f093fb', '#f5576c', '#4facfe'];
+    
+    // Update chart
+    charts.size.data.labels = labels;
+    charts.size.data.datasets[0].data = data;
+    charts.size.data.datasets[0].backgroundColor = colors;
+    charts.size.update();
+}
+function updateVendorChart() {
+    // Group by vendor
+    var vendorData = {};
+    
+    for (var i = 0; i < filteredData.length; i++) {
+        var vendor = filteredData[i].vendor || 'Unknown';
+        
+        // Truncate long vendor names
+        if (vendor.length > 12) {
+            vendor = vendor.substring(0, 10) + '...';
+        }
+        
+        if (!vendorData[vendor]) {
+            vendorData[vendor] = 0;
+        }
+        
+        vendorData[vendor] += filteredData[i].value;
+    }
+    
+    // Convert to array and sort
+    var vendorArray = [];
+    
+    for (var vendor in vendorData) {
+        vendorArray.push({
+            name: vendor,
+            value: vendorData[vendor]
+        });
+    }
+    
+    vendorArray.sort(function(a, b) {
+        return b.value - a.value;
+    });
+    
+    // Take top 8 vendors (adjust as needed)
+    var topVendors = vendorArray.slice(0, 8);
+    
+    // Prepare chart data
+    var labels = [];
+    var data = [];
+    var backgroundColors = [];
+    
+    for (var i = 0; i < topVendors.length; i++) {
+        labels.push(topVendors[i].name);
+        data.push(topVendors[i].value);
+    }
+    
+    // Get chart colors
+    var chartColors = [
+        '#667eea', '#764ba2', '#f093fb', '#f5576c', 
+        '#4facfe', '#43e97b', '#a8eb12', '#ebbf12'
+    ];
+    
+    // Assign colors
+    for (var i = 0; i < labels.length; i++) {
+        backgroundColors.push(chartColors[i % chartColors.length]);
+    }
+    
+    // Update chart
+    charts.vendor.data.labels = labels;
+    charts.vendor.data.datasets[0].data = data;
+    charts.vendor.data.datasets[0].backgroundColor = backgroundColors;
+    
+    // Add click handler for bar chart
+    charts.vendor.options.onClick = function(event, elements) {
+        if (elements.length > 0) {
+            const index = elements[0].index;
+            const vendorName = charts.vendor.data.labels[index];
+            
+            console.log(`Bar clicked: ${vendorName}`);
+            
+            // Filter data to show only this vendor
+            filterByVendorName(vendorName);
+        }
+    };
+    
+    charts.vendor.update();
+}
+function filterByVendorName(vendorName) {
+    console.log(`Filtering to vendor: ${vendorName}`);
+    
+    // Start with all data
+    filteredData = [...allData];
+    
+    // Convert the vendor name to uppercase for case-insensitive comparison
+    const nameUpper = vendorName.toUpperCase();
+    
+    // Filter to include only this vendor
+    filteredData = filteredData.filter(function(item) {
+        // Look for the vendor name in the item's vendor field
+        return item.vendor && 
+               (item.vendor.toUpperCase().includes(nameUpper) || 
+                nameUpper.includes(item.vendor.toUpperCase().split(' ')[0]));
+    });
+    
+    // Check if we have any data after filtering
+    if (filteredData.length === 0) {
+        showMessage(`No data found for vendor: ${vendorName}`, "info");
+        // Reset to all data if no matches
+        filteredData = [...allData];
+        return;
+    }
+    
+    
+    // Update the UI to show this is a filtered view
+    showMessage(`Showing data for vendor: ${vendorName} (${filteredData.length} contracts)`, "success");
+    
+    // Update the dashboard with filtered data
+    updateDashboard();
+    
+    // Update Sankey diagram with filtered data
+    if (document.getElementById('sankeyChart')) {
+        updateSankeyDiagramWithFilteredData();
+    }
+}
+// Update target vendor analysis table
+function updateTargetTable() {
+    // Group by vendor
+    var vendorAnalysis = {};
+    var totalMarketValue = 0;
+    
+    for (var i = 0; i < filteredData.length; i++) {
+        var contract = filteredData[i];
+        totalMarketValue += contract.value;
+        
+        var vendor = contract.vendor || 'Unknown';
+        
+        if (!vendorAnalysis[vendor]) {
+            vendorAnalysis[vendor] = {
+                value: 0,
+                count: 0,
+                largest: 0,
+                isTarget: contract.isTarget
+            };
+        }
+        
+        vendorAnalysis[vendor].value += contract.value;
+        vendorAnalysis[vendor].count++;
+        
+        if (contract.value > vendorAnalysis[vendor].largest) {
+            vendorAnalysis[vendor].largest = contract.value;
+        }
+    }
+    
+    // Convert to array and sort
+    var vendorArray = [];
+    
+    for (var vendor in vendorAnalysis) {
+        vendorArray.push({
+            name: vendor,
+            value: vendorAnalysis[vendor].value,
+            count: vendorAnalysis[vendor].count,
+            largest: vendorAnalysis[vendor].largest,
+            isTarget: vendorAnalysis[vendor].isTarget
+        });
+    }
+    
+    vendorArray.sort(function(a, b) {
+        return b.value - a.value;
+    });
+    
+    // Get top vendors and any target vendors
+    var topVendors = [];
+    
+    // First add all target vendors
+    for (var i = 0; i < vendorArray.length; i++) {
+        if (vendorArray[i].isTarget) {
+            topVendors.push(vendorArray[i]);
+        }
+    }
+    
+    // Then add top vendors by value, up to a total of 15
+    for (var i = 0; i < vendorArray.length && topVendors.length < 15; i++) {
+        if (!vendorArray[i].isTarget) {
+            topVendors.push(vendorArray[i]);
+        }
+    }
+    
+    // Update table
+    var tbody = document.getElementById('targetTableBody');
+    tbody.innerHTML = '';
+    
+    for (var i = 0; i < topVendors.length; i++) {
+        var vendor = topVendors[i];
+        var row = document.createElement('tr');
+        
+        if (vendor.isTarget) {
+            row.className = 'target-vendor';
+        }
+        
+        var marketShare = (vendor.value / totalMarketValue) * 100;
+        var avgDealSize = vendor.value / vendor.count;
+        
+        row.innerHTML = 
+            '<td>' + vendor.name + '</td>' +
+            '<td>' + formatCurrency(vendor.value) + '</td>' +
+            '<td>' + marketShare.toFixed(2) + '%</td>' +
+            '<td>' + vendor.count + '</td>' +
+            '<td>' + formatCurrency(avgDealSize) + '</td>';
+        
+        tbody.appendChild(row);
+    }
+}
+
+// Update office table - shows top contracting offices
+function updateOfficeTable() {
+    // Group by office
+    var officeAnalysis = {};
+    
+    for (var i = 0; i < filteredData.length; i++) {
+        var contract = filteredData[i];
+        var office = contract.office || 'Unknown';
+        var agency = contract.agency || '';
+        
+        if (!officeAnalysis[office]) {
+            officeAnalysis[office] = {
+                value: 0,
+                count: 0,
+                largest: 0,
+                targetCount: 0,
+                agency: agency
+            };
+        }
+        
+        officeAnalysis[office].value += contract.value;
+        officeAnalysis[office].count++;
+        
+        if (contract.value > officeAnalysis[office].largest) {
+            officeAnalysis[office].largest = contract.value;
+        }
+        
+        if (contract.isTarget) {
+            officeAnalysis[office].targetCount++;
+        }
+    }
+    
+    // Convert to array and sort
+    var officeArray = [];
+    for (var office in officeAnalysis) {
+        officeArray.push({
+            name: office,
+            value: officeAnalysis[office].value,
+            count: officeAnalysis[office].count,
+            largest: officeAnalysis[office].largest,
+            targetCount: officeAnalysis[office].targetCount,
+            agency: officeAnalysis[office].agency
+        });
+    }
+    
+    officeArray.sort(function(a, b) {
+        return b.value - a.value;
+    });
+    
+    // Get top 15
+    var topOffices = officeArray.slice(0, 15);
+    
+    // Update table
+    var tbody = document.getElementById('officeTableBody');
+    tbody.innerHTML = '';
+    
+    for (var i = 0; i < topOffices.length; i++) {
+        var office = topOffices[i];
+        var row = document.createElement('tr');
+        
+        if (office.targetCount > 0) {
+            row.className = 'target-vendor';
+        }
+        
+        row.innerHTML = 
+            '<td>' + office.agency + '</td>' +
+            '<td>' + office.name + '</td>' +
+            '<td>' + formatCurrency(office.value) + '</td>' +
+            '<td>' + office.count + '</td>' +
+            '<td>' + office.targetCount + ' contracts</td>' +
+            '<td>' + formatCurrency(office.largest) + '</td>';
+        
+        tbody.appendChild(row);
+    }
+}
+
+// Function to build FPDS.gov link with all necessary parameters
+function buildFpdsLink(contract) {
+    // Check if we have the minimum required data
+    if (!contract.id) {
+        return '<span class="badge badge-inactive">No ID</span>';
+    }
+    
+    try {
+        // Use the public ezsearch interface instead
+        const PIID = contract.id || '';
+        
+        // Build search URL - this uses the public search interface which doesn't require a session
+        const searchUrl = "https://www.fpds.gov/ezsearch/search.do?indexName=awardfull&templateName=1.5.3&s=FPDS&q=" + encodeURIComponent(PIID) + "&sortBy=SIGNED_DATE&desc=Y";
+        
+        return '<a href="' + searchUrl + '" target="_blank" class="fpds-link" title="View contract details in FPDS.gov"><i class="fas fa-external-link-alt"></i> View in FPDS</a>';
+    } catch (error) {
+        console.error("Error building FPDS link:", error);
+        return '<span class="badge badge-inactive">Link Error</span>';
+    }
+}
+
+// Update contracts table
+function updateContractsTable() {
+    // Sort by date (newest first)
+    var sortedContracts = [];
+    for (var i = 0; i < filteredData.length; i++) {
+        sortedContracts.push(filteredData[i]);
+    }
+    
+    sortedContracts.sort(function(a, b) {
+        var dateA = parseDate(a.date) || new Date(0);
+        var dateB = parseDate(b.date) || new Date(0);
+        return dateB - dateA;
+    });
+    
+    // Get most recent contracts
+    var recentContracts = sortedContracts.slice(0, 20);
+    
+    // Update table
+    var tbody = document.getElementById('contractsTableBody');
+    tbody.innerHTML = '';
+    
+    for (var i = 0; i < recentContracts.length; i++) {
+        var contract = recentContracts[i];
+        var row = document.createElement('tr');
+        
+        if (contract.isTarget) {
+            row.className = 'target-vendor';
+        }
+        
+        var statusClass = 'badge-active';
+        var statusText = contract.value > 0 ? 'Funded' : 'Zero Value';
+        
+        if (contract.isTarget) {
+            statusClass = 'badge-target';
+            statusText = 'Target ISV';
+        } else if (contract.value > 1000000) {
+            statusClass = 'badge-target';
+            statusText = 'Large Deal';
+        }
+        
+        // Generate FPDS hyperlink
+        var fpdsLink = contract.id ? buildFpdsLink(contract) : 'N/A';
+        
+        var parentCompanyHtml = '';
+        if (contract.parentCompany && contract.parentCompany !== contract.vendor) {
+            parentCompanyHtml = '<div style="font-size: 0.8em; color: #666;">Parent: ' + contract.parentCompany + '</div>';
+        }
+        
+        var officeHtml = '';
+        if (contract.office) {
+            officeHtml = '<div style="font-size: 0.8em; color: #666;">' + contract.office + '</div>';
+        }
+        
+        var idHtml = '';
+        if (contract.id) {
+            idHtml = '<div style="font-size: 0.8em; color: #666;">ID: ' + contract.id + ' | ' + contract.reference + '</div>';
+        }
+        
+        row.innerHTML = 
+            '<td>' + formatDate(contract.date) + '</td>' +
+            '<td>' + contract.vendor + parentCompanyHtml + '</td>' +
+            '<td>' + contract.agency + officeHtml + '</td>' +
+            '<td>' + contract.description + idHtml + '</td>' +
+            '<td class="amount">' + formatCurrency(contract.value) + '</td>' +
+            // The Type column is removed from here
+            '<td>' + fpdsLink + '</td>';
+        
+        tbody.appendChild(row);
+    }
+}
+function initSortableTables() {
+    // Find all sortable tables
+    var tables = document.querySelectorAll('table.sortable');
+    
+    // Add click event listeners to all sortable table headers
+    tables.forEach(function(table) {
+        var headers = table.querySelectorAll('th');
+        headers.forEach(function(header, index) {
+            header.addEventListener('click', function() {
+                sortTable(table, index, header.getAttribute('data-sort'));
+            });
+        });
+    });
+}
+
+// Main sort function
+function sortTable(table, columnIndex, dataType) {
+    var tbody = table.querySelector('tbody');
+    var rows = Array.from(tbody.querySelectorAll('tr'));
+    var headers = table.querySelectorAll('th');
+    
+    // Determine sort direction
+    var sortDirection = 'asc';
+    if (headers[columnIndex].classList.contains('sort-asc')) {
+        sortDirection = 'desc';
+    }
+    
+    // Reset all headers
+    headers.forEach(function(header) {
+        header.classList.remove('sort-asc', 'sort-desc');
+    });
+    
+    // Add appropriate class to current header
+    headers[columnIndex].classList.add(sortDirection === 'asc' ? 'sort-asc' : 'sort-desc');
+    
+    // Sort the rows
+    rows.sort(function(rowA, rowB) {
+        var cellA = rowA.querySelectorAll('td')[columnIndex].textContent.trim();
+        var cellB = rowB.querySelectorAll('td')[columnIndex].textContent.trim();
+        
+        var comparison = 0;
+        
+        switch (dataType) {
+            case 'number':
+                // Extract numbers from strings like "$1.2M" or "15%"
+                var numA = parseNumberFromString(cellA);
+                var numB = parseNumberFromString(cellB);
+                comparison = numA - numB;
+                break;
+                
+            case 'date':
+                // Parse dates
+                var dateA = parseDate(cellA) || new Date(0);
+                var dateB = parseDate(cellB) || new Date(0);
+                comparison = dateA - dateB;
+                break;
+                
+            case 'string':
+            default:
+                // Simple string comparison
+                comparison = cellA.localeCompare(cellB);
+                break;
+        }
+        
+        // Reverse if descending
+        return sortDirection === 'asc' ? comparison : -comparison;
+    });
+    
+    // Re-append rows in new order
+    rows.forEach(function(row) {
+        tbody.appendChild(row);
+    });
+}
+
+// Helper function to extract numbers from formatted strings
+function parseNumberFromString(str) {
+    // Handle currency values like "$1.2M", "$500K"
+    if (str.includes('$')) {
+        str = str.replace('$', '');
+        
+        if (str.includes('B')) {
+            return parseFloat(str.replace('B', '')) * 1000000000;
+        } else if (str.includes('M')) {
+            return parseFloat(str.replace('M', '')) * 1000000;
+        } else if (str.includes('K')) {
+            return parseFloat(str.replace('K', '')) * 1000;
+        }
+    }
+    
+    // Handle percentage values
+    if (str.includes('%')) {
+        return parseFloat(str.replace('%', ''));
+    }
+    
+    // Try to parse any other number
+    var num = parseFloat(str.replace(/,/g, ''));
+    return isNaN(num) ? 0 : num;
+}
+
+// Parse date from various formats
+function parseDate(dateStr) {
+    if (!dateStr) return null;
+    
+    // Handle format like "19-Jul-23"
+    if (dateStr.indexOf('-') !== -1) {
+        var parts = dateStr.split('-');
+        if (parts.length === 3) {
+            var day = parseInt(parts[0]);
+            var monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                           'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            var month = monthNames.indexOf(parts[1]);
+            var year = parseInt(parts[2]);
+            
+            // Convert 2-digit year to 4-digit
+            if (year < 50) year += 2000;
+            else if (year < 100) year += 1900;
+            
+            if (month !== -1) {
+                return new Date(year, month, day);
+            }
+        }
+    }
+    
+    // Handle format like "Jan 15, 2024"
+    var dateParts = dateStr.match(/(\w+)\s+(\d+),\s+(\d+)/);
+    if (dateParts) {
+        var monthName = dateParts[1];
+        var day = parseInt(dateParts[2]);
+        var year = parseInt(dateParts[3]);
+        
+        var monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                       'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        var month = monthNames.indexOf(monthName.substr(0, 3));
+        
+        if (month !== -1) {
+            return new Date(year, month, day);
+        }
+    }
+    
+    // Try standard date parsing
+    var date = new Date(dateStr);
+    return isNaN(date.getTime()) ? null : date;
+}
+
+// Format date for display
+function formatDate(dateStr) {
+    var date = parseDate(dateStr);
+    if (!date) return 'N/A';
+    
+    var options = { year: 'numeric', month: 'short', day: 'numeric' };
+    return date.toLocaleDateString('en-US', options);
+}
+
+// Format currency for display
+function formatCurrency(amount) {
+    if (amount >= 1000000000) {
+        return '$' + (amount / 1000000000).toFixed(1) + 'B';
+    } else if (amount >= 1000000) {
+        return '$' + (amount / 1000000).toFixed(1) + 'M';
+    } else if (amount >= 1000) {
+        return '$' + (amount / 1000).toFixed(1) + 'K';
+    }
+    return '$' + amount.toLocaleString();
+}
+// Enhanced showMessage function with natural language and tag-based filters
+function showMessage(primaryMessage, type, filters) {
+    var statusElement = document.getElementById('statusMessage');
+    if (!statusElement) return;
+    
+    // Determine icon based on message type
+    var icon = 'fa-info-circle';
+    if (type === 'success') icon = 'fa-check-circle';
+    if (type === 'error') icon = 'fa-exclamation-circle';
+    
+    // Start with primary message
+    var content = `<div class="primary-message"><i class="fas ${icon}"></i>${primaryMessage}</div>`;
+    
+    // Add filter tags if provided
+    if (filters && Object.keys(filters).length > 0) {
+        content += `<div class="filter-tags">`;
+        
+        // Add each filter as a tag
+        for (const [key, value] of Object.entries(filters)) {
+            if (value) {
+                content += `<div class="filter-tag"><span class="tag-label">${key}:</span> <span class="tag-value">${value}</span></div>`;
+            }
+        }
+        
+        content += `</div>`;
+    }
+    
+    statusElement.innerHTML = content;
+    
+    // Remove all previous classes
+    statusElement.className = 'status-message';
+    
+    // Add appropriate class
+    if (type) {
+        statusElement.className += ' ' + type;
+    }
+}
+// Function to apply compact sidebar styles
+function applyCompactSidebarStyles() {
+    // Create a style element
+    const style = document.createElement('style');
+    style.textContent = `
+        /* Compact sidebar styles */
+        .sidebar-nav {
+            padding: 0.5rem;
+        }
+        
+        .nav-section {
+            margin-bottom: 0.5rem;
+        }
+        
+        .nav-section-title {
+            margin-bottom: 0.25rem;
+            font-size: 0.7rem;
+        }
+        
+        .upload-container, .search-container {
+            padding: 0.6rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .upload-title {
+            margin-bottom: 0.3rem;
+            font-size: 0.8rem;
+        }
+        
+        .form-label {
+            margin-bottom: 0.2rem;
+            font-size: 0.75rem;
+            display: inline-block;
+        }
+        
+        .form-control {
+            padding: 0.3rem 0.4rem;
+            margin-bottom: 0.4rem;
+            font-size: 0.8rem;
+            min-height: 28px;
+            height: 28px;
+        }
+        
+        .filter-group {
+            gap: 0.3rem;
+            margin-bottom: 0.3rem;
+        }
+        
+        .form-group {
+            margin-bottom: 0.3rem;
+        }
+        
+        .btn {
+            padding: 0.3rem 0.6rem;
+            font-size: 0.8rem;
+            height: 28px;
+            line-height: 1;
+        }
+        
+        .filter-actions {
+            margin-top: 0.3rem;
+        }
+        
+        .search-title {
+            font-size: 0.9rem;
+            margin-bottom: 0.4rem;
+        }
+        
+        /* Remove padding from dynamicFiltersContainer */
+        #dynamicFiltersContainer {
+            padding: 0;
+            overflow: visible;
+        }
+        
+        /* Make file input more compact */
+        input[type="file"].form-control {
+            padding: 0.2rem;
+            height: auto;
+        }
+        
+        /* Compact search header */
+        .search-header {
+            margin-bottom: 0.5rem;
+        }
+        
+        /* Filter button styles */
+        #targetVendorFilterBtn, #resetTargetFilterBtn {
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+            transition: var(--transition);
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            height: 28px;
+            margin: 0;
+        }
+        
+        #targetVendorFilterBtn:hover, #resetTargetFilterBtn:hover {
+            background-color: var(--border);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow);
+        }
+        
+        #targetVendorFilterBtn.btn-primary, #resetTargetFilterBtn.btn-primary {
+            background-color: var(--primary);
+            color: white;
+            box-shadow: var(--shadow-md);
+        }
+        
+        #targetVendorFilterBtn.btn-primary:hover, #resetTargetFilterBtn.btn-primary:hover {
+            background-color: var(--primary-dark);
+        }
+        
+        /* Make buttons stack properly in container */
+        .filter-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+            width: 100%;
+        }
+    `;
+    document.head.appendChild(style);
+}
+
+// Function to update the upload container layout
+function updateUploadContainerLayout() {
+    const uploadContainer = document.querySelector('.upload-container');
+    if (uploadContainer) {
+        // Make the container more compact
+        uploadContainer.style.padding = '0.75rem';
+        
+        // Make the title more compact
+        const title = uploadContainer.querySelector('.upload-title');
+        if (title) {
+            title.style.fontSize = '0.8rem';
+            title.style.marginBottom = '0.4rem';
+        }
+        
+        // Make the form more compact
+        const form = uploadContainer.querySelector('form');
+        if (form) {
+            // Arrange inputs in a grid
+            form.style.display = 'grid';
+            form.style.gridTemplateColumns = '1fr';
+            form.style.gap = '0.4rem';
+            
+            // Make labels more compact
+            const labels = form.querySelectorAll('.form-label');
+            labels.forEach(label => {
+                label.style.fontSize = '0.8rem';
+                label.style.marginBottom = '0.2rem';
+            });
+            
+            // Make the file input more compact
+            const fileInput = form.querySelector('input[type="file"]');
+            if (fileInput) {
+                fileInput.style.padding = '0.25rem';
+                fileInput.style.height = 'auto';
+                fileInput.style.marginBottom = '0.4rem';
+            }
+            
+            // Make the button more compact
+            const button = form.querySelector('.btn');
+            if (button) {
+                button.style.padding = '0.375rem 0.75rem';
+                button.style.fontSize = '0.8rem';
+            }
+        }
+    }
+}
+
+// Function to update the search container
+function updateSearchContainer() {
+    const searchContainer = document.querySelector('.search-container');
+    if (searchContainer) {
+        searchContainer.style.padding = '0.6rem';
+        
+        const searchHeader = searchContainer.querySelector('.search-header');
+        if (searchHeader) {
+            searchHeader.style.marginBottom = '0.3rem';
+            
+            const searchTitle = searchHeader.querySelector('.search-title');
+            if (searchTitle) {
+                searchTitle.style.fontSize = '0.9rem';
+            }
+        }
+        
+        const unifiedSearch = searchContainer.querySelector('#unifiedSearch');
+        if (unifiedSearch) {
+            unifiedSearch.style.height = '28px';
+            unifiedSearch.style.padding = '0.3rem 0.4rem';
+            unifiedSearch.style.fontSize = '0.8rem';
+            unifiedSearch.style.marginBottom = '0.3rem';
+        }
+        
+        const resetBtn = searchContainer.querySelector('#resetFiltersBtn');
+        if (resetBtn) {
+            resetBtn.style.padding = '0.3rem 0.6rem';
+            resetBtn.style.fontSize = '0.75rem';
+            resetBtn.style.height = '26px';
+            resetBtn.style.lineHeight = '1';
+        }
+    }
+}
+
+// Function to update the upload container
+function updateUploadContainer() {
+    const uploadContainer = document.querySelector('.upload-container');
+    if (uploadContainer) {
+        uploadContainer.style.padding = '0.6rem';
+        
+        const title = uploadContainer.querySelector('.upload-title');
+        if (title) {
+            title.style.fontSize = '0.8rem';
+            title.style.marginBottom = '0.3rem';
+        }
+        
+        const fileInput = uploadContainer.querySelector('#csvFileInput');
+        if (fileInput) {
+            fileInput.style.height = 'auto';
+            fileInput.style.padding = '0.2rem';
+            fileInput.style.fontSize = '0.75rem';
+            fileInput.style.marginBottom = '0.3rem';
+        }
+        
+        const loadBtn = uploadContainer.querySelector('#loadBtn');
+        if (loadBtn) {
+            loadBtn.style.padding = '0.3rem 0.6rem';
+            loadBtn.style.fontSize = '0.75rem';
+            loadBtn.style.height = '26px';
+            loadBtn.style.lineHeight = '1';
+        }
+    }
+}
+// Function to create dynamic dropdowns
+function createDynamicDropdowns() {
+    if (allData.length === 0) {
+        return; // Don't create dropdowns if no data is loaded
+    }
+
+    var dynamicFiltersContainer = document.getElementById('dynamicFiltersContainer');
+    if (dynamicFiltersContainer) {
+        dynamicFiltersContainer.innerHTML = ''; // Clear existing dynamic filters
+    } else {
+        console.error("Could not find dynamicFiltersContainer");
+        return;
+    }
+
+    // Fields for dropdowns and their display labels
+    var dropdownFields = [
+        { id: 'naicsFilter', field: 'naics', label: 'NAICS Code' },
+        { id: 'agencyFilter', field: 'agency', label: 'Agency' },
+        { id: 'officeFilter', field: 'office', label: 'Office' },
+        { id: 'vendorFilter', field: 'vendor', label: 'Vendor' }
+    ];
+
+    dropdownFields.forEach(function(dropdownField) {
+        var formGroup = document.createElement('div');
+        formGroup.className = 'form-group';
+        // formGroup.style.margin = '0 0 0.5rem 0'; // Styling best handled by CSS
+
+        var select = document.createElement('select');
+        select.id = dropdownField.id;
+        select.className = 'form-control'; // Apply standard styling
+        select.style.width = '100%';      // Ensure it takes full width
+
+        // Add a selectable "All [Category]" option as the first item
+        var allOption = document.createElement('option');
+        allOption.value = ''; // CRUCIAL: Empty value signifies "no filter" / "all" for this category
+
+        // Make the text clearly indicate it's for showing all items
+        let allOptionText = 'All ' + dropdownField.label;
+        if (dropdownField.label === "NAICS Code") {
+            allOptionText = "All NAICS Codes";
+        } else if (dropdownField.label.endsWith('y')) {
+            allOptionText = "All " + dropdownField.label.slice(0, -1) + "ies"; // e.g. Agency -> All Agencies
+        } else if (!dropdownField.label.endsWith('s')) {
+            allOptionText = "All " + dropdownField.label + "s"; // e.g. Vendor -> All Vendors
+        }
+        allOption.textContent = allOptionText;
+        // This option will be selected by default as it's the first one added,
+        // unless JavaScript later selects a specific filter value.
+        select.appendChild(allOption);
+
+        // Get unique values for this field and their totals
+        var uniqueValues = {};
+        var valuesByTotal = {};
+
+        for (var i = 0; i < allData.length; i++) {
+            var value = allData[i][dropdownField.field];
+            if (value) {
+                if (!uniqueValues[value]) {
+                    uniqueValues[value] = 0;
+                    valuesByTotal[value] = 0;
+                }
+                uniqueValues[value]++;
+                valuesByTotal[value] += allData[i].value || 0;
+            }
+        }
+
+        var valueArray = [];
+        for (var value in valuesByTotal) {
+            valueArray.push({
+                value: value,
+                count: uniqueValues[value],
+                total: valuesByTotal[value]
+            });
+        }
+
+        valueArray.sort(function(a, b) {
+            return b.total - a.total;
+        });
+
+        var topValues = valueArray.slice(0, 50); // Limit options for performance
+
+        for (var j = 0; j < topValues.length; j++) {
+            var option = document.createElement('option');
+            option.value = topValues[j].value;
+
+            var displayValue = topValues[j].value;
+            if (displayValue && displayValue.length > 30) {
+                displayValue = displayValue.substring(0, 27) + '...';
+            }
+            var formattedTotal = formatCurrency(topValues[j].total);
+            option.textContent = displayValue + ' (' + topValues[j].count + ' | ' + formattedTotal + ')';
+            select.appendChild(option);
+        }
+
+        select.addEventListener('change', applyAllFilters);
+
+        formGroup.appendChild(select);
+        dynamicFiltersContainer.appendChild(formGroup);
+    });
+}
+// Setup auto-filtering
+function setupAutoFiltering() {
+    // Set up event listener for unified search input
+    var unifiedSearch = document.getElementById('unifiedSearch');
+    if (unifiedSearch) {
+        unifiedSearch.addEventListener('input', function() {
+            // Small delay to avoid filtering on every keystroke
+            clearTimeout(unifiedSearch.timer);
+            unifiedSearch.timer = setTimeout(function() {
+                applyAllFilters();
+            }, 300); // 300ms delay after typing stops
+        });
+    }
+    
+    // Set up event listeners for dynamic dropdowns
+    var dropdownIds = ['naicsFilter', 'agencyFilter', 'officeFilter', 'vendorFilter'];
+    dropdownIds.forEach(function(id) {
+        var dropdown = document.getElementById(id);
+        if (dropdown) {
+            dropdown.addEventListener('change', function() {
+                applyAllFilters();
+            });
+        }
+    });
+    
+    console.log("Auto-filtering setup complete");
+}
+
+
+// Create Sankey diagram with matching height
+function createSankeyDiagram() {
+    console.log("Creating Sankey diagram...");
+    
+    // Check if we already have a Sankey container
+    let sankeyContainer = document.getElementById('sankeyContainer');
+    if (sankeyContainer) {
+        // Clear its contents but keep the container
+        sankeyContainer.innerHTML = '';
+    } else {
+        // Create a new container
+        sankeyContainer = document.createElement('div');
+        sankeyContainer.id = 'sankeyContainer';
+        sankeyContainer.className = 'card';
+        
+        // Find the placeholder and replace it
+        const placeholder = document.getElementById('sankeyPlaceholder');
+        if (placeholder) {
+            // Ensure the container inherits the grid position from the placeholder
+            sankeyContainer.style.gridColumn = '2 / 4'; // Span columns 2-3
+            sankeyContainer.style.gridRow = '1 / 2';    // First row
+            sankeyContainer.style.height = placeholder.style.height; // Same height as placeholder
+            placeholder.parentNode.replaceChild(sankeyContainer, placeholder);
+        } else {
+            // Fallback handling
+            const dashboardGrid = document.querySelector('.dashboard-grid');
+            if (dashboardGrid) {
+                sankeyContainer.style.gridColumn = '2 / 4';
+                sankeyContainer.style.gridRow = '1 / 2';
+                dashboardGrid.appendChild(sankeyContainer);
+            }
+        }
+    }
+    
+    // Add header
+    const header = document.createElement('div');
+    header.className = 'card-header';
+    header.innerHTML = `
+        <h3 class="card-title">
+          Funding Flow: Agency → Office → Vendor
+        </h3>
+    `;
+    sankeyContainer.appendChild(header);
+    
+    // Add chart container with height calculation
+    const chartContainer = document.createElement('div');
+    chartContainer.id = 'sankeyChart';
+    // Calculate height: container height minus header (62px) minus button container (40px) minus padding
+    chartContainer.style.height = 'calc(100% - 120px)';
+    chartContainer.style.width = '100%';
+    chartContainer.style.overflow = 'hidden';
+    chartContainer.style.position = 'relative';
+    sankeyContainer.appendChild(chartContainer);
+    
+    // Add controls at bottom
+    const controls = document.createElement('div');
+    controls.className = 'filter-actions';
+    controls.style.marginTop = '10px';
+    controls.style.display = 'flex';
+    controls.style.flexDirection = 'row'; // Make buttons horizontal
+    controls.style.justifyContent = 'center';
+    controls.style.gap = '10px';
+    controls.style.height = '36px'; // Fixed height for the button row
+    controls.innerHTML = `
+        <button class="btn btn-secondary" id="sankeyTop10">
+            Top 10 Flows
+        </button>
+        <button class="btn btn-secondary active" id="sankeyTop25">
+            Top 25 Flows
+        </button>
+        <button class="btn btn-secondary" id="sankeyAll">
+            Show All
+        </button>
+    `;
+    sankeyContainer.appendChild(controls);
+    
+    // Add event listeners to control buttons
+    document.getElementById('sankeyTop10').addEventListener('click', function() {
+        currentSankeyLimit = 10;
+        updateSankeyButtonStates();
+        updateSankeyDiagramWithFilteredData();
+    });
+    
+    document.getElementById('sankeyTop25').addEventListener('click', function() {
+        currentSankeyLimit = 25;
+        updateSankeyButtonStates();
+        updateSankeyDiagramWithFilteredData();
+    });
+    
+    document.getElementById('sankeyAll').addEventListener('click', function() {
+        currentSankeyLimit = 0;
+        updateSankeyButtonStates();
+        updateSankeyDiagramWithFilteredData();
+    });
+    
+    // Add window resize listener
+    window.removeEventListener('resize', handleSankeyResize);
+    window.addEventListener('resize', handleSankeyResize);
+    
+    // Set initial button state
+    updateSankeyButtonStates();
+    
+    // Update diagram with filtered data
+    updateSankeyDiagramWithFilteredData();
+}
+
+// Function to handle window resize for Sankey diagram
+function handleSankeyResize() {
+    // Check if Sankey container exists
+    const sankeyChart = document.getElementById('sankeyChart');
+    if (!sankeyChart) return;
+    
+    // Debounce the resize event to avoid excessive redraws
+    clearTimeout(window.sankeyResizeTimer);
+    window.sankeyResizeTimer = setTimeout(function() {
+        console.log("Window resized, updating Sankey diagram");
+        // Redraw the Sankey diagram with current data and settings
+        updateSankeyDiagramWithFilteredData();
+    }, 250); // Wait 250ms after resize ends
+}
+
+// Function to prepare Sankey diagram data from contract data
+function prepareSankeyData(data) {
+    console.log("Preparing Sankey data from", data.length, "records");
+    
+    // Maps for unique nodes
+    const agencyNodes = new Map();
+    const officeNodes = new Map();
+    const vendorNodes = new Map();
+    
+    // Flow data
+    const agencyToOfficeLinks = new Map();
+    const officeToVendorLinks = new Map();
+    
+    // Process each contract
+    for (const item of data) {
+        // Skip contracts with no value
+        if (!item.value || item.value <= 0) continue;
+        
+        // Get the entities
+        const agency = item.agency || 'Unknown Agency';
+        const office = item.office || 'Unknown Office';
+        const vendor = item.vendor || 'Unknown Vendor';
+        
+        // Track nodes
+        if (!agencyNodes.has(agency)) {
+            agencyNodes.set(agency, { name: agency, value: 0 });
+        }
+        if (!officeNodes.has(office)) {
+            officeNodes.set(office, { name: office, value: 0 });
+        }
+        if (!vendorNodes.has(vendor)) {
+            vendorNodes.set(vendor, { name: vendor, value: 0 });
+        }
+        
+        // Update node values
+        agencyNodes.get(agency).value += item.value;
+        officeNodes.get(office).value += item.value;
+        vendorNodes.get(vendor).value += item.value;
+        
+        // Track links
+        const agencyOfficeKey = `${agency}|${office}`;
+        const officeVendorKey = `${office}|${vendor}`;
+        
+        if (!agencyToOfficeLinks.has(agencyOfficeKey)) {
+            agencyToOfficeLinks.set(agencyOfficeKey, 0);
+        }
+        if (!officeToVendorLinks.has(officeVendorKey)) {
+            officeToVendorLinks.set(officeVendorKey, 0);
+        }
+        
+        // Update link values
+        agencyToOfficeLinks.set(agencyOfficeKey, agencyToOfficeLinks.get(agencyOfficeKey) + item.value);
+        officeToVendorLinks.set(officeVendorKey, officeToVendorLinks.get(officeVendorKey) + item.value);
+    }
+    
+    // Create nodes array with correct indices
+    const nodes = [];
+    
+    // Add agency nodes first
+    const agencyIndices = new Map();
+    for (const [agency, data] of agencyNodes.entries()) {
+        const index = nodes.length;
+        agencyIndices.set(agency, index);
+        nodes.push({ id: index, name: data.name });
+    }
+    
+    // Add office nodes next
+    const officeIndices = new Map();
+    for (const [office, data] of officeNodes.entries()) {
+        const index = nodes.length;
+        officeIndices.set(office, index);
+        nodes.push({ id: index, name: data.name });
+    }
+    
+    // Add vendor nodes last
+    const vendorIndices = new Map();
+    for (const [vendor, data] of vendorNodes.entries()) {
+        const index = nodes.length;
+        vendorIndices.set(vendor, index);
+        nodes.push({ id: index, name: data.name });
+    }
+    
+    // Create links array
+    const links = [];
+    
+    // Add agency to office links
+    for (const [key, value] of agencyToOfficeLinks.entries()) {
+        const [agency, office] = key.split('|');
+        links.push({
+            source: agencyIndices.get(agency),
+            target: officeIndices.get(office),
+            value: value
+        });
+    }
+    
+    // Add office to vendor links
+    for (const [key, value] of officeToVendorLinks.entries()) {
+        const [office, vendor] = key.split('|');
+        links.push({
+            source: officeIndices.get(office),
+            target: vendorIndices.get(vendor),
+            value: value
+        });
+    }
+    
+    console.log(`Created Sankey data with ${nodes.length} nodes and ${links.length} links`);
+    
+    return { nodes, links };
+}
+
+// Function to filter sankey data to top N flows
+function filterSankeyData(data, limit = 0) {
+    if (!limit || limit <= 0) return data;
+    
+    console.log("Filtering Sankey data to top", limit, "flows");
+    
+    // Sort links by value in descending order
+    const sortedLinks = [...data.links].sort((a, b) => b.value - a.value);
+    
+    // Take top N links
+    const topLinks = sortedLinks.slice(0, limit);
+    
+    // Create a set of node IDs used in the top links
+    const usedNodeIds = new Set();
+    for (const link of topLinks) {
+        usedNodeIds.add(link.source);
+        usedNodeIds.add(link.target);
+    }
+    
+    // Filter nodes to only include those used in the top links
+    const filteredNodes = data.nodes.filter(node => usedNodeIds.has(node.id));
+    
+    // Remap node IDs to be consecutive
+    const nodeMap = new Map();
+    filteredNodes.forEach((node, index) => {
+        nodeMap.set(node.id, index);
+        node.id = index;
+    });
+    
+    // Remap source and target in links
+    const remappedLinks = topLinks.map(link => ({
+        source: nodeMap.get(link.source),
+        target: nodeMap.get(link.target),
+        value: link.value
+    }));
+    
+    console.log("Filtered to", filteredNodes.length, "nodes and", remappedLinks.length, "links");
+    
+    return {
+        nodes: filteredNodes,
+        links: remappedLinks
+    };
+}
+
+// Function to update Sankey diagram with filtered data
+function updateSankeyDiagramWithFilteredData() {
+    console.log("Updating Sankey diagram with filtered data:", filteredData.length, "records");
+    console.log("Current Sankey limit:", currentSankeyLimit);
+    
+    if (filteredData.length === 0) {
+        const chartContainer = document.getElementById('sankeyChart');
+        if (chartContainer) {
+            chartContainer.innerHTML = '<div style="padding: 20px; text-align: center;">No data matches the current filters.</div>';
+        }
+        return;
+    }
+    
+    // Prepare Sankey data with filtered data
+    const sankeyData = prepareSankeyData(filteredData);
+    
+    // Filter to top flows if needed
+    const filteredSankeyData = filterSankeyData(sankeyData, currentSankeyLimit);
+    
+    // Render the diagram
+    renderSankeyDiagram(filteredSankeyData, 'sankeyChart');
+}
+
+// Update Sankey button states based on current limit
+function updateSankeyButtonStates() {
+    const top10Button = document.getElementById('sankeyTop10');
+    const top25Button = document.getElementById('sankeyTop25');
+    const allButton = document.getElementById('sankeyAll');
+    
+    if (!top10Button || !top25Button || !allButton) return;
+    
+    // Remove active class from all buttons
+    top10Button.classList.remove('active');
+    top25Button.classList.remove('active');
+    allButton.classList.remove('active');
+    
+    // Add active class to correct button based on current limit
+if (currentSankeyLimit === 10 || currentSankeyLimit === undefined) {
+    top10Button.classList.add('active');
+} else if (currentSankeyLimit === 25) {
+    top25Button.classList.add('active');
+} else if (currentSankeyLimit === 0) {
+    allButton.classList.add('active');
+}
+}
+function renderSankeyDiagram(data, containerId) {
+    console.log("Rendering Sankey diagram...");
+    
+    // Get container
+    const container = document.getElementById(containerId);
+    if (!container) {
+        console.error("Container not found:", containerId);
+        return;
+    }
+    
+    // Clear container
+    container.innerHTML = '';
+    
+    // Check if we have data
+    if (!data || !data.nodes || data.nodes.length === 0 || !data.links || data.links.length === 0) {
+        container.innerHTML = '<div style="text-align: center; padding: 50px;">No data available for Sankey diagram</div>';
+        console.error("No valid data for Sankey diagram");
+        return;
+    }
+    
+    // Get the vendor chart data to match colors
+    const vendorChartLabels = charts.vendor.data.labels || [];
+    const vendorChartColors = charts.vendor.data.datasets[0].backgroundColor || [];
+    
+    // Create a mapping of vendor names to colors from the vendor chart
+    const vendorColorMap = {};
+    for (let i = 0; i < vendorChartLabels.length; i++) {
+        vendorColorMap[vendorChartLabels[i]] = vendorChartColors[i];
+    }
+    
+    console.log("Vendor chart colors:", vendorColorMap);
+    
+    try {
+        // Add a style element to override the default d3-sankey cursor behavior
+        const styleElement = document.createElement('style');
+        styleElement.textContent = `
+            .node rect {
+                cursor: default !important; /* Override default move cursor */
+            }
+            .node[data-depth="2"] rect {
+                cursor: pointer !important; /* Pointer cursor for vendor nodes */
+            }
+        `;
+        document.head.appendChild(styleElement);
+        
+        // Get container dimensions - get the actual pixel width
+        const containerRect = container.getBoundingClientRect();
+        const width = containerRect.width - 10; // Subtract a small amount for padding
+        const height = containerRect.height - 10;
+        
+        console.log("Sankey container dimensions:", width, "x", height);
+        
+        // Create SVG with explicit dimensions that match the container
+        const svg = d3.select(container)
+            .append('svg')
+            .attr('width', '100%')  // Make SVG fill the container width
+            .attr('height', height)
+            .attr('viewBox', `0 0 ${width} ${height}`)
+            .attr('preserveAspectRatio', 'xMinYMin meet');
+        
+        // Create Sankey generator that uses the full width
+        const sankey = d3.sankey()
+            .nodeWidth(15)
+            .nodePadding(8)
+            .extent([[0, 0], [width, height]])
+            .nodeSort((a, b) => b.value - a.value); // Sort by value (largest first)
+        
+        // Generate layout
+        const sankeyData = sankey(data);
+        
+        // For debugging - add background rectangle to show the full extent
+        svg.append('rect')
+            .attr('width', width)
+            .attr('height', height)
+            .attr('fill', 'none')
+            .attr('stroke', 'rgba(0,0,0,0.1)')
+            .attr('stroke-width', 1);
+        
+        // Find the rightmost node
+        let maxX = 0;
+        sankeyData.nodes.forEach(node => {
+            maxX = Math.max(maxX, node.x1);
+        });
+        
+        // If the rightmost node is not using the full width, apply scaling
+        if (maxX < width - 30) {
+            console.log("Stretching Sankey diagram to full width");
+            const scaleFactor = (width - 20) / maxX;
+            
+            // Scale all node positions
+            sankeyData.nodes.forEach(node => {
+                node.x0 *= scaleFactor;
+                node.x1 *= scaleFactor;
+            });
+        }
+        
+        // Create color mappings for each node
+        const nodeColorMap = new Map();
+        
+        // Grayscale for agencies and offices
+        const agencyGray = '#666666';
+        const officeGray = '#999999';
+        
+        // Default gray for vendors not in top vendors
+        const defaultVendorGray = '#cccccc';
+        
+        // Function to find the best match for a vendor name in the vendor chart labels
+        function findBestVendorMatch(nodeName) {
+            // Check for direct match first
+            if (vendorColorMap[nodeName]) {
+                return nodeName;
+            }
+            
+            // Simple normalization - extract company name without details
+            const simplifiedName = nodeName.split(' ')[0];
+            
+            // Look for partial matches in vendor chart labels
+            for (const chartVendor in vendorColorMap) {
+                if (nodeName.includes(chartVendor) || chartVendor.includes(simplifiedName)) {
+                    return chartVendor;
+                }
+            }
+            
+            // Special cases for common vendor variations
+            if (nodeName.includes('MICROSOFT')) return 'MICROSOFT';
+            if (nodeName.includes('PALANTIR')) return 'PALANTIR';
+            if (nodeName.includes('DELL')) return 'DELL FEDERAL';
+            if (nodeName.includes('AMAZON')) return 'AMAZON WEB';
+            
+            return null;
+        }
+        
+        // Assign colors to nodes
+        sankeyData.nodes.forEach(node => {
+            if (node.depth === 0) {
+                // Agency nodes - dark gray
+                nodeColorMap.set(node.index, agencyGray);
+            } else if (node.depth === 1) {
+                // Office nodes - medium gray
+                nodeColorMap.set(node.index, officeGray);
+            } else if (node.depth === 2) {
+                // Vendor nodes - try to match with vendor chart
+                const matchedVendor = findBestVendorMatch(node.name);
+                
+                if (matchedVendor && vendorColorMap[matchedVendor]) {
+                    nodeColorMap.set(node.index, vendorColorMap[matchedVendor]);
+                    console.log(`Matched ${node.name} to ${matchedVendor}: ${vendorColorMap[matchedVendor]}`);
+                } else {
+                    // For vendors not in top list, use light gray
+                    nodeColorMap.set(node.index, defaultVendorGray);
+                    console.log(`No match found for ${node.name}, using default gray`);
+                }
+            }
+        });
+        
+        // Draw links with colors matching target nodes
+        const link = svg.append('g')
+            .selectAll('.link')
+            .data(sankeyData.links)
+            .join('path')
+            .attr('class', 'link')
+            .attr('d', d3.sankeyLinkHorizontal())
+            .attr('stroke-width', d => Math.max(1, d.width))
+            .style('stroke', function(d) {
+                // Use target node color for the link
+                return nodeColorMap.get(d.target.index);
+            })
+            .style('fill', 'none')
+            .style('stroke-opacity', 0.3);
+        
+        // Add hover effect and tooltip to links
+        link.append('title')
+            .text(d => `${d.source.name} → ${d.target.name}\n${formatCurrency(d.value)}`);
+        
+        // Draw nodes
+        const node = svg.append('g')
+            .selectAll('.node')
+            .data(sankeyData.nodes)
+            .join('g')
+            .attr('class', 'node')
+            .attr('data-depth', d => d.depth) // Add data-depth attribute for CSS targeting
+            .attr('transform', d => `translate(${d.x0},${d.y0})`);
+        
+        // Add rectangles for nodes with consistent colors
+        const rects = node.append('rect')
+            .attr('height', d => Math.max(1, d.y1 - d.y0))
+            .attr('width', d => d.x1 - d.x0)
+            .attr('fill', d => nodeColorMap.get(d.index))
+            .attr('stroke', d => {
+                const baseColor = nodeColorMap.get(d.index);
+                return d3.rgb(baseColor).darker(0.3);
+            })
+            .style('fill-opacity', 0.85);
+        
+        // Add click handlers only to vendor node rectangles
+        node.filter(d => d.depth === 2) // Only vendor nodes
+            .select('rect')
+            .style('cursor', 'pointer')
+            .on('click', function(event, d) {
+                event.stopPropagation(); // Prevent event bubbling
+                console.log(`Sankey node clicked: ${d.name}`);
+                
+                // Call the filter function
+                window.filterByVendorName(d.name);
+            });
+        
+        // Add node labels
+        node.append('text')
+            .attr('x', d => {
+                // Position labels based on node position in diagram
+                const relativeX = d.x0 / width;
+                if (relativeX < 0.3) return d.x1 - d.x0 + 6; // Left side
+                if (relativeX > 0.7) return -6;              // Right side
+                return (d.x1 - d.x0) / 2;                    // Middle
+            })
+            .attr('y', d => (d.y1 - d.y0) / 2)
+            .attr('dy', '0.35em')
+            .attr('text-anchor', d => {
+                const relativeX = d.x0 / width;
+                if (relativeX < 0.3) return 'start';
+                if (relativeX > 0.7) return 'end';
+                return 'middle';
+            })
+            .text(d => {
+                // Truncate node name if too long
+                const maxLength = 25;
+                return d.name.length > maxLength ? d.name.substring(0, maxLength) + '...' : d.name;
+            })
+            .style('fill', d => {
+                // Use white text for dark backgrounds, black for light backgrounds
+                const color = d3.rgb(nodeColorMap.get(d.index));
+                return color.l < 0.5 ? '#ffffff' : '#333333';
+            })
+            .style('font-size', '11px')
+            .style('font-weight', '500');
+        
+        // Add tooltips to vendor nodes
+        node.filter(d => d.depth === 2) // Only vendor nodes
+            .append('title')
+            .text(d => `Click to filter to ${d.name}`);
+        
+        console.log("Sankey diagram rendered successfully");
+        
+    } catch (error) {
+        console.error("Error rendering Sankey diagram:", error);
+        container.innerHTML = `<div style="text-align: center; padding: 50px;">Error: ${error.message}</div>`;
+    }
+}
+
+function initInteractivity() {
+
+
+    const style = document.createElement('style');
+    style.textContent = `
+.node[data-depth="2"]:hover rect {
+            stroke-width: 2px;
+            stroke: #ffffff;
+            filter: brightness(1.1);
+        }
+        
+        #sankeyChart path.link:hover {
+            stroke-opacity: 0.6 !important;
+        }
+    `;
+    document.head.appendChild(style);
+    
+    // Enhance the vendor bar chart for interactivity
+    if (charts.vendor) {
+        // Add hover styling to the chart
+        charts.vendor.options.onHover = function(event, elements) {
+            event.native.target.style.cursor = elements.length ? 'pointer' : 'default';
+        };
+        
+        // Update chart settings
+        charts.vendor.options.onClick = function(event, elements) {
+            if (elements.length > 0) {
+                const index = elements[0].index;
+                const vendorName = charts.vendor.data.labels[index];
+                
+                console.log(`Bar clicked: ${vendorName}`);
+                
+                // Filter data to show only this vendor
+                filterByVendorName(vendorName);
+            }
+        };
+        
+        charts.vendor.update();
+    }
+    
+    // Add tooltips to table elements when truncated
+    const tableRows = document.querySelectorAll('td');
+    tableRows.forEach(cell => {
+        if (cell.offsetWidth < cell.scrollWidth) {
+            cell.title = cell.textContent;
+        }
+    });
+    
+    // Add custom functions to enhance status messages
+    window.showMessage = function(message, type) {
+        var statusElement = document.getElementById('statusMessage');
+        if (!statusElement) return;
+        
+        // Add icon based on message type
+        let icon = '';
+        if (type === 'success') {
+            icon = '<i class="fas fa-check-circle" style="color: rgba(16, 185, 129, 1);"></i>';
+        } else if (type === 'error') {
+            icon = '<i class="fas fa-exclamation-circle" style="color: rgba(239, 68, 68, 1);"></i>';
+        } else {
+            icon = '<i class="fas fa-info-circle" style="color: rgba(79, 70, 229, 1);"></i>';
+        }
+        
+        statusElement.innerHTML = icon + ' ' + message;
+        
+        // Remove all previous classes
+        statusElement.className = 'status-message';
+        
+        // Add appropriate class
+        if (type) {
+            statusElement.className += ' ' + type;
+        }
+        
+        // Add animation
+        statusElement.style.animation = 'none';
+        setTimeout(() => {
+            statusElement.style.animation = 'fadeIn 0.3s ease-out forwards';
+        }, 10);
+    };
+    
+    console.log("Interactive features initialized successfully");
+}
+function createTargetSelectionInterface() {
+    // Create a container for target selection sections
+    const targetSelectionContainer = document.createElement('div');
+    targetSelectionContainer.className = 'target-selection-container';
+    targetSelectionContainer.style.marginBottom = '1rem';
+    
+    // Add header with toggle capability
+    const header = document.createElement('div');
+    header.className = 'search-header';
+    header.style.display = 'flex';
+    header.style.justifyContent = 'space-between';
+    header.style.alignItems = 'center';
+    header.style.cursor = 'pointer';
+    header.style.padding = '0.75rem 0.5rem';
+    header.style.borderRadius = '4px';
+    header.style.background = 'var(--bg-tertiary)';
+    header.style.marginBottom = '0.5rem';
+    
+    header.innerHTML = `
+        <h2 class="search-title" style="margin: 0; font-size: 0.9rem; font-weight: 600;">Target Groups</h2>
+        <i class="fas fa-chevron-down"></i>
+    `;
+    
+    // Container for the collapsible content
+    const content = document.createElement('div');
+    content.className = 'target-selection-content';
+    content.style.display = 'none'; // Initially collapsed
+    
+    // Create tabs for different target types
+    const tabs = document.createElement('div');
+    tabs.className = 'target-tabs';
+    tabs.style.display = 'flex';
+    tabs.style.borderBottom = '1px solid var(--border)';
+    tabs.style.marginBottom = '0.5rem';
+    
+    tabs.innerHTML = `
+        <button class="tab-btn active" data-tab="vendors" style="flex: 1; padding: 0.5rem; background: none; border: none; cursor: pointer; border-bottom: 2px solid transparent;">Vendors</button>
+        <button class="tab-btn" data-tab="agencies" style="flex: 1; padding: 0.5rem; background: none; border: none; cursor: pointer; border-bottom: 2px solid transparent;">Agencies</button>
+        <button class="tab-btn" data-tab="offices" style="flex: 1; padding: 0.5rem; background: none; border: none; cursor: pointer; border-bottom: 2px solid transparent;">Offices</button>
+    `;
+    
+    // Activate the first tab
+    tabs.querySelector('.tab-btn.active').style.borderBottomColor = 'var(--primary)';
+    
+    // Create tab content containers
+    const vendorsTab = document.createElement('div');
+    vendorsTab.className = 'tab-content';
+    vendorsTab.id = 'vendors-tab';
+    vendorsTab.style.display = 'block'; // Active by default
+    
+    const agenciesTab = document.createElement('div');
+    agenciesTab.className = 'tab-content';
+    agenciesTab.id = 'agencies-tab';
+    agenciesTab.style.display = 'none';
+    
+    const officesTab = document.createElement('div');
+    officesTab.className = 'tab-content';
+    officesTab.id = 'offices-tab';
+    officesTab.style.display = 'none';
+    
+    // Add search box to each tab
+    const createSearchBox = (placeholder) => {
+        const div = document.createElement('div');
+        div.className = 'search-box';
+        div.style.marginBottom = '0.5rem';
+        div.innerHTML = `
+            <input type="text" placeholder="${placeholder}" class="form-control" style="height: 28px; padding: 0.25rem 0.5rem; font-size: 0.75rem;">
+        `;
+        return div;
+    };
+    
+    vendorsTab.appendChild(createSearchBox('Search vendors...'));
+    agenciesTab.appendChild(createSearchBox('Search agencies...'));
+    officesTab.appendChild(createSearchBox('Search offices...'));
+    
+    // Add selection lists
+    const createSelectionList = () => {
+        const div = document.createElement('div');
+        div.className = 'selection-list';
+        div.style.maxHeight = '200px';
+        div.style.overflowY = 'auto';
+        div.style.border = '1px solid var(--border)';
+        div.style.borderRadius = '4px';
+        div.style.padding = '0.25rem';
+        div.style.fontSize = '0.75rem';
+        return div;
+    };
+    
+    const vendorsList = createSelectionList();
+    const agenciesList = createSelectionList();
+    const officesList = createSelectionList();
+    
+    vendorsTab.appendChild(vendorsList);
+    agenciesTab.appendChild(agenciesList);
+    officesTab.appendChild(officesList);
+    
+    // Add target filter button and clear button
+    const buttonContainer = document.createElement('div');
+    buttonContainer.style.display = 'flex';
+    buttonContainer.style.gap = '0.5rem';
+    buttonContainer.style.marginTop = '0.5rem';
+    
+    const targetFilterBtn = document.createElement('button');
+    targetFilterBtn.id = 'targetFilterBtn';
+    targetFilterBtn.className = 'btn btn-secondary';
+    targetFilterBtn.style.flex = '1';
+    targetFilterBtn.style.fontSize = '0.75rem';
+    targetFilterBtn.style.padding = '0.4rem';
+    targetFilterBtn.innerHTML = '<i class="fas fa-filter"></i> Target Filter';
+    
+    const clearTargetsBtn = document.createElement('button');
+    clearTargetsBtn.id = 'clearTargetsBtn';
+    clearTargetsBtn.className = 'btn btn-secondary';
+    clearTargetsBtn.style.flex = '1';
+    clearTargetsBtn.style.fontSize = '0.75rem';
+    clearTargetsBtn.style.padding = '0.4rem';
+    clearTargetsBtn.innerHTML = '<i class="fas fa-times"></i> Clear';
+    
+    buttonContainer.appendChild(targetFilterBtn);
+    buttonContainer.appendChild(clearTargetsBtn);
+    
+    // Assemble the components
+    content.appendChild(tabs);
+    content.appendChild(vendorsTab);
+    content.appendChild(agenciesTab);
+    content.appendChild(officesTab);
+    content.appendChild(buttonContainer);
+    
+    targetSelectionContainer.appendChild(header);
+    targetSelectionContainer.appendChild(content);
+    
+    // Add event listeners
+    header.addEventListener('click', function() {
+        if (content.style.display === 'none') {
+            content.style.display = 'block';
+            header.querySelector('i').className = 'fas fa-chevron-up';
+        } else {
+            content.style.display = 'none';
+            header.querySelector('i').className = 'fas fa-chevron-down';
+        }
+    });
+    
+    // Tab switching
+    tabs.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            // Update active state
+            tabs.querySelectorAll('.tab-btn').forEach(b => {
+                b.classList.remove('active');
+                b.style.borderBottomColor = 'transparent';
+            });
+            this.classList.add('active');
+            this.style.borderBottomColor = 'var(--primary)';
+            
+            // Hide all content
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.style.display = 'none';
+            });
+            
+            // Show selected content
+            const tabId = this.getAttribute('data-tab');
+            document.getElementById(tabId + '-tab').style.display = 'block';
+        });
+    });
+    
+    // Target filter button
+    targetFilterBtn.addEventListener('click', function() {
+        toggleTargetFilter();
+    });
+    
+    // Clear button
+    clearTargetsBtn.addEventListener('click', function() {
+        clearAllTargets();
+        populateTargetSelectionLists();
+    });
+    
+    // Search functionality
+    vendorsTab.querySelector('input').addEventListener('input', function() {
+        filterSelectionList(this.value, vendorsList);
+    });
+    
+    agenciesTab.querySelector('input').addEventListener('input', function() {
+        filterSelectionList(this.value, agenciesList);
+    });
+    
+    officesTab.querySelector('input').addEventListener('input', function() {
+        filterSelectionList(this.value, officesList);
+    });
+    
+    // Find where to insert in the sidebar
+    const searchContainer = document.querySelector('.search-container');
+    if (searchContainer) {
+        searchContainer.insertAdjacentElement('afterend', targetSelectionContainer);
+    }
+    
+    return {
+        container: targetSelectionContainer,
+        vendorsList: vendorsList,
+        agenciesList: agenciesList,
+        officesList: officesList
+    };
+}
+
+function filterSelectionList(searchTerm, listElement) {
+    const items = listElement.querySelectorAll('.selection-item');
+    searchTerm = searchTerm.toLowerCase();
+    
+    items.forEach(item => {
+        const text = item.querySelector('span').textContent.toLowerCase();
+        if (text.includes(searchTerm)) {
+            item.style.display = 'flex';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+}
+
+function populateTargetSelectionLists() {
+    // Get the selection lists
+    const vendorsList = document.querySelector('#vendors-tab .selection-list');
+    const agenciesList = document.querySelector('#agencies-tab .selection-list');
+    const officesList = document.querySelector('#offices-tab .selection-list');
+    
+    if (!vendorsList || !agenciesList || !officesList || !allData.length) return;
+    
+    // Clear existing content
+    vendorsList.innerHTML = '';
+    agenciesList.innerHTML = '';
+    officesList.innerHTML = '';
+    
+    // Gather unique values
+    const uniqueVendors = new Set();
+    const uniqueAgencies = new Set();
+    const uniqueOffices = new Set();
+    
+    allData.forEach(item => {
+        if (item.vendor) uniqueVendors.add(item.vendor);
+        if (item.agency) uniqueAgencies.add(item.agency);
+        if (item.office) uniqueOffices.add(item.office);
+    });
+    
+    // Helper function to create selection items
+    function createSelectionItems(container, items, type) {
+        Array.from(items).sort().forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'selection-item';
+            div.style.padding = '0.35rem 0.5rem';
+            div.style.borderBottom = '1px solid var(--border-light)';
+            div.style.display = 'flex';
+            div.style.alignItems = 'center';
+            div.style.cursor = 'pointer';
+            
+            // Check if this item is already selected
+            const isSelected = targetSelections[type].has(item);
+            
+            div.innerHTML = `
+                <input type="checkbox" ${isSelected ? 'checked' : ''} style="margin-right: 0.5rem; cursor: pointer;">
+                <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${item}</span>
+            `;
+            
+            // Add click handler
+            div.addEventListener('click', function() {
+                const checkbox = this.querySelector('input[type="checkbox"]');
+                checkbox.checked = !checkbox.checked;
+                
+                if (checkbox.checked) {
+                    targetSelections[type].add(item);
+                } else {
+                    targetSelections[type].delete(item);
+                }
+                
+                // Update the target count display
+                updateTargetCountDisplay();
+            });
+            
+            container.appendChild(div);
+        });
+    }
+    
+    // Populate each list
+    createSelectionItems(vendorsList, uniqueVendors, 'vendors');
+    createSelectionItems(agenciesList, uniqueAgencies, 'agencies');
+    createSelectionItems(officesList, uniqueOffices, 'offices');
+    
+    // Update the target count display
+    updateTargetCountDisplay();
+}
+
+function updateTargetCountDisplay() {
+    const tabButtons = document.querySelectorAll('.target-tabs .tab-btn');
+    
+    // Update vendor tab
+    const vendorBtn = tabButtons[0];
+    if (vendorBtn) {
+        const count = targetSelections.vendors.size;
+        vendorBtn.textContent = count > 0 ? `Vendors (${count})` : 'Vendors';
+    }
+    
+    // Update agency tab
+    const agencyBtn = tabButtons[1];
+    if (agencyBtn) {
+        const count = targetSelections.agencies.size;
+        agencyBtn.textContent = count > 0 ? `Agencies (${count})` : 'Agencies';
+    }
+    
+    // Update office tab
+    const officeBtn = tabButtons[2];
+    if (officeBtn) {
+        const count = targetSelections.offices.size;
+        officeBtn.textContent = count > 0 ? `Offices (${count})` : 'Offices';
+    }
+    
+    // Update target filter button
+    const targetBtn = document.getElementById('targetFilterBtn');
+    if (targetBtn) {
+        const totalCount = targetSelections.vendors.size + 
+                          targetSelections.agencies.size + 
+                          targetSelections.offices.size;
+                          
+        if (totalCount > 0) {
+            targetBtn.innerHTML = `<i class="fas fa-filter"></i> Filter (${totalCount})`;
+            
+            // If the filter is active, make sure the button shows active state
+            if (targetFilterActive) {
+                targetBtn.classList.remove('btn-secondary');
+                targetBtn.classList.add('btn-primary');
+            }
+        } else {
+            targetBtn.innerHTML = '<i class="fas fa-filter"></i> Target Filter';
+            
+            // If there are no targets, disable the filter
+            targetFilterActive = false;
+            targetBtn.classList.remove('btn-primary');
+            targetBtn.classList.add('btn-secondary');
+        }
+    }
+    
+    // Update the status indicator
+    updateTargetStatusIndicator();
+}
+
+function createTargetStatusIndicator() {
+    // Only create if it doesn't exist
+    if (document.getElementById('targetStatusIndicator')) return;
+    
+    const indicator = document.createElement('div');
+    indicator.id = 'targetStatusIndicator';
+    indicator.style.display = 'none'; // Hidden by default
+    indicator.style.padding = '0.75rem';
+    indicator.style.borderRadius = '6px';
+    indicator.style.backgroundColor = 'rgba(79, 70, 229, 0.1)';
+    indicator.style.borderLeft = '4px solid #4F46E5';
+    indicator.style.marginBottom = '1rem';
+    indicator.style.fontSize = '0.875rem';
+    indicator.style.color = 'var(--text-primary)';
+    
+    // Insert at the top of main content
+    const mainContent = document.querySelector('.main-content');
+    if (mainContent) {
+        const firstChild = mainContent.firstChild;
+        if (firstChild) {
+            mainContent.insertBefore(indicator, firstChild);
+        } else {
+            mainContent.appendChild(indicator);
+        }
+    }
+}
+
+function updateTargetStatusIndicator() {
+    const indicator = document.getElementById('targetStatusIndicator');
+    if (!indicator) return;
+    
+    // Only show if target filter is active and we have targets
+    if (targetFilterActive) {
+        // Count how many of each type are active
+        const vendorCount = targetSelections.vendors.size;
+        const agencyCount = targetSelections.agencies.size;
+        const officeCount = targetSelections.offices.size;
+        
+        // Create indicator text
+        let parts = [];
+        if (vendorCount > 0) parts.push(`${vendorCount} vendor${vendorCount > 1 ? 's' : ''}`);
+        if (agencyCount > 0) parts.push(`${agencyCount} agenc${agencyCount > 1 ? 'ies' : 'y'}`);
+        if (officeCount > 0) parts.push(`${officeCount} office${officeCount > 1 ? 's' : ''}`);
+        
+        let text = '<i class="fas fa-filter"></i> Filtering by ' + parts.join(', ');
+        
+        indicator.innerHTML = text;
+        indicator.style.display = 'block';
+    } else {
+        indicator.style.display = 'none';
+    }
+}
+
+function isTargetItem(item) {
+    return (
+        (item.vendor && targetSelections.vendors.has(item.vendor)) ||
+        (item.agency && targetSelections.agencies.has(item.agency)) ||
+        (item.office && targetSelections.offices.has(item.office))
+    );
+}
+
+function toggleTargetFilter() {
+    // Toggle the filter state
+    targetFilterActive = !targetFilterActive;
+    
+    // Update the button appearance
+    const targetBtn = document.getElementById('targetFilterBtn');
+    if (targetBtn) {
+        if (targetFilterActive) {
+            targetBtn.classList.remove('btn-secondary');
+            targetBtn.classList.add('btn-primary');
+        } else {
+            targetBtn.classList.remove('btn-primary');
+            targetBtn.classList.add('btn-secondary');
+        }
+    }
+    
+    // Apply filters
+    applyAllFilters();
+}
+function clearAllTargets() {
+    targetSelections.vendors.clear();
+    targetSelections.agencies.clear();
+    targetSelections.offices.clear();
+    
+    // Update UI
+    updateTargetCountDisplay();
+    
+    // If filter was active, reapply to reset
+    if (targetFilterActive) {
+        targetFilterActive = false;
+        applyAllFilters();
+    }
+}
+</script>
+</html>
