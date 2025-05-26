@@ -902,6 +902,9 @@ th.sort-desc .sort-icon:after { content: "\f0dd"; opacity: 1; color: var(--prima
         <button class="header-button" id="themeToggle" aria-label="Toggle Theme">
           <i class="fas fa-moon" aria-hidden="true"></i>
         </button>
+		<button class="mobile-menu-toggle" id="mobileMenuToggle">
+          <i class="fas fa-bars"></i>
+        </button>
       </div>
 
       <div class="sidebar-nav">
@@ -1094,6 +1097,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Theme initialization
     const themeToggle = document.getElementById('themeToggle');
+	const mobileMenuToggle = document.getElementById('mobileMenuToggle');
     const currentTheme = localStorage.getItem('theme') || 'light'; // Default to light mode
     document.documentElement.setAttribute('data-theme', currentTheme);
     
@@ -1149,6 +1153,13 @@ document.addEventListener('DOMContentLoaded', function() {
     // Show initial message
     showMessage("Select a CSV file to begin analysis.", "info");
 });
+
+function toggleMobileSidebar() {
+  sidebar.classList.toggle('collapsed');
+  sidebarBackdrop.classList.toggle('active');
+}
+
+mobileMenuToggle.addEventListener('click', toggleMobileSidebar);
 // Add CSS for dark mode text in Sankey chart
 function addDarkModeSankeyStyles() {
     const styleElement = document.createElement('style');
