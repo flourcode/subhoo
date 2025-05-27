@@ -33,7 +33,7 @@
   --shadow-md: 0 6px 10px 0 rgba(0, 0, 0, 0.06), 0 4px 12px 0 rgba(0, 0, 0, 0.06);
   --shadow-lg: 0 10px 15px 0 rgba(0, 0, 0, 0.07), 0 5px 20px 0 rgba(0, 0, 0, 0.07);
   --shadow-xl: 0 12px 25px 0 rgba(0, 0, 0, 0.08), 0 8px 30px 0 rgba(0, 0, 0, 0.08);
-  --radius: 0.5rem;
+  --radius: 0.4rem;
   --radius-lg: 0.75rem;
   --sidebar-width: 280px;
   --sidebar-collapsed-width: 72px;
@@ -103,7 +103,141 @@ body {
   min-height: 100vh;
   position: relative;
 }
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  min-height: 44px;
+  border: 1px solid transparent; /* Base border is transparent */
+  border-radius: var(--radius);
+  font-size: 1rem;
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: normal;
+  cursor: pointer;
+  transition: background-color var(--transition), border-color var(--transition), opacity var(--transition);
+  width: auto;
+  box-shadow: none;
+  line-height: 1.4;
+}
+.btn:active {
+  opacity: 0.7;
+  transform: none;
+}
 
+.btn-primary {
+  background-color: var(--primary);
+  color: white;
+  /* Inherits transparent border from .btn, background provides definition */
+}
+.btn-primary:hover {
+  background-color: var(--primary-dark);
+  opacity: 0.9;
+}
+
+.btn-secondary {
+  background-color: var(--bg-tertiary); /* e.g., Light Gray */
+  color: var(--primary);               /* e.g., Blue text */
+  border: 1px solid var(--border);     /* MODIFIED: Added visible border */
+}
+.btn-secondary:hover {
+  background-color: var(--border-light); /* Slightly different background on hover */
+  border-color: var(--text-tertiary);   /* Darken border slightly on hover */
+  opacity: 0.9;
+}
+[data-theme="dark"] .btn-secondary {
+  background-color: var(--bg-tertiary); /* e.g., Darker Gray */
+  color: var(--primary);               /* e.g., Bright Blue text */
+  border-color: var(--border);         /* Visible border in dark mode */
+}
+[data-theme="dark"] .btn-secondary:hover {
+  background-color: var(--border-light);
+  border-color: var(--text-tertiary);
+}
+
+.btn.active { /* For active state, e.g., toggled buttons */
+  background-color: var(--primary-dark);
+  color: white;
+  opacity: 1;
+  border-color: var(--primary-dark); /* Match background if it's a filled active state */
+}
+
+/* === Styles for buttons SPECIFICALLY IN THE SIDEBAR === */
+.sidebar .btn {
+  font-size: 0.8125rem;
+  padding: 0.5rem 0.875rem;
+  min-height: 36px;
+  height: 36px;
+  width: 100%;
+  line-height: 1.2;
+  /* Inherits common .btn properties like display, align-items, border-radius, text-transform etc. */
+  /* Also inherits 'border: 1px solid transparent;' from general .btn initially */
+}
+
+.sidebar .btn.btn-primary {
+  /* No specific overrides needed unless different from general .btn-primary */
+  /* Will correctly inherit sidebar .btn sizing and general .btn-primary colors */
+}
+
+.sidebar .btn.btn-secondary {
+  background-color: var(--bg-tertiary);
+  color: var(--primary);
+  border: 1px solid var(--border); /* MODIFIED: Ensure visible border for sidebar secondary buttons */
+}
+.sidebar .btn.btn-secondary:hover {
+  background-color: var(--border-light);
+  border-color: var(--text-tertiary);
+  opacity: 0.9;
+}
+[data-theme="dark"] .sidebar .btn.btn-secondary {
+  background-color: var(--bg-tertiary);
+  color: var(--primary);
+  border-color: var(--border);
+}
+[data-theme="dark"] .sidebar .btn.btn-secondary:hover {
+  background-color: var(--border-light);
+  border-color: var(--text-tertiary);
+}
+
+/* Specific button group overrides (mostly for font-weight and specific appearances) */
+#loadBtn,
+/* #resetVendorFilterBtn, /* Assuming this also gets .btn-secondary and doesn't need unique style */
+#resetFiltersBtn, /* This button has .btn-secondary, its specific border/bg rule is now covered */
+#sankeyTop10,
+#sankeyTop25,
+#sankeyAll {
+  text-transform: none; /* Already default for .btn, but ensures it for these IDs */
+  box-shadow: none;     /* Already default for .btn */
+  font-weight: 400;     /* Make these specific control buttons regular weight */
+}
+
+/*
+  The specific rule for #resetFiltersBtn regarding background, color, and border
+  is now effectively covered by the updated .btn-secondary class rule.
+  So, it no longer needs its own separate rule for those properties if it has class="btn btn-secondary".
+  The rule above for font-weight will still apply if needed.
+*/
+
+/* Styles for Sankey control buttons */
+#sankeyTop10, #sankeyTop25, #sankeyAll {
+  padding: 0.5rem 0.875rem; /* Match other compact buttons */
+  font-size: 0.875rem;
+  margin: 0 2px;
+  background-color: var(--bg-tertiary);
+  color: var(--text-primary); /* Different text color than typical btn-secondary */
+  border: 1px solid var(--border);
+}
+#sankeyTop10:hover, #sankeyTop25:hover, #sankeyAll:hover {
+  background-color: var(--border);
+}
+#sankeyTop10.active, #sankeyTop25.active, #sankeyAll.active {
+  background-color: var(--primary);
+  color: white;
+  border-color: var(--primary);
+  opacity: 1;
+}
 .sidebar {
   width: 100%;
   height: auto;
@@ -132,8 +266,8 @@ body {
   flex-shrink: 0;
 }
 .sidebar .logo {
-  font-size: 1.25rem; /* Adjusted logo size */
-  font-weight: 600;
+  font-size: 2rem; /* Adjusted logo size */
+  font-weight: 800;
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -161,17 +295,25 @@ body {
 [data-theme="dark"] .sidebar .sidebar-header .header-button:hover {
   background: var(--border);
 }
-.sidebar .sidebar-header .mobile-menu-toggle {
-  display: none; /* Hidden on mobile in stacked view */
-  background: none;
-  border: none;
-  color: var(--primary);
-  cursor: pointer;
-  padding: 0.5rem;
-  border-radius: var(--radius);
-  font-size: 1.125rem;
+.sidebar .sidebar-header {
+  display: flex; /* Ensure it's flex for alignment */
+  align-items: center; /* Vertically align items */
+  justify-content: space-between; /* Pushes logo left, toggle right */
+  padding-left: 1.25rem;  /* (0.5rem from sidebar-nav + 0.75rem from typical section padding) */
+  padding-right: 1.25rem; /* (0.5rem from sidebar-nav + 0.75rem from typical section padding) */
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+  height: auto; /* From your compact styles */
+  min-height: 48px; /* From your compact styles */
+  border-bottom: 1px solid var(--border); /* Keep the separator */
+  flex-shrink: 0; /* Prevent header from shrinking if sidebar content is too long */
 }
 
+.sidebar .sidebar-header .header-button#themeToggle {
+  padding: 0.5rem; /* Existing compact style */
+  font-size: 1.125rem; /* Existing compact style for icon size */
+  color: var(--primary);
+}
 .sidebar-backdrop {
   display: none;
   position: fixed;
@@ -596,7 +738,7 @@ tr:hover td { background: var(--bg-tertiary); }
     border-right-color: var(--border);
     border-bottom-color: transparent;
   }
-  .sidebar .sidebar-header .mobile-menu-toggle {
+  .sidebar .sidebar-header {
     display: flex; /* Show toggle on desktop for collapsing */
   }
   .sidebar.collapsed {
@@ -716,13 +858,10 @@ th.sort-desc .sort-icon:after { content: "\f0dd"; opacity: 1; color: var(--prima
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-header">
         <a href="#" class="logo">
-         <span class="logo-text">FedTab</span>
+         <span class="logo-text">fedviz.</span>
         </a>
         <button class="header-button" id="themeToggle" aria-label="Toggle Theme">
           <i class="fas fa-moon" aria-hidden="true"></i>
-        </button>
-		<button class="mobile-menu-toggle" id="mobileMenuToggle">
-          <i class="fas fa-bars"></i>
         </button>
       </div>
 
@@ -916,7 +1055,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Theme initialization
     const themeToggle = document.getElementById('themeToggle');
-	const mobileMenuToggle = document.getElementById('mobileMenuToggle');
     const currentTheme = localStorage.getItem('theme') || 'light'; // Default to light mode
     document.documentElement.setAttribute('data-theme', currentTheme);
     
@@ -973,12 +1111,6 @@ document.addEventListener('DOMContentLoaded', function() {
     showMessage("Select a CSV file to begin analysis.", "info");
 });
 
-function toggleMobileSidebar() {
-  sidebar.classList.toggle('collapsed');
-  sidebarBackdrop.classList.toggle('active');
-}
-
-mobileMenuToggle.addEventListener('click', toggleMobileSidebar);
 // Add CSS for dark mode text in Sankey chart
 function addDarkModeSankeyStyles() {
     const styleElement = document.createElement('style');
@@ -1641,39 +1773,102 @@ function initContractTypeChart() {
         }
     });
 }
-
 function loadCSVFile() {
     var fileInput = document.getElementById('csvFileInput');
     var file = fileInput.files[0];
-    
+
     if (!file) {
-        showMessage("Please select a CSV file first.", "error");
+        if (typeof showMessage === 'function') showMessage("Please select a CSV file first.", "error");
         return;
     }
-    
-    console.log("Loading file:", file.name, "Size:", file.size, "Type:", file.type);
-    showMessage("Loading file: " + file.name + ". Please wait...", "info");
-    
-    // Reset data arrays
-    allData = [];
-    filteredData = [];
-    
-    // Reinitialize charts
-    initCharts();
-    
-    var reader = new FileReader();
-    reader.onload = function(e) {
-        console.log("File loaded successfully");
-        var csvContent = e.target.result;
-        parseCSV(csvContent);
-    };
-    reader.onerror = function(e) {
-        console.error("File reading error:", e);
-        showMessage("Error reading file: " + e.message, "error");
-    };
-    reader.readAsText(file);
-}
 
+    let fileName = file.name.toLowerCase();
+    let isLikelyCsv = false;
+
+    // Check for common CSV patterns, including the iOS-specific one
+    if (fileName.endsWith('.csv') || fileName.endsWith('.csv.xls')) {
+        isLikelyCsv = true;
+    }
+
+    // Fallback check for MIME type if filename isn't conclusive (MIME types can be unreliable)
+    if (!isLikelyCsv && (file.type === 'text/csv' || file.type === 'application/vnd.ms-excel' || (file.type === '' && fileName.includes('csv')))) {
+        console.log("Filename pattern not primary match, but MIME type or name suggests CSV: ", file.name, file.type);
+        isLikelyCsv = true;
+    }
+
+    if (isLikelyCsv) {
+        if (typeof showMessage === 'function') showMessage("Loading file: " + file.name + ". Please wait...", "info");
+
+        // --- Comprehensive Reset before loading new data ---
+        allData = [];
+        filteredData = [];
+
+        const unifiedSearchInput = document.getElementById('unifiedSearch');
+        if (unifiedSearchInput) unifiedSearchInput.value = '';
+
+        const dynamicFiltersContainer = document.getElementById('dynamicFiltersContainer');
+        if (dynamicFiltersContainer) dynamicFiltersContainer.innerHTML = '';
+
+        const tableBodyIds = ['officeTableBody', 'targetTableBody', 'contractsTableBody'];
+        tableBodyIds.forEach(id => {
+            const tbody = document.getElementById(id);
+            if (tbody) tbody.innerHTML = '<tr><td colspan="100%">Loading data...</td></tr>';
+        });
+
+        const totalContractsEl = document.getElementById('totalContracts');
+        if (totalContractsEl) totalContractsEl.textContent = '0';
+        const totalValueEl = document.getElementById('totalValue');
+        if (totalValueEl) totalValueEl.textContent = '$0';
+        const activeVendorsEl = document.getElementById('activeVendors');
+        if (activeVendorsEl) activeVendorsEl.textContent = '0';
+
+        if (typeof targetSelections !== 'undefined') {
+            targetSelections.vendors.clear();
+            targetSelections.agencies.clear();
+            targetSelections.offices.clear();
+            targetFilterActive = false;
+            if (typeof updateTargetCountDisplay === 'function') updateTargetCountDisplay();
+            if (typeof updateTargetStatusIndicator === 'function') updateTargetStatusIndicator();
+            const targetBtn = document.getElementById('targetFilterBtn');
+            if (targetBtn) {
+                targetBtn.classList.remove('btn-primary');
+                targetBtn.classList.add('btn-secondary');
+                if (targetBtn.querySelector('i')) { // Assuming icon exists
+                     targetBtn.innerHTML = '<i class="fas fa-filter"></i> Target Filter';
+                } else {
+                    targetBtn.textContent = 'Target Filter';
+                }
+            }
+        }
+
+        const sankeyChartArea = document.getElementById('sankeyChart');
+        if (sankeyChartArea) {
+            sankeyChartArea.innerHTML = '';
+        }
+        if (typeof initCharts === 'function') initCharts();
+        // --- End Comprehensive Reset ---
+
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            var csvContent = e.target.result;
+            if (typeof parseCSV === 'function') {
+                parseCSV(csvContent);
+            }
+            fileInput.value = null; // Clear file input to allow re-selecting same file
+        };
+        reader.onerror = function(e) {
+            console.error("File reading error:", e);
+            if (typeof showMessage === 'function') showMessage("Error reading file: " + e.message, "error");
+            fileInput.value = null;
+        };
+        reader.readAsText(file); // Always read as text, as CSV is text-based
+
+    } else {
+        if (typeof showMessage === 'function') showMessage("Unsupported file type: '" + file.name + "'. Please upload a CSV file from FPDS.gov.", "error");
+        fileInput.value = null; // Clear the invalid file selection
+        return;
+    }
+}
 // Parse CSV data
 function parseCSV(csvText) {
     try {
@@ -4073,17 +4268,36 @@ function toggleTargetFilter() {
     applyAllFilters();
 }
 function clearAllTargets() {
+    const wasTargetFilterActive = targetFilterActive;
+
     targetSelections.vendors.clear();
     targetSelections.agencies.clear();
     targetSelections.offices.clear();
-    
-    // Update UI
-    updateTargetCountDisplay();
-    
-    // If filter was active, reapply to reset
-    if (targetFilterActive) {
-        targetFilterActive = false;
-        applyAllFilters();
+
+    targetFilterActive = false;
+
+    if (typeof populateTargetSelectionLists === 'function') {
+        populateTargetSelectionLists();
+    }
+
+    if (typeof updateTargetCountDisplay === 'function') {
+        updateTargetCountDisplay();
+    } else {
+        const targetBtn = document.getElementById('targetFilterBtn');
+        if (targetBtn) {
+            targetBtn.innerHTML = '<i class="fas fa-filter"></i> Target Filter';
+            targetBtn.classList.remove('btn-primary');
+            targetBtn.classList.add('btn-secondary');
+        }
+        if (typeof updateTargetStatusIndicator === 'function') {
+            updateTargetStatusIndicator();
+        }
+    }
+
+    if (wasTargetFilterActive) {
+        if (typeof applyAllFilters === 'function') {
+            applyAllFilters();
+        }
     }
 }
 </script>
