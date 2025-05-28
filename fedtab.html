@@ -1300,8 +1300,6 @@ td[title] {
   box-shadow: 0 0 0 1px var(--primary);
   background-color: rgba(var(--primary-rgb, 10, 132, 255), 0.15);
 }
-
-
 </style>
 </head>
 <body>
@@ -1861,7 +1859,7 @@ function filterByVendorName(vendorName) {
         updateSankeyDiagramWithFilteredData();
     }
 }
-// Setup the dashboard grid with our desired layout
+// Revised setupDashboardGrid function with proper mobile responsiveness
 function setupDashboardGrid() {
     const dashboardGrid = document.querySelector('.dashboard-grid');
     if (!dashboardGrid) {
@@ -1872,51 +1870,119 @@ function setupDashboardGrid() {
     // Clear the grid
     dashboardGrid.innerHTML = '';
     
-    // Use standard CSS Grid (not flexbox) for the main layout
-    dashboardGrid.style.display = 'grid';
-    dashboardGrid.style.gridTemplateColumns = 'repeat(3, 1fr)';
-    dashboardGrid.style.gridTemplateRows = 'auto auto';
-    dashboardGrid.style.gap = '1.5rem';
+    // Get the current viewport width
+    const viewportWidth = window.innerWidth;
+    const isMobile = viewportWidth < 768;
     
-    const CHART_HEIGHT = '550px'; // Consistent height for top row charts
+    // Create a style tag for additional responsive styles
+    const styleTag = document.createElement('style');
+    document.head.appendChild(styleTag);
     
-    // First row: Vendor Chart (1/3) + Sankey Chart placeholder (2/3)
-    // Create Vendor Chart (1/3 width)
+    // Set different grid layouts based on screen size
+    if (isMobile) {
+        // Mobile layout - single column stack
+        dashboardGrid.style.display = 'grid';
+        dashboardGrid.style.gridTemplateColumns = '1fr';
+        dashboardGrid.style.gridTemplateRows = 'auto auto auto auto auto';
+        dashboardGrid.style.gap = '1rem';
+        
+        // Add responsive styles for mobile
+        styleTag.textContent = `
+            @media (max-width: 767px) {
+                .card {
+                    margin-bottom: 1rem;
+                }
+                .chart-container {
+                    height: 300px !important;
+                }
+                #sankeyChart {
+                    height: 350px !important;
+                }
+            }
+        `;
+    } else {
+        // Desktop layout - 3 column grid
+        dashboardGrid.style.display = 'grid';
+        dashboardGrid.style.gridTemplateColumns = 'repeat(3, 1fr)';
+        dashboardGrid.style.gridTemplateRows = 'auto auto';
+        dashboardGrid.style.gap = '1.5rem';
+    }
+    
+    const CHART_HEIGHT = isMobile ? '350px' : '550px'; // Smaller height for mobile
+    
+    // Create all chart cards
+    // --------------------
+    
+    // First row: Vendor Chart
     const vendorCard = createChartCard('vendorChart', 'Top Vendors by Value');
-    vendorCard.style.gridColumn = '1 / 2'; // First column
-    vendorCard.style.gridRow = '1 / 2';    // First row
-    vendorCard.style.height = CHART_HEIGHT; // Fixed height
+    if (isMobile) {
+        // Full width on mobile
+        vendorCard.style.gridColumn = '1 / 2'; 
+        vendorCard.style.gridRow = '1 / 2';
+    } else {
+        // 1/3 width on desktop
+        vendorCard.style.gridColumn = '1 / 2';
+        vendorCard.style.gridRow = '1 / 2';
+    }
+    vendorCard.style.height = CHART_HEIGHT;
     dashboardGrid.appendChild(vendorCard);
     
-    // Create Sankey placeholder (2/3 width)
+    // First row: Sankey placeholder
     const sankeyPlaceholder = document.createElement('div');
     sankeyPlaceholder.id = 'sankeyPlaceholder';
-    sankeyPlaceholder.style.gridColumn = '2 / 4'; // Span columns 2-3
-    sankeyPlaceholder.style.gridRow = '1 / 2';    // First row
-    sankeyPlaceholder.style.height = CHART_HEIGHT; // Same fixed height
+    if (isMobile) {
+        // Full width on mobile, second row
+        sankeyPlaceholder.style.gridColumn = '1 / 2';
+        sankeyPlaceholder.style.gridRow = '2 / 3';
+    } else {
+        // 2/3 width on desktop
+        sankeyPlaceholder.style.gridColumn = '2 / 4';
+        sankeyPlaceholder.style.gridRow = '1 / 2';
+    }
+    sankeyPlaceholder.style.height = CHART_HEIGHT;
     dashboardGrid.appendChild(sankeyPlaceholder);
     
-    // Second row: Three equal charts
-    // Size Chart (1/3)
+    // Second row: Size Chart
     const sizeCard = createChartCard('sizeChart', 'Contract Size Distribution');
-    sizeCard.style.gridColumn = '1 / 2'; // First column
-    sizeCard.style.gridRow = '2 / 3';    // Second row
+    if (isMobile) {
+        // Full width on mobile, third row
+        sizeCard.style.gridColumn = '1 / 2';
+        sizeCard.style.gridRow = '3 / 4';
+    } else {
+        // 1/3 width on desktop
+        sizeCard.style.gridColumn = '1 / 2';
+        sizeCard.style.gridRow = '2 / 3';
+    }
     dashboardGrid.appendChild(sizeCard);
     
-    // Type Chart (1/3)
+    // Second row: Type Chart
     const typeCard = createChartCard('contractTypeChart', 'Contract Types');
-    typeCard.style.gridColumn = '2 / 3'; // Second column
-    typeCard.style.gridRow = '2 / 3';    // Second row
+    if (isMobile) {
+        // Full width on mobile, fourth row
+        typeCard.style.gridColumn = '1 / 2';
+        typeCard.style.gridRow = '4 / 5';
+    } else {
+        // 1/3 width on desktop
+        typeCard.style.gridColumn = '2 / 3';
+        typeCard.style.gridRow = '2 / 3';
+    }
     dashboardGrid.appendChild(typeCard);
     
-    // Monthly Chart (1/3)
+    // Second row: Monthly Chart
     const monthlyCard = createChartCard('monthlyChart', 'Buying Cycle');
-    monthlyCard.style.gridColumn = '3 / 4'; // Third column
-    monthlyCard.style.gridRow = '2 / 3';    // Second row
+    if (isMobile) {
+        // Full width on mobile, fifth row
+        monthlyCard.style.gridColumn = '1 / 2';
+        monthlyCard.style.gridRow = '5 / 6';
+    } else {
+        // 1/3 width on desktop
+        monthlyCard.style.gridColumn = '3 / 4';
+        monthlyCard.style.gridRow = '2 / 3';
+    }
     dashboardGrid.appendChild(monthlyCard);
 }
 
-// Helper function to create a chart card
+// This is your existing createChartCard helper function
 function createChartCard(chartId, title, icon) {
     const card = document.createElement('div');
     card.className = 'card';
@@ -1956,6 +2022,26 @@ function createChartCard(chartId, title, icon) {
     
     return card;
 }
+
+// Add a window resize event listener to adjust layout when screen size changes
+window.addEventListener('resize', function() {
+    // Debounce the resize event
+    clearTimeout(window.resizeTimer);
+    window.resizeTimer = setTimeout(function() {
+        setupDashboardGrid();
+        
+        // Reinitialize charts if they exist
+        if (typeof initCharts === 'function') {
+            initCharts();
+        }
+        
+        // Update Sankey diagram if it exists
+        if (typeof updateSankeyDiagramWithFilteredData === 'function' && 
+            document.getElementById('sankeyChart')) {
+            updateSankeyDiagramWithFilteredData();
+        }
+    }, 250); // Wait 250ms after resize ends
+});
 // Initialize charts
 function initCharts() {
     console.log("Initializing charts...");
