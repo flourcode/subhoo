@@ -998,250 +998,88 @@ td[title] {
     gap: 0.375rem;
   }
 }
+/* === Main Status Container === */
 .main-status-container {
-    margin-bottom: 1.5rem;
-    width: 100%;
-  }
-  
-  .main-status-wrapper {
-    background-color: var(--bg-primary);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-sm);
-    padding: 1.25rem 1.5rem;
-    border: 1px solid var(--border-light);
-    transition: all 0.3s ease;
-  }
-  
-  .main-status-message {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-  
-  .status-heading {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--text-primary);
-    margin: 0;
-    line-height: 1.4;
-  }
-  
-  .status-filters {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    margin-top: 0.75rem;
-  }
-  
-  .status-filter-tag {
-    display: flex;
-    align-items: center;
-    gap: 0.375rem;
-    padding: 0.375rem 0.75rem;
-    background-color: var(--bg-tertiary);
-    border-radius: var(--radius);
-    font-size: 0.875rem;
-    color: var(--text-primary);
-  }
-  
-  .status-filter-label {
-    font-weight: 500;
-    color: var(--text-secondary);
-  }
-  
-  .status-filter-value {
-    font-weight: 500;
-    color: var(--primary);
-  }
-  
-  .status-filter-tag i {
-    color: var(--text-tertiary);
-    font-size: 0.75rem;
-  }
-  
-  /* Dark mode adjustments */
-  [data-theme="dark"] .main-status-wrapper {
-    background-color: var(--bg-tertiary);
-    border-color: var(--border);
-  }
-  
-  [data-theme="dark"] .status-filter-tag {
-    background-color: var(--bg-primary);
-  }
-  
-  /* Media queries for responsive layout */
-  @media (max-width: 768px) {
-    .main-status-wrapper {
-      padding: 1rem;
-    }
-    
-    .status-heading {
-      font-size: 1.25rem;
-    }
-  }
-  /* Data Context Info */
-  .data-context-info {
-    margin-top: 0.5rem;
-    margin-bottom: 1rem;
-    padding: 0.75rem 1rem;
-    background-color: rgba(var(--primary-rgb, 0, 122, 255), 0.05);
-    border-left: 3px solid var(--primary);
-    border-radius: var(--radius);
-    display: flex;
-    align-items: flex-start;
-    gap: 0.75rem;
-    font-size: 0.875rem;
-    color: var(--text-secondary);
-    position: relative;
-  }
+  margin-bottom: 1.5rem;
+  width: 100%;
+}
 
-  .info-icon {
-    color: var(--primary);
-    font-size: 1rem;
-    margin-top: 0.125rem;
-  }
+.main-status-wrapper {
+  background-color: var(--bg-dark, #1C1C1E);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: 1.25rem 1.5rem;
+  transition: all 0.3s ease;
+  color: white;
+}
 
-  .info-text {
-    flex: 1;
-    line-height: 1.5;
-  }
-  
-  #contextMonth, 
-  #contextDate {
-    font-weight: 500;
-    color: var(--text-primary);
-  }
-  
-  /* Month Progress Bar */
-  .month-progress-container {
-    position: absolute;
-    right: 1rem;
-    top: 0.75rem;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 0.25rem;
-    width: 120px;
-  }
-  
-  .month-progress-bar {
-    width: 100%;
-    height: 8px;
-    background-color: var(--bg-tertiary);
-    border-radius: 4px;
-    overflow: hidden;
-  }
-  
-  .month-progress-fill {
-    height: 100%;
-    background-color: var(--primary);
-    border-radius: 4px;
-    width: 0%; /* Will be set by JavaScript */
-  }
-  
-  .month-progress-text {
-    font-size: 0.75rem;
-    color: var(--text-secondary);
-    text-align: right;
-  }
-  
-  /* Archive Months */
-  .archive-months-container {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    margin-bottom: 1.5rem;
-    flex-wrap: wrap;
-  }
-  
-  .archive-months-title {
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: var(--text-secondary);
-  }
-  
-  .archive-months-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-  }
-  
-  .archive-month-btn {
-    padding: 0.375rem 0.75rem;
-    font-size: 0.8125rem;
-    background-color: var(--bg-tertiary);
-    color: var(--text-primary);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    cursor: pointer;
-    transition: all 0.2s ease;
-  }
-  
-  .archive-month-btn:hover {
-    background-color: var(--border-light);
-    transform: translateY(-1px);
-  }
-  
-  .archive-month-btn.active {
-    background-color: var(--primary);
-    color: white;
-    border-color: var(--primary);
-  }
-  
-  /* Dark mode adjustments */
-  [data-theme="dark"] .data-context-info {
-    background-color: rgba(var(--primary-rgb, 10, 132, 255), 0.1);
-  }
-  
-  [data-theme="dark"] .month-progress-bar {
-    background-color: var(--bg-primary);
-  }
-  
-  [data-theme="dark"] .archive-month-btn {
-    background-color: var(--bg-primary);
-    border-color: var(--border);
-  }
-  
-  /* Responsive adjustments */
-  @media (max-width: 768px) {
-    .data-context-info {
-      flex-direction: column;
-      padding-bottom: 2.5rem;
-    }
-    
-    .month-progress-container {
-      position: relative;
-      right: auto;
-      top: auto;
-      width: 100%;
-      margin-top: 0.5rem;
-      align-items: flex-start;
-    }
-    
-    .archive-months-container {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 0.5rem;
-    }
-  }
-  /* Styles for the info text above stats */
+.main-status-message {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.status-heading {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: white;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.status-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.status-filter-tag {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius);
+  font-size: 0.875rem;
+  color: white;
+}
+
+.status-filter-label {
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.status-filter-value {
+  font-weight: 600;
+  color: white;
+}
+
+.status-filter-tag i {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.75rem;
+}
+
+/* === Data Context Info === */
 .data-context-info {
+  margin-top: 0.75rem;
   margin-bottom: 1rem;
-  padding: 0.75rem 1rem;
-  background-color: rgba(var(--primary-rgb, 0, 122, 255), 0.05);
+  padding: 0.875rem 1.25rem;
+  background-color: rgba(var(--primary-rgb, 0, 122, 255), 0.1);
   border-left: 3px solid var(--primary);
   border-radius: var(--radius);
   display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
+  align-items: center;
+  gap: 1rem;
   font-size: 0.875rem;
   color: var(--text-secondary);
+  position: relative;
 }
 
 .info-icon {
   color: var(--primary);
-  font-size: 1rem;
-  margin-top: 0.125rem;
+  font-size: 1.125rem;
+  flex-shrink: 0;
 }
 
 .info-text {
@@ -1251,34 +1089,183 @@ td[title] {
 
 #contextMonth, 
 #contextDate {
-  font-weight: 500;
+  font-weight: 600;
   color: var(--text-primary);
 }
 
-/* Styles for the progress card */
-.progress-container {
-  height: 12px;
+/* === Month Progress Container === */
+.month-progress-container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.375rem;
+  min-width: 100px;
+  margin-left: auto;
+}
+
+.month-progress-bar {
+  width: 100%;
+  height: 8px;
   background-color: var(--bg-tertiary);
-  border-radius: 6px;
+  border-radius: 4px;
   overflow: hidden;
-  margin-top: 0.5rem;
+}
+
+.month-progress-fill {
+  height: 100%;
+  background-color: var(--primary);
+  border-radius: 4px;
+  width: 0%; /* Will be set by JavaScript */
+  transition: width 0.5s ease-in-out;
+}
+
+.month-progress-text {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--primary);
+  text-align: right;
+}
+
+/* === Archive Months === */
+.archive-months-container {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.archive-months-title {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.archive-months-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.archive-month-btn {
+  padding: 0.5rem 0.875rem;
+  font-size: 0.8125rem;
+  background-color: var(--bg-tertiary);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.archive-month-btn:hover {
+  background-color: var(--border-light);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.archive-month-btn.active {
+  background-color: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+/* === Progress Card (if using card approach) === */
+.progress-card {
+  background-color: var(--bg-primary);
+  border-radius: var(--radius-lg);
+  padding: 1rem;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-light);
+}
+
+.progress-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.progress-card-title {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.progress-card-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.progress-container {
+  height: 10px;
+  background-color: var(--bg-tertiary);
+  border-radius: 5px;
+  overflow: hidden;
 }
 
 .progress-fill {
   height: 100%;
   background-color: var(--primary);
-  border-radius: 6px;
+  border-radius: 5px;
   width: 0%; /* Will be set by JavaScript */
   transition: width 0.5s ease-in-out;
 }
 
-/* Dark mode adjustments */
-[data-theme="dark"] .data-context-info {
-  background-color: rgba(var(--primary-rgb, 10, 132, 255), 0.1);
+/* === Dark Mode Adjustments === */
+[data-theme="dark"] .main-status-wrapper {
+  background-color: var(--bg-dark, #1C1C1E);
 }
 
+[data-theme="dark"] .data-context-info {
+  background-color: rgba(var(--primary-rgb, 10, 132, 255), 0.15);
+}
+
+[data-theme="dark"] .month-progress-bar,
 [data-theme="dark"] .progress-container {
   background-color: var(--bg-primary);
+}
+
+[data-theme="dark"] .archive-month-btn {
+  background-color: var(--bg-primary);
+  border-color: var(--border);
+}
+
+[data-theme="dark"] .progress-card {
+  background-color: var(--bg-tertiary);
+  border-color: var(--border);
+}
+
+/* === Responsive Adjustments === */
+@media (max-width: 768px) {
+  .main-status-wrapper {
+    padding: 1rem;
+  }
+  
+  .status-heading {
+    font-size: 1.25rem;
+  }
+  
+  .data-context-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 1rem;
+  }
+  
+  .month-progress-container {
+    width: 100%;
+    margin-top: 0.5rem;
+    align-items: flex-start;
+  }
+  
+  .archive-months-container {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
 }
 </style>
 </head>
@@ -1334,41 +1321,48 @@ td[title] {
 
     <div class="main-wrapper">
       <main class="main-content">
-	 <div id="mainStatusContainer" class="main-status-container">
+<!-- Main status container with dark background -->
+<div class="main-status-container">
   <div class="main-status-wrapper">
-    <div id="mainStatusMessage" class="main-status-message">
-      <h2 class="status-heading" id="statusHeading">Viewing all available contract data with no filters applied.</h2>
+    <div class="main-status-message">
+      <h2 id="statusHeading" class="status-heading">You're viewing awards for April 2025 containing "pal".</h2>
     </div>
-    <div id="statusFilters" class="status-filters"></div>
+    <div class="status-filters">
+      <div class="status-filter-tag">
+        <span class="status-filter-label">Search:</span>
+        <span class="status-filter-value">pal</span>
+      </div>
+      <div class="status-filter-tag">
+        <span class="status-filter-label">Total Value:</span>
+        <span class="status-filter-value">$5.6M</span>
+      </div>
+    </div>
   </div>
 </div>
+
+<!-- Data context info with progress bar -->
 <div id="dataContextInfo" class="data-context-info">
   <div class="info-icon"><i class="fas fa-info-circle"></i></div>
   <div class="info-text">
-    This dashboard shows all contract awards for <span id="contextMonth">the current month</span> 
-    that have been published to FPDS.gov through <span id="contextDate">today</span>. 
+    This dashboard shows all contract awards for <span id="contextMonth">April 2025</span> 
+    that have been published to FPDS.gov through <span id="contextDate">April 30</span>. 
     Data is updated each night to include the latest available contract information.
+  </div>
+  <div class="month-progress-container">
+    <div class="month-progress-text" id="monthProgressText">30/30 days</div>
+    <div class="month-progress-bar">
+      <div id="monthProgressFill" class="month-progress-fill" style="width: 100%;"></div>
+    </div>
   </div>
 </div>
 
-<!-- Add this for archive months - place below the data context info -->
+<!-- Archive months selector -->
 <div id="archiveMonthsContainer" class="archive-months-container">
   <div class="archive-months-title">Previous Months:</div>
   <div id="archiveMonthsList" class="archive-months-list">
-    <!-- Archive month buttons will be added here dynamically -->
-  </div>
-</div>
-
-        <div class="stats-grid">
-		<div id="monthProgressCard" class="stat-card">
-  <div class="stat-header">
-    <div class="stat-info">
-      <div class="stat-label">Month Progress</div>
-      <div class="stat-value" id="progressFraction">0/31</div>
-    </div>
-  </div>
-  <div class="progress-container">
-    <div id="monthProgressFill" class="progress-fill"></div>
+    <button class="archive-month-btn">Current Month</button>
+    <button class="archive-month-btn active">April 2025</button>
+    <button class="archive-month-btn">March 2025</button>
   </div>
 </div>
           <div class="stat-card">
