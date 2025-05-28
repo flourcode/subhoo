@@ -998,275 +998,7 @@ td[title] {
     gap: 0.375rem;
   }
 }
-/* === Main Status Container === */
-.main-status-container {
-  margin-bottom: 1.5rem;
-  width: 100%;
-}
 
-.main-status-wrapper {
-  background-color: var(--bg-dark, #1C1C1E);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
-  padding: 1.25rem 1.5rem;
-  transition: all 0.3s ease;
-  color: white;
-}
-
-.main-status-message {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.status-heading {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: white;
-  margin: 0;
-  line-height: 1.4;
-}
-
-.status-filters {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-top: 0.75rem;
-}
-
-.status-filter-tag {
-  display: flex;
-  align-items: center;
-  gap: 0.375rem;
-  padding: 0.375rem 0.75rem;
-  background-color: rgba(255, 255, 255, 0.1);
-  border-radius: var(--radius);
-  font-size: 0.875rem;
-  color: white;
-}
-
-.status-filter-label {
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.7);
-}
-
-.status-filter-value {
-  font-weight: 600;
-  color: white;
-}
-
-.status-filter-tag i {
-  color: rgba(255, 255, 255, 0.5);
-  font-size: 0.75rem;
-}
-
-/* === Data Context Info === */
-.data-context-info {
-  margin-top: 0.75rem;
-  margin-bottom: 1rem;
-  padding: 0.875rem 1.25rem;
-  background-color: rgba(var(--primary-rgb, 0, 122, 255), 0.1);
-  border-left: 3px solid var(--primary);
-  border-radius: var(--radius);
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-  position: relative;
-}
-
-.info-icon {
-  color: var(--primary);
-  font-size: 1.125rem;
-  flex-shrink: 0;
-}
-
-.info-text {
-  flex: 1;
-  line-height: 1.5;
-}
-
-#contextMonth, 
-#contextDate {
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-/* === Month Progress Container === */
-.month-progress-container {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 0.375rem;
-  min-width: 100px;
-  margin-left: auto;
-}
-
-.month-progress-bar {
-  width: 100%;
-  height: 8px;
-  background-color: var(--bg-tertiary);
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.month-progress-fill {
-  height: 100%;
-  background-color: var(--primary);
-  border-radius: 4px;
-  width: 0%; /* Will be set by JavaScript */
-  transition: width 0.5s ease-in-out;
-}
-
-.month-progress-text {
-  font-weight: 600;
-  font-size: 0.875rem;
-  color: var(--primary);
-  text-align: right;
-}
-
-/* === Archive Months === */
-.archive-months-container {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-top: 0.75rem;
-  margin-bottom: 1.5rem;
-  flex-wrap: wrap;
-}
-
-.archive-months-title {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--text-secondary);
-}
-
-.archive-months-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
-.archive-month-btn {
-  padding: 0.5rem 0.875rem;
-  font-size: 0.8125rem;
-  background-color: var(--bg-tertiary);
-  color: var(--text-primary);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.archive-month-btn:hover {
-  background-color: var(--border-light);
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-sm);
-}
-
-.archive-month-btn.active {
-  background-color: var(--primary);
-  color: white;
-  border-color: var(--primary);
-}
-
-/* === Progress Card (if using card approach) === */
-.progress-card {
-  background-color: var(--bg-primary);
-  border-radius: var(--radius-lg);
-  padding: 1rem;
-  box-shadow: var(--shadow-sm);
-  border: 1px solid var(--border-light);
-}
-
-.progress-card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 0.75rem;
-}
-
-.progress-card-title {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--text-secondary);
-}
-
-.progress-card-value {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--primary);
-}
-
-.progress-container {
-  height: 10px;
-  background-color: var(--bg-tertiary);
-  border-radius: 5px;
-  overflow: hidden;
-}
-
-.progress-fill {
-  height: 100%;
-  background-color: var(--primary);
-  border-radius: 5px;
-  width: 0%; /* Will be set by JavaScript */
-  transition: width 0.5s ease-in-out;
-}
-
-/* === Dark Mode Adjustments === */
-[data-theme="dark"] .main-status-wrapper {
-  background-color: var(--bg-dark, #1C1C1E);
-}
-
-[data-theme="dark"] .data-context-info {
-  background-color: rgba(var(--primary-rgb, 10, 132, 255), 0.15);
-}
-
-[data-theme="dark"] .month-progress-bar,
-[data-theme="dark"] .progress-container {
-  background-color: var(--bg-primary);
-}
-
-[data-theme="dark"] .archive-month-btn {
-  background-color: var(--bg-primary);
-  border-color: var(--border);
-}
-
-[data-theme="dark"] .progress-card {
-  background-color: var(--bg-tertiary);
-  border-color: var(--border);
-}
-
-/* === Responsive Adjustments === */
-@media (max-width: 768px) {
-  .main-status-wrapper {
-    padding: 1rem;
-  }
-  
-  .status-heading {
-    font-size: 1.25rem;
-  }
-  
-  .data-context-info {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.75rem;
-    padding: 1rem;
-  }
-  
-  .month-progress-container {
-    width: 100%;
-    margin-top: 0.5rem;
-    align-items: flex-start;
-  }
-  
-  .archive-months-container {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.5rem;
-  }
-}
 </style>
 </head>
 <body>
@@ -1274,7 +1006,7 @@ td[title] {
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-header">
         <a href="#" class="logo">
-          <span class="logo-text">FedAward</span>
+         <span class="logo-text">FedAward</span>
         </a>
         <button class="header-button" id="themeToggle" aria-label="Toggle Theme">
           <i class="fas fa-moon" aria-hidden="true"></i>
@@ -1284,19 +1016,18 @@ td[title] {
       <div class="sidebar-nav">
         <div class="nav-section">
           <div class="search-container">
-            <div id="statusMessage" class="status-message" role="status" aria-live="polite">
-              Select a CSV file to begin analysis.
-            </div>
+		  <div id="statusMessage" class="status-message" role="status" aria-live="polite">
+          Select a CSV file to begin analysis.
+        </div>
             <div class="search-header">
               <h2 class="search-title">Search & Filter</h2>
             </div>
             <div class="filter-container">
               <div class="form-group">
-                <input type="text" id="unifiedSearch" placeholder="Search across all contract fields..." class="form-control">
+             <input type="text" id="unifiedSearch" placeholder="Search across all contract fields..." class="form-control">
               </div>
               <div class="filter-group" id="dynamicFiltersContainer">
-                <!-- Dynamic filters will be added here -->
-              </div>
+                </div>
               <div class="filter-actions">
                 <button class="btn btn-secondary" id="resetFiltersBtn">
                   Reset Filters
@@ -1322,44 +1053,43 @@ td[title] {
 
     <div class="main-wrapper">
       <main class="main-content">
-        <!-- Main status container with dark background -->
-        <div class="main-status-container">
-          <div class="main-status-wrapper">
-            <div class="main-status-message">
-              <h2 id="statusHeading" class="status-heading">Viewing all available contract data with no filters applied.</h2>
-            </div>
-            <div id="statusFilters" class="status-filters">
-              <!-- Filter tags will be added here dynamically -->
-            </div>
-          </div>
-        </div>
+	 <div id="mainStatusContainer" class="main-status-container">
+  <div class="main-status-wrapper">
+    <div id="mainStatusMessage" class="main-status-message">
+      <h2 class="status-heading" id="statusHeading">Viewing all available contract data with no filters applied.</h2>
+    </div>
+    <div id="statusFilters" class="status-filters"></div>
+  </div>
+</div>
+<div id="dataContextInfo" class="data-context-info">
+  <div class="info-icon"><i class="fas fa-info-circle"></i></div>
+  <div class="info-text">
+    This dashboard shows all contract awards for <span id="contextMonth">the current month</span> 
+    that have been published to FPDS.gov through <span id="contextDate">today</span>. 
+    Data is updated each night to include the latest available contract information.
+  </div>
+</div>
 
-        <!-- Data context info with progress bar -->
-        <div id="dataContextInfo" class="data-context-info">
-          <div class="info-icon"><i class="fas fa-info-circle"></i></div>
-          <div class="info-text">
-            This dashboard shows all contract awards for <span id="contextMonth">the current month</span> 
-            that have been published to FPDS.gov through <span id="contextDate">today</span>. 
-            Data is updated each night to include the latest available contract information.
-          </div>
-          <div class="month-progress-container">
-            <div class="month-progress-text" id="monthProgressText">0/31 days</div>
-            <div class="month-progress-bar">
-              <div id="monthProgressFill" class="month-progress-fill" style="width: 0%;"></div>
-            </div>
-          </div>
-        </div>
+<!-- Add this for archive months - place below the data context info -->
+<div id="archiveMonthsContainer" class="archive-months-container">
+  <div class="archive-months-title">Previous Months:</div>
+  <div id="archiveMonthsList" class="archive-months-list">
+    <!-- Archive month buttons will be added here dynamically -->
+  </div>
+</div>
 
-        <!-- Archive months selector -->
-        <div id="archiveMonthsContainer" class="archive-months-container">
-          <div class="archive-months-title">Previous Months:</div>
-          <div id="archiveMonthsList" class="archive-months-list">
-            <!-- Archive month buttons will be added here dynamically -->
-          </div>
-        </div>
-
-        <!-- Stats cards in a grid -->
         <div class="stats-grid">
+		<div id="monthProgressCard" class="stat-card">
+  <div class="stat-header">
+    <div class="stat-info">
+      <div class="stat-label">Month Progress</div>
+      <div class="stat-value" id="progressFraction">0/31</div>
+    </div>
+  </div>
+  <div class="progress-container">
+    <div id="monthProgressFill" class="progress-fill"></div>
+  </div>
+</div>
           <div class="stat-card">
             <div class="stat-header">
               <div class="stat-info">
@@ -1387,64 +1117,58 @@ td[title] {
             </div>
           </div>
         </div>
-
-        <!-- Dashboard grid for charts -->
         <div class="dashboard-grid">
-          <!-- Charts will be added here dynamically -->
-        </div>
+          </div>
 
-        <!-- Office table -->
         <div class="table-container" id="officeTableContainer">
           <div class="table-header">
             <h3 class="table-title">Top Contracting Offices</h3>
           </div>
           <div class="table-wrapper">
-            <table class="sortable" id="officeTable" aria-labelledby="officeTableContainer">
-              <thead>
-                <tr>
-                  <th data-sort="string" scope="col">Agency <span class="sort-icon"></span></th>
-                  <th data-sort="string" scope="col">Contracting Office <span class="sort-icon"></span></th>
-                  <th data-sort="number" scope="col">Total Value <span class="sort-icon"></span></th>
-                  <th data-sort="number" scope="col">Contracts <span class="sort-icon"></span></th>
-                  <th data-sort="string" scope="col">Top Vendor <span class="sort-icon"></span></th>
-                  <th data-sort="number" scope="col">Largest Contract <span class="sort-icon"></span></th>
-                  <th data-sort="string" scope="col">View Details</th>
-                </tr>
-              </thead>
-              <tbody id="officeTableBody">
-                <!-- Table body will be populated dynamically -->
-              </tbody>
-            </table>
+           <table class="sortable" id="officeTable" aria-labelledby="officeTableContainer">
+  <thead>
+    <tr>
+      <th data-sort="string" scope="col">Agency <span class="sort-icon"></span></th>
+      <th data-sort="string" scope="col">Contracting Office <span class="sort-icon"></span></th>
+      <th data-sort="number" scope="col">Total Value <span class="sort-icon"></span></th>
+      <th data-sort="number" scope="col">Contracts <span class="sort-icon"></span></th>
+      <th data-sort="string" scope="col">Top Vendor <span class="sort-icon"></span></th>
+      <th data-sort="number" scope="col">Largest Contract <span class="sort-icon"></span></th>
+      <th data-sort="string" scope="col">View Details</th>
+    </tr>
+  </thead>
+  <tbody id="officeTableBody">
+    <!-- Table body will be populated dynamically -->
+  </tbody>
+</table>
           </div>
         </div>
 
-        <!-- Target ISVs table -->
         <div class="table-container" id="targetTableContainer">
           <div class="table-header">
             <h3 class="table-title">Target ISVs Analysis</h3>
           </div>
           <div class="table-wrapper">
             <table class="sortable" id="targetTable" aria-labelledby="targetTableContainer">
-              <thead>
-                <tr>
-                  <th data-sort="string" scope="col">Vendor <span class="sort-icon"></span></th>
-                  <th data-sort="number" scope="col">Total Value <span class="sort-icon"></span></th>
-                  <th data-sort="number" scope="col">Market Share <span class="sort-icon"></span></th>
-                  <th data-sort="number" scope="col">Contracts <span class="sort-icon"></span></th>
-                  <th data-sort="number" scope="col">Avg Deal Size <span class="sort-icon"></span></th>
-                  <th data-sort="string" scope="col">Top Contract Agency <span class="sort-icon"></span></th>
-                  <th data-sort="number" scope="col">Largest Contract <span class="sort-icon"></span></th>
-                  <th data-sort="string" scope="col">View Details</th>
-                </tr>
-              </thead>
-              <tbody id="targetTableBody">
-                <!-- Table body will be populated dynamically -->
-              </tbody>
-            </table>
+  <thead>
+    <tr>
+      <th data-sort="string" scope="col">Vendor <span class="sort-icon"></span></th>
+      <th data-sort="number" scope="col">Total Value <span class="sort-icon"></span></th>
+      <th data-sort="number" scope="col">Market Share <span class="sort-icon"></span></th>
+      <th data-sort="number" scope="col">Contracts <span class="sort-icon"></span></th>
+      <th data-sort="number" scope="col">Avg Deal Size <span class="sort-icon"></span></th>
+      <th data-sort="string" scope="col">Top Contract Agency <span class="sort-icon"></span></th>
+      <th data-sort="number" scope="col">Largest Contract <span class="sort-icon"></span></th>
+      <th data-sort="string" scope="col">View Details</th>
+    </tr>
+  </thead>
+  <tbody id="targetTableBody">
+    <!-- Table body will be populated dynamically -->
+  </tbody>
+</table>
           </div>
         </div>
 
-        <!-- Contracts table -->
         <div class="table-container" id="contractsTableContainer">
           <div class="table-header">
             <h3 class="table-title">Recent Contract Awards</h3>
@@ -1462,15 +1186,14 @@ td[title] {
                 </tr>
               </thead>
               <tbody id="contractsTableBody">
-                <!-- Table body will be populated dynamically -->
-              </tbody>
+                </tbody>
             </table>
           </div>
         </div>
       </main>
     </div>
   </div>
-</body>
+  </body>
 <script>
 // Global variables
 var allData = [];
