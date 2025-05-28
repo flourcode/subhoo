@@ -1231,7 +1231,7 @@ td[title] {
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-header">
         <a href="#" class="logo">
-         <span class="logo-text">fedviz.</span>
+         <span class="logo-text">FedAward</span>
         </a>
         <button class="header-button" id="themeToggle" aria-label="Toggle Theme">
           <i class="fas fa-moon" aria-hidden="true"></i>
@@ -5356,6 +5356,7 @@ function collectActiveFilters() {
   
   return filters;
 }
+// END OF OLD CODE
 // Global variables to store data period information
 window.currentDataPeriod = null;
 window.periodDescription = "";
@@ -5365,6 +5366,7 @@ window.archiveMonths = [
   // { month: "March", year: "2025", url: "https://subhoodata.s3.us-east-1.amazonaws.com/data/march2025.csv" }
 ];
 window.currentMonthActive = true;
+window.isAutoLoadedData = false; // Flag to track if data was auto-loaded
 
 // Function to auto-load the current month's data on page load
 function autoLoadCurrentData() {
@@ -5398,6 +5400,9 @@ function autoLoadCurrentData() {
     .then(csvText => {
       // Give charts a moment to initialize
       setTimeout(() => {
+        // Set flag that this is auto-loaded data
+        window.isAutoLoadedData = true;
+        
         // Parse and load the CSV using your existing function
         parseCSV(csvText);
         
@@ -5448,6 +5453,9 @@ function loadArchivedMonthData(archiveMonth) {
     .then(csvText => {
       // Give charts a moment to initialize
       setTimeout(() => {
+        // Set flag that this is auto-loaded data (archive counts as auto-loaded)
+        window.isAutoLoadedData = true;
+        
         // Parse and load the CSV using your existing function
         parseCSV(csvText);
         
@@ -5478,6 +5486,47 @@ function loadArchivedMonthData(archiveMonth) {
         "Status": `Failed to load ${archiveMonth.month} ${archiveMonth.year} award data. Please try again later.`
       });
     });
+}
+
+// Modify the original loadCSVFile function to clear the auto-loaded flag
+const originalLoadCSVFile = window.loadCSVFile || function() {};
+window.loadCSVFile = function() {
+  // Set flag that this is NOT auto-loaded data
+  window.isAutoLoadedData = false;
+  
+  // Hide the progress info and context since this is user-uploaded data
+  hideDataContextInfo();
+  
+  // Call the original function
+  originalLoadCSVFile.apply(this, arguments);
+};
+
+// Function to hide the data context info
+function hideDataContextInfo() {
+  const dataContextInfo = document.getElementById('dataContextInfo');
+  const archiveMonthsContainer = document.getElementById('archiveMonthsContainer');
+  
+  if (dataContextInfo) {
+    dataContextInfo.style.display = 'none';
+  }
+  
+  if (archiveMonthsContainer) {
+    archiveMonthsContainer.style.display = 'none';
+  }
+}
+
+// Function to show the data context info
+function showDataContextInfo() {
+  const dataContextInfo = document.getElementById('dataContextInfo');
+  const archiveMonthsContainer = document.getElementById('archiveMonthsContainer');
+  
+  if (dataContextInfo) {
+    dataContextInfo.style.display = 'flex';
+  }
+  
+  if (archiveMonthsContainer) {
+    archiveMonthsContainer.style.display = 'flex';
+  }
 }
 
 // Function to get the last day of a month
@@ -5559,6 +5608,13 @@ function fixedDetectDateRangeFromData() {
   
   console.log(`Progress calculation: ${endDay}/${daysInMonth} days`);
   
+  // Show data context info since this is auto-loaded data
+  if (window.isAutoLoadedData) {
+    showDataContextInfo();
+  } else {
+    hideDataContextInfo();
+  }
+  
   // Update the data context information and status message
   fixedUpdateDataContext();
   updateStatusWithPeriodInfo();
@@ -5567,6 +5623,11 @@ function fixedDetectDateRangeFromData() {
 // Fixed function to correctly display the month progress
 function fixedUpdateDataContext() {
   if (!window.currentDataPeriod) return;
+  
+  // Only update if this is auto-loaded data
+  if (!window.isAutoLoadedData) {
+    return;
+  }
   
   const contextMonth = document.getElementById('contextMonth');
   const contextDate = document.getElementById('contextDate');
@@ -5657,6 +5718,11 @@ function fixedParseDate(dateStr) {
 
 // Function to update the UI for archive months
 function updateArchiveMonthsUI(currentMonthActive, activeArchive = null) {
+  // Only update if this is auto-loaded data
+  if (!window.isAutoLoadedData) {
+    return;
+  }
+  
   const archiveMonthsList = document.getElementById('archiveMonthsList');
   if (!archiveMonthsList) return;
   
@@ -5706,8 +5772,11 @@ function updateStatusWithPeriodInfo() {
 
 // Enhanced natural language description generator that includes period information
 function generateNaturalDescription(filters) {
-  // Use the automatically detected period if available
-  let periodText = window.periodDescription || "";
+  // Only include period text for auto-loaded data
+  let periodText = "";
+  if (window.isAutoLoadedData && window.periodDescription) {
+    periodText = window.periodDescription;
+  }
   
   if (!filters || Object.keys(filters).length === 0) {
     return `Viewing all available contract data ${periodText} with no filters applied.`;
@@ -5728,7 +5797,7 @@ function generateNaturalDescription(filters) {
   const targetOffices = filters["Target Offices"] ? parseInt(filters["Target Offices"]) : 0;
   
   // Start building the natural language description
-  let description = "You're viewing Federal ";
+  let description = "You're viewing ";
   
   // Build agency/vendor/date part of the description
   if (agency) {
@@ -5748,7 +5817,7 @@ function generateNaturalDescription(filters) {
     description += `from ${month} `;
   } else if (year) {
     description += `from ${year} `;
-  } else if (periodText && !filters["Month"] && !filters["Year"]) {
+  } else if (periodText && !filters["Month"] && !filters["Year"] && window.isAutoLoadedData) {
     // Only add the period text if no specific month/year filter is applied
     description += `${periodText} `;
   }
@@ -5797,6 +5866,9 @@ function generateNaturalDescription(filters) {
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function initAutoLoad() {
+  // Initially hide the data context info until we load auto data
+  hideDataContextInfo();
+  
   // Check if auto-load is enabled (you can make this configurable)
   const autoLoadEnabled = true;
   
