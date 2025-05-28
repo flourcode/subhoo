@@ -1224,6 +1224,62 @@ td[title] {
       gap: 0.5rem;
     }
   }
+  /* Styles for the info text above stats */
+.data-context-info {
+  margin-bottom: 1rem;
+  padding: 0.75rem 1rem;
+  background-color: rgba(var(--primary-rgb, 0, 122, 255), 0.05);
+  border-left: 3px solid var(--primary);
+  border-radius: var(--radius);
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.info-icon {
+  color: var(--primary);
+  font-size: 1rem;
+  margin-top: 0.125rem;
+}
+
+.info-text {
+  flex: 1;
+  line-height: 1.5;
+}
+
+#contextMonth, 
+#contextDate {
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+/* Styles for the progress card */
+.progress-container {
+  height: 12px;
+  background-color: var(--bg-tertiary);
+  border-radius: 6px;
+  overflow: hidden;
+  margin-top: 0.5rem;
+}
+
+.progress-fill {
+  height: 100%;
+  background-color: var(--primary);
+  border-radius: 6px;
+  width: 0%; /* Will be set by JavaScript */
+  transition: width 0.5s ease-in-out;
+}
+
+/* Dark mode adjustments */
+[data-theme="dark"] .data-context-info {
+  background-color: rgba(var(--primary-rgb, 10, 132, 255), 0.1);
+}
+
+[data-theme="dark"] .progress-container {
+  background-color: var(--bg-primary);
+}
 </style>
 </head>
 <body>
@@ -1293,12 +1349,6 @@ td[title] {
     that have been published to FPDS.gov through <span id="contextDate">today</span>. 
     Data is updated each night to include the latest available contract information.
   </div>
-  <div class="month-progress-container">
-    <div id="monthProgressBar" class="month-progress-bar">
-      <div id="monthProgressFill" class="month-progress-fill"></div>
-    </div>
-    <div id="monthProgressText" class="month-progress-text">0/31 days</div>
-  </div>
 </div>
 
 <!-- Add this for archive months - place below the data context info -->
@@ -1306,6 +1356,17 @@ td[title] {
   <div class="archive-months-title">Previous Months:</div>
   <div id="archiveMonthsList" class="archive-months-list">
     <!-- Archive month buttons will be added here dynamically -->
+  </div>
+</div>
+<div id="monthProgressCard" class="stat-card">
+  <div class="stat-header">
+    <div class="stat-info">
+      <div class="stat-label">Month Progress</div>
+      <div class="stat-value" id="progressFraction">0/31</div>
+    </div>
+  </div>
+  <div class="progress-container">
+    <div id="monthProgressFill" class="progress-fill"></div>
   </div>
 </div>
         <div class="stats-grid">
@@ -5499,14 +5560,71 @@ window.loadCSVFile = function() {
   // Call the original function
   originalLoadCSVFile.apply(this, arguments);
 };
+// Updated function to correctly display the month progress
+function fixedUpdateDataContext() {
+  if (!window.currentDataPeriod) return;
+  
+  // Only update if this is auto-loaded data
+  if (!window.isAutoLoadedData) {
+    // Hide elements for non-auto-loaded data
+    document.getElementById('dataContextInfo').style.display = 'none';
+    document.getElementById('monthProgressCard').style.display = 'none';
+    return;
+  }
+  
+  // Show elements for auto-loaded data
+  document.getElementById('dataContextInfo').style.display = 'flex';
+  document.getElementById('monthProgressCard').style.display = 'block';
+  
+  const contextMonth = document.getElementById('contextMonth');
+  const contextDate = document.getElementById('contextDate');
+  const monthProgressFill = document.getElementById('monthProgressFill');
+  const progressFraction = document.getElementById('progressFraction');
+  
+  console.log("Updating data context with period:", window.currentDataPeriod);
+  
+  if (contextMonth && contextDate) {
+    const month = window.currentDataPeriod.startDate.toLocaleString('default', { month: 'long' });
+    const year = window.currentDataPeriod.startDate.getFullYear();
+    const lastDate = window.currentDataPeriod.endDate.toLocaleDateString('en-US', {
+      month: 'long',
+      day: 'numeric'
+    });
+    
+    contextMonth.textContent = `${month} ${year}`;
+    contextDate.textContent = lastDate;
+    
+    // Update progress bar
+    if (monthProgressFill && progressFraction) {
+      const startDay = 1; // Always start from day 1
+      const endDay = window.currentDataPeriod.endDate.getDate();
+      const daysInMonth = new Date(
+        window.currentDataPeriod.startDate.getFullYear(),
+        window.currentDataPeriod.startDate.getMonth() + 1,
+        0
+      ).getDate();
+      
+      console.log(`Setting progress bar: Day ${endDay} of ${daysInMonth}`);
+      
+      const progressPercent = Math.round((endDay / daysInMonth) * 100);
+      monthProgressFill.style.width = `${progressPercent}%`;
+      progressFraction.textContent = `${endDay}/${daysInMonth}`;
+    }
+  }
+}
 
 // Function to hide the data context info
 function hideDataContextInfo() {
   const dataContextInfo = document.getElementById('dataContextInfo');
+  const monthProgressCard = document.getElementById('monthProgressCard');
   const archiveMonthsContainer = document.getElementById('archiveMonthsContainer');
   
   if (dataContextInfo) {
     dataContextInfo.style.display = 'none';
+  }
+  
+  if (monthProgressCard) {
+    monthProgressCard.style.display = 'none';
   }
   
   if (archiveMonthsContainer) {
@@ -5517,17 +5635,21 @@ function hideDataContextInfo() {
 // Function to show the data context info
 function showDataContextInfo() {
   const dataContextInfo = document.getElementById('dataContextInfo');
+  const monthProgressCard = document.getElementById('monthProgressCard');
   const archiveMonthsContainer = document.getElementById('archiveMonthsContainer');
   
   if (dataContextInfo) {
     dataContextInfo.style.display = 'flex';
   }
   
+  if (monthProgressCard) {
+    monthProgressCard.style.display = 'block';
+  }
+  
   if (archiveMonthsContainer) {
     archiveMonthsContainer.style.display = 'flex';
   }
 }
-
 // Function to get the last day of a month
 function getLastDayOfMonth(monthName, year) {
   const months = ["January", "February", "March", "April", "May", "June", 
@@ -5619,57 +5741,6 @@ function fixedDetectDateRangeFromData() {
   updateStatusWithPeriodInfo();
 }
 
-// Fixed function to correctly display the month progress
-function fixedUpdateDataContext() {
-  if (!window.currentDataPeriod) return;
-  
-  // Only update if this is auto-loaded data
-  if (!window.isAutoLoadedData) {
-    return;
-  }
-  
-  const contextMonth = document.getElementById('contextMonth');
-  const contextDate = document.getElementById('contextDate');
-  const monthProgressFill = document.getElementById('monthProgressFill');
-  const monthProgressText = document.getElementById('monthProgressText');
-  
-  console.log("Updating data context with period:", window.currentDataPeriod);
-  
-  if (contextMonth && contextDate) {
-    const month = window.currentDataPeriod.startDate.toLocaleString('default', { month: 'long' });
-    const year = window.currentDataPeriod.startDate.getFullYear();
-    const lastDate = window.currentDataPeriod.endDate.toLocaleDateString('en-US', {
-      month: 'long',
-      day: 'numeric'
-    });
-    
-    contextMonth.textContent = `${month} ${year}`;
-    contextDate.textContent = lastDate;
-    
-    // Update progress bar
-    if (monthProgressFill && monthProgressText) {
-      const startDay = 1; // Always start from day 1
-      const endDay = window.currentDataPeriod.endDate.getDate();
-      const daysInMonth = new Date(
-        window.currentDataPeriod.startDate.getFullYear(),
-        window.currentDataPeriod.startDate.getMonth() + 1,
-        0
-      ).getDate();
-      
-      console.log(`Setting progress bar: Day ${endDay} of ${daysInMonth}`);
-      
-      const progressPercent = Math.round((endDay / daysInMonth) * 100);
-      monthProgressFill.style.width = `${progressPercent}%`;
-      monthProgressText.textContent = `${endDay}/${daysInMonth} days`;
-      
-      // Only show progress for current month, hide for archives
-      const progressContainer = document.querySelector('.month-progress-container');
-      if (progressContainer) {
-        progressContainer.style.display = window.currentMonthActive ? 'flex' : 'none';
-      }
-    }
-  }
-}
 
 // Fixed function to parse dates
 function fixedParseDate(dateStr) {
