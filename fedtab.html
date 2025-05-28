@@ -392,7 +392,7 @@ body {
   font-size: 0.8125rem;
   margin-bottom: 0.75rem;
   border-radius: var(--radius);
-  background-color: var(--bg-tertiary);
+  background-color: var(--bg-primary);
   border: 1px solid var(--border);
   color: var(--text-primary); /* Ensure text color is appropriate */
   display: flex; /* Keep display flex for internal alignment */
@@ -428,20 +428,21 @@ body {
 .sidebar .status-message .filter-tag {
   padding: 0.125rem 0.375rem;
   font-size: 0.75rem;
-  background-color: var(--border-light); /* Match main filter tag style */
+  background-color: var(--bg-tertiary);
   border: none;
   border-radius: var(--radius);
-  color: var(--text-secondary);
+  color: var(--text-primary);
   display: inline-flex;
   align-items: center;
 }
+
 [data-theme="dark"] .sidebar .status-message .filter-tag {
     background-color: var(--border);
     color: var(--text-tertiary);
 }
-.sidebar .status-message .filter-tag .tag-label { font-weight: 400; color: var(--text-tertiary); margin-right: 0.25rem; }
-.sidebar .status-message .filter-tag .tag-value { font-weight: 500; color: var(--text-secondary); }
-[data-theme="dark"] .sidebar .status-message .filter-tag .tag-value { color: var(--text-tertiary); }
+.sidebar .status-message .filter-tag .tag-label { font-weight: 400; color: var(--text-primary); margin-right: 0.25rem; }
+.sidebar .status-message .filter-tag .tag-value { font-weight: 500; color: var(--text-primary); }
+[data-theme="dark"] .sidebar .status-message .filter-tag .tag-value { color: var(--text-primary); }
 
 
 .sidebar .form-group {
@@ -571,7 +572,6 @@ body {
 .sidebar .selection-item input[type="checkbox"] { margin-right: 0.375rem; cursor: pointer; accent-color: var(--primary); width: 14px; height: 14px; }
 .sidebar .selection-item span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.8125rem; }
 .sidebar #targetFilterBtn, .sidebar #clearTargetsBtn { flex: 1; font-size: 0.8125rem; padding: 0.5rem; min-height: 32px; height: 32px; }
-
 
 .main-wrapper {
   margin-left: 0; /* Mobile default */
@@ -956,7 +956,6 @@ td[title] {
   height: 36px;
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  background-color: var(--bg-primary);
   color: var(--text-primary);
   width: 100%;
   margin-bottom: 0;
@@ -973,13 +972,10 @@ td[title] {
 /* Highlight active date filters */
 #monthFilter:not([value=""]), 
 #yearFilter:not([value=""]) {
-  border-color: var(--primary);
-  background-color: rgba(var(--primary-rgb, 0, 122, 255), 0.05);
 }
 
 [data-theme="dark"] #monthFilter:not([value=""]), 
 [data-theme="dark"] #yearFilter:not([value=""]) {
-  background-color: rgba(var(--primary-rgb, 10, 132, 255), 0.1);
 }
 
 /* Date filter header */
@@ -1021,7 +1017,7 @@ td[title] {
 
 .status-heading {
   font-size: 1.5rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text-primary);
   margin: 0;
   line-height: 1.4;
@@ -1039,7 +1035,7 @@ td[title] {
   align-items: center;
   gap: 0.375rem;
   padding: 0.375rem 0.75rem;
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: var(--bg-tertiary);
   border-radius: var(--radius);
   font-size: 0.875rem;
   color: var(--text-primary);
@@ -1266,6 +1262,46 @@ td[title] {
     gap: 0.5rem;
   }
 }
+/* Style for the unifiedSearch input to match Date Signed filter styles */
+
+/* Default style - make the search box stand out with a light background in light mode */
+#unifiedSearch {
+  background-color: rgba(var(--primary-rgb, 0, 122, 255), 0.05);
+  border-color: var(--border);
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+/* When search has content, make it more prominent */
+#unifiedSearch:not([value=""]) {
+  border-color: var(--primary);
+  background-color: rgba(var(--primary-rgb, 0, 122, 255), 0.1);
+}
+
+/* Focus state */
+#unifiedSearch:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 1px var(--primary);
+  background-color: rgba(var(--primary-rgb, 0, 122, 255), 0.1);
+}
+
+/* Dark mode styles */
+[data-theme="dark"] #unifiedSearch {
+  background-color: rgba(var(--primary-rgb, 10, 132, 255), 0.08);
+  border-color: var(--border);
+}
+
+[data-theme="dark"] #unifiedSearch:not([value=""]) {
+  border-color: var(--primary);
+  background-color: rgba(var(--primary-rgb, 10, 132, 255), 0.15);
+}
+
+[data-theme="dark"] #unifiedSearch:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 1px var(--primary);
+  background-color: rgba(var(--primary-rgb, 10, 132, 255), 0.15);
+}
+
+
 </style>
 </head>
 <body>
@@ -1283,9 +1319,6 @@ td[title] {
       <div class="sidebar-nav">
         <div class="nav-section">
           <div class="search-container">
-		  <div id="statusMessage" class="status-message" role="status" aria-live="polite">
-          Select a CSV file to begin analysis.
-        </div>
             <div class="search-header">
               <h2 class="search-title">Search & Filter</h2>
             </div>
