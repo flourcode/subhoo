@@ -5356,6 +5356,16 @@ function collectActiveFilters() {
   
   return filters;
 }
+// Global variables to store data period information
+window.currentDataPeriod = null;
+window.periodDescription = "";
+window.archiveMonths = [
+  // Example archive months - you'll need to update this as you add new archives
+  // { month: "April", year: "2025", url: "https://subhoodata.s3.us-east-1.amazonaws.com/data/april2025.csv" },
+  // { month: "March", year: "2025", url: "https://subhoodata.s3.us-east-1.amazonaws.com/data/march2025.csv" }
+];
+window.currentMonthActive = true;
+
 // Function to auto-load the current month's data on page load
 function autoLoadCurrentData() {
   // Your actual S3 URL
@@ -5366,7 +5376,7 @@ function autoLoadCurrentData() {
     "Status": "Loading current month award data..."
   });
   
-  // Initialize charts first to avoid the error
+  // Initialize charts first if they don't exist
   if (!window.charts || !window.charts.monthly) {
     console.log("Initializing charts before loading data...");
     // Check if dashboard grid exists
@@ -5392,7 +5402,7 @@ function autoLoadCurrentData() {
         parseCSV(csvText);
         
         // After loading, detect the date range in the loaded data
-        detectDateRangeFromData();
+        fixedDetectDateRangeFromData();
         
         // Update UI to show current month is active
         updateArchiveMonthsUI(true);
@@ -5409,7 +5419,7 @@ function autoLoadCurrentData() {
     });
 }
 
-// Function to load archived month data with chart initialization
+// Function to load archived month data
 function loadArchivedMonthData(archiveMonth) {
   // Show loading message
   showEnhancedMessage("", "info", {
@@ -5452,7 +5462,7 @@ function loadArchivedMonthData(archiveMonth) {
         window.periodDescription = `for ${archiveMonth.month} ${archiveMonth.year}`;
         
         // Update data context and status message
-        updateDataContext();
+        fixedUpdateDataContext();
         updateStatusWithPeriodInfo();
         
         // Update UI to show which archive month is active
@@ -5470,54 +5480,324 @@ function loadArchivedMonthData(archiveMonth) {
     });
 }
 
-// Safe update functions that check if charts exist before updating
-function safeUpdateCharts() {
-  try {
-    if (window.charts && window.charts.monthly) {
-      updateMonthlyChart();
-    } else {
-      console.warn("Monthly chart not initialized, skipping update");
+// Function to get the last day of a month
+function getLastDayOfMonth(monthName, year) {
+  const months = ["January", "February", "March", "April", "May", "June", 
+                  "July", "August", "September", "October", "November", "December"];
+  const monthIndex = months.findIndex(m => m.toLowerCase() === monthName.toLowerCase());
+  
+  if (monthIndex === -1) return new Date();
+  
+  // Get the last day of the month (day 0 of next month)
+  return new Date(parseInt(year), monthIndex + 1, 0);
+}
+
+// Fixed function to detect date range from the loaded data
+function fixedDetectDateRangeFromData() {
+  if (!window.allData || window.allData.length === 0) {
+    return;
+  }
+  
+  let earliestDate = new Date('9999-12-31');
+  let latestDate = new Date('1970-01-01');
+  
+  // Debug log to see what's happening
+  console.log("Detecting date range from data...");
+  
+  // Loop through data to find min and max dates
+  let datesFound = 0;
+  
+  window.allData.forEach(item => {
+    if (item.date) {
+      const contractDate = fixedParseDate(item.date);
+      if (contractDate) {
+        datesFound++;
+        
+        if (datesFound <= 3) {
+          console.log(`Sample date: ${item.date} parsed as: ${contractDate}`);
+        }
+        
+        if (contractDate < earliestDate) earliestDate = contractDate;
+        if (contractDate > latestDate) latestDate = contractDate;
+      }
     }
+  });
+  
+  console.log(`Found ${datesFound} valid dates`);
+  console.log(`Earliest date: ${earliestDate}`);
+  console.log(`Latest date: ${latestDate}`);
+  
+  // Ensure dates are valid
+  if (earliestDate > latestDate) {
+    console.error("Error: earliest date is after latest date");
+    // Default to current month
+    const today = new Date();
+    earliestDate = new Date(today.getFullYear(), today.getMonth(), 1);
+    latestDate = today;
+  }
+  
+  // Store the detected date range globally
+  window.currentDataPeriod = {
+    startDate: earliestDate,
+    endDate: latestDate,
+    lastUpdated: new Date() // Today's date
+  };
+  
+  // Create the period description for use in status messages
+  const month = window.currentDataPeriod.startDate.toLocaleString('default', { month: 'long' });
+  const year = window.currentDataPeriod.startDate.getFullYear();
+  window.periodDescription = `for ${month} ${year}`;
+  
+  // Debug the progress calculation
+  const startDay = 1; // Always start from day 1
+  const endDay = window.currentDataPeriod.endDate.getDate();
+  const daysInMonth = new Date(
+    window.currentDataPeriod.startDate.getFullYear(),
+    window.currentDataPeriod.startDate.getMonth() + 1,
+    0
+  ).getDate();
+  
+  console.log(`Progress calculation: ${endDay}/${daysInMonth} days`);
+  
+  // Update the data context information and status message
+  fixedUpdateDataContext();
+  updateStatusWithPeriodInfo();
+}
+
+// Fixed function to correctly display the month progress
+function fixedUpdateDataContext() {
+  if (!window.currentDataPeriod) return;
+  
+  const contextMonth = document.getElementById('contextMonth');
+  const contextDate = document.getElementById('contextDate');
+  const monthProgressFill = document.getElementById('monthProgressFill');
+  const monthProgressText = document.getElementById('monthProgressText');
+  
+  console.log("Updating data context with period:", window.currentDataPeriod);
+  
+  if (contextMonth && contextDate) {
+    const month = window.currentDataPeriod.startDate.toLocaleString('default', { month: 'long' });
+    const year = window.currentDataPeriod.startDate.getFullYear();
+    const lastDate = window.currentDataPeriod.endDate.toLocaleDateString('en-US', {
+      month: 'long',
+      day: 'numeric'
+    });
     
-    if (window.charts && window.charts.vendor) {
-      updateVendorChart();
-    } else {
-      console.warn("Vendor chart not initialized, skipping update");
-    }
+    contextMonth.textContent = `${month} ${year}`;
+    contextDate.textContent = lastDate;
     
-    if (window.charts && window.charts.size) {
-      updateSizeChart();
-    } else {
-      console.warn("Size chart not initialized, skipping update");
+    // Update progress bar
+    if (monthProgressFill && monthProgressText) {
+      const startDay = 1; // Always start from day 1
+      const endDay = window.currentDataPeriod.endDate.getDate();
+      const daysInMonth = new Date(
+        window.currentDataPeriod.startDate.getFullYear(),
+        window.currentDataPeriod.startDate.getMonth() + 1,
+        0
+      ).getDate();
+      
+      console.log(`Setting progress bar: Day ${endDay} of ${daysInMonth}`);
+      
+      const progressPercent = Math.round((endDay / daysInMonth) * 100);
+      monthProgressFill.style.width = `${progressPercent}%`;
+      monthProgressText.textContent = `${endDay}/${daysInMonth} days`;
+      
+      // Only show progress for current month, hide for archives
+      const progressContainer = document.querySelector('.month-progress-container');
+      if (progressContainer) {
+        progressContainer.style.display = window.currentMonthActive ? 'flex' : 'none';
+      }
     }
-    
-    if (window.charts && window.charts.contractType) {
-      updateContractTypeChart();
-    } else {
-      console.warn("Contract type chart not initialized, skipping update");
-    }
-  } catch (error) {
-    console.error("Error safely updating charts:", error);
   }
 }
 
-// Override the updateDashboard function to use safe chart updates
-function safeUpdateDashboard() {
-  updateStats();
-  safeUpdateCharts();
-  updateTargetTable();
-  updateOfficeTable();
-  updateContractsTable();
-  initSortableTables();
+// Fixed function to parse dates
+function fixedParseDate(dateStr) {
+  if (!dateStr) return null;
+  
+  console.log(`Parsing date: ${dateStr}`);
+  
+  // Handle format like "16-May-25"
+  const dateMatch = dateStr.match(/(\d+)-(\w+)-(\d+)/);
+  if (dateMatch) {
+    const day = parseInt(dateMatch[1]);
+    const month = dateMatch[2];
+    const year = parseInt(dateMatch[3]);
+    
+    // Map month names to month indices
+    const monthMap = {
+      'Jan': 0, 'Feb': 1, 'Mar': 2, 'Apr': 3, 'May': 4, 'Jun': 5,
+      'Jul': 6, 'Aug': 7, 'Sep': 8, 'Oct': 9, 'Nov': 10, 'Dec': 11
+    };
+    
+    // Get month index
+    const monthIndex = monthMap[month];
+    if (monthIndex === undefined) {
+      console.error(`Unknown month: ${month}`);
+      return null;
+    }
+    
+    // Convert 2-digit year to 4-digit
+    const fullYear = year < 50 ? 2000 + year : 1900 + year;
+    
+    console.log(`Parsed ${dateStr} as Day: ${day}, Month: ${monthIndex}, Year: ${fullYear}`);
+    
+    return new Date(fullYear, monthIndex, day);
+  }
+  
+  // Try standard date parsing as fallback
+  const date = new Date(dateStr);
+  if (!isNaN(date.getTime())) {
+    return date;
+  }
+  
+  console.error(`Failed to parse date: ${dateStr}`);
+  return null;
 }
 
-// Updated initialization on page load
-document.addEventListener('DOMContentLoaded', function safeInitialize() {
-  // Setup the dashboard grid and initialize charts first
-  setupDashboardGrid();
-  initCharts();
+// Function to update the UI for archive months
+function updateArchiveMonthsUI(currentMonthActive, activeArchive = null) {
+  const archiveMonthsList = document.getElementById('archiveMonthsList');
+  if (!archiveMonthsList) return;
   
-  // Check if auto-load is enabled
+  // Clear existing buttons
+  archiveMonthsList.innerHTML = '';
+  
+  // Add current month button
+  const currentMonthBtn = document.createElement('button');
+  currentMonthBtn.className = `archive-month-btn${currentMonthActive ? ' active' : ''}`;
+  currentMonthBtn.textContent = 'Current Month';
+  currentMonthBtn.addEventListener('click', function() {
+    if (!window.currentMonthActive) {
+      autoLoadCurrentData();
+    }
+  });
+  archiveMonthsList.appendChild(currentMonthBtn);
+  
+  // Add archive month buttons
+  window.archiveMonths.forEach(archiveMonth => {
+    const isActive = !currentMonthActive && 
+                     activeArchive && 
+                     activeArchive.month === archiveMonth.month && 
+                     activeArchive.year === archiveMonth.year;
+    
+    const monthBtn = document.createElement('button');
+    monthBtn.className = `archive-month-btn${isActive ? ' active' : ''}`;
+    monthBtn.textContent = `${archiveMonth.month} ${archiveMonth.year}`;
+    monthBtn.addEventListener('click', function() {
+      // Check if this month is already active
+      if (!isActive) {
+        loadArchivedMonthData(archiveMonth);
+      }
+    });
+    
+    archiveMonthsList.appendChild(monthBtn);
+  });
+}
+
+// Function to update status message with period information
+function updateStatusWithPeriodInfo() {
+  // Collect all active filters
+  const filters = collectActiveFilters();
+  
+  // Show enhanced message
+  showEnhancedMessage("", "info", filters);
+}
+
+// Enhanced natural language description generator that includes period information
+function generateNaturalDescription(filters) {
+  // Use the automatically detected period if available
+  let periodText = window.periodDescription || "";
+  
+  if (!filters || Object.keys(filters).length === 0) {
+    return `Viewing all available contract data ${periodText} with no filters applied.`;
+  }
+  
+  // Extract key filter components
+  const agency = filters["Agency"] || "";
+  const vendor = filters["Vendor"] || "";
+  const month = filters["Month"] || "";
+  const year = filters["Year"] || "";
+  const searchTerm = filters["Search"] || "";
+  const naicsCode = filters["NAICS Code"] || "";
+  const naicsDesc = filters["NAICS"] || "";
+  
+  // Gather target information
+  const targetVendors = filters["Target Vendors"] ? parseInt(filters["Target Vendors"]) : 0;
+  const targetAgencies = filters["Target Agencies"] ? parseInt(filters["Target Agencies"]) : 0;
+  const targetOffices = filters["Target Offices"] ? parseInt(filters["Target Offices"]) : 0;
+  
+  // Start building the natural language description
+  let description = "You're viewing ";
+  
+  // Build agency/vendor/date part of the description
+  if (agency) {
+    description += `${agency} awards `;
+  } else {
+    description += "awards ";
+  }
+  
+  if (vendor) {
+    description += `to ${vendor} `;
+  }
+  
+  // Use month/year from filters if specified, otherwise use the detected period
+  if (month && year) {
+    description += `from ${month} ${year} `;
+  } else if (month) {
+    description += `from ${month} `;
+  } else if (year) {
+    description += `from ${year} `;
+  } else if (periodText && !filters["Month"] && !filters["Year"]) {
+    // Only add the period text if no specific month/year filter is applied
+    description += `${periodText} `;
+  }
+  
+  // Add NAICS information
+  if (naicsCode && naicsDesc) {
+    description += `for ${naicsDesc} (NAICS ${naicsCode}) `;
+  } else if (naicsCode) {
+    description += `with NAICS code ${naicsCode} `;
+  } else if (naicsDesc) {
+    description += `for ${naicsDesc} `;
+  }
+  
+  // Add search term
+  if (searchTerm) {
+    description += `containing "${searchTerm}" `;
+  }
+  
+  // Add target information
+  const targetParts = [];
+  
+  if (targetVendors > 0) {
+    targetParts.push(targetVendors === 1 ? "1 target vendor" : `${targetVendors} target vendors`);
+  }
+  
+  if (targetAgencies > 0) {
+    targetParts.push(targetAgencies === 1 ? "1 target agency" : `${targetAgencies} target agencies`);
+  }
+  
+  if (targetOffices > 0) {
+    targetParts.push(targetOffices === 1 ? "1 target office" : `${targetOffices} target offices`);
+  }
+  
+  if (targetParts.length > 0) {
+    description += `with ${targetParts.join(" and ")} `;
+  }
+  
+  // Clean up the description
+  description = description.trim();
+  if (!description.endsWith(".")) {
+    description += ".";
+  }
+  
+  return description;
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function initAutoLoad() {
+  // Check if auto-load is enabled (you can make this configurable)
   const autoLoadEnabled = true;
   
   if (autoLoadEnabled) {
@@ -5533,145 +5813,8 @@ document.addEventListener('DOMContentLoaded', function safeInitialize() {
   }
 });
 
-// Export the safe update dashboard function
-window.safeUpdateDashboard = safeUpdateDashboard;
-
-// Modified parseCSV function to use safe dashboard update
-function safeParseCSV(csvText) {
-  try {
-    showMessage("Parsing CSV data...", "info");
-    console.log("CSV length:", csvText.length);
-    
-    // Split into lines
-    var lines = csvText.split(/\r?\n/);
-    console.log("Number of lines:", lines.length);
-    
-    if (lines.length <= 1) {
-      showMessage("Could not parse CSV. Check format.", "error");
-      return;
-    }
-    
-    // Parse headers and data
-    var headers = parseCSVLine(lines[0]);
-    console.log("Headers:", headers);
-    
-    var rawData = [];
-    
-    // Parse data rows
-    for (var i = 1; i < lines.length; i++) {
-      if (lines[i].trim()) {
-        try {
-          var values = parseCSVLine(lines[i]);
-          
-          if (values.length >= 5) {
-            var row = {};
-            for (var j = 0; j < Math.min(headers.length, values.length); j++) {
-              if (headers[j]) {
-                row[headers[j]] = values[j] || '';
-              }
-            }
-            rawData.push(row);
-          }
-        } catch (e) {
-          console.error("Error parsing line " + i + ":", e);
-        }
-      }
-    }
-    
-    console.log("Parsed " + rawData.length + " data rows");
-    
-    if (rawData.length > 0) {
-      // Use the safe process data function
-      safeProcessData(rawData);
-    } else {
-      showMessage("No valid data rows found in the CSV.", "error");
-    }
-  } catch (error) {
-    showMessage("Error parsing CSV: " + error.message, "error");
-    console.error(error);
-  }
-}
-
-// Safe process data function
-function safeProcessData(rawData) {
-  showMessage("Processing data...");
-  
-  console.log("Processing data with " + rawData.length + " rows");
-  if (rawData.length > 0) {
-    console.log("First row keys:", Object.keys(rawData[0]));
-    console.log("Sample row:", rawData[0]);
-  }
-  
-  // Transform data for our dashboard
-  allData = [];
-  for (var i = 0; i < rawData.length; i++) {
-    var row = rawData[i];
-    
-    // Extract vendor name
-    var vendor = row['Legal Business Name'] || '';
-    
-    // Debug information
-    if (i === 0) {
-      console.log("Vendor name from first row:", vendor);
-      console.log("Action Obligation value:", row['Action Obligation ($)']);
-      console.log("Parsed money value:", parseMoneyValue(row['Action Obligation ($)']));
-    }
-    
-    try {
-      allData.push({
-        id: row['Contract ID'] || '',
-        reference: row['Reference IDV'] || '',
-        vendor: vendor,
-        parentCompany: row['Ultimate Parent Legal Business Name'] || '',
-        agency: row['Contracting Agency'] || '',
-        office: row['Contracting Office Name'] || '',
-        date: row['Date Signed'] || '',
-        value: parseMoneyValue(row['Action Obligation ($)']),
-        type: row['Award/IDV Type'] || '',
-        description: row['PSC Description'] || '',
-        location: (row['Entity City'] || '') + ', ' + (row['Entity State'] || ''),
-        naics: row['NAICS'] || '',
-        naicsDescription: row['NAICS Description'] || '',
-      });
-    } catch (error) {
-      console.error("Error processing row " + i + ":", error);
-      console.log("Problematic row:", row);
-    }
-  }
-  
-  console.log("Processed " + allData.length + " contracts");
-  
-  // Set filtered data to all data initially
-  filteredData = [...allData];
-  
-  // Reset target selections
-  if (window.targetSelections) {
-    window.targetSelections.vendors.clear();
-    window.targetSelections.agencies.clear();
-    window.targetSelections.offices.clear();
-    window.targetFilterActive = false;
-  }
-  
-  // Create dynamic dropdowns after data is loaded
-  try {
-    createDynamicDropdowns();
-    setupAutoFiltering();
-    if (typeof populateTargetSelectionLists === 'function') {
-      populateTargetSelectionLists(); // Populate target selection lists
-    }
-  } catch (error) {
-    console.error("Error setting up filters:", error);
-  }
-  
-  // Update the dashboard with filtered data - use safe version
-  safeUpdateDashboard();
-  
-  // Create and update Sankey diagram
-  setTimeout(function() {
-    createSankeyDiagram();
-  }, 500);
-  
-  showMessage("Successfully loaded " + allData.length + " contracts. Ready for analysis.", "success");
-}
+// Expose functions for potential manual use
+window.loadCurrentMonthData = autoLoadCurrentData;
+window.loadArchivedMonth = loadArchivedMonthData;
 </script>
 </html>
