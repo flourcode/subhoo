@@ -5514,7 +5514,7 @@ function safeUpdateCharts() {
 }
 
 // Override the original updateCharts function
-const originalUpdateCharts = window.updateCharts;
+const chartFixUpdateCharts = window.updateCharts;
 window.updateCharts = function() {
   // Use the safer version if charts might not be initialized
   if (!window.charts || Object.keys(window.charts).length === 0) {
@@ -5526,8 +5526,8 @@ window.updateCharts = function() {
       });
   } else {
     // If charts are already initialized, use the original function
-    if (typeof originalUpdateCharts === 'function') {
-      originalUpdateCharts();
+    if (typeof chartFixUpdateCharts === 'function') {
+      chartFixUpdateCharts();
     } else {
       // Fallback to safe update if original function is not available
       safeUpdateCharts();
@@ -5536,14 +5536,14 @@ window.updateCharts = function() {
 };
 
 // Hook into processData to ensure charts exist before updating
-const originalProcessData = window.processData;
+const chartFixProcessData = window.processData;
 window.processData = function(rawData) {
   // Ensure charts are initialized first
   ensureChartsInitialized()
     .then(() => {
       // Call the original processData function
-      if (typeof originalProcessData === 'function') {
-        originalProcessData(rawData);
+      if (typeof chartFixProcessData === 'function') {
+        chartFixProcessData(rawData);
       }
     });
 };
