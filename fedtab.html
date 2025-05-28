@@ -5356,10 +5356,20 @@ function collectActiveFilters() {
   
   return filters;
 }
-// Add this improved function to your JavaScript to handle chart initialization properly
+// Add this debugging and fixing code to your JavaScript
 
-// Modify the autoLoadCurrentData function
+// Debug function to inspect the data flow
+function debugDataFlow(stage, data) {
+  console.log(`[DEBUG] ${stage}:`, data ? data.length : 0);
+  if (data && data.length > 0) {
+    console.log(`[DEBUG] Sample item:`, data[0]);
+  }
+}
+
+// Enhanced autoLoadCurrentData function with debugging
 function autoLoadCurrentData() {
+  console.log("Starting autoLoadCurrentData function");
+  
   // Your actual S3 URL
   const dataUrl = "https://subhoodata.s3.us-east-1.amazonaws.com/data/daily.csv";
   
@@ -5374,23 +5384,41 @@ function autoLoadCurrentData() {
       if (!response.ok) {
         throw new Error(`Failed to fetch data: ${response.status} ${response.statusText}`);
       }
+      console.log("CSV data fetched successfully");
       return response.text();
     })
     .then(csvText => {
+      console.log("CSV text received, length:", csvText.length);
+      
       // Make sure charts are initialized first before parsing and loading data
-      ensureChartsInitialized()
+      return ensureChartsInitialized()
         .then(() => {
-          // Parse and load the CSV using your existing function
-          parseCSV(csvText);
+          console.log("Charts initialized, now parsing CSV");
           
-          // After loading, detect the date range in the loaded data
-          detectDateRangeFromData();
-          
-          // Update UI to show current month is active
-          updateArchiveMonthsUI(true);
-          
-          // Mark current month as active
-          window.currentMonthActive = true;
+          // Parse the CSV directly here instead of calling parseCSV
+          try {
+            const parsedData = parseCSVDirectly(csvText);
+            console.log("CSV parsed successfully, processing data");
+            
+            // Process the parsed data
+            processDataDirectly(parsedData);
+            
+            // After loading, detect the date range in the loaded data
+            detectDateRangeFromData();
+            
+            // Update UI to show current month is active
+            updateArchiveMonthsUI(true);
+            
+            // Mark current month as active
+            window.currentMonthActive = true;
+            
+            console.log("Data loading and processing complete");
+          } catch (error) {
+            console.error("Error parsing or processing CSV:", error);
+            showEnhancedMessage("", "error", {
+              "Status": "Error processing data: " + error.message
+            });
+          }
         });
     })
     .catch(error => {
@@ -5401,159 +5429,190 @@ function autoLoadCurrentData() {
     });
 }
 
-// Function to ensure charts are initialized
-function ensureChartsInitialized() {
-  return new Promise((resolve) => {
-    // Check if charts object exists and has properties
-    if (!window.charts || Object.keys(window.charts).length === 0) {
-      console.log("Charts not initialized, initializing now...");
-      
-      // Create dashboard grid if not exists
-      if (!document.querySelector('.dashboard-grid')) {
-        setupDashboardGrid();
-      }
-      
-      // Initialize charts
-      initCharts();
-      
-      // Give a small delay to ensure charts are fully initialized
-      setTimeout(() => {
-        resolve();
-      }, 500);
-    } else {
-      console.log("Charts already initialized");
-      resolve();
-    }
-  });
-}
-
-// Modified loadArchivedMonthData function
-function loadArchivedMonthData(archiveMonth) {
-  // Show loading message
-  showEnhancedMessage("", "info", {
-    "Status": `Loading ${archiveMonth.month} ${archiveMonth.year} award data...`
-  });
+// Parse CSV directly without using the global parseCSV function
+function parseCSVDirectly(csvText) {
+  console.log("Parsing CSV directly, length:", csvText.length);
   
-  // Fetch the CSV from the archive URL
-  fetch(archiveMonth.url)
-    .then(response => {
-      if (!response.ok) {
-        throw new Error(`Failed to fetch archive data: ${response.status} ${response.statusText}`);
+  // Split into lines
+  var lines = csvText.split(/\r?\n/);
+  console.log("Number of lines:", lines.length);
+  
+  if (lines.length <= 1) {
+    throw new Error("Could not parse CSV. Check format.");
+  }
+  
+  // Parse headers and data
+  var headers = parseCSVLine(lines[0]);
+  console.log("Headers:", headers);
+  
+  var rawData = [];
+  
+  // Parse data rows
+  for (var i = 1; i < lines.length && i < 30001; i++) {  // Limit to 30000 rows for safety
+    if (lines[i].trim()) {
+      try {
+        var values = parseCSVLine(lines[i]);
+        
+        if (values.length >= 5) {
+          var row = {};
+          for (var j = 0; j < Math.min(headers.length, values.length); j++) {
+            if (headers[j]) {
+              row[headers[j]] = values[j] || '';
+            }
+          }
+          rawData.push(row);
+        }
+      } catch (e) {
+        console.error("Error parsing line " + i + ":", e);
       }
-      return response.text();
-    })
-    .then(csvText => {
-      // Make sure charts are initialized first
-      ensureChartsInitialized()
-        .then(() => {
-          // Parse and load the CSV using your existing function
-          parseCSV(csvText);
-          
-          // Set the date period manually since this is an archive
-          window.currentDataPeriod = {
-            startDate: new Date(`${archiveMonth.month} 1, ${archiveMonth.year}`),
-            endDate: getLastDayOfMonth(archiveMonth.month, archiveMonth.year),
-            lastUpdated: new Date() // Today's date
-          };
-          
-          // Update period description
-          window.periodDescription = `for ${archiveMonth.month} ${archiveMonth.year}`;
-          
-          // Update data context and status message
-          updateDataContext();
-          updateStatusWithPeriodInfo();
-          
-          // Update UI to show which archive month is active
-          updateArchiveMonthsUI(false, archiveMonth);
-          
-          // Mark current month as inactive
-          window.currentMonthActive = false;
-        });
-    })
-    .catch(error => {
-      console.error(`Error loading ${archiveMonth.month} ${archiveMonth.year} data:`, error);
-      showEnhancedMessage("", "error", {
-        "Status": `Failed to load ${archiveMonth.month} ${archiveMonth.year} award data. Please try again later.`
-      });
-    });
+    }
+  }
+  
+  console.log("Parsed " + rawData.length + " data rows");
+  debugDataFlow("After parsing", rawData);
+  
+  return rawData;
 }
 
-// Safer version of the updateCharts function
-function safeUpdateCharts() {
+// Parse a CSV line directly
+function parseCSVLine(line) {
+  if (!line) return [];
+  
+  var result = [];
+  var current = "";
+  var inQuotes = false;
+  
+  for (var i = 0; i < line.length; i++) {
+    var char = line[i];
+    var next = line[i + 1] || '';
+    
+    if (char === '"') {
+      if (inQuotes && next === '"') {
+        current += '"';
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (char === ',' && !inQuotes) {
+      result.push(current.trim());
+      current = "";
+    } else {
+      current += char;
+    }
+  }
+  
+  result.push(current.trim());
+  return result;
+}
+
+// Process the data directly
+function processDataDirectly(rawData) {
+  console.log("Processing data directly with " + rawData.length + " rows");
+  debugDataFlow("Before processing", rawData);
+  
+  if (rawData.length === 0) {
+    console.error("No data to process");
+    return;
+  }
+  
+  // Transform data for our dashboard
+  window.allData = [];
+  for (var i = 0; i < rawData.length; i++) {
+    var row = rawData[i];
+    
+    // Extract vendor name
+    var vendor = row['Legal Business Name'] || '';
+    
+    // Debug information
+    if (i === 0) {
+      console.log("First row keys:", Object.keys(row));
+      console.log("Vendor field name test:", row['Legal Business Name'], row['VENDOR_NAME'], row['Vendor Name']);
+      console.log("Action Obligation value:", row['Action Obligation ($)']);
+      console.log("Date Signed value:", row['Date Signed']);
+    }
+    
+    // Identify the field names based on the headers we have
+    const vendorField = identifyField(row, ['Legal Business Name', 'VENDOR_NAME', 'Vendor Name']);
+    const parentField = identifyField(row, ['Ultimate Parent Legal Business Name', 'ULTIMATE_PARENT_LEGAL_BUSINESS_NAME']);
+    const agencyField = identifyField(row, ['Contracting Agency', 'CONTRACTING_AGENCY_NAME']);
+    const officeField = identifyField(row, ['Contracting Office Name', 'CONTRACTING_OFFICE_NAME']);
+    const dateField = identifyField(row, ['Date Signed', 'SIGNED_DATE']);
+    const valueField = identifyField(row, ['Action Obligation ($)', 'OBLIGATED_AMOUNT']);
+    const typeField = identifyField(row, ['Award/IDV Type', 'CONTRACT_TYPE']);
+    const descField = identifyField(row, ['PSC Description', 'PRODUCT_OR_SERVICE_CODE_DESCRIPTION']);
+    const naicsField = identifyField(row, ['NAICS', 'NAICS_CODE']);
+    const naicsDescField = identifyField(row, ['NAICS Description', 'NAICS_DESCRIPTION']);
+    
+    try {
+      window.allData.push({
+        id: row['Contract ID'] || row['CONTRACT_ID'] || row['CONTRACT_AWARD_ID'] || '',
+        reference: row['Reference IDV'] || row['REFERENCE_IDV'] || '',
+        vendor: row[vendorField] || '',
+        parentCompany: row[parentField] || '',
+        agency: row[agencyField] || '',
+        office: row[officeField] || '',
+        date: row[dateField] || '',
+        value: parseMoneyValue(row[valueField]),
+        type: row[typeField] || '',
+        description: row[descField] || '',
+        naics: row[naicsField] || '',
+        naicsDescription: row[naicsDescField] || '',
+      });
+    } catch (error) {
+      console.error("Error processing row " + i + ":", error);
+      console.log("Problematic row:", row);
+    }
+  }
+  
+  console.log("Processed " + window.allData.length + " contracts");
+  debugDataFlow("After processing", window.allData);
+  
+  // Set filtered data to all data initially
+  window.filteredData = [...window.allData];
+  
+  // Create dynamic dropdowns after data is loaded
   try {
-    // Check if monthly chart exists before updating
-    if (window.charts && window.charts.monthly) {
-      updateMonthlyChart();
-    } else {
-      console.warn("Monthly chart is not initialized, skipping update");
+    if (typeof createDynamicDropdowns === 'function') {
+      createDynamicDropdowns();
     }
     
-    // Check if vendor chart exists before updating
-    if (window.charts && window.charts.vendor) {
-      updateVendorChart();
-    } else {
-      console.warn("Vendor chart is not initialized, skipping update");
+    if (typeof setupAutoFiltering === 'function') {
+      setupAutoFiltering();
     }
     
-    // Check if size chart exists before updating
-    if (window.charts && window.charts.size) {
-      updateSizeChart();
-    } else {
-      console.warn("Size chart is not initialized, skipping update");
-    }
-    
-    // Check if contract type chart exists before updating
-    if (window.charts && window.charts.contractType) {
-      updateContractTypeChart();
-    } else {
-      console.warn("Contract type chart is not initialized, skipping update");
+    if (typeof populateTargetSelectionLists === 'function') {
+      populateTargetSelectionLists();
     }
   } catch (error) {
-    console.error("Error updating charts:", error);
+    console.error("Error setting up filters:", error);
   }
+  
+  // Update the dashboard with filtered data
+  console.log("Updating dashboard with", window.filteredData.length, "filtered records");
+  updateDashboard();
+  
+  // Create and update Sankey diagram
+  setTimeout(function() {
+    if (typeof createSankeyDiagram === 'function') {
+      createSankeyDiagram();
+    }
+  }, 500);
+  
+  showMessage("Successfully loaded " + window.allData.length + " contracts. Ready for analysis.", "success");
 }
 
-// Override the original updateCharts function
-const chartFixUpdateCharts = window.updateCharts;
-window.updateCharts = function() {
-  // Use the safer version if charts might not be initialized
-  if (!window.charts || Object.keys(window.charts).length === 0) {
-    // First try to initialize charts
-    ensureChartsInitialized()
-      .then(() => {
-        // Then update them
-        safeUpdateCharts();
-      });
-  } else {
-    // If charts are already initialized, use the original function
-    if (typeof chartFixUpdateCharts === 'function') {
-      chartFixUpdateCharts();
-    } else {
-      // Fallback to safe update if original function is not available
-      safeUpdateCharts();
+// Helper function to identify the correct field name
+function identifyField(row, possibleNames) {
+  for (const name of possibleNames) {
+    if (row[name] !== undefined) {
+      return name;
     }
   }
-};
+  return possibleNames[0]; // Default to first name
+}
 
-// Hook into processData to ensure charts exist before updating
-const chartFixProcessData = window.processData;
-window.processData = function(rawData) {
-  // Ensure charts are initialized first
-  ensureChartsInitialized()
-    .then(() => {
-      // Call the original processData function
-      if (typeof chartFixProcessData === 'function') {
-        chartFixProcessData(rawData);
-      }
-    });
-};
-
-// Initialize on page load - modified version
-document.addEventListener('DOMContentLoaded', function() {
-  // First set up the dashboard and initialize charts
-  setupDashboardGrid();
-  initCharts();
-  
+// Override the DOM ready event handler
+document.addEventListener('DOMContentLoaded', function fixedInitialization() {
   // Check if auto-load is enabled (you can make this configurable)
   const autoLoadEnabled = true;
   
@@ -5563,7 +5622,7 @@ document.addEventListener('DOMContentLoaded', function() {
       "Status": "Loading current month award data..."
     });
     
-    // Load current month data after a short delay to ensure charts are initialized
+    // Load current month data after a short delay to ensure the page is fully loaded
     setTimeout(function() {
       autoLoadCurrentData();
     }, 1000);
