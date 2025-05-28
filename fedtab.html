@@ -863,6 +863,367 @@ th.sort-desc .sort-icon:after { content: "\f0dd"; opacity: 1; color: var(--prima
 .example-links-container p {
     line-height: 1.4;
 }
+/* Add these styles to handle the new table structure */
+
+/* Office Table Specific Column Widths */
+#officeTable th:nth-child(1), #officeTable td:nth-child(1) { min-width: 100px; width: 15%; } /* Agency */
+#officeTable th:nth-child(2), #officeTable td:nth-child(2) { min-width: 140px; width: 20%; } /* Office */
+#officeTable th:nth-child(3), #officeTable td:nth-child(3) { min-width: 90px; width: 10%; } /* Total Value */
+#officeTable th:nth-child(4), #officeTable td:nth-child(4) { min-width: 80px; width: 8%; } /* Contracts */
+#officeTable th:nth-child(5), #officeTable td:nth-child(5) { min-width: 180px; width: 25%; } /* Top Contract */
+#officeTable th:nth-child(6), #officeTable td:nth-child(6) { min-width: 90px; width: 10%; } /* Largest Contract */
+#officeTable th:nth-child(7), #officeTable td:nth-child(7) { min-width: 80px; width: 12%; text-align: center; } /* View Details */
+
+/* Target ISV Table Specific Column Widths */
+#targetTable th:nth-child(1), #targetTable td:nth-child(1) { min-width: 120px; width: 15%; } /* Vendor */
+#targetTable th:nth-child(2), #targetTable td:nth-child(2) { min-width: 90px; width: 9%; } /* Total Value */
+#targetTable th:nth-child(3), #targetTable td:nth-child(3) { min-width: 80px; width: 8%; } /* Market Share */
+#targetTable th:nth-child(4), #targetTable td:nth-child(4) { min-width: 70px; width: 7%; } /* Contracts */
+#targetTable th:nth-child(5), #targetTable td:nth-child(5) { min-width: 90px; width: 9%; } /* Avg Deal Size */
+#targetTable th:nth-child(6), #targetTable td:nth-child(6) { min-width: 180px; width: 25%; } /* Top Contract */
+#targetTable th:nth-child(7), #targetTable td:nth-child(7) { min-width: 90px; width: 9%; } /* Largest Contract */
+#targetTable th:nth-child(8), #targetTable td:nth-child(8) { min-width: 80px; width: 10%; text-align: center; } /* View Details */
+
+/* Ensure tables can scroll horizontally on smaller screens */
+.table-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Add tooltips for truncated text */
+td[title] {
+  cursor: help;
+}
+
+/* Improve the FPDS link appearance */
+.fpds-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  text-decoration: none;
+  padding: 0.4rem 0.75rem;
+  background-color: var(--primary);
+  color: white !important;
+  border-radius: var(--radius);
+  font-size: 0.75rem;
+  font-weight: 500;
+  transition: background-color 0.2s, opacity 0.2s;
+  text-transform: none;
+  box-shadow: none;
+}
+
+.fpds-link:hover {
+  background-color: var(--primary-dark);
+  opacity: 0.9;
+}
+
+.fpds-link i {
+  margin-right: 3px;
+  font-size: 0.75rem;
+}
+
+/* Additional responsive adjustments */
+@media (max-width: 1200px) {
+  /* Adjust column widths for smaller screens */
+  #officeTable th:nth-child(5), #officeTable td:nth-child(5), 
+  #targetTable th:nth-child(6), #targetTable td:nth-child(6) {
+    min-width: 150px; /* Make top contract description narrower */
+  }
+}
+
+@media (max-width: 768px) {
+  /* Further adjustments for mobile */
+  .fpds-link {
+    padding: 0.35rem 0.6rem;
+    font-size: 0.7rem;
+  }
+  
+  .fpds-link i {
+    margin-right: 2px;
+  }
+}
+/* Styles for the Date Signed filter */
+
+#dateSignedFilterGroup {
+  margin-bottom: 0.75rem;
+}
+
+#dateSignedFilterGroup .form-control {
+  font-size: 0.8125rem;
+  padding: 0.5rem 0.75rem;
+  min-height: 36px;
+  height: 36px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  width: 100%;
+  margin-bottom: 0;
+  line-height: 1.4;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+#dateSignedFilterGroup .form-control:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 1px var(--primary);
+}
+
+/* Highlight active date filters */
+#monthFilter:not([value=""]), 
+#yearFilter:not([value=""]) {
+  border-color: var(--primary);
+  background-color: rgba(var(--primary-rgb, 0, 122, 255), 0.05);
+}
+
+[data-theme="dark"] #monthFilter:not([value=""]), 
+[data-theme="dark"] #yearFilter:not([value=""]) {
+  background-color: rgba(var(--primary-rgb, 10, 132, 255), 0.1);
+}
+
+/* Date filter header */
+.date-filter-header {
+  font-size: 0.75rem;
+  margin-bottom: 0.25rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  display: block;
+}
+
+/* Mobile adjustments */
+@media (max-width: 767px) {
+  #dateSignedFilterGroup > div {
+    flex-direction: column;
+    gap: 0.375rem;
+  }
+}
+.main-status-container {
+    margin-bottom: 1.5rem;
+    width: 100%;
+  }
+  
+  .main-status-wrapper {
+    background-color: var(--bg-primary);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    padding: 1.25rem 1.5rem;
+    border: 1px solid var(--border-light);
+    transition: all 0.3s ease;
+  }
+  
+  .main-status-message {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .status-heading {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+    line-height: 1.4;
+  }
+  
+  .status-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+  }
+  
+  .status-filter-tag {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.375rem 0.75rem;
+    background-color: var(--bg-tertiary);
+    border-radius: var(--radius);
+    font-size: 0.875rem;
+    color: var(--text-primary);
+  }
+  
+  .status-filter-label {
+    font-weight: 500;
+    color: var(--text-secondary);
+  }
+  
+  .status-filter-value {
+    font-weight: 500;
+    color: var(--primary);
+  }
+  
+  .status-filter-tag i {
+    color: var(--text-tertiary);
+    font-size: 0.75rem;
+  }
+  
+  /* Dark mode adjustments */
+  [data-theme="dark"] .main-status-wrapper {
+    background-color: var(--bg-tertiary);
+    border-color: var(--border);
+  }
+  
+  [data-theme="dark"] .status-filter-tag {
+    background-color: var(--bg-primary);
+  }
+  
+  /* Media queries for responsive layout */
+  @media (max-width: 768px) {
+    .main-status-wrapper {
+      padding: 1rem;
+    }
+    
+    .status-heading {
+      font-size: 1.25rem;
+    }
+  }
+  /* Data Context Info */
+  .data-context-info {
+    margin-top: 0.5rem;
+    margin-bottom: 1rem;
+    padding: 0.75rem 1rem;
+    background-color: rgba(var(--primary-rgb, 0, 122, 255), 0.05);
+    border-left: 3px solid var(--primary);
+    border-radius: var(--radius);
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    position: relative;
+  }
+
+  .info-icon {
+    color: var(--primary);
+    font-size: 1rem;
+    margin-top: 0.125rem;
+  }
+
+  .info-text {
+    flex: 1;
+    line-height: 1.5;
+  }
+  
+  #contextMonth, 
+  #contextDate {
+    font-weight: 500;
+    color: var(--text-primary);
+  }
+  
+  /* Month Progress Bar */
+  .month-progress-container {
+    position: absolute;
+    right: 1rem;
+    top: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.25rem;
+    width: 120px;
+  }
+  
+  .month-progress-bar {
+    width: 100%;
+    height: 8px;
+    background-color: var(--bg-tertiary);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  
+  .month-progress-fill {
+    height: 100%;
+    background-color: var(--primary);
+    border-radius: 4px;
+    width: 0%; /* Will be set by JavaScript */
+  }
+  
+  .month-progress-text {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    text-align: right;
+  }
+  
+  /* Archive Months */
+  .archive-months-container {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+  }
+  
+  .archive-months-title {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+  }
+  
+  .archive-months-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  
+  .archive-month-btn {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.8125rem;
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  
+  .archive-month-btn:hover {
+    background-color: var(--border-light);
+    transform: translateY(-1px);
+  }
+  
+  .archive-month-btn.active {
+    background-color: var(--primary);
+    color: white;
+    border-color: var(--primary);
+  }
+  
+  /* Dark mode adjustments */
+  [data-theme="dark"] .data-context-info {
+    background-color: rgba(var(--primary-rgb, 10, 132, 255), 0.1);
+  }
+  
+  [data-theme="dark"] .month-progress-bar {
+    background-color: var(--bg-primary);
+  }
+  
+  [data-theme="dark"] .archive-month-btn {
+    background-color: var(--bg-primary);
+    border-color: var(--border);
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .data-context-info {
+      flex-direction: column;
+      padding-bottom: 2.5rem;
+    }
+    
+    .month-progress-container {
+      position: relative;
+      right: auto;
+      top: auto;
+      width: 100%;
+      margin-top: 0.5rem;
+      align-items: flex-start;
+    }
+    
+    .archive-months-container {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
+  }
 </style>
 </head>
 <body>
@@ -899,7 +1260,6 @@ th.sort-desc .sort-icon:after { content: "\f0dd"; opacity: 1; color: var(--prima
               </div>
             </div>
           </div>
-
           <div class="upload-container">
             <div class="upload-title">
               Upload FPDS CSV Data
@@ -912,37 +1272,42 @@ th.sort-desc .sort-icon:after { content: "\f0dd"; opacity: 1; color: var(--prima
               </button>
             </form>
           </div>
-		  <div class="example-links-container" style="margin-top: 1rem; font-size: 0.8125rem;">
-  <p style="margin-bottom: 0.5rem; color: var(--text-secondary);">
-    Need an example? Download a sample CSV from FPDS.gov:
-  </p>
-  <ul style="list-style: none; padding-left: 0;">
-    <li style="margin-bottom: 0.375rem;">
-      <a href="https://www.fpds.gov/ezsearch/search.do?s=FPDS&indexName=awardfull&templateName=CSV&renderer=jsp&length=50&q=LEGAL_BUSINESS_NAME%3A%22LOCKHEED+MARTIN+CORPORATION%22+SIGNED_DATE%3A%2201%2F01%2F2024%2C01%2F31%2F2024%22" target="_blank" rel="noopener noreferrer" class="example-fpds-link">
-        Sample NASA Contracts CSV
-      </a>
-    </li>
-    <li style="margin-bottom: 0.375rem;">
-      <a href="https://www.fpds.gov/ezsearch/search.do?s=FPDS&indexName=awardfull&templateName=CSV&renderer=jsp&length=50&q=LEGAL_BUSINESS_NAME%3A%22LOCKHEED+MARTIN+CORPORATION%22+SIGNED_DATE%3A%2201%2F01%2F2024%2C01%2F31%2F2024%22" target="_blank" rel="noopener noreferrer" class="example-fpds-link">
-        Sample Lockheed Martin Contracts CSV
-      </a>
-    </li>
-    <li style="margin-bottom: 0.375rem;">
-      <a href="https://www.fpds.gov/ezsearch/search.do?s=FPDS&indexName=awardfull&templateName=CSV&renderer=jsp&length=50&q=PSC_DESCRIPTION%3A%22Aircraft+Engines%22+SIGNED_DATE%3A%2201%2F01%2F2024%2C01%2F31%2F2024%22" target="_blank" rel="noopener noreferrer" class="example-fpds-link">
-        Sample "Aircraft Engines" Contracts CSV
-      </a>
-    </li>
-  </ul>
-  <p style="margin-top: 0.5rem; font-size: 0.75rem; color: var(--text-tertiary);">
-    (These links will download a CSV with up to 50 records directly from FPDS.gov)
-  </p>
-</div>
         </div>
       </div>
     </aside>
 
     <div class="main-wrapper">
       <main class="main-content">
+	 <div id="mainStatusContainer" class="main-status-container">
+  <div class="main-status-wrapper">
+    <div id="mainStatusMessage" class="main-status-message">
+      <h2 class="status-heading" id="statusHeading">Viewing all available contract data with no filters applied.</h2>
+    </div>
+    <div id="statusFilters" class="status-filters"></div>
+  </div>
+</div>
+<div id="dataContextInfo" class="data-context-info">
+  <div class="info-icon"><i class="fas fa-info-circle"></i></div>
+  <div class="info-text">
+    This dashboard shows all contract awards for <span id="contextMonth">the current month</span> 
+    that have been published to FPDS.gov through <span id="contextDate">today</span>. 
+    Data is updated each night to include the latest available contract information.
+  </div>
+  <div class="month-progress-container">
+    <div id="monthProgressBar" class="month-progress-bar">
+      <div id="monthProgressFill" class="month-progress-fill"></div>
+    </div>
+    <div id="monthProgressText" class="month-progress-text">0/31 days</div>
+  </div>
+</div>
+
+<!-- Add this for archive months - place below the data context info -->
+<div id="archiveMonthsContainer" class="archive-months-container">
+  <div class="archive-months-title">Previous Months:</div>
+  <div id="archiveMonthsList" class="archive-months-list">
+    <!-- Archive month buttons will be added here dynamically -->
+  </div>
+</div>
         <div class="stats-grid">
           <div class="stat-card">
             <div class="stat-header">
@@ -979,20 +1344,22 @@ th.sort-desc .sort-icon:after { content: "\f0dd"; opacity: 1; color: var(--prima
             <h3 class="table-title">Top Contracting Offices</h3>
           </div>
           <div class="table-wrapper">
-            <table class="sortable" id="officeTable" aria-labelledby="officeTableContainer">
-              <thead>
-                <tr>
-                  <th data-sort="string" scope="col">Agency <span class="sort-icon"></span></th>
-                  <th data-sort="string" scope="col">Contracting Office <span class="sort-icon"></span></th>
-                  <th data-sort="number" scope="col">Total Value <span class="sort-icon"></span></th>
-                  <th data-sort="number" scope="col">Contracts <span class="sort-icon"></span></th>
-                  <th data-sort="number" scope="col">Target ISV Activity <span class="sort-icon"></span></th>
-                  <th data-sort="number" scope="col">Largest Contract <span class="sort-icon"></span></th>
-                </tr>
-              </thead>
-              <tbody id="officeTableBody">
-                </tbody>
-            </table>
+           <table class="sortable" id="officeTable" aria-labelledby="officeTableContainer">
+  <thead>
+    <tr>
+      <th data-sort="string" scope="col">Agency <span class="sort-icon"></span></th>
+      <th data-sort="string" scope="col">Contracting Office <span class="sort-icon"></span></th>
+      <th data-sort="number" scope="col">Total Value <span class="sort-icon"></span></th>
+      <th data-sort="number" scope="col">Contracts <span class="sort-icon"></span></th>
+      <th data-sort="string" scope="col">Top Vendor <span class="sort-icon"></span></th>
+      <th data-sort="number" scope="col">Largest Contract <span class="sort-icon"></span></th>
+      <th data-sort="string" scope="col">View Details</th>
+    </tr>
+  </thead>
+  <tbody id="officeTableBody">
+    <!-- Table body will be populated dynamically -->
+  </tbody>
+</table>
           </div>
         </div>
 
@@ -1002,18 +1369,22 @@ th.sort-desc .sort-icon:after { content: "\f0dd"; opacity: 1; color: var(--prima
           </div>
           <div class="table-wrapper">
             <table class="sortable" id="targetTable" aria-labelledby="targetTableContainer">
-              <thead>
-                <tr>
-                  <th data-sort="string" scope="col">Vendor <span class="sort-icon"></span></th>
-                  <th data-sort="number" scope="col">Total Value <span class="sort-icon"></span></th>
-                  <th data-sort="number" scope="col">Market Share <span class="sort-icon"></span></th>
-                  <th data-sort="number" scope="col">Contracts <span class="sort-icon"></span></th>
-                  <th data-sort="number" scope="col">Avg Deal Size <span class="sort-icon"></span></th>
-                </tr>
-              </thead>
-              <tbody id="targetTableBody">
-                </tbody>
-            </table>
+  <thead>
+    <tr>
+      <th data-sort="string" scope="col">Vendor <span class="sort-icon"></span></th>
+      <th data-sort="number" scope="col">Total Value <span class="sort-icon"></span></th>
+      <th data-sort="number" scope="col">Market Share <span class="sort-icon"></span></th>
+      <th data-sort="number" scope="col">Contracts <span class="sort-icon"></span></th>
+      <th data-sort="number" scope="col">Avg Deal Size <span class="sort-icon"></span></th>
+      <th data-sort="string" scope="col">Top Contract Agency <span class="sort-icon"></span></th>
+      <th data-sort="number" scope="col">Largest Contract <span class="sort-icon"></span></th>
+      <th data-sort="string" scope="col">View Details</th>
+    </tr>
+  </thead>
+  <tbody id="targetTableBody">
+    <!-- Table body will be populated dynamically -->
+  </tbody>
+</table>
           </div>
         </div>
 
@@ -1085,7 +1456,6 @@ document.addEventListener('DOMContentLoaded', function() {
     updateUploadContainerLayout();
     updateSearchContainer();
     updateUploadContainer();
-	handleBookmarkletData();
     
     // Add target functionality (new code)
     createTargetSelectionInterface();
@@ -2412,6 +2782,93 @@ function filterByVendorName(vendorName) {
         updateSankeyDiagramWithFilteredData();
     }
 }
+function updateOfficeTable() {
+    // Group by office
+    var officeAnalysis = {};
+    
+    for (var i = 0; i < filteredData.length; i++) {
+        var contract = filteredData[i];
+        var office = contract.office || 'Unknown';
+        var agency = contract.agency || '';
+        
+        if (!officeAnalysis[office]) {
+            officeAnalysis[office] = {
+                value: 0,
+                count: 0,
+                largest: 0,
+                largestContract: null, // Store the full contract object
+                agency: agency
+            };
+        }
+        
+        officeAnalysis[office].value += contract.value;
+        officeAnalysis[office].count++;
+        
+        if (contract.value > officeAnalysis[office].largest) {
+            officeAnalysis[office].largest = contract.value;
+            officeAnalysis[office].largestContract = contract; // Store the contract
+        }
+    }
+    
+    // Convert to array and sort
+    var officeArray = [];
+    for (var office in officeAnalysis) {
+        officeArray.push({
+            name: office,
+            value: officeAnalysis[office].value,
+            count: officeAnalysis[office].count,
+            largest: officeAnalysis[office].largest,
+            largestContract: officeAnalysis[office].largestContract,
+            agency: officeAnalysis[office].agency
+        });
+    }
+    
+    officeArray.sort(function(a, b) {
+        return b.value - a.value;
+    });
+    
+    // Get top 15
+    var topOffices = officeArray.slice(0, 15);
+    
+    // Update table
+    var tbody = document.getElementById('officeTableBody');
+    tbody.innerHTML = '';
+    
+    for (var i = 0; i < topOffices.length; i++) {
+        var office = topOffices[i];
+        var row = document.createElement('tr');
+        
+        // Create FPDS link for largest contract
+        var fpdsLink = '';
+        if (office.largestContract && office.largestContract.id) {
+            fpdsLink = buildFpdsLink(office.largestContract);
+        } else {
+            fpdsLink = '<span class="badge badge-inactive">No ID</span>';
+        }
+        
+        // Get the vendor name of the largest contract
+        var topContractVendor = office.largestContract ? 
+            (office.largestContract.vendor || 'Unknown vendor') : 
+            'No contract data';
+        
+        // Truncate vendor name if too long
+        if (topContractVendor.length > 40) {
+            topContractVendor = topContractVendor.substring(0, 37) + '...';
+        }
+        
+        row.innerHTML = 
+            '<td>' + office.agency + '</td>' +
+            '<td>' + office.name + '</td>' +
+            '<td>' + formatCurrency(office.value) + '</td>' +
+            '<td>' + office.count + '</td>' +
+            '<td title="' + topContractVendor + '">' + topContractVendor + '</td>' +
+            '<td>' + formatCurrency(office.largest) + '</td>' +
+            '<td>' + fpdsLink + '</td>';
+        
+        tbody.appendChild(row);
+    }
+}
+
 // Update target vendor analysis table
 function updateTargetTable() {
     // Group by vendor
@@ -2429,6 +2886,7 @@ function updateTargetTable() {
                 value: 0,
                 count: 0,
                 largest: 0,
+                largestContract: null, // Store the full contract object
                 isTarget: contract.isTarget
             };
         }
@@ -2438,6 +2896,7 @@ function updateTargetTable() {
         
         if (contract.value > vendorAnalysis[vendor].largest) {
             vendorAnalysis[vendor].largest = contract.value;
+            vendorAnalysis[vendor].largestContract = contract; // Store the contract
         }
     }
     
@@ -2450,6 +2909,7 @@ function updateTargetTable() {
             value: vendorAnalysis[vendor].value,
             count: vendorAnalysis[vendor].count,
             largest: vendorAnalysis[vendor].largest,
+            largestContract: vendorAnalysis[vendor].largestContract,
             isTarget: vendorAnalysis[vendor].isTarget
         });
     }
@@ -2490,93 +2950,38 @@ function updateTargetTable() {
         var marketShare = (vendor.value / totalMarketValue) * 100;
         var avgDealSize = vendor.value / vendor.count;
         
+        // Create FPDS link for largest contract
+        var fpdsLink = '';
+        if (vendor.largestContract && vendor.largestContract.id) {
+            fpdsLink = buildFpdsLink(vendor.largestContract);
+        } else {
+            fpdsLink = '<span class="badge badge-inactive">No ID</span>';
+        }
+        
+        // Get the agency/office name of the largest contract (representing who awarded the contract to this vendor)
+        var topContractAwarder = vendor.largestContract ? 
+            (vendor.largestContract.agency || 
+             (vendor.largestContract.office || 'Unknown office')) : 
+            'No contract data';
+        
+        // Truncate agency/office name if too long
+        if (topContractAwarder.length > 30) {
+            topContractAwarder = topContractAwarder.substring(0, 27) + '...';
+        }
+        
         row.innerHTML = 
             '<td>' + vendor.name + '</td>' +
             '<td>' + formatCurrency(vendor.value) + '</td>' +
             '<td>' + marketShare.toFixed(2) + '%</td>' +
             '<td>' + vendor.count + '</td>' +
-            '<td>' + formatCurrency(avgDealSize) + '</td>';
+            '<td>' + formatCurrency(avgDealSize) + '</td>' +
+            '<td title="' + topContractAwarder + '">' + topContractAwarder + '</td>' +
+            '<td>' + formatCurrency(vendor.largest) + '</td>' +
+            '<td>' + fpdsLink + '</td>';
         
         tbody.appendChild(row);
     }
 }
-
-// Update office table - shows top contracting offices
-function updateOfficeTable() {
-    // Group by office
-    var officeAnalysis = {};
-    
-    for (var i = 0; i < filteredData.length; i++) {
-        var contract = filteredData[i];
-        var office = contract.office || 'Unknown';
-        var agency = contract.agency || '';
-        
-        if (!officeAnalysis[office]) {
-            officeAnalysis[office] = {
-                value: 0,
-                count: 0,
-                largest: 0,
-                targetCount: 0,
-                agency: agency
-            };
-        }
-        
-        officeAnalysis[office].value += contract.value;
-        officeAnalysis[office].count++;
-        
-        if (contract.value > officeAnalysis[office].largest) {
-            officeAnalysis[office].largest = contract.value;
-        }
-        
-        if (contract.isTarget) {
-            officeAnalysis[office].targetCount++;
-        }
-    }
-    
-    // Convert to array and sort
-    var officeArray = [];
-    for (var office in officeAnalysis) {
-        officeArray.push({
-            name: office,
-            value: officeAnalysis[office].value,
-            count: officeAnalysis[office].count,
-            largest: officeAnalysis[office].largest,
-            targetCount: officeAnalysis[office].targetCount,
-            agency: officeAnalysis[office].agency
-        });
-    }
-    
-    officeArray.sort(function(a, b) {
-        return b.value - a.value;
-    });
-    
-    // Get top 15
-    var topOffices = officeArray.slice(0, 15);
-    
-    // Update table
-    var tbody = document.getElementById('officeTableBody');
-    tbody.innerHTML = '';
-    
-    for (var i = 0; i < topOffices.length; i++) {
-        var office = topOffices[i];
-        var row = document.createElement('tr');
-        
-        if (office.targetCount > 0) {
-            row.className = 'target-vendor';
-        }
-        
-        row.innerHTML = 
-            '<td>' + office.agency + '</td>' +
-            '<td>' + office.name + '</td>' +
-            '<td>' + formatCurrency(office.value) + '</td>' +
-            '<td>' + office.count + '</td>' +
-            '<td>' + office.targetCount + ' contracts</td>' +
-            '<td>' + formatCurrency(office.largest) + '</td>';
-        
-        tbody.appendChild(row);
-    }
-}
-
 // Function to build FPDS.gov link with all necessary parameters
 function buildFpdsLink(contract) {
     // Check if we have the minimum required data
@@ -4338,248 +4743,973 @@ function clearAllTargets() {
         }
     }
 }
-function handleBookmarkletData() {
-    // Check if we have bookmarklet data in the URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const fpdsData = urlParams.get('fpds_data');
-    
-    if (fpdsData) {
-        try {
-            // Decode and parse the data
-            const data = JSON.parse(decodeURIComponent(fpdsData));
-            console.log('Received FPDS bookmarklet data:', data);
-            
-            // Clean up the URL to remove the parameter
-            const cleanUrl = window.location.protocol + '//' + window.location.host + window.location.pathname;
-            window.history.replaceState({}, document.title, cleanUrl);
-            
-            // Store the data for later use
-            localStorage.setItem('fpds_last_search', JSON.stringify(data));
-            
-            // Show the import modal
-            showFPDSImportModal(data);
-            
-        } catch (error) {
-            console.error('Error parsing FPDS data:', error);
-            showMessage('Error processing FPDS data. Please try again.', 'error');
-        }
-    }
+// Function to add a Date Signed filter to the dynamic filters container
+function addDateSignedFilter() {
+  // Get the dynamic filters container
+  const filtersContainer = document.getElementById('dynamicFiltersContainer');
+  if (!filtersContainer) {
+    console.error("Filters container not found");
+    return;
+  }
+
+  // Create the month/year filter group
+  const dateFilterGroup = document.createElement('div');
+  dateFilterGroup.className = 'form-group';
+  dateFilterGroup.id = 'dateSignedFilterGroup';
+
+  // Create month/year selector with labels
+  dateFilterGroup.innerHTML = `
+    <div style="margin-bottom: 0.25rem;">
+      <span class="date-filter-header">Date Signed Filter</span>
+    </div>
+    <div style="display: flex; gap: 0.5rem;">
+      <div style="flex: 1;">
+        <select id="monthFilter" class="form-control">
+          <option value="">All Months</option>
+          <option value="Jan">January</option>
+          <option value="Feb">February</option>
+          <option value="Mar">March</option>
+          <option value="Apr">April</option>
+          <option value="May">May</option>
+          <option value="Jun">June</option>
+          <option value="Jul">July</option>
+          <option value="Aug">August</option>
+          <option value="Sep">September</option>
+          <option value="Oct">October</option>
+          <option value="Nov">November</option>
+          <option value="Dec">December</option>
+        </select>
+      </div>
+      <div style="flex: 1;">
+        <select id="yearFilter" class="form-control">
+          <option value="">All Years</option>
+        </select>
+      </div>
+    </div>
+  `;
+
+  // Add the filter group to the container - at the beginning
+  if (filtersContainer.firstChild) {
+    filtersContainer.insertBefore(dateFilterGroup, filtersContainer.firstChild);
+  } else {
+    filtersContainer.appendChild(dateFilterGroup);
+  }
+
+  // Initialize year options
+  populateYearOptions();
+
+  // Add event listeners
+  document.getElementById('monthFilter').addEventListener('change', applyDateFilter);
+  document.getElementById('yearFilter').addEventListener('change', applyDateFilter);
 }
 
-// Function to show import modal with FPDS data
-function showFPDSImportModal(data) {
-    // Create modal overlay
-    const modal = document.createElement('div');
-    modal.className = 'fpds-import-modal';
-    modal.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(0, 0, 0, 0.7);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 10000;
-        animation: fadeIn 0.3s ease-out;
-    `;
+// Function to populate year options based on the data
+function populateYearOptions() {
+  // Get year filter dropdown
+  const yearFilter = document.getElementById('yearFilter');
+  if (!yearFilter) return;
+
+  // Start with the "All Years" option (already in HTML)
+  // Get unique years from the data
+  const uniqueYears = new Set();
+  
+  // Function to extract year from DD-MMM-YY format
+  function extractYear(dateStr) {
+    if (!dateStr) return null;
     
-    // Create modal content
-    const content = document.createElement('div');
-    content.style.cssText = `
-        background: var(--bg-primary);
-        padding: 2rem;
-        border-radius: var(--radius-lg);
-        max-width: 500px;
-        width: 90%;
-        box-shadow: var(--shadow-xl);
-        animation: slideIn 0.3s ease-out;
-    `;
-    
-    // Build filter summary
-    let filterSummary = '';
-    if (data.filters.naics) filterSummary += `<li>NAICS: ${data.filters.naics}</li>`;
-    if (data.filters.agency) filterSummary += `<li>Agency: ${data.filters.agency}</li>`;
-    if (data.filters.vendor) filterSummary += `<li>Vendor: ${data.filters.vendor}</li>`;
-    if (data.filters.startDate && data.filters.endDate) {
-        filterSummary += `<li>Date Range: ${data.filters.startDate} to ${data.filters.endDate}</li>`;
+    const match = dateStr.match(/\d+-\w+-(\d+)/);
+    if (match && match[1]) {
+      const year = parseInt(match[1]);
+      // Convert 2-digit year to 4-digit
+      return year < 50 ? 2000 + year : 1900 + year;
     }
-    if (data.filters.pscDescription) filterSummary += `<li>PSC: ${data.filters.pscDescription}</li>`;
-    
-    content.innerHTML = `
-        <h2 style="margin-top: 0; color: var(--text-primary); font-size: 1.5rem; margin-bottom: 1rem;">
-            Import FPDS.gov Data
-        </h2>
-        
-        <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius); margin-bottom: 1.5rem;">
-            <p style="margin: 0 0 0.5rem 0; color: var(--text-primary); font-weight: 500;">
-                Search Details:
-            </p>
-            <ul style="margin: 0; padding-left: 1.5rem; color: var(--text-secondary); font-size: 0.875rem; line-height: 1.6;">
-                <li>Results Found: ${data.resultCount}</li>
-                ${filterSummary}
-            </ul>
-        </div>
-        
-        <p style="color: var(--text-secondary); margin-bottom: 1.5rem; line-height: 1.5;">
-            To complete the import, download the CSV file from FPDS.gov and upload it here:
-        </p>
-        
-        <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 1.5rem;">
-            <a href="${data.csvUrl}" 
-               target="_blank"
-               class="btn btn-primary"
-               style="flex: 1; text-decoration: none; text-align: center;">
-                <i class="fas fa-download"></i> Download CSV
-            </a>
-            <span style="color: var(--text-tertiary);">then</span>
-            <button class="btn btn-secondary" 
-                    style="flex: 1;"
-                    onclick="document.getElementById('csvFileInput').click(); this.closest('.fpds-import-modal').remove();">
-                <i class="fas fa-upload"></i> Upload Here
-            </button>
-        </div>
-        
-        <div style="text-align: center;">
-            <button onclick="this.closest('.fpds-import-modal').remove()" 
-                    class="btn btn-secondary"
-                    style="padding: 0.5rem 2rem;">
-                Cancel
-            </button>
-        </div>
-    `;
-    
-    modal.appendChild(content);
-    document.body.appendChild(modal);
-    
-    // Add CSS animations if not already present
-    if (!document.getElementById('fpds-import-styles')) {
-        const style = document.createElement('style');
-        style.id = 'fpds-import-styles';
-        style.textContent = `
-            @keyframes fadeIn {
-                from { opacity: 0; }
-                to { opacity: 1; }
-            }
-            @keyframes slideIn {
-                from { 
-                    opacity: 0;
-                    transform: translateY(-20px);
-                }
-                to {
-                    opacity: 1;
-                    transform: translateY(0);
-                }
-            }
-        `;
-        document.head.appendChild(style);
+    return null;
+  }
+
+  // Collect unique years from data
+  allData.forEach(item => {
+    const year = extractYear(item.date);
+    if (year) {
+      uniqueYears.add(year);
     }
-    
-    // Close modal when clicking outside
-    modal.addEventListener('click', function(e) {
-        if (e.target === modal) {
-            modal.remove();
-        }
+  });
+
+  // Convert to array and sort in descending order (newest first)
+  const years = Array.from(uniqueYears).sort((a, b) => b - a);
+
+  // Add options to the dropdown
+  years.forEach(year => {
+    const option = document.createElement('option');
+    option.value = year;
+    option.textContent = year;
+    yearFilter.appendChild(option);
+  });
+}
+
+// Function to apply the date filter
+function applyDateFilter() {
+  const monthFilter = document.getElementById('monthFilter').value;
+  const yearFilter = document.getElementById('yearFilter').value;
+  
+  // If no filters selected, just use the standard filtering
+  if (!monthFilter && !yearFilter) {
+    applyAllFilters();
+    return;
+  }
+  
+  // Start with all data
+  let dateFilteredData = [...allData];
+  
+  // Apply other filters first
+  dateFilteredData = applyOtherFilters(dateFilteredData);
+  
+  // Then apply date filters
+  if (monthFilter || yearFilter) {
+    dateFilteredData = dateFilteredData.filter(item => {
+      // Parse the date
+      if (!item.date) return false;
+      
+      // Extract date components using regex
+      const dateMatch = item.date.match(/(\d+)-(\w+)-(\d+)/);
+      if (!dateMatch) return false;
+      
+      const day = dateMatch[1];
+      const month = dateMatch[2];
+      const yearDigits = dateMatch[3];
+      
+      // Convert 2-digit year to 4-digit
+      const fullYear = parseInt(yearDigits) < 50 ? "20" + yearDigits : "19" + yearDigits;
+      
+      // Apply month filter if specified
+      if (monthFilter && month !== monthFilter) {
+        return false;
+      }
+      
+      // Apply year filter if specified (ensure string comparison)
+      if (yearFilter && fullYear !== yearFilter.toString()) {
+        return false;
+      }
+      
+      return true;
     });
-    
-    // Auto-apply filters when CSV is loaded
-    scheduleFilterApplication(data.filters);
+  }
+  
+  // Update filtered data
+  filteredData = dateFilteredData;
+  
+  // Generate filter message
+  let filterMessage = `Showing ${filteredData.length.toLocaleString()} contracts`;
+  let filterDetails = {};
+  
+  if (monthFilter) {
+    // Convert short month to full name
+    const monthNames = {
+      'Jan': 'January', 'Feb': 'February', 'Mar': 'March', 'Apr': 'April',
+      'May': 'May', 'Jun': 'June', 'Jul': 'July', 'Aug': 'August',
+      'Sep': 'September', 'Oct': 'October', 'Nov': 'November', 'Dec': 'December'
+    };
+    filterDetails["Month"] = monthNames[monthFilter] || monthFilter;
+  }
+  
+  if (yearFilter) {
+    filterDetails["Year"] = yearFilter;
+  }
+  
+  // Calculate totals
+  const totalValue = filteredData.reduce((sum, item) => sum + item.value, 0);
+  filterDetails["Total Value"] = formatCurrency(totalValue);
+  
+  // Update status message
+  showMessage(filterMessage, "info", filterDetails);
+  
+  // Update dashboard
+  updateDashboard();
+  
+  // Update Sankey diagram if it exists
+  if (document.getElementById('sankeyChart')) {
+    updateSankeyDiagramWithFilteredData();
+  }
 }
 
-// Function to schedule filter application after CSV load
-function scheduleFilterApplication(filters) {
-    // Store filters to apply after data loads
-    sessionStorage.setItem('pending_fpds_filters', JSON.stringify(filters));
-}
-
-// Modify your existing processData function to check for pending filters
-const originalProcessData = window.processData || processData;
-window.processData = function(rawData) {
-    // Call original function
-    originalProcessData(rawData);
-    
-    // Check for pending FPDS filters
-    const pendingFilters = sessionStorage.getItem('pending_fpds_filters');
-    if (pendingFilters) {
-        try {
-            const filters = JSON.parse(pendingFilters);
-            sessionStorage.removeItem('pending_fpds_filters');
-            
-            // Apply filters after a short delay to ensure dropdowns are created
-            setTimeout(() => {
-                applyFPDSFilters(filters);
-            }, 500);
-        } catch (e) {
-            console.error('Error applying FPDS filters:', e);
+// Helper function to apply all other filters except date
+function applyOtherFilters(data) {
+  let result = [...data];
+  
+  // Apply unified search if there's a search term
+  const searchTerm = document.getElementById('unifiedSearch').value.toLowerCase().trim();
+  if (searchTerm) {
+    result = result.filter(function(item) {
+      // Search across all string properties
+      for (var key in item) {
+        if (typeof item[key] === 'string' && 
+            item[key].toLowerCase().indexOf(searchTerm) !== -1) {
+          return true;
         }
+      }
+      return false;
+    });
+  }
+  
+  // Apply dropdown filters
+  const dropdowns = {
+    'naicsFilter': 'naics',
+    'agencyFilter': 'agency',
+    'officeFilter': 'office',
+    'vendorFilter': 'vendor'
+  };
+  
+  for (const id in dropdowns) {
+    const dropdown = document.getElementById(id);
+    if (dropdown && dropdown.value) {
+      const field = dropdowns[id];
+      result = result.filter(item => item[field] === dropdown.value);
     }
+  }
+  
+  // Apply target filter if active
+  if (targetFilterActive) {
+    // Only filter if we have targets selected
+    const hasTargets = 
+      targetSelections.vendors.size > 0 || 
+      targetSelections.agencies.size > 0 || 
+      targetSelections.offices.size > 0;
+        
+    if (hasTargets) {
+      result = result.filter(isTargetItem);
+    }
+  }
+  
+  return result;
+}
+
+// Override the applyAllFilters function to use our date filter
+const originalApplyAllFilters = applyAllFilters;
+applyAllFilters = function() {
+  // Check if date filters are active
+  const monthFilter = document.getElementById('monthFilter');
+  const yearFilter = document.getElementById('yearFilter');
+  
+  if ((monthFilter && monthFilter.value) || (yearFilter && yearFilter.value)) {
+    // If date filters are active, use our special filter
+    applyDateFilter();
+  } else {
+    // Otherwise use the original filter
+    originalApplyAllFilters();
+  }
 };
 
-// Function to apply FPDS filters to your dropdowns
-function applyFPDSFilters(filters) {
-    console.log('Applying FPDS filters:', filters);
-    
-    // Apply NAICS filter
-    if (filters.naics) {
-        const naicsDropdown = document.getElementById('naicsFilter');
-        if (naicsDropdown) {
-            // Find the option that contains this NAICS code
-            for (let option of naicsDropdown.options) {
-                if (option.value.includes(filters.naics)) {
-                    naicsDropdown.value = option.value;
-                    break;
-                }
-            }
-        }
+// Initialize the date filter when data is loaded
+const originalProcessData = processData;
+processData = function(rawData) {
+  // Call the original function
+  originalProcessData(rawData);
+  
+  // Add our date filter
+  addDateSignedFilter();
+};
+
+// Also add the date filter when resetting filters
+const originalResetAllFilters = resetAllFilters;
+resetAllFilters = function() {
+  // Call the original function
+  originalResetAllFilters();
+  
+  // Reset date filters
+  const monthFilter = document.getElementById('monthFilter');
+  const yearFilter = document.getElementById('yearFilter');
+  
+  if (monthFilter) monthFilter.value = '';
+  if (yearFilter) yearFilter.value = '';
+};
+// Enhanced showMessage function that displays messages in the main content area
+function showEnhancedMessage(primaryMessage, type, filters) {
+  // Get the main status container elements
+  const mainStatusWrapper = document.querySelector('.main-status-wrapper');
+  const statusHeading = document.getElementById('statusHeading');
+  const statusFilters = document.getElementById('statusFilters');
+  
+  if (!mainStatusWrapper || !statusHeading || !statusFilters) {
+    console.error("Main status elements not found");
+    return;
+  }
+  
+  // Create a natural language description based on the filters
+  const naturalDescription = generateNaturalDescription(filters);
+  
+  // Update the heading with the natural language description (not the primary message)
+  statusHeading.textContent = naturalDescription;
+  
+  // Add or remove has-filters class based on whether there are filters
+  if (filters && Object.keys(filters).length > 0) {
+    mainStatusWrapper.classList.add('has-filters');
+  } else {
+    mainStatusWrapper.classList.remove('has-filters');
+  }
+  
+  // Clear previous filter tags
+  statusFilters.innerHTML = '';
+  
+  // Add filter tags if provided
+  if (filters && Object.keys(filters).length > 0) {
+    // Add each filter as a tag
+    for (const [key, value] of Object.entries(filters)) {
+      if (value) {
+        const tag = document.createElement('div');
+        tag.className = 'status-filter-tag';
+        tag.innerHTML = `
+          <span class="status-filter-label">${key}:</span>
+          <span class="status-filter-value">${value}</span>
+        `;
+        statusFilters.appendChild(tag);
+      }
     }
-    
-    // Apply Agency filter
-    if (filters.agency) {
-        const agencyDropdown = document.getElementById('agencyFilter');
-        if (agencyDropdown) {
-            // Try exact match first
-            for (let option of agencyDropdown.options) {
-                if (option.value === filters.agency) {
-                    agencyDropdown.value = option.value;
-                    break;
-                }
-            }
-        }
-    }
-    
-    // Apply Vendor filter
-    if (filters.vendor) {
-        const vendorDropdown = document.getElementById('vendorFilter');
-        if (vendorDropdown) {
-            // Try to find matching vendor
-            for (let option of vendorDropdown.options) {
-                if (option.value.toUpperCase().includes(filters.vendor.toUpperCase())) {
-                    vendorDropdown.value = option.value;
-                    break;
-                }
-            }
-        }
-    }
-    
-    // Apply unified search for PSC if present
-    if (filters.pscDescription) {
-        const unifiedSearch = document.getElementById('unifiedSearch');
-        if (unifiedSearch) {
-            unifiedSearch.value = filters.pscDescription;
-        }
-    }
-    
-    // Trigger filter application
-    if (typeof applyAllFilters === 'function') {
-        applyAllFilters();
-        
-        // Show success message
-        showMessage(
-            `FPDS filters applied successfully! Showing results for your search.`,
-            'success'
-        );
-    }
+  }
+  
+  // Also update the sidebar status message for compatibility
+  updateSidebarStatusMessage(primaryMessage, type, filters);
 }
+
+// Function to generate a natural language description of the filters
+function generateNaturalDescription(filters) {
+  if (!filters || Object.keys(filters).length === 0) {
+    return "Showing all available contract data with no filters applied.";
+  }
+  
+  // Extract key filter components
+  const agency = filters["Agency"] || "";
+  const vendor = filters["Vendor"] || "";
+  const month = filters["Month"] || "";
+  const year = filters["Year"] || "";
+  const searchTerm = filters["Search"] || "";
+  const naicsCode = filters["NAICS Code"] || "";
+  const naicsDesc = filters["NAICS"] || "";
+  
+  // Gather target information
+  const targetVendors = filters["Target Vendors"] ? parseInt(filters["Target Vendors"]) : 0;
+  const targetAgencies = filters["Target Agencies"] ? parseInt(filters["Target Agencies"]) : 0;
+  const targetOffices = filters["Target Offices"] ? parseInt(filters["Target Offices"]) : 0;
+  
+  // Get all other filters (excluding the ones we handle specially)
+  const excludedKeys = ["Agency", "Vendor", "Month", "Year", "Total Value", "Search", 
+                       "Target Vendors", "Target Agencies", "Target Offices", 
+                       "NAICS Code", "NAICS"];
+  
+  const otherFilters = [];
+  for (const [key, value] of Object.entries(filters)) {
+    if (value && !excludedKeys.includes(key)) {
+      otherFilters.push(key);
+    }
+  }
+  
+  // Start building the natural language description
+  let description = "You're viewing ";
+  
+  // Build agency/vendor/date part of the description
+  if (agency) {
+    description += `${agency} awards `;
+  } else {
+    description += "awards ";
+  }
+  
+  if (vendor) {
+    description += `to ${vendor} `;
+  }
+  
+  if (month && year) {
+    description += `from ${month} ${year} `;
+  } else if (month) {
+    description += `from ${month} `;
+  } else if (year) {
+    description += `from ${year} `;
+  }
+  
+  // Add NAICS information
+  if (naicsCode && naicsDesc) {
+    description += `for ${naicsDesc} (NAICS ${naicsCode}) `;
+  } else if (naicsCode) {
+    description += `with NAICS code ${naicsCode} `;
+  } else if (naicsDesc) {
+    description += `for ${naicsDesc} `;
+  }
+  
+  // Add search term
+  if (searchTerm) {
+    description += `containing "${searchTerm}" `;
+  }
+  
+  // Add target information
+  const targetParts = [];
+  
+  if (targetVendors > 0) {
+    targetParts.push(targetVendors === 1 ? "1 target vendor" : `${targetVendors} target vendors`);
+  }
+  
+  if (targetAgencies > 0) {
+    targetParts.push(targetAgencies === 1 ? "1 target agency" : `${targetAgencies} target agencies`);
+  }
+  
+  if (targetOffices > 0) {
+    targetParts.push(targetOffices === 1 ? "1 target office" : `${targetOffices} target offices`);
+  }
+  
+  if (targetParts.length > 0) {
+    description += `with ${targetParts.join(" and ")} `;
+  }
+  
+  // Add other filters if any
+  if (otherFilters.length > 0) {
+    // Make the list more natural with proper conjunction
+    let filterList = "";
+    if (otherFilters.length === 1) {
+      filterList = otherFilters[0];
+    } else if (otherFilters.length === 2) {
+      filterList = `${otherFilters[0]} and ${otherFilters[1]}`;
+    } else {
+      const lastFilter = otherFilters.pop();
+      filterList = `${otherFilters.join(", ")}, and ${lastFilter}`;
+    }
+    
+    description += `filtered by ${filterList} `;
+  }
+  
+  // Clean up the description
+  description = description.trim();
+  if (!description.endsWith(".")) {
+    description += ".";
+  }
+  
+  return description;
+}
+
+// Function to update the sidebar status message (for backward compatibility)
+function updateSidebarStatusMessage(primaryMessage, type, filters) {
+  const sidebarStatusElement = document.getElementById('statusMessage');
+  if (!sidebarStatusElement) return;
+  
+  // Determine icon based on message type
+  let icon = 'fa-info-circle';
+  if (type === 'success') icon = 'fa-check-circle';
+  if (type === 'error') icon = 'fa-exclamation-circle';
+  
+  // Start with primary message
+  let content = `<div class="primary-message"><i class="fas ${icon}"></i>${primaryMessage}</div>`;
+  
+  // Add filter tags if provided
+  if (filters && Object.keys(filters).length > 0) {
+    content += `<div class="filter-tags">`;
+    
+    // Add each filter as a tag
+    for (const [key, value] of Object.entries(filters)) {
+      if (value) {
+        content += `<div class="filter-tag"><span class="tag-label">${key}:</span> <span class="tag-value">${value}</span></div>`;
+      }
+    }
+    
+    content += `</div>`;
+  }
+  
+  sidebarStatusElement.innerHTML = content;
+  
+  // Remove all previous classes
+  sidebarStatusElement.className = 'status-message';
+  
+  // Add appropriate class
+  if (type) {
+    sidebarStatusElement.className += ' ' + type;
+  }
+}
+
+// Override the original showMessage function to use our enhanced version
+const originalShowMessage = window.showMessage || function() {};
+window.showMessage = function(primaryMessage, type, filters) {
+  // Call the enhanced version
+  showEnhancedMessage(primaryMessage, type, filters);
+  
+  // Optionally, also call the original function if needed
+  // originalShowMessage(primaryMessage, type, filters);
+};
+
+// Update the messages when the page loads
+document.addEventListener('DOMContentLoaded', function() {
+  // Initialize with default message
+  showEnhancedMessage("Viewing all contract data", "info", {});
+  
+  // Override functions that might show messages
+  hookIntoFilterFunctions();
+});
+
+// Hook into filter functions to ensure they use the enhanced message
+function hookIntoFilterFunctions() {
+  // Override applyAllFilters
+  const originalApplyAllFilters = window.applyAllFilters;
+  if (originalApplyAllFilters) {
+    window.applyAllFilters = function() {
+      // Call the original function
+      originalApplyAllFilters.apply(this, arguments);
+      
+      // Collect all active filter values
+      const filters = collectActiveFilters();
+      
+      // Primary message is not needed anymore, as we're using just the natural language description
+      // The contract count is already shown in the stats cards
+      let primaryMsg = '';
+      
+      // Show enhanced message
+      showEnhancedMessage(primaryMsg, 'info', filters);
+    };
+  }
+  
+  // Also hook into resetAllFilters
+  const originalResetAllFilters = window.resetAllFilters;
+  if (originalResetAllFilters) {
+    window.resetAllFilters = function() {
+      // Call the original function
+      originalResetAllFilters.apply(this, arguments);
+      
+      // Show default message
+      showEnhancedMessage("", "info", {});
+    };
+  }
+  
+  // Hook into applyDateFilter if it exists
+  const originalApplyDateFilter = window.applyDateFilter;
+  if (originalApplyDateFilter) {
+    window.applyDateFilter = function() {
+      // Call the original function
+      originalApplyDateFilter.apply(this, arguments);
+      
+      // Collect all active filter values
+      const filters = collectActiveFilters();
+      
+      // Primary message is not needed anymore
+      let primaryMsg = '';
+      
+      // Show enhanced message
+      showEnhancedMessage(primaryMsg, 'info', filters);
+    };
+  }
+}
+
+// Helper function to collect all active filters
+function collectActiveFilters() {
+  const filters = {};
+  
+  // Check for search term
+  const searchInput = document.getElementById('unifiedSearch');
+  if (searchInput && searchInput.value.trim()) {
+    filters["Search"] = searchInput.value.trim();
+  }
+  
+  // Check for date filters
+  const monthFilter = document.getElementById('monthFilter');
+  const yearFilter = document.getElementById('yearFilter');
+  
+  if (monthFilter && monthFilter.value) {
+    // Convert short month to full name
+    const monthNames = {
+      'Jan': 'January', 'Feb': 'February', 'Mar': 'March', 'Apr': 'April',
+      'May': 'May', 'Jun': 'June', 'Jul': 'July', 'Aug': 'August',
+      'Sep': 'September', 'Oct': 'October', 'Nov': 'November', 'Dec': 'December'
+    };
+    filters["Month"] = monthNames[monthFilter.value] || monthFilter.value;
+  }
+  
+  if (yearFilter && yearFilter.value) {
+    filters["Year"] = yearFilter.value;
+  }
+  
+  // Check for dropdown filters
+  const dropdowns = {
+    'naicsFilter': 'NAICS',
+    'agencyFilter': 'Agency',
+    'officeFilter': 'Office',
+    'vendorFilter': 'Vendor'
+  };
+  
+  for (const id in dropdowns) {
+    const dropdown = document.getElementById(id);
+    if (dropdown && dropdown.value) {
+      filters[dropdowns[id]] = dropdown.value;
+    }
+  }
+  
+  // Check for target filters
+  if (window.targetSelections) {
+    if (window.targetSelections.vendors && window.targetSelections.vendors.size > 0) {
+      filters["Target Vendors"] = window.targetSelections.vendors.size;
+    }
+    
+    if (window.targetSelections.agencies && window.targetSelections.agencies.size > 0) {
+      filters["Target Agencies"] = window.targetSelections.agencies.size;
+    }
+    
+    if (window.targetSelections.offices && window.targetSelections.offices.size > 0) {
+      filters["Target Offices"] = window.targetSelections.offices.size;
+    }
+  }
+  
+  // Calculate totals if filtered data is available
+  if (window.filteredData && window.filteredData.length > 0) {
+    const totalValue = window.filteredData.reduce((sum, item) => sum + item.value, 0);
+    filters["Total Value"] = formatCurrency(totalValue);
+  }
+  
+  return filters;
+}
+// Auto-loading functionality for current month and archived data
+// Add this to your main JavaScript file
+
+// Global variables to store data period information
+window.currentDataPeriod = null;
+window.periodDescription = "";
+window.archiveMonths = [
+  // Example archive months - you'll need to update this as you add new archives
+  // { month: "April", year: "2025", url: "https://subhoodata.s3.us-east-1.amazonaws.com/data/april2025.csv" },
+  // { month: "March", year: "2025", url: "https://subhoodata.s3.us-east-1.amazonaws.com/data/march2025.csv" }
+];
+window.currentMonthActive = true;
+
+// Function to auto-load the current month's data on page load
+function autoLoadCurrentData() {
+  // Your actual S3 URL
+  const dataUrl = "https://subhoodata.s3.us-east-1.amazonaws.com/data/daily.csv";
+  
+  // Show loading message
+  showEnhancedMessage("", "info", {
+    "Status": "Loading current month award data..."
+  });
+  
+  // Fetch the CSV
+  fetch(dataUrl)
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`Failed to fetch data: ${response.status} ${response.statusText}`);
+      }
+      return response.text();
+    })
+    .then(csvText => {
+      // Parse and load the CSV using your existing function
+      parseCSV(csvText);
+      
+      // After loading, detect the date range in the loaded data
+      detectDateRangeFromData();
+      
+      // Update UI to show current month is active
+      updateArchiveMonthsUI(true);
+      
+      // Mark current month as active
+      window.currentMonthActive = true;
+    })
+    .catch(error => {
+      console.error("Error loading current month data:", error);
+      showEnhancedMessage("", "error", {
+        "Status": "Failed to load current month award data. Please try again later."
+      });
+    });
+}
+
+// Function to load archived month data
+function loadArchivedMonthData(archiveMonth) {
+  // Show loading message
+  showEnhancedMessage("", "info", {
+    "Status": `Loading ${archiveMonth.month} ${archiveMonth.year} award data...`
+  });
+  
+  // Fetch the CSV from the archive URL
+  fetch(archiveMonth.url)
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`Failed to fetch archive data: ${response.status} ${response.statusText}`);
+      }
+      return response.text();
+    })
+    .then(csvText => {
+      // Parse and load the CSV using your existing function
+      parseCSV(csvText);
+      
+      // Set the date period manually since this is an archive
+      window.currentDataPeriod = {
+        startDate: new Date(`${archiveMonth.month} 1, ${archiveMonth.year}`),
+        endDate: getLastDayOfMonth(archiveMonth.month, archiveMonth.year),
+        lastUpdated: new Date() // Today's date
+      };
+      
+      // Update period description
+      window.periodDescription = `for ${archiveMonth.month} ${archiveMonth.year}`;
+      
+      // Update data context and status message
+      updateDataContext();
+      updateStatusWithPeriodInfo();
+      
+      // Update UI to show which archive month is active
+      updateArchiveMonthsUI(false, archiveMonth);
+      
+      // Mark current month as inactive
+      window.currentMonthActive = false;
+    })
+    .catch(error => {
+      console.error(`Error loading ${archiveMonth.month} ${archiveMonth.year} data:`, error);
+      showEnhancedMessage("", "error", {
+        "Status": `Failed to load ${archiveMonth.month} ${archiveMonth.year} award data. Please try again later.`
+      });
+    });
+}
+
+// Function to get the last day of a month
+function getLastDayOfMonth(monthName, year) {
+  const months = ["January", "February", "March", "April", "May", "June", 
+                  "July", "August", "September", "October", "November", "December"];
+  const monthIndex = months.findIndex(m => m.toLowerCase() === monthName.toLowerCase());
+  
+  if (monthIndex === -1) return new Date();
+  
+  // Get the last day of the month (day 0 of next month)
+  return new Date(parseInt(year), monthIndex + 1, 0);
+}
+
+// Function to detect date range from the loaded data
+function detectDateRangeFromData() {
+  if (!window.allData || window.allData.length === 0) {
+    return;
+  }
+  
+  let earliestDate = new Date('9999-12-31');
+  let latestDate = new Date('1970-01-01');
+  
+  // Loop through data to find min and max dates
+  window.allData.forEach(item => {
+    if (item.date) {
+      const contractDate = parseDate(item.date);
+      if (contractDate) {
+        if (contractDate < earliestDate) earliestDate = contractDate;
+        if (contractDate > latestDate) latestDate = contractDate;
+      }
+    }
+  });
+  
+  // Store the detected date range globally
+  window.currentDataPeriod = {
+    startDate: earliestDate,
+    endDate: latestDate,
+    lastUpdated: new Date() // Today's date
+  };
+  
+  // Create the period description for use in status messages
+  const month = window.currentDataPeriod.startDate.toLocaleString('default', { month: 'long' });
+  const year = window.currentDataPeriod.startDate.getFullYear();
+  window.periodDescription = `for ${month} ${year}`;
+  
+  // Update the data context information and status message
+  updateDataContext();
+  updateStatusWithPeriodInfo();
+}
+
+// Function to update the data context information section
+function updateDataContext() {
+  if (!window.currentDataPeriod) return;
+  
+  const contextMonth = document.getElementById('contextMonth');
+  const contextDate = document.getElementById('contextDate');
+  const monthProgressFill = document.getElementById('monthProgressFill');
+  const monthProgressText = document.getElementById('monthProgressText');
+  
+  if (contextMonth && contextDate) {
+    const month = window.currentDataPeriod.startDate.toLocaleString('default', { month: 'long' });
+    const year = window.currentDataPeriod.startDate.getFullYear();
+    const lastDate = window.currentDataPeriod.endDate.toLocaleDateString('en-US', {
+      month: 'long',
+      day: 'numeric'
+    });
+    
+    contextMonth.textContent = `${month} ${year}`;
+    contextDate.textContent = lastDate;
+    
+    // Update progress bar
+    if (monthProgressFill && monthProgressText) {
+      const startDay = 1; // Always start from day 1
+      const endDay = window.currentDataPeriod.endDate.getDate();
+      const daysInMonth = new Date(
+        window.currentDataPeriod.startDate.getFullYear(),
+        window.currentDataPeriod.startDate.getMonth() + 1,
+        0
+      ).getDate();
+      
+      const progressPercent = Math.round((endDay / daysInMonth) * 100);
+      monthProgressFill.style.width = `${progressPercent}%`;
+      monthProgressText.textContent = `${endDay}/${daysInMonth} days`;
+      
+      // Only show progress for current month, hide for archives
+      const progressContainer = document.querySelector('.month-progress-container');
+      if (progressContainer) {
+        progressContainer.style.display = window.currentMonthActive ? 'flex' : 'none';
+      }
+    }
+  }
+}
+
+// Function to update status message with period information
+function updateStatusWithPeriodInfo() {
+  // Collect all active filters
+  const filters = collectActiveFilters();
+  
+  // Show enhanced message
+  showEnhancedMessage("", "info", filters);
+}
+
+// Function to update the UI for archive months
+function updateArchiveMonthsUI(currentMonthActive, activeArchive = null) {
+  const archiveMonthsList = document.getElementById('archiveMonthsList');
+  if (!archiveMonthsList) return;
+  
+  // Clear existing buttons
+  archiveMonthsList.innerHTML = '';
+  
+  // Add current month button
+  const currentMonthBtn = document.createElement('button');
+  currentMonthBtn.className = `archive-month-btn${currentMonthActive ? ' active' : ''}`;
+  currentMonthBtn.textContent = 'Current Month';
+  currentMonthBtn.addEventListener('click', function() {
+    if (!window.currentMonthActive) {
+      autoLoadCurrentData();
+    }
+  });
+  archiveMonthsList.appendChild(currentMonthBtn);
+  
+  // Add archive month buttons
+  window.archiveMonths.forEach(archiveMonth => {
+    const isActive = !currentMonthActive && 
+                     activeArchive && 
+                     activeArchive.month === archiveMonth.month && 
+                     activeArchive.year === archiveMonth.year;
+    
+    const monthBtn = document.createElement('button');
+    monthBtn.className = `archive-month-btn${isActive ? ' active' : ''}`;
+    monthBtn.textContent = `${archiveMonth.month} ${archiveMonth.year}`;
+    monthBtn.addEventListener('click', function() {
+      // Check if this month is already active
+      if (!isActive) {
+        loadArchivedMonthData(archiveMonth);
+      }
+    });
+    
+    archiveMonthsList.appendChild(monthBtn);
+  });
+}
+
+// Enhanced natural language description generator that includes period information
+function generateNaturalDescription(filters) {
+  // Use the automatically detected period if available
+  let periodText = window.periodDescription || "";
+  
+  if (!filters || Object.keys(filters).length === 0) {
+    return `Viewing all available contract data ${periodText} with no filters applied.`;
+  }
+  
+  // Extract key filter components
+  const agency = filters["Agency"] || "";
+  const vendor = filters["Vendor"] || "";
+  const month = filters["Month"] || "";
+  const year = filters["Year"] || "";
+  const searchTerm = filters["Search"] || "";
+  const naicsCode = filters["NAICS Code"] || "";
+  const naicsDesc = filters["NAICS"] || "";
+  
+  // Gather target information
+  const targetVendors = filters["Target Vendors"] ? parseInt(filters["Target Vendors"]) : 0;
+  const targetAgencies = filters["Target Agencies"] ? parseInt(filters["Target Agencies"]) : 0;
+  const targetOffices = filters["Target Offices"] ? parseInt(filters["Target Offices"]) : 0;
+  
+  // Start building the natural language description
+  let description = "You're viewing ";
+  
+  // Build agency/vendor/date part of the description
+  if (agency) {
+    description += `${agency} awards `;
+  } else {
+    description += "awards ";
+  }
+  
+  if (vendor) {
+    description += `to ${vendor} `;
+  }
+  
+  // Use month/year from filters if specified, otherwise use the detected period
+  if (month && year) {
+    description += `from ${month} ${year} `;
+  } else if (month) {
+    description += `from ${month} `;
+  } else if (year) {
+    description += `from ${year} `;
+  } else if (periodText && !filters["Month"] && !filters["Year"]) {
+    // Only add the period text if no specific month/year filter is applied
+    description += `${periodText} `;
+  }
+  
+  // Add NAICS information
+  if (naicsCode && naicsDesc) {
+    description += `for ${naicsDesc} (NAICS ${naicsCode}) `;
+  } else if (naicsCode) {
+    description += `with NAICS code ${naicsCode} `;
+  } else if (naicsDesc) {
+    description += `for ${naicsDesc} `;
+  }
+  
+  // Add search term
+  if (searchTerm) {
+    description += `containing "${searchTerm}" `;
+  }
+  
+  // Add target information
+  const targetParts = [];
+  
+  if (targetVendors > 0) {
+    targetParts.push(targetVendors === 1 ? "1 target vendor" : `${targetVendors} target vendors`);
+  }
+  
+  if (targetAgencies > 0) {
+    targetParts.push(targetAgencies === 1 ? "1 target agency" : `${targetAgencies} target agencies`);
+  }
+  
+  if (targetOffices > 0) {
+    targetParts.push(targetOffices === 1 ? "1 target office" : `${targetOffices} target offices`);
+  }
+  
+  if (targetParts.length > 0) {
+    description += `with ${targetParts.join(" and ")} `;
+  }
+  
+  // Clean up the description
+  description = description.trim();
+  if (!description.endsWith(".")) {
+    description += ".";
+  }
+  
+  return description;
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+  // Check if auto-load is enabled (you can make this configurable)
+  const autoLoadEnabled = true;
+  
+  if (autoLoadEnabled) {
+    // Show loading message
+    showEnhancedMessage("", "info", {
+      "Status": "Loading current month award data..."
+    });
+    
+    // Load current month data
+    setTimeout(function() {
+      autoLoadCurrentData();
+    }, 500);
+  }
+  
+  // Setup the rest of your application
+  // ...
+});
+
+// Expose functions for potential manual use
+window.loadCurrentMonthData = autoLoadCurrentData;
+window.loadArchivedMonth = loadArchivedMonthData;
 </script>
 </html>
