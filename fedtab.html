@@ -1347,6 +1347,20 @@ td[title] {
               </button>
             </form>
           </div>
+		  <div id="dataContextInfo" class="data-context-info">
+  <div class="info-icon"><i class="fas fa-info-circle"></i></div>
+  <div class="info-text">
+    Showing Federal contract awards >$100K for <span id="contextMonth">the current month</span> through <span id="contextDate">today</span>.
+  </div>
+</div>
+
+<!-- Add this for archive months - place below the data context info -->
+<div id="archiveMonthsContainer" class="archive-months-container">
+  <div class="archive-months-title">Archives:</div>
+  <div id="archiveMonthsList" class="archive-months-list">
+    <!-- Archive month buttons will be added here dynamically -->
+  </div>
+</div>
         </div>
       </div>
     </aside>
@@ -1361,21 +1375,6 @@ td[title] {
     <div id="statusFilters" class="status-filters"></div>
   </div>
 </div>
-<div id="dataContextInfo" class="data-context-info">
-  <div class="info-icon"><i class="fas fa-info-circle"></i></div>
-  <div class="info-text">
-    Showing Federal contract awards >$100K for <span id="contextMonth">the current month</span> through <span id="contextDate">today</span>.
-  </div>
-</div>
-
-<!-- Add this for archive months - place below the data context info -->
-<div id="archiveMonthsContainer" class="archive-months-container">
-  <div class="archive-months-title">Archives:</div>
-  <div id="archiveMonthsList" class="archive-months-list">
-    <!-- Archive month buttons will be added here dynamically -->
-  </div>
-</div>
-
         <div class="stats-grid">
 		<div id="monthProgressCard" class="stat-card">
   <div class="stat-header">
