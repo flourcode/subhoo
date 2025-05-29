@@ -1774,6 +1774,52 @@ a.logo {
   color: var(--text-primary);
   border: 1px solid var(--border);
 }
+/* Mobile footer styles */
+@media (max-width: 767px) {
+  .mobile-footer {
+    position: fixed;
+    bottom: 60px; /* Position it above the bottom nav bar */
+    left: 0;
+    right: 0;
+    height: 40px;
+    background-color: var(--bg-primary);
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem;
+    z-index: 990; /* Below the bottom nav but above content */
+    box-shadow: 0 -1px 5px rgba(0, 0, 0, 0.05);
+  }
+  
+  .mobile-logo {
+    /* Smaller sizes for mobile */
+    transform: scale(0.8);
+    opacity: 0.8;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .mobile-logo .logo-text {
+    font-size: 1.5rem;
+  }
+  
+  .mobile-logo .logo-subtitle {
+    font-size: 0.7rem;
+  }
+  
+  /* Adjust main content padding to account for both bars */
+  .main-wrapper {
+    padding-bottom: 100px; /* 60px for nav + 40px for footer */
+  }
+}
+@media (max-width: 767px) {
+  /* Update the mobile filter modal to account for both the nav bar and footer */
+  .mobile-filter-modal {
+    bottom: 100px; /* 60px for nav + 40px for footer */
+  }
+}
 </style>
 </head>
 <body>
@@ -1964,7 +2010,13 @@ a.logo {
     <span>Refresh</span>
   </button>
 </div>
-
+<!-- Add this HTML right after the mobile bottom bar -->
+<div class="mobile-footer" id="mobileFooter">
+  <div class="logo-group mobile-logo">
+    <span class="logo-text">FedWon.</span>
+    <span class="logo-subtitle">Federal Awards Viewer</span>
+  </div>
+</div>
 <!-- Mobile search bar -->
 <div class="mobile-search-bar" id="mobileSearchBar">
   <div class="search-input-container">
@@ -6365,5 +6417,43 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
 });
+// Add this to your initMobileNavigation function
+function initMobileFooter() {
+  const footer = document.getElementById('mobileFooter');
+  if (!footer) return;
+  
+  let lastScrollTop = 0;
+  let isFooterVisible = true;
+  
+  // Hide footer when scrolling down, show when scrolling up
+  window.addEventListener('scroll', function() {
+    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+    
+    // Don't do anything for small scroll amounts
+    if (Math.abs(lastScrollTop - scrollTop) < 10) return;
+    
+    if (scrollTop > lastScrollTop && scrollTop > 100) {
+      // Scrolling down and not at the top
+      if (isFooterVisible) {
+        footer.style.transform = 'translateY(40px)';
+        isFooterVisible = false;
+      }
+    } else {
+      // Scrolling up
+      if (!isFooterVisible) {
+        footer.style.transform = 'translateY(0)';
+        isFooterVisible = true;
+      }
+    }
+    
+    lastScrollTop = scrollTop;
+  }, { passive: true });
+  
+  // Add transition for smooth hiding/showing
+  footer.style.transition = 'transform 0.3s ease';
+}
+
+// Call this function
+initMobileFooter();
 </script>
 </html>
