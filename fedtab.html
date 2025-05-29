@@ -1624,7 +1624,9 @@ a.logo {
 		<div id="monthProgressCard" class="stat-card">
   <div class="stat-header">
     <div class="stat-info">
-      <div class="stat-label">Month Progress</div>
+      <div class="stat-label">
+        <span id="progressMonthName">Month</span> Progress
+      </div>
       <div class="stat-value" id="progressFraction">0/31</div>
     </div>
   </div>
@@ -5232,6 +5234,7 @@ function fixedUpdateDataContext() {
   const contextDate = document.getElementById('contextDate');
   const monthProgressFill = document.getElementById('monthProgressFill');
   const progressFraction = document.getElementById('progressFraction');
+  const progressMonthName = document.getElementById('progressMonthName'); // Add this line
   
   console.log("Updating data context with period:", window.currentDataPeriod);
   
@@ -5245,6 +5248,11 @@ function fixedUpdateDataContext() {
     
     contextMonth.textContent = `${month} ${year}`;
     contextDate.textContent = lastDate;
+    
+    // Update the month name in the progress card
+    if (progressMonthName) {
+      progressMonthName.textContent = month;
+    }
     
     // Update progress bar
     if (monthProgressFill && progressFraction) {
@@ -5264,7 +5272,6 @@ function fixedUpdateDataContext() {
     }
   }
 }
-
 // Function to hide the data context info
 function hideDataContextInfo() {
   const dataContextInfo = document.getElementById('dataContextInfo');
