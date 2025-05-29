@@ -1792,6 +1792,26 @@ th.sort-desc .sort-icon:after {
     min-width: 150px;
   }
 }
+/* Add gap between file input and upload button */
+#uploadForm {
+  display: flex;
+  flex-direction: column;
+  gap: 10px; /* This creates the gap between elements */
+}
+
+/* If you want to specifically target just the gap between the file input and button */
+#csvFileInput {
+  margin-bottom: 10px; /* Alternative approach using margin */
+}
+
+/* Make sure the file input and button are properly styled */
+#csvFileInput.form-control {
+  width: 100%;
+}
+
+#loadBtn.btn.btn-primary {
+  width: 100%;
+}
 </style>
 </head>
 <body>
