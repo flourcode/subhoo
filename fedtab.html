@@ -1300,6 +1300,85 @@ td[title] {
   box-shadow: 0 0 0 1px var(--primary);
   background-color: rgba(var(--primary-rgb, 10, 132, 255), 0.15);
 }
+/* Mobile styles for Sankey diagram */
+@media (max-width: 767px) {
+  /* Container height */
+  #sankeyContainer {
+    min-height: 450px !important;
+  }
+  
+  /* Chart height */
+  #sankeyChart {
+    height: 380px !important;
+  }
+  
+  /* Make sure buttons are visible and properly styled */
+  #sankeyContainer .filter-actions {
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: center !important;
+    margin-top: 10px !important;
+    margin-bottom: 10px !important;
+  }
+  
+  /* Individual button styling */
+  #sankeyTop10, 
+  #sankeyTop25, 
+  #sankeyAll {
+    display: inline-flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    min-height: 36px !important;
+    padding: 0.5rem 0.75rem !important;
+  }
+}
+@media (max-width: 767px) {
+ /* Inside @media (max-width: 767px) { ... } */
+
+/* Container height */
+#sankeyContainer {
+  min-height: 400px !important; /* UPDATED from 450px */
+  height: auto !important; /* ADDED for flexibility */
+}
+
+/* Chart height */
+#sankeyChart {
+  height: 320px !important; /* UPDATED from 380px */
+}
+
+/*
+  The following rules for chart stacking and general mobile layout
+  from your description seem to be ALREADY CORRECTLY IMPLEMENTED
+  in your provided CSS:
+
+  .dashboard-grid {
+    grid-template-columns: 1fr !important;
+    grid-template-rows: auto !important;
+    gap: 0.75rem;
+  }
+  .dashboard-grid > * {
+    grid-column: 1 / -1 !important;
+    grid-row: auto !important;
+    height: auto !important;
+    min-height: 300px;
+  }
+  .chart-container {
+    height: 250px !important;
+  }
+  Make sure these existing rules are present and correctly formatted.
+*/
+/* fedtab.html @media (max-width: 767px) */
+.dashboard-grid {
+  grid-template-columns: 1fr !important; /* This should force a single column */
+  grid-template-rows: auto !important;   /* Rows adjust to content */
+  gap: 0.75rem;
+}
+.dashboard-grid > * { /* Styles for the cards within the grid */
+  grid-column: 1 / -1 !important; /* Makes each card span the full width of the single column */
+  grid-row: auto !important;      /* Allows cards to stack vertically, one per row */
+  height: auto !important;         /* Overrides any fixed heights set by JS for desktop */
+  min-height: 300px;               /* Ensures cards have a minimum height */
+}
 </style>
 </head>
 <body>
@@ -1859,129 +1938,65 @@ function filterByVendorName(vendorName) {
         updateSankeyDiagramWithFilteredData();
     }
 }
-// Revised setupDashboardGrid function with proper mobile responsiveness
+// In fedtab.html
 function setupDashboardGrid() {
     const dashboardGrid = document.querySelector('.dashboard-grid');
     if (!dashboardGrid) {
         console.error("Dashboard grid not found");
         return;
     }
-    
-    // Clear the grid
-    dashboardGrid.innerHTML = '';
-    
-    // Get the current viewport width
-    const viewportWidth = window.innerWidth;
-    const isMobile = viewportWidth < 768;
-    
-    // Create a style tag for additional responsive styles
-    const styleTag = document.createElement('style');
-    document.head.appendChild(styleTag);
-    
-    // Set different grid layouts based on screen size
-    if (isMobile) {
-        // Mobile layout - single column stack
-        dashboardGrid.style.display = 'grid';
-        dashboardGrid.style.gridTemplateColumns = '1fr';
-        dashboardGrid.style.gridTemplateRows = 'auto auto auto auto auto';
-        dashboardGrid.style.gap = '1rem';
-        
-        // Add responsive styles for mobile
-        styleTag.textContent = `
-            @media (max-width: 767px) {
-                .card {
-                    margin-bottom: 1rem;
-                }
-                .chart-container {
-                    height: 300px !important;
-                }
-                #sankeyChart {
-                    height: 350px !important;
-                }
-            }
-        `;
-    } else {
-        // Desktop layout - 3 column grid
-        dashboardGrid.style.display = 'grid';
-        dashboardGrid.style.gridTemplateColumns = 'repeat(3, 1fr)';
-        dashboardGrid.style.gridTemplateRows = 'auto auto';
-        dashboardGrid.style.gap = '1.5rem';
+
+    dashboardGrid.innerHTML = ''; // Clear the grid
+
+    // Check if we are in a mobile view. Using 767px to match your CSS media query.
+    const isMobileView = window.innerWidth < 768; // or window.matchMedia("(max-width: 767px)").matches;
+
+    // CSS primarily controls grid columns/rows. JS sets specific positions for desktop.
+    // The global CSS for .dashboard-grid already sets 'display: grid'.
+
+    const CHART_HEIGHT_DESKTOP = '550px'; // Used for vendor chart and Sankey on desktop
+
+    // First row: Vendor Chart (1/3) + Sankey Chart placeholder (2/3)
+    const vendorCard = createChartCard('vendorChart', 'Top Vendors by Value', 'fa-building');
+    // These JS-set grid positions are for desktop; mobile CSS with !important overrides them.
+    vendorCard.style.gridColumn = '1 / 2';
+    vendorCard.style.gridRow = '1 / 2';
+    if (!isMobileView) { // Only apply fixed height for desktop view
+        vendorCard.style.height = CHART_HEIGHT_DESKTOP;
     }
-    
-    const CHART_HEIGHT = isMobile ? '350px' : '550px'; // Smaller height for mobile
-    
-    // Create all chart cards
-    // --------------------
-    
-    // First row: Vendor Chart
-    const vendorCard = createChartCard('vendorChart', 'Top Vendors by Value');
-    if (isMobile) {
-        // Full width on mobile
-        vendorCard.style.gridColumn = '1 / 2'; 
-        vendorCard.style.gridRow = '1 / 2';
-    } else {
-        // 1/3 width on desktop
-        vendorCard.style.gridColumn = '1 / 2';
-        vendorCard.style.gridRow = '1 / 2';
-    }
-    vendorCard.style.height = CHART_HEIGHT;
     dashboardGrid.appendChild(vendorCard);
-    
-    // First row: Sankey placeholder
+
     const sankeyPlaceholder = document.createElement('div');
     sankeyPlaceholder.id = 'sankeyPlaceholder';
-    if (isMobile) {
-        // Full width on mobile, second row
-        sankeyPlaceholder.style.gridColumn = '1 / 2';
-        sankeyPlaceholder.style.gridRow = '2 / 3';
-    } else {
-        // 2/3 width on desktop
-        sankeyPlaceholder.style.gridColumn = '2 / 4';
-        sankeyPlaceholder.style.gridRow = '1 / 2';
+    // JS-set grid positions for desktop
+    sankeyPlaceholder.style.gridColumn = '2 / 4';
+    sankeyPlaceholder.style.gridRow = '1 / 2';
+    if (!isMobileView) { // Only apply fixed height for desktop view
+        sankeyPlaceholder.style.height = CHART_HEIGHT_DESKTOP;
     }
-    sankeyPlaceholder.style.height = CHART_HEIGHT;
     dashboardGrid.appendChild(sankeyPlaceholder);
-    
-    // Second row: Size Chart
-    const sizeCard = createChartCard('sizeChart', 'Contract Size Distribution');
-    if (isMobile) {
-        // Full width on mobile, third row
-        sizeCard.style.gridColumn = '1 / 2';
-        sizeCard.style.gridRow = '3 / 4';
-    } else {
-        // 1/3 width on desktop
-        sizeCard.style.gridColumn = '1 / 2';
-        sizeCard.style.gridRow = '2 / 3';
-    }
-    dashboardGrid.appendChild(sizeCard);
-    
-    // Second row: Type Chart
-    const typeCard = createChartCard('contractTypeChart', 'Contract Types');
-    if (isMobile) {
-        // Full width on mobile, fourth row
-        typeCard.style.gridColumn = '1 / 2';
-        typeCard.style.gridRow = '4 / 5';
-    } else {
-        // 1/3 width on desktop
-        typeCard.style.gridColumn = '2 / 3';
-        typeCard.style.gridRow = '2 / 3';
-    }
-    dashboardGrid.appendChild(typeCard);
-    
-    // Second row: Monthly Chart
-    const monthlyCard = createChartCard('monthlyChart', 'Buying Cycle');
-    if (isMobile) {
-        // Full width on mobile, fifth row
-        monthlyCard.style.gridColumn = '1 / 2';
-        monthlyCard.style.gridRow = '5 / 6';
-    } else {
-        // 1/3 width on desktop
-        monthlyCard.style.gridColumn = '3 / 4';
-        monthlyCard.style.gridRow = '2 / 3';
-    }
-    dashboardGrid.appendChild(monthlyCard);
-}
 
+    // Second row: Three equal charts
+    const sizeCard = createChartCard('sizeChart', 'Contract Size Distribution', 'fa-chart-bar');
+    sizeCard.style.gridColumn = '1 / 2'; // JS-set grid positions for desktop
+    sizeCard.style.gridRow = '2 / 3';
+    // No explicit height set by JS here; relies on .chart-container CSS (280px/250px) and card auto height
+    dashboardGrid.appendChild(sizeCard);
+
+    const typeCard = createChartCard('contractTypeChart', 'Contract Types', 'fa-tags');
+    typeCard.style.gridColumn = '2 / 3'; // JS-set grid positions for desktop
+    typeCard.style.gridRow = '2 / 3';
+    dashboardGrid.appendChild(typeCard);
+
+    const monthlyCard = createChartCard('monthlyChart', 'Monthly Trends', 'fa-calendar-alt');
+    monthlyCard.style.gridColumn = '3 / 4'; // JS-set grid positions for desktop
+    monthlyCard.style.gridRow = '2 / 3';
+    dashboardGrid.appendChild(monthlyCard);
+
+    // NOTE: The general window resize listener that calls setupDashboardGrid repeatedly
+    // was removed in the previous step to align with fedviz25MAY.html's behavior.
+    // setupDashboardGrid is typically called once on page load or when data necessitates a full layout rebuild.
+}
 // This is your existing createChartCard helper function
 function createChartCard(chartId, title, icon) {
     const card = document.createElement('div');
@@ -2022,26 +2037,26 @@ function createChartCard(chartId, title, icon) {
     
     return card;
 }
+// Add this function to your <script> in fedtab.html, if it's not already there
+// or if it was the more complex version previously.
+function handleSankeyResize() {
+    const sankeyChart = document.getElementById('sankeyChart'); // Check if the chart div exists
+    if (!sankeyChart || sankeyChart.offsetWidth === 0 || sankeyChart.offsetHeight === 0) {
+        // If container is not visible or has no dimensions, don't attempt to update
+        // This can happen if it's part of a tab that's not active, etc.
+        // Or if createSankeyDiagram hasn't run yet to create it.
+        return;
+    }
 
-// Add a window resize event listener to adjust layout when screen size changes
-window.addEventListener('resize', function() {
-    // Debounce the resize event
-    clearTimeout(window.resizeTimer);
-    window.resizeTimer = setTimeout(function() {
-        setupDashboardGrid();
-        
-        // Reinitialize charts if they exist
-        if (typeof initCharts === 'function') {
-            initCharts();
-        }
-        
-        // Update Sankey diagram if it exists
-        if (typeof updateSankeyDiagramWithFilteredData === 'function' && 
-            document.getElementById('sankeyChart')) {
+    // Use a unique timer ID for Sankey's resize debounce to avoid conflicts
+    clearTimeout(window.sankeySpecificResizeTimer);
+    window.sankeySpecificResizeTimer = setTimeout(function() {
+        console.log("Sankey specific resize: updating Sankey diagram.");
+        if (typeof updateSankeyDiagramWithFilteredData === 'function') {
             updateSankeyDiagramWithFilteredData();
         }
-    }, 250); // Wait 250ms after resize ends
-});
+    }, 250); // 250ms debounce
+}
 // Initialize charts
 function initCharts() {
     console.log("Initializing charts...");
@@ -3802,8 +3817,6 @@ function setupAutoFiltering() {
     console.log("Auto-filtering setup complete");
 }
 
-
-// Create Sankey diagram with matching height
 function createSankeyDiagram() {
     console.log("Creating Sankey diagram...");
     
@@ -3848,14 +3861,20 @@ function createSankeyDiagram() {
     sankeyContainer.appendChild(header);
     
     // Add chart container with height calculation
-    const chartContainer = document.createElement('div');
-    chartContainer.id = 'sankeyChart';
-    // Calculate height: container height minus header (62px) minus button container (40px) minus padding
-    chartContainer.style.height = 'calc(100% - 120px)';
-    chartContainer.style.width = '100%';
-    chartContainer.style.overflow = 'hidden';
-    chartContainer.style.position = 'relative';
-    sankeyContainer.appendChild(chartContainer);
+const chartContainer = document.createElement('div');
+chartContainer.id = 'sankeyChart';
+
+// UPDATED height logic for chartContainer (which is #sankeyChart)
+if (window.innerWidth < 768) { // Use 768 as the consistent breakpoint
+    chartContainer.style.height = '320px'; // UPDATED from 380px
+} else {
+    chartContainer.style.height = 'calc(100% - 120px)'; // Assuming 120px for header + controls
+}
+
+chartContainer.style.width = '100%';
+chartContainer.style.overflow = 'hidden';
+chartContainer.style.position = 'relative';
+sankeyContainer.appendChild(chartContainer);
     
     // Add controls at bottom
     const controls = document.createElement('div');
@@ -3879,6 +3898,19 @@ function createSankeyDiagram() {
     `;
     sankeyContainer.appendChild(controls);
     
+    if (window.innerWidth < 768) { // Use 768 as the consistent breakpoint
+    const buttons = sankeyContainer.querySelectorAll('button');
+    buttons.forEach(button => {
+        button.style.display = 'inline-flex';
+        button.style.visibility = 'visible';
+        button.style.opacity = '1';
+    });
+    
+    // Make container taller on mobile
+    sankeyContainer.style.minHeight = '450px'; // UPDATED from 450px
+}
+    window.removeEventListener('resize', handleSankeyResize); // Remove if already attached
+window.addEventListener('resize', handleSankeyResize);
     // Add event listeners to control buttons
     document.getElementById('sankeyTop10').addEventListener('click', function() {
         currentSankeyLimit = 10;
@@ -3898,30 +3930,11 @@ function createSankeyDiagram() {
         updateSankeyDiagramWithFilteredData();
     });
     
-    // Add window resize listener
-    window.removeEventListener('resize', handleSankeyResize);
-    window.addEventListener('resize', handleSankeyResize);
-    
     // Set initial button state
     updateSankeyButtonStates();
     
     // Update diagram with filtered data
     updateSankeyDiagramWithFilteredData();
-}
-
-// Function to handle window resize for Sankey diagram
-function handleSankeyResize() {
-    // Check if Sankey container exists
-    const sankeyChart = document.getElementById('sankeyChart');
-    if (!sankeyChart) return;
-    
-    // Debounce the resize event to avoid excessive redraws
-    clearTimeout(window.sankeyResizeTimer);
-    window.sankeyResizeTimer = setTimeout(function() {
-        console.log("Window resized, updating Sankey diagram");
-        // Redraw the Sankey diagram with current data and settings
-        updateSankeyDiagramWithFilteredData();
-    }, 250); // Wait 250ms after resize ends
 }
 
 // Function to prepare Sankey diagram data from contract data
