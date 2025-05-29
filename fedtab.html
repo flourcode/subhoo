@@ -5976,93 +5976,241 @@ function initMobileNavigation() {
     searchBar.classList.remove('active');
   }
   
-  function showFilterModal() {
-    // Clone filter controls into the modal
-    const filtersContainer = document.getElementById('dynamicFiltersContainer');
-    const dateFilter = document.getElementById('dateSignedFilterGroup');
+// Improved mobile filter modal implementation
+function showFilterModal() {
+  // Get the original filter elements
+  const filtersContainer = document.getElementById('dynamicFiltersContainer');
+  const dateFilter = document.getElementById('dateSignedFilterGroup');
+  const mobileFilterContent = document.getElementById('mobileFilterContent');
+  
+  if (!mobileFilterContent) return;
+  
+  // Clear previous content
+  mobileFilterContent.innerHTML = '';
+  
+  // Create containers for our filter sections
+  const dateFilterSection = document.createElement('div');
+  dateFilterSection.className = 'mobile-filter-section';
+  
+  const contractFilterSection = document.createElement('div');
+  contractFilterSection.className = 'mobile-filter-section';
+  
+  // Add title for date filter if it exists
+  if (dateFilter) {
+    const dateLabel = document.createElement('div');
+    dateLabel.className = 'filter-section-title';
+    dateLabel.style.fontWeight = '600';
+    dateLabel.style.fontSize = '1rem';
+    dateLabel.style.marginBottom = '0.75rem';
+    dateLabel.textContent = 'Date Filters';
+    dateFilterSection.appendChild(dateLabel);
     
-    if (filtersContainer || dateFilter) {
-      // Clear previous content
-      mobileFilterContent.innerHTML = '';
-      
-      // Add title for date filter if it exists
-      if (dateFilter) {
-        const dateFilterClone = dateFilter.cloneNode(true);
-        
-        // Create label for date filter
-        const dateLabel = document.createElement('div');
-        dateLabel.className = 'filter-section-title';
-        dateLabel.style.fontWeight = '600';
-        dateLabel.style.fontSize = '1rem';
-        dateLabel.style.marginBottom = '0.75rem';
-        dateLabel.textContent = 'Date Filters';
-        
-        mobileFilterContent.appendChild(dateLabel);
-        mobileFilterContent.appendChild(dateFilterClone);
-        
-        // Add separator
-        const separator = document.createElement('hr');
-        separator.style.margin = '1rem 0';
-        separator.style.borderTop = '1px solid var(--border)';
-        mobileFilterContent.appendChild(separator);
-      }
-      
-      // Add title for other filters
-      const filtersLabel = document.createElement('div');
-      filtersLabel.className = 'filter-section-title';
-      filtersLabel.style.fontWeight = '600';
-      filtersLabel.style.fontSize = '1rem';
-      filtersLabel.style.marginBottom = '0.75rem';
-      filtersLabel.textContent = 'Contract Filters';
-      
-      mobileFilterContent.appendChild(filtersLabel);
-      
-      // Clone each filter from the container
-      if (filtersContainer) {
-        Array.from(filtersContainer.children).forEach(child => {
-          if (child.id !== 'dateSignedFilterGroup') {
-            const clone = child.cloneNode(true);
-            mobileFilterContent.appendChild(clone);
-          }
-        });
-      }
-      
-      // Add apply and reset buttons
-      const buttonContainer = document.createElement('div');
-      buttonContainer.style.display = 'flex';
-      buttonContainer.style.gap = '1rem';
-      buttonContainer.style.marginTop = '1.5rem';
-      
-      const applyBtn = document.createElement('button');
-      applyBtn.className = 'btn btn-primary';
-      applyBtn.style.flex = '1';
-      applyBtn.textContent = 'Apply Filters';
-      applyBtn.addEventListener('click', function() {
-        applyAllFilters();
-        hideFilterModal();
+    // Create the month filter
+    const monthFilterGroup = document.createElement('div');
+    monthFilterGroup.className = 'form-group';
+    monthFilterGroup.innerHTML = `
+      <label class="form-label">Month</label>
+      <select id="mobileMonthFilter" class="form-control">
+        <option value="">All Months</option>
+        <option value="Jan">January</option>
+        <option value="Feb">February</option>
+        <option value="Mar">March</option>
+        <option value="Apr">April</option>
+        <option value="May">May</option>
+        <option value="Jun">June</option>
+        <option value="Jul">July</option>
+        <option value="Aug">August</option>
+        <option value="Sep">September</option>
+        <option value="Oct">October</option>
+        <option value="Nov">November</option>
+        <option value="Dec">December</option>
+      </select>
+    `;
+    dateFilterSection.appendChild(monthFilterGroup);
+    
+    // Create the year filter
+    const yearFilterGroup = document.createElement('div');
+    yearFilterGroup.className = 'form-group';
+    yearFilterGroup.innerHTML = `
+      <label class="form-label">Year</label>
+      <select id="mobileYearFilter" class="form-control"></select>
+    `;
+    dateFilterSection.appendChild(yearFilterGroup);
+    
+    // Sync with original filter values
+    const originalMonthFilter = document.getElementById('monthFilter');
+    const originalYearFilter = document.getElementById('yearFilter');
+    const mobileMonthFilter = monthFilterGroup.querySelector('#mobileMonthFilter');
+    const mobileYearFilter = yearFilterGroup.querySelector('#mobileYearFilter');
+    
+    // Populate year options from original filter
+    if (originalYearFilter && mobileYearFilter) {
+      Array.from(originalYearFilter.options).forEach(option => {
+        const newOption = document.createElement('option');
+        newOption.value = option.value;
+        newOption.textContent = option.textContent;
+        newOption.selected = option.selected;
+        mobileYearFilter.appendChild(newOption);
       });
-      
-      const resetBtn = document.createElement('button');
-      resetBtn.className = 'btn btn-secondary';
-      resetBtn.style.flex = '1';
-      resetBtn.textContent = 'Reset Filters';
-      resetBtn.addEventListener('click', function() {
-        resetAllFilters();
-        hideFilterModal();
-      });
-      
-      buttonContainer.appendChild(applyBtn);
-      buttonContainer.appendChild(resetBtn);
-      mobileFilterContent.appendChild(buttonContainer);
     }
     
-    // Show the modal
-    filterModal.classList.add('active');
+    // Set current values
+    if (originalMonthFilter && mobileMonthFilter) {
+      mobileMonthFilter.value = originalMonthFilter.value;
+    }
+    if (originalYearFilter && mobileYearFilter) {
+      mobileYearFilter.value = originalYearFilter.value;
+    }
   }
   
-  function hideFilterModal() {
+  // Add title for contract filters
+  const filtersLabel = document.createElement('div');
+  filtersLabel.className = 'filter-section-title';
+  filtersLabel.style.fontWeight = '600';
+  filtersLabel.style.fontSize = '1rem';
+  filtersLabel.style.marginBottom = '0.75rem';
+  filtersLabel.textContent = 'Contract Filters';
+  contractFilterSection.appendChild(filtersLabel);
+  
+  // Create mobile versions of all filter dropdowns
+  if (filtersContainer) {
+    const filterSelects = filtersContainer.querySelectorAll('select');
+    
+    filterSelects.forEach(select => {
+      // Skip date filters which we've already handled
+      if (select.id === 'monthFilter' || select.id === 'yearFilter') return;
+      
+      // Create a group for this filter
+      const filterGroup = document.createElement('div');
+      filterGroup.className = 'form-group';
+      
+      // Get a user-friendly label from the select id
+      let labelText = select.id.replace('Filter', '');
+      labelText = labelText.charAt(0).toUpperCase() + labelText.slice(1); // Capitalize
+      
+      // Create the label and select
+      const label = document.createElement('label');
+      label.className = 'form-label';
+      label.textContent = labelText;
+      
+      const mobileSelect = document.createElement('select');
+      mobileSelect.id = 'mobile' + select.id.charAt(0).toUpperCase() + select.id.slice(1);
+      mobileSelect.className = 'form-control';
+      
+      // Copy options from original select
+      Array.from(select.options).forEach(option => {
+        const newOption = document.createElement('option');
+        newOption.value = option.value;
+        newOption.textContent = option.textContent;
+        newOption.selected = option.selected;
+        mobileSelect.appendChild(newOption);
+      });
+      
+      // Add label and select to the group
+      filterGroup.appendChild(label);
+      filterGroup.appendChild(mobileSelect);
+      
+      // Add the group to the filter section
+      contractFilterSection.appendChild(filterGroup);
+    });
+  }
+  
+  // Add the filter sections to the modal content
+  if (dateFilterSection.children.length > 1) { // If we have more than just the title
+    mobileFilterContent.appendChild(dateFilterSection);
+    
+    // Add separator if we have both date and contract filters
+    if (contractFilterSection.children.length > 1) {
+      const separator = document.createElement('hr');
+      separator.style.margin = '1rem 0';
+      separator.style.borderTop = '1px solid var(--border)';
+      mobileFilterContent.appendChild(separator);
+    }
+  }
+  
+  if (contractFilterSection.children.length > 1) { // If we have more than just the title
+    mobileFilterContent.appendChild(contractFilterSection);
+  }
+  
+  // Add apply and reset buttons
+  const buttonContainer = document.createElement('div');
+  buttonContainer.style.display = 'flex';
+  buttonContainer.style.gap = '1rem';
+  buttonContainer.style.marginTop = '1.5rem';
+  
+  const applyBtn = document.createElement('button');
+  applyBtn.className = 'btn btn-primary';
+  applyBtn.style.flex = '1';
+  applyBtn.textContent = 'Apply Filters';
+  applyBtn.addEventListener('click', function() {
+    // Sync mobile filter values to original filters
+    syncMobileFiltersToOriginal();
+    applyAllFilters();
+    hideFilterModal();
+  });
+  
+  const resetBtn = document.createElement('button');
+  resetBtn.className = 'btn btn-secondary';
+  resetBtn.style.flex = '1';
+  resetBtn.textContent = 'Reset Filters';
+  resetBtn.addEventListener('click', function() {
+    resetAllFilters();
+    hideFilterModal();
+  });
+  
+  buttonContainer.appendChild(applyBtn);
+  buttonContainer.appendChild(resetBtn);
+  mobileFilterContent.appendChild(buttonContainer);
+  
+  // Show the modal
+  const filterModal = document.getElementById('mobileFilterModal');
+  if (filterModal) {
+    filterModal.classList.add('active');
+  }
+}
+
+// Function to sync mobile filter values to the original filters
+function syncMobileFiltersToOriginal() {
+  // Sync date filters
+  const mobileMonthFilter = document.getElementById('mobileMonthFilter');
+  const mobileYearFilter = document.getElementById('mobileYearFilter');
+  const originalMonthFilter = document.getElementById('monthFilter');
+  const originalYearFilter = document.getElementById('yearFilter');
+  
+  if (mobileMonthFilter && originalMonthFilter) {
+    originalMonthFilter.value = mobileMonthFilter.value;
+  }
+  
+  if (mobileYearFilter && originalYearFilter) {
+    originalYearFilter.value = mobileYearFilter.value;
+  }
+  
+  // Sync other filters
+  const filtersContainer = document.getElementById('dynamicFiltersContainer');
+  if (filtersContainer) {
+    const filterSelects = filtersContainer.querySelectorAll('select');
+    
+    filterSelects.forEach(select => {
+      // Skip date filters which we've already handled
+      if (select.id === 'monthFilter' || select.id === 'yearFilter') return;
+      
+      const mobileSelectId = 'mobile' + select.id.charAt(0).toUpperCase() + select.id.slice(1);
+      const mobileSelect = document.getElementById(mobileSelectId);
+      
+      if (mobileSelect) {
+        select.value = mobileSelect.value;
+      }
+    });
+  }
+}
+
+// Function to hide the filter modal
+function hideFilterModal() {
+  const filterModal = document.getElementById('mobileFilterModal');
+  if (filterModal) {
     filterModal.classList.remove('active');
   }
+}
   
   function showTables() {
     // Hide main dashboard content
