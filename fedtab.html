@@ -1408,6 +1408,145 @@ a.logo {
 .sidebar.collapsed .logo-subtitle {
   display: none;
 }
+@media (max-width: 767px) {
+  .btn, 
+  .form-control,
+  .selection-item,
+  .archive-month-btn {
+    min-height: 44px; /* Ensure minimum touch target height */
+    padding: 0.75rem 1rem; /* More generous padding */
+  }
+  
+  /* Increase spacing between interactive elements */
+  .form-group,
+  .filter-actions {
+    margin-bottom: 0.75rem; /* More spacing between form elements */
+  }
+  
+  /* Ensure table cells are tappable */
+  td, th {
+    padding: 0.75rem; /* Larger padding for table cells */
+  }
+}
+/* Loading Overlay Styles */
+#loadingOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.3s ease;
+}
+
+.loading-spinner {
+  background-color: var(--bg-primary);
+  padding: 2rem;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  max-width: 80%;
+  text-align: center;
+}
+
+.loading-spinner i {
+  font-size: 2.5rem;
+  color: var(--primary);
+  animation: spin 1.5s linear infinite;
+}
+
+.loading-spinner .loading-message {
+  font-size: 1.125rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-top: 0.5rem;
+}
+
+.loading-spinner .loading-details {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin-top: 0.25rem;
+}
+
+/* For dark mode */
+[data-theme="dark"] .loading-spinner {
+  background-color: var(--bg-dark);
+}
+
+/* Animation for the spinner */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Loading Progress Bar */
+.loading-progress {
+  width: 100%;
+  height: 4px;
+  background-color: var(--bg-tertiary);
+  border-radius: 2px;
+  margin-top: 0.5rem;
+  overflow: hidden;
+}
+
+.loading-progress-bar {
+  height: 100%;
+  background-color: var(--primary);
+  border-radius: 2px;
+  width: 0%;
+  transition: width 0.3s ease;
+}
+@keyframes loading-progress {
+  0% {
+    width: 0%;
+    opacity: 0.1;
+  }
+  50% {
+    width: 100%;
+    opacity: 0.8;
+  }
+  100% {
+    width: 0%;
+    opacity: 0.1;
+  }
+}
+/* Hide upload container on mobile devices */
+@media (max-width: 767px) {
+  .upload-container {
+    display: none !important; /* Use !important to override any inline styles */
+  }
+  
+  /* Optionally add more vertical space to other elements */
+  .search-container {
+    margin-bottom: 1rem; /* Add a bit more margin to the search container */
+  }
+  
+  /* Show a mobile-specific message if needed */
+  .mobile-only-message {
+    display: block;
+    padding: 0.75rem;
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+    background-color: var(--bg-tertiary);
+    border-radius: var(--radius);
+    margin-bottom: 1rem;
+    text-align: center;
+  }
+}
+
+/* Show upload container on desktop */
+@media (min-width: 768px) {
+  .mobile-only-message {
+    display: none; /* Hide the mobile message on desktop */
+  }
+}
 </style>
 </head>
 <body>
@@ -1779,72 +1918,89 @@ function getVendorColor(vendorName, index) {
   vendorColorMap.set(vendorName, color);
   return color;
 }
+// Modify applyAllFilters to include NAICS description
 function applyAllFilters() {
-    // Start with all data
-    filteredData = [...allData];
-    
-    // Track applied filters for status message
-    var appliedFilters = {};
-    
-    // Apply unified search if there's a search term
-    var searchTerm = document.getElementById('unifiedSearch').value.toLowerCase().trim();
-    if (searchTerm) {
-        filteredData = filteredData.filter(function(item) {
-            // Search across all string properties
-            for (var key in item) {
-                if (typeof item[key] === 'string' && 
-                    item[key].toLowerCase().indexOf(searchTerm) !== -1) {
-                    return true;
-                }
-            }
-            return false;
-        });
-        
-        appliedFilters["Search"] = searchTerm;
-    }
-    
-    // Apply dropdown filters
-    var dropdowns = {
-        'naicsFilter': 'NAICS',
-        'agencyFilter': 'Agency',
-        'officeFilter': 'Office',
-        'vendorFilter': 'Vendor'
-    };
-    
-    for (var id in dropdowns) {
-        var dropdown = document.getElementById(id);
-        if (dropdown && dropdown.value) {
-            var field = id.replace('Filter', '').toLowerCase();
-            var label = dropdowns[id];
-            
-            filteredData = filteredData.filter(function(item) {
-                return item[field] === dropdown.value;
-            });
-            
-            appliedFilters[label] = dropdown.value;
+  // Start with all data
+  filteredData = [...allData];
+  
+  // Track applied filters for status message
+  var appliedFilters = {};
+  
+  // Apply unified search if there's a search term
+  var searchTerm = document.getElementById('unifiedSearch').value.toLowerCase().trim();
+  if (searchTerm) {
+    filteredData = filteredData.filter(function(item) {
+      // Search across all string properties
+      for (var key in item) {
+        if (typeof item[key] === 'string' && 
+            item[key].toLowerCase().indexOf(searchTerm) !== -1) {
+          return true;
         }
+      }
+      return false;
+    });
+    
+    appliedFilters["Search"] = searchTerm;
+  }
+  
+  // Apply dropdown filters
+  var dropdowns = {
+    'naicsFilter': 'NAICS',
+    'agencyFilter': 'Agency',
+    'officeFilter': 'Office',
+    'vendorFilter': 'Vendor'
+  };
+  
+  for (var id in dropdowns) {
+    var dropdown = document.getElementById(id);
+    if (dropdown && dropdown.value) {
+      var field = id.replace('Filter', '').toLowerCase();
+      var label = dropdowns[id];
+      
+      filteredData = filteredData.filter(function(item) {
+        return item[field] === dropdown.value;
+      });
+      
+      appliedFilters[label] = dropdown.value;
+      
+      // NEW: For NAICS filter, also add the description
+      if (id === 'naicsFilter' && filteredData.length > 0) {
+        // Find the first item with this NAICS code to get its description
+        for (let i = 0; i < filteredData.length; i++) {
+          if (filteredData[i].naicsDescription) {
+            appliedFilters["NAICS Description"] = filteredData[i].naicsDescription;
+            break;
+          }
+        }
+      }
     }
-    
-    // Update the dashboard with filtered data
-    updateDashboard();
-    
-    // Generate natural language message
-    var totalContracts = filteredData.length;
-    var totalValue = filteredData.reduce((sum, item) => sum + item.value, 0);
-    
-    // Create primary message based on results
-    var primaryMessage = "";
-    if (Object.keys(appliedFilters).length > 0) {
-        primaryMessage = `Showing ${totalContracts.toLocaleString()} filtered contracts with a total value of ${formatCurrency(totalValue)}`;
-    } else {
-        primaryMessage = `Showing all ${totalContracts.toLocaleString()} contracts with a total value of ${formatCurrency(totalValue)}`;
-    }
-    
-    showMessage(primaryMessage, 'info', appliedFilters);
-    
-    if (document.getElementById('sankeyChart')) {
-        updateSankeyDiagramWithFilteredData();
-    }
+  }
+  
+  // Apply other filters (date, target, etc.) if they exist...
+  
+  // Update the dashboard with filtered data
+  updateDashboard();
+  
+  // Generate natural language message
+  var totalContracts = filteredData.length;
+  var totalValue = filteredData.reduce((sum, item) => sum + item.value, 0);
+  
+  // Create primary message based on results
+  var primaryMessage = "";
+  if (Object.keys(appliedFilters).length > 0) {
+    primaryMessage = `Showing ${totalContracts.toLocaleString()} filtered contracts with a total value of ${formatCurrency(totalValue)}`;
+  } else {
+    primaryMessage = `Showing all ${totalContracts.toLocaleString()} contracts with a total value of ${formatCurrency(totalValue)}`;
+  }
+  
+  // Add total value to filters for display
+  appliedFilters["Total Value"] = formatCurrency(totalValue);
+  
+  showMessage(primaryMessage, 'info', appliedFilters);
+  
+  if (document.getElementById('sankeyChart')) {
+    updateSankeyDiagramWithFilteredData();
+  }
 }
 // Update filterByVendorName function to not use a separate reset button
 function filterByVendorName(vendorName) {
@@ -2315,87 +2471,103 @@ function initContractTypeChart() {
         }
     });
 }
+// Modify the loadCSVFile function to show loading indicator
 function loadCSVFile() {
-    var fileInput = document.getElementById('csvFileInput');
-    var file = fileInput.files[0];
+  var fileInput = document.getElementById('csvFileInput');
+  var file = fileInput.files[0];
 
-    if (!file) {
-        if (typeof showMessage === 'function') showMessage("Please select a CSV file first.", "error");
-        return;
+  if (!file) {
+    if (typeof showMessage === 'function') showMessage("Please select a CSV file first.", "error");
+    return;
+  }
+
+  let fileName = file.name.toLowerCase();
+  let isLikelyCsv = false;
+
+  // Check for common CSV patterns, including the iOS-specific one
+  if (fileName.endsWith('.csv') || fileName.endsWith('.csv.xls')) {
+    isLikelyCsv = true;
+  }
+
+  // Fallback check for MIME type if filename isn't conclusive (MIME types can be unreliable)
+  if (!isLikelyCsv && (file.type === 'text/csv' || file.type === 'application/vnd.ms-excel' || (file.type === '' && fileName.includes('csv')))) {
+    console.log("Filename pattern not primary match, but MIME type or name suggests CSV: ", file.name, file.type);
+    isLikelyCsv = true;
+  }
+
+  if (isLikelyCsv) {
+    // Show loading indicator
+    showLoadingIndicator(true, "Loading CSV file...", `Processing ${file.name}`);
+    
+    if (typeof showMessage === 'function') showMessage("Loading file: " + file.name + ". Please wait...", "info");
+
+    // --- Comprehensive Reset before loading new data ---
+    allData = [];
+    filteredData = [];
+
+    const unifiedSearchInput = document.getElementById('unifiedSearch');
+    if (unifiedSearchInput) unifiedSearchInput.value = '';
+
+    const dynamicFiltersContainer = document.getElementById('dynamicFiltersContainer');
+    if (dynamicFiltersContainer) dynamicFiltersContainer.innerHTML = '';
+
+    const tableBodyIds = ['officeTableBody', 'contractsTableBody'];
+    tableBodyIds.forEach(id => {
+        const tbody = document.getElementById(id);
+        if (tbody) tbody.innerHTML = '<tr><td colspan="100%">Loading data...</td></tr>';
+    });
+
+    const totalContractsEl = document.getElementById('totalContracts');
+    if (totalContractsEl) totalContractsEl.textContent = '0';
+    const totalValueEl = document.getElementById('totalValue');
+    if (totalValueEl) totalValueEl.textContent = '$0';
+    const activeVendorsEl = document.getElementById('activeVendors');
+    if (activeVendorsEl) activeVendorsEl.textContent = '0';
+
+    const sankeyChartArea = document.getElementById('sankeyChart');
+    if (sankeyChartArea) {
+        sankeyChartArea.innerHTML = '';
     }
+    if (typeof initCharts === 'function') initCharts();
+    // --- End Comprehensive Reset ---
 
-    let fileName = file.name.toLowerCase();
-    let isLikelyCsv = false;
-
-    // Check for common CSV patterns, including the iOS-specific one
-    if (fileName.endsWith('.csv') || fileName.endsWith('.csv.xls')) {
-        isLikelyCsv = true;
-    }
-
-    // Fallback check for MIME type if filename isn't conclusive (MIME types can be unreliable)
-    if (!isLikelyCsv && (file.type === 'text/csv' || file.type === 'application/vnd.ms-excel' || (file.type === '' && fileName.includes('csv')))) {
-        console.log("Filename pattern not primary match, but MIME type or name suggests CSV: ", file.name, file.type);
-        isLikelyCsv = true;
-    }
-
-    if (isLikelyCsv) {
-        if (typeof showMessage === 'function') showMessage("Loading file: " + file.name + ". Please wait...", "info");
-
-        // --- Comprehensive Reset before loading new data ---
-        allData = [];
-        filteredData = [];
-
-        const unifiedSearchInput = document.getElementById('unifiedSearch');
-        if (unifiedSearchInput) unifiedSearchInput.value = '';
-
-        const dynamicFiltersContainer = document.getElementById('dynamicFiltersContainer');
-        if (dynamicFiltersContainer) dynamicFiltersContainer.innerHTML = '';
-
-        const tableBodyIds = ['officeTableBody', 'contractsTableBody'];
-        tableBodyIds.forEach(id => {
-            const tbody = document.getElementById(id);
-            if (tbody) tbody.innerHTML = '<tr><td colspan="100%">Loading data...</td></tr>';
-        });
-
-        const totalContractsEl = document.getElementById('totalContracts');
-        if (totalContractsEl) totalContractsEl.textContent = '0';
-        const totalValueEl = document.getElementById('totalValue');
-        if (totalValueEl) totalValueEl.textContent = '$0';
-        const activeVendorsEl = document.getElementById('activeVendors');
-        if (activeVendorsEl) activeVendorsEl.textContent = '0';
-
-        const sankeyChartArea = document.getElementById('sankeyChart');
-        if (sankeyChartArea) {
-            sankeyChartArea.innerHTML = '';
+    var reader = new FileReader();
+    reader.onload = function(e) {
+        var csvContent = e.target.result;
+        // Update loading indicator
+        showLoadingIndicator(true, "Parsing CSV data...", `${file.name}`, 30);
+        
+        if (typeof parseCSV === 'function') {
+            parseCSV(csvContent);
         }
-        if (typeof initCharts === 'function') initCharts();
-        // --- End Comprehensive Reset ---
+        fileInput.value = null; // Clear file input to allow re-selecting same file
+        
+        // Hide loading indicator
+        showLoadingIndicator(false);
+    };
+    reader.onerror = function(e) {
+        console.error("File reading error:", e);
+        if (typeof showMessage === 'function') showMessage("Error reading file: " + e.message, "error");
+        fileInput.value = null;
+        
+        // Hide loading indicator with error message
+        showLoadingIndicator(false);
+    };
+    reader.readAsText(file); // Always read as text, as CSV is text-based
 
-        var reader = new FileReader();
-        reader.onload = function(e) {
-            var csvContent = e.target.result;
-            if (typeof parseCSV === 'function') {
-                parseCSV(csvContent);
-            }
-            fileInput.value = null; // Clear file input to allow re-selecting same file
-        };
-        reader.onerror = function(e) {
-            console.error("File reading error:", e);
-            if (typeof showMessage === 'function') showMessage("Error reading file: " + e.message, "error");
-            fileInput.value = null;
-        };
-        reader.readAsText(file); // Always read as text, as CSV is text-based
-
-    } else {
-        if (typeof showMessage === 'function') showMessage("Unsupported file type: '" + file.name + "'. Please upload a CSV file from FPDS.gov.", "error");
-        fileInput.value = null; // Clear the invalid file selection
-        return;
-    }
+  } else {
+    if (typeof showMessage === 'function') showMessage("Unsupported file type: '" + file.name + "'. Please upload a CSV file from FPDS.gov.", "error");
+    fileInput.value = null; // Clear the invalid file selection
+    return;
+  }
 }
-// Parse CSV data
+// Parse CSV data with loading indicator
 function parseCSV(csvText) {
     try {
         showMessage("Parsing CSV data...", "info");
+        // Update loading indicator
+        showLoadingIndicator(true, "Parsing CSV data...", "Analyzing file format", 40);
+        
         console.log("CSV length:", csvText.length);
         
         // Split into lines
@@ -2404,6 +2576,7 @@ function parseCSV(csvText) {
         
         if (lines.length <= 1) {
             showMessage("Could not parse CSV. Check format.", "error");
+            showLoadingIndicator(false);
             return;
         }
         
@@ -2411,10 +2584,19 @@ function parseCSV(csvText) {
         var headers = parseCSVLine(lines[0]);
         console.log("Headers:", headers);
         
+        // Update loading indicator
+        showLoadingIndicator(true, "Processing data...", `Processing ${lines.length} rows`, 50);
+        
         var rawData = [];
         
         // Parse data rows
         for (var i = 1; i < lines.length; i++) {
+            if (i % 1000 === 0 || i === lines.length - 1) {
+                // Update progress every 1000 rows
+                const progress = Math.min(50 + Math.floor((i / lines.length) * 45), 95);
+                updateLoadingProgress(progress, "Processing data...", `Processing row ${i} of ${lines.length}`);
+            }
+            
             if (lines[i].trim()) {
                 try {
                     var values = parseCSVLine(lines[i]);
@@ -2436,17 +2618,21 @@ function parseCSV(csvText) {
         
         console.log("Parsed " + rawData.length + " data rows");
         
+        // Update loading indicator
+        showLoadingIndicator(true, "Finalizing data...", "Preparing dashboard", 95);
+        
         if (rawData.length > 0) {
             processData(rawData);
         } else {
             showMessage("No valid data rows found in the CSV.", "error");
+            showLoadingIndicator(false);
         }
     } catch (error) {
         showMessage("Error parsing CSV: " + error.message, "error");
         console.error(error);
+        showLoadingIndicator(false);
     }
 }
-
 // Parse a single CSV line
 function parseCSVLine(line) {
     if (!line) return [];
@@ -2478,9 +2664,11 @@ function parseCSVLine(line) {
     return result;
 }
 
-// Process the raw data into a more usable format
+// Process the raw data with loading indicator
 function processData(rawData) {
     showMessage("Processing data...");
+    // Final loading indicator update
+    showLoadingIndicator(true, "Finalizing...", "Preparing visualization", 95);
     
     console.log("Processing data with " + rawData.length + " rows");
     if (rawData.length > 0) {
@@ -2544,9 +2732,12 @@ function processData(rawData) {
     // Create and update Sankey diagram
     setTimeout(function() {
         createSankeyDiagram();
+        
+        // Hide loading indicator
+        showLoadingIndicator(false);
+        
+        showMessage("Successfully loaded " + allData.length + " contracts. Ready for analysis.", "success");
     }, 500);
-    
-    showMessage("Successfully loaded " + allData.length + " contracts. Ready for analysis.", "success");
 }
 // Parse money values more robustly
 function parseMoneyValue(value) {
@@ -3485,25 +3676,24 @@ function createDynamicDropdowns() {
 
     // Fields for dropdowns and their display labels
     var dropdownFields = [
-        { id: 'naicsFilter', field: 'naics', label: 'NAICS Code' },
         { id: 'agencyFilter', field: 'agency', label: 'Agency' },
         { id: 'officeFilter', field: 'office', label: 'Office' },
-        { id: 'vendorFilter', field: 'vendor', label: 'Vendor' }
+        { id: 'vendorFilter', field: 'vendor', label: 'Vendor' },
+		{ id: 'naicsFilter', field: 'naics', label: 'NAICS Code' }
     ];
 
     dropdownFields.forEach(function(dropdownField) {
         var formGroup = document.createElement('div');
         formGroup.className = 'form-group';
-        // formGroup.style.margin = '0 0 0.5rem 0'; // Styling best handled by CSS
 
         var select = document.createElement('select');
         select.id = dropdownField.id;
-        select.className = 'form-control'; // Apply standard styling
-        select.style.width = '100%';      // Ensure it takes full width
+        select.className = 'form-control';
+        select.style.width = '100%';
 
         // Add a selectable "All [Category]" option as the first item
         var allOption = document.createElement('option');
-        allOption.value = ''; // CRUCIAL: Empty value signifies "no filter" / "all" for this category
+        allOption.value = ''; // Empty value signifies "no filter" / "all"
 
         // Make the text clearly indicate it's for showing all items
         let allOptionText = 'All ' + dropdownField.label;
@@ -3515,13 +3705,14 @@ function createDynamicDropdowns() {
             allOptionText = "All " + dropdownField.label + "s"; // e.g. Vendor -> All Vendors
         }
         allOption.textContent = allOptionText;
-        // This option will be selected by default as it's the first one added,
-        // unless JavaScript later selects a specific filter value.
         select.appendChild(allOption);
 
         // Get unique values for this field and their totals
         var uniqueValues = {};
         var valuesByTotal = {};
+        
+        // For NAICS codes, also track the description
+        var naicsDescriptions = {};
 
         for (var i = 0; i < allData.length; i++) {
             var value = allData[i][dropdownField.field];
@@ -3529,6 +3720,11 @@ function createDynamicDropdowns() {
                 if (!uniqueValues[value]) {
                     uniqueValues[value] = 0;
                     valuesByTotal[value] = 0;
+                    
+                    // Store NAICS description if this is the NAICS filter
+                    if (dropdownField.id === 'naicsFilter' && allData[i].naicsDescription) {
+                        naicsDescriptions[value] = allData[i].naicsDescription;
+                    }
                 }
                 uniqueValues[value]++;
                 valuesByTotal[value] += allData[i].value || 0;
@@ -3540,7 +3736,8 @@ function createDynamicDropdowns() {
             valueArray.push({
                 value: value,
                 count: uniqueValues[value],
-                total: valuesByTotal[value]
+                total: valuesByTotal[value],
+                description: naicsDescriptions[value] || '' // Include description for NAICS
             });
         }
 
@@ -3558,8 +3755,24 @@ function createDynamicDropdowns() {
             if (displayValue && displayValue.length > 30) {
                 displayValue = displayValue.substring(0, 27) + '...';
             }
+            
             var formattedTotal = formatCurrency(topValues[j].total);
-            option.textContent = displayValue + ' (' + topValues[j].count + ' | ' + formattedTotal + ')';
+            
+            // Special handling for NAICS codes to include a truncated description
+            if (dropdownField.id === 'naicsFilter' && topValues[j].description) {
+                // Truncate description if too long
+                var description = topValues[j].description;
+                if (description.length > 40) {
+                    description = description.substring(0, 37) + '...';
+                }
+                
+                // Format: "541511 - Web Development (42 | $1.2M)"
+                option.textContent = `${displayValue} - ${description} (${topValues[j].count} | ${formattedTotal})`;
+            } else {
+                // Standard format for other filters: "Value (42 | $1.2M)"
+                option.textContent = displayValue + ' (' + topValues[j].count + ' | ' + formattedTotal + ')';
+            }
+            
             select.appendChild(option);
         }
 
@@ -4265,7 +4478,6 @@ function addDateSignedFilter() {
   // Create month/year selector with labels
   dateFilterGroup.innerHTML = `
     <div style="margin-bottom: 0.25rem;">
-      <span class="date-filter-header">Date Signed Filter</span>
     </div>
     <div style="display: flex; gap: 0.5rem;">
       <div style="flex: 1;">
@@ -4292,13 +4504,7 @@ function addDateSignedFilter() {
       </div>
     </div>
   `;
-
-  // Add the filter group to the container - at the beginning
-  if (filtersContainer.firstChild) {
-    filtersContainer.insertBefore(dateFilterGroup, filtersContainer.firstChild);
-  } else {
-    filtersContainer.appendChild(dateFilterGroup);
-  }
+filtersContainer.appendChild(dateFilterGroup);
 
   // Initialize year options
   populateYearOptions();
@@ -4475,20 +4681,19 @@ function applyOtherFilters(data) {
   return result;
 }
 
-// Override the applyAllFilters function to use our date filter
+// Modify applyAllFilters to show brief loading indication for filters
 const originalApplyAllFilters = applyAllFilters;
 applyAllFilters = function() {
-  // Check if date filters are active
-  const monthFilter = document.getElementById('monthFilter');
-  const yearFilter = document.getElementById('yearFilter');
-  
-  if ((monthFilter && monthFilter.value) || (yearFilter && yearFilter.value)) {
-    // If date filters are active, use our special filter
-    applyDateFilter();
-  } else {
-    // Otherwise use the original filter
-    originalApplyAllFilters();
-  }
+    // Show a quick loading indicator when filtering
+    showLoadingIndicator(true, "Applying filters...", "This will only take a moment", -1);
+    
+    // Use setTimeout to allow the UI to update before processing
+    setTimeout(function() {
+        originalApplyAllFilters();
+        
+        // Hide loading indicator when done
+        showLoadingIndicator(false);
+    }, 50);
 };
 
 // Initialize the date filter when data is loaded
@@ -4562,10 +4767,16 @@ function showEnhancedMessage(primaryMessage, type, filters) {
   updateSidebarStatusMessage(primaryMessage, type, filters);
 }
 
-// Function to generate a natural language description of the filters
+// Enhanced natural language description generator that includes NAICS description
 function generateNaturalDescription(filters) {
+  // Only include period text for auto-loaded data
+  let periodText = "";
+  if (window.isAutoLoadedData && window.periodDescription) {
+    periodText = window.periodDescription;
+  }
+  
   if (!filters || Object.keys(filters).length === 0) {
-    return "Showing all available contract data with no filters applied.";
+    return `Viewing all available contract data ${periodText} with no filters applied.`;
   }
   
   // Extract key filter components
@@ -4574,20 +4785,30 @@ function generateNaturalDescription(filters) {
   const month = filters["Month"] || "";
   const year = filters["Year"] || "";
   const searchTerm = filters["Search"] || "";
-  const naicsCode = filters["NAICS Code"] || "";
-  const naicsDesc = filters["NAICS"] || "";
-
+  const naicsCode = filters["NAICS"] || "";
   
-  // Get all other filters (excluding the ones we handle specially)
-  const excludedKeys = ["Agency", "Vendor", "Month", "Year", "Total Value", "Search",  
-                       "NAICS Code", "NAICS"];
+  // NEW: Get NAICS description from filter or look it up in the data
+  let naicsDescription = "";
   
-  const otherFilters = [];
-  for (const [key, value] of Object.entries(filters)) {
-    if (value && !excludedKeys.includes(key)) {
-      otherFilters.push(key);
+  // Check if we have a description directly in the filters
+  if (filters["NAICS Description"]) {
+    naicsDescription = filters["NAICS Description"];
+  } 
+  // If we have a NAICS code but no description, try to find it in the data
+  else if (naicsCode && allData && allData.length > 0) {
+    // Look through the data to find a matching NAICS code and get its description
+    for (let i = 0; i < allData.length; i++) {
+      if (allData[i].naics === naicsCode && allData[i].naicsDescription) {
+        naicsDescription = allData[i].naicsDescription;
+        break;
+      }
     }
   }
+  
+  // Gather target information (if target functionality is still present)
+  const targetVendors = filters["Target Vendors"] ? parseInt(filters["Target Vendors"]) : 0;
+  const targetAgencies = filters["Target Agencies"] ? parseInt(filters["Target Agencies"]) : 0;
+  const targetOffices = filters["Target Offices"] ? parseInt(filters["Target Offices"]) : 0;
   
   // Start building the natural language description
   let description = "You're viewing ";
@@ -4603,43 +4824,49 @@ function generateNaturalDescription(filters) {
     description += `to ${vendor} `;
   }
   
+  // Use month/year from filters if specified, otherwise use the detected period
   if (month && year) {
     description += `from ${month} ${year} `;
   } else if (month) {
     description += `from ${month} `;
   } else if (year) {
     description += `from ${year} `;
+  } else if (periodText && !filters["Month"] && !filters["Year"] && window.isAutoLoadedData) {
+    // Only add the period text if no specific month/year filter is applied
+    description += `${periodText} `;
   }
   
-  // Add NAICS information
-  if (naicsCode && naicsDesc) {
-    description += `for ${naicsDesc} (NAICS ${naicsCode}) `;
+  // Add NAICS information - now with description when available
+  if (naicsCode && naicsDescription) {
+    description += `for ${naicsDescription} (NAICS ${naicsCode}) `;
   } else if (naicsCode) {
     description += `with NAICS code ${naicsCode} `;
-  } else if (naicsDesc) {
-    description += `for ${naicsDesc} `;
+  } else if (naicsDescription) {
+    description += `for ${naicsDescription} `;
   }
   
   // Add search term
   if (searchTerm) {
     description += `containing "${searchTerm}" `;
   }
-
   
-  // Add other filters if any
-  if (otherFilters.length > 0) {
-    // Make the list more natural with proper conjunction
-    let filterList = "";
-    if (otherFilters.length === 1) {
-      filterList = otherFilters[0];
-    } else if (otherFilters.length === 2) {
-      filterList = `${otherFilters[0]} and ${otherFilters[1]}`;
-    } else {
-      const lastFilter = otherFilters.pop();
-      filterList = `${otherFilters.join(", ")}, and ${lastFilter}`;
-    }
-    
-    description += `filtered by ${filterList} `;
+  // Add target information if target functionality is still present
+  const targetParts = [];
+  
+  if (targetVendors > 0) {
+    targetParts.push(targetVendors === 1 ? "1 target vendor" : `${targetVendors} target vendors`);
+  }
+  
+  if (targetAgencies > 0) {
+    targetParts.push(targetAgencies === 1 ? "1 target agency" : `${targetAgencies} target agencies`);
+  }
+  
+  if (targetOffices > 0) {
+    targetParts.push(targetOffices === 1 ? "1 target office" : `${targetOffices} target offices`);
+  }
+  
+  if (targetParts.length > 0) {
+    description += `with ${targetParts.join(" and ")} `;
   }
   
   // Clean up the description
@@ -4650,7 +4877,6 @@ function generateNaturalDescription(filters) {
   
   return description;
 }
-
 // Function to update the sidebar status message (for backward compatibility)
 function updateSidebarStatusMessage(primaryMessage, type, filters) {
   const sidebarStatusElement = document.getElementById('statusMessage');
@@ -4800,6 +5026,18 @@ function collectActiveFilters() {
     const dropdown = document.getElementById(id);
     if (dropdown && dropdown.value) {
       filters[dropdowns[id]] = dropdown.value;
+      
+      // NEW: For NAICS filter, also add the description
+      if (id === 'naicsFilter' && window.filteredData && window.filteredData.length > 0) {
+        // Find the first item with this NAICS code to get its description
+        for (let i = 0; i < window.filteredData.length; i++) {
+          if (window.filteredData[i].naics === dropdown.value && 
+              window.filteredData[i].naicsDescription) {
+            filters["NAICS Description"] = window.filteredData[i].naicsDescription;
+            break;
+          }
+        }
+      }
     }
   }
   
@@ -4827,8 +5065,9 @@ function autoLoadCurrentData() {
   // Your actual S3 URL
   const dataUrl = "https://subhoodata.s3.us-east-1.amazonaws.com/data/daily.csv";
   
-  // Show loading message
-  showEnhancedMessage("", "info", {
+  // Show loading message with loading indicator
+  showLoadingIndicator(true, "Loading current month data...", "Fetching from data server", 10);
+  showMessage("", "info", {
     "Status": "Loading current month award data..."
   });
   
@@ -4849,9 +5088,14 @@ function autoLoadCurrentData() {
       if (!response.ok) {
         throw new Error(`Failed to fetch data: ${response.status} ${response.statusText}`);
       }
+      // Update loading indicator for download progress
+      showLoadingIndicator(true, "Downloading data...", "Processing response", 30);
       return response.text();
     })
     .then(csvText => {
+      // Update loading indicator for processing
+      showLoadingIndicator(true, "Processing data...", "Preparing visualization", 50);
+      
       // Give charts a moment to initialize
       setTimeout(() => {
         // Set flag that this is auto-loaded data
@@ -4868,16 +5112,21 @@ function autoLoadCurrentData() {
         
         // Mark current month as active
         window.currentMonthActive = true;
+        
+        // Hide loading indicator when completely done
+        showLoadingIndicator(false);
       }, 500);
     })
     .catch(error => {
       console.error("Error loading current month data:", error);
-      showEnhancedMessage("", "error", {
+      showMessage("", "error", {
         "Status": "Failed to load current month award data. Please try again later."
       });
+      
+      // Hide loading indicator with error message
+      showLoadingIndicator(false);
     });
 }
-
 // Function to load archived month data
 function loadArchivedMonthData(archiveMonth) {
   // Show loading message
@@ -5327,5 +5576,89 @@ document.addEventListener('DOMContentLoaded', function initAutoLoad() {
 // Expose functions for potential manual use
 window.loadCurrentMonthData = autoLoadCurrentData;
 window.loadArchivedMonth = loadArchivedMonthData;
+// Loading indicator functionality
+function showLoadingIndicator(isLoading, message = "Loading data...", details = "", progress = -1) {
+  // Create loading overlay if it doesn't exist
+  let loadingOverlay = document.getElementById('loadingOverlay');
+  
+  if (!loadingOverlay && isLoading) {
+    loadingOverlay = document.createElement('div');
+    loadingOverlay.id = 'loadingOverlay';
+    loadingOverlay.innerHTML = `
+      <div class="loading-spinner">
+        <i class="fas fa-circle-notch fa-spin"></i>
+        <div class="loading-message" id="loadingMessage">${message}</div>
+        <div class="loading-details" id="loadingDetails">${details}</div>
+        <div class="loading-progress">
+          <div class="loading-progress-bar" id="loadingProgressBar"></div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(loadingOverlay);
+  }
+  
+  // Show or hide the overlay
+  if (loadingOverlay) {
+    if (isLoading) {
+      loadingOverlay.style.display = 'flex';
+      
+      // Update message and details if provided
+      const msgEl = document.getElementById('loadingMessage');
+      const detailsEl = document.getElementById('loadingDetails');
+      const progressBar = document.getElementById('loadingProgressBar');
+      
+      if (msgEl) msgEl.textContent = message;
+      
+      if (detailsEl) {
+        if (details) {
+          detailsEl.textContent = details;
+          detailsEl.style.display = 'block';
+        } else {
+          detailsEl.style.display = 'none';
+        }
+      }
+      
+      // Handle progress bar
+      if (progressBar) {
+        if (progress >= 0 && progress <= 100) {
+          progressBar.style.width = `${progress}%`;
+          progressBar.parentElement.style.display = 'block';
+        } else {
+          // Indeterminate progress or no progress specified
+          progressBar.style.width = '100%';
+          progressBar.style.animation = 'loading-progress 1.5s infinite ease-in-out';
+          progressBar.parentElement.style.display = 'block';
+        }
+      }
+    } else {
+      // Add a fade-out effect before removing
+      loadingOverlay.style.opacity = '0';
+      setTimeout(() => {
+        loadingOverlay.style.display = 'none';
+        loadingOverlay.style.opacity = '1';
+      }, 300);
+    }
+  }
+}
+
+// Helper function to update loading progress without recreating the overlay
+function updateLoadingProgress(progress, message = null, details = null) {
+  const progressBar = document.getElementById('loadingProgressBar');
+  const msgEl = document.getElementById('loadingMessage');
+  const detailsEl = document.getElementById('loadingDetails');
+  
+  if (progressBar && progress >= 0 && progress <= 100) {
+    progressBar.style.width = `${progress}%`;
+  }
+  
+  if (msgEl && message !== null) {
+    msgEl.textContent = message;
+  }
+  
+  if (detailsEl && details !== null) {
+    detailsEl.textContent = details;
+    detailsEl.style.display = details ? 'block' : 'none';
+  }
+}
 </script>
 </html>
