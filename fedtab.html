@@ -1808,7 +1808,16 @@ document.addEventListener('DOMContentLoaded', function() {
     // Show initial message
     showMessage("Select a CSV file to begin analysis.", "info");
 });
-
+document.addEventListener('DOMContentLoaded', function() {
+  // Clean the URL if it contains parameters, without reloading the page
+  if (window.location.search) {
+    const cleanUrl = window.location.protocol + "//" + 
+                     window.location.host + 
+                     window.location.pathname;
+    window.history.replaceState({}, document.title, cleanUrl);
+    console.log("URL parameters cleared");
+  }
+});
 // Add CSS for dark mode text in Sankey chart
 function addDarkModeSankeyStyles() {
     const styleElement = document.createElement('style');
