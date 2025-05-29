@@ -2712,79 +2712,103 @@ App.ui = {
       sidebarStatusElement.className += ' ' + type;
     }
   },
+/**
+ * Generate natural language description of filters
+ */
+generateNaturalDescription: function(filters) {
+  // Only include period text for auto-loaded data
+  let periodText = "";
+  if (App.data.isAutoLoadedData && App.data.periodDescription) {
+    periodText = App.data.periodDescription;
+  }
   
-  /**
-   * Generate natural language description of filters
-   */
-  generateNaturalDescription: function(filters) {
-    // Only include period text for auto-loaded data
-    let periodText = "";
-    if (App.data.isAutoLoadedData && App.data.periodDescription) {
-      periodText = App.data.periodDescription;
-    }
-    
-    if (!filters || Object.keys(filters).length === 0) {
-      return `Viewing all Awards ${periodText}`;
-    }
-    
-    // Extract key filter components
-    const agency = filters["Agency"] || "";
-    const vendor = filters["Vendor"] || "";
-    const month = filters["Month"] || "";
-    const year = filters["Year"] || "";
-    const searchTerm = filters["Search"] || "";
-    const naicsCode = filters["NAICS"] || "";
-    const naicsDesc = filters["NAICS Description"] || "";
-    
-    // Start building the natural language description
-    let description = "";
-    
-    // Build agency/vendor/date part of the description
-    if (agency) {
-      description += `${agency} awards `;
-    } else {
-      description += "Awards ";
-    }
-    
-    if (vendor) {
-      description += `to ${vendor} `;
-    }
-    
-    // Use month/year from filters if specified, otherwise use the detected period
-    if (month && year) {
-      description += `from ${month} ${year} `;
-    } else if (month) {
-      description += `from ${month} `;
-    } else if (year) {
-      description += `from ${year} `;
-    } else if (periodText && !filters["Month"] && !filters["Year"] && App.data.isAutoLoadedData) {
-      // Only add the period text if no specific month/year filter is applied
-      description += `${periodText} `;
-    }
-    
-    // Add NAICS information
-    if (naicsCode && naicsDesc) {
-      description += `for ${naicsDesc} (NAICS ${naicsCode}) `;
-    } else if (naicsCode) {
-      description += `with NAICS code ${naicsCode} `;
-    } else if (naicsDesc) {
-      description += `for ${naicsDesc} `;
-    }
-    
-    // Add search term
-    if (searchTerm) {
-      description += `containing "${searchTerm}" `;
-    }
-    
-    // Clean up the description
-    description = description.trim();
-    if (!description.endsWith(".")) {
-      description += ".";
-    }
-    
-    return description;
-  },
+  if (!filters || Object.keys(filters).length === 0) {
+    return `Viewing all Awards ${periodText}`;
+  }
   
+  // Extract key filter components
+  const agency = filters["Agency"] || "";
+  const vendor = filters["Vendor"] || "";
+  const month = filters["Month"] || "";
+  const year = filters["Year"] || "";
+  const searchTerm = filters["Search"] || "";
+  const naicsCode = filters["NAICS"] || "";
+  const naicsDesc = filters["NAICS Description"] || "";
+  
+  // Start building the natural language description
+  let description = "";
+  
+  // Build agency/vendor/date part of the description
+  if (agency) {
+    description += `${agency} awards `;
+  } else {
+    description += "Awards ";
+  }
+  
+  if (vendor) {
+    description += `to ${vendor} `;
+  }
+  
+  // Use month/year from filters if specified, otherwise use the detected period
+  if (month && year) {
+    description += `from ${month} ${year} `;
+  } else if (month) {
+    description += `from ${month} `;
+  } else if (year) {
+    description += `from ${year} `;
+  } else if (periodText && !filters["Month"] && !filters["Year"] && App.data.isAutoLoadedData) {
+    // Only add the period text if no specific month/year filter is applied
+    description += `${periodText} `;
+  }
+  
+  // Add NAICS information
+  if (naicsCode && naicsDesc) {
+    description += `for ${naicsDesc} (NAICS ${naicsCode}) `;
+  } else if (naicsCode) {
+    description += `with NAICS code ${naicsCode} `;
+  } else if (naicsDesc) {
+    description += `for ${naicsDesc} `;
+  }
+  
+  // Add search term
+  if (searchTerm) {
+    description += `containing "${searchTerm}" `;
+  }
+  
+  // Clean up the description
+  description = description.trim();
+  if (!description.endsWith(".")) {
+    description += ".";
+  }
+  
+  return description;
+},
+// Add this function to your code, it doesn't replace anything
+updatePeriodDescription: function() {
+  if (!App.data.currentDataPeriod) return "";
+  
+  const startDate = App.data.currentDataPeriod.startDate;
+  const endDate = App.data.currentDataPeriod.endDate;
+  
+  const startMonth = startDate.toLocaleString('default', { month: 'long' });
+  const startYear = startDate.getFullYear();
+  const endMonth = endDate.toLocaleString('default', { month: 'long' });
+  const endDay = endDate.getDate();
+  const endYear = endDate.getFullYear();
+  
+  // Create a more detailed period description
+  let periodText;
+  if (startMonth === endMonth && startYear === endYear) {
+    periodText = `for ${startMonth} ${startYear} through ${endMonth} ${endDay}`;
+  } else {
+    periodText = `for ${startMonth} ${startYear} through ${endMonth} ${endDay}, ${endYear}`;
+  }
+  
+  // Store for future use
+  App.data.periodDescription = periodText;
+  
+  return periodText;
+},
   /**
    * Toggle theme between light and dark mode
    */
@@ -6112,64 +6136,61 @@ App.handlers = {
    }
  },
 
- /**
-  * Detect date range from data
-  */
- detectDateRangeFromData: function() {
-   if (!App.data.allData || App.data.allData.length === 0) {
-     return;
-   }
-   
-   let earliestDate = new Date('9999-12-31');
-   let latestDate = new Date('1970-01-01');
-   
-   // Loop through data to find min and max dates
-   let datesFound = 0;
-   
-   App.data.allData.forEach(item => {
-     if (item.date) {
-       const contractDate = App.utils.parseDate(item.date);
-       if (contractDate) {
-         datesFound++;
-         
-         if (contractDate < earliestDate) earliestDate = contractDate;
-         if (contractDate > latestDate) latestDate = contractDate;
-       }
-     }
-   });
-   
-   // Ensure dates are valid
-   if (earliestDate > latestDate) {
-     // Default to current month
-     const today = new Date();
-     earliestDate = new Date(today.getFullYear(), today.getMonth(), 1);
-     latestDate = today;
-   }
-   
-   // Store the detected date range globally
-   App.data.currentDataPeriod = {
-     startDate: earliestDate,
-     endDate: latestDate,
-     lastUpdated: new Date() // Today's date
-   };
-   
-   // Create the period description for use in status messages
-   const month = App.data.currentDataPeriod.startDate.toLocaleString('default', { month: 'long' });
-   const year = App.data.currentDataPeriod.startDate.getFullYear();
-   App.data.periodDescription = `for ${month} ${year}`;
-   
-   // Show data context info since this is auto-loaded data
-   if (App.data.isAutoLoadedData) {
-     App.ui.showDataContextInfo();
-   } else {
-     App.ui.hideDataContextInfo();
-   }
-   
-   // Update the data context information and status message
-   App.ui.updateDataContext();
-   App.handlers.updateStatusWithPeriodInfo();
- },
-
+/**
+ * Detect date range from data
+ */
+detectDateRangeFromData: function() {
+  if (!App.data.allData || App.data.allData.length === 0) {
+    return;
+  }
+  
+  let earliestDate = new Date('9999-12-31');
+  let latestDate = new Date('1970-01-01');
+  
+  // Loop through data to find min and max dates
+  let datesFound = 0;
+  
+  App.data.allData.forEach(item => {
+    if (item.date) {
+      const contractDate = App.utils.parseDate(item.date);
+      if (contractDate) {
+        datesFound++;
+        
+        if (contractDate < earliestDate) earliestDate = contractDate;
+        if (contractDate > latestDate) latestDate = contractDate;
+      }
+    }
+  });
+  
+  // Ensure dates are valid
+  if (earliestDate > latestDate) {
+    // Default to current month
+    const today = new Date();
+    earliestDate = new Date(today.getFullYear(), today.getMonth(), 1);
+    latestDate = today;
+  }
+  
+  // Store the detected date range globally
+  App.data.currentDataPeriod = {
+    startDate: earliestDate,
+    endDate: latestDate,
+    lastUpdated: new Date() // Today's date
+  };
+  
+  // Update the period description using the new helper function
+  App.handlers.updatePeriodDescription();
+  
+  // Show data context info since this is auto-loaded data
+  if (App.data.isAutoLoadedData) {
+    App.ui.showDataContextInfo();
+  } else {
+    App.ui.hideDataContextInfo();
+  }
+  
+  // Update the data context information and status message
+  App.ui.updateDataContext();
+  App.handlers.updateStatusWithPeriodInfo();
+},
  /**
   * Update status with period information
   */
