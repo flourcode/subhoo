@@ -1379,19 +1379,51 @@ td[title] {
   height: auto !important;         /* Overrides any fixed heights set by JS for desktop */
   min-height: 300px;               /* Ensures cards have a minimum height */
 }
+.logo-group {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+
+a.logo {
+  text-decoration: none;
+}
+
+.logo-text {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  display: block;
+}
+
+.logo-subtitle {
+  display: block;
+  font-size: 0.70rem;
+  font-weight: 400;
+  color: var(--text-secondary);
+  letter-spacing: 0.025em;
+  margin-top: 0.1em;
+}
+
+.sidebar.collapsed .logo-subtitle {
+  display: none;
+}
 </style>
 </head>
 <body>
   <div class="app-container">
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-header">
-        <a href="#" class="logo">
-         <span class="logo-text">fedtab.</span>
-        </a>
-        <button class="header-button" id="themeToggle" aria-label="Toggle Theme">
-          <i class="fas fa-moon" aria-hidden="true"></i>
-        </button>
-      </div>
+  <div class="logo-group">
+    <a href="#" class="logo">
+      <span class="logo-text">FedWon.</span>
+    </a>
+    <span class="logo-subtitle">Federal Awards Viewer</span>
+  </div>
+  <button class="header-button" id="themeToggle" aria-label="Toggle Theme">
+    <i class="fas fa-moon" aria-hidden="true"></i>
+  </button>
+</div>
 
       <div class="sidebar-nav">
         <div class="nav-section">
