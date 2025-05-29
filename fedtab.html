@@ -1938,6 +1938,143 @@ a.logo {
   color: var(--text-secondary);
   font-style: italic;
 }
+/* Style for the search submit button */
+.search-input-container {
+  position: relative;
+  width: 100%;
+}
+
+.search-submit-btn {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 5;
+}
+
+/* Adjust the close button position to not overlap with submit button */
+.close-search {
+  right: 56px !important;
+}
+
+/* Make sure the input has enough padding for both buttons */
+.mobile-search-bar input {
+  padding-right: 100px;
+}
+/* Styles for mobile filter modal */
+.mobile-filter-modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 60px; /* Leave room for bottom nav */
+  background-color: var(--bg-primary);
+  z-index: 999;
+  overflow-y: auto;
+  padding: 1rem;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease-in-out;
+  transform: translateY(100%);
+}
+
+.mobile-filter-modal.active {
+  transform: translateY(0);
+  display: block;
+}
+
+.mobile-filter-modal .modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 0.75rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.mobile-filter-modal .modal-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.mobile-filter-modal .close-button {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.mobile-filter-modal .filter-section {
+  margin-bottom: 1.5rem;
+}
+
+.mobile-filter-modal .filter-section-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.25rem;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.mobile-filter-modal .form-group {
+  margin-bottom: 1rem;
+}
+
+.mobile-filter-modal .form-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 0.25rem;
+  display: block;
+}
+
+.mobile-filter-modal .form-control {
+  width: 100%;
+  padding: 0.75rem;
+  font-size: 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  height: 44px;
+}
+
+.mobile-filter-modal .filter-buttons {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.mobile-filter-modal .filter-buttons .btn {
+  flex: 1;
+  padding: 0.875rem;
+  font-size: 1rem;
+  height: 48px;
+}
+
+.mobile-filter-modal .btn-primary {
+  background-color: var(--primary);
+  color: white;
+}
+
+.mobile-filter-modal .btn-secondary {
+  background-color: var(--bg-tertiary);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+}
 </style>
 </head>
 <body>
@@ -6280,6 +6417,437 @@ document.addEventListener('DOMContentLoaded', function() {
       initMobileNavigation();
     }
   });
+});
+// Improved mobile search functionality
+function initMobileSearch() {
+  console.log("Initializing mobile search functionality");
+  
+  // Get search elements
+  const mobileSearchBar = document.getElementById('mobileSearchBar');
+  const mobileSearchInput = document.getElementById('mobileSearchInput');
+  const unifiedSearch = document.getElementById('unifiedSearch');
+  const closeSearchBtn = document.getElementById('closeSearchBtn');
+  
+  if (!mobileSearchBar || !mobileSearchInput) {
+    console.error("Mobile search elements not found");
+    return;
+  }
+  
+  // Function to apply search
+  function applyMobileSearch() {
+    console.log("Applying mobile search");
+    
+    // First, sync with unified search
+    if (unifiedSearch) {
+      unifiedSearch.value = mobileSearchInput.value;
+    }
+    
+    // Apply the search by calling the global filter function
+    if (typeof applyAllFilters === 'function') {
+      applyAllFilters();
+    } else {
+      console.error("applyAllFilters function not found");
+    }
+    
+    // Hide the search bar
+    mobileSearchBar.classList.remove('active');
+    
+    // Set dashboard button as active
+    const dashboardBtn = document.getElementById('dashboardBtn');
+    if (dashboardBtn) {
+      const bottomBar = document.getElementById('mobileBottomBar');
+      if (bottomBar) {
+        const buttons = bottomBar.querySelectorAll('.nav-button');
+        buttons.forEach(btn => btn.classList.remove('active'));
+        dashboardBtn.classList.add('active');
+      }
+    }
+    
+    console.log("Mobile search applied with term:", mobileSearchInput.value);
+  }
+  
+  // Add event listener for Enter key
+  mobileSearchInput.addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+      e.preventDefault(); // Prevent form submission if in a form
+      console.log("Enter key pressed in search");
+      applyMobileSearch();
+    }
+  });
+  
+  // Add search button to the mobile search bar if it doesn't exist
+  if (!document.getElementById('mobileSearchSubmitBtn')) {
+    const searchSubmitBtn = document.createElement('button');
+    searchSubmitBtn.id = 'mobileSearchSubmitBtn';
+    searchSubmitBtn.className = 'search-submit-btn';
+    searchSubmitBtn.innerHTML = '<i class="fas fa-arrow-right"></i>';
+    searchSubmitBtn.type = 'button';
+    
+    // Add the button to the search bar
+    const searchInputContainer = mobileSearchBar.querySelector('.search-input-container');
+    if (searchInputContainer) {
+      searchInputContainer.appendChild(searchSubmitBtn);
+    } else {
+      mobileSearchBar.appendChild(searchSubmitBtn);
+    }
+    
+    // Add event listener to the button
+    searchSubmitBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      console.log("Search submit button clicked");
+      applyMobileSearch();
+    });
+  }
+  
+  // Ensure the close button works
+  if (closeSearchBtn) {
+    closeSearchBtn.addEventListener('click', function() {
+      mobileSearchBar.classList.remove('active');
+      
+      // Set dashboard button as active
+      const dashboardBtn = document.getElementById('dashboardBtn');
+      if (dashboardBtn) {
+        const bottomBar = document.getElementById('mobileBottomBar');
+        if (bottomBar) {
+          const buttons = bottomBar.querySelectorAll('.nav-button');
+          buttons.forEach(btn => btn.classList.remove('active'));
+          dashboardBtn.classList.add('active');
+        }
+      }
+    });
+  }
+  
+  console.log("Mobile search functionality initialized");
+}
+
+// Call this function on page load
+document.addEventListener('DOMContentLoaded', function() {
+  if (window.innerWidth < 768) {
+    initMobileSearch();
+  }
+});
+// Improved filter modal function
+function showMobileFilterModal() {
+  console.log("Showing mobile filter modal");
+  
+  // Get or create the filter modal
+  let filterModal = document.getElementById('mobileFilterModal');
+  if (!filterModal) {
+    console.log("Creating new filter modal");
+    
+    // Create the modal structure
+    filterModal = document.createElement('div');
+    filterModal.id = 'mobileFilterModal';
+    filterModal.className = 'mobile-filter-modal';
+    
+    filterModal.innerHTML = `
+      <div class="modal-header">
+        <div class="modal-title">Filter Options</div>
+        <button class="close-button" id="closeFilterBtn">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="modal-content" id="mobileFilterContent">
+        <!-- This will be populated with filter options -->
+      </div>
+    `;
+    
+    document.body.appendChild(filterModal);
+    
+    // Add event listener to close button
+    const closeBtn = filterModal.querySelector('#closeFilterBtn');
+    if (closeBtn) {
+      closeBtn.addEventListener('click', function() {
+        filterModal.classList.remove('active');
+        
+        // Set dashboard button as active
+        const dashboardBtn = document.getElementById('dashboardBtn');
+        if (dashboardBtn) {
+          const bottomBar = document.getElementById('mobileBottomBar');
+          if (bottomBar) {
+            const buttons = bottomBar.querySelectorAll('.nav-button');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            dashboardBtn.classList.add('active');
+          }
+        }
+      });
+    }
+  }
+  
+  // Get the filter content container
+  const filterContent = document.getElementById('mobileFilterContent');
+  if (!filterContent) {
+    console.error("Filter content container not found");
+    return;
+  }
+  
+  // Clear existing content
+  filterContent.innerHTML = '';
+  
+  // Create a function to add filter sections
+  function addFilterSection(title, content) {
+    const section = document.createElement('div');
+    section.className = 'filter-section';
+    
+    const sectionTitle = document.createElement('div');
+    sectionTitle.className = 'filter-section-title';
+    sectionTitle.textContent = title;
+    
+    section.appendChild(sectionTitle);
+    section.appendChild(content);
+    
+    return section;
+  }
+  
+  // Create date filter section
+  const dateFilterContent = document.createElement('div');
+  dateFilterContent.className = 'date-filter-content';
+  
+  // Create month filter
+  const monthGroup = document.createElement('div');
+  monthGroup.className = 'form-group';
+  monthGroup.innerHTML = `
+    <label class="form-label">Month</label>
+    <select id="mobileMonthFilter" class="form-control">
+      <option value="">All Months</option>
+      <option value="Jan">January</option>
+      <option value="Feb">February</option>
+      <option value="Mar">March</option>
+      <option value="Apr">April</option>
+      <option value="May">May</option>
+      <option value="Jun">June</option>
+      <option value="Jul">July</option>
+      <option value="Aug">August</option>
+      <option value="Sep">September</option>
+      <option value="Oct">October</option>
+      <option value="Nov">November</option>
+      <option value="Dec">December</option>
+    </select>
+  `;
+  dateFilterContent.appendChild(monthGroup);
+  
+  // Create year filter
+  const yearGroup = document.createElement('div');
+  yearGroup.className = 'form-group';
+  yearGroup.innerHTML = `
+    <label class="form-label">Year</label>
+    <select id="mobileYearFilter" class="form-control">
+      <option value="">All Years</option>
+    </select>
+  `;
+  dateFilterContent.appendChild(yearGroup);
+  
+  // Populate year options
+  const yearSelect = yearGroup.querySelector('#mobileYearFilter');
+  const originalYearFilter = document.getElementById('yearFilter');
+  
+  if (yearSelect && originalYearFilter) {
+    // Copy options from original year filter
+    Array.from(originalYearFilter.options).forEach(option => {
+      const newOption = document.createElement('option');
+      newOption.value = option.value;
+      newOption.textContent = option.textContent;
+      if (option.selected) newOption.selected = true;
+      yearSelect.appendChild(newOption);
+    });
+  } else {
+    // Fallback: add some default years
+    const currentYear = new Date().getFullYear();
+    for (let year = currentYear; year >= currentYear - 5; year--) {
+      const option = document.createElement('option');
+      option.value = year;
+      option.textContent = year;
+      yearSelect.appendChild(option);
+    }
+  }
+  
+  // Add date filter section
+  filterContent.appendChild(addFilterSection('Date Filters', dateFilterContent));
+  
+  // Create contract filter section
+  const contractFilterContent = document.createElement('div');
+  contractFilterContent.className = 'contract-filter-content';
+  
+  // Add NAICS filter
+  const naicsGroup = document.createElement('div');
+  naicsGroup.className = 'form-group';
+  naicsGroup.innerHTML = `
+    <label class="form-label">NAICS Code</label>
+    <select id="mobileNaicsFilter" class="form-control">
+      <option value="">All NAICS Codes</option>
+    </select>
+  `;
+  contractFilterContent.appendChild(naicsGroup);
+  
+  // Add Agency filter
+  const agencyGroup = document.createElement('div');
+  agencyGroup.className = 'form-group';
+  agencyGroup.innerHTML = `
+    <label class="form-label">Agency</label>
+    <select id="mobileAgencyFilter" class="form-control">
+      <option value="">All Agencies</option>
+    </select>
+  `;
+  contractFilterContent.appendChild(agencyGroup);
+  
+  // Add Office filter
+  const officeGroup = document.createElement('div');
+  officeGroup.className = 'form-group';
+  officeGroup.innerHTML = `
+    <label class="form-label">Office</label>
+    <select id="mobileOfficeFilter" class="form-control">
+      <option value="">All Offices</option>
+    </select>
+  `;
+  contractFilterContent.appendChild(officeGroup);
+  
+  // Add Vendor filter
+  const vendorGroup = document.createElement('div');
+  vendorGroup.className = 'form-group';
+  vendorGroup.innerHTML = `
+    <label class="form-label">Vendor</label>
+    <select id="mobileVendorFilter" class="form-control">
+      <option value="">All Vendors</option>
+    </select>
+  `;
+  contractFilterContent.appendChild(vendorGroup);
+  
+  // Add contract filter section
+  filterContent.appendChild(addFilterSection('Contract Filters', contractFilterContent));
+  
+  // Populate filter dropdowns from original filters
+  const filterMap = {
+    'naicsFilter': 'mobileNaicsFilter',
+    'agencyFilter': 'mobileAgencyFilter',
+    'officeFilter': 'mobileOfficeFilter',
+    'vendorFilter': 'mobileVendorFilter',
+    'monthFilter': 'mobileMonthFilter',
+    'yearFilter': 'mobileYearFilter'
+  };
+  
+  // Copy options from original filters to mobile filters
+  for (const [originalId, mobileId] of Object.entries(filterMap)) {
+    const originalFilter = document.getElementById(originalId);
+    const mobileFilter = document.getElementById(mobileId);
+    
+    if (originalFilter && mobileFilter) {
+      // First remove all options except the first one (All...)
+      while (mobileFilter.options.length > 1) {
+        mobileFilter.remove(1);
+      }
+      
+      // Then copy options from original filter
+      Array.from(originalFilter.options).forEach((option, index) => {
+        if (index === 0) {
+          // Keep the first option but sync its selection state
+          mobileFilter.options[0].selected = option.selected;
+        } else {
+          const newOption = document.createElement('option');
+          newOption.value = option.value;
+          newOption.textContent = option.textContent;
+          newOption.selected = option.selected;
+          mobileFilter.appendChild(newOption);
+        }
+      });
+    }
+  }
+  
+  // Add buttons
+  const buttonContainer = document.createElement('div');
+  buttonContainer.className = 'filter-buttons';
+  buttonContainer.innerHTML = `
+    <button id="mobileApplyFiltersBtn" class="btn btn-primary">Apply Filters</button>
+    <button id="mobileClearFiltersBtn" class="btn btn-secondary">Clear Filters</button>
+  `;
+  filterContent.appendChild(buttonContainer);
+  
+  // Add event listeners to buttons
+  const applyBtn = document.getElementById('mobileApplyFiltersBtn');
+  const clearBtn = document.getElementById('mobileClearFiltersBtn');
+  
+  if (applyBtn) {
+    applyBtn.addEventListener('click', function() {
+      // Sync mobile filters to original filters
+      for (const [originalId, mobileId] of Object.entries(filterMap)) {
+        const originalFilter = document.getElementById(originalId);
+        const mobileFilter = document.getElementById(mobileId);
+        
+        if (originalFilter && mobileFilter) {
+          originalFilter.value = mobileFilter.value;
+        }
+      }
+      
+      // Apply filters
+      if (typeof applyAllFilters === 'function') {
+        applyAllFilters();
+      }
+      
+      // Hide modal
+      filterModal.classList.remove('active');
+      
+      // Set dashboard button as active
+      const dashboardBtn = document.getElementById('dashboardBtn');
+      if (dashboardBtn) {
+        const bottomBar = document.getElementById('mobileBottomBar');
+        if (bottomBar) {
+          const buttons = bottomBar.querySelectorAll('.nav-button');
+          buttons.forEach(btn => btn.classList.remove('active'));
+          dashboardBtn.classList.add('active');
+        }
+      }
+    });
+  }
+  
+  if (clearBtn) {
+    clearBtn.addEventListener('click', function() {
+      // Reset all mobile filters
+      for (const mobileId of Object.values(filterMap)) {
+        const mobileFilter = document.getElementById(mobileId);
+        if (mobileFilter) {
+          mobileFilter.selectedIndex = 0;
+        }
+      }
+    });
+  }
+  
+  // Show the modal
+  filterModal.classList.add('active');
+  
+  console.log("Mobile filter modal displayed");
+}
+
+// Update the filter button click handler
+document.addEventListener('DOMContentLoaded', function() {
+  const filterBtn = document.getElementById('filterBtn');
+  
+  if (filterBtn) {
+    console.log("Adding event listener to filter button");
+    
+    // Remove any existing event listeners
+    filterBtn.replaceWith(filterBtn.cloneNode(true));
+    
+    // Get the fresh reference
+    const newFilterBtn = document.getElementById('filterBtn');
+    
+    // Add the event listener
+    if (newFilterBtn) {
+      newFilterBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        console.log("Filter button clicked");
+        
+        // Set this button as active
+        const bottomBar = document.getElementById('mobileBottomBar');
+        if (bottomBar) {
+          const buttons = bottomBar.querySelectorAll('.nav-button');
+          buttons.forEach(btn => btn.classList.remove('active'));
+          this.classList.add('active');
+        }
+        
+        // Show the filter modal
+        showMobileFilterModal();
+      });
+    }
+  }
 });
 // Add this to your initMobileNavigation function
 function initMobileFooter() {
