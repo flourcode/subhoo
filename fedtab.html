@@ -229,7 +229,7 @@ body {
 
 .logo-subtitle {
   display: block;
-  font-size: 0.70rem;
+  font-size: 0.9rem;
   font-weight: 400;
   color: var(--text-secondary);
   letter-spacing: 0.025em;
@@ -1812,6 +1812,257 @@ th.sort-desc .sort-icon:after {
 #loadBtn.btn.btn-primary {
   width: 100%;
 }
+/* Enhanced theme toggle icon styles */
+.sidebar .header-button#themeToggle {
+  padding: 8px;
+  height: 36px;
+  width: 36px;
+  border-radius: 50%;
+  background-color: rgba(var(--primary-rgb), 0.1);
+  color: var(--text-primary); /* Match logo-title color */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.sidebar .header-button#themeToggle:hover {
+  background-color: rgba(var(--primary-rgb), 0.15);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.sidebar .header-button#themeToggle:active {
+  transform: translateY(0);
+}
+
+.sidebar .header-button#themeToggle i {
+  font-size: 16px;
+  transition: transform 0.3s ease, color 0.3s ease;
+}
+
+/* Subtle animation when switching themes */
+.sidebar .header-button#themeToggle i.fa-sun {
+  color: #f6ad55; /* A warm sun color */
+  transform: rotate(0deg);
+}
+
+.sidebar .header-button#themeToggle i.fa-moon {
+  color: var(--text-primary); /* Match logo color */
+  transform: rotate(-20deg);
+}
+
+/* Mobile header theme toggle styles */
+#mobileThemeToggle {
+  padding: 8px;
+  height: 36px;
+  width: 36px;
+  border-radius: 50%;
+  background-color: rgba(var(--primary-rgb), 0.1);
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+#mobileThemeToggle:hover {
+  background-color: rgba(var(--primary-rgb), 0.15);
+}
+
+#mobileThemeToggle i {
+  font-size: 16px;
+  transition: transform 0.3s ease, color 0.3s ease;
+}
+
+#mobileThemeToggle i.fa-sun {
+  color: #f6ad55;
+  transform: rotate(0deg);
+}
+
+#mobileThemeToggle i.fa-moon {
+  color: var(--text-primary);
+  transform: rotate(-20deg);
+}
+
+/* Dark mode specific adjustments */
+[data-theme="dark"] .sidebar .header-button#themeToggle,
+[data-theme="dark"] #mobileThemeToggle {
+  background-color: rgba(var(--primary-rgb), 0.2);
+}
+
+[data-theme="dark"] .sidebar .header-button#themeToggle:hover,
+[data-theme="dark"] #mobileThemeToggle:hover {
+  background-color: rgba(var(--primary-rgb), 0.25);
+}
+
+[data-theme="dark"] .sidebar .header-button#themeToggle i.fa-sun {
+  color: #ffffff;
+}
+
+[data-theme="dark"] .sidebar .header-button#themeToggle i.fa-moon,
+[data-theme="dark"] #mobileThemeToggle i.fa-moon {
+  color: #a3bffa; /* Light bluish color for moon in dark mode */
+}
+/* Loading Overlay - Make it work on all screen sizes */
+#loadingOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.3s ease;
+}
+
+.loading-spinner {
+  background-color: var(--bg-primary);
+  padding: 2rem;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  max-width: 80%;
+  width: 400px; /* Set a fixed width for desktop */
+  text-align: center;
+}
+
+.loading-spinner i {
+  font-size: 2.5rem;
+  color: var(--primary);
+  animation: spin 1.5s linear infinite;
+}
+
+.loading-spinner .loading-message {
+  font-size: 1.125rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-top: 0.5rem;
+}
+
+.loading-spinner .loading-details {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin-top: 0.25rem;
+}
+
+[data-theme="dark"] .loading-spinner {
+  background-color: var(--bg-dark);
+}
+
+/* Animation for the spinner */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Loading Progress Bar */
+.loading-progress {
+  width: 100%;
+  height: 4px;
+  background-color: var(--bg-tertiary);
+  border-radius: 2px;
+  margin-top: 0.5rem;
+  overflow: hidden;
+}
+
+.loading-progress-bar {
+  height: 100%;
+  background-color: var(--primary);
+  border-radius: 2px;
+  width: 0%;
+  transition: width 0.3s ease;
+}
+
+@keyframes loading-progress {
+  0% { width: 0%; opacity: 0.1; }
+  50% { width: 100%; opacity: 0.8; }
+  100% { width: 0%; opacity: 0.1; }
+}
+
+/* Make sure desktop is not hiding these elements */
+@media (min-width: 768px) {
+  #loadingOverlay,
+  .loading-spinner,
+  .loading-progress {
+    display: flex; /* Ensure they're visible on desktop */
+  }
+  
+  /* Position the loading overlay relative to the main content area on desktop */
+  .main-wrapper #loadingOverlay {
+    left: var(--sidebar-width); /* Adjust based on your sidebar width */
+  }
+  
+  /* When sidebar is collapsed */
+  .sidebar.collapsed + .main-wrapper #loadingOverlay {
+    left: var(--sidebar-collapsed-width);
+  }
+}
+/* Status Messages - Consistent across devices */
+.main-status-container {
+  margin-bottom: 1.5rem;
+  width: 100%;
+}
+
+.main-status-wrapper {
+  background-color: var(--bg-primary);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: 1.25rem 1.5rem;
+  transition: all 0.3s ease;
+  color: var(--text-primary);
+}
+
+.main-status-message {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.status-heading {
+  font-size: 1.5rem; /* Slightly smaller than mobile for consistency */
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.status-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.status-filter-tag {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  background-color: var(--bg-tertiary);
+  border-radius: var(--radius);
+  font-size: 0.875rem;
+  color: var(--text-primary);
+}
+
+@media (min-width: 768px) {
+  /* Ensure desktop status message looks consistent with mobile */
+  .status-heading {
+    font-size: 1.5rem; /* Match mobile size */
+  }
+  
+  .main-status-wrapper {
+    box-shadow: var(--shadow-sm); /* Ensure shadow is visible on desktop */
+  }
+}
 </style>
 </head>
 <body>
@@ -1821,7 +2072,7 @@ th.sort-desc .sort-icon:after {
       <div class="sidebar-header">
         <div class="logo-group">
           <a href="#" class="logo">
-            <span class="logo-text"><i class="fa-solid fa-flag-usa"></i> FedWon.</span>
+            <span class="logo-text"><i class="fa-solid fa-flag-usa"></i> FedWon</span>
           </a>
           <span class="logo-subtitle">Federal Awards Viewer</span>
         </div>
@@ -6165,7 +6416,72 @@ App.init = function() {
      }
    });
  }
- 
+ /**
+ * Show loading indicator
+ */
+App.ui.showLoadingIndicator = function(isLoading, message = "Loading data...", details = "", progress = -1) {
+  // Create loading overlay if it doesn't exist
+  let loadingOverlay = document.getElementById('loadingOverlay');
+  
+  if (!loadingOverlay && isLoading) {
+    loadingOverlay = document.createElement('div');
+    loadingOverlay.id = 'loadingOverlay';
+    loadingOverlay.innerHTML = `
+      <div class="loading-spinner">
+        <i class="fas fa-circle-notch fa-spin"></i>
+        <div class="loading-message" id="loadingMessage">${message}</div>
+        <div class="loading-details" id="loadingDetails">${details}</div>
+        <div class="loading-progress">
+          <div class="loading-progress-bar" id="loadingProgressBar"></div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(loadingOverlay);
+  }
+  
+  // Show or hide the overlay
+  if (loadingOverlay) {
+    if (isLoading) {
+      loadingOverlay.style.display = 'flex';
+      
+      // Update message and details if provided
+      const msgEl = document.getElementById('loadingMessage');
+      const detailsEl = document.getElementById('loadingDetails');
+      const progressBar = document.getElementById('loadingProgressBar');
+      
+      if (msgEl) msgEl.textContent = message;
+      
+      if (detailsEl) {
+        if (details) {
+          detailsEl.textContent = details;
+          detailsEl.style.display = 'block';
+        } else {
+          detailsEl.style.display = 'none';
+        }
+      }
+      
+      // Handle progress bar
+      if (progressBar) {
+        if (progress >= 0 && progress <= 100) {
+          progressBar.style.width = `${progress}%`;
+          progressBar.parentElement.style.display = 'block';
+        } else {
+          // Indeterminate progress or no progress specified
+          progressBar.style.width = '100%';
+          progressBar.style.animation = 'loading-progress 1.5s infinite ease-in-out';
+          progressBar.parentElement.style.display = 'block';
+        }
+      }
+    } else {
+      // Add a fade-out effect before removing
+      loadingOverlay.style.opacity = '0';
+      setTimeout(() => {
+        loadingOverlay.style.display = 'none';
+        loadingOverlay.style.opacity = '1';
+      }, 300);
+    }
+  }
+};
  // Set up dashboard layout
  App.charts.setupDashboardGrid();
  
