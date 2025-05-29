@@ -2144,7 +2144,7 @@ a.logo {
 	 <div id="mainStatusContainer" class="main-status-container">
   <div class="main-status-wrapper">
     <div id="mainStatusMessage" class="main-status-message">
-      <h2 class="status-heading" id="statusHeading">Viewing all contract data with no filters applied.</h2>
+      <h2 class="status-heading" id="statusHeading">Viewing all Awards</h2>
     </div>
     <div id="statusFilters" class="status-filters"></div>
   </div>
@@ -5383,7 +5383,7 @@ function generateNaturalDescription(filters) {
   }
   
   if (!filters || Object.keys(filters).length === 0) {
-    return `Viewing all available contract data ${periodText} with no filters applied.`;
+    return `Viewing all Awards ${periodText}`;
   }
   
   // Extract key filter components
@@ -5535,7 +5535,7 @@ window.showMessage = function(primaryMessage, type, filters) {
 // Update the messages when the page loads
 document.addEventListener('DOMContentLoaded', function() {
   // Initialize with default message
-  showEnhancedMessage("Viewing all contract data", "info", {});
+  showEnhancedMessage("Viewing all Awards", "info", {});
   
   // Override functions that might show messages
   hookIntoFilterFunctions();
@@ -6104,7 +6104,7 @@ function generateNaturalDescription(filters) {
   }
   
   if (!filters || Object.keys(filters).length === 0) {
-    return `Viewing all available contract data ${periodText} with no filters applied.`;
+    return `Viewing all Awards ${periodText}`;
   }
   
   // Extract key filter components
@@ -6116,13 +6116,13 @@ function generateNaturalDescription(filters) {
   const naicsCode = filters["NAICS Code"] || "";
   const naicsDesc = filters["NAICS"] || "";
   // Start building the natural language description
-  let description = "You're viewing ";
+  let description = "";
   
   // Build agency/vendor/date part of the description
   if (agency) {
     description += `${agency} awards `;
   } else {
-    description += "awards ";
+    description += "Awards ";
   }
   
   if (vendor) {
