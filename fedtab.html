@@ -2046,6 +2046,62 @@ a.logo {
     grid-template-columns: 1fr; /* Keep as is for mobile */
   }
 }
+/* Add this CSS for the mobile header */
+@media (max-width: 767px) {
+    .mobile-header {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 0.75rem 1rem;
+        background-color: var(--bg-primary);
+        border-bottom: 1px solid var(--border-light);
+        margin-bottom: 1rem;
+        box-shadow: var(--shadow-sm);
+        text-align: center;
+    }
+    
+    .mobile-header .logo-group {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .mobile-header .logo-text {
+        font-size: 1.75rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        line-height: 1.2;
+    }
+    
+    .mobile-header .logo-subtitle {
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        margin-top: 0.1rem;
+    }
+    
+    /* Ensure the main status container doesn't have unnecessary margin at top */
+    .main-status-container {
+        margin-top: 0;
+    }
+}
+@media (max-width: 767px) {
+    /* Adjust main content padding */
+    .main-content {
+        padding-top: 0; /* No top padding since the header provides spacing */
+        padding-bottom: 70px; /* Keep bottom padding for the nav bar */
+    }
+    
+    /* Ensure status container has proper spacing */
+    .main-status-container {
+        margin-top: 0;
+    }
+}
+@media (max-width: 767px) {
+    /* Hide the sidebar logo on mobile */
+    .sidebar .logo-group {
+        display: none;
+    }
+}
 </style>
 </head>
 <body>
@@ -2222,13 +2278,6 @@ a.logo {
     <i class="fas fa-undo"></i>
     <span>Reset</span>
   </button>
-</div>
-<!-- Add this HTML right after the mobile bottom bar -->
-<div class="mobile-footer" id="mobileFooter">
-  <div class="logo-group mobile-logo">
-    <span class="logo-text">FedWon.</span>
-    <span class="logo-subtitle">Federal Awards Viewer</span>
-  </div>
 </div>
 <!-- Mobile search bar -->
 <div class="mobile-search-bar" id="mobileSearchBar">
@@ -6810,44 +6859,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 });
-// Add this to your initMobileNavigation function
-function initMobileFooter() {
-  const footer = document.getElementById('mobileFooter');
-  if (!footer) return;
-  
-  let lastScrollTop = 0;
-  let isFooterVisible = true;
-  
-  // Hide footer when scrolling down, show when scrolling up
-  window.addEventListener('scroll', function() {
-    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-    
-    // Don't do anything for small scroll amounts
-    if (Math.abs(lastScrollTop - scrollTop) < 10) return;
-    
-    if (scrollTop > lastScrollTop && scrollTop > 100) {
-      // Scrolling down and not at the top
-      if (isFooterVisible) {
-        footer.style.transform = 'translateY(40px)';
-        isFooterVisible = false;
-      }
-    } else {
-      // Scrolling up
-      if (!isFooterVisible) {
-        footer.style.transform = 'translateY(0)';
-        isFooterVisible = true;
-      }
-    }
-    
-    lastScrollTop = scrollTop;
-  }, { passive: true });
-  
-  // Add transition for smooth hiding/showing
-  footer.style.transition = 'transform 0.3s ease';
-}
 
-// Call this function
-initMobileFooter();
 // Add this function to your JavaScript - it will be our dedicated function for resetting
 function handleMobileReset() {
   console.log("Mobile reset initiated");
@@ -7131,6 +7143,54 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     }
   }
+});
+// Add this function to create a mobile header
+function createMobileHeader() {
+    console.log("Creating mobile header with logo");
+    
+    // Check if it already exists
+    if (document.getElementById('mobileHeader')) return;
+    
+    // Create the header element
+    const mobileHeader = document.createElement('div');
+    mobileHeader.id = 'mobileHeader';
+    mobileHeader.className = 'mobile-header';
+    
+    // Add the logo and subtitle
+    mobileHeader.innerHTML = `
+        <div class="logo-group mobile-logo">
+            <span class="logo-text">FedWon.</span>
+            <span class="logo-subtitle">Federal Awards Viewer</span>
+        </div>
+    `;
+    
+    // Find where to insert it - at the top of main-content
+    const mainContent = document.querySelector('.main-content');
+    if (mainContent && mainContent.firstChild) {
+        mainContent.insertBefore(mobileHeader, mainContent.firstChild);
+    } else if (mainContent) {
+        mainContent.appendChild(mobileHeader);
+    } else {
+        console.error("Could not find main-content to insert mobile header");
+    }
+}
+
+// Call this function when the page loads on mobile
+document.addEventListener('DOMContentLoaded', function() {
+    if (window.innerWidth < 768) {
+        createMobileHeader();
+    }
+});
+
+// Also call it on resize, in case of orientation change
+window.addEventListener('resize', function() {
+    if (window.innerWidth < 768) {
+        createMobileHeader();
+    } else {
+        // Remove mobile header when switching to desktop
+        const mobileHeader = document.getElementById('mobileHeader');
+        if (mobileHeader) mobileHeader.remove();
+    }
 });
 </script>
 </html>
