@@ -1016,7 +1016,7 @@ td[title] {
 }
 
 .status-heading {
-  font-size: 2rem;
+  font-size: 1.5rem;
   font-weight: 700;
   color: var(--text-primary);
   margin: 0;
@@ -1367,7 +1367,7 @@ td[title] {
   }
   Make sure these existing rules are present and correctly formatted.
 */
-/* fedtab.html @media (max-width: 767px) */
+/* @media (max-width: 767px) */
 .dashboard-grid {
   grid-template-columns: 1fr !important; /* This should force a single column */
   grid-template-rows: auto !important;   /* Rows adjust to content */
@@ -1428,9 +1428,6 @@ a.logo {
       <div class="sidebar-nav">
         <div class="nav-section">
           <div class="search-container">
-            <div class="search-header">
-              <h2 class="search-title">Search & Filter</h2>
-            </div>
             <div class="filter-container">
               <div class="form-group">
              <input type="text" id="unifiedSearch" placeholder="Search across all contract fields..." class="form-control">
@@ -1550,30 +1547,6 @@ a.logo {
           </div>
         </div>
 
-        <div class="table-container" id="targetTableContainer">
-          <div class="table-header">
-            <h3 class="table-title">Target ISVs Analysis</h3>
-          </div>
-          <div class="table-wrapper">
-            <table class="sortable" id="targetTable" aria-labelledby="targetTableContainer">
-  <thead>
-    <tr>
-      <th data-sort="string" scope="col">Vendor <span class="sort-icon"></span></th>
-      <th data-sort="number" scope="col">Total Value <span class="sort-icon"></span></th>
-      <th data-sort="number" scope="col">Market Share <span class="sort-icon"></span></th>
-      <th data-sort="number" scope="col">Contracts <span class="sort-icon"></span></th>
-      <th data-sort="number" scope="col">Avg Deal Size <span class="sort-icon"></span></th>
-      <th data-sort="string" scope="col">Top Contract Agency <span class="sort-icon"></span></th>
-      <th data-sort="number" scope="col">Largest Contract <span class="sort-icon"></span></th>
-      <th data-sort="string" scope="col">View Details</th>
-    </tr>
-  </thead>
-  <tbody id="targetTableBody">
-    <!-- Table body will be populated dynamically -->
-  </tbody>
-</table>
-          </div>
-        </div>
 
         <div class="table-container" id="contractsTableContainer">
           <div class="table-header">
@@ -1607,12 +1580,7 @@ var filteredData = [];
 var charts = {};
 var currentSankeyLimit = 10;
 var vendorColorMap = new Map();
-var targetSelections = {
-    vendors: new Set(),
-    agencies: new Set(),
-    offices: new Set()
-};
-var targetFilterActive = false;
+
 // Initialize on DOM content loaded
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize the UI components
@@ -1643,10 +1611,6 @@ document.addEventListener('DOMContentLoaded', function() {
     updateUploadContainerLayout();
     updateSearchContainer();
     updateUploadContainer();
-    
-    // Add target functionality (new code)
-    createTargetSelectionInterface();
-    createTargetStatusIndicator();
     
     // Theme initialization
     const themeToggle = document.getElementById('themeToggle');
@@ -1773,19 +1737,10 @@ function resetAllFilters() {
         select.selectedIndex = 0;
     });
     
-    // Reset target filter state but don't clear selections
-    targetFilterActive = false;
-    const targetBtn = document.getElementById('targetFilterBtn');
-    if (targetBtn) {
-        targetBtn.classList.remove('btn-primary');
-        targetBtn.classList.add('btn-secondary');
-    }
     
     // Reset filtered data to all data
     filteredData = [...allData];
-    
-    // Update status indicators
-    updateTargetStatusIndicator();
+
     
     // Calculate totals
     var totalContracts = filteredData.length;
@@ -1869,38 +1824,6 @@ function applyAllFilters() {
             appliedFilters[label] = dropdown.value;
         }
     }
-    
-    // Apply target filter if active
-    if (targetFilterActive) {
-        // Only filter if we have targets selected
-        const hasTargets = 
-            targetSelections.vendors.size > 0 || 
-            targetSelections.agencies.size > 0 || 
-            targetSelections.offices.size > 0;
-            
-        if (hasTargets) {
-            filteredData = filteredData.filter(isTargetItem);
-            
-            // Add to applied filters
-            if (targetSelections.vendors.size > 0)
-                appliedFilters["Target Vendors"] = targetSelections.vendors.size;
-            if (targetSelections.agencies.size > 0)
-                appliedFilters["Target Agencies"] = targetSelections.agencies.size;
-            if (targetSelections.offices.size > 0)
-                appliedFilters["Target Offices"] = targetSelections.offices.size;
-        } else {
-            // No targets selected, disable the filter
-            targetFilterActive = false;
-            const targetBtn = document.getElementById('targetFilterBtn');
-            if (targetBtn) {
-                targetBtn.classList.remove('btn-primary');
-                targetBtn.classList.add('btn-secondary');
-            }
-        }
-    }
-    
-    // Update the target status indicator
-    updateTargetStatusIndicator();
     
     // Update the dashboard with filtered data
     updateDashboard();
@@ -2428,7 +2351,7 @@ function loadCSVFile() {
         const dynamicFiltersContainer = document.getElementById('dynamicFiltersContainer');
         if (dynamicFiltersContainer) dynamicFiltersContainer.innerHTML = '';
 
-        const tableBodyIds = ['officeTableBody', 'targetTableBody', 'contractsTableBody'];
+        const tableBodyIds = ['officeTableBody', 'contractsTableBody'];
         tableBodyIds.forEach(id => {
             const tbody = document.getElementById(id);
             if (tbody) tbody.innerHTML = '<tr><td colspan="100%">Loading data...</td></tr>';
@@ -2440,25 +2363,6 @@ function loadCSVFile() {
         if (totalValueEl) totalValueEl.textContent = '$0';
         const activeVendorsEl = document.getElementById('activeVendors');
         if (activeVendorsEl) activeVendorsEl.textContent = '0';
-
-        if (typeof targetSelections !== 'undefined') {
-            targetSelections.vendors.clear();
-            targetSelections.agencies.clear();
-            targetSelections.offices.clear();
-            targetFilterActive = false;
-            if (typeof updateTargetCountDisplay === 'function') updateTargetCountDisplay();
-            if (typeof updateTargetStatusIndicator === 'function') updateTargetStatusIndicator();
-            const targetBtn = document.getElementById('targetFilterBtn');
-            if (targetBtn) {
-                targetBtn.classList.remove('btn-primary');
-                targetBtn.classList.add('btn-secondary');
-                if (targetBtn.querySelector('i')) { // Assuming icon exists
-                     targetBtn.innerHTML = '<i class="fas fa-filter"></i> Target Filter';
-                } else {
-                    targetBtn.textContent = 'Target Filter';
-                }
-            }
-        }
 
         const sankeyChartArea = document.getElementById('sankeyChart');
         if (sankeyChartArea) {
@@ -2626,17 +2530,10 @@ function processData(rawData) {
     // Set filtered data to all data initially
     filteredData = [...allData];
     
-    // Reset target selections
-    targetSelections.vendors.clear();
-    targetSelections.agencies.clear();
-    targetSelections.offices.clear();
-    targetFilterActive = false;
-    
     // Create dynamic dropdowns after data is loaded
     try {
         createDynamicDropdowns();
         setupAutoFiltering();
-        populateTargetSelectionLists(); // Populate target selection lists
     } catch (error) {
         console.error("Error setting up filters:", error);
     }
@@ -2669,7 +2566,6 @@ function parseMoneyValue(value) {
 function updateDashboard() {
     updateStats();
     updateCharts();
-    updateTargetTable();
     updateOfficeTable();
     updateContractsTable();
     initSortableTables(); // Initialize sortable tables
@@ -3079,120 +2975,6 @@ function updateOfficeTable() {
         tbody.appendChild(row);
     }
 }
-
-// Update target vendor analysis table
-function updateTargetTable() {
-    // Group by vendor
-    var vendorAnalysis = {};
-    var totalMarketValue = 0;
-    
-    for (var i = 0; i < filteredData.length; i++) {
-        var contract = filteredData[i];
-        totalMarketValue += contract.value;
-        
-        var vendor = contract.vendor || 'Unknown';
-        
-        if (!vendorAnalysis[vendor]) {
-            vendorAnalysis[vendor] = {
-                value: 0,
-                count: 0,
-                largest: 0,
-                largestContract: null, // Store the full contract object
-                isTarget: contract.isTarget
-            };
-        }
-        
-        vendorAnalysis[vendor].value += contract.value;
-        vendorAnalysis[vendor].count++;
-        
-        if (contract.value > vendorAnalysis[vendor].largest) {
-            vendorAnalysis[vendor].largest = contract.value;
-            vendorAnalysis[vendor].largestContract = contract; // Store the contract
-        }
-    }
-    
-    // Convert to array and sort
-    var vendorArray = [];
-    
-    for (var vendor in vendorAnalysis) {
-        vendorArray.push({
-            name: vendor,
-            value: vendorAnalysis[vendor].value,
-            count: vendorAnalysis[vendor].count,
-            largest: vendorAnalysis[vendor].largest,
-            largestContract: vendorAnalysis[vendor].largestContract,
-            isTarget: vendorAnalysis[vendor].isTarget
-        });
-    }
-    
-    vendorArray.sort(function(a, b) {
-        return b.value - a.value;
-    });
-    
-    // Get top vendors and any target vendors
-    var topVendors = [];
-    
-    // First add all target vendors
-    for (var i = 0; i < vendorArray.length; i++) {
-        if (vendorArray[i].isTarget) {
-            topVendors.push(vendorArray[i]);
-        }
-    }
-    
-    // Then add top vendors by value, up to a total of 15
-    for (var i = 0; i < vendorArray.length && topVendors.length < 15; i++) {
-        if (!vendorArray[i].isTarget) {
-            topVendors.push(vendorArray[i]);
-        }
-    }
-    
-    // Update table
-    var tbody = document.getElementById('targetTableBody');
-    tbody.innerHTML = '';
-    
-    for (var i = 0; i < topVendors.length; i++) {
-        var vendor = topVendors[i];
-        var row = document.createElement('tr');
-        
-        if (vendor.isTarget) {
-            row.className = 'target-vendor';
-        }
-        
-        var marketShare = (vendor.value / totalMarketValue) * 100;
-        var avgDealSize = vendor.value / vendor.count;
-        
-        // Create FPDS link for largest contract
-        var fpdsLink = '';
-        if (vendor.largestContract && vendor.largestContract.id) {
-            fpdsLink = buildFpdsLink(vendor.largestContract);
-        } else {
-            fpdsLink = '<span class="badge badge-inactive">No ID</span>';
-        }
-        
-        // Get the agency/office name of the largest contract (representing who awarded the contract to this vendor)
-        var topContractAwarder = vendor.largestContract ? 
-            (vendor.largestContract.agency || 
-             (vendor.largestContract.office || 'Unknown office')) : 
-            'No contract data';
-        
-        // Truncate agency/office name if too long
-        if (topContractAwarder.length > 30) {
-            topContractAwarder = topContractAwarder.substring(0, 27) + '...';
-        }
-        
-        row.innerHTML = 
-            '<td>' + vendor.name + '</td>' +
-            '<td>' + formatCurrency(vendor.value) + '</td>' +
-            '<td>' + marketShare.toFixed(2) + '%</td>' +
-            '<td>' + vendor.count + '</td>' +
-            '<td>' + formatCurrency(avgDealSize) + '</td>' +
-            '<td title="' + topContractAwarder + '">' + topContractAwarder + '</td>' +
-            '<td>' + formatCurrency(vendor.largest) + '</td>' +
-            '<td>' + fpdsLink + '</td>';
-        
-        tbody.appendChild(row);
-    }
-}
 // Function to build FPDS.gov link with all necessary parameters
 function buildFpdsLink(contract) {
     // Check if we have the minimum required data
@@ -3238,10 +3020,6 @@ function updateContractsTable() {
     for (var i = 0; i < recentContracts.length; i++) {
         var contract = recentContracts[i];
         var row = document.createElement('tr');
-        
-        if (contract.isTarget) {
-            row.className = 'target-vendor';
-        }
         
         var statusClass = 'badge-active';
         var statusText = contract.value > 0 ? 'Funded' : 'Zero Value';
@@ -3568,36 +3346,6 @@ function applyCompactSidebarStyles() {
         /* Compact search header */
         .search-header {
             margin-bottom: 0.5rem;
-        }
-        
-        /* Filter button styles */
-        #targetVendorFilterBtn, #resetTargetFilterBtn {
-            background-color: var(--bg-tertiary);
-            color: var(--text-primary);
-            transition: var(--transition);
-            box-shadow: var(--shadow-sm);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            height: 28px;
-            margin: 0;
-        }
-        
-        #targetVendorFilterBtn:hover, #resetTargetFilterBtn:hover {
-            background-color: var(--border);
-            transform: translateY(-1px);
-            box-shadow: var(--shadow);
-        }
-        
-        #targetVendorFilterBtn.btn-primary, #resetTargetFilterBtn.btn-primary {
-            background-color: var(--primary);
-            color: white;
-            box-shadow: var(--shadow-md);
-        }
-        
-        #targetVendorFilterBtn.btn-primary:hover, #resetTargetFilterBtn.btn-primary:hover {
-            background-color: var(--primary-dark);
         }
         
         /* Make buttons stack properly in container */
@@ -4499,459 +4247,7 @@ function initInteractivity() {
     
     console.log("Interactive features initialized successfully");
 }
-function createTargetSelectionInterface() {
-    // Create a container for target selection sections
-    const targetSelectionContainer = document.createElement('div');
-    targetSelectionContainer.className = 'target-selection-container';
-    targetSelectionContainer.style.marginBottom = '1rem';
-    
-    // Add header with toggle capability
-    const header = document.createElement('div');
-    header.className = 'search-header';
-    header.style.display = 'flex';
-    header.style.justifyContent = 'space-between';
-    header.style.alignItems = 'center';
-    header.style.cursor = 'pointer';
-    header.style.padding = '0.75rem 0.5rem';
-    header.style.borderRadius = '4px';
-    header.style.background = 'var(--bg-tertiary)';
-    header.style.marginBottom = '0.5rem';
-    
-    header.innerHTML = `
-        <h2 class="search-title" style="margin: 0; font-size: 0.9rem; font-weight: 600;">Target Groups</h2>
-        <i class="fas fa-chevron-down"></i>
-    `;
-    
-    // Container for the collapsible content
-    const content = document.createElement('div');
-    content.className = 'target-selection-content';
-    content.style.display = 'none'; // Initially collapsed
-    
-    // Create tabs for different target types
-    const tabs = document.createElement('div');
-    tabs.className = 'target-tabs';
-    tabs.style.display = 'flex';
-    tabs.style.borderBottom = '1px solid var(--border)';
-    tabs.style.marginBottom = '0.5rem';
-    
-    tabs.innerHTML = `
-        <button class="tab-btn active" data-tab="vendors" style="flex: 1; padding: 0.5rem; background: none; border: none; cursor: pointer; border-bottom: 2px solid transparent;">Vendors</button>
-        <button class="tab-btn" data-tab="agencies" style="flex: 1; padding: 0.5rem; background: none; border: none; cursor: pointer; border-bottom: 2px solid transparent;">Agencies</button>
-        <button class="tab-btn" data-tab="offices" style="flex: 1; padding: 0.5rem; background: none; border: none; cursor: pointer; border-bottom: 2px solid transparent;">Offices</button>
-    `;
-    
-    // Activate the first tab
-    tabs.querySelector('.tab-btn.active').style.borderBottomColor = 'var(--primary)';
-    
-    // Create tab content containers
-    const vendorsTab = document.createElement('div');
-    vendorsTab.className = 'tab-content';
-    vendorsTab.id = 'vendors-tab';
-    vendorsTab.style.display = 'block'; // Active by default
-    
-    const agenciesTab = document.createElement('div');
-    agenciesTab.className = 'tab-content';
-    agenciesTab.id = 'agencies-tab';
-    agenciesTab.style.display = 'none';
-    
-    const officesTab = document.createElement('div');
-    officesTab.className = 'tab-content';
-    officesTab.id = 'offices-tab';
-    officesTab.style.display = 'none';
-    
-    // Add search box to each tab
-    const createSearchBox = (placeholder) => {
-        const div = document.createElement('div');
-        div.className = 'search-box';
-        div.style.marginBottom = '0.5rem';
-        div.innerHTML = `
-            <input type="text" placeholder="${placeholder}" class="form-control" style="height: 28px; padding: 0.25rem 0.5rem; font-size: 0.75rem;">
-        `;
-        return div;
-    };
-    
-    vendorsTab.appendChild(createSearchBox('Search vendors...'));
-    agenciesTab.appendChild(createSearchBox('Search agencies...'));
-    officesTab.appendChild(createSearchBox('Search offices...'));
-    
-    // Add selection lists
-    const createSelectionList = () => {
-        const div = document.createElement('div');
-        div.className = 'selection-list';
-        div.style.maxHeight = '200px';
-        div.style.overflowY = 'auto';
-        div.style.border = '1px solid var(--border)';
-        div.style.borderRadius = '4px';
-        div.style.padding = '0.25rem';
-        div.style.fontSize = '0.75rem';
-        return div;
-    };
-    
-    const vendorsList = createSelectionList();
-    const agenciesList = createSelectionList();
-    const officesList = createSelectionList();
-    
-    vendorsTab.appendChild(vendorsList);
-    agenciesTab.appendChild(agenciesList);
-    officesTab.appendChild(officesList);
-    
-    // Add target filter button and clear button
-    const buttonContainer = document.createElement('div');
-    buttonContainer.style.display = 'flex';
-    buttonContainer.style.gap = '0.5rem';
-    buttonContainer.style.marginTop = '0.5rem';
-    
-    const targetFilterBtn = document.createElement('button');
-    targetFilterBtn.id = 'targetFilterBtn';
-    targetFilterBtn.className = 'btn btn-secondary';
-    targetFilterBtn.style.flex = '1';
-    targetFilterBtn.style.fontSize = '0.75rem';
-    targetFilterBtn.style.padding = '0.4rem';
-    targetFilterBtn.innerHTML = '<i class="fas fa-filter"></i> Target Filter';
-    
-    const clearTargetsBtn = document.createElement('button');
-    clearTargetsBtn.id = 'clearTargetsBtn';
-    clearTargetsBtn.className = 'btn btn-secondary';
-    clearTargetsBtn.style.flex = '1';
-    clearTargetsBtn.style.fontSize = '0.75rem';
-    clearTargetsBtn.style.padding = '0.4rem';
-    clearTargetsBtn.innerHTML = '<i class="fas fa-times"></i> Clear';
-    
-    buttonContainer.appendChild(targetFilterBtn);
-    buttonContainer.appendChild(clearTargetsBtn);
-    
-    // Assemble the components
-    content.appendChild(tabs);
-    content.appendChild(vendorsTab);
-    content.appendChild(agenciesTab);
-    content.appendChild(officesTab);
-    content.appendChild(buttonContainer);
-    
-    targetSelectionContainer.appendChild(header);
-    targetSelectionContainer.appendChild(content);
-    
-    // Add event listeners
-    header.addEventListener('click', function() {
-        if (content.style.display === 'none') {
-            content.style.display = 'block';
-            header.querySelector('i').className = 'fas fa-chevron-up';
-        } else {
-            content.style.display = 'none';
-            header.querySelector('i').className = 'fas fa-chevron-down';
-        }
-    });
-    
-    // Tab switching
-    tabs.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            // Update active state
-            tabs.querySelectorAll('.tab-btn').forEach(b => {
-                b.classList.remove('active');
-                b.style.borderBottomColor = 'transparent';
-            });
-            this.classList.add('active');
-            this.style.borderBottomColor = 'var(--primary)';
-            
-            // Hide all content
-            document.querySelectorAll('.tab-content').forEach(tab => {
-                tab.style.display = 'none';
-            });
-            
-            // Show selected content
-            const tabId = this.getAttribute('data-tab');
-            document.getElementById(tabId + '-tab').style.display = 'block';
-        });
-    });
-    
-    // Target filter button
-    targetFilterBtn.addEventListener('click', function() {
-        toggleTargetFilter();
-    });
-    
-    // Clear button
-    clearTargetsBtn.addEventListener('click', function() {
-        clearAllTargets();
-        populateTargetSelectionLists();
-    });
-    
-    // Search functionality
-    vendorsTab.querySelector('input').addEventListener('input', function() {
-        filterSelectionList(this.value, vendorsList);
-    });
-    
-    agenciesTab.querySelector('input').addEventListener('input', function() {
-        filterSelectionList(this.value, agenciesList);
-    });
-    
-    officesTab.querySelector('input').addEventListener('input', function() {
-        filterSelectionList(this.value, officesList);
-    });
-    
-    // Find where to insert in the sidebar
-    const searchContainer = document.querySelector('.search-container');
-    if (searchContainer) {
-        searchContainer.insertAdjacentElement('afterend', targetSelectionContainer);
-    }
-    
-    return {
-        container: targetSelectionContainer,
-        vendorsList: vendorsList,
-        agenciesList: agenciesList,
-        officesList: officesList
-    };
-}
 
-function filterSelectionList(searchTerm, listElement) {
-    const items = listElement.querySelectorAll('.selection-item');
-    searchTerm = searchTerm.toLowerCase();
-    
-    items.forEach(item => {
-        const text = item.querySelector('span').textContent.toLowerCase();
-        if (text.includes(searchTerm)) {
-            item.style.display = 'flex';
-        } else {
-            item.style.display = 'none';
-        }
-    });
-}
-
-function populateTargetSelectionLists() {
-    // Get the selection lists
-    const vendorsList = document.querySelector('#vendors-tab .selection-list');
-    const agenciesList = document.querySelector('#agencies-tab .selection-list');
-    const officesList = document.querySelector('#offices-tab .selection-list');
-    
-    if (!vendorsList || !agenciesList || !officesList || !allData.length) return;
-    
-    // Clear existing content
-    vendorsList.innerHTML = '';
-    agenciesList.innerHTML = '';
-    officesList.innerHTML = '';
-    
-    // Gather unique values
-    const uniqueVendors = new Set();
-    const uniqueAgencies = new Set();
-    const uniqueOffices = new Set();
-    
-    allData.forEach(item => {
-        if (item.vendor) uniqueVendors.add(item.vendor);
-        if (item.agency) uniqueAgencies.add(item.agency);
-        if (item.office) uniqueOffices.add(item.office);
-    });
-    
-    // Helper function to create selection items
-    function createSelectionItems(container, items, type) {
-        Array.from(items).sort().forEach(item => {
-            const div = document.createElement('div');
-            div.className = 'selection-item';
-            div.style.padding = '0.35rem 0.5rem';
-            div.style.borderBottom = '1px solid var(--border-light)';
-            div.style.display = 'flex';
-            div.style.alignItems = 'center';
-            div.style.cursor = 'pointer';
-            
-            // Check if this item is already selected
-            const isSelected = targetSelections[type].has(item);
-            
-            div.innerHTML = `
-                <input type="checkbox" ${isSelected ? 'checked' : ''} style="margin-right: 0.5rem; cursor: pointer;">
-                <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${item}</span>
-            `;
-            
-            // Add click handler
-            div.addEventListener('click', function() {
-                const checkbox = this.querySelector('input[type="checkbox"]');
-                checkbox.checked = !checkbox.checked;
-                
-                if (checkbox.checked) {
-                    targetSelections[type].add(item);
-                } else {
-                    targetSelections[type].delete(item);
-                }
-                
-                // Update the target count display
-                updateTargetCountDisplay();
-            });
-            
-            container.appendChild(div);
-        });
-    }
-    
-    // Populate each list
-    createSelectionItems(vendorsList, uniqueVendors, 'vendors');
-    createSelectionItems(agenciesList, uniqueAgencies, 'agencies');
-    createSelectionItems(officesList, uniqueOffices, 'offices');
-    
-    // Update the target count display
-    updateTargetCountDisplay();
-}
-
-function updateTargetCountDisplay() {
-    const tabButtons = document.querySelectorAll('.target-tabs .tab-btn');
-    
-    // Update vendor tab
-    const vendorBtn = tabButtons[0];
-    if (vendorBtn) {
-        const count = targetSelections.vendors.size;
-        vendorBtn.textContent = count > 0 ? `Vendors (${count})` : 'Vendors';
-    }
-    
-    // Update agency tab
-    const agencyBtn = tabButtons[1];
-    if (agencyBtn) {
-        const count = targetSelections.agencies.size;
-        agencyBtn.textContent = count > 0 ? `Agencies (${count})` : 'Agencies';
-    }
-    
-    // Update office tab
-    const officeBtn = tabButtons[2];
-    if (officeBtn) {
-        const count = targetSelections.offices.size;
-        officeBtn.textContent = count > 0 ? `Offices (${count})` : 'Offices';
-    }
-    
-    // Update target filter button
-    const targetBtn = document.getElementById('targetFilterBtn');
-    if (targetBtn) {
-        const totalCount = targetSelections.vendors.size + 
-                          targetSelections.agencies.size + 
-                          targetSelections.offices.size;
-                          
-        if (totalCount > 0) {
-            targetBtn.innerHTML = `<i class="fas fa-filter"></i> Filter (${totalCount})`;
-            
-            // If the filter is active, make sure the button shows active state
-            if (targetFilterActive) {
-                targetBtn.classList.remove('btn-secondary');
-                targetBtn.classList.add('btn-primary');
-            }
-        } else {
-            targetBtn.innerHTML = '<i class="fas fa-filter"></i> Target Filter';
-            
-            // If there are no targets, disable the filter
-            targetFilterActive = false;
-            targetBtn.classList.remove('btn-primary');
-            targetBtn.classList.add('btn-secondary');
-        }
-    }
-    
-    // Update the status indicator
-    updateTargetStatusIndicator();
-}
-
-function createTargetStatusIndicator() {
-    // Only create if it doesn't exist
-    if (document.getElementById('targetStatusIndicator')) return;
-    
-    const indicator = document.createElement('div');
-    indicator.id = 'targetStatusIndicator';
-    indicator.style.display = 'none'; // Hidden by default
-    indicator.style.padding = '0.75rem';
-    indicator.style.borderRadius = '6px';
-    indicator.style.backgroundColor = 'rgba(79, 70, 229, 0.1)';
-    indicator.style.borderLeft = '4px solid #4F46E5';
-    indicator.style.marginBottom = '1rem';
-    indicator.style.fontSize = '0.875rem';
-    indicator.style.color = 'var(--text-primary)';
-    
-    // Insert at the top of main content
-    const mainContent = document.querySelector('.main-content');
-    if (mainContent) {
-        const firstChild = mainContent.firstChild;
-        if (firstChild) {
-            mainContent.insertBefore(indicator, firstChild);
-        } else {
-            mainContent.appendChild(indicator);
-        }
-    }
-}
-
-function updateTargetStatusIndicator() {
-    const indicator = document.getElementById('targetStatusIndicator');
-    if (!indicator) return;
-    
-    // Only show if target filter is active and we have targets
-    if (targetFilterActive) {
-        // Count how many of each type are active
-        const vendorCount = targetSelections.vendors.size;
-        const agencyCount = targetSelections.agencies.size;
-        const officeCount = targetSelections.offices.size;
-        
-        // Create indicator text
-        let parts = [];
-        if (vendorCount > 0) parts.push(`${vendorCount} vendor${vendorCount > 1 ? 's' : ''}`);
-        if (agencyCount > 0) parts.push(`${agencyCount} agenc${agencyCount > 1 ? 'ies' : 'y'}`);
-        if (officeCount > 0) parts.push(`${officeCount} office${officeCount > 1 ? 's' : ''}`);
-        
-        let text = '<i class="fas fa-filter"></i> Filtering by ' + parts.join(', ');
-        
-        indicator.innerHTML = text;
-        indicator.style.display = 'block';
-    } else {
-        indicator.style.display = 'none';
-    }
-}
-
-function isTargetItem(item) {
-    return (
-        (item.vendor && targetSelections.vendors.has(item.vendor)) ||
-        (item.agency && targetSelections.agencies.has(item.agency)) ||
-        (item.office && targetSelections.offices.has(item.office))
-    );
-}
-
-function toggleTargetFilter() {
-    // Toggle the filter state
-    targetFilterActive = !targetFilterActive;
-    
-    // Update the button appearance
-    const targetBtn = document.getElementById('targetFilterBtn');
-    if (targetBtn) {
-        if (targetFilterActive) {
-            targetBtn.classList.remove('btn-secondary');
-            targetBtn.classList.add('btn-primary');
-        } else {
-            targetBtn.classList.remove('btn-primary');
-            targetBtn.classList.add('btn-secondary');
-        }
-    }
-    
-    // Apply filters
-    applyAllFilters();
-}
-function clearAllTargets() {
-    const wasTargetFilterActive = targetFilterActive;
-
-    targetSelections.vendors.clear();
-    targetSelections.agencies.clear();
-    targetSelections.offices.clear();
-
-    targetFilterActive = false;
-
-    if (typeof populateTargetSelectionLists === 'function') {
-        populateTargetSelectionLists();
-    }
-
-    if (typeof updateTargetCountDisplay === 'function') {
-        updateTargetCountDisplay();
-    } else {
-        const targetBtn = document.getElementById('targetFilterBtn');
-        if (targetBtn) {
-            targetBtn.innerHTML = '<i class="fas fa-filter"></i> Target Filter';
-            targetBtn.classList.remove('btn-primary');
-            targetBtn.classList.add('btn-secondary');
-        }
-        if (typeof updateTargetStatusIndicator === 'function') {
-            updateTargetStatusIndicator();
-        }
-    }
-
-    if (wasTargetFilterActive) {
-        if (typeof applyAllFilters === 'function') {
-            applyAllFilters();
-        }
-    }
-}
 // Function to add a Date Signed filter to the dynamic filters container
 function addDateSignedFilter() {
   // Get the dynamic filters container
@@ -5175,18 +4471,6 @@ function applyOtherFilters(data) {
     }
   }
   
-  // Apply target filter if active
-  if (targetFilterActive) {
-    // Only filter if we have targets selected
-    const hasTargets = 
-      targetSelections.vendors.size > 0 || 
-      targetSelections.agencies.size > 0 || 
-      targetSelections.offices.size > 0;
-        
-    if (hasTargets) {
-      result = result.filter(isTargetItem);
-    }
-  }
   
   return result;
 }
@@ -5292,15 +4576,10 @@ function generateNaturalDescription(filters) {
   const searchTerm = filters["Search"] || "";
   const naicsCode = filters["NAICS Code"] || "";
   const naicsDesc = filters["NAICS"] || "";
-  
-  // Gather target information
-  const targetVendors = filters["Target Vendors"] ? parseInt(filters["Target Vendors"]) : 0;
-  const targetAgencies = filters["Target Agencies"] ? parseInt(filters["Target Agencies"]) : 0;
-  const targetOffices = filters["Target Offices"] ? parseInt(filters["Target Offices"]) : 0;
+
   
   // Get all other filters (excluding the ones we handle specially)
-  const excludedKeys = ["Agency", "Vendor", "Month", "Year", "Total Value", "Search", 
-                       "Target Vendors", "Target Agencies", "Target Offices", 
+  const excludedKeys = ["Agency", "Vendor", "Month", "Year", "Total Value", "Search",  
                        "NAICS Code", "NAICS"];
   
   const otherFilters = [];
@@ -5345,25 +4624,7 @@ function generateNaturalDescription(filters) {
   if (searchTerm) {
     description += `containing "${searchTerm}" `;
   }
-  
-  // Add target information
-  const targetParts = [];
-  
-  if (targetVendors > 0) {
-    targetParts.push(targetVendors === 1 ? "1 target vendor" : `${targetVendors} target vendors`);
-  }
-  
-  if (targetAgencies > 0) {
-    targetParts.push(targetAgencies === 1 ? "1 target agency" : `${targetAgencies} target agencies`);
-  }
-  
-  if (targetOffices > 0) {
-    targetParts.push(targetOffices === 1 ? "1 target office" : `${targetOffices} target offices`);
-  }
-  
-  if (targetParts.length > 0) {
-    description += `with ${targetParts.join(" and ")} `;
-  }
+
   
   // Add other filters if any
   if (otherFilters.length > 0) {
@@ -5539,21 +4800,6 @@ function collectActiveFilters() {
     const dropdown = document.getElementById(id);
     if (dropdown && dropdown.value) {
       filters[dropdowns[id]] = dropdown.value;
-    }
-  }
-  
-  // Check for target filters
-  if (window.targetSelections) {
-    if (window.targetSelections.vendors && window.targetSelections.vendors.size > 0) {
-      filters["Target Vendors"] = window.targetSelections.vendors.size;
-    }
-    
-    if (window.targetSelections.agencies && window.targetSelections.agencies.size > 0) {
-      filters["Target Agencies"] = window.targetSelections.agencies.size;
-    }
-    
-    if (window.targetSelections.offices && window.targetSelections.offices.size > 0) {
-      filters["Target Offices"] = window.targetSelections.offices.size;
     }
   }
   
@@ -6008,12 +5254,6 @@ function generateNaturalDescription(filters) {
   const searchTerm = filters["Search"] || "";
   const naicsCode = filters["NAICS Code"] || "";
   const naicsDesc = filters["NAICS"] || "";
-  
-  // Gather target information
-  const targetVendors = filters["Target Vendors"] ? parseInt(filters["Target Vendors"]) : 0;
-  const targetAgencies = filters["Target Agencies"] ? parseInt(filters["Target Agencies"]) : 0;
-  const targetOffices = filters["Target Offices"] ? parseInt(filters["Target Offices"]) : 0;
-  
   // Start building the natural language description
   let description = "You're viewing ";
   
@@ -6052,25 +5292,6 @@ function generateNaturalDescription(filters) {
   // Add search term
   if (searchTerm) {
     description += `containing "${searchTerm}" `;
-  }
-  
-  // Add target information
-  const targetParts = [];
-  
-  if (targetVendors > 0) {
-    targetParts.push(targetVendors === 1 ? "1 target vendor" : `${targetVendors} target vendors`);
-  }
-  
-  if (targetAgencies > 0) {
-    targetParts.push(targetAgencies === 1 ? "1 target agency" : `${targetAgencies} target agencies`);
-  }
-  
-  if (targetOffices > 0) {
-    targetParts.push(targetOffices === 1 ? "1 target office" : `${targetOffices} target offices`);
-  }
-  
-  if (targetParts.length > 0) {
-    description += `with ${targetParts.join(" and ")} `;
   }
   
   // Clean up the description
