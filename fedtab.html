@@ -1843,12 +1843,12 @@ th.sort-desc .sort-icon:after {
 }
 
 /* Subtle animation when switching themes */
-.sidebar .header-button#themeToggle i.fa-sun {
+.sidebar .header-button#themeToggle i.fa-circle-half-stroke {
   color: #f6ad55; /* A warm sun color */
   transform: rotate(0deg);
 }
 
-.sidebar .header-button#themeToggle i.fa-moon {
+.sidebar .header-button#themeToggle i.fa-circle-half-stroke {
   color: var(--text-primary); /* Match logo color */
   transform: rotate(-20deg);
 }
@@ -1877,12 +1877,12 @@ th.sort-desc .sort-icon:after {
   transition: transform 0.3s ease, color 0.3s ease;
 }
 
-#mobileThemeToggle i.fa-sun {
+#mobileThemeToggle i.fa-circle-half-stroke {
   color: #ffffff;
   transform: rotate(0deg);
 }
 
-#mobileThemeToggle i.fa-moon {
+#mobileThemeToggle i.fa-circle-half-stroke {
   color: var(--text-primary);
   transform: rotate(-20deg);
 }
@@ -1898,12 +1898,12 @@ th.sort-desc .sort-icon:after {
   background-color: rgba(var(--primary-rgb), 0.25);
 }
 
-[data-theme="dark"] .sidebar .header-button#themeToggle i.fa-sun {
+[data-theme="dark"] .sidebar .header-button#themeToggle i.fa-circle-half-stroke {
   color: #ffffff;
 }
 
-[data-theme="dark"] .sidebar .header-button#themeToggle i.fa-moon,
-[data-theme="dark"] #mobileThemeToggle i.fa-moon {
+[data-theme="dark"] .sidebar .header-button#themeToggle i.fa-circle-half-stroke,
+[data-theme="dark"] #mobileThemeToggle i.fa-circle-half-stroke {
   color: #a3bffa; /* Light bluish color for moon in dark mode */
 }
 /* Loading Overlay - Make it work on all screen sizes */
@@ -2077,7 +2077,7 @@ th.sort-desc .sort-icon:after {
           <span class="logo-subtitle">Federal Awards Viewer</span>
         </div>
         <button class="header-button" id="themeToggle" aria-label="Toggle Theme">
-          <i class="fas fa-moon" aria-hidden="true"></i>
+          <i class="fas fa-circle-half-stroke" aria-hidden="true"></i>
         </button>
       </div>
 
@@ -2712,103 +2712,79 @@ App.ui = {
       sidebarStatusElement.className += ' ' + type;
     }
   },
-/**
- * Generate natural language description of filters
- */
-generateNaturalDescription: function(filters) {
-  // Only include period text for auto-loaded data
-  let periodText = "";
-  if (App.data.isAutoLoadedData && App.data.periodDescription) {
-    periodText = App.data.periodDescription;
-  }
   
-  if (!filters || Object.keys(filters).length === 0) {
-    return `Viewing all Awards ${periodText}`;
-  }
+  /**
+   * Generate natural language description of filters
+   */
+  generateNaturalDescription: function(filters) {
+    // Only include period text for auto-loaded data
+    let periodText = "";
+    if (App.data.isAutoLoadedData && App.data.periodDescription) {
+      periodText = App.data.periodDescription;
+    }
+    
+    if (!filters || Object.keys(filters).length === 0) {
+      return `Viewing all Awards ${periodText}`;
+    }
+    
+    // Extract key filter components
+    const agency = filters["Agency"] || "";
+    const vendor = filters["Vendor"] || "";
+    const month = filters["Month"] || "";
+    const year = filters["Year"] || "";
+    const searchTerm = filters["Search"] || "";
+    const naicsCode = filters["NAICS"] || "";
+    const naicsDesc = filters["NAICS Description"] || "";
+    
+    // Start building the natural language description
+    let description = "";
+    
+    // Build agency/vendor/date part of the description
+    if (agency) {
+      description += `${agency} awards `;
+    } else {
+      description += "Awards ";
+    }
+    
+    if (vendor) {
+      description += `to ${vendor} `;
+    }
+    
+    // Use month/year from filters if specified, otherwise use the detected period
+    if (month && year) {
+      description += `from ${month} ${year} `;
+    } else if (month) {
+      description += `from ${month} `;
+    } else if (year) {
+      description += `from ${year} `;
+    } else if (periodText && !filters["Month"] && !filters["Year"] && App.data.isAutoLoadedData) {
+      // Only add the period text if no specific month/year filter is applied
+      description += `${periodText} `;
+    }
+    
+    // Add NAICS information
+    if (naicsCode && naicsDesc) {
+      description += `for ${naicsDesc} (NAICS ${naicsCode}) `;
+    } else if (naicsCode) {
+      description += `with NAICS code ${naicsCode} `;
+    } else if (naicsDesc) {
+      description += `for ${naicsDesc} `;
+    }
+    
+    // Add search term
+    if (searchTerm) {
+      description += `containing "${searchTerm}" `;
+    }
+    
+    // Clean up the description
+    description = description.trim();
+    if (!description.endsWith(".")) {
+      description += ".";
+    }
+    
+    return description;
+  },
   
-  // Extract key filter components
-  const agency = filters["Agency"] || "";
-  const vendor = filters["Vendor"] || "";
-  const month = filters["Month"] || "";
-  const year = filters["Year"] || "";
-  const searchTerm = filters["Search"] || "";
-  const naicsCode = filters["NAICS"] || "";
-  const naicsDesc = filters["NAICS Description"] || "";
-  
-  // Start building the natural language description
-  let description = "";
-  
-  // Build agency/vendor/date part of the description
-  if (agency) {
-    description += `${agency} awards `;
-  } else {
-    description += "Awards ";
-  }
-  
-  if (vendor) {
-    description += `to ${vendor} `;
-  }
-  
-  // Use month/year from filters if specified, otherwise use the detected period
-  if (month && year) {
-    description += `from ${month} ${year} `;
-  } else if (month) {
-    description += `from ${month} `;
-  } else if (year) {
-    description += `from ${year} `;
-  } else if (periodText && !filters["Month"] && !filters["Year"] && App.data.isAutoLoadedData) {
-    // Only add the period text if no specific month/year filter is applied
-    description += `${periodText} `;
-  }
-  
-  // Add NAICS information
-  if (naicsCode && naicsDesc) {
-    description += `for ${naicsDesc} (NAICS ${naicsCode}) `;
-  } else if (naicsCode) {
-    description += `with NAICS code ${naicsCode} `;
-  } else if (naicsDesc) {
-    description += `for ${naicsDesc} `;
-  }
-  
-  // Add search term
-  if (searchTerm) {
-    description += `containing "${searchTerm}" `;
-  }
-  
-  // Clean up the description
-  description = description.trim();
-  if (!description.endsWith(".")) {
-    description += ".";
-  }
-  
-  return description;
-},
-// Add this function to your code, it doesn't replace anything
-updatePeriodDescription: function() {
-  if (!App.data.currentDataPeriod) return "";
-  
-  const startDate = App.data.currentDataPeriod.startDate;
-  const endDate = App.data.currentDataPeriod.endDate;
-  
-  const startMonth = startDate.toLocaleString('default', { month: 'long' });
-  const startYear = startDate.getFullYear();
-  const endMonth = endDate.toLocaleString('default', { month: 'long' });
-  const endDay = endDate.getDate();
-  const endYear = endDate.getFullYear();
-  
-  // Create a more detailed period description
-  let periodText;
-  if (startMonth === endMonth && startYear === endYear) {
-    periodText = `for ${startMonth} ${startYear} through ${endMonth} ${endDay}`;
-  } else {
-    periodText = `for ${startMonth} ${startYear} through ${endMonth} ${endDay}, ${endYear}`;
-  }
-  
-  // Store for future use
-  App.data.periodDescription = periodText;
-  
-  return periodText;
-},
   /**
    * Toggle theme between light and dark mode
    */
@@ -2846,7 +2822,7 @@ updatePeriodDescription: function() {
       if (!toggle) return;
       const icon = toggle.querySelector('i');
       if (icon) {
-        icon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+        icon.className = theme === 'dark' ? 'fas fa-circle-half-stroke' : 'fas fa-circle-half-stroke';
       }
     });
   },
@@ -2959,7 +2935,7 @@ updatePeriodDescription: function() {
         <span class="logo-subtitle">Federal Awards Viewer</span>
       </div>
       <button class="header-button" id="mobileThemeToggle" aria-label="Toggle Theme">
-        <i class="fas fa-moon" aria-hidden="true"></i>
+        <i class="fas fa-circle-half-stroke" aria-hidden="true"></i>
       </button>
     `;
     
@@ -2979,8 +2955,8 @@ updatePeriodDescription: function() {
       const icon = mobileThemeToggle.querySelector('i');
       
       if (currentTheme === 'dark') {
-        icon.classList.remove('fa-moon');
-        icon.classList.add('fa-sun');
+        icon.classList.remove('fa-circle-half-stroke');
+        icon.classList.add('fa-circle-half-stroke');
       }
       
       // Add click handler
@@ -3054,7 +3030,16 @@ updatePeriodDescription: function() {
         showDashboard();
       });
     }
-    
+    if (elements.dashboardBtn) {
+  elements.dashboardBtn.addEventListener('touchend', function(e) {
+    e.preventDefault();
+    setActiveButton(this);
+    hideSearchBar();
+    hideFilterModal();
+    App.utils.handleModal('mobileArchivesModal', 'hide');
+    showDashboard();
+  });
+}
     if (elements.searchBtn) {
       App.utils.addEventListenerSafe(elements.searchBtn, 'click', function() {
         setActiveButton(this);
@@ -3063,7 +3048,15 @@ updatePeriodDescription: function() {
         App.utils.handleModal('mobileArchivesModal', 'hide');
       });
     }
-    
+    if (elements.searchBtn) {
+  elements.searchBtn.addEventListener('touchend', function(e) {
+    e.preventDefault();
+    setActiveButton(this);
+    showSearchBar();
+    hideFilterModal();
+    App.utils.handleModal('mobileArchivesModal', 'hide');
+  });
+}
     if (elements.filterBtn) {
       App.utils.addEventListenerSafe(elements.filterBtn, 'click', function() {
         setActiveButton(this);
@@ -3072,7 +3065,15 @@ updatePeriodDescription: function() {
         App.utils.handleModal('mobileArchivesModal', 'hide');
       });
     }
-    
+    if (elements.filterBtn) {
+  elements.filterBtn.addEventListener('touchend', function(e) {
+    e.preventDefault();
+    setActiveButton(this);
+    hideSearchBar();
+    showFilterModal();
+    App.utils.handleModal('mobileArchivesModal', 'hide');
+  });
+}
     if (elements.archivesBtn) {
       App.utils.addEventListenerSafe(elements.archivesBtn, 'click', function() {
         setActiveButton(this);
@@ -3081,6 +3082,15 @@ updatePeriodDescription: function() {
         App.ui.showMobileArchives();
       });
     }
+	if (elements.archivesBtn) {
+  elements.archivesBtn.addEventListener('touchend', function(e) {
+    e.preventDefault();
+    setActiveButton(this);
+    hideSearchBar();
+    hideFilterModal();
+    App.ui.showMobileArchives();
+  });
+}
     
     if (elements.resetBtn) {
       App.utils.addEventListenerSafe(elements.resetBtn, 'click', function() {
@@ -3091,14 +3101,22 @@ updatePeriodDescription: function() {
         App.handlers.handleMobileReset();
       });
     }
-    
+    if (elements.resetBtn) {
+  elements.resetBtn.addEventListener('touchend', function(e) {
+    e.preventDefault();
+    setActiveButton(elements.dashboardBtn);
+    hideSearchBar();
+    hideFilterModal();
+    App.utils.handleModal('mobileArchivesModal', 'hide');
+    App.handlers.handleMobileReset();
+  });
+}
     if (elements.closeSearchBtn) {
       App.utils.addEventListenerSafe(elements.closeSearchBtn, 'click', function() {
         hideSearchBar();
         setActiveButton(elements.dashboardBtn);
       });
     }
-    
     if (elements.closeFilterBtn) {
       App.utils.addEventListenerSafe(elements.closeFilterBtn, 'click', function() {
         hideFilterModal();
@@ -6136,61 +6154,64 @@ App.handlers = {
    }
  },
 
-/**
- * Detect date range from data
- */
-detectDateRangeFromData: function() {
-  if (!App.data.allData || App.data.allData.length === 0) {
-    return;
-  }
-  
-  let earliestDate = new Date('9999-12-31');
-  let latestDate = new Date('1970-01-01');
-  
-  // Loop through data to find min and max dates
-  let datesFound = 0;
-  
-  App.data.allData.forEach(item => {
-    if (item.date) {
-      const contractDate = App.utils.parseDate(item.date);
-      if (contractDate) {
-        datesFound++;
-        
-        if (contractDate < earliestDate) earliestDate = contractDate;
-        if (contractDate > latestDate) latestDate = contractDate;
-      }
-    }
-  });
-  
-  // Ensure dates are valid
-  if (earliestDate > latestDate) {
-    // Default to current month
-    const today = new Date();
-    earliestDate = new Date(today.getFullYear(), today.getMonth(), 1);
-    latestDate = today;
-  }
-  
-  // Store the detected date range globally
-  App.data.currentDataPeriod = {
-    startDate: earliestDate,
-    endDate: latestDate,
-    lastUpdated: new Date() // Today's date
-  };
-  
-  // Update the period description using the new helper function
-  App.handlers.updatePeriodDescription();
-  
-  // Show data context info since this is auto-loaded data
-  if (App.data.isAutoLoadedData) {
-    App.ui.showDataContextInfo();
-  } else {
-    App.ui.hideDataContextInfo();
-  }
-  
-  // Update the data context information and status message
-  App.ui.updateDataContext();
-  App.handlers.updateStatusWithPeriodInfo();
-},
+ /**
+  * Detect date range from data
+  */
+ detectDateRangeFromData: function() {
+   if (!App.data.allData || App.data.allData.length === 0) {
+     return;
+   }
+   
+   let earliestDate = new Date('9999-12-31');
+   let latestDate = new Date('1970-01-01');
+   
+   // Loop through data to find min and max dates
+   let datesFound = 0;
+   
+   App.data.allData.forEach(item => {
+     if (item.date) {
+       const contractDate = App.utils.parseDate(item.date);
+       if (contractDate) {
+         datesFound++;
+         
+         if (contractDate < earliestDate) earliestDate = contractDate;
+         if (contractDate > latestDate) latestDate = contractDate;
+       }
+     }
+   });
+   
+   // Ensure dates are valid
+   if (earliestDate > latestDate) {
+     // Default to current month
+     const today = new Date();
+     earliestDate = new Date(today.getFullYear(), today.getMonth(), 1);
+     latestDate = today;
+   }
+   
+   // Store the detected date range globally
+   App.data.currentDataPeriod = {
+     startDate: earliestDate,
+     endDate: latestDate,
+     lastUpdated: new Date() // Today's date
+   };
+   
+   // Create the period description for use in status messages
+   const month = App.data.currentDataPeriod.startDate.toLocaleString('default', { month: 'long' });
+   const year = App.data.currentDataPeriod.startDate.getFullYear();
+   App.data.periodDescription = `for ${month} ${year}`;
+   
+   // Show data context info since this is auto-loaded data
+   if (App.data.isAutoLoadedData) {
+     App.ui.showDataContextInfo();
+   } else {
+     App.ui.hideDataContextInfo();
+   }
+   
+   // Update the data context information and status message
+   App.ui.updateDataContext();
+   App.handlers.updateStatusWithPeriodInfo();
+ },
+
  /**
   * Update status with period information
   */
@@ -6516,11 +6537,11 @@ App.ui.showLoadingIndicator = function(isLoading, message = "Loading data...", d
    const icon = themeToggle.querySelector('i');
    if (icon) {
      if (currentTheme === 'dark') {
-       icon.classList.remove('fa-moon');
-       icon.classList.add('fa-sun');
+       icon.classList.remove('fa-circle-half-stroke');
+       icon.classList.add('fa-circle-half-stroke');
      } else {
-       icon.classList.remove('fa-sun');
-       icon.classList.add('fa-moon');
+       icon.classList.remove('fa-circle-half-stroke');
+       icon.classList.add('fa-circle-half-stroke');
      }
    }
    
