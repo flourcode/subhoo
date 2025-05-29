@@ -1166,48 +1166,6 @@ td[title] {
   border-color: var(--primary);
 }
 
-/* === Progress Card (if using card approach) === */
-.progress-card {
-  background-color: var(--bg-primary);
-  border-radius: var(--radius-lg);
-  padding: 1rem;
-  box-shadow: var(--shadow-sm);
-  border: 1px solid var(--border-light);
-}
-
-.progress-card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 0.75rem;
-}
-
-.progress-card-title {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--text-secondary);
-}
-
-.progress-card-value {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--primary);
-}
-
-.progress-container {
-  height: 10px;
-  background-color: var(--bg-tertiary);
-  border-radius: 5px;
-  overflow: hidden;
-}
-
-.progress-fill {
-  height: 100%;
-  background-color: var(--primary);
-  border-radius: 5px;
-  width: 0%; /* Will be set by JavaScript */
-  transition: width 0.5s ease-in-out;
-}
 
 /* === Dark Mode Adjustments === */
 [data-theme="dark"] .main-status-wrapper {
@@ -2075,6 +2033,19 @@ a.logo {
   color: var(--text-primary);
   border: 1px solid var(--border);
 }
+/* You might want to update this to ensure proper layout after removing one card */
+.stats-grid {
+  display: grid;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  grid-template-columns: repeat(3, 1fr); /* Updated from 4 to 3 columns */
+}
+
+@media (max-width: 767px) {
+  .stats-grid {
+    grid-template-columns: 1fr; /* Keep as is for mobile */
+  }
+}
 </style>
 </head>
 <body>
@@ -2150,19 +2121,6 @@ a.logo {
   </div>
 </div>
         <div class="stats-grid">
-		<div id="monthProgressCard" class="stat-card">
-  <div class="stat-header">
-    <div class="stat-info">
-      <div class="stat-label">
-        <span id="progressMonthName">Month</span> Days Covered
-      </div>
-      <div class="stat-value" id="progressFraction">0/31</div>
-    </div>
-  </div>
-  <div class="progress-container">
-    <div id="monthProgressFill" class="progress-fill"></div>
-  </div>
-</div>
           <div class="stat-card">
             <div class="stat-header">
               <div class="stat-info">
@@ -5670,14 +5628,13 @@ window.archiveMonths = [
 window.currentMonthActive = true;
 window.isAutoLoadedData = false; // Flag to track if data was auto-loaded
 
-// Function to auto-load the current month's data on page load
+// Modify autoLoadCurrentData to remove progress card references
 function autoLoadCurrentData() {
   // Your actual S3 URL
   const dataUrl = "https://subhoodata.s3.us-east-1.amazonaws.com/data/daily.csv";
   
-  // Show loading message with loading indicator
-  showLoadingIndicator(true, "Loading current month data...", "Fetching from data server", 10);
-  showMessage("", "info", {
+  // Show loading message
+  showEnhancedMessage("", "info", {
     "Status": "Loading current month award data..."
   });
   
@@ -5698,18 +5655,15 @@ function autoLoadCurrentData() {
       if (!response.ok) {
         throw new Error(`Failed to fetch data: ${response.status} ${response.statusText}`);
       }
-      // Update loading indicator for download progress
-      showLoadingIndicator(true, "Downloading data...", "Processing response", 30);
       return response.text();
     })
     .then(csvText => {
-      // Update loading indicator for processing
-      showLoadingIndicator(true, "Processing data...", "Preparing visualization", 50);
-      
       // Give charts a moment to initialize
       setTimeout(() => {
         // Set flag that this is auto-loaded data
         window.isAutoLoadedData = true;
+        
+        // REMOVED: All code related to showing the month progress card
         
         // Parse and load the CSV using your existing function
         parseCSV(csvText);
@@ -5722,9 +5676,6 @@ function autoLoadCurrentData() {
         
         // Mark current month as active
         window.currentMonthActive = true;
-        
-        // Hide loading indicator when completely done
-        showLoadingIndicator(false);
       }, 500);
     })
     .catch(error => {
@@ -5732,19 +5683,21 @@ function autoLoadCurrentData() {
       showMessage("", "error", {
         "Status": "Failed to load current month award data. Please try again later."
       });
-      
-      // Hide loading indicator with error message
-      showLoadingIndicator(false);
     });
 }
-// Function to load archived month data
+// Modify loadArchivedMonthData to remove progress card references
 function loadArchivedMonthData(archiveMonth) {
   // Show loading message
   showEnhancedMessage("", "info", {
     "Status": `Loading ${archiveMonth.month} ${archiveMonth.year} award data...`
   });
   
-  // Initialize charts first if needed
+  // Show loading indicator if available
+  if (typeof showLoadingIndicator === 'function') {
+    showLoadingIndicator(true, `Loading ${archiveMonth.month} ${archiveMonth.year} data...`, "Fetching archived data");
+  }
+  
+  // Initialize charts if needed
   if (!window.charts || !window.charts.monthly) {
     console.log("Initializing charts before loading archive data...");
     // Check if dashboard grid exists
@@ -5766,7 +5719,7 @@ function loadArchivedMonthData(archiveMonth) {
     .then(csvText => {
       // Give charts a moment to initialize
       setTimeout(() => {
-        // Set flag that this is auto-loaded data (archive counts as auto-loaded)
+        // Set flag that this is archive data
         window.isAutoLoadedData = true;
         
         // Parse and load the CSV using your existing function
@@ -5782,6 +5735,19 @@ function loadArchivedMonthData(archiveMonth) {
         // Update period description
         window.periodDescription = `for ${archiveMonth.month} ${archiveMonth.year}`;
         
+        // REMOVED: All code related to the month progress card
+        
+        // Keep the context info and archive months visible
+        const dataContextInfo = document.getElementById('dataContextInfo');
+        if (dataContextInfo) {
+          dataContextInfo.style.display = 'flex';
+        }
+        
+        const archiveMonthsContainer = document.getElementById('archiveMonthsContainer');
+        if (archiveMonthsContainer) {
+          archiveMonthsContainer.style.display = 'flex';
+        }
+        
         // Update data context and status message
         fixedUpdateDataContext();
         updateStatusWithPeriodInfo();
@@ -5791,16 +5757,25 @@ function loadArchivedMonthData(archiveMonth) {
         
         // Mark current month as inactive
         window.currentMonthActive = false;
+        
+        // Hide loading indicator if it was shown
+        if (typeof showLoadingIndicator === 'function') {
+          showLoadingIndicator(false);
+        }
       }, 500);
     })
     .catch(error => {
       console.error(`Error loading ${archiveMonth.month} ${archiveMonth.year} data:`, error);
-      showEnhancedMessage("", "error", {
+      showMessage("", "error", {
         "Status": `Failed to load ${archiveMonth.month} ${archiveMonth.year} award data. Please try again later.`
       });
+      
+      // Hide loading indicator if it was shown
+      if (typeof showLoadingIndicator === 'function') {
+        showLoadingIndicator(false);
+      }
     });
 }
-
 // Modify the original loadCSVFile function to clear the auto-loaded flag
 const originalLoadCSVFile = window.loadCSVFile || function() {};
 window.loadCSVFile = function() {
@@ -5813,27 +5788,30 @@ window.loadCSVFile = function() {
   // Call the original function
   originalLoadCSVFile.apply(this, arguments);
 };
-// Updated function to correctly display the month progress
+// Modify this function to remove progress-related code
 function fixedUpdateDataContext() {
   if (!window.currentDataPeriod) return;
   
   // Only update if this is auto-loaded data
   if (!window.isAutoLoadedData) {
     // Hide elements for non-auto-loaded data
-    document.getElementById('dataContextInfo').style.display = 'none';
-    document.getElementById('monthProgressCard').style.display = 'none';
+    const dataContextInfo = document.getElementById('dataContextInfo');
+    const archiveMonthsContainer = document.getElementById('archiveMonthsContainer');
+    
+    if (dataContextInfo) dataContextInfo.style.display = 'none';
+    if (archiveMonthsContainer) archiveMonthsContainer.style.display = 'none';
     return;
   }
   
   // Show elements for auto-loaded data
-  document.getElementById('dataContextInfo').style.display = 'flex';
-  document.getElementById('monthProgressCard').style.display = 'block';
+  const dataContextInfo = document.getElementById('dataContextInfo');
+  const archiveMonthsContainer = document.getElementById('archiveMonthsContainer');
+  
+  if (dataContextInfo) dataContextInfo.style.display = 'flex';
+  if (archiveMonthsContainer) archiveMonthsContainer.style.display = 'flex';
   
   const contextMonth = document.getElementById('contextMonth');
   const contextDate = document.getElementById('contextDate');
-  const monthProgressFill = document.getElementById('monthProgressFill');
-  const progressFraction = document.getElementById('progressFraction');
-  const progressMonthName = document.getElementById('progressMonthName'); // Add this line
   
   console.log("Updating data context with period:", window.currentDataPeriod);
   
@@ -5848,27 +5826,7 @@ function fixedUpdateDataContext() {
     contextMonth.textContent = `${month} ${year}`;
     contextDate.textContent = lastDate;
     
-    // Update the month name in the progress card
-    if (progressMonthName) {
-      progressMonthName.textContent = month;
-    }
-    
-    // Update progress bar
-    if (monthProgressFill && progressFraction) {
-      const startDay = 1; // Always start from day 1
-      const endDay = window.currentDataPeriod.endDate.getDate();
-      const daysInMonth = new Date(
-        window.currentDataPeriod.startDate.getFullYear(),
-        window.currentDataPeriod.startDate.getMonth() + 1,
-        0
-      ).getDate();
-      
-      console.log(`Setting progress bar: Day ${endDay} of ${daysInMonth}`);
-      
-      const progressPercent = Math.round((endDay / daysInMonth) * 100);
-      monthProgressFill.style.width = `${progressPercent}%`;
-      progressFraction.textContent = `${endDay}/${daysInMonth}`;
-    }
+    // REMOVED: All code related to updating the progress bar and month name
   }
 }
 // Function to hide the data context info
