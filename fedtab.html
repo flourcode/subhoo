@@ -11,7 +11,9 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-sankey/0.12.3/d3-sankey.min.js"></script>
 <style>
 :root {
+  /* Colors */
   --primary: #007AFF;
+  --primary-rgb: 0, 122, 255;
   --primary-dark: #0056b3;
   --primary-light: #58AFFF;
   --secondary: #8E8E93;
@@ -28,6 +30,8 @@
   --bg-dark: #787880;
   --border: #C6C6C8;
   --border-light: #D1D1D6;
+  
+  /* Shadows & Radiuses */
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.04), 0 2px 4px 0 rgba(0, 0, 0, 0.04);
   --shadow: 0 3px 5px 0 rgba(0, 0, 0, 0.05), 0 4px 8px 0 rgba(0, 0, 0, 0.05);
   --shadow-md: 0 6px 10px 0 rgba(0, 0, 0, 0.06), 0 4px 12px 0 rgba(0, 0, 0, 0.06);
@@ -35,6 +39,8 @@
   --shadow-xl: 0 12px 25px 0 rgba(0, 0, 0, 0.08), 0 8px 30px 0 rgba(0, 0, 0, 0.08);
   --radius: 0.4rem;
   --radius-lg: 0.75rem;
+  
+  /* Layout */
   --sidebar-width: 280px;
   --sidebar-collapsed-width: 72px;
   --header-height: 56px;
@@ -43,13 +49,9 @@
 
 [data-theme="dark"] {
   --primary: #0A84FF;
+  --primary-rgb: 10, 132, 255;
   --primary-dark: #0060DF;
   --primary-light: #59AFFF;
-  --secondary: #8E8E93;
-  --accent: #64D2FF;
-  --success: #30D158;
-  --warning: #FF9F0A;
-  --danger: #FF453A;
   --text-primary: #FFFFFF;
   --text-secondary: #8E8E93;
   --text-tertiary: #636366;
@@ -61,6 +63,7 @@
   --border-light: #2C2C2E;
 }
 
+/* Base Styles */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -72,7 +75,7 @@ html {
 }
 
 body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   background-color: var(--bg-secondary);
   color: var(--text-primary);
   line-height: 1.5;
@@ -82,6 +85,7 @@ body {
   overflow-x: hidden;
 }
 
+/* Scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -97,12 +101,30 @@ body {
   background: var(--text-secondary);
 }
 
+/* Layout */
 .app-container {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
   position: relative;
 }
+
+.main-wrapper {
+  margin-left: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.main-content {
+  flex: 1;
+  padding: 1rem;
+  overflow-y: auto;
+  background-color: var(--bg-secondary);
+}
+
+/* Buttons */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -110,18 +132,17 @@ body {
   gap: 0.5rem;
   padding: 0.625rem 1.25rem;
   min-height: 44px;
-  border: 1px solid transparent; /* Base border is transparent */
+  border: 1px solid transparent;
   border-radius: var(--radius);
   font-size: 1rem;
   font-weight: 500;
-  text-transform: none;
-  letter-spacing: normal;
   cursor: pointer;
   transition: background-color var(--transition), border-color var(--transition), opacity var(--transition);
   width: auto;
   box-shadow: none;
   line-height: 1.4;
 }
+
 .btn:active {
   opacity: 0.7;
   transform: none;
@@ -130,7 +151,6 @@ body {
 .btn-primary {
   background-color: var(--primary);
   color: white;
-  /* Inherits transparent border from .btn, background provides definition */
 }
 .btn-primary:hover {
   background-color: var(--primary-dark);
@@ -138,106 +158,24 @@ body {
 }
 
 .btn-secondary {
-  background-color: var(--bg-tertiary); /* e.g., Light Gray */
-  color: var(--primary);               /* e.g., Blue text */
-  border: 1px solid var(--border);     /* MODIFIED: Added visible border */
-}
-.btn-secondary:hover {
-  background-color: var(--border-light); /* Slightly different background on hover */
-  border-color: var(--text-tertiary);   /* Darken border slightly on hover */
-  opacity: 0.9;
-}
-[data-theme="dark"] .btn-secondary {
-  background-color: var(--bg-tertiary); /* e.g., Darker Gray */
-  color: var(--primary);               /* e.g., Bright Blue text */
-  border-color: var(--border);         /* Visible border in dark mode */
-}
-[data-theme="dark"] .btn-secondary:hover {
-  background-color: var(--border-light);
-  border-color: var(--text-tertiary);
-}
-
-.btn.active { /* For active state, e.g., toggled buttons */
-  background-color: var(--primary-dark);
-  color: white;
-  opacity: 1;
-  border-color: var(--primary-dark); /* Match background if it's a filled active state */
-}
-
-/* === Styles for buttons SPECIFICALLY IN THE SIDEBAR === */
-.sidebar .btn {
-  font-size: 0.8125rem;
-  padding: 0.5rem 0.875rem;
-  min-height: 36px;
-  height: 36px;
-  width: 100%;
-  line-height: 1.2;
-  /* Inherits common .btn properties like display, align-items, border-radius, text-transform etc. */
-  /* Also inherits 'border: 1px solid transparent;' from general .btn initially */
-}
-
-.sidebar .btn.btn-primary {
-  /* No specific overrides needed unless different from general .btn-primary */
-  /* Will correctly inherit sidebar .btn sizing and general .btn-primary colors */
-}
-
-.sidebar .btn.btn-secondary {
   background-color: var(--bg-tertiary);
   color: var(--primary);
-  border: 1px solid var(--border); /* MODIFIED: Ensure visible border for sidebar secondary buttons */
-}
-.sidebar .btn.btn-secondary:hover {
-  background-color: var(--border-light);
-  border-color: var(--text-tertiary);
-  opacity: 0.9;
-}
-[data-theme="dark"] .sidebar .btn.btn-secondary {
-  background-color: var(--bg-tertiary);
-  color: var(--primary);
-  border-color: var(--border);
-}
-[data-theme="dark"] .sidebar .btn.btn-secondary:hover {
-  background-color: var(--border-light);
-  border-color: var(--text-tertiary);
-}
-
-/* Specific button group overrides (mostly for font-weight and specific appearances) */
-#loadBtn,
-/* #resetVendorFilterBtn, /* Assuming this also gets .btn-secondary and doesn't need unique style */
-#resetFiltersBtn, /* This button has .btn-secondary, its specific border/bg rule is now covered */
-#sankeyTop10,
-#sankeyTop25,
-#sankeyAll {
-  text-transform: none; /* Already default for .btn, but ensures it for these IDs */
-  box-shadow: none;     /* Already default for .btn */
-  font-weight: 400;     /* Make these specific control buttons regular weight */
-}
-
-/*
-  The specific rule for #resetFiltersBtn regarding background, color, and border
-  is now effectively covered by the updated .btn-secondary class rule.
-  So, it no longer needs its own separate rule for those properties if it has class="btn btn-secondary".
-  The rule above for font-weight will still apply if needed.
-*/
-
-/* Styles for Sankey control buttons */
-#sankeyTop10, #sankeyTop25, #sankeyAll {
-  padding: 0.5rem 0.875rem; /* Match other compact buttons */
-  font-size: 0.875rem;
-  margin: 0 2px;
-  background-color: var(--bg-tertiary);
-  color: var(--text-primary); /* Different text color than typical btn-secondary */
   border: 1px solid var(--border);
 }
-#sankeyTop10:hover, #sankeyTop25:hover, #sankeyAll:hover {
-  background-color: var(--border);
+.btn-secondary:hover {
+  background-color: var(--border-light);
+  border-color: var(--text-tertiary);
+  opacity: 0.9;
 }
-#sankeyTop10.active, #sankeyTop25.active, #sankeyAll.active {
+
+.btn.active {
   background-color: var(--primary);
   color: white;
   border-color: var(--primary);
   opacity: 1;
 }
+
+/* Sidebar */
 .sidebar {
   width: 100%;
   height: auto;
@@ -251,9 +189,6 @@ body {
   transition: transform var(--transition), width var(--transition);
   z-index: auto;
 }
-[data-theme="dark"] .sidebar {
-  border-bottom-color: var(--border);
-}
 
 .sidebar .sidebar-header {
   padding: 0.75rem 1rem;
@@ -262,11 +197,14 @@ body {
   justify-content: space-between;
   height: auto;
   min-height: 48px;
-  border-bottom: 1px solid var(--border); /* Header separator for mobile stacked view */
+  border-bottom: 1px solid var(--border);
   flex-shrink: 0;
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
 }
+
 .sidebar .logo {
-  font-size: 2rem; /* Adjusted logo size */
+  font-size: 2rem;
   font-weight: 800;
   display: flex;
   align-items: center;
@@ -274,10 +212,41 @@ body {
   text-decoration: none;
   color: var(--text-primary);
 }
+
+.logo-group {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+
 .logo-text {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  display: block;
   transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;
 }
-.sidebar .sidebar-header .header-button { /* Theme toggle */
+
+.logo-subtitle {
+  display: block;
+  font-size: 0.70rem;
+  font-weight: 400;
+  color: var(--text-secondary);
+  letter-spacing: 0.025em;
+  margin-top: 0.1em;
+}
+
+.sidebar.collapsed .logo-text,
+.sidebar.collapsed .logo-subtitle,
+.sidebar.collapsed .nav-section-title {
+  opacity: 0;
+  height: 0;
+  overflow: hidden;
+  transform: translateX(-10px);
+  pointer-events: none;
+}
+
+.sidebar .sidebar-header .header-button {
   padding: 0.5rem;
   font-size: 1.125rem;
   background: none;
@@ -289,31 +258,38 @@ body {
   align-items: center;
   justify-content: center;
 }
+
 .sidebar .sidebar-header .header-button:hover {
   background: var(--border-light);
 }
+
 [data-theme="dark"] .sidebar .sidebar-header .header-button:hover {
   background: var(--border);
 }
-.sidebar .sidebar-header {
-  display: flex; /* Ensure it's flex for alignment */
-  align-items: center; /* Vertically align items */
-  justify-content: space-between; /* Pushes logo left, toggle right */
-  padding-left: 1.25rem;  /* (0.5rem from sidebar-nav + 0.75rem from typical section padding) */
-  padding-right: 1.25rem; /* (0.5rem from sidebar-nav + 0.75rem from typical section padding) */
-  padding-top: 0.75rem;
-  padding-bottom: 0.75rem;
-  height: auto; /* From your compact styles */
-  min-height: 48px; /* From your compact styles */
-  border-bottom: 1px solid var(--border); /* Keep the separator */
-  flex-shrink: 0; /* Prevent header from shrinking if sidebar content is too long */
+
+.sidebar .sidebar-nav {
+  padding: 0.75rem 1rem;
+  overflow-y: auto;
+  flex: initial;
 }
 
-.sidebar .sidebar-header .header-button#themeToggle {
-  padding: 0.5rem; /* Existing compact style */
-  font-size: 1.125rem; /* Existing compact style for icon size */
-  color: var(--primary);
+.sidebar .nav-section {
+  margin-bottom: 0.75rem;
 }
+
+.sidebar .nav-section-title {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
+  padding: 0 0.75rem;
+  opacity: 1;
+  height: auto;
+  overflow: visible;
+}
+
 .sidebar-backdrop {
   display: none;
   position: fixed;
@@ -323,53 +299,23 @@ body {
   opacity: 0;
   transition: opacity var(--transition);
 }
+
 .sidebar-backdrop.active {
   display: block;
   opacity: 1;
 }
 
-.sidebar .sidebar-nav {
-  padding: 0.75rem 1rem; /* Padding for controls area on mobile */
-  overflow-y: auto; /* Allow scrolling if controls exceed height */
-  flex: initial; /* Not flex:1 on mobile */
-}
-.sidebar .nav-section {
-  margin-bottom: 0.75rem;
-}
-.sidebar .nav-section-title { /* Only used if sidebar is collapsed on desktop */
-  font-size: 0.8125rem;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--text-secondary);
-  margin-bottom: 0.5rem;
-  padding: 0 0.75rem;
-  opacity: 1; /* Default visible */
-  height: auto; /* Default auto */
-  overflow: visible; /* Default visible */
-}
-.sidebar.collapsed .nav-section-title { /* For desktop collapsed state */
-  opacity: 0;
-  height: 0;
-  margin: 0;
-  overflow: hidden;
-  padding: 0;
-}
-.sidebar.collapsed .logo-text {
-  opacity: 0;
-  transform: translateX(-10px);
-  pointer-events: none;
-}
-
+/* Sidebar Containers */
 .sidebar .search-container,
 .sidebar .upload-container,
 .sidebar .target-selection-container {
   padding: 0.75rem;
   margin-bottom: 0.75rem;
   border-radius: var(--radius);
-  background-color: var(--bg-primary); /* Sections inside controls area */
+  background-color: var(--bg-primary);
   border: 1px solid var(--border-light);
 }
+
 [data-theme="dark"] .sidebar .search-container,
 [data-theme="dark"] .sidebar .upload-container,
 [data-theme="dark"] .sidebar .target-selection-container {
@@ -387,6 +333,8 @@ body {
   align-items: center;
   gap: 0.5rem;
 }
+
+/* Status Message */
 .sidebar .status-message {
   padding: 0.625rem 0.875rem;
   font-size: 0.8125rem;
@@ -394,27 +342,29 @@ body {
   border-radius: var(--radius);
   background-color: var(--bg-primary);
   border: 1px solid var(--border);
-  color: var(--text-primary); /* Ensure text color is appropriate */
-  display: flex; /* Keep display flex for internal alignment */
-  flex-direction: column; /* Stack primary message and tags */
+  color: var(--text-primary);
+  display: flex;
+  flex-direction: column;
 }
+
 [data-theme="dark"] .sidebar .status-message {
   background-color: var(--bg-primary);
   border-color: var(--border-light);
-  color: var(--text-primary);
 }
+
 .sidebar .status-message .primary-message {
   font-size: 0.875rem;
   font-weight: 500;
   margin-bottom: 0.25rem;
   display: flex;
   align-items: center;
-  /* color: var(--text-primary); /* Inherits from .status-message */
 }
+
 .sidebar .status-message .primary-message i {
   font-size: 0.875rem;
   margin-right: 0.375rem;
 }
+
 .sidebar .status-message.info .primary-message i { color: var(--secondary); }
 .sidebar .status-message.success .primary-message i { color: var(--success); }
 .sidebar .status-message.error .primary-message i { color: var(--danger); }
@@ -422,9 +372,10 @@ body {
 .sidebar .status-message .filter-tags {
   margin-top: 0.375rem;
   gap: 0.25rem;
-  display: flex; /* Ensure tags are flex */
-  flex-wrap: wrap; /* Allow tags to wrap */
+  display: flex;
+  flex-wrap: wrap;
 }
+
 .sidebar .status-message .filter-tag {
   padding: 0.125rem 0.375rem;
   font-size: 0.75rem;
@@ -437,17 +388,30 @@ body {
 }
 
 [data-theme="dark"] .sidebar .status-message .filter-tag {
-    background-color: var(--border);
-    color: var(--text-tertiary);
+  background-color: var(--border);
+  color: var(--text-tertiary);
 }
-.sidebar .status-message .filter-tag .tag-label { font-weight: 400; color: var(--text-primary); margin-right: 0.25rem; }
-.sidebar .status-message .filter-tag .tag-value { font-weight: 500; color: var(--text-primary); }
-[data-theme="dark"] .sidebar .status-message .filter-tag .tag-value { color: var(--text-primary); }
 
+.sidebar .status-message .filter-tag .tag-label { 
+  font-weight: 400; 
+  color: var(--text-primary); 
+  margin-right: 0.25rem; 
+}
 
+.sidebar .status-message .filter-tag .tag-value { 
+  font-weight: 500; 
+  color: var(--text-primary); 
+}
+
+[data-theme="dark"] .sidebar .status-message .filter-tag .tag-value { 
+  color: var(--text-primary); 
+}
+
+/* Form Elements */
 .sidebar .form-group {
   margin-bottom: 0.625rem;
 }
+
 .sidebar .form-label {
   font-size: 0.75rem;
   margin-bottom: 0.25rem;
@@ -455,6 +419,7 @@ body {
   color: var(--text-secondary);
   display: block;
 }
+
 .sidebar .form-control {
   font-size: 0.875rem;
   padding: 0.5rem 0.75rem;
@@ -466,54 +431,36 @@ body {
   color: var(--text-primary);
   width: 100%;
   margin-bottom: 0;
-  line-height: 1.4; /* Added for consistency */
-  transition: border-color var(--transition), box-shadow var(--transition); /* Added */
+  line-height: 1.4;
+  transition: border-color var(--transition), box-shadow var(--transition);
 }
+
 [data-theme="dark"] .sidebar .form-control {
-    background-color: var(--bg-tertiary);
-    border-color: var(--border);
+  background-color: var(--bg-tertiary);
+  border-color: var(--border);
 }
+
 .sidebar .form-control:focus {
   outline: none;
   border-color: var(--primary);
   box-shadow: 0 0 0 1px var(--primary);
 }
 
+/* Sidebar Buttons */
 .sidebar .btn {
   font-size: 0.8125rem;
   padding: 0.5rem 0.875rem;
   min-height: 36px;
   height: 36px;
   width: 100%;
-  display: inline-flex; /* From general .btn */
-  align-items: center; /* From general .btn */
-  justify-content: center; /* From general .btn */
-  gap: 0.5rem; /* From general .btn */
-  border: 1px solid transparent; /* From general .btn */
-  border-radius: var(--radius); /* From general .btn */
-  font-weight: 500; /* From general .btn */
-  text-transform: none; /* From general .btn */
-  cursor: pointer; /* From general .btn */
-  transition: background-color var(--transition), border-color var(--transition), opacity var(--transition); /* From general .btn */
-  box-shadow: none; /* From general .btn */
-  line-height: 1.2; /* Specific to sidebar compact btn */
+  line-height: 1.2;
 }
-.sidebar .btn:active { opacity: 0.7; transform: none; }
-.sidebar .btn.btn-primary { background-color: var(--primary); color: white; }
-.sidebar .btn.btn-primary:hover { background-color: var(--primary-dark); opacity: 0.9; }
-.sidebar .btn.btn-secondary { background-color: var(--bg-tertiary); color: var(--primary); }
-.sidebar .btn.btn-secondary:hover { background-color: var(--border); opacity: 0.9; }
-[data-theme="dark"] .sidebar .btn.btn-secondary { background-color: var(--bg-tertiary); color: var(--primary); }
-
 
 .sidebar .filter-actions {
   margin-top: 0.625rem;
-  display: flex; /* Added from original compact styles */
-  flex-direction: column; /* Added from original compact styles */
-  gap: 0.5rem; /* Added from original compact styles */
-}
-.sidebar .filter-actions .btn {
-  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
 .sidebar .filter-group#dynamicFiltersContainer {
@@ -521,18 +468,21 @@ body {
   grid-template-columns: 1fr;
   gap: 0.25rem;
   margin-bottom: 0.625rem;
-  padding: 0; /* From original compact styles */
-  overflow: visible; /* From original compact styles */
+  padding: 0;
+  overflow: visible;
 }
+
 .sidebar .filter-group#dynamicFiltersContainer .form-group {
   margin-bottom: 0;
 }
 
+/* File Input */
 .sidebar input[type="file"].form-control {
   padding: 0;
   height: 40px;
   min-height: 40px;
 }
+
 .sidebar input[type="file"]#csvFileInput.form-control::file-selector-button {
   background-color: var(--primary);
   color: white;
@@ -543,50 +493,117 @@ body {
   border: none;
   border-right: 1px solid var(--border);
   margin-right: 0.625rem;
-  cursor: pointer; /* Added for button part */
-  transition: background-color var(--transition); /* Added */
+  cursor: pointer;
+  transition: background-color var(--transition);
 }
+
 [data-theme="dark"] .sidebar input[type="file"]#csvFileInput.form-control::file-selector-button {
   border-right-color: var(--text-tertiary);
 }
+
 .sidebar input[type="file"]#csvFileInput.form-control::file-selector-button:hover {
   background-color: var(--primary-dark);
 }
 
-.sidebar .target-selection-container .search-header { padding: 0.5rem 0; background: transparent; margin-bottom: 0.25rem; cursor: pointer; }
-.sidebar .target-selection-container .search-title { font-size: 0.875rem; font-weight: 500; }
-.sidebar .target-tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 0.25rem; }
+/* Target Selection */
+.sidebar .target-selection-container .search-header { 
+  padding: 0.5rem 0; 
+  background: transparent; 
+  margin-bottom: 0.25rem; 
+  cursor: pointer; 
+}
+
+.sidebar .target-selection-container .search-title { 
+  font-size: 0.875rem; 
+  font-weight: 500; 
+}
+
+.sidebar .target-tabs { 
+  display: flex; 
+  border-bottom: 1px solid var(--border); 
+  margin-bottom: 0.25rem; 
+}
+
 .sidebar .target-tabs .tab-btn {
-  flex: 1; padding: 0.5rem 0.25rem; background: none; border: none;
-  border-bottom: 2px solid transparent; cursor: pointer;
-  color: var(--text-secondary); font-size: 0.75rem; font-weight: 400;
+  flex: 1; 
+  padding: 0.5rem 0.25rem; 
+  background: none; 
+  border: none;
+  border-bottom: 2px solid transparent; 
+  cursor: pointer;
+  color: var(--text-secondary); 
+  font-size: 0.75rem; 
+  font-weight: 400;
   transition: color var(--transition), border-color var(--transition);
 }
-.sidebar .target-tabs .tab-btn:hover { color: var(--primary); }
-.sidebar .target-tabs .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); font-weight: 500; }
-.sidebar .tab-content .search-box input.form-control { margin-bottom: 0.25rem; height:32px; min-height:32px; font-size:0.8125rem;}
-.sidebar .selection-list { max-height: 120px; overflow-y: auto; border: 1px solid var(--border); border-radius: var(--radius); padding: 0.125rem 0; font-size: 0.75rem; }
-.sidebar .selection-item { padding: 0.375rem 0.5rem; border-bottom: 1px solid var(--border-light); display: flex; align-items: center; cursor: pointer; transition: background-color var(--transition); }
-.sidebar .selection-item:last-child { border-bottom: none; }
-.sidebar .selection-item:hover { background-color: var(--bg-tertiary); }
-.sidebar .selection-item input[type="checkbox"] { margin-right: 0.375rem; cursor: pointer; accent-color: var(--primary); width: 14px; height: 14px; }
-.sidebar .selection-item span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.8125rem; }
-.sidebar #targetFilterBtn, .sidebar #clearTargetsBtn { flex: 1; font-size: 0.8125rem; padding: 0.5rem; min-height: 32px; height: 32px; }
 
-.main-wrapper {
-  margin-left: 0; /* Mobile default */
-  flex: 1;
-  display: flex; /* Added to allow main-content to grow */
-  flex-direction: column; /* Added */
-  min-width: 0; /* Added */
-}
-.main-content {
-  flex: 1;
-  padding: 1rem;
-  overflow-y: auto;
-  background-color: var(--bg-secondary);
+.sidebar .target-tabs .tab-btn:hover { 
+  color: var(--primary); 
 }
 
+.sidebar .target-tabs .tab-btn.active { 
+  color: var(--primary); 
+  border-bottom-color: var(--primary); 
+  font-weight: 500; 
+}
+
+.sidebar .tab-content .search-box input.form-control { 
+  margin-bottom: 0.25rem; 
+  height: 32px; 
+  min-height: 32px; 
+  font-size: 0.8125rem;
+}
+
+.sidebar .selection-list { 
+  max-height: 120px; 
+  overflow-y: auto; 
+  border: 1px solid var(--border); 
+  border-radius: var(--radius); 
+  padding: 0.125rem 0; 
+  font-size: 0.75rem; 
+}
+
+.sidebar .selection-item { 
+  padding: 0.375rem 0.5rem; 
+  border-bottom: 1px solid var(--border-light); 
+  display: flex; 
+  align-items: center; 
+  cursor: pointer; 
+  transition: background-color var(--transition); 
+}
+
+.sidebar .selection-item:last-child { 
+  border-bottom: none; 
+}
+
+.sidebar .selection-item:hover { 
+  background-color: var(--bg-tertiary); 
+}
+
+.sidebar .selection-item input[type="checkbox"] { 
+  margin-right: 0.375rem; 
+  cursor: pointer; 
+  accent-color: var(--primary); 
+  width: 14px; 
+  height: 14px; 
+}
+
+.sidebar .selection-item span { 
+  overflow: hidden; 
+  text-overflow: ellipsis; 
+  white-space: nowrap; 
+  font-size: 0.8125rem; 
+}
+
+.sidebar #targetFilterBtn, .sidebar #clearTargetsBtn { 
+  flex: 1; 
+  font-size: 0.8125rem; 
+  padding: 0.5rem; 
+  min-height: 32px; 
+  height: 32px; 
+}
+
+/* Cards & Grids */
 .dashboard-grid, .stats-grid {
   display: grid;
   gap: 1rem;
@@ -603,20 +620,27 @@ body {
   position: relative;
   overflow: hidden;
 }
+
 .card:hover, .stat-card:hover {
   box-shadow: var(--shadow);
 }
+
 .card-header {
-  display: flex; align-items: center; justify-content: space-between;
+  display: flex; 
+  align-items: center; 
+  justify-content: space-between;
   margin-bottom: 1rem;
   padding-bottom: 0.75rem;
   border-bottom: 1px solid var(--border-light);
 }
+
 .card-title {
   font-size: 1.0625rem;
   font-weight: 500;
   color: var(--text-primary);
-  display: flex; align-items: center; gap: 0.5rem;
+  display: flex; 
+  align-items: center; 
+  gap: 0.5rem;
 }
 
 .stat-header {
@@ -624,9 +648,11 @@ body {
   justify-content: flex-start;
   margin-bottom: 0.25rem;
 }
+
 .stat-info {
   flex: 1;
 }
+
 .stat-label {
   font-size: 0.875rem;
   font-weight: 400;
@@ -635,6 +661,7 @@ body {
   text-transform: none;
   line-height: 1.4;
 }
+
 .stat-value {
   font-size: 2.5rem;
   font-weight: 700;
@@ -643,8 +670,13 @@ body {
   display: block;
 }
 
-.chart-container { position: relative; height: 280px; margin-top: 1rem; }
+.chart-container { 
+  position: relative; 
+  height: 280px; 
+  margin-top: 1rem; 
+}
 
+/* Tables */
 .table-container {
   background: var(--bg-primary);
   border-radius: var(--radius-lg);
@@ -653,15 +685,33 @@ body {
   overflow: hidden;
   margin-bottom: 1.5rem;
 }
+
 .table-header {
   padding: 0.75rem 1rem;
   border-bottom: 1px solid var(--border);
   background-color: var(--bg-tertiary);
 }
-[data-theme="dark"] .table-header { background-color: var(--bg-tertiary); }
-.table-title { font-size: 1rem; font-weight: 500; color: var(--text-primary); }
-.table-wrapper { overflow-x: auto; }
-table { width: 100%; border-collapse: collapse; }
+
+[data-theme="dark"] .table-header { 
+  background-color: var(--bg-tertiary); 
+}
+
+.table-title { 
+  font-size: 1rem; 
+  font-weight: 500; 
+  color: var(--text-primary); 
+}
+
+.table-wrapper { 
+  overflow-x: auto; 
+  -webkit-overflow-scrolling: touch;
+}
+
+table { 
+  width: 100%; 
+  border-collapse: collapse; 
+}
+
 th {
   background: var(--bg-tertiary);
   padding: 0.75rem 1rem;
@@ -671,9 +721,15 @@ th {
   text-transform: none;
   color: var(--text-secondary);
   border-bottom: 1px solid var(--border);
-  position: sticky; top: 0; z-index: 10;
+  position: sticky; 
+  top: 0; 
+  z-index: 10;
 }
-[data-theme="dark"] th { background: var(--bg-tertiary); }
+
+[data-theme="dark"] th { 
+  background: var(--bg-tertiary); 
+}
+
 td {
   padding: 0.75rem 1rem;
   border-bottom: 1px solid var(--border-light);
@@ -681,107 +737,91 @@ td {
   color: var(--text-primary);
   vertical-align: middle;
 }
-tr:last-child td { border-bottom: none; }
-tr:hover td { background: var(--bg-tertiary); }
-[data-theme="dark"] tr:hover td { background: var(--border); }
 
+tr:last-child td { 
+  border-bottom: none; 
+}
+
+tr:hover td { 
+  background: var(--bg-tertiary); 
+}
+
+[data-theme="dark"] tr:hover td { 
+  background: var(--border); 
+}
+
+/* Column Widths for Tables */
+#officeTable th:nth-child(1), #officeTable td:nth-child(1) { min-width: 100px; width: 15%; }
+#officeTable th:nth-child(2), #officeTable td:nth-child(2) { min-width: 140px; width: 20%; }
+#officeTable th:nth-child(3), #officeTable td:nth-child(3) { min-width: 90px; width: 10%; }
+#officeTable th:nth-child(4), #officeTable td:nth-child(4) { min-width: 80px; width: 8%; }
+#officeTable th:nth-child(5), #officeTable td:nth-child(5) { min-width: 180px; width: 25%; }
+#officeTable th:nth-child(6), #officeTable td:nth-child(6) { min-width: 90px; width: 10%; }
+#officeTable th:nth-child(7), #officeTable td:nth-child(7) { min-width: 80px; width: 12%; text-align: center; }
+
+#targetTable th:nth-child(1), #targetTable td:nth-child(1) { min-width: 120px; width: 15%; }
+#targetTable th:nth-child(2), #targetTable td:nth-child(2) { min-width: 90px; width: 9%; }
+#targetTable th:nth-child(3), #targetTable td:nth-child(3) { min-width: 80px; width: 8%; }
+#targetTable th:nth-child(4), #targetTable td:nth-child(4) { min-width: 70px; width: 7%; }
+#targetTable th:nth-child(5), #targetTable td:nth-child(5) { min-width: 90px; width: 9%; }
+#targetTable th:nth-child(6), #targetTable td:nth-child(6) { min-width: 180px; width: 25%; }
+#targetTable th:nth-child(7), #targetTable td:nth-child(7) { min-width: 90px; width: 9%; }
+#targetTable th:nth-child(8), #targetTable td:nth-child(8) { min-width: 80px; width: 10%; text-align: center; }
+
+#contractsTable th:nth-child(1), #contractsTable td:nth-child(1) { min-width: 120px; width: 120px; white-space: nowrap; }
+#contractsTable th:last-child, #contractsTable td:last-child { min-width: 140px; width: 140px; white-space: nowrap; text-align: center; }
+
+/* Table Sorting */
+th .sort-icon:after { 
+  font-family: "Font Awesome 5 Free"; 
+  font-weight: 900; 
+  margin-left: 0.4em; 
+  opacity: 0.4; 
+  color: var(--text-tertiary); 
+}
+
+th.sort-asc .sort-icon:after { 
+  content: "\f0de"; 
+  opacity: 1; 
+  color: var(--primary); 
+}
+
+th.sort-desc .sort-icon:after { 
+  content: "\f0dd"; 
+  opacity: 1; 
+  color: var(--primary); 
+}
+
+/* Status Indicators */
 #targetStatusIndicator {
-  padding: 0.75rem 1rem; border-radius: var(--radius);
+  padding: 0.75rem 1rem; 
+  border-radius: var(--radius);
   background-color: var(--bg-tertiary);
   border: 1px solid var(--border);
-  margin-bottom: 1rem; font-size: 0.875rem;
+  margin-bottom: 1rem; 
+  font-size: 0.875rem;
   color: var(--text-secondary);
-  display: none; align-items: center; gap: 0.5rem;
+  display: none; 
+  align-items: center; 
+  gap: 0.5rem;
 }
-#targetStatusIndicator i { color: var(--secondary); margin-right: 0.375rem; }
+
+#targetStatusIndicator i { 
+  color: var(--secondary); 
+  margin-right: 0.375rem; 
+}
+
 [data-theme="dark"] #targetStatusIndicator {
   background-color: var(--bg-tertiary);
   border-color: var(--border);
   color: var(--text-tertiary);
 }
-[data-theme="dark"] #targetStatusIndicator i { color: var(--text-tertiary); }
 
-
-@media (max-width: 767px) {
-  .main-content { padding: 0.75rem; }
-  .dashboard-grid, .stats-grid { grid-template-columns: 1fr; gap: 0.75rem; }
-  .stat-value { font-size: 1.5rem; }
-  .card, .stat-card { padding: 0.75rem; }
-  .card-header { margin-bottom: 0.75rem; padding-bottom: 0.5rem;}
-  th, td { padding: 0.625rem 0.75rem; font-size: 0.875rem; }
-  /* General .btn for mobile if needed, sidebar specific is already compact */
-  .btn { padding: 0.625rem 1rem; font-size: 0.9375rem; min-height: 40px; }
-  .sidebar .btn { padding: 0.5rem 0.875rem; font-size:0.8125rem; min-height:36px; height:36px;} /* Ensure sidebar btn remains compact */
-
-  .sidebar .filter-group#dynamicFiltersContainer {
-    gap: 0.5rem; /* Slightly more gap on small mobile for easier tapping */
-  }
+[data-theme="dark"] #targetStatusIndicator i { 
+  color: var(--text-tertiary); 
 }
 
-@media (min-width: 1024px) {
-  .app-container {
-    flex-direction: row;
-  }
-  .sidebar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: var(--sidebar-width);
-    height: 100vh;
-    box-shadow: var(--shadow-md);
-    border-right: 1px solid var(--border);
-    border-bottom: none;
-    z-index: 200;
-    transform: translateX(0); /* Ensure it's visible */
-  }
-  [data-theme="dark"] .sidebar {
-    border-right-color: var(--border);
-    border-bottom-color: transparent;
-  }
-  .sidebar .sidebar-header {
-    display: flex; /* Show toggle on desktop for collapsing */
-  }
-  .sidebar.collapsed {
-    transform: translateX(0);
-    width: var(--sidebar-collapsed-width);
-  }
-  .sidebar.collapsed .sidebar-header {
-    padding: 1.5rem 0; /* As per original collapsed style */
-    justify-content: center;
-  }
-  .sidebar.collapsed .logo-text { /* Re-add from original if needed for collapsed state */
-    opacity: 0;
-    transform: translateX(-10px);
-    pointer-events: none;
-  }
-  .sidebar.collapsed .nav-section-title {
-    opacity: 0;
-    height: 0;
-    margin: 0;
-    overflow: hidden;
-    padding: 0;
-  }
-  .main-wrapper {
-    margin-left: var(--sidebar-width);
-  }
-  .sidebar.collapsed + .main-wrapper {
-    margin-left: var(--sidebar-collapsed-width);
-  }
-  .dashboard-grid { grid-template-columns: repeat(3, 1fr); }
-  .stats-grid { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
-}
-
-.node rect { cursor: default; fill-opacity: 0.95; shape-rendering: crispEdges; stroke-width: 0.5px; stroke: var(--bg-primary); }
-[data-theme="dark"] .node rect { stroke: var(--bg-secondary); }
-.node text { pointer-events: none; font-size: 11px; font-weight: 400; fill: var(--text-primary); text-shadow: none !important; }
-[data-theme="dark"] .node text { fill: var(--text-primary) !important; }
-.link { fill: none; stroke-opacity: 0.25; }
-.link:hover { stroke-opacity: 0.5; }
-
-th .sort-icon:after { font-family: "Font Awesome 5 Free"; font-weight: 900; margin-left: 0.4em; opacity: 0.4; color: var(--text-tertiary); }
-th.sort-asc .sort-icon:after { content: "\f0de"; opacity: 1; color: var(--primary); }
-th.sort-desc .sort-icon:after { content: "\f0dd"; opacity: 1; color: var(--primary); }
-
+/* Badges */
 .badge {
   display: inline-block;
   padding: 0.25rem 0.625rem;
@@ -790,112 +830,101 @@ th.sort-desc .sort-icon:after { content: "\f0dd"; opacity: 1; color: var(--prima
   font-weight: 500;
   line-height: 1.2;
 }
-.badge-inactive { background-color: var(--border-light); color: var(--text-tertiary); }
-[data-theme="dark"] .badge-inactive { background-color: var(--border); color: var(--text-tertiary); }
 
-.target-vendor td { background-color: rgba(var(--primary-rgb,0,122,255), 0.05) !important; }
-[data-theme="dark"] .target-vendor td { background-color: rgba(var(--primary-rgb,10,132,255), 0.1) !important; }
+.badge-inactive { 
+  background-color: var(--border-light); 
+  color: var(--text-tertiary); 
+}
 
-#sankeyChart { width: 100%; height: 450px; position: relative; overflow: hidden; transition: height 0.3s ease; }
-@media (max-width: 768px) { #sankeyChart { height: 350px; }}
+[data-theme="dark"] .badge-inactive { 
+  background-color: var(--border); 
+  color: var(--text-tertiary); 
+}
 
-#loadBtn, #resetVendorFilterBtn, #resetFiltersBtn,
+.target-vendor td { 
+  background-color: rgba(var(--primary-rgb), 0.05) !important; 
+}
+
+[data-theme="dark"] .target-vendor td { 
+  background-color: rgba(var(--primary-rgb), 0.1) !important; 
+}
+
+/* Sankey Chart */
+#sankeyChart { 
+  width: 100%; 
+  height: 450px; 
+  position: relative; 
+  overflow: hidden; 
+  transition: height 0.3s ease; 
+}
+
+.node rect { 
+  cursor: default; 
+  fill-opacity: 0.95; 
+  shape-rendering: crispEdges; 
+  stroke-width: 0.5px; 
+  stroke: var(--bg-primary); 
+}
+
+[data-theme="dark"] .node rect { 
+  stroke: var(--bg-secondary); 
+}
+
+.node text { 
+  pointer-events: none; 
+  font-size: 11px; 
+  font-weight: 400; 
+  fill: var(--text-primary); 
+  text-shadow: none !important; 
+}
+
+[data-theme="dark"] .node text { 
+  fill: var(--text-primary) !important; 
+}
+
+.link { 
+  fill: none; 
+  stroke-opacity: 0.25; 
+}
+
+.link:hover { 
+  stroke-opacity: 0.5; 
+}
+
+.node[data-depth="2"]:hover rect {
+  stroke-width: 2px;
+  stroke: #ffffff;
+  filter: brightness(1.1);
+}
+
+#sankeyChart path.link:hover {
+  stroke-opacity: 0.6 !important;
+}
+
+/* Sankey Controls */
 #sankeyTop10, #sankeyTop25, #sankeyAll {
+  padding: 0.5rem 0.875rem; 
+  font-size: 0.875rem; 
+  margin: 0 2px;
+  background-color: var(--bg-tertiary); 
+  color: var(--text-primary);
+  border: 1px solid var(--border);
   text-transform: none;
   box-shadow: none;
   font-weight: 400;
 }
-#resetVendorFilterBtn, #resetFiltersBtn {
-  background-color: var(--bg-tertiary);
-  color: var(--primary);
-  border: 1px solid var(--border);
+
+#sankeyTop10:hover, #sankeyTop25:hover, #sankeyAll:hover { 
+  background-color: var(--border); 
 }
-#resetVendorFilterBtn:hover, #resetFiltersBtn:hover {
-  background-color: var(--border); opacity: 0.9;
-}
-#sankeyTop10, #sankeyTop25, #sankeyAll {
-  padding: 0.5rem 0.875rem; font-size: 0.875rem; margin: 0 2px;
-  background-color: var(--bg-tertiary); color: var(--text-primary);
-  border: 1px solid var(--border);
-}
-#sankeyTop10:hover, #sankeyTop25:hover, #sankeyAll:hover { background-color: var(--border); }
+
 #sankeyTop10.active, #sankeyTop25.active, #sankeyAll.active {
-  background-color: var(--primary); color: white; border-color: var(--primary); opacity: 1;
+  background-color: var(--primary); 
+  color: white; 
+  border-color: var(--primary); 
+  opacity: 1;
 }
-
-#contractsTable th:nth-child(1), #contractsTable td:nth-child(1) { min-width: 120px; width: 120px; white-space: nowrap; }
-#contractsTable th:last-child, #contractsTable td:last-child { min-width: 140px; width: 140px; white-space: nowrap; text-align: center; }
-
-.fpds-link {
-  display: inline-flex; align-items: center; gap: 0.375rem;
-  white-space: nowrap; text-decoration: none;
-  padding: 0.5rem 0.875rem;
-  background-color: var(--primary); color: white !important;
-  border-radius: var(--radius);
-  font-size: 0.8125rem; font-weight: 500;
-  transition: background-color 0.2s, opacity 0.2s;
-  text-transform: none; box-shadow: none;
-}
-.fpds-link:hover { background-color: var(--primary-dark); opacity: 0.9; }
-.fpds-link i { margin-right: 4px; }
-
-[data-theme="dark"] .chart-container,
-[data-theme="dark"] .chart-container canvas,
-[data-theme="dark"] .chartjs-legend li span,
-[data-theme="dark"] .chartjs-tooltip,
-[data-theme="dark"] .chartjs-tooltip-header { color: var(--text-primary) !important; }
-[data-theme="dark"] canvas { filter: brightness(1) contrast(1); }
-[data-theme="dark"] .chartjs-tooltip {
-  background-color: rgba(50, 50, 52, 0.9) !important;
-  border-color: rgba(80,80,82,0.8) !important;
-  box-shadow: var(--shadow-md);
-}
-.example-fpds-link {
-  color: var(--primary);
-  text-decoration: none;
-  display: inline-block; /* Or block */
-  padding: 0.25rem 0;
-}
-.example-fpds-link:hover {
-  text-decoration: underline;
-  color: var(--primary-dark);
-}
-.example-links-container p {
-    line-height: 1.4;
-}
-/* Add these styles to handle the new table structure */
-
-/* Office Table Specific Column Widths */
-#officeTable th:nth-child(1), #officeTable td:nth-child(1) { min-width: 100px; width: 15%; } /* Agency */
-#officeTable th:nth-child(2), #officeTable td:nth-child(2) { min-width: 140px; width: 20%; } /* Office */
-#officeTable th:nth-child(3), #officeTable td:nth-child(3) { min-width: 90px; width: 10%; } /* Total Value */
-#officeTable th:nth-child(4), #officeTable td:nth-child(4) { min-width: 80px; width: 8%; } /* Contracts */
-#officeTable th:nth-child(5), #officeTable td:nth-child(5) { min-width: 180px; width: 25%; } /* Top Contract */
-#officeTable th:nth-child(6), #officeTable td:nth-child(6) { min-width: 90px; width: 10%; } /* Largest Contract */
-#officeTable th:nth-child(7), #officeTable td:nth-child(7) { min-width: 80px; width: 12%; text-align: center; } /* View Details */
-
-/* Target ISV Table Specific Column Widths */
-#targetTable th:nth-child(1), #targetTable td:nth-child(1) { min-width: 120px; width: 15%; } /* Vendor */
-#targetTable th:nth-child(2), #targetTable td:nth-child(2) { min-width: 90px; width: 9%; } /* Total Value */
-#targetTable th:nth-child(3), #targetTable td:nth-child(3) { min-width: 80px; width: 8%; } /* Market Share */
-#targetTable th:nth-child(4), #targetTable td:nth-child(4) { min-width: 70px; width: 7%; } /* Contracts */
-#targetTable th:nth-child(5), #targetTable td:nth-child(5) { min-width: 90px; width: 9%; } /* Avg Deal Size */
-#targetTable th:nth-child(6), #targetTable td:nth-child(6) { min-width: 180px; width: 25%; } /* Top Contract */
-#targetTable th:nth-child(7), #targetTable td:nth-child(7) { min-width: 90px; width: 9%; } /* Largest Contract */
-#targetTable th:nth-child(8), #targetTable td:nth-child(8) { min-width: 80px; width: 10%; text-align: center; } /* View Details */
-
-/* Ensure tables can scroll horizontally on smaller screens */
-.table-wrapper {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-/* Add tooltips for truncated text */
-td[title] {
-  cursor: help;
-}
-
-/* Improve the FPDS link appearance */
+/* FPDS Link */
 .fpds-link {
   display: inline-flex;
   align-items: center;
@@ -923,28 +952,42 @@ td[title] {
   font-size: 0.75rem;
 }
 
-/* Additional responsive adjustments */
-@media (max-width: 1200px) {
-  /* Adjust column widths for smaller screens */
-  #officeTable th:nth-child(5), #officeTable td:nth-child(5), 
-  #targetTable th:nth-child(6), #targetTable td:nth-child(6) {
-    min-width: 150px; /* Make top contract description narrower */
-  }
+.example-fpds-link {
+  color: var(--primary);
+  text-decoration: none;
+  display: inline-block;
+  padding: 0.25rem 0;
 }
 
-@media (max-width: 768px) {
-  /* Further adjustments for mobile */
-  .fpds-link {
-    padding: 0.35rem 0.6rem;
-    font-size: 0.7rem;
-  }
-  
-  .fpds-link i {
-    margin-right: 2px;
-  }
+.example-fpds-link:hover {
+  text-decoration: underline;
+  color: var(--primary-dark);
 }
-/* Styles for the Date Signed filter */
 
+.example-links-container p {
+  line-height: 1.4;
+}
+
+/* Chart Dark Mode Adjustments */
+[data-theme="dark"] .chart-container,
+[data-theme="dark"] .chart-container canvas,
+[data-theme="dark"] .chartjs-legend li span,
+[data-theme="dark"] .chartjs-tooltip,
+[data-theme="dark"] .chartjs-tooltip-header {
+  color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] canvas {
+  filter: brightness(1) contrast(1);
+}
+
+[data-theme="dark"] .chartjs-tooltip {
+  background-color: rgba(50, 50, 52, 0.9) !important;
+  border-color: rgba(80, 80, 82, 0.8) !important;
+  box-shadow: var(--shadow-md);
+}
+
+/* Date Filters */
 #dateSignedFilterGroup {
   margin-bottom: 0.75rem;
 }
@@ -969,32 +1012,15 @@ td[title] {
   box-shadow: 0 0 0 1px var(--primary);
 }
 
-/* Highlight active date filters */
-#monthFilter:not([value=""]), 
-#yearFilter:not([value=""]) {
-}
-
-[data-theme="dark"] #monthFilter:not([value=""]), 
-[data-theme="dark"] #yearFilter:not([value=""]) {
-}
-
-/* Date filter header */
 .date-filter-header {
   font-size: 0.75rem;
   margin-bottom: 0.25rem;
   font-weight: 500;
- color: var(--text-primary);
+  color: var(--text-primary);
   display: block;
 }
 
-/* Mobile adjustments */
-@media (max-width: 767px) {
-  #dateSignedFilterGroup > div {
-    flex-direction: column;
-    gap: 0.375rem;
-  }
-}
-/* === Main Status Container === */
+/* Main Status Container */
 .main-status-container {
   margin-bottom: 1.5rem;
   width: 100%;
@@ -1043,7 +1069,7 @@ td[title] {
 
 .status-filter-label {
   font-weight: 500;
- color: var(--text-primary);
+  color: var(--text-primary);
 }
 
 .status-filter-value {
@@ -1056,12 +1082,12 @@ td[title] {
   font-size: 0.75rem;
 }
 
-/* === Data Context Info === */
+/* Data Context Info */
 .data-context-info {
   margin-top: 0.75rem;
   margin-bottom: 1rem;
   padding: 0.875rem 1.25rem;
-  background-color: rgba(var(--primary-rgb, 0, 122, 255), 0.1);
+  background-color: rgba(var(--primary-rgb), 0.1);
   border-radius: var(--radius);
   display: flex;
   align-items: center;
@@ -1088,7 +1114,7 @@ td[title] {
   color: var(--text-primary);
 }
 
-/* === Month Progress Container === */
+/* Month Progress */
 .month-progress-container {
   display: flex;
   flex-direction: column;
@@ -1110,7 +1136,7 @@ td[title] {
   height: 100%;
   background-color: var(--primary);
   border-radius: 4px;
-  width: 0%; /* Will be set by JavaScript */
+  width: 0%;
   transition: width 0.5s ease-in-out;
 }
 
@@ -1121,7 +1147,7 @@ td[title] {
   text-align: right;
 }
 
-/* === Archive Months === */
+/* Archive Months */
 .archive-months-container {
   display: flex;
   align-items: center;
@@ -1166,227 +1192,41 @@ td[title] {
   border-color: var(--primary);
 }
 
-
-/* === Dark Mode Adjustments === */
-[data-theme="dark"] .main-status-wrapper {
-  background-color: var(--bg-dark, #1C1C1E);
-}
-
-[data-theme="dark"] .data-context-info {
-  background-color: rgba(var(--primary-rgb, 10, 132, 255), 0.15);
-}
-
-[data-theme="dark"] .month-progress-bar,
-[data-theme="dark"] .progress-container {
-  background-color: var(--bg-primary);
-}
-
-[data-theme="dark"] .archive-month-btn {
-  background-color: var(--bg-primary);
-  border-color: var(--border);
-}
-
-[data-theme="dark"] .progress-card {
-  background-color: var(--bg-tertiary);
-  border-color: var(--border);
-}
-
-/* === Responsive Adjustments === */
-@media (max-width: 768px) {
-  .main-status-wrapper {
-    padding: 1rem;
-  }
-  
-  .status-heading {
-    font-size: 1.25rem;
-  }
-  
-  .data-context-info {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.75rem;
-    padding: 1rem;
-  }
-  
-  .month-progress-container {
-    width: 100%;
-    margin-top: 0.5rem;
-    align-items: flex-start;
-  }
-  
-  .archive-months-container {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.5rem;
-  }
-}
-/* Style for the unifiedSearch input to match Date Signed filter styles */
-
-/* Default style - make the search box stand out with a light background in light mode */
+/* Search Input Styling */
 #unifiedSearch {
-  background-color: rgba(var(--primary-rgb, 0, 122, 255), 0.05);
+  background-color: rgba(var(--primary-rgb), 0.05);
   border-color: var(--border);
   transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
-/* When search has content, make it more prominent */
 #unifiedSearch:not([value=""]) {
   border-color: var(--primary);
-  background-color: rgba(var(--primary-rgb, 0, 122, 255), 0.1);
+  background-color: rgba(var(--primary-rgb), 0.1);
 }
 
-/* Focus state */
 #unifiedSearch:focus {
   border-color: var(--primary);
   box-shadow: 0 0 0 1px var(--primary);
-  background-color: rgba(var(--primary-rgb, 0, 122, 255), 0.1);
+  background-color: rgba(var(--primary-rgb), 0.1);
 }
 
-/* Dark mode styles */
 [data-theme="dark"] #unifiedSearch {
-  background-color: rgba(var(--primary-rgb, 10, 132, 255), 0.08);
+  background-color: rgba(var(--primary-rgb), 0.08);
   border-color: var(--border);
 }
 
 [data-theme="dark"] #unifiedSearch:not([value=""]) {
   border-color: var(--primary);
-  background-color: rgba(var(--primary-rgb, 10, 132, 255), 0.15);
+  background-color: rgba(var(--primary-rgb), 0.15);
 }
 
 [data-theme="dark"] #unifiedSearch:focus {
   border-color: var(--primary);
   box-shadow: 0 0 0 1px var(--primary);
-  background-color: rgba(var(--primary-rgb, 10, 132, 255), 0.15);
-}
-/* Mobile styles for Sankey diagram */
-@media (max-width: 767px) {
-  /* Container height */
-  #sankeyContainer {
-    min-height: 450px !important;
-  }
-  
-  /* Chart height */
-  #sankeyChart {
-    height: 380px !important;
-  }
-  
-  /* Make sure buttons are visible and properly styled */
-  #sankeyContainer .filter-actions {
-    display: flex !important;
-    flex-direction: row !important;
-    justify-content: center !important;
-    margin-top: 10px !important;
-    margin-bottom: 10px !important;
-  }
-  
-  /* Individual button styling */
-  #sankeyTop10, 
-  #sankeyTop25, 
-  #sankeyAll {
-    display: inline-flex !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    min-height: 36px !important;
-    padding: 0.5rem 0.75rem !important;
-  }
-}
-@media (max-width: 767px) {
- /* Inside @media (max-width: 767px) { ... } */
-
-/* Container height */
-#sankeyContainer {
-  min-height: 400px !important; /* UPDATED from 450px */
-  height: auto !important; /* ADDED for flexibility */
+  background-color: rgba(var(--primary-rgb), 0.15);
 }
 
-/* Chart height */
-#sankeyChart {
-  height: 320px !important; /* UPDATED from 380px */
-}
-
-/*
-  The following rules for chart stacking and general mobile layout
-  from your description seem to be ALREADY CORRECTLY IMPLEMENTED
-  in your provided CSS:
-
-  .dashboard-grid {
-    grid-template-columns: 1fr !important;
-    grid-template-rows: auto !important;
-    gap: 0.75rem;
-  }
-  .dashboard-grid > * {
-    grid-column: 1 / -1 !important;
-    grid-row: auto !important;
-    height: auto !important;
-    min-height: 300px;
-  }
-  .chart-container {
-    height: 250px !important;
-  }
-  Make sure these existing rules are present and correctly formatted.
-*/
-/* @media (max-width: 767px) */
-.dashboard-grid {
-  grid-template-columns: 1fr !important; /* This should force a single column */
-  grid-template-rows: auto !important;   /* Rows adjust to content */
-  gap: 0.75rem;
-}
-.dashboard-grid > * { /* Styles for the cards within the grid */
-  grid-column: 1 / -1 !important; /* Makes each card span the full width of the single column */
-  grid-row: auto !important;      /* Allows cards to stack vertically, one per row */
-  height: auto !important;         /* Overrides any fixed heights set by JS for desktop */
-  min-height: 300px;               /* Ensures cards have a minimum height */
-}
-.logo-group {
-  display: flex;
-  flex-direction: column;
-  line-height: 1.1;
-}
-
-a.logo {
-  text-decoration: none;
-}
-
-.logo-text {
-  font-size: 2rem;
-  font-weight: 800;
-  color: var(--text-primary);
-  display: block;
-}
-
-.logo-subtitle {
-  display: block;
-  font-size: 0.70rem;
-  font-weight: 400;
-  color: var(--text-secondary);
-  letter-spacing: 0.025em;
-  margin-top: 0.1em;
-}
-
-.sidebar.collapsed .logo-subtitle {
-  display: none;
-}
-@media (max-width: 767px) {
-  .btn, 
-  .form-control,
-  .selection-item,
-  .archive-month-btn {
-    min-height: 44px; /* Ensure minimum touch target height */
-    padding: 0.75rem 1rem; /* More generous padding */
-  }
-  
-  /* Increase spacing between interactive elements */
-  .form-group,
-  .filter-actions {
-    margin-bottom: 0.75rem; /* More spacing between form elements */
-  }
-  
-  /* Ensure table cells are tappable */
-  td, th {
-    padding: 0.75rem; /* Larger padding for table cells */
-  }
-}
-/* Loading Overlay Styles */
+/* Loading Overlay */
 #loadingOverlay {
   position: fixed;
   top: 0;
@@ -1433,18 +1273,15 @@ a.logo {
   margin-top: 0.25rem;
 }
 
-/* For dark mode */
 [data-theme="dark"] .loading-spinner {
   background-color: var(--bg-dark);
 }
 
-/* Animation for the spinner */
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
 
-/* Loading Progress Bar */
 .loading-progress {
   width: 100%;
   height: 4px;
@@ -1461,65 +1298,186 @@ a.logo {
   width: 0%;
   transition: width 0.3s ease;
 }
+
 @keyframes loading-progress {
-  0% {
-    width: 0%;
-    opacity: 0.1;
-  }
-  50% {
-    width: 100%;
-    opacity: 0.8;
-  }
-  100% {
-    width: 0%;
-    opacity: 0.1;
-  }
-}
-/* Hide upload container on mobile devices */
-@media (max-width: 767px) {
-  .upload-container {
-    display: none !important; /* Use !important to override any inline styles */
-  }
-  
-  /* Optionally add more vertical space to other elements */
-  .search-container {
-    margin-bottom: 1rem; /* Add a bit more margin to the search container */
-  }
-  
-  /* Show a mobile-specific message if needed */
-  .mobile-only-message {
-    display: block;
-    padding: 0.75rem;
-    font-size: 0.8125rem;
-    color: var(--text-secondary);
-    background-color: var(--bg-tertiary);
-    border-radius: var(--radius);
-    margin-bottom: 1rem;
-    text-align: center;
-  }
+  0% { width: 0%; opacity: 0.1; }
+  50% { width: 100%; opacity: 0.8; }
+  100% { width: 0%; opacity: 0.1; }
 }
 
-/* Show upload container on desktop */
-@media (min-width: 768px) {
-  .mobile-only-message {
-    display: none; /* Hide the mobile message on desktop */
-  }
+/* Mobile Styles */
+.mobile-header {
+  display: none;
 }
-/* Mobile Bottom Navigation */
+
+.mobile-bottom-bar,
+.mobile-search-bar,
+.mobile-filter-modal,
+.mobile-archives-modal,
+.mobile-footer {
+  display: none;
+}
+
 @media (max-width: 767px) {
-  /* Hide the sidebar on mobile */
+  /* Layout */
+  .main-content {
+    padding: 0.75rem;
+    padding-top: 0;
+    padding-bottom: 70px;
+  }
+  
+  .dashboard-grid, .stats-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+  
+  .dashboard-grid > * {
+    grid-column: 1 / -1 !important;
+    grid-row: auto !important;
+    height: auto !important;
+    min-height: 300px;
+  }
+  
+  .stat-value {
+    font-size: 1.5rem;
+  }
+  
+  .card, .stat-card {
+    padding: 0.75rem;
+  }
+  
+  .card-header {
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+  }
+  
+  th, td {
+    padding: 0.625rem 0.75rem;
+    font-size: 0.875rem;
+  }
+  
+  .btn {
+    padding: 0.625rem 1rem;
+    font-size: 0.9375rem;
+    min-height: 40px;
+  }
+  
+  /* Chart sizes */
+  .chart-container {
+    height: 250px !important;
+  }
+  
+  /* Hide sidebar */
   .sidebar {
     display: none;
   }
   
-  /* Main content takes full width */
+  /* Main wrapper takes full width */
   .main-wrapper {
     margin-left: 0;
     width: 100%;
-    padding-bottom: 70px; /* Make room for the bottom bar */
   }
   
-  /* Bottom navigation bar */
+  /* Sankey adjustments */
+  #sankeyContainer {
+    min-height: 400px !important;
+    height: auto !important;
+  }
+  
+  #sankeyChart {
+    height: 320px !important;
+  }
+  
+  /* Touch targets */
+  .btn, 
+  .form-control,
+  .selection-item,
+  .archive-month-btn {
+    min-height: 44px;
+    padding: 0.75rem 1rem;
+  }
+  
+  .form-group,
+  .filter-actions {
+    margin-bottom: 0.75rem;
+  }
+  
+  td, th {
+    padding: 0.75rem;
+  }
+  
+  /* Hide upload container */
+  .upload-container {
+    display: none !important;
+  }
+  
+  /* Date filter group */
+  #dateSignedFilterGroup > div {
+    flex-direction: column;
+    gap: 0.375rem;
+  }
+  
+  /* Main status container */
+  .main-status-wrapper {
+    padding: 1rem;
+  }
+  
+  .status-heading {
+    font-size: 1.25rem;
+  }
+  
+  .data-context-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 1rem;
+  }
+  
+  .month-progress-container {
+    width: 100%;
+    margin-top: 0.5rem;
+    align-items: flex-start;
+  }
+  
+  .archive-months-container {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  /* Mobile Header */
+  .mobile-header {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    background-color: var(--bg-primary);
+    border-bottom: 1px solid var(--border-light);
+    margin-bottom: 1rem;
+    box-shadow: var(--shadow-sm);
+    text-align: center;
+  }
+  
+  .mobile-header .logo-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .mobile-header .logo-text {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    line-height: 1.2;
+  }
+  
+  .mobile-header .logo-subtitle {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-top: 0.1rem;
+  }
+  
+  /* Mobile Bottom Bar */
   .mobile-bottom-bar {
     display: flex;
     position: fixed;
@@ -1534,7 +1492,6 @@ a.logo {
     padding: 0 10px;
   }
   
-  /* Bottom bar buttons */
   .mobile-bottom-bar .nav-button {
     flex: 1;
     display: flex;
@@ -1565,78 +1522,7 @@ a.logo {
     color: var(--primary);
   }
   
-  /* Mobile content ordering - put important content first */
-  .main-content {
-    display: flex;
-    flex-direction: column;
-  }
-  
-  /* Order of elements from top to bottom */
-  .main-status-container {
-    order: 1;
-  }
-  
-  .stats-grid {
-    order: 2;
-  }
-  
-  .dashboard-grid {
-    order: 3;
-  }
-  
-  #officeTableContainer {
-    order: 4;
-  }
-  
-  #contractsTableContainer {
-    order: 5;
-  }
-  
-  /* Modal for filters */
-  .mobile-filter-modal {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 60px; /* Leave room for bottom bar */
-    background-color: var(--bg-primary);
-    z-index: 999;
-    overflow-y: auto;
-    padding: 1rem;
-    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
-    transition: transform 0.3s ease-in-out;
-    transform: translateY(100%);
-  }
-  
-  .mobile-filter-modal.active {
-    transform: translateY(0);
-    display: block;
-  }
-  
-  .mobile-filter-modal .modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding-bottom: 0.75rem;
-    margin-bottom: 1rem;
-    border-bottom: 1px solid var(--border);
-  }
-  
-  .mobile-filter-modal .modal-title {
-    font-size: 1.25rem;
-    font-weight: 600;
-  }
-  
-  .mobile-filter-modal .close-button {
-    background: none;
-    border: none;
-    font-size: 1.5rem;
-    color: var(--text-secondary);
-    cursor: pointer;
-  }
-  
-  /* Mobile search bar */
+  /* Mobile Search Bar */
   .mobile-search-bar {
     position: fixed;
     top: 0;
@@ -1658,6 +1544,7 @@ a.logo {
   
   .mobile-search-bar .search-input-container {
     position: relative;
+    width: 100%;
   }
   
   .mobile-search-bar .search-icon {
@@ -1674,11 +1561,12 @@ a.logo {
     border: 1px solid var(--border);
     border-radius: var(--radius);
     font-size: 1rem;
+    padding-right: 100px;
   }
   
   .mobile-search-bar .close-search {
     position: absolute;
-    right: 10px;
+    right: 56px;
     top: 50%;
     transform: translateY(-50%);
     background: none;
@@ -1686,496 +1574,300 @@ a.logo {
     color: var(--text-secondary);
     cursor: pointer;
   }
-}
-/* Additional styling for mobile filter modal */
-.mobile-filter-section {
-  margin-bottom: 1.5rem;
-}
-
-.mobile-filter-section .form-group {
-  margin-bottom: 1rem;
-}
-
-.mobile-filter-section .form-label {
-  font-size: 0.875rem;
-  font-weight: 500;
-  margin-bottom: 0.25rem;
-  color: var(--text-secondary);
-}
-
-.mobile-filter-section .form-control {
-  font-size: 1rem;
-  padding: 0.75rem;
-  height: 44px; /* Larger touch target */
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background-color: var(--bg-primary);
-  color: var(--text-primary);
-}
-
-/* Style for the apply and reset buttons */
-#mobileFilterContent .btn {
-  padding: 0.875rem 1rem;
-  font-size: 1rem;
-  height: 48px; /* Larger touch target */
-  box-shadow: var(--shadow-sm);
-}
-
-#mobileFilterContent .btn-primary {
-  background-color: var(--primary);
-  color: white;
-  border: none;
-}
-
-#mobileFilterContent .btn-secondary {
-  background-color: var(--bg-tertiary);
-  color: var(--text-primary);
-  border: 1px solid var(--border);
-}
-/* Mobile footer styles */
-@media (max-width: 767px) {
-  .mobile-footer {
-    position: fixed;
-    bottom: 60px; /* Position it above the bottom nav bar */
-    left: 0;
-    right: 0;
-    height: 40px;
-    background-color: var(--bg-primary);
-    border-top: 1px solid var(--border);
+  
+  .search-submit-btn {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 0.5rem;
-    z-index: 990; /* Below the bottom nav but above content */
-    box-shadow: 0 -1px 5px rgba(0, 0, 0, 0.05);
+    cursor: pointer;
+    z-index: 5;
   }
   
-  .mobile-logo {
-    /* Smaller sizes for mobile */
-    transform: scale(0.8);
-    opacity: 0.8;
-    flex-direction: row;
+  /* Mobile Modals */
+  .mobile-filter-modal,
+  .mobile-archives-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 60px;
+    background-color: var(--bg-primary);
+    z-index: 999;
+    overflow-y: auto;
+    padding: 1rem;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease-in-out;
+    transform: translateY(100%);
+    display: none;
+  }
+  
+  .mobile-filter-modal.active,
+  .mobile-archives-modal.active {
+    transform: translateY(0);
+    display: block;
+  }
+  
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
     align-items: center;
-    gap: 0.5rem;
+    padding-bottom: 0.75rem;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
   }
   
-  .mobile-logo .logo-text {
+  .modal-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+  
+  .close-button {
+    background: none;
+    border: none;
     font-size: 1.5rem;
+    color: var(--text-secondary);
+    cursor: pointer;
   }
   
-  .mobile-logo .logo-subtitle {
-    font-size: 0.7rem;
+  /* Filter Modal */
+  .filter-section {
+    margin-bottom: 1.5rem;
   }
   
-  /* Adjust main content padding to account for both bars */
+  .filter-section-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.25rem;
+    border-bottom: 1px solid var(--border-light);
+  }
+  
+  .filter-buttons {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1.5rem;
+  }
+  
+  .filter-buttons .btn {
+    flex: 1;
+    padding: 0.875rem;
+    font-size: 1rem;
+    height: 48px;
+  }
+  
+  /* Archives Modal */
+  .archives-title {
+    margin-bottom: 1.5rem;
+  }
+  
+  .archives-title h3 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+  }
+  
+  .archives-title p {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+  }
+  
+  .archives-buttons {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .mobile-archives-modal .archive-month-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    height: 100px;
+    text-align: center;
+  }
+  
+  .mobile-archives-modal .archive-month-btn i {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+    color: var(--primary);
+  }
+  
+  .mobile-archives-modal .archive-month-btn span {
+    font-size: 0.875rem;
+  }
+  
+  .mobile-archives-modal .archive-month-btn.active i {
+    color: white;
+  }
+  
+  .no-archives {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 1rem;
+    color: var(--text-secondary);
+    font-style: italic;
+  }
+  
+  /* Mobile content ordering */
+  .main-content {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .main-status-container { order: 1; }
+  .stats-grid { order: 2; }
+  .dashboard-grid { order: 3; }
+  #officeTableContainer { order: 4; }
+  #contractsTableContainer { order: 5; }
+}
+
+@media (min-width: 1024px) {
+  .app-container {
+    flex-direction: row;
+  }
+  
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: var(--sidebar-width);
+    height: 100vh;
+    box-shadow: var(--shadow-md);
+    border-right: 1px solid var(--border);
+    border-bottom: none;
+    z-index: 200;
+    transform: translateX(0);
+  }
+  
+  [data-theme="dark"] .sidebar {
+    border-right-color: var(--border);
+    border-bottom-color: transparent;
+  }
+  
+  .sidebar.collapsed {
+    transform: translateX(0);
+    width: var(--sidebar-collapsed-width);
+  }
+  
+  .sidebar.collapsed .sidebar-header {
+    padding: 1.5rem 0;
+    justify-content: center;
+  }
+  
   .main-wrapper {
-    padding-bottom: 100px; /* 60px for nav + 40px for footer */
+    margin-left: var(--sidebar-width);
   }
-}
-@media (max-width: 767px) {
-  /* Update the mobile filter modal to account for both the nav bar and footer */
-  .mobile-filter-modal {
-    bottom: 100px; /* 60px for nav + 40px for footer */
+  
+  .sidebar.collapsed + .main-wrapper {
+    margin-left: var(--sidebar-collapsed-width);
   }
-}
-/* Styles for the mobile archives modal */
-.mobile-archives-modal {
-  display: none;
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 60px; /* Leave room for bottom nav */
-  background-color: var(--bg-primary);
-  z-index: 999;
-  overflow-y: auto;
-  padding: 1rem;
-  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s ease-in-out;
-  transform: translateY(100%);
-}
-
-.mobile-archives-modal.active {
-  transform: translateY(0);
-  display: block;
-}
-
-.mobile-archives-modal .modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-bottom: 0.75rem;
-  margin-bottom: 1rem;
-  border-bottom: 1px solid var(--border);
-}
-
-.mobile-archives-modal .modal-title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.mobile-archives-modal .close-button {
-  background: none;
-  border: none;
-  font-size: 1.5rem;
-  color: var(--text-secondary);
-  cursor: pointer;
-}
-
-.mobile-archives-modal .archives-title {
-  margin-bottom: 1.5rem;
-}
-
-.mobile-archives-modal .archives-title h3 {
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin-bottom: 0.25rem;
-}
-
-.mobile-archives-modal .archives-title p {
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-}
-
-.mobile-archives-modal .archives-buttons {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 0.75rem;
-  margin-bottom: 1.5rem;
-}
-
-.mobile-archives-modal .archive-month-btn {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
-  border-radius: var(--radius);
-  border: 1px solid var(--border);
-  background-color: var(--bg-tertiary);
-  color: var(--text-primary);
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  height: 100px;
-  text-align: center;
-}
-
-.mobile-archives-modal .archive-month-btn i {
-  font-size: 1.5rem;
-  margin-bottom: 0.5rem;
-  color: var(--primary);
-}
-
-.mobile-archives-modal .archive-month-btn span {
-  font-size: 0.875rem;
-}
-
-.mobile-archives-modal .archive-month-btn:hover {
-  background-color: var(--border-light);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-sm);
-}
-
-.mobile-archives-modal .archive-month-btn.active {
-  background-color: var(--primary);
-  color: white;
-  border-color: var(--primary);
-}
-
-.mobile-archives-modal .archive-month-btn.active i {
-  color: white;
-}
-
-.mobile-archives-modal .no-archives {
-  grid-column: 1 / -1;
-  text-align: center;
-  padding: 1rem;
-  color: var(--text-secondary);
-  font-style: italic;
-}
-/* Style for the search submit button */
-.search-input-container {
-  position: relative;
-  width: 100%;
-}
-
-.search-submit-btn {
-  position: absolute;
-  right: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  background-color: var(--primary);
-  color: white;
-  border: none;
-  border-radius: 50%;
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  z-index: 5;
-}
-
-/* Adjust the close button position to not overlap with submit button */
-.close-search {
-  right: 56px !important;
-}
-
-/* Make sure the input has enough padding for both buttons */
-.mobile-search-bar input {
-  padding-right: 100px;
-}
-/* Styles for mobile filter modal */
-.mobile-filter-modal {
-  display: none;
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 60px; /* Leave room for bottom nav */
-  background-color: var(--bg-primary);
-  z-index: 999;
-  overflow-y: auto;
-  padding: 1rem;
-  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s ease-in-out;
-  transform: translateY(100%);
-}
-
-.mobile-filter-modal.active {
-  transform: translateY(0);
-  display: block;
-}
-
-.mobile-filter-modal .modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-bottom: 0.75rem;
-  margin-bottom: 1rem;
-  border-bottom: 1px solid var(--border);
-}
-
-.mobile-filter-modal .modal-title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.mobile-filter-modal .close-button {
-  background: none;
-  border: none;
-  font-size: 1.5rem;
-  color: var(--text-secondary);
-  cursor: pointer;
-}
-
-.mobile-filter-modal .filter-section {
-  margin-bottom: 1.5rem;
-}
-
-.mobile-filter-modal .filter-section-title {
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin-bottom: 0.75rem;
-  padding-bottom: 0.25rem;
-  border-bottom: 1px solid var(--border-light);
-}
-
-.mobile-filter-modal .form-group {
-  margin-bottom: 1rem;
-}
-
-.mobile-filter-modal .form-label {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--text-secondary);
-  margin-bottom: 0.25rem;
-  display: block;
-}
-
-.mobile-filter-modal .form-control {
-  width: 100%;
-  padding: 0.75rem;
-  font-size: 1rem;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background-color: var(--bg-primary);
-  color: var(--text-primary);
-  height: 44px;
-}
-
-.mobile-filter-modal .filter-buttons {
-  display: flex;
-  gap: 1rem;
-  margin-top: 1.5rem;
-}
-
-.mobile-filter-modal .filter-buttons .btn {
-  flex: 1;
-  padding: 0.875rem;
-  font-size: 1rem;
-  height: 48px;
-}
-
-.mobile-filter-modal .btn-primary {
-  background-color: var(--primary);
-  color: white;
-}
-
-.mobile-filter-modal .btn-secondary {
-  background-color: var(--bg-tertiary);
-  color: var(--text-primary);
-  border: 1px solid var(--border);
-}
-/* You might want to update this to ensure proper layout after removing one card */
-.stats-grid {
-  display: grid;
-  gap: 1rem;
-  margin-bottom: 1rem;
-  grid-template-columns: repeat(3, 1fr); /* Updated from 4 to 3 columns */
-}
-
-@media (max-width: 767px) {
+  
+  .dashboard-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
   .stats-grid {
-    grid-template-columns: 1fr; /* Keep as is for mobile */
+    grid-template-columns: repeat(3, 1fr);
   }
 }
-/* Add this CSS for the mobile header */
-@media (max-width: 767px) {
-    .mobile-header {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        padding: 0.75rem 1rem;
-        background-color: var(--bg-primary);
-        border-bottom: 1px solid var(--border-light);
-        margin-bottom: 1rem;
-        box-shadow: var(--shadow-sm);
-        text-align: center;
-    }
-    
-    .mobile-header .logo-group {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-    }
-    
-    .mobile-header .logo-text {
-        font-size: 1.75rem;
-        font-weight: 800;
-        color: var(--text-primary);
-        line-height: 1.2;
-    }
-    
-    .mobile-header .logo-subtitle {
-        font-size: 0.8rem;
-        color: var(--text-secondary);
-        margin-top: 0.1rem;
-    }
-    
-    /* Ensure the main status container doesn't have unnecessary margin at top */
-    .main-status-container {
-        margin-top: 0;
-    }
-}
-@media (max-width: 767px) {
-    /* Adjust main content padding */
-    .main-content {
-        padding-top: 0; /* No top padding since the header provides spacing */
-        padding-bottom: 70px; /* Keep bottom padding for the nav bar */
-    }
-    
-    /* Ensure status container has proper spacing */
-    .main-status-container {
-        margin-top: 0;
-    }
-}
-@media (max-width: 767px) {
-    /* Hide the sidebar logo on mobile */
-    .sidebar .logo-group {
-        display: none;
-    }
+
+@media (max-width: 1200px) {
+  #officeTable th:nth-child(5), #officeTable td:nth-child(5), 
+  #targetTable th:nth-child(6), #targetTable td:nth-child(6) {
+    min-width: 150px;
+  }
 }
 </style>
 </head>
 <body>
   <div class="app-container">
+    <!-- Sidebar -->
     <aside class="sidebar" id="sidebar">
-<div class="sidebar-header">
-  <div class="drag-indicator"></div>
-  <div class="logo-group">
-    <a href="#" class="logo">
-      <span class="logo-text">FedWon.</span>
-    </a>
-    <span class="logo-subtitle">Federal Awards Viewer</span>
-  </div>
-  <button class="header-button" id="themeToggle" aria-label="Toggle Theme">
-    <i class="fas fa-moon" aria-hidden="true"></i>
-  </button>
-</div>
+      <div class="sidebar-header">
+        <div class="logo-group">
+          <a href="#" class="logo">
+            <span class="logo-text"><i class="fa-solid fa-flag-usa"></i> FedWon.</span>
+          </a>
+          <span class="logo-subtitle">Federal Awards Viewer</span>
+        </div>
+        <button class="header-button" id="themeToggle" aria-label="Toggle Theme">
+          <i class="fas fa-moon" aria-hidden="true"></i>
+        </button>
+      </div>
 
       <div class="sidebar-nav">
         <div class="nav-section">
+          <!-- Search Container -->
           <div class="search-container">
             <div class="filter-container">
               <div class="form-group">
-             <input type="text" id="unifiedSearch" placeholder="Search across all contract fields..." class="form-control">
+                <input type="text" id="unifiedSearch" placeholder="Search across all contract fields..." class="form-control">
               </div>
-              <div class="filter-group" id="dynamicFiltersContainer">
-                </div>
+              <div class="filter-group" id="dynamicFiltersContainer"></div>
               <div class="filter-actions">
-                <button class="btn btn-secondary" id="resetFiltersBtn">
-                  Reset Filters
-                </button>
+                <button class="btn btn-secondary" id="resetFiltersBtn">Reset Filters</button>
               </div>
             </div>
           </div>
+          
+          <!-- Upload Container -->
           <div class="upload-container">
-            <div class="upload-title">
-              Upload FPDS CSV Data
-            </div>
+            <div class="upload-title">Upload FPDS CSV Data</div>
             <form id="uploadForm">
               <label class="form-label" for="csvFileInput">Select CSV file</label>
               <input type="file" id="csvFileInput" accept=".csv" class="form-control">
-              <button type="button" id="loadBtn" class="btn btn-primary">
-                Load Data
-              </button>
+              <button type="button" id="loadBtn" class="btn btn-primary">Load Data</button>
             </form>
           </div>
-		  <div id="dataContextInfo" class="data-context-info">
-  <div class="info-icon"><i class="fas fa-info-circle"></i></div>
-  <div class="info-text">
-    Showing contract awards >$100K for <span id="contextMonth">the current month</span> through <span id="contextDate">today</span>.
-  </div>
-</div>
+          
+          <!-- Data Context Info -->
+          <div id="dataContextInfo" class="data-context-info">
+            <div class="info-icon"><i class="fas fa-info-circle"></i></div>
+            <div class="info-text">
+              Showing contract awards >$100K for <span id="contextMonth">the current month</span> through <span id="contextDate">today</span>.
+            </div>
+          </div>
 
-<!-- Add this for archive months - place below the data context info -->
-<div id="archiveMonthsContainer" class="archive-months-container">
-  <div class="archive-months-title">Archives:</div>
-  <div id="archiveMonthsList" class="archive-months-list">
-    <!-- Archive month buttons will be added here dynamically -->
-  </div>
-</div>
+          <!-- Archive Months Container -->
+          <div id="archiveMonthsContainer" class="archive-months-container">
+            <div class="archive-months-title">Archives:</div>
+            <div id="archiveMonthsList" class="archive-months-list">
+              <!-- Archive month buttons will be added here dynamically -->
+            </div>
+          </div>
         </div>
       </div>
     </aside>
 
+    <!-- Main Content -->
     <div class="main-wrapper">
       <main class="main-content">
-	 <div id="mainStatusContainer" class="main-status-container">
-  <div class="main-status-wrapper">
-    <div id="mainStatusMessage" class="main-status-message">
-      <h2 class="status-heading" id="statusHeading">Viewing all Awards</h2>
-    </div>
-    <div id="statusFilters" class="status-filters"></div>
-  </div>
-</div>
+        <!-- Status Container -->
+        <div id="mainStatusContainer" class="main-status-container">
+          <div class="main-status-wrapper">
+            <div id="mainStatusMessage" class="main-status-message">
+              <h2 class="status-heading" id="statusHeading">Viewing all Awards</h2>
+            </div>
+            <div id="statusFilters" class="status-filters"></div>
+          </div>
+        </div>
+        
+        <!-- Stats Grid -->
         <div class="stats-grid">
           <div class="stat-card">
             <div class="stat-header">
@@ -2204,34 +1896,36 @@ a.logo {
             </div>
           </div>
         </div>
-        <div class="dashboard-grid">
-          </div>
+        
+        <!-- Dashboard Grid (for charts) -->
+        <div class="dashboard-grid"></div>
 
+        <!-- Office Table -->
         <div class="table-container" id="officeTableContainer">
           <div class="table-header">
             <h3 class="table-title">Top Contracting Offices</h3>
           </div>
           <div class="table-wrapper">
-           <table class="sortable" id="officeTable" aria-labelledby="officeTableContainer">
-  <thead>
-    <tr>
-      <th data-sort="string" scope="col">Agency <span class="sort-icon"></span></th>
-      <th data-sort="string" scope="col">Contracting Office <span class="sort-icon"></span></th>
-      <th data-sort="number" scope="col">Total Value <span class="sort-icon"></span></th>
-      <th data-sort="number" scope="col">Contracts <span class="sort-icon"></span></th>
-      <th data-sort="string" scope="col">Top Vendor <span class="sort-icon"></span></th>
-      <th data-sort="number" scope="col">Largest Contract <span class="sort-icon"></span></th>
-      <th data-sort="string" scope="col">View Details</th>
-    </tr>
-  </thead>
-  <tbody id="officeTableBody">
-    <!-- Table body will be populated dynamically -->
-  </tbody>
-</table>
+            <table class="sortable" id="officeTable" aria-labelledby="officeTableContainer">
+              <thead>
+                <tr>
+                  <th data-sort="string" scope="col">Agency <span class="sort-icon"></span></th>
+                  <th data-sort="string" scope="col">Contracting Office <span class="sort-icon"></span></th>
+                  <th data-sort="number" scope="col">Total Value <span class="sort-icon"></span></th>
+                  <th data-sort="number" scope="col">Contracts <span class="sort-icon"></span></th>
+                  <th data-sort="string" scope="col">Top Vendor <span class="sort-icon"></span></th>
+                  <th data-sort="number" scope="col">Largest Contract <span class="sort-icon"></span></th>
+                  <th data-sort="string" scope="col">View Details</th>
+                </tr>
+              </thead>
+              <tbody id="officeTableBody">
+                <!-- Table body will be populated dynamically -->
+              </tbody>
+            </table>
           </div>
         </div>
 
-
+        <!-- Contracts Table -->
         <div class="table-container" id="contractsTableContainer">
           <div class="table-header">
             <h3 class="table-title">Recent Contract Awards</h3>
@@ -2248,61 +1942,63 @@ a.logo {
                   <th data-sort="string" scope="col">Status <span class="sort-icon"></span></th>
                 </tr>
               </thead>
-              <tbody id="contractsTableBody">
-                </tbody>
+              <tbody id="contractsTableBody"></tbody>
             </table>
           </div>
         </div>
       </main>
     </div>
   </div>
-<!-- Mobile-specific UI elements (only shown on mobile) -->
-<div class="mobile-bottom-bar" id="mobileBottomBar">
-  <button class="nav-button active" data-target="main" id="dashboardBtn">
-    <i class="fas fa-chart-bar"></i>
-    <span>Dashboard</span>
-  </button>
-  <button class="nav-button" data-target="search" id="searchBtn">
-    <i class="fas fa-search"></i>
-    <span>Search</span>
-  </button>
-  <button class="nav-button" data-target="filter" id="filterBtn">
-    <i class="fas fa-filter"></i>
-    <span>Filters</span>
-  </button>
-  <button class="nav-button" data-target="archives" id="archivesBtn">
-    <i class="fas fa-archive"></i>
-    <span>Archives</span>
-  </button>
-  <button class="nav-button" data-target="reset" id="resetBtn">
-    <i class="fas fa-undo"></i>
-    <span>Reset</span>
-  </button>
-</div>
-<!-- Mobile search bar -->
-<div class="mobile-search-bar" id="mobileSearchBar">
-  <div class="search-input-container">
-    <i class="fas fa-search search-icon"></i>
-    <input type="text" id="mobileSearchInput" placeholder="Search across all contract fields...">
-    <button class="close-search" id="closeSearchBtn">
-      <i class="fas fa-times"></i>
+  
+  <!-- Mobile UI Elements -->
+  <!-- Mobile Bottom Navigation Bar -->
+  <div class="mobile-bottom-bar" id="mobileBottomBar">
+    <button class="nav-button active" data-target="main" id="dashboardBtn">
+      <i class="fas fa-chart-bar"></i>
+      <span>Dashboard</span>
+    </button>
+    <button class="nav-button" data-target="search" id="searchBtn">
+      <i class="fas fa-search"></i>
+      <span>Search</span>
+    </button>
+    <button class="nav-button" data-target="filter" id="filterBtn">
+      <i class="fas fa-filter"></i>
+      <span>Filters</span>
+    </button>
+    <button class="nav-button" data-target="archives" id="archivesBtn">
+      <i class="fas fa-archive"></i>
+      <span>Archives</span>
+    </button>
+    <button class="nav-button" data-target="reset" id="resetBtn">
+      <i class="fas fa-undo"></i>
+      <span>Reset</span>
     </button>
   </div>
-</div>
+  
+  <!-- Mobile Search Bar -->
+  <div class="mobile-search-bar" id="mobileSearchBar">
+    <div class="search-input-container">
+      <i class="fas fa-search search-icon"></i>
+      <input type="text" id="mobileSearchInput" placeholder="Search across all contract fields...">
+      <button class="close-search" id="closeSearchBtn">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+  </div>
 
-<!-- Mobile filter modal -->
-<div class="mobile-filter-modal" id="mobileFilterModal">
-  <div class="modal-header">
-    <div class="modal-title">Filter Options</div>
-    <button class="close-button" id="closeFilterBtn">
-      <i class="fas fa-times"></i>
-    </button>
+  <!-- Mobile Filter Modal -->
+  <div class="mobile-filter-modal" id="mobileFilterModal">
+    <div class="modal-header">
+      <div class="modal-title">Filter Options</div>
+      <button class="close-button" id="closeFilterBtn">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="modal-content" id="mobileFilterContent">
+      <!-- This will be populated with filter controls -->
+    </div>
   </div>
-  <div class="modal-content" id="mobileFilterContent">
-    <!-- This will be populated with filter controls -->
-  </div>
-</div>
-  </body>
+</body>
 <script>
 // Global variables
 var allData = [];
@@ -7146,7 +6842,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 // Add this function to create a mobile header
 function createMobileHeader() {
-    console.log("Creating mobile header with logo");
+    console.log("Creating mobile header with logo and theme toggle");
     
     // Check if it already exists
     if (document.getElementById('mobileHeader')) return;
@@ -7156,12 +6852,15 @@ function createMobileHeader() {
     mobileHeader.id = 'mobileHeader';
     mobileHeader.className = 'mobile-header';
     
-    // Add the logo and subtitle
+    // Add the logo, subtitle, and theme toggle
     mobileHeader.innerHTML = `
         <div class="logo-group mobile-logo">
-            <span class="logo-text">FedWon.</span>
+            <span class="logo-text"><i class="fa-solid fa-flag-usa"></i> FedWon.</span>
             <span class="logo-subtitle">Federal Awards Viewer</span>
         </div>
+        <button class="header-button" id="mobileThemeToggle" aria-label="Toggle Theme">
+            <i class="fas fa-moon" aria-hidden="true"></i>
+        </button>
     `;
     
     // Find where to insert it - at the top of main-content
@@ -7172,9 +6871,63 @@ function createMobileHeader() {
         mainContent.appendChild(mobileHeader);
     } else {
         console.error("Could not find main-content to insert mobile header");
+        return;
+    }
+    
+    // Set up the mobile theme toggle functionality
+    const mobileThemeToggle = document.getElementById('mobileThemeToggle');
+    if (mobileThemeToggle) {
+        // Sync with current theme
+        const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+        const icon = mobileThemeToggle.querySelector('i');
+        
+        if (currentTheme === 'dark') {
+            icon.classList.remove('fa-moon');
+            icon.classList.add('fa-sun');
+        } else {
+            icon.classList.remove('fa-sun');
+            icon.classList.add('fa-moon');
+        }
+        
+        // Add click handler
+        mobileThemeToggle.addEventListener('click', function() {
+            const theme = document.documentElement.getAttribute('data-theme');
+            const newTheme = theme === 'light' ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            
+            // Update mobile icon
+            const icon = this.querySelector('i');
+            if (newTheme === 'dark') {
+                icon.classList.remove('fa-moon');
+                icon.classList.add('fa-sun');
+            } else {
+                icon.classList.remove('fa-sun');
+                icon.classList.add('fa-moon');
+            }
+            
+            // Also update the main theme toggle if it exists
+            const mainThemeToggle = document.getElementById('themeToggle');
+            if (mainThemeToggle) {
+                const mainIcon = mainThemeToggle.querySelector('i');
+                if (mainIcon) {
+                    if (newTheme === 'dark') {
+                        mainIcon.classList.remove('fa-moon');
+                        mainIcon.classList.add('fa-sun');
+                    } else {
+                        mainIcon.classList.remove('fa-sun');
+                        mainIcon.classList.add('fa-moon');
+                    }
+                }
+            }
+            
+            // Update Chart.js colors for dark mode
+            if (typeof updateChartJsColors === 'function') {
+                updateChartJsColors();
+            }
+        });
     }
 }
-
 // Call this function when the page loads on mobile
 document.addEventListener('DOMContentLoaded', function() {
     if (window.innerWidth < 768) {
