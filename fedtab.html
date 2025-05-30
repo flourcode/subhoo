@@ -2116,7 +2116,7 @@ th.sort-desc .sort-icon:after {
 
           <!-- Archive Months Container -->
           <div id="archiveMonthsContainer" class="archive-months-container">
-            <div class="archive-months-title">Archives:</div>
+            <div class="archive-months-title">Library:</div>
             <div id="archiveMonthsList" class="archive-months-list">
               <!-- Archive month buttons will be added here dynamically -->
             </div>
@@ -2284,15 +2284,15 @@ App.data = {
   allData: [],
   filteredData: [],
   charts: {},
-  currentSankeyLimit: 25, // Default to showing top 25 flows
+  currentSankeyLimit: 10, // Default to showing top 25 flows
   vendorColorMap: new Map(),
   currentDataPeriod: null,
   periodDescription: "",
   isAutoLoadedData: false,
-  currentMonthActive: true,
+  currentMonthActive: false,
   // Archive months configuration - update as needed
   archiveMonths: [
-    { month: "Jan", year: "2025", url: "https://subhoodata.s3.us-east-1.amazonaws.com/data/jan25.csv" },
+    { month: "SaaS", year: "3Year", url: "https://subhoodata.s3.us-east-1.amazonaws.com/data/target.csv" },
     { month: "Feb", year: "2025", url: "https://subhoodata.s3.us-east-1.amazonaws.com/data/feb25.csv" },
     { month: "Mar", year: "2025", url: "https://subhoodata.s3.us-east-1.amazonaws.com/data/march25.csv" },
     { month: "Apr", year: "2025", url: "https://subhoodata.s3.us-east-1.amazonaws.com/data/april2025.csv" }
