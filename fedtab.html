@@ -2292,10 +2292,7 @@ App.data = {
   currentMonthActive: false,
   // Archive months configuration - update as needed
   archiveMonths: [
-    { month: "SaaS", year: "3Year", url: "https://subhoodata.s3.us-east-1.amazonaws.com/data/target.csv" },
-    { month: "Feb", year: "2025", url: "https://subhoodata.s3.us-east-1.amazonaws.com/data/feb25.csv" },
-    { month: "Mar", year: "2025", url: "https://subhoodata.s3.us-east-1.amazonaws.com/data/march25.csv" },
-    { month: "Apr", year: "2025", url: "https://subhoodata.s3.us-east-1.amazonaws.com/data/april2025.csv" }
+    { month: "SaaS", year: "3 Year", url: "https://subhoodata.s3.us-east-1.amazonaws.com/data/target.csv" }
   ]
 };
 
@@ -3272,7 +3269,7 @@ App.ui = {
      currentMonthBtn.className = `archive-month-btn${App.data.currentMonthActive ? ' active' : ''}`;
      currentMonthBtn.innerHTML = `
        <i class="fas fa-calendar-day"></i>
-       <span>Current Month</span>
+       <span>Current YTD</span>
      `;
      
      App.utils.addEventListenerSafe(currentMonthBtn, 'click', function() {
