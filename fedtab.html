@@ -2719,13 +2719,22 @@ App.ui = {
   generateNaturalDescription: function(filters) {
     // Only include period text for auto-loaded data
     let periodText = "";
-    if (App.data.isAutoLoadedData && App.data.periodDescription) {
+  if (App.data.isAutoLoadedData) {
+    const contextMonth = document.getElementById('contextMonth');
+    const contextDate = document.getElementById('contextDate');
+    
+    if (contextMonth && contextDate && contextMonth.textContent && contextDate.textContent) {
+      // Use the full date range from context elements
+      periodText = ` for ${contextMonth.textContent} through ${contextDate.textContent}`;
+    } else if (App.data.periodDescription) {
+      // Fallback to basic period description
       periodText = App.data.periodDescription;
     }
-    
-    if (!filters || Object.keys(filters).length === 0) {
-      return `Viewing all Awards ${periodText}`;
-    }
+  }
+  
+  if (!filters || Object.keys(filters).length === 0) {
+    return `Viewing all Awards${periodText}`;
+  }
     
     // Extract key filter components
     const agency = filters["Agency"] || "";
@@ -2752,15 +2761,15 @@ App.ui = {
     
     // Use month/year from filters if specified, otherwise use the detected period
     if (month && year) {
-      description += `from ${month} ${year} `;
-    } else if (month) {
-      description += `from ${month} `;
-    } else if (year) {
-      description += `from ${year} `;
-    } else if (periodText && !filters["Month"] && !filters["Year"] && App.data.isAutoLoadedData) {
-      // Only add the period text if no specific month/year filter is applied
-      description += `${periodText} `;
-    }
+    description += `from ${month} ${year} `;
+  } else if (month) {
+    description += `from ${month} `;
+  } else if (year) {
+    description += `from ${year} `;
+  } else if (periodText && !filters["Month"] && !filters["Year"] && App.data.isAutoLoadedData) {
+    // Only add the period text if no specific month/year filter is applied
+    description += `${periodText} `;
+  }
     
     // Add NAICS information
     if (naicsCode && naicsDesc) {
