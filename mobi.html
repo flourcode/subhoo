@@ -437,19 +437,17 @@
       .header-actions .btn .btn-text { display: inline-block; }
       .file-input-wrapper .btn .btn-text { display: inline-block; }
       
-      /* --- NEW: Styles for example CSV buttons on larger screens --- */
       .example-csv-loader {
-        flex-direction: row; /* Align label and buttons in a row */
-        align-items: center; /* Vertically align label and buttons */
+        flex-direction: row; 
+        align-items: center; 
       }
       .example-csv-loader-label {
-        margin-bottom: 0; /* Remove bottom margin when in a row */
-        margin-right: var(--space-2); /* Add right margin to separate from buttons */
+        margin-bottom: 0; 
+        margin-right: var(--space-2); 
       }
       .example-csv-buttons .btn {
-        flex-grow: 0; /* Don't allow buttons to grow excessively */
+        flex-grow: 0; 
       }
-      /* --- END NEW --- */
 
       .filter-bar {
         flex-direction: row; overflow-x: visible; flex-wrap: wrap;
@@ -502,7 +500,6 @@
         </div>
       </div>
       
-      <!-- --- NEW: Example CSV Loader Section --- -->
       <div class="example-csv-loader">
         <span class="example-csv-loader-label">Or load an example:</span>
         <div class="example-csv-buttons">
@@ -511,7 +508,6 @@
             <button id="loadExample3" class="btn btn-secondary"><span class="btn-text">Example 3</span></button>
         </div>
       </div>
-      <!-- --- END NEW --- -->
 
       <div class="filter-controls">
         <div class="filter-bar">
@@ -652,19 +648,15 @@
       naicsCodes: {}, pscCodes: {}, charts: {}, filters: {},
       selection: { type: null, value: null, container: null },
       sankeyDisplayLimit: 10,
-      // --- NEW: S3 Base URL ---
       s3BaseUrl: "https://subhoodata.s3.us-east-1.amazonaws.com/data/"
     };
 
-    // DOM Elements (add new example buttons)
     const elements = {
       csvFile: document.getElementById('csvFile'),
       uploadBtn: document.querySelector('label[for="csvFile"]'),
-      // --- NEW: Example CSV Buttons ---
       loadExample1Btn: document.getElementById('loadExample1'),
       loadExample2Btn: document.getElementById('loadExample2'),
       loadExample3Btn: document.getElementById('loadExample3'),
-      // --- END NEW ---
       valueFilter: document.getElementById('valueFilter'),
       startDate: document.getElementById('startDate'), endDate: document.getElementById('endDate'),
       agencyFilter: document.getElementById('agencyFilter'), officeFilter: document.getElementById('officeFilter'),
@@ -693,7 +685,6 @@
       closeModalBtn: document.getElementById('closeModalBtn'), contractModalBody: document.getElementById('contractModalBody')
     };
 
-    // Utility functions (mostly unchanged, ensure parseDate handles your S3 date format if different)
     const utils = {
       formatMoney:function(v){if(!v&&v!==0)return'$0';const n=parseFloat(v);if(isNaN(n))return'$0';if(n>=1e9)return'$'+(n/1e9).toFixed(1)+'B';if(n>=1e6)return'$'+(n/1e6).toFixed(1)+'M';if(n>=1e3)return'$'+(n/1e3).toFixed(1)+'K';return'$'+n.toFixed(0)},
       formatDate:function(d){if(!d)return'N/A';const dt=d instanceof Date?d:new Date(d);if(isNaN(dt.getTime())){const p=String(d).split('-');if(p.length===3){const m={'Jan':0,'Feb':1,'Mar':2,'Apr':3,'May':4,'Jun':5,'Jul':6,'Aug':7,'Sep':8,'Oct':9,'Nov':10,'Dec':11},dd=parseInt(p[0]),mm=m[p[1]];let y=parseInt(p[2]);if(y<100)y=y<50?2000+y:1900+y;if(!isNaN(dd)&&mm!==undefined&&!isNaN(y))return new Date(y,mm,dd).toLocaleDateString('en-US',{year:'2-digit',month:'short',day:'numeric'})}return String(d)}return dt.toLocaleDateString('en-US',{year:'2-digit',month:'short',day:'numeric'})},
@@ -706,22 +697,19 @@
       parseValueRange:function(r){if(!r)return null;const p=r.split('-');return p.length!==2?null:{min:parseFloat(p[0]),max:parseFloat(p[1])}}
     };
     
-    // Data processing functions (mostly unchanged)
     const dataProcessor = {
       processData:function(c){if(!c||!c.data||c.data.length===0)throw new Error('No valid data found in CSV file');const f=['Contract ID','Date Signed','Contracting Agency','Legal Business Name','Action Obligation ($)'];for(const e of f)if(!c.headers.includes(e))throw new Error(`Required field "${e}" not found in CSV file`);return c.data.map(r=>({id:r['Contract ID']||'',reference:r['Reference IDV']||'',modification:r['Modification Number']||'',date:r['Date Signed']||'',parsedDate:utils.parseDate(r['Date Signed']),type:r['Award/IDV Type']||'',value:utils.parseMoney(r['Action Obligation ($)']),agency:r['Contracting Agency']||'',office:r['Contracting Office Name']||'',psc:r['PSC']||'',pscDescription:r['PSC Description']||'',naics:r['NAICS']||'',naicsDescription:r['NAICS Description']||'',vendor:r['Legal Business Name']||'',parentVendor:r['Ultimate Parent Legal Business Name']||'',description:r['PSC Description']||''}))},
       analyzeData:function(d){const a={},o={},v={},n={},p={};d.forEach(c=>{if(c.agency){if(!a[c.agency])a[c.agency]={name:c.agency,count:0,value:0,offices:new Set(),vendors:new Set()};a[c.agency].count++;a[c.agency].value+=c.value;if(c.office)a[c.agency].offices.add(c.office);if(c.vendor)a[c.agency].vendors.add(c.vendor)}if(c.office){if(!o[c.office])o[c.office]={name:c.office,agency:c.agency,count:0,value:0,vendors:new Set(),naicsCodes:{}};o[c.office].count++;o[c.office].value+=c.value;if(c.vendor)o[c.office].vendors.add(c.vendor);if(c.naics){if(!o[c.office].naicsCodes[c.naics])o[c.office].naicsCodes[c.naics]={code:c.naics,description:c.naicsDescription,count:0,value:0};o[c.office].naicsCodes[c.naics].count++;o[c.office].naicsCodes[c.naics].value+=c.value}}if(c.vendor){if(!v[c.vendor])v[c.vendor]={name:c.vendor,parent:c.parentVendor,count:0,value:0,agencies:new Set(),naicsCodes:{}};v[c.vendor].count++;v[c.vendor].value+=c.value;if(c.agency)v[c.vendor].agencies.add(c.agency);if(c.naics){if(!v[c.vendor].naicsCodes[c.naics])v[c.vendor].naicsCodes[c.naics]={code:c.naics,description:c.naicsDescription,count:0,value:0};v[c.vendor].naicsCodes[c.naics].count++;v[c.vendor].naicsCodes[c.naics].value+=c.value}}if(c.naics){if(!n[c.naics])n[c.naics]={code:c.naics,description:c.naicsDescription,count:0,value:0,vendors:new Set()};n[c.naics].count++;n[c.naics].value+=c.value;if(c.vendor)n[c.naics].vendors.add(c.vendor)}if(c.psc){if(!p[c.psc])p[c.psc]={code:c.psc,description:c.pscDescription,count:0,value:0};p[c.psc].count++;p[c.psc].value+=c.value}});return{agencies:a,offices:o,vendors:v,naicsCodes:n,pscCodes:p}},
       generateSankeyData:function(d,l=10){const af={},of={},nm=new Map;d.forEach(c=>{if(c.agency&&c.office&&c.vendor&&c.value>0){const ak=`${c.agency}|${c.office}`;if(!af[ak])af[ak]={source:c.agency,target:c.office,value:0};af[ak].value+=c.value;const ok=`${c.office}|${c.vendor}`;if(!of[ok])of[ok]={source:c.office,target:c.vendor,value:0};of[ok].value+=c.value}});Object.values(af).forEach(f=>{if(!nm.has(f.source))nm.set(f.source,{name:f.source,type:'agency'});if(!nm.has(f.target))nm.set(f.target,{name:f.target,type:'office'})});Object.values(of).forEach(f=>{if(!nm.has(f.target))nm.set(f.target,{name:f.target,type:'vendor'})});const na=Array.from(nm.values());na.forEach((n,i)=>n.id=i);const nim=new Map;na.forEach((n,i)=>nim.set(n.name,i));const al=Object.values(af).map(f=>({source:nim.get(f.source),target:nim.get(f.target),value:f.value,type:'agency-office'})),ol=Object.values(of).map(f=>({source:nim.get(f.source),target:nim.get(f.target),value:f.value,type:'office-vendor'})),la=[...al,...ol].sort((a,b)=>b.value-a.value);const tl=[],in_=new Set,ml=l===0?la.length:Math.min(l,la.length);for(let i=0;i<ml;i++){tl.push(la[i]);in_.add(la[i].source);in_.add(la[i].target)}const fn=na.filter((n,i)=>in_.has(i)).map(n=>({...n})),fnim=new Map;fn.forEach((n,i)=>fnim.set(n.name,i));const fl=tl.map(k=>({source:fnim.get(na[k.source].name),target:fnim.get(na[k.target].name),value:k.value,type:k.type}));return{nodes:fn,links:fl}}
     };
 
-    // Filter functions (updateFilterTags logic slightly adjusted for initial load)
     const filterManager = {
       applyFilters:function(){const f=app.filters;let l=[...app.data];if(f.valueRange)l=l.filter(c=>c.value>=f.valueRange.min&&c.value<=f.valueRange.max);if(f.startDate)l=l.filter(c=>c.parsedDate&&c.parsedDate>=new Date(f.startDate));if(f.endDate){const e=new Date(f.endDate);e.setHours(23,59,59,999);l=l.filter(c=>c.parsedDate&&c.parsedDate<=e)}if(f.agency)l=l.filter(c=>c.agency===f.agency);if(f.office)l=l.filter(c=>c.office===f.office);if(f.naics)l=l.filter(c=>c.naics===f.naics);if(f.psc)l=l.filter(c=>c.psc===f.psc);if(f.vendor)l=l.filter(c=>c.vendor===f.vendor);if(f.search){const s=f.search.toLowerCase();l=l.filter(c=>(c.id&&c.id.toLowerCase().includes(s))||(c.agency&&c.agency.toLowerCase().includes(s))||(c.office&&c.office.toLowerCase().includes(s))||(c.vendor&&c.vendor.toLowerCase().includes(s))||(c.description&&c.description.toLowerCase().includes(s))||(c.naicsDescription&&c.naicsDescription.toLowerCase().includes(s))||(c.pscDescription&&c.pscDescription.toLowerCase().includes(s)))}app.filteredData=l;return l},
       applySelectionFilter:function(t,v,c){document.querySelectorAll('.selection-indicator').forEach(i=>i.style.display='none');if(app.selection.type===t&&app.selection.value===v){app.selection={type:null,value:null,container:null};delete app.filters[t]}else{delete app.filters.agency;delete app.filters.office;delete app.filters.naics;delete app.filters.vendor;if(t&&v){app.filters[t]=v;app.selection={type:t,value:v,container:c};if(c){const i=c.querySelector('.selection-indicator');if(i)i.style.display='block'}}}this.applyFilters();this.updateFilterTags();dashboardManager.refreshDashboard()},
-      updateFilterTags:function(){const f=app.filters,ac=elements.activeFilters;ac.innerHTML='';const t=[];if(f.valueRange)t.push({key:'valueRange',label:'Value',value:`${utils.formatMoney(f.valueRange.min)} - ${utils.formatMoney(f.valueRange.max)}`});if(f.startDate)t.push({key:'startDate',label:'From',value:new Date(f.startDate).toLocaleDateString()});if(f.endDate)t.push({key:'endDate',label:'To',value:new Date(f.endDate).toLocaleDateString()});if(f.agency)t.push({key:'agency',label:'Agency',value:f.agency});if(f.office)t.push({key:'office',label:'Office',value:f.office});if(f.naics)t.push({key:'naics',label:'NAICS',value:f.naics});if(f.psc)t.push({key:'psc',label:'PSC',value:f.psc});if(f.vendor)t.push({key:'vendor',label:'Vendor',value:f.vendor});if(f.search)t.push({key:'search',label:'Search',value:f.search});t.forEach(g=>{const e=document.createElement('div');e.className='filter-tag';e.innerHTML=`${g.label}: ${utils.truncateText(g.value,15)} <button class="filter-tag-remove" data-filter="${g.key}"><i class="fas fa-times"></i></button>`;ac.appendChild(e);e.querySelector('.filter-tag-remove').addEventListener('click',function(){const k=this.getAttribute('data-filter');if(k==='valueRange'){delete app.filters.valueRange;elements.valueFilter.value=''}else if(k==='startDate'){delete app.filters.startDate;elements.startDate.value=''}else if(k==='endDate'){delete app.filters.endDate;elements.endDate.value=''}else if(k==='agency'){delete app.filters.agency;elements.agencyFilter.value='';if(app.selection.type==='agency')app.selection={type:null,value:null,container:null}}else if(k==='office'){delete app.filters.office;elements.officeFilter.value='';if(app.selection.type==='office')app.selection={type:null,value:null,container:null}}else if(k==='naics'){delete app.filters.naics;elements.naicsFilter.value='';if(app.selection.type==='naics')app.selection={type:null,value:null,container:null}}else if(k==='psc'){delete app.filters.psc;elements.pscFilter.value='';if(app.selection.type==='psc')app.selection={type:null,value:null,container:null}}else if(k==='vendor'){delete app.filters.vendor;elements.vendorFilter.value='';if(app.selection.type==='vendor')app.selection={type:null,value:null,container:null}}else if(k==='search'){delete app.filters.search;elements.searchInput.value=''}document.querySelectorAll('.selection-indicator').forEach(i=>i.style.display='none');filterManager.applyFilters();dashboardManager.refreshDashboard()})});const st=document.querySelector('#statusBox .status-title');let tt='',ds='';if(app.filteredData.length>0){let md=null,xd=null;app.filteredData.forEach(c=>{if(c.parsedDate&&c.parsedDate instanceof Date&&!isNaN(c.parsedDate.getTime())){if(!md||c.parsedDate<md)md=c.parsedDate;if(!xd||c.parsedDate>xd)xd=c.parsedDate}});if(md&&xd){const fm=utils.formatDate(md),fx=utils.formatDate(maxDate);if(fm===fx){if(fm!=='N/A')ds=` (Date: ${fm})`}else{if(fm!=='N/A'&&fx!=='N/A')ds=` (${fm} - ${fx})`;else if(fm!=='N/A')ds=` (From: ${fm})`;else if(fx!=='N/A')ds=` (To: ${fx})`}}}if(st){if(app.data.length===0&&app.filteredData.length===0)tt='No data loaded';else if(app.filteredData.length===0&&app.data.length>0)tt='No contracts match current filters';else if(app.filteredData.length<app.data.length)tt=`Viewing ${app.filteredData.length.toLocaleString()} filtered contracts`;else tt=`Viewing all ${app.filteredData.length.toLocaleString()} contracts`;st.textContent=tt+ds}},
+      updateFilterTags:function(){const f=app.filters,ac=elements.activeFilters;ac.innerHTML='';const t=[];if(f.valueRange)t.push({key:'valueRange',label:'Value',value:`${utils.formatMoney(f.valueRange.min)} - ${utils.formatMoney(f.valueRange.max)}`});if(f.startDate)t.push({key:'startDate',label:'From',value:new Date(f.startDate).toLocaleDateString()});if(f.endDate)t.push({key:'endDate',label:'To',value:new Date(f.endDate).toLocaleDateString()});if(f.agency)t.push({key:'agency',label:'Agency',value:f.agency});if(f.office)t.push({key:'office',label:'Office',value:f.office});if(f.naics)t.push({key:'naics',label:'NAICS',value:f.naics});if(f.psc)t.push({key:'psc',label:'PSC',value:f.psc});if(f.vendor)t.push({key:'vendor',label:'Vendor',value:f.vendor});if(f.search)t.push({key:'search',label:'Search',value:f.search});t.forEach(g=>{const e=document.createElement('div');e.className='filter-tag';e.innerHTML=`${g.label}: ${utils.truncateText(g.value,15)} <button class="filter-tag-remove" data-filter="${g.key}"><i class="fas fa-times"></i></button>`;ac.appendChild(e);e.querySelector('.filter-tag-remove').addEventListener('click',function(){const k=this.getAttribute('data-filter');if(k==='valueRange'){delete app.filters.valueRange;elements.valueFilter.value=''}else if(k==='startDate'){delete app.filters.startDate;elements.startDate.value=''}else if(k==='endDate'){delete app.filters.endDate;elements.endDate.value=''}else if(k==='agency'){delete app.filters.agency;elements.agencyFilter.value='';if(app.selection.type==='agency')app.selection={type:null,value:null,container:null}}else if(k==='office'){delete app.filters.office;elements.officeFilter.value='';if(app.selection.type==='office')app.selection={type:null,value:null,container:null}}else if(k==='naics'){delete app.filters.naics;elements.naicsFilter.value='';if(app.selection.type==='naics')app.selection={type:null,value:null,container:null}}else if(k==='psc'){delete app.filters.psc;elements.pscFilter.value='';if(app.selection.type==='psc')app.selection={type:null,value:null,container:null}}else if(k==='vendor'){delete app.filters.vendor;elements.vendorFilter.value='';if(app.selection.type==='vendor')app.selection={type:null,value:null,container:null}}else if(k==='search'){delete app.filters.search;elements.searchInput.value=''}document.querySelectorAll('.selection-indicator').forEach(i=>i.style.display='none');filterManager.applyFilters();dashboardManager.refreshDashboard()})});const st=document.querySelector('#statusBox .status-title');let tt='',ds='';if(app.filteredData.length>0){let md=null,xd=null;app.filteredData.forEach(c=>{if(c.parsedDate&&c.parsedDate instanceof Date&&!isNaN(c.parsedDate.getTime())){if(!md||c.parsedDate<md)md=c.parsedDate;if(!xd||c.parsedDate>xd)xd=c.parsedDate}});if(md&&xd){const fm=utils.formatDate(md),fx=utils.formatDate(xd);/* Corrected line */ if(fm===fx){if(fm!=='N/A')ds=` (Date: ${fm})`}else{if(fm!=='N/A'&&fx!=='N/A')ds=` (${fm} - ${fx})`;else if(fm!=='N/A')ds=` (From: ${fm})`;else if(fx!=='N/A')ds=` (To: ${fx})`}}}if(st){if(app.data.length===0&&app.filteredData.length===0)tt='No data loaded';else if(app.filteredData.length===0&&app.data.length>0)tt='No contracts match current filters';else if(app.filteredData.length<app.data.length)tt=`Viewing ${app.filteredData.length.toLocaleString()} filtered contracts`;else tt=`Viewing all ${app.filteredData.length.toLocaleString()} contracts`;st.textContent=tt+ds}},
       resetFilters:function(){app.filters={};app.selection={type:null,value:null,container:null};elements.valueFilter.value='';elements.startDate.value='';elements.endDate.value='';elements.agencyFilter.value='';elements.officeFilter.value='';elements.naicsFilter.value='';elements.pscFilter.value='';elements.vendorFilter.value='';elements.searchInput.value='';document.querySelectorAll('.selection-indicator').forEach(i=>i.style.display='none');app.filteredData=[...app.data];this.updateFilterTags();dashboardManager.refreshDashboard()}
     };
     
-    // Chart functions (mostly unchanged)
     const chartManager = {
       initCharts:function(){Object.values(app.charts).forEach(c=>{if(c instanceof Chart)c.destroy()});app.charts={};Chart.defaults.font.family="'Inter',sans-serif";Chart.defaults.font.size=11;Chart.defaults.color=getComputedStyle(document.documentElement).getPropertyValue('--text-secondary');this.initValueTimeChart();this.initAgencyChart();this.initNaicsBubbleChart();this.initVendorChart();this.initSankeyChart();this.addChartClickEvents()},
       initValueTimeChart:function(){app.charts.valueTimeChart=new Chart(elements.valueTimeChart.getContext('2d'),{type:'line',data:{labels:[],datasets:[{label:'Contract Value',data:[],borderColor:getComputedStyle(document.documentElement).getPropertyValue('--primary'),backgroundColor:'rgba(0,112,243,0.1)',tension:0.4,fill:true,pointBackgroundColor:getComputedStyle(document.documentElement).getPropertyValue('--primary'),pointBorderColor:getComputedStyle(document.documentElement).getPropertyValue('--bg-primary'),pointBorderWidth:1,pointRadius:3,borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>utils.formatMoney(c.raw)}}},scales:{x:{grid:{display:false},ticks:{maxRotation:45,minRotation:45,font:{size:10}}},y:{beginAtZero:true,ticks:{callback:v=>utils.formatMoney(v),font:{size:10}}}}}})},
@@ -738,7 +726,6 @@
       updateVendorChart:function(){const d=app.filteredData;if(!d||d.length===0)return;const v={};d.forEach(c=>{if(c.vendor){if(!v[c.vendor])v[c.vendor]=0;v[c.vendor]+=c.value}});const a=Object.keys(v).map(n=>({name:n,value:v[n]})).sort((c,n)=>n.value-c.value).slice(0,8),c=app.charts.vendorChart;c.data.labels=a.map(n=>utils.truncateText(n.name,12));c.data.datasets[0].data=a.map(n=>n.value);c.data.datasets[0].backgroundColor=a.map(n=>utils.stringToColor(n.name));c.update()}
     };
     
-    // Table functions (mostly unchanged)
     const tableManager = {
       initTableSorting:function(){document.querySelectorAll('th[data-sort]').forEach(h=>{h.addEventListener('click',function(){const t=this.closest('table'),b=t.querySelector('tbody'),r=Array.from(b.querySelectorAll('tr')),s=this.getAttribute('data-sort');let d='asc';if(this.classList.contains('sort-asc'))d='desc';t.querySelectorAll('th').forEach(e=>e.classList.remove('sort-asc','sort-desc'));this.classList.add(`sort-${d}`);const cf=(x,y)=>{const xc=x.querySelector(`td:nth-child(${Array.from(this.parentNode.children).indexOf(this)+1})`),yc=y.querySelector(`td:nth-child(${Array.from(this.parentNode.children).indexOf(this)+1})`);if(!xc||!yc)return 0;let xv=xc.textContent.trim(),yv=yc.textContent.trim();if(s==='value'){xv=utils.parseMoney(xv);yv=utils.parseMoney(yv)}else if(s==='date'){xv=new Date(xv).getTime()||0;yv=new Date(yv).getTime()||0}else if(s==='contracts'){xv=parseInt(xv.replace(/,/g,''))||0;yv=parseInt(yv.replace(/,/g,''))||0}return d==='asc'?(xv>yv?1:-1):(xv<yv?1:-1)};r.sort(cf).forEach(e=>b.appendChild(e))})})},
       updateContractsTable:function(){const d=app.filteredData,t=elements.contractsTable;t.innerHTML='';[...d].sort((a,b)=>{if(!a.parsedDate&&!b.parsedDate)return 0;if(!a.parsedDate)return 1;if(!b.parsedDate)return-1;return b.parsedDate-a.parsedDate}).slice(0,10).forEach(c=>this.addContractRow(c,t))},
@@ -750,37 +737,26 @@
       updateTables:function(){this.updateContractsTable();this.updateLargestContractsTable();this.updateOfficesTable()}
     };
     
-    // Dashboard manager (mostly unchanged)
     const dashboardManager = {
       initDashboard:function(){elements.loadingIndicator.style.display='none';elements.errorMessage.style.display='none';elements.noDataMessage.style.display='none';elements.dashboard.style.display='flex';elements.statusBox.style.display='flex';chartManager.initCharts();tableManager.initTableSorting();this.refreshDashboard()},
       refreshDashboard:function(){this.updateStats();chartManager.updateCharts();tableManager.updateTables();filterManager.updateFilterTags()},
       updateStats:function(){const d=app.filteredData;elements.totalContracts.textContent=d.length.toLocaleString();elements.totalValue.textContent=utils.formatMoney(d.reduce((s,c)=>s+c.value,0));elements.avgValue.textContent=utils.formatMoney(d.length>0?d.reduce((s,c)=>s+c.value,0)/d.length:0);elements.uniqueVendors.textContent=new Set(d.map(c=>c.vendor).filter(Boolean)).size.toLocaleString()}
     };
 
-    // --- MODIFIED: File Handling Logic ---
     const fileHandler = {
-      // Helper function to process CSV text and update dashboard
       processAndDisplayCsv: function(csvText, fileNameForDisplay = "Uploaded Data") {
         try {
           const csvData = utils.parseCSV(csvText);
           const processedData = dataProcessor.processData(csvData);
           app.data = processedData;
           app.filteredData = [...processedData];
-          
           const analysis = dataProcessor.analyzeData(processedData);
-          app.agencies = analysis.agencies;
-          app.offices = analysis.offices;
-          app.vendors = analysis.vendors;
-          app.naicsCodes = analysis.naicsCodes;
-          app.pscCodes = analysis.pscCodes;
-          
+          app.agencies = analysis.agencies; app.offices = analysis.offices; app.vendors = analysis.vendors;
+          app.naicsCodes = analysis.naicsCodes; app.pscCodes = analysis.pscCodes;
           this.populateFilterDropdowns();
-          dashboardManager.initDashboard(); // This will refresh stats, charts, tables
-          
-          // Update the manual upload button text to a generic one after loading any file
+          dashboardManager.initDashboard(); 
           const uploadBtnTextSpan = elements.uploadBtn.querySelector('.btn-text');
           if(uploadBtnTextSpan) uploadBtnTextSpan.textContent = 'Upload';
-
         } catch (error) {
           console.error('Error processing CSV data:', error);
           this.showError(`Error processing ${fileNameForDisplay}: ${error.message}`);
@@ -788,14 +764,11 @@
           elements.loadingIndicator.style.display = 'none';
         }
       },
-
-      // Load CSV from a URL
       loadCsvFromUrl: async function(csvUrl, fileNameForDisplay) {
         elements.loadingIndicator.style.display = 'flex';
         elements.errorMessage.style.display = 'none';
-        elements.noDataMessage.style.display = 'none'; // Hide no data message
-        elements.dashboard.style.display = 'none'; // Hide dashboard while loading new data
-
+        elements.noDataMessage.style.display = 'none'; 
+        elements.dashboard.style.display = 'none'; 
         try {
           const response = await fetch(csvUrl);
           if (!response.ok) {
@@ -807,32 +780,20 @@
           console.error(`Error fetching CSV from ${csvUrl}:`, error);
           this.showError(`Failed to load ${fileNameForDisplay}: ${error.message}. Check if the S3 bucket CORS policy allows this origin.`);
           elements.loadingIndicator.style.display = 'none';
-          // If dashboard was hidden and error occurs, show no data message again
           if(app.data.length === 0) elements.noDataMessage.style.display = 'flex';
         }
       },
-
-      // Handle manual file upload
       handleFileUpload: function() {
         const file = elements.csvFile.files[0];
-        if (!file) {
-          this.showError('Please select a CSV file to upload.');
-          return;
-        }
-        if (file.type !== 'text/csv' && !file.name.endsWith('.csv')) {
-          this.showError('Please upload a valid CSV file.');
-          return;
-        }
-        
+        if (!file) { this.showError('Please select a CSV file to upload.'); return; }
+        if (file.type !== 'text/csv' && !file.name.endsWith('.csv')) { this.showError('Please upload a valid CSV file.'); return; }
         elements.loadingIndicator.style.display = 'flex';
         elements.errorMessage.style.display = 'none';
         elements.noDataMessage.style.display = 'none';
         elements.dashboard.style.display = 'none';
-
         const reader = new FileReader();
         reader.onload = (event) => {
           this.processAndDisplayCsv(event.target.result, file.name);
-          // Update button text specifically for manual upload
           const uploadBtnTextSpan = elements.uploadBtn.querySelector('.btn-text');
           if(uploadBtnTextSpan) uploadBtnTextSpan.textContent = ` ${utils.truncateText(file.name,10)}`;
         };
@@ -843,22 +804,15 @@
         };
         reader.readAsText(file);
       },
-      
       showError: function(m){elements.errorMessage.textContent=m;elements.errorMessage.style.display='block'},
       populateFilterDropdowns:function(){const p=(e,i,v,f)=>{while(e.options.length>1)e.remove(1);[...i].sort((a,b)=>b.count-a.count).slice(0,100).forEach(d=>{const o=document.createElement('option');o.value=d[v];o.textContent=f(d);e.appendChild(o)})};p(elements.agencyFilter,Object.values(app.agencies),'name',i=>`${utils.truncateText(i.name,30)} (${i.count})`);p(elements.officeFilter,Object.values(app.offices),'name',i=>`${utils.truncateText(i.name,30)} (${i.count})`);p(elements.naicsFilter,Object.values(app.naicsCodes),'code',i=>`${i.code} - ${utils.truncateText(i.description,25)} (${i.count})`);p(elements.pscFilter,Object.values(app.pscCodes),'code',i=>`${i.code} - ${utils.truncateText(i.description,25)} (${i.count})`);p(elements.vendorFilter,Object.values(app.vendors),'name',i=>`${utils.truncateText(i.name,30)} (${i.count})`)}
     };
-    // --- END MODIFIED ---
 
-    // Event listeners setup
     function setupEventListeners() {
       elements.csvFile.addEventListener('change', () => fileHandler.handleFileUpload());
-      
-      // --- NEW: Event listeners for example CSV buttons ---
       if(elements.loadExample1Btn) elements.loadExample1Btn.addEventListener('click', () => fileHandler.loadCsvFromUrl(app.s3BaseUrl + 'example1.csv', 'Example 1'));
       if(elements.loadExample2Btn) elements.loadExample2Btn.addEventListener('click', () => fileHandler.loadCsvFromUrl(app.s3BaseUrl + 'example2.csv', 'Example 2'));
       if(elements.loadExample3Btn) elements.loadExample3Btn.addEventListener('click', () => fileHandler.loadCsvFromUrl(app.s3BaseUrl + 'example3.csv', 'Example 3'));
-      // --- END NEW ---
-
       elements.searchInput.addEventListener('input',()=>{clearTimeout(elements.searchInput.timer);elements.searchInput.timer=setTimeout(()=>{app.filters.search=elements.searchInput.value;filterManager.applyFilters();dashboardManager.refreshDashboard()},300)});
       elements.agencyFilter.addEventListener('change',()=>{app.filters.agency=elements.agencyFilter.value;filterManager.applySelectionFilter('agency',elements.agencyFilter.value,elements.agencyChartContainer)});
       elements.vendorFilter.addEventListener('change',()=>{app.filters.vendor=elements.vendorFilter.value;filterManager.applySelectionFilter('vendor',elements.vendorFilter.value,elements.vendorChartContainer)});
@@ -881,19 +835,14 @@
       document.addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.target===elements.searchInput||e.target===elements.valueFilter||e.target===elements.startDate||e.target===elements.endDate||e.target===elements.agencyFilter||e.target===elements.officeFilter||e.target===elements.naicsFilter||e.target===elements.pscFilter||e.target===elements.vendorFilter)){e.preventDefault();filterManager.applyFilters();dashboardManager.refreshDashboard()}});
     }
     
-    // Theme toggling (mostly unchanged)
     function toggleTheme(){const c=document.documentElement.getAttribute('data-theme')||'light',n=c==='light'?'dark':'light';document.documentElement.setAttribute('data-theme',n);const i=elements.themeToggle.querySelector('i');if(i)i.className=n==='dark'?'fas fa-sun':'fas fa-moon';localStorage.setItem('theme',n);if(app.charts&&Object.keys(app.charts).length>0){Object.values(app.charts).forEach(h=>{if(h instanceof Chart){h.options.color=getComputedStyle(document.documentElement).getPropertyValue('--text-secondary');if(h.options.scales){Object.values(h.options.scales).forEach(s=>{if(s.ticks)s.ticks.color=getComputedStyle(document.documentElement).getPropertyValue('--text-secondary');if(s.title&&s.title.text)s.title.color=getComputedStyle(document.documentElement).getPropertyValue('--text-secondary');if(s.grid)s.grid.color=getComputedStyle(document.documentElement).getPropertyValue('--border')})}h.update()}});if(elements.dashboard.style.display!=='none')chartManager.updateSankeyChart()}}
 
-    // Load saved theme (mostly unchanged)
     function loadSavedTheme(){const s=localStorage.getItem('theme');let e=document.documentElement.getAttribute('data-theme')||'light';if(s){document.documentElement.setAttribute('data-theme',s);e=s}const i=elements.themeToggle.querySelector('i');if(i)i.className=e==='dark'?'fas fa-sun':'fas fa-moon'}
 
-    // Initialize application
     function init() {
       loadSavedTheme();
       setupEventListeners();
-      // --- NEW: Autoload default CSV ---
       fileHandler.loadCsvFromUrl(app.s3BaseUrl + 'da10.csv', 'Default Data (da10.csv)');
-      // --- END NEW ---
     }
 
     init();
