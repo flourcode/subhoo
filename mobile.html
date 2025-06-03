@@ -1,0 +1,4021 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FedViz - Federal Contract Intelligence</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-sankey/0.12.3/d3-sankey.min.js"></script>
+  <style>
+    :root {
+      /* Colors */
+      --primary: #0070f3;
+      --primary-dark: #0060df;
+      --primary-light: #3291ff;
+      --secondary: #7f7f7f;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --text-primary: #111827;
+      --text-secondary: #6b7280;
+      --text-tertiary: #9ca3af;
+      --bg-primary: #ffffff;
+      --bg-secondary: #f9fafb;
+      --bg-tertiary: #f3f4f6;
+      --border: #e5e7eb;
+      --app-bg: #0f172a; /* Dark blue background for the app */
+      
+      /* Spacing Scale */
+      --space-1: 0.25rem;
+      --space-2: 0.5rem;
+      --space-3: 0.75rem;
+      --space-4: 1rem;
+      --space-5: 1.25rem;
+      --space-6: 1.5rem;
+      --space-8: 2rem;
+      
+      /* Typography Scale (following 1.2 ratio) */
+      --font-xs: 0.75rem;   /* 12px */
+      --font-sm: 0.875rem;  /* 14px */
+      --font-base: 1rem;    /* 16px */
+      --font-lg: 1.125rem;  /* 18px */
+      --font-xl: 1.25rem;   /* 20px */
+      --font-2xl: 1.5rem;   /* 24px */
+      --font-3xl: 1.875rem; /* 30px */
+      
+      /* Radiuses and Shadows */
+      --radius-sm: 0.25rem;
+      --radius: 0.375rem;
+      --radius-md: 0.5rem;
+      --radius-lg: 0.75rem;
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      
+      /* Transitions */
+      --transition: all 0.2s ease-in-out;
+    }
+
+    /* Dark theme overrides */
+    [data-theme="dark"] {
+      --primary: #3291ff;
+      --primary-dark: #0070f3;
+      --primary-light: #84c0ff;
+      --text-primary: #f9fafb;
+      --text-secondary: #e5e7eb;
+      --text-tertiary: #9ca3af;
+      --bg-primary: #1e293b;
+      --bg-secondary: #111827;
+      --bg-tertiary: #374151;
+      --border: #374151;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: var(--app-bg);
+      color: var(--text-primary);
+      line-height: 1.5;
+      font-size: var(--font-base);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* App Layout */
+    .app-container {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: var(--space-4); /* Adjusted for mobile */
+    }
+
+    /* Header */
+    .app-header {
+      background-color: var(--bg-primary);
+      box-shadow: var(--shadow);
+      padding: var(--space-3);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      border-radius: var(--radius-lg);
+      margin-bottom: var(--space-4);
+    }
+
+    .header-top {
+      display: flex;
+      flex-direction: column; /* Mobile: stacks logo, search, actions */
+      align-items: stretch;   /* Mobile: items take full width in the stack */
+      gap: var(--space-3);    /* Mobile: spacing between stacked items */
+      margin-bottom: var(--space-3);
+    }
+
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      font-size: var(--font-lg);
+      font-weight: 700;
+      color: var(--primary);
+      align-self: flex-start; /* Mobile: align logo to the start of the column */
+    }
+    
+    .search-bar {
+      position: relative;
+      width: 100%; /* Mobile: search bar takes full width in its row */
+    }
+
+    .search-input {
+      width: 100%;
+      padding: var(--space-2) var(--space-4) var(--space-2) var(--space-6);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      font-size: var(--font-sm);
+      transition: var(--transition);
+    }
+
+    .search-icon {
+      position: absolute;
+      left: var(--space-3);
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-tertiary);
+      pointer-events: none;
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(0, 112, 243, 0.2);
+    }
+    
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      justify-content: flex-end; /* Mobile: aligns actions to the end of their row */
+    }
+    
+    .header-actions .btn { /* Mobile: specific padding for header action buttons */
+        padding: var(--space-2);
+    }
+    
+    .header-actions .btn .btn-text { /* Mobile: hide text in general header buttons */
+        display: none;
+    }
+
+
+    /* Filter Controls */
+    .filter-controls {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+    }
+
+    .filter-bar { /* Mobile: primary filters scroll horizontally */
+      display: flex;
+      gap: var(--space-2);
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: var(--space-2); /* Space for scrollbar and visual */
+      padding-top: var(--space-1); /* Some top padding */
+    }
+    
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0; /* Prevent shrinking in scrollable row */
+      min-width: 150px; /* Mobile: minimum width for items in scrollable row */
+      gap: var(--space-1);
+    }
+
+    .filter-label {
+      font-size: var(--font-xs);
+      color: var(--text-secondary);
+    }
+
+    .filter-select {
+      width: 100%;
+      padding: var(--space-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      font-size: var(--font-sm);
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none'%3E%3Cpath d='M2.5 4.5L6 8L9.5 4.5' stroke='%236B7280' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 0.5rem center;
+      padding-right: 2rem;
+    }
+
+    .filter-select:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    .filter-actions {
+      display: flex;
+      gap: var(--space-2);
+      justify-content: flex-end; /* Aligns Reset/More Filters to the right */
+      margin-top: var(--space-2); /* Adjusted from space-3 for mobile */
+    }
+
+    /* Status Bar */
+    .status-section {
+      background-color: var(--bg-primary);
+      border-radius: var(--radius-lg);
+      padding: var(--space-3);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+      margin-bottom: var(--space-4);
+    }
+
+    .status-title {
+      font-size: var(--font-lg);
+      font-weight: 600;
+    }
+
+    .active-filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-2);
+    }
+
+    .filter-tag {
+      display: flex;
+      align-items: center;
+      gap: var(--space-1);
+      padding: var(--space-1) var(--space-2);
+      background-color: var(--bg-tertiary);
+      border-radius: var(--radius-sm);
+      font-size: var(--font-xs);
+    }
+
+    .filter-tag-remove {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+    }
+
+    .filter-tag-remove:hover {
+      color: var(--danger);
+    }
+
+    /* Loading and Error States */
+    .loading-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: var(--space-8);
+      text-align: center;
+      background-color: var(--bg-primary);
+      border-radius: var(--radius-lg);
+      margin-bottom: var(--space-4);
+    }
+
+    .loading-spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid var(--bg-tertiary);
+      border-top: 3px solid var(--primary);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: var(--space-4);
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .error-message {
+      background-color: rgba(239, 68, 68, 0.1);
+      color: var(--danger);
+      padding: var(--space-3) var(--space-4);
+      border-radius: var(--radius-lg);
+      margin-bottom: var(--space-4);
+      background-color: var(--bg-primary); /* This was likely a mistake, should be themed error color */
+    }
+    [data-theme="light"] .error-message {
+        background-color: rgba(239, 68, 68, 0.1); /* Light theme error background */
+    }
+    [data-theme="dark"] .error-message {
+        background-color: rgba(239, 68, 68, 0.2); /* Dark theme error background */
+    }
+
+
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: var(--space-8);
+      text-align: center;
+      color: var(--text-secondary);
+      background-color: var(--bg-primary);
+      border-radius: var(--radius-lg);
+    }
+
+    .empty-state i {
+      font-size: 3rem;
+      margin-bottom: var(--space-4);
+    }
+
+    .empty-state h2 {
+      margin-bottom: var(--space-2);
+      font-weight: 600;
+    }
+
+    /* Buttons */
+    .btn {
+      padding: var(--space-2) var(--space-3);
+      border-radius: var(--radius);
+      font-weight: 500;
+      cursor: pointer;
+      transition: var(--transition);
+      font-size: var(--font-sm);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-2);
+      white-space: nowrap;
+    }
+    
+    .btn .btn-text { /* Mobile: Hide text in general buttons by default */
+      display: none;
+    }
+
+    .btn-primary {
+      background-color: var(--primary);
+      color: white;
+      border: none;
+    }
+
+    .btn-primary:hover {
+      background-color: var(--primary-dark);
+    }
+
+    .btn-secondary {
+      background-color: var(--bg-tertiary);
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      background-color: var(--bg-secondary);
+    }
+
+    .btn-sm {
+      padding: var(--space-1) var(--space-2);
+      font-size: var(--font-xs);
+    }
+    
+    .btn-sm .btn-text { /* Ensure text in small buttons is visible if explicitly set */
+        display: inline-block;
+    }
+
+
+    .btn-icon {
+      padding: var(--space-1);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .btn-icon:hover {
+      background-color: var(--bg-tertiary);
+      color: var(--text-primary);
+    }
+
+    .theme-toggle {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: var(--transition);
+    }
+
+    .theme-toggle:hover {
+      color: var(--primary);
+      background-color: var(--bg-tertiary);
+    }
+
+    /* File input styling */
+    .file-input-wrapper {
+      position: relative;
+    }
+    
+    .file-input-wrapper .btn .btn-text { /* Specifically for upload button text */
+        display: none; /* Keep hidden on mobile by default */
+    }
+
+
+    .file-input {
+      position: absolute;
+      width: 0.1px;
+      height: 0.1px;
+      opacity: 0;
+      overflow: hidden;
+      z-index: -1;
+    }
+
+    .file-input + .btn {
+      cursor: pointer;
+    }
+
+    /* Advanced Filters Panel */
+    .filters-panel {
+      background-color: var(--bg-primary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-md);
+      margin: 0 0 var(--space-3) 0;
+      padding: var(--space-3);
+      display: none; /* Hidden by default, JS toggles 'active' */
+    }
+
+    .filters-panel.active {
+      display: block;
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: var(--space-3);
+    }
+
+    .panel-header h3 {
+      font-size: var(--font-lg);
+      font-weight: 600;
+    }
+
+    .filters-grid { /* Mobile: Advanced filters stack */
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: var(--space-3);
+    }
+
+    .date-range-picker {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+    }
+
+    .filter-date {
+      flex: 1;
+      min-width: 0;
+      padding: var(--space-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      font-size: var(--font-sm);
+    }
+
+    .date-separator {
+      color: var(--text-secondary);
+      font-size: var(--font-sm);
+    }
+
+    /* Dashboard Container */
+    #dashboard {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-4);
+    }
+
+    /* Stats Row */
+    .stats-section {
+      margin-bottom: var(--space-4);
+    }
+
+    .stats-row { /* Mobile: Two stats per row */
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--space-3);
+    }
+
+    .stat-card {
+      background-color: var(--bg-primary);
+      border-radius: var(--radius-lg);
+      padding: var(--space-3) var(--space-2); /* Adjusted padding for larger font */
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      text-align: center; /* Center text for better appearance with large font */
+    }
+
+    .stat-label {
+      font-size: var(--font-xs);
+      color: var(--text-secondary);
+    }
+
+    .stat-value {
+      font-size: var(--font-3xl); /* Increased font size */
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-top: var(--space-1);
+      line-height: 1.2; /* Adjust line height for larger font */
+    }
+
+    /* Card Components */
+    .card {
+      background-color: var(--bg-primary);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: var(--space-3);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .card-title {
+      font-size: var(--font-sm);
+      font-weight: 600;
+    }
+
+    .primary-viz {
+      margin-bottom: var(--space-4);
+    }
+
+    .sankey-chart-container {
+      height: 300px; /* Adjusted for mobile, might need more on desktop */
+      position: relative;
+      padding: var(--space-3);
+    }
+
+    .sankey-controls {
+      display: flex;
+      gap: var(--space-1);
+    }
+
+    /* Charts Grid */
+    .charts-grid { /* Mobile: Charts stack */
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: var(--space-4);
+      margin-bottom: var(--space-4);
+    }
+
+    .chart-card {
+      background-color: var(--bg-primary);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .chart-container {
+      height: 200px;
+      position: relative;
+      padding: var(--space-3);
+    }
+
+    .bubble-chart-container {
+      height: 220px;
+      position: relative;
+      padding: var(--space-3);
+    }
+
+    .selection-indicator {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background-color: var(--primary);
+      display: none;
+    }
+
+    /* Tables Section */
+    .tables-section {
+      background-color: var(--bg-primary);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      margin-bottom: var(--space-4);
+    }
+
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      background-color: var(--bg-primary);
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+
+    .tab-btn {
+      padding: var(--space-3) var(--space-4);
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-weight: 500;
+      color: var(--text-secondary);
+      position: relative;
+      transition: var(--transition);
+    }
+
+    .tab-btn:hover {
+      color: var(--primary);
+    }
+
+    .tab-btn.active {
+      color: var(--primary);
+    }
+
+    .tab-btn.active::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background-color: var(--primary);
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* Tables */
+    .table-container {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .data-table th, 
+    .data-table td {
+      padding: var(--space-3);
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+      font-size: var(--font-sm);
+    }
+
+    .data-table th {
+      position: sticky;
+      top: 0;
+      background-color: var(--bg-primary);
+      font-weight: 600;
+      color: var(--text-secondary);
+      cursor: pointer;
+      user-select: none;
+      z-index: 1;
+    }
+
+    .data-table th:hover {
+      background-color: var(--bg-tertiary);
+    }
+    
+    .data-table th.sort-asc::after {
+      content: "▲";
+      display: inline-block;
+      margin-left: 5px;
+      font-size: 10px;
+    }
+    
+    .data-table th.sort-desc::after {
+      content: "▼";
+      display: inline-block;
+      margin-left: 5px;
+      font-size: 10px;
+    }
+
+    .data-table tr:hover td {
+      background-color: var(--bg-tertiary);
+    }
+
+    /* Entity Badges */
+    .agency-badge,
+    .office-badge,
+    .vendor-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-2);
+      font-weight: 500;
+    }
+
+    .agency-icon {
+      width: 1.5rem;
+      height: 1.5rem;
+      border-radius: 50%; /* Circle */
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: var(--font-xs);
+      font-weight: 600;
+    }
+
+    .office-icon {
+      width: 1.5rem;
+      height: 1.5rem;
+      border-radius: var(--radius-sm); /* Rounded square for offices too */
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: var(--font-xs);
+      font-weight: 600;
+    }
+
+    .vendor-icon {
+      width: 1.5rem;
+      height: 1.5rem;
+      border-radius: var(--radius-sm); /* Rounded square */
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: var(--font-xs);
+      font-weight: 600;
+    }
+
+    .badge {
+      padding: var(--space-1) var(--space-2);
+      border-radius: var(--radius-sm);
+      font-size: var(--font-xs);
+      font-weight: 500;
+      display: inline-block;
+    }
+
+    .badge-primary {
+      background-color: rgba(0, 112, 243, 0.1);
+      color: var(--primary);
+    }
+
+    .money {
+      font-family: 'Inter', monospace;
+      font-weight: 500;
+    }
+
+    .action-btn {
+      padding: var(--space-1) var(--space-2);
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: var(--font-xs);
+      font-weight: 500;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+     .action-btn .btn-text { /* Ensure text in action buttons is visible */
+        display: inline-block;
+    }
+
+
+    .action-btn:hover {
+      background-color: var(--primary-dark);
+    }
+
+    /* Chart Tooltip */
+    .chart-tooltip {
+      position: absolute;
+      padding: var(--space-2) var(--space-3);
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      pointer-events: none;
+      font-size: var(--font-xs);
+      box-shadow: var(--shadow);
+      z-index: 10;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    /* Modal */
+    .modal-backdrop {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.2s, visibility 0.2s;
+    }
+
+    .modal-backdrop.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .modal {
+      background-color: var(--bg-primary);
+      border-radius: var(--radius-lg);
+      width: 90%;
+      max-width: 600px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: var(--shadow-lg);
+      transform: translateY(-20px);
+      transition: transform 0.2s;
+    }
+
+    .modal-backdrop.active .modal {
+      transform: translateY(0);
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-4);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .modal-title {
+      font-size: var(--font-lg);
+      font-weight: 600;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: var(--font-xl);
+      color: var(--text-secondary);
+      transition: var(--transition);
+    }
+
+    .modal-close:hover {
+      color: var(--danger);
+    }
+
+    .modal-body {
+      padding: var(--space-4);
+    }
+
+    .modal-footer {
+      padding: var(--space-4);
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: flex-end;
+      gap: var(--space-2);
+    }
+     .modal-footer .btn .btn-text { /* Ensure text in modal buttons is visible */
+        display: inline-block;
+    }
+
+
+    /* Mobile Floating Action Button */
+    .mobile-action-btn { /* Mobile: FAB is displayed */
+      position: fixed;
+      bottom: var(--space-4);
+      right: var(--space-4);
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      box-shadow: var(--shadow-lg);
+      display: flex; /* Shown by default for mobile-first */
+      align-items: center;
+      justify-content: center;
+      font-size: var(--font-lg);
+      cursor: pointer;
+      z-index: 40;
+      transition: var(--transition);
+    }
+
+    .mobile-action-btn:hover {
+      background-color: var(--primary-dark);
+      transform: scale(1.05);
+    }
+
+
+    /* Responsive Grid Adjustments */
+    /* Tablet and larger screens */
+    @media (min-width: 768px) { /* Adjusted breakpoint from 640px for more common tablet */
+      .app-container {
+        padding: var(--space-6);
+      }
+
+      .header-top {
+        flex-direction: row; /* Tablet+: Header items in a row */
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--space-3);
+      }
+      .logo-container {
+        align-self: unset; 
+      }
+      .search-bar {
+        width: auto; /* Tablet+: Search bar takes available space */
+        flex-grow: 1;
+        margin: 0; /* Reset mobile margin */
+      }
+      .header-actions .btn .btn-text { /* Tablet+: Show text in header buttons */
+        display: inline-block;
+      }
+      .file-input-wrapper .btn .btn-text { /* Tablet+: Show text in upload button */
+        display: inline-block;
+      }
+
+
+      .filter-bar { /* Tablet+: Filters wrap, no horizontal scroll */
+        overflow-x: visible;
+        flex-wrap: wrap;
+        padding-bottom: 0;
+        padding-top: 0;
+      }
+      .filter-group {
+        flex: 1; /* Allow filter groups to grow */
+        min-width: 120px; /* Reset mobile min-width if needed, or set new one */
+      }
+      .filter-actions {
+         margin-top: var(--space-2); /* Original margin for larger screens */
+      }
+
+
+      .stats-row {
+        grid-template-columns: repeat(4, 1fr);
+      }
+      
+      .charts-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      
+      .filters-grid { /* Advanced filters grid */
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .sankey-chart-container {
+        height: 400px; 
+      }
+
+      .mobile-action-btn { /* Tablet+: Hide FAB */
+        display: none;
+      }
+      
+      .btn .btn-text { /* Tablet+: Show text in general buttons */
+        display: inline-block;
+      }
+    }
+
+    /* Desktop and larger screens */
+    @media (min-width: 1024px) {
+      /* .app-container padding already set at 768px */
+      
+      .charts-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+      
+      .filters-grid { /* Advanced filters grid */
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <header class="app-header">
+      <div class="header-top">
+        <div class="logo-container">
+          <i class="fa-regular fa-eye"></i>
+          <span>FedViz</span>
+        </div>
+        
+        <div class="search-bar">
+          <input type="text" id="searchInput" placeholder="Search contracts..." class="search-input">
+        </div>
+        
+        <div class="header-actions">
+          <div class="file-input-wrapper">
+            <input type="file" id="csvFile" accept=".csv" class="file-input">
+            <label for="csvFile" class="btn btn-primary">
+              <i class="fas fa-upload"></i>
+              <span class="btn-text">Upload</span>
+            </label>
+          </div>
+          
+          <button class="theme-toggle" id="themeToggle">
+            <i class="fas fa-moon"></i>
+          </button>
+        </div>
+      </div>
+      
+      <div class="filter-controls">
+        <div class="filter-bar">
+          <div class="filter-group">
+            <span class="filter-label">Agency:</span>
+            <select id="agencyFilter" class="filter-select">
+              <option value="">All Agencies</option>
+            </select>
+          </div>
+          
+          <div class="filter-group">
+            <span class="filter-label">Vendor:</span>
+            <select id="vendorFilter" class="filter-select">
+              <option value="">All Vendors</option>
+            </select>
+          </div>
+          <div class="filter-group">
+          <span class="filter-label">PSC Code:</span>
+          <select id="pscFilter" class="filter-select">
+            <option value="">Any PSC</option>
+          </select>
+        </div>
+        </div>
+        
+        <div class="filter-actions">
+          <button id="resetFilters" class="btn btn-secondary">
+            <i class="fas fa-undo"></i>
+            <span class="btn-text">Reset</span>
+          </button>
+          
+          <button id="moreFiltersBtn" class="btn btn-secondary">
+            <i class="fas fa-sliders-h"></i>
+            <span class="btn-text">More Filters</span>
+          </button>
+        </div>
+      </div>
+    </header> <section id="advancedFiltersPanel" class="filters-panel">
+      <div class="panel-header">
+        <h3>Advanced Filters</h3>
+        <button id="closeFilters" class="btn-icon">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      
+      <div class="filters-grid">
+        <div class="filter-group">
+          <label for="dateRangeLabel">Date Range</label> <div class="date-range-picker" id="dateRangeLabel">
+            <input type="date" id="startDate" class="filter-date">
+            <span class="date-separator">to</span>
+            <input type="date" id="endDate" class="filter-date">
+          </div>
+        </div>
+        
+        <div class="filter-group">
+          <label for="officeFilter">Office</label>
+          <select id="officeFilter" class="filter-select">
+            <option value="">Any Office</option>
+          </select>
+        </div>
+        
+        <div class="filter-group">
+          <label for="naicsFilter">NAICS Code</label>
+          <select id="naicsFilter" class="filter-select">
+            <option value="">Any NAICS</option>
+          </select>
+        </div>
+        
+        <div class="filter-group">
+            <span class="filter-label">Value:</span>
+            <select id="valueFilter" class="filter-select">
+              <option value="">Any Value</option>
+              <option value="0-100000">Under $100K</option>
+              <option value="100000-500000">$100K - $500K</option>
+              <option value="500000-1000000">$500K - $1M</option>
+              <option value="1000000-5000000">$1M - $5M</option>
+              <option value="5000000-10000000">$5M - $10M</option>
+              <option value="10000000-999999999999">Over $10M</option>
+            </select>
+          </div>
+      </div>
+    </section>
+
+    <section id="statusBox" class="app-section status-section">
+      <div class="status-title">No data loaded</div>
+      <div id="activeFilters" class="active-filters">
+        </div>
+    </section>
+    
+    <div id="loadingIndicator" class="loading-state" style="display: none;">
+      <div class="loading-spinner"></div>
+      <div>Loading and processing contract data...</div>
+    </div>
+    
+    <div id="errorMessage" class="error-message" style="display: none;">
+      </div>
+    
+    <div id="noDataMessage" class="empty-state">
+      <i class="fas fa-file-upload"></i>
+      <h2>No Contract Data Loaded</h2>
+      <p>Upload a CSV file to visualize federal contract data.</p>
+    </div>
+
+    <main id="dashboard" style="display: none;">
+      <section class="app-section stats-section">
+        <div class="stats-row">
+          <div class="stat-card">
+            <div class="stat-label">Total Contracts</div>
+            <div id="totalContracts" class="stat-value">0</div>
+          </div>
+          
+          <div class="stat-card">
+            <div class="stat-label">Total Value</div>
+            <div id="totalValue" class="stat-value">$0</div>
+          </div>
+          
+          <div class="stat-card">
+            <div class="stat-label">Avg. Contract</div>
+            <div id="avgValue" class="stat-value">$0</div>
+          </div>
+          
+          <div class="stat-card">
+            <div class="stat-label">Vendors</div>
+            <div id="uniqueVendors" class="stat-value">0</div>
+          </div>
+        </div>
+      </section>
+      
+    
+      <div class="card primary-viz">
+        <div class="card-header">
+          <div class="card-title">Contract Value Flow: Agency → Office → Vendor</div>
+          <div class="sankey-controls">
+            <button id="sankeyTop10" class="btn btn-sm btn-primary">
+                <span class="btn-text">Top 10</span></button>
+            <button id="sankeyTop25" class="btn btn-sm btn-secondary">
+                <span class="btn-text">Top 25</span></button>
+            <button id="sankeyAll" class="btn btn-sm btn-secondary">
+                <span class="btn-text">All</span></button>
+          </div>
+        </div>
+        <div class="sankey-chart-container" id="sankeyChartContainer">
+          <div id="sankeyTooltip" class="chart-tooltip"></div>
+          </div>
+      </div>
+      
+      <div class="charts-grid">
+        
+        <div class="chart-card">
+          <div class="card-header">
+            <div class="card-title">Top Agencies</div>
+          </div>
+          <div class="chart-container" id="agencyChartContainer">
+            <canvas id="agencyChart"></canvas>
+            <div class="selection-indicator"></div>
+          </div>
+        </div>
+        
+        <div class="chart-card">
+          <div class="card-header">
+            <div class="card-title">Top Vendors</div>
+          </div>
+          <div class="chart-container" id="vendorChartContainer">
+            <canvas id="vendorChart"></canvas>
+            <div class="selection-indicator"></div>
+          </div>
+        </div>
+        <div class="chart-card">
+          <div class="card-header">
+            <div class="card-title">Contract Value by Month</div>
+          </div>
+          <div class="chart-container" id="valueTimeChartContainer">
+            <canvas id="valueTimeChart"></canvas>
+            <div class="selection-indicator"></div>
+          </div>
+        </div>
+        <div class="chart-card">
+          <div class="card-header">
+            <div class="card-title">NAICS Distribution</div>
+          </div>
+          <div class="bubble-chart-container" id="naicsBubbleChartContainer">
+            <canvas id="naicsBubbleChart"></canvas>
+            <div class="selection-indicator"></div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="tables-section">
+        <div class="tabs">
+          <button class="tab-btn active" data-tab="largest">Largest Contracts</button>
+          <button class="tab-btn" data-tab="recent">Recent Contracts</button>
+          <button class="tab-btn" data-tab="offices">Top Offices</button>
+        </div>
+        
+        <div id="largestTab" class="tab-content active">
+          <div class="table-container">
+            <table id="largestContractsTable" class="data-table">
+              <thead>
+                <tr>
+                  <th data-sort="date">Date</th>
+                  <th data-sort="id">Contract ID</th>
+                  <th data-sort="agency">Agency</th>
+                  <th data-sort="office">Office</th>
+                  <th data-sort="vendor">Vendor</th>
+                  <th data-sort="description">Description</th>
+                  <th data-sort="value">Value</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                </tbody>
+            </table>
+          </div>
+        </div>
+        
+        <div id="recentTab" class="tab-content">
+          <div class="table-container">
+            <table id="contractsTable" class="data-table">
+              <thead>
+                <tr>
+                  <th data-sort="date">Date</th>
+                  <th data-sort="id">Contract ID</th>
+                  <th data-sort="agency">Agency</th>
+                  <th data-sort="office">Office</th>
+                  <th data-sort="vendor">Vendor</th>
+                  <th data-sort="description">Description</th>
+                  <th data-sort="value">Value</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                </tbody>
+            </table>
+          </div>
+        </div>
+        
+        <div id="officesTab" class="tab-content">
+          <div class="table-container">
+            <table id="officesTable" class="data-table">
+              <thead>
+                <tr>
+                  <th data-sort="agency">Agency</th>
+                  <th data-sort="office">Office</th>
+                  <th data-sort="contracts">Contracts</th>
+                  <th data-sort="value">Total Value</th>
+                  <th data-sort="naics">Top NAICS</th>
+                  <th data-sort="vendor">Top Vendor</th>
+                </tr>
+              </thead>
+              <tbody>
+                </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+  <div id="contractModal" class="modal-backdrop">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">Contract Details</h3>
+        <button id="closeModal" class="modal-close">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="modal-body" id="contractModalBody">
+        </div>
+      <div class="modal-footer">
+        <button id="closeModalBtn" class="btn btn-secondary"><span class="btn-text">Close</span></button>
+      </div>
+    </div>
+  </div>
+  
+  <button id="mobileFilterBtn" class="mobile-action-btn">
+    <i class="fas fa-filter"></i>
+  </button>
+
+  <script>
+    // Main application data object
+    const app = {
+      data: [],
+      filteredData: [],
+      agencies: {},
+      offices: {},
+      vendors: {},
+      naicsCodes: {},
+      pscCodes: {},
+      charts: {},
+      filters: {},
+      // Store chart selection data
+      selection: {
+        type: null,
+        value: null,
+        container: null
+      },
+      // Sankey display options
+      sankeyDisplayLimit: 10
+    };
+
+    // DOM Elements
+    const elements = {
+      // File upload
+      csvFile: document.getElementById('csvFile'),
+      uploadBtn: document.querySelector('label[for="csvFile"]'),
+      
+      // Filters
+      valueFilter: document.getElementById('valueFilter'),
+      startDate: document.getElementById('startDate'),
+      endDate: document.getElementById('endDate'),
+      agencyFilter: document.getElementById('agencyFilter'),
+      officeFilter: document.getElementById('officeFilter'),
+      naicsFilter: document.getElementById('naicsFilter'),
+      pscFilter: document.getElementById('pscFilter'),
+      vendorFilter: document.getElementById('vendorFilter'),
+      activeFilters: document.getElementById('activeFilters'),
+      resetFilters: document.getElementById('resetFilters'),
+      searchInput: document.getElementById('searchInput'),
+      moreFiltersBtn: document.getElementById('moreFiltersBtn'),
+      closeFilters: document.getElementById('closeFilters'),
+      mobileFilterBtn: document.getElementById('mobileFilterBtn'),
+      advancedFiltersPanel: document.getElementById('advancedFiltersPanel'),
+      
+      // UI components
+      themeToggle: document.getElementById('themeToggle'),
+      loadingIndicator: document.getElementById('loadingIndicator'),
+      errorMessage: document.getElementById('errorMessage'),
+      noDataMessage: document.getElementById('noDataMessage'),
+      dashboard: document.getElementById('dashboard'),
+      statusBox: document.getElementById('statusBox'),
+      
+      // Stats
+      totalContracts: document.getElementById('totalContracts'),
+      totalValue: document.getElementById('totalValue'),
+      avgValue: document.getElementById('avgValue'),
+      uniqueVendors: document.getElementById('uniqueVendors'),
+      
+      // Sankey buttons
+      sankeyTop10: document.getElementById('sankeyTop10'),
+      sankeyTop25: document.getElementById('sankeyTop25'),
+      sankeyAll: document.getElementById('sankeyAll'),
+      
+      // Chart containers
+      sankeyChartContainer: document.getElementById('sankeyChartContainer'),
+      sankeyTooltip: document.getElementById('sankeyTooltip'),
+      valueTimeChartContainer: document.getElementById('valueTimeChartContainer'),
+      agencyChartContainer: document.getElementById('agencyChartContainer'),
+      naicsBubbleChartContainer: document.getElementById('naicsBubbleChartContainer'),
+      vendorChartContainer: document.getElementById('vendorChartContainer'),
+      
+      // Charts
+      valueTimeChart: document.getElementById('valueTimeChart'),
+      agencyChart: document.getElementById('agencyChart'),
+      naicsBubbleChart: document.getElementById('naicsBubbleChart'),
+      vendorChart: document.getElementById('vendorChart'),
+      
+      // Tables
+      largestTab: document.getElementById('largestTab'),
+      recentTab: document.getElementById('recentTab'),
+      officesTab: document.getElementById('officesTab'),
+      contractsTable: document.getElementById('contractsTable').querySelector('tbody'),
+      largestContractsTable: document.getElementById('largestContractsTable').querySelector('tbody'),
+      officesTable: document.getElementById('officesTable').querySelector('tbody'),
+      
+      // Tabs
+      tabButtons: document.querySelectorAll('.tab-btn'),
+      tabContents: document.querySelectorAll('.tab-content'),
+      
+      // Modal
+      contractModal: document.getElementById('contractModal'),
+      closeModal: document.getElementById('closeModal'),
+      closeModalBtn: document.getElementById('closeModalBtn'),
+      contractModalBody: document.getElementById('contractModalBody')
+    };
+
+    // Utility functions
+    const utils = {
+      // Format currency values
+      formatMoney: function(value) {
+        if (!value && value !== 0) return '$0';
+        
+        const number = parseFloat(value);
+        if (isNaN(number)) return '$0';
+        
+        if (number >= 1000000000) {
+          return '$' + (number / 1000000000).toFixed(1) + 'B';
+        } else if (number >= 1000000) {
+          return '$' + (number / 1000000).toFixed(1) + 'M';
+        } else if (number >= 1000) {
+          return '$' + (number / 1000).toFixed(1) + 'K';
+        } else {
+          return '$' + number.toFixed(0);
+        }
+      },
+      
+      // Format date values
+      formatDate: function(dateString) {
+        if (!dateString) return 'N/A';
+        
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) {
+          // Try to handle different date formats
+          // Format like "25-Apr-25"
+          const parts = dateString.split('-');
+          if (parts.length === 3) {
+            const months = {
+              'Jan': 0, 'Feb': 1, 'Mar': 2, 'Apr': 3, 'May': 4, 'Jun': 5,
+              'Jul': 6, 'Aug': 7, 'Sep': 8, 'Oct': 9, 'Nov': 10, 'Dec': 11
+            };
+            
+            const day = parseInt(parts[0]);
+            const month = months[parts[1]];
+            let year = parseInt(parts[2]);
+            
+            if (year < 100) {
+              // Interpret 2-digit years
+              year = year < 50 ? 2000 + year : 1900 + year;
+            }
+            
+            if (!isNaN(day) && month !== undefined && !isNaN(year)) {
+              const parsedDate = new Date(year, month, day);
+              return parsedDate.toLocaleDateString('en-US', { 
+                year: '2-digit', 
+                month: 'short', 
+                day: 'numeric' 
+              });
+            }
+          }
+          
+          return dateString; // Return original if we can't parse
+        }
+        
+        return date.toLocaleDateString('en-US', { 
+          year: '2-digit', 
+          month: 'short', 
+          day: 'numeric' 
+        });
+      },
+      
+      // Parse money values from strings
+      parseMoney: function(value) {
+        if (!value) return 0;
+        
+        // Handle string values that may contain $ or commas
+        let cleanValue = value.toString().replace(/[$,\s]/g, '');
+        return parseFloat(cleanValue) || 0;
+      },
+      
+      // Parse CSV data
+      parseCSV: function(text) {
+        // Split by line
+        const lines = text.split(/\r\n|\n/);
+        if (lines.length === 0) return { headers: [], data: [] };
+        
+        // Function to parse a single CSV line, handling quoted values
+        const parseLine = function(line) {
+          const values = [];
+          let current = '';
+          let inQuotes = false;
+          
+          for (let i = 0; i < line.length; i++) {
+            const char = line[i];
+            const nextChar = line[i + 1] || '';
+            
+            if (char === '"') {
+              if (inQuotes && nextChar === '"') {
+                // Handle escaped quote within quotes
+                current += '"';
+                i++; // Skip the next quote
+              } else {
+                // Toggle quotes state
+                inQuotes = !inQuotes;
+              }
+            } else if (char === ',' && !inQuotes) {
+              // End of field
+              values.push(current.trim());
+              current = '';
+            } else {
+              current += char;
+            }
+          }
+          
+          // Add the last field
+          values.push(current.trim());
+          
+          return values;
+        };
+        
+        // Parse headers
+        const headers = parseLine(lines[0]);
+        
+        // Parse data rows
+        const data = [];
+        for (let i = 1; i < lines.length; i++) {
+          if (lines[i].trim()) { // Skip empty lines
+            const values = parseLine(lines[i]);
+            
+            // Create an object with column headers
+            const row = {};
+            for (let j = 0; j < Math.min(headers.length, values.length); j++) {
+              if (headers[j]) { // Skip empty header columns
+                row[headers[j]] = values[j] || '';
+              }
+            }
+            
+            data.push(row);
+          }
+        }
+        
+        return { headers, data };
+      },
+      
+      // Parse dates from different formats
+      parseDate: function(dateString) {
+        if (!dateString) return null;
+        
+        // Handle format like "25-Apr-25"
+        const parts = dateString.split('-');
+        if (parts.length === 3) {
+          const months = {
+            'Jan': 0, 'Feb': 1, 'Mar': 2, 'Apr': 3, 'May': 4, 'Jun': 5,
+            'Jul': 6, 'Aug': 7, 'Sep': 8, 'Oct': 9, 'Nov': 10, 'Dec': 11
+          };
+          
+          const day = parseInt(parts[0]);
+          const month = months[parts[1]];
+          let year = parseInt(parts[2]);
+          
+          if (year < 100) {
+            // Interpret 2-digit years
+            year = year < 50 ? 2000 + year : 1900 + year;
+          }
+          
+          if (!isNaN(day) && month !== undefined && !isNaN(year)) {
+            return new Date(year, month, day);
+          }
+        }
+        
+        // Try standard date parsing
+        const date = new Date(dateString);
+        if (!isNaN(date.getTime())) {
+          return date;
+        }
+        
+        return null;
+      },
+      
+      // Truncate text to a specified length
+      truncateText: function(text, maxLength) {
+        if (!text) return '';
+        if (text.length <= maxLength) return text;
+        
+        return text.substring(0, maxLength) + '...';
+      },
+      
+      // Generate a color based on a string (for consistent coloring)
+      stringToColor: function(str) {
+        if (!str) return '#cccccc';
+        
+        let hash = 0;
+        for (let i = 0; i < str.length; i++) {
+          hash = str.charCodeAt(i) + ((hash << 5) - hash);
+        }
+        
+        // Muted rainbow color palette with diverse, balanced colors
+        const mutedColors = [
+          '#4F6D7A', // Slate blue
+          '#56A3A6', // Teal
+          '#84B59F', // Sage green
+          '#A6D3A0', // Light green
+          '#D1B280', // Sand
+          '#EDAE49', // Amber
+          '#D1495B', // Muted red
+          '#9D5C63', // Mauve
+          '#647AA3', // Steel blue
+          '#7D938A', // Forest green
+          '#BFAE9F', // Taupe
+          '#FAD4C0', // Peach
+          '#CE8147', // Copper
+          '#B0C592', // Olive
+          '#91A6FF'  // Periwinkle
+        ];
+        
+        return mutedColors[Math.abs(hash) % mutedColors.length];
+      },
+      
+      // Get first letter or abbreviation from a name
+      getInitials: function(name) {
+        if (!name) return '?';
+        
+        // For multi-word names, use first letter of each word (up to 2)
+        const words = name.split(/\s+/);
+        if (words.length > 1) {
+          return (words[0].charAt(0) + words[1].charAt(0)).toUpperCase();
+        }
+        
+        // For single word, use first letter
+        return name.charAt(0).toUpperCase();
+      },
+      
+      // Parse value range from string (e.g. "100000-500000")
+      parseValueRange: function(rangeStr) {
+        if (!rangeStr) return null;
+        
+        const parts = rangeStr.split('-');
+        if (parts.length !== 2) return null;
+        
+        return {
+          min: parseFloat(parts[0]),
+          max: parseFloat(parts[1])
+        };
+      }
+    };
+
+    // Data processing functions
+    const dataProcessor = {
+      // Process raw CSV data
+      processData: function(csvData) {
+        if (!csvData || !csvData.data || csvData.data.length === 0) {
+          throw new Error('No valid data found in CSV file');
+        }
+        
+        // Check for required fields
+        const requiredFields = [
+          'Contract ID', 'Date Signed', 'Contracting Agency', 
+          'Legal Business Name', 'Action Obligation ($)'
+        ];
+        
+        for (const field of requiredFields) {
+          if (!csvData.headers.includes(field)) {
+            throw new Error(`Required field "${field}" not found in CSV file`);
+          }
+        }
+        
+        // Process each row
+        const processedData = csvData.data.map(row => {
+          return {
+            id: row['Contract ID'] || '',
+            reference: row['Reference IDV'] || '',
+            modification: row['Modification Number'] || '',
+            date: row['Date Signed'] || '',
+            parsedDate: utils.parseDate(row['Date Signed']),
+            type: row['Award/IDV Type'] || '',
+            value: utils.parseMoney(row['Action Obligation ($)']),
+            agency: row['Contracting Agency'] || '',
+            office: row['Contracting Office Name'] || '',
+            psc: row['PSC'] || '',
+            pscDescription: row['PSC Description'] || '',
+            naics: row['NAICS'] || '',
+            naicsDescription: row['NAICS Description'] || '',
+            vendor: row['Legal Business Name'] || '',
+            parentVendor: row['Ultimate Parent Legal Business Name'] || '',
+            description: row['PSC Description'] || '' // Default to PSC, could be more specific
+          };
+        });
+        
+        return processedData;
+      },
+      
+      // Analyze data and extract unique values and statistics
+      analyzeData: function(data) {
+        const agencies = {};
+        const offices = {};
+        const vendors = {};
+        const naicsCodes = {};
+        const pscCodes = {};
+        
+        data.forEach(contract => {
+          // Count agencies
+          if (contract.agency) {
+            if (!agencies[contract.agency]) {
+              agencies[contract.agency] = {
+                name: contract.agency,
+                count: 0,
+                value: 0,
+                offices: new Set(),
+                vendors: new Set()
+              };
+            }
+            
+            agencies[contract.agency].count++;
+            agencies[contract.agency].value += contract.value;
+            
+            if (contract.office) {
+              agencies[contract.agency].offices.add(contract.office);
+            }
+            
+            if (contract.vendor) {
+              agencies[contract.agency].vendors.add(contract.vendor);
+            }
+          }
+          
+          // Count offices
+          if (contract.office) {
+            if (!offices[contract.office]) {
+              offices[contract.office] = {
+                name: contract.office,
+                agency: contract.agency,
+                count: 0,
+                value: 0,
+                vendors: new Set(),
+                naicsCodes: {}
+              };
+            }
+            
+            offices[contract.office].count++;
+            offices[contract.office].value += contract.value;
+            
+            if (contract.vendor) {
+              offices[contract.office].vendors.add(contract.vendor);
+            }
+            
+            // Track NAICS codes per office
+            if (contract.naics) {
+              if (!offices[contract.office].naicsCodes[contract.naics]) {
+                offices[contract.office].naicsCodes[contract.naics] = {
+                  code: contract.naics,
+                  description: contract.naicsDescription,
+                  count: 0,
+                  value: 0
+                };
+              }
+              
+              offices[contract.office].naicsCodes[contract.naics].count++;
+              offices[contract.office].naicsCodes[contract.naics].value += contract.value;
+            }
+          }
+          
+          // Count vendors
+          if (contract.vendor) {
+            if (!vendors[contract.vendor]) {
+              vendors[contract.vendor] = {
+                name: contract.vendor,
+                parent: contract.parentVendor,
+                count: 0,
+                value: 0,
+                agencies: new Set(),
+                naicsCodes: {}
+              };
+            }
+            
+            vendors[contract.vendor].count++;
+            vendors[contract.vendor].value += contract.value;
+            
+            if (contract.agency) {
+              vendors[contract.vendor].agencies.add(contract.agency);
+            }
+            
+            // Track NAICS codes per vendor
+            if (contract.naics) {
+              if (!vendors[contract.vendor].naicsCodes[contract.naics]) {
+                vendors[contract.vendor].naicsCodes[contract.naics] = {
+                  code: contract.naics,
+                  description: contract.naicsDescription,
+                  count: 0,
+                  value: 0
+                };
+              }
+              
+              vendors[contract.vendor].naicsCodes[contract.naics].count++;
+              vendors[contract.vendor].naicsCodes[contract.naics].value += contract.value;
+            }
+          }
+          
+          // Count NAICS codes
+          if (contract.naics) {
+            if (!naicsCodes[contract.naics]) {
+              naicsCodes[contract.naics] = {
+                code: contract.naics,
+                description: contract.naicsDescription,
+                count: 0,
+                value: 0,
+                vendors: new Set()
+              };
+            }
+            
+            naicsCodes[contract.naics].count++;
+            naicsCodes[contract.naics].value += contract.value;
+            
+            if (contract.vendor) {
+              naicsCodes[contract.naics].vendors.add(contract.vendor);
+            }
+          }
+          
+          // Count PSC codes
+          if (contract.psc) {
+            if (!pscCodes[contract.psc]) {
+              pscCodes[contract.psc] = {
+                code: contract.psc,
+                description: contract.pscDescription,
+                count: 0,
+                value: 0
+              };
+            }
+            
+            pscCodes[contract.psc].count++;
+            pscCodes[contract.psc].value += contract.value;
+          }
+        });
+        
+        return {
+          agencies,
+          offices,
+          vendors,
+          naicsCodes,
+          pscCodes
+        };
+      },
+      
+      // Generate Sankey diagram data from contracts
+      generateSankeyData: function(data, limit = 10) {
+        // Create nodes and links for Sankey diagram
+        const nodes = [];
+        const links = [];
+        
+        // Track agency -> office flows
+        const agencyOfficeFlows = {};
+        // Track office -> vendor flows
+        const officeVendorFlows = {};
+        
+        // Process each contract to build flow data
+        data.forEach(contract => {
+          if (contract.agency && contract.office && contract.vendor && contract.value > 0) {
+            // Agency -> Office flow
+            const agencyOfficeKey = `${contract.agency}|${contract.office}`;
+            if (!agencyOfficeFlows[agencyOfficeKey]) {
+              agencyOfficeFlows[agencyOfficeKey] = {
+                source: contract.agency,
+                target: contract.office,
+                value: 0
+              };
+            }
+            agencyOfficeFlows[agencyOfficeKey].value += contract.value;
+            
+            // Office -> Vendor flow
+            const officeVendorKey = `${contract.office}|${contract.vendor}`;
+            if (!officeVendorFlows[officeVendorKey]) {
+              officeVendorFlows[officeVendorKey] = {
+                source: contract.office,
+                target: contract.vendor,
+                value: 0
+              };
+            }
+            officeVendorFlows[officeVendorKey].value += contract.value;
+          }
+        });
+        
+        // Build unique node list
+        const nodeMap = new Map();
+        
+        // Add agency nodes
+        Object.values(agencyOfficeFlows).forEach(flow => {
+          if (!nodeMap.has(flow.source)) {
+            nodeMap.set(flow.source, {
+              name: flow.source,
+              type: 'agency'
+            });
+          }
+        });
+        
+        // Add office nodes
+        Object.values(agencyOfficeFlows).forEach(flow => {
+          if (!nodeMap.has(flow.target)) {
+            nodeMap.set(flow.target, {
+			name: flow.target,
+              type: 'office'
+            });
+          }
+        });
+        
+        // Add vendor nodes
+        Object.values(officeVendorFlows).forEach(flow => {
+          if (!nodeMap.has(flow.target)) {
+            nodeMap.set(flow.target, {
+              name: flow.target,
+              type: 'vendor'
+            });
+          }
+        });
+        
+        // Convert nodes map to array and add index
+        const nodesArray = Array.from(nodeMap.values());
+        nodesArray.forEach((node, index) => {
+          node.id = index;
+        });
+        
+        // Build node index map for quick lookup
+        const nodeIndexMap = new Map();
+        nodesArray.forEach((node, index) => {
+          nodeIndexMap.set(node.name, index);
+        });
+        
+        // Build links with node indices
+        const agencyOfficeLinks = Object.values(agencyOfficeFlows).map(flow => ({
+          source: nodeIndexMap.get(flow.source),
+          target: nodeIndexMap.get(flow.target),
+          value: flow.value,
+          type: 'agency-office'
+        }));
+        
+        const officeVendorLinks = Object.values(officeVendorFlows).map(flow => ({
+          source: nodeIndexMap.get(flow.source),
+          target: nodeIndexMap.get(flow.target),
+          value: flow.value,
+          type: 'office-vendor'
+        }));
+        
+        // Combine all links
+        const linksArray = [...agencyOfficeLinks, ...officeVendorLinks];
+        
+        // Filter to top flows for performance and readability
+        // Sort links by value
+        linksArray.sort((a, b) => b.value - a.value);
+        
+        // Take top links, but ensure connected paths
+        const topLinks = [];
+        const includedNodes = new Set();
+        
+        // First pass: add top links (limited by parameter)
+        const maxLinks = limit === 0 ? linksArray.length : Math.min(limit, linksArray.length);
+        
+        for (let i = 0; i < maxLinks; i++) {
+          topLinks.push(linksArray[i]);
+          includedNodes.add(linksArray[i].source);
+          includedNodes.add(linksArray[i].target);
+        }
+        
+        // Build final node list using only nodes in the top links
+        const finalNodes = nodesArray
+          .filter((node, index) => includedNodes.has(index))
+          .map(node => ({ ...node }));
+        
+        // Rebuild node index map
+        const finalNodeIndexMap = new Map();
+        finalNodes.forEach((node, index) => {
+          finalNodeIndexMap.set(node.name, index);
+        });
+        
+        // Remap links to use new node indices
+        const finalLinks = topLinks.map(link => {
+          const sourceName = nodesArray[link.source].name;
+          const targetName = nodesArray[link.target].name;
+          
+          return {
+            source: finalNodeIndexMap.get(sourceName),
+            target: finalNodeIndexMap.get(targetName),
+            value: link.value,
+            type: link.type
+          };
+        });
+        
+        return {
+          nodes: finalNodes,
+          links: finalLinks
+        };
+      }
+    };
+
+    // Filter functions
+    const filterManager = {
+      // Apply all filters to data
+      applyFilters: function() {
+        const filters = app.filters;
+        
+        // Start with all data
+        let filtered = [...app.data];
+        
+        // Apply value filter
+        if (filters.valueRange) {
+          filtered = filtered.filter(contract => {
+            return contract.value >= filters.valueRange.min && 
+                  contract.value <= filters.valueRange.max;
+          });
+        }
+        
+        // Apply date filters
+        if (filters.startDate) {
+          const startDate = new Date(filters.startDate);
+          filtered = filtered.filter(contract => {
+            if (!contract.parsedDate) return false;
+            return contract.parsedDate >= startDate;
+          });
+        }
+        
+        if (filters.endDate) {
+          const endDate = new Date(filters.endDate);
+          // Set time to end of day
+          endDate.setHours(23, 59, 59, 999);
+          filtered = filtered.filter(contract => {
+            if (!contract.parsedDate) return false;
+            return contract.parsedDate <= endDate;
+          });
+        }
+        
+        // Apply dropdown filters
+        if (filters.agency) {
+          filtered = filtered.filter(contract => contract.agency === filters.agency);
+        }
+        
+        if (filters.office) {
+          filtered = filtered.filter(contract => contract.office === filters.office);
+        }
+        
+        if (filters.naics) {
+          filtered = filtered.filter(contract => contract.naics === filters.naics);
+        }
+        
+        if (filters.psc) {
+          filtered = filtered.filter(contract => contract.psc === filters.psc);
+        }
+        
+        if (filters.vendor) {
+          filtered = filtered.filter(contract => contract.vendor === filters.vendor);
+        }
+        
+        // Apply search filter
+        if (filters.search) {
+          const searchTerm = filters.search.toLowerCase();
+          filtered = filtered.filter(contract => {
+            return (
+              (contract.id && contract.id.toLowerCase().includes(searchTerm)) ||
+              (contract.agency && contract.agency.toLowerCase().includes(searchTerm)) ||
+              (contract.office && contract.office.toLowerCase().includes(searchTerm)) ||
+              (contract.vendor && contract.vendor.toLowerCase().includes(searchTerm)) ||
+              (contract.description && contract.description.toLowerCase().includes(searchTerm)) ||
+              (contract.naicsDescription && contract.naicsDescription.toLowerCase().includes(searchTerm)) ||
+              (contract.pscDescription && contract.pscDescription.toLowerCase().includes(searchTerm))
+            );
+          });
+        }
+        
+        app.filteredData = filtered;
+        return filtered;
+      },
+      
+      // Apply chart selection filter
+      applySelectionFilter: function(type, value, container) {
+        // Clear previous selection indicators
+        document.querySelectorAll('.selection-indicator').forEach(indicator => {
+          indicator.style.display = 'none';
+        });
+        
+        // If selecting the same value, clear the filter
+        if (app.selection.type === type && app.selection.value === value) {
+          // Clear selection
+          app.selection.type = null;
+          app.selection.value = null;
+          app.selection.container = null;
+          
+          // Clear the relevant filter
+          delete app.filters[type];
+        } else {
+          // Clear existing selection filters
+          delete app.filters.agency;
+          delete app.filters.office;
+          delete app.filters.naics;
+          delete app.filters.vendor;
+          
+          // Set new selection filter
+          if (type && value) {
+            app.filters[type] = value;
+            app.selection.type = type;
+            app.selection.value = value;
+            app.selection.container = container;
+            
+            // Show selection indicator
+            if (container) {
+              const indicator = container.querySelector('.selection-indicator');
+              if (indicator) {
+                indicator.style.display = 'block';
+              }
+            }
+          }
+        }
+        
+        // Apply filters
+        this.applyFilters();
+        
+        // Update UI
+        this.updateFilterTags();
+        
+        // Refresh dashboard
+        dashboardManager.refreshDashboard();
+      },
+      
+      // Update filter UI
+      updateFilterTags: function() {
+        const filters = app.filters;
+        const activeFilters = elements.activeFilters;
+        
+        // Clear existing tags
+        activeFilters.innerHTML = '';
+        
+        // Prepare filter tags
+        const tags = [];
+        
+        if (filters.valueRange) {
+          tags.push({ 
+            key: 'valueRange', 
+            label: 'Value', 
+            value: `${utils.formatMoney(filters.valueRange.min)} - ${utils.formatMoney(filters.valueRange.max)}`
+          });
+        }
+        
+        if (filters.startDate) {
+          tags.push({ 
+            key: 'startDate', 
+            label: 'From', 
+            value: new Date(filters.startDate).toLocaleDateString() 
+          });
+        }
+        
+        if (filters.endDate) {
+          tags.push({ 
+            key: 'endDate', 
+            label: 'To', 
+            value: new Date(filters.endDate).toLocaleDateString() 
+          });
+        }
+        
+        if (filters.agency) {
+          tags.push({ key: 'agency', label: 'Agency', value: filters.agency });
+        }
+        
+        if (filters.office) {
+          tags.push({ key: 'office', label: 'Office', value: filters.office });
+        }
+        
+        if (filters.naics) {
+          tags.push({ key: 'naics', label: 'NAICS', value: filters.naics });
+        }
+        
+        if (filters.psc) {
+          tags.push({ key: 'psc', label: 'PSC', value: filters.psc });
+        }
+        
+        if (filters.vendor) {
+          tags.push({ key: 'vendor', label: 'Vendor', value: filters.vendor });
+        }
+        
+        if (filters.search) {
+          tags.push({ key: 'search', label: 'Search', value: filters.search });
+        }
+        
+        // Create filter tags
+        tags.forEach(tag => {
+          const tagElement = document.createElement('div');
+          tagElement.className = 'filter-tag';
+          tagElement.innerHTML = `
+            ${tag.label}: ${utils.truncateText(tag.value, 15)}
+            <button class="filter-tag-remove" data-filter="${tag.key}">
+              <i class="fas fa-times"></i>
+            </button>
+          `;
+          activeFilters.appendChild(tagElement);
+          
+          // Add event listener to remove button
+          const removeButton = tagElement.querySelector('.filter-tag-remove');
+          removeButton.addEventListener('click', function() {
+            const filterKey = this.getAttribute('data-filter');
+            
+            // Reset the corresponding filter
+            if (filterKey === 'valueRange') {
+              delete app.filters.valueRange;
+              elements.valueFilter.value = '';
+            } 
+            else if (filterKey === 'startDate') {
+              delete app.filters.startDate;
+              elements.startDate.value = '';
+            } 
+            else if (filterKey === 'endDate') {
+              delete app.filters.endDate;
+              elements.endDate.value = '';
+            } 
+            else if (filterKey === 'agency') {
+              delete app.filters.agency;
+              elements.agencyFilter.value = '';
+              if (app.selection.type === 'agency') {
+                app.selection.type = null;
+                app.selection.value = null;
+                app.selection.container = null;
+              }
+            } 
+            else if (filterKey === 'office') {
+              delete app.filters.office;
+              elements.officeFilter.value = '';
+              if (app.selection.type === 'office') {
+                app.selection.type = null;
+                app.selection.value = null;
+                app.selection.container = null;
+              }
+            } 
+            else if (filterKey === 'naics') {
+              delete app.filters.naics;
+              elements.naicsFilter.value = '';
+              if (app.selection.type === 'naics') {
+                app.selection.type = null;
+                app.selection.value = null;
+                app.selection.container = null;
+              }
+            } 
+            else if (filterKey === 'psc') {
+              delete app.filters.psc;
+              elements.pscFilter.value = '';
+              if (app.selection.type === 'psc') {
+                app.selection.type = null;
+                app.selection.value = null;
+                app.selection.container = null;
+              }
+            } 
+            else if (filterKey === 'vendor') {
+              delete app.filters.vendor;
+              elements.vendorFilter.value = '';
+              if (app.selection.type === 'vendor') {
+                app.selection.type = null;
+                app.selection.value = null;
+                app.selection.container = null;
+              }
+            } 
+            else if (filterKey === 'search') {
+              delete app.filters.search;
+              elements.searchInput.value = '';
+            }
+            
+            // Clear selection indicators
+            document.querySelectorAll('.selection-indicator').forEach(indicator => {
+              indicator.style.display = 'none';
+            });
+            
+            // Update filters and refresh
+            filterManager.applyFilters();
+            dashboardManager.refreshDashboard();
+          });
+        });
+        
+        // Update status box title
+        const statusTitle = document.querySelector('.status-title');
+        if (statusTitle) {
+          if (tags.length > 0) {
+            statusTitle.textContent = `Viewing ${app.filteredData.length.toLocaleString()} filtered contracts`;
+          } else {
+            statusTitle.textContent = `Viewing all ${app.filteredData.length.toLocaleString()} contracts`;
+          }
+        }
+      },
+      
+      // Reset all filters
+      resetFilters: function() {
+        // Clear filter values
+        app.filters = {};
+        app.selection = { type: null, value: null, container: null };
+        
+        // Reset form inputs
+        elements.valueFilter.value = '';
+        elements.startDate.value = '';
+        elements.endDate.value = '';
+        elements.agencyFilter.value = '';
+        elements.officeFilter.value = '';
+        elements.naicsFilter.value = '';
+        elements.pscFilter.value = '';
+        elements.vendorFilter.value = '';
+        elements.searchInput.value = '';
+        
+        // Clear selection indicators
+        document.querySelectorAll('.selection-indicator').forEach(indicator => {
+          indicator.style.display = 'none';
+        });
+        
+        // Apply filters (reset to all data)
+        app.filteredData = [...app.data];
+        
+        // Update UI
+        filterManager.updateFilterTags();
+        
+        // Refresh dashboard
+        dashboardManager.refreshDashboard();
+      }
+    };
+
+    // Chart functions
+    const chartManager = {
+      // Initialize all charts
+      initCharts: function() {
+        // Destroy existing charts
+        Object.values(app.charts).forEach(chart => {
+          if (chart instanceof Chart) {
+            chart.destroy();
+          }
+        });
+        
+        // Reset charts object
+        app.charts = {};
+        
+        // Set chart defaults
+        Chart.defaults.font.family = "'Inter', sans-serif";
+        Chart.defaults.font.size = 11;
+        Chart.defaults.color = getComputedStyle(document.documentElement).getPropertyValue('--text-secondary');
+        
+        // Initialize contract value over time chart
+        this.initValueTimeChart();
+        
+        // Initialize agency chart
+        this.initAgencyChart();
+        
+        // Initialize NAICS bubble chart
+        this.initNaicsBubbleChart();
+        
+        // Initialize vendor chart
+        this.initVendorChart();
+        
+        // Initialize Sankey diagram
+        this.initSankeyChart();
+        
+        // Add chart click events
+        this.addChartClickEvents();
+      },
+      
+      // Value over time chart
+      initValueTimeChart: function() {
+        const ctx = document.getElementById('valueTimeChart').getContext('2d');
+        
+        app.charts.valueTimeChart = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: [],
+            datasets: [{
+              label: 'Contract Value',
+              data: [],
+              borderColor: getComputedStyle(document.documentElement).getPropertyValue('--primary'),
+              backgroundColor: 'rgba(0, 112, 243, 0.1)',
+              tension: 0.4,
+              fill: true,
+              pointBackgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--primary'),
+              pointBorderColor: getComputedStyle(document.documentElement).getPropertyValue('--bg-primary'),
+              pointBorderWidth: 1,
+              pointRadius: 3,
+              borderWidth: 2
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                display: false
+              },
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    return utils.formatMoney(context.raw);
+                  }
+                }
+              }
+            },
+            scales: {
+              x: {
+                grid: {
+                  display: false
+                },
+                ticks: {
+                  maxRotation: 45,
+                  minRotation: 45,
+                  font: {
+                    size: 10
+                  }
+                }
+              },
+              y: {
+                beginAtZero: true,
+                ticks: {
+                  callback: function(value) {
+                    return utils.formatMoney(value);
+                  },
+                  font: {
+                    size: 10
+                  }
+                }
+              }
+            }
+          }
+        });
+      },
+      
+      // Agency chart
+      initAgencyChart: function() {
+        const ctx = document.getElementById('agencyChart').getContext('2d');
+        
+        app.charts.agencyChart = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: [],
+            datasets: [{
+              label: 'Contract Value',
+              data: [],
+              backgroundColor: [],
+              borderWidth: 0,
+              borderRadius: 4,
+              barThickness: 'flex',
+              maxBarThickness: 15
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            indexAxis: 'y',
+            plugins: {
+              legend: {
+                display: false
+              },
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    return utils.formatMoney(context.raw);
+                  }
+                }
+              }
+            },
+            scales: {
+              x: {
+                beginAtZero: true,
+                ticks: {
+                  callback: function(value) {
+                    return utils.formatMoney(value);
+                  },
+                  font: {
+                    size: 10
+                  }
+                }
+              },
+              y: {
+                grid: {
+                  display: false
+                },
+                ticks: {
+                  font: {
+                    size: 10
+                  }
+                }
+              }
+            }
+          }
+        });
+      },
+      
+      // NAICS bubble chart
+      initNaicsBubbleChart: function() {
+        const ctx = document.getElementById('naicsBubbleChart').getContext('2d');
+        
+        app.charts.naicsBubbleChart = new Chart(ctx, {
+          type: 'bubble',
+          data: {
+            datasets: []
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                display: false
+              },
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    const dataset = context.dataset;
+                    const index = context.dataIndex;
+                    const data = dataset.data[index];
+                    const label = dataset.label[index] || '';
+                    
+                    return [
+                      label,
+                      `Contracts: ${data.x.toLocaleString()}`,
+                      `Value: ${utils.formatMoney(data.y)}`
+                    ];
+                  }
+                }
+              }
+            },
+            scales: {
+              x: {
+                type: 'linear',
+                position: 'bottom',
+                title: {
+                  display: true,
+                  text: 'Contracts',
+                  font: {
+                    size: 10
+                  }
+                },
+                ticks: {
+                  font: {
+                    size: 10
+                  }
+                }
+              },
+              y: {
+                title: {
+                  display: true,
+                  text: 'Value',
+                  font: {
+                    size: 10
+                  }
+                },
+                ticks: {
+                  callback: function(value) {
+                    return utils.formatMoney(value);
+                  },
+                  font: {
+                    size: 10
+                  }
+                }
+              }
+            }
+          }
+        });
+      },
+      
+      // Vendor chart
+      initVendorChart: function() {
+        const ctx = document.getElementById('vendorChart').getContext('2d');
+        
+        app.charts.vendorChart = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: [],
+            datasets: [{
+              label: 'Contract Value',
+              data: [],
+              backgroundColor: [],
+              borderWidth: 0,
+              borderRadius: 4,
+              barThickness: 'flex',
+              maxBarThickness: 15
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            indexAxis: 'y',
+            plugins: {
+              legend: {
+                display: false
+              },
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    return utils.formatMoney(context.raw);
+                  }
+                }
+              }
+            },
+            scales: {
+              x: {
+                beginAtZero: true,
+                ticks: {
+                  callback: function(value) {
+                    return utils.formatMoney(value);
+                  },
+                  font: {
+                    size: 10
+                  }
+                }
+              },
+              y: {
+                grid: {
+                  display: false
+                },
+                ticks: {
+                  font: {
+                    size: 10
+                  }
+                }
+              }
+            }
+          }
+        });
+      },
+      
+      // Initialize Sankey chart
+      initSankeyChart: function() {
+        // Clear any existing chart
+        const container = elements.sankeyChartContainer;
+        if (container) {
+          container.querySelector('svg')?.remove();
+        }
+        
+        // Set up Sankey filter buttons
+        elements.sankeyTop10.addEventListener('click', () => {
+          app.sankeyDisplayLimit = 10;
+          elements.sankeyTop10.classList.remove('btn-secondary');
+          elements.sankeyTop10.classList.add('btn-primary');
+          elements.sankeyTop25.classList.remove('btn-primary');
+          elements.sankeyTop25.classList.add('btn-secondary');
+          elements.sankeyAll.classList.remove('btn-primary');
+          elements.sankeyAll.classList.add('btn-secondary');
+          this.updateSankeyChart();
+        });
+        
+        elements.sankeyTop25.addEventListener('click', () => {
+          app.sankeyDisplayLimit = 25;
+          elements.sankeyTop10.classList.remove('btn-primary');
+          elements.sankeyTop10.classList.add('btn-secondary');
+          elements.sankeyTop25.classList.remove('btn-secondary');
+          elements.sankeyTop25.classList.add('btn-primary');
+          elements.sankeyAll.classList.remove('btn-primary');
+          elements.sankeyAll.classList.add('btn-secondary');
+          this.updateSankeyChart();
+        });
+        
+        elements.sankeyAll.addEventListener('click', () => {
+          app.sankeyDisplayLimit = 0; // 0 means all
+          elements.sankeyTop10.classList.remove('btn-primary');
+          elements.sankeyTop10.classList.add('btn-secondary');
+          elements.sankeyTop25.classList.remove('btn-primary');
+          elements.sankeyTop25.classList.add('btn-secondary');
+          elements.sankeyAll.classList.remove('btn-secondary');
+          elements.sankeyAll.classList.add('btn-primary');
+          this.updateSankeyChart();
+        });
+        
+        // Sankey chart will be created in updateSankeyChart with data
+      },
+      
+      // Update Sankey diagram with data
+      updateSankeyChart: function() {
+        const data = app.filteredData;
+        if (!data || data.length === 0) return;
+        
+        // Generate Sankey data with current display limit
+        const sankeyData = dataProcessor.generateSankeyData(data, app.sankeyDisplayLimit);
+        
+        // Clear any existing chart
+        const container = elements.sankeyChartContainer;
+        container.querySelector('svg')?.remove();
+        
+        // Get container dimensions
+        const width = container.clientWidth;
+        const height = container.clientHeight;
+        
+        // Create SVG
+        const svg = d3.select(container)
+          .append('svg')
+          .attr('width', width)
+          .attr('height', height);
+        
+        // Create Sankey generator
+        const sankey = d3.sankey()
+          .nodeWidth(15)
+          .nodePadding(10)
+          .extent([[20, 10], [width - 20, height - 10]])
+		  .nodeSort((a, b) => d3.descending(a.value, b.value));
+        
+        // Apply sankey layout to data
+        const { nodes, links } = sankey({
+          nodes: sankeyData.nodes.map(d => Object.assign({}, d)),
+          links: sankeyData.links.map(d => Object.assign({}, d))
+        });
+        
+        // Pre-calculate colors for all nodes and links
+        nodes.forEach(node => {
+          node.color = utils.stringToColor(node.name);
+        });
+        
+        links.forEach(link => {
+          link.color = nodes[link.source.index].color;
+        });
+        
+        // Draw links
+        const link = svg.append('g')
+          .selectAll('path')
+          .data(links)
+          .join('path')
+          .attr('d', d3.sankeyLinkHorizontal())
+          .attr('stroke-width', d => Math.max(1, d.width))
+          .style('stroke', d => d.color)
+          .style('fill', 'none')
+          .style('stroke-opacity', 0.4)
+          .on('mouseover', function(event, d) {
+            d3.select(this)
+              .style('stroke-opacity', 0.7);
+            
+            const tooltip = elements.sankeyTooltip;
+            tooltip.style.opacity = 1;
+            tooltip.style.left = (event.pageX + 10) + 'px';
+            tooltip.style.top = (event.pageY - 10) + 'px';
+            
+            const sourceName = nodes[d.source.index].name;
+            const targetName = nodes[d.target.index].name;
+            
+            tooltip.innerHTML = `
+              <div style="font-weight: 600;">${utils.truncateText(sourceName, 25)} → ${utils.truncateText(targetName, 25)}</div>
+              <div>${utils.formatMoney(d.value)}</div>
+            `;
+          })
+          .on('mouseout', function() {
+            d3.select(this)
+              .style('stroke-opacity', 0.4);
+            elements.sankeyTooltip.style.opacity = 0;
+          })
+          .on('click', (event, d) => {
+            const sourceNode = nodes[d.source.index];
+            const targetNode = nodes[d.target.index];
+            
+            if (sourceNode.type === 'agency' && targetNode.type === 'office') {
+              // Apply agency filter
+              filterManager.applySelectionFilter('agency', sourceNode.name, null);
+              elements.agencyFilter.value = sourceNode.name;
+            } else if (sourceNode.type === 'office' && targetNode.type === 'vendor') {
+              // Apply office filter
+              filterManager.applySelectionFilter('office', sourceNode.name, null);
+              elements.officeFilter.value = sourceNode.name;
+            }
+          });
+        
+        // Draw nodes
+        const node = svg.append('g')
+          .selectAll('rect')
+          .data(nodes)
+          .join('rect')
+          .attr('x', d => d.x0)
+          .attr('y', d => d.y0)
+          .attr('height', d => d.y1 - d.y0)
+          .attr('width', d => d.x1 - d.x0)
+          .style('fill', d => d.color)
+          .style('opacity', 0.8)
+          .on('mouseover', function(event, d) {
+            link
+              .style('stroke-opacity', l => 
+                l.source.index === d.index || l.target.index === d.index ? 0.7 : 0.1
+              );
+            
+            const tooltip = elements.sankeyTooltip;
+            tooltip.style.opacity = 1;
+            tooltip.style.left = (event.pageX + 10) + 'px';
+            tooltip.style.top = (event.pageY - 10) + 'px';
+            
+            tooltip.innerHTML = `
+              <div style="font-weight: 600;">${utils.truncateText(d.name, 30)}</div>
+              <div>${d.type.charAt(0).toUpperCase() + d.type.slice(1)}</div>
+              <div>Total: ${utils.formatMoney(d.value)}</div>
+            `;
+          })
+          .on('mouseout', function() {
+            link.style('stroke-opacity', 0.4);
+            elements.sankeyTooltip.style.opacity = 0;
+          })
+          .on('click', (event, d) => {
+            if (d.type === 'agency') {
+              filterManager.applySelectionFilter('agency', d.name, null);
+              elements.agencyFilter.value = d.name;
+            } else if (d.type === 'office') {
+              filterManager.applySelectionFilter('office', d.name, null);
+              elements.officeFilter.value = d.name;
+            } else if (d.type === 'vendor') {
+              filterManager.applySelectionFilter('vendor', d.name, null);
+              elements.vendorFilter.value = d.name;
+            }
+          });
+        
+        // Draw node labels
+        svg.append('g')
+          .selectAll('text')
+          .data(nodes)
+          .join('text')
+          .attr('x', d => d.x0 < width / 2 ? d.x1 + 6 : d.x0 - 6)
+          .attr('y', d => (d.y1 + d.y0) / 2)
+          .attr('dy', '0.35em')
+          .attr('text-anchor', d => d.x0 < width / 2 ? 'start' : 'end')
+          .text(d => utils.truncateText(d.name, 20))
+          .attr('font-size', '9px')
+          .style('fill', getComputedStyle(document.documentElement).getPropertyValue('--text-primary'));
+        
+        // Force a repaint to ensure colors are applied immediately
+        if(container.offsetHeight === undefined) { // Basic check if offsetHeight is available
+            // no-op, just to ensure variable is used if needed.
+        }
+      },
+      
+      // Add chart click events
+      addChartClickEvents: function() {
+        // Time chart container click
+        elements.valueTimeChartContainer.addEventListener('click', (event) => {
+          const chart = app.charts.valueTimeChart;
+          const activePoints = chart.getElementsAtEventForMode(event, 'nearest', { intersect: true }, false);
+          
+          if (activePoints.length > 0) {
+            const firstPoint = activePoints[0];
+            const label = chart.data.labels[firstPoint.index];
+            
+            // Convert month name to date range
+            const monthNameRegex = /(\w+)\s*'?(\d+)?/;
+            const match = label.match(monthNameRegex);
+            
+            if (match) {
+              const monthName = match[1];
+              const yearShort = match[2] || new Date().getFullYear().toString().substr(2);
+              
+              // Map month names to month numbers
+              const monthMap = {
+                'Jan': 0, 'Feb': 1, 'Mar': 2, 'Apr': 3, 'May': 4, 'Jun': 5,
+                'Jul': 6, 'Aug': 7, 'Sep': 8, 'Oct': 9, 'Nov': 10, 'Dec': 11
+              };
+              
+              if (monthMap[monthName] !== undefined) {
+                // Create start and end dates for the month
+                const fullYear = parseInt('20' + yearShort);
+                const startDate = new Date(fullYear, monthMap[monthName], 1);
+                const endDate = new Date(fullYear, monthMap[monthName] + 1, 0);
+                
+                // Format for input elements
+                const startDateStr = startDate.toISOString().split('T')[0];
+                const endDateStr = endDate.toISOString().split('T')[0];
+                
+                // Update date inputs
+                elements.startDate.value = startDateStr;
+                elements.endDate.value = endDateStr;
+                
+                // Update filters
+                app.filters.startDate = startDateStr;
+                app.filters.endDate = endDateStr;
+                
+                // Clear existing selection if any
+                if (app.selection.type) {
+                  delete app.filters[app.selection.type];
+                  app.selection = { type: null, value: null, container: null };
+                  
+                  // Clear selection indicators
+                  document.querySelectorAll('.selection-indicator').forEach(indicator => {
+                    indicator.style.display = 'none';
+                  });
+                }
+                
+                // Apply filters and refresh dashboard
+                filterManager.applyFilters();
+                filterManager.updateFilterTags();
+                dashboardManager.refreshDashboard();
+              }
+            }
+          }
+        });
+        
+        // Agency chart container click
+        elements.agencyChartContainer.addEventListener('click', (event) => {
+          const chart = app.charts.agencyChart;
+          const activePoints = chart.getElementsAtEventForMode(event, 'nearest', { intersect: true }, false);
+          
+          if (activePoints.length > 0) {
+            const firstPoint = activePoints[0];
+            const labelIndex = firstPoint.index;
+            const label = chart.data.labels[labelIndex];
+            
+            // Find the full agency name that matches or includes the label
+            const agencyNames = Object.keys(app.agencies);
+            const agencyName = agencyNames.find(name => name === label || label.includes(name));
+            
+            if (agencyName) {
+              // Apply agency filter
+              filterManager.applySelectionFilter('agency', agencyName, elements.agencyChartContainer);
+              
+              // Update the dropdown to match
+              elements.agencyFilter.value = agencyName;
+            }
+          }
+        });
+        
+        // NAICS chart container click
+        elements.naicsBubbleChartContainer.addEventListener('click', (event) => {
+          const chart = app.charts.naicsBubbleChart;
+          const activePoints = chart.getElementsAtEventForMode(event, 'nearest', { intersect: true }, false);
+          
+          if (activePoints.length > 0) {
+            const firstPoint = activePoints[0];
+            const datasetIndex = firstPoint.datasetIndex;
+            const pointIndex = firstPoint.index;
+            const label = chart.data.datasets[datasetIndex].label[pointIndex];
+            
+            // Extract NAICS code
+            const naicsCodeMatch = label.match(/^(\d+)/);
+            if (naicsCodeMatch && naicsCodeMatch[1]) {
+              const naicsCode = naicsCodeMatch[1];
+              
+              // Apply NAICS filter
+              filterManager.applySelectionFilter('naics', naicsCode, elements.naicsBubbleChartContainer);
+              
+              // Update the dropdown to match
+              elements.naicsFilter.value = naicsCode;
+            }
+          }
+        });
+        
+        // Vendor chart container click
+        elements.vendorChartContainer.addEventListener('click', (event) => {
+          const chart = app.charts.vendorChart;
+          const activePoints = chart.getElementsAtEventForMode(event, 'nearest', { intersect: true }, false);
+          
+          if (activePoints.length > 0) {
+            const firstPoint = activePoints[0];
+            const labelIndex = firstPoint.index;
+            const label = chart.data.labels[labelIndex];
+            
+            // Find the full vendor name that matches or includes the label
+            const vendorNames = Object.keys(app.vendors);
+            const vendorName = vendorNames.find(name => name === label || label.includes(name) || name.includes(label));
+            
+            if (vendorName) {
+              // Apply vendor filter
+              filterManager.applySelectionFilter('vendor', vendorName, elements.vendorChartContainer);
+              
+              // Update the dropdown to match
+              elements.vendorFilter.value = vendorName;
+            }
+          }
+        });
+      },
+      
+      // Update all charts with new data
+      updateCharts: function() {
+        this.updateValueTimeChart();
+        this.updateAgencyChart();
+        this.updateNaicsBubbleChart();
+        this.updateVendorChart();
+        this.updateSankeyChart();
+      },
+      
+      // Update value time chart
+      updateValueTimeChart: function() {
+        const data = app.filteredData;
+        if (!data || data.length === 0) return;
+        
+        // Group by month
+        const valueByMonth = {};
+        
+        data.forEach(contract => {
+          if (contract.parsedDate) {
+            const monthYear = `${contract.parsedDate.getFullYear()}-${(contract.parsedDate.getMonth() + 1).toString().padStart(2, '0')}`;
+            
+            if (!valueByMonth[monthYear]) {
+              valueByMonth[monthYear] = 0;
+            }
+            
+            valueByMonth[monthYear] += contract.value;
+          }
+        });
+        
+        // Sort by date
+        const sortedMonths = Object.keys(valueByMonth).sort();
+        
+        // Prepare chart data
+        const labels = [];
+        const values = [];
+        
+        sortedMonths.forEach(month => {
+          const [year, monthNum] = month.split('-');
+          const date = new Date(parseInt(year), parseInt(monthNum) - 1, 1);
+          
+          labels.push(date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }));
+          values.push(valueByMonth[month]);
+        });
+        
+        // Update chart
+        const chart = app.charts.valueTimeChart;
+        chart.data.labels = labels;
+        chart.data.datasets[0].data = values;
+        chart.update();
+      },
+      
+      // Update agency chart
+      updateAgencyChart: function() {
+        const data = app.filteredData;
+        if (!data || data.length === 0) return;
+        
+        // Group by agency
+        const valueByAgency = {};
+        
+        data.forEach(contract => {
+          if (contract.agency) {
+            if (!valueByAgency[contract.agency]) {
+              valueByAgency[contract.agency] = 0;
+            }
+            
+            valueByAgency[contract.agency] += contract.value;
+          }
+        });
+        
+        // Convert to array and sort
+        const agencies = Object.keys(valueByAgency).map(agency => ({
+          name: agency,
+          value: valueByAgency[agency]
+        }));
+        
+        agencies.sort((a, b) => b.value - a.value);
+        
+        // Take top 8
+        const topAgencies = agencies.slice(0, 8);
+        
+        // Prepare chart data
+        const labels = topAgencies.map(agency => utils.truncateText(agency.name, 15));
+        const values = topAgencies.map(agency => agency.value);
+        const colors = topAgencies.map(agency => utils.stringToColor(agency.name));
+        
+        // Update chart
+        const chart = app.charts.agencyChart;
+        chart.data.labels = labels;
+        chart.data.datasets[0].data = values;
+        chart.data.datasets[0].backgroundColor = colors;
+        chart.update();
+      },
+      
+      // Update NAICS bubble chart
+      updateNaicsBubbleChart: function() {
+        const data = app.filteredData;
+        if (!data || data.length === 0) return;
+        
+        // Group by NAICS
+        const naicsData = {};
+        
+        data.forEach(contract => {
+          if (contract.naics) {
+            if (!naicsData[contract.naics]) {
+              naicsData[contract.naics] = {
+                code: contract.naics,
+                description: contract.naicsDescription || '',
+                count: 0,
+                value: 0
+              };
+            }
+            
+            naicsData[contract.naics].count++;
+            naicsData[contract.naics].value += contract.value;
+          }
+        });
+        
+        // Convert to array and sort
+        const naicsCodes = Object.values(naicsData);
+        naicsCodes.sort((a, b) => b.value - a.value);
+        
+        // Take top 15
+        const topNaics = naicsCodes.slice(0, 15);
+        
+        // Prepare bubble chart data
+        const bubbleData = topNaics.map(naics => ({
+          x: naics.count,
+          y: naics.value,
+          r: Math.max(4, Math.sqrt(naics.value) / 200) // Scale radius based on value, with minimum size
+        }));
+        
+        const labels = topNaics.map(naics => `${naics.code} - ${utils.truncateText(naics.description, 30)}`);
+        const colors = topNaics.map(naics => utils.stringToColor(naics.code));
+        
+        // Update chart
+        const chart = app.charts.naicsBubbleChart;
+        chart.data.datasets = [{
+          label: labels,
+          data: bubbleData,
+          backgroundColor: colors.map(color => color + '80'), // Add transparency
+          borderColor: colors,
+          borderWidth: 1
+        }];
+        chart.update();
+      },
+      
+      // Update vendor chart
+      updateVendorChart: function() {
+        const data = app.filteredData;
+        if (!data || data.length === 0) return;
+        
+        // Group by vendor
+        const valueByVendor = {};
+        
+        data.forEach(contract => {
+          if (contract.vendor) {
+            if (!valueByVendor[contract.vendor]) {
+              valueByVendor[contract.vendor] = 0;
+            }
+            
+            valueByVendor[contract.vendor] += contract.value;
+          }
+        });
+        
+        // Convert to array and sort
+        const vendors = Object.keys(valueByVendor).map(vendor => ({
+          name: vendor,
+          value: valueByVendor[vendor]
+        }));
+        
+        vendors.sort((a, b) => b.value - a.value);
+        
+        // Take top 8
+        const topVendors = vendors.slice(0, 8);
+        
+        // Prepare chart data
+        const labels = topVendors.map(vendor => utils.truncateText(vendor.name, 12));
+        const values = topVendors.map(vendor => vendor.value);
+        const colors = topVendors.map(vendor => utils.stringToColor(vendor.name));
+        
+        // Update chart
+        const chart = app.charts.vendorChart;
+        chart.data.labels = labels;
+        chart.data.datasets[0].data = values;
+        chart.data.datasets[0].backgroundColor = colors;
+        chart.update();
+      }
+    };
+
+    // Table functions
+    const tableManager = {
+      // Initialize table sorting functionality
+      initTableSorting: function() {
+        // Add event listeners to all sortable table headers
+        document.querySelectorAll('th[data-sort]').forEach(header => {
+          header.addEventListener('click', function() {
+            const table = this.closest('table');
+            const tbody = table.querySelector('tbody');
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+            const sortField = this.getAttribute('data-sort');
+            
+            // Determine sort direction
+            let sortDirection = 'asc';
+            if (this.classList.contains('sort-asc')) {
+              sortDirection = 'desc';
+            }
+            
+            // Clear previous sort indicators
+            table.querySelectorAll('th').forEach(th => {
+              th.classList.remove('sort-asc', 'sort-desc');
+            });
+            
+            // Add current sort indicator
+            this.classList.add(`sort-${sortDirection}`);
+            
+            // Define compare function based on field type
+            const compareFunction = (a, b) => {
+              // Get cell values
+              const aCell = a.querySelector(`td:nth-child(${Array.from(this.parentNode.children).indexOf(this) + 1})`);
+              const bCell = b.querySelector(`td:nth-child(${Array.from(this.parentNode.children).indexOf(this) + 1})`);
+              
+              if (!aCell || !bCell) return 0;
+              
+              let aValue = aCell.textContent.trim();
+              let bValue = bCell.textContent.trim();
+              
+              // Handle specific data types
+              if (sortField === 'value') {
+                // Parse money values
+                aValue = utils.parseMoney(aValue);
+                bValue = utils.parseMoney(bValue);
+              } else if (sortField === 'date') {
+                // Parse dates
+                aValue = new Date(aValue).getTime() || 0;
+                bValue = new Date(bValue).getTime() || 0;
+              } else if (sortField === 'contracts') {
+                // Parse numbers
+                aValue = parseInt(aValue.replace(/,/g, '')) || 0;
+                bValue = parseInt(bValue.replace(/,/g, '')) || 0;
+              }
+              
+              // Compare based on direction
+              if (sortDirection === 'asc') {
+                return aValue > bValue ? 1 : -1;
+              } else {
+                return aValue < bValue ? 1 : -1;
+              }
+            };
+            
+            // Sort rows and reappend
+            rows.sort(compareFunction).forEach(row => tbody.appendChild(row));
+          });
+        });
+      },
+      
+      // Update recent contracts table
+      updateContractsTable: function() {
+        const data = app.filteredData;
+        const tbody = elements.contractsTable;
+        
+        // Clear table
+        tbody.innerHTML = '';
+        
+        // Sort by date (newest first)
+        const sortedData = [...data].sort((a, b) => {
+          if (!a.parsedDate && !b.parsedDate) return 0;
+          if (!a.parsedDate) return 1;
+          if (!b.parsedDate) return -1;
+          
+          return b.parsedDate - a.parsedDate;
+        });
+        
+        // Take most recent 10 contracts
+        const recentContracts = sortedData.slice(0, 10);
+        
+        // Add rows
+        recentContracts.forEach(contract => this.addContractRow(contract, tbody));
+      },
+      
+      // Update largest contracts table
+      updateLargestContractsTable: function() {
+        const data = app.filteredData;
+        const tbody = elements.largestContractsTable;
+        
+        // Clear table
+        tbody.innerHTML = '';
+        
+        // Sort by value (largest first)
+        const sortedData = [...data].sort((a, b) => b.value - a.value);
+        
+        // Take largest 10 contracts
+        const largestContracts = sortedData.slice(0, 10);
+        
+        // Add rows
+        largestContracts.forEach(contract => this.addContractRow(contract, tbody));
+      },
+      
+      // Helper method to add a contract row to any table
+      addContractRow: function(contract, tbody) {
+        const row = document.createElement('tr');
+        
+        // Create agency icon
+        const agencyInitials = utils.getInitials(contract.agency);
+        const agencyColor = utils.stringToColor(contract.agency);
+        
+        // Create office icon
+        const officeInitials = utils.getInitials(contract.office);
+        const officeColor = utils.stringToColor(contract.office);
+        
+        // Create vendor icon
+        const vendorInitials = utils.getInitials(contract.vendor);
+        const vendorColor = utils.stringToColor(contract.vendor);
+        
+        row.innerHTML = `
+          <td>${utils.formatDate(contract.date)}</td>
+          <td>${contract.id}</td>
+          <td>
+            <div class="agency-badge">
+              <div class="agency-icon" style="background-color: ${agencyColor}">
+                ${agencyInitials}
+              </div>
+              ${utils.truncateText(contract.agency, 15)}
+            </div>
+          </td>
+          <td>
+            <div class="office-badge">
+              <div class="office-icon" style="background-color: ${officeColor}">
+                ${officeInitials}
+              </div>
+              ${utils.truncateText(contract.office, 15)}
+            </div>
+          </td>
+          <td>
+            <div class="vendor-badge">
+              <div class="vendor-icon" style="background-color: ${vendorColor}">
+                ${vendorInitials}
+              </div>
+              ${utils.truncateText(contract.vendor, 15)}
+            </div>
+          </td>
+          <td>${utils.truncateText(contract.description, 30)}</td>
+          <td class="money">${utils.formatMoney(contract.value)}</td>
+          <td>
+            <button class="action-btn view-contract" data-id="${contract.id}">
+              <span class="btn-text">Details</span>
+            </button>
+          </td>
+        `;
+        
+        tbody.appendChild(row);
+        
+        // Add event listener to detail button
+        const detailButton = row.querySelector('.view-contract');
+        detailButton.addEventListener('click', function() {
+          const contractId = this.getAttribute('data-id');
+          tableManager.showContractDetails(contractId);
+        });
+      },
+      
+      // Update offices table
+      updateOfficesTable: function() {
+        const data = app.filteredData;
+        const tbody = elements.officesTable;
+        
+        // Clear table
+        tbody.innerHTML = '';
+        
+        // Group by office
+        const officeData = {};
+        
+        data.forEach(contract => {
+          if (contract.office) {
+            if (!officeData[contract.office]) {
+              officeData[contract.office] = {
+                name: contract.office,
+                agency: contract.agency,
+                count: 0,
+                value: 0,
+                naicsCodes: {},
+                vendors: {}
+              };
+            }
+            
+            officeData[contract.office].count++;
+            officeData[contract.office].value += contract.value;
+            
+            // Track NAICS codes
+            if (contract.naics) {
+              if (!officeData[contract.office].naicsCodes[contract.naics]) {
+                officeData[contract.office].naicsCodes[contract.naics] = {
+                  code: contract.naics,
+                  description: contract.naicsDescription,
+                  count: 0,
+                  value: 0
+                };
+              }
+              
+              officeData[contract.office].naicsCodes[contract.naics].count++;
+              officeData[contract.office].naicsCodes[contract.naics].value += contract.value;
+            }
+            
+            // Track vendors
+            if (contract.vendor) {
+              if (!officeData[contract.office].vendors[contract.vendor]) {
+                officeData[contract.office].vendors[contract.vendor] = {
+                  name: contract.vendor,
+                  count: 0,
+                  value: 0
+                };
+              }
+              
+              officeData[contract.office].vendors[contract.vendor].count++;
+              officeData[contract.office].vendors[contract.vendor].value += contract.value;
+            }
+          }
+        });
+        
+        // Convert to array and sort by value
+        const offices = Object.values(officeData).sort((a, b) => b.value - a.value);
+        
+        // Take top 10
+        const topOffices = offices.slice(0, 10);
+        
+        // Add rows
+        topOffices.forEach(office => {
+          // Find top NAICS code
+          const topNaics = Object.values(office.naicsCodes)
+            .sort((a, b) => b.value - a.value)[0] || { code: 'N/A', description: 'N/A' };
+          
+          // Find top vendor
+          const topVendor = Object.values(office.vendors)
+            .sort((a, b) => b.value - a.value)[0] || { name: 'N/A' };
+          
+          // Create agency icon
+          const agencyInitials = utils.getInitials(office.agency);
+          const agencyColor = utils.stringToColor(office.agency);
+          
+          // Create office icon
+          const officeInitials = utils.getInitials(office.name);
+          const officeColor = utils.stringToColor(office.name);
+          
+          // Create vendor icon
+          const vendorInitials = utils.getInitials(topVendor.name);
+          const vendorColor = utils.stringToColor(topVendor.name);
+          
+          const row = document.createElement('tr');
+          
+          row.innerHTML = `
+            <td>
+              <div class="agency-badge">
+                <div class="agency-icon" style="background-color: ${agencyColor}">
+                  ${agencyInitials}
+                </div>
+                ${utils.truncateText(office.agency, 15)}
+              </div>
+            </td>
+            <td>
+              <div class="office-badge">
+                <div class="office-icon" style="background-color: ${officeColor}">
+                  ${officeInitials}
+                </div>
+                ${utils.truncateText(office.name, 15)}
+              </div>
+            </td>
+            <td>${office.count.toLocaleString()}</td>
+            <td class="money">${utils.formatMoney(office.value)}</td>
+            <td>
+              <span class="badge badge-primary" title="${topNaics.description}">
+                ${topNaics.code}
+              </span>
+            </td>
+            <td>
+              <div class="vendor-badge">
+                <div class="vendor-icon" style="background-color: ${vendorColor}">
+                  ${vendorInitials}
+                </div>
+                ${utils.truncateText(topVendor.name, 15)}
+              </div>
+            </td>
+          `;
+          
+          tbody.appendChild(row);
+          
+          // Add row click event for filtering
+          row.addEventListener('click', function() {
+            // Apply office filter
+            filterManager.applySelectionFilter('office', office.name, null);
+            elements.officeFilter.value = office.name;
+          });
+        });
+      },
+      
+      // Show contract details in modal
+      showContractDetails: function(contractId) {
+        // Find the contract
+        const contract = app.data.find(c => c.id === contractId);
+        
+        if (!contract) {
+          console.error('Contract not found:', contractId);
+          return;
+        }
+        
+        // Create agency icon
+        const agencyInitials = utils.getInitials(contract.agency);
+        const agencyColor = utils.stringToColor(contract.agency);
+        
+        // Create office icon
+        const officeInitials = utils.getInitials(contract.office);
+        const officeColor = utils.stringToColor(contract.office);
+        
+        // Create vendor icon
+        const vendorInitials = utils.getInitials(contract.vendor);
+        const vendorColor = utils.stringToColor(contract.vendor);
+        
+        // Populate modal body
+        const modalBody = elements.contractModalBody;
+        
+        modalBody.innerHTML = `
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div>
+              <h4 style="margin-bottom: 0.75rem; font-size: 1rem;">Contract Information</h4>
+              <p><strong>Contract ID:</strong> ${contract.id}</p>
+              <p><strong>Reference IDV:</strong> ${contract.reference || 'N/A'}</p>
+              <p><strong>Date Signed:</strong> ${utils.formatDate(contract.date)}</p>
+              <p><strong>Contract Type:</strong> ${contract.type || 'N/A'}</p>
+              <p><strong>Value:</strong> ${utils.formatMoney(contract.value)}</p>
+            </div>
+            <div>
+              <h4 style="margin-bottom: 0.75rem; font-size: 1rem;">Parties</h4>
+              <div style="display: flex; align-items: center; margin-bottom: 0.5rem;">
+                <div class="agency-icon" style="background-color: ${agencyColor}; margin-right: 0.5rem;">
+                  ${agencyInitials}
+                </div>
+                <strong>Agency:</strong> ${contract.agency}
+              </div>
+              <div style="display: flex; align-items: center; margin-bottom: 0.5rem; margin-top: 0.5rem;">
+                <div class="office-icon" style="background-color: ${officeColor}; margin-right: 0.5rem;">
+                  ${officeInitials}
+                </div>
+                <strong>Office:</strong> ${contract.office || 'N/A'}
+              </div>
+              <div style="display: flex; align-items: center; margin-bottom: 0.5rem; margin-top: 0.5rem;">
+                <div class="vendor-icon" style="background-color: ${vendorColor}; margin-right: 0.5rem;">
+                  ${vendorInitials}
+                </div>
+                <strong>Vendor:</strong> ${contract.vendor}
+              </div>
+              <p><strong>Parent Company:</strong> ${contract.parentVendor || 'N/A'}</p>
+            </div>
+          </div>
+          <div style="margin-top: 1rem;">
+            <h4 style="margin-bottom: 0.75rem; font-size: 1rem;">Description</h4>
+            <p>${contract.description || 'No description available.'}</p>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+            <div>
+              <h4 style="margin-bottom: 0.75rem; font-size: 1rem;">NAICS</h4>
+              <p><strong>Code:</strong> ${contract.naics || 'N/A'}</p>
+              <p><strong>Description:</strong> ${contract.naicsDescription || 'N/A'}</p>
+            </div>
+            <div>
+              <h4 style="margin-bottom: 0.75rem; font-size: 1rem;">PSC</h4>
+              <p><strong>Code:</strong> ${contract.psc || 'N/A'}</p>
+              <p><strong>Description:</strong> ${contract.pscDescription || 'N/A'}</p>
+            </div>
+          </div>
+          <div style="margin-top: 1rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            <button id="filterByAgency" class="btn btn-secondary">
+              <i class="fas fa-filter"></i> <span class="btn-text">By Agency</span>
+            </button>
+            <button id="filterByOffice" class="btn btn-secondary">
+              <i class="fas fa-filter"></i> <span class="btn-text">By Office</span>
+            </button>
+            <button id="filterByVendor" class="btn btn-secondary">
+              <i class="fas fa-filter"></i> <span class="btn-text">By Vendor</span>
+            </button>
+          </div>
+        `;
+        
+        // Show modal
+        elements.contractModal.classList.add('active');
+        
+        // Add filter buttons event listeners
+        const filterByAgencyBtn = document.getElementById('filterByAgency');
+        const filterByOfficeBtn = document.getElementById('filterByOffice');
+        const filterByVendorBtn = document.getElementById('filterByVendor');
+        
+        filterByAgencyBtn.addEventListener('click', () => {
+          filterManager.applySelectionFilter('agency', contract.agency, null);
+          elements.agencyFilter.value = contract.agency;
+          tableManager.hideContractDetails();
+        });
+        
+        filterByOfficeBtn.addEventListener('click', () => {
+          filterManager.applySelectionFilter('office', contract.office, null);
+          elements.officeFilter.value = contract.office;
+          tableManager.hideContractDetails();
+        });
+        
+        filterByVendorBtn.addEventListener('click', () => {
+          filterManager.applySelectionFilter('vendor', contract.vendor, null);
+          elements.vendorFilter.value = contract.vendor;
+          tableManager.hideContractDetails();
+        });
+      },
+      
+      // Hide contract details modal
+      hideContractDetails: function() {
+        elements.contractModal.classList.remove('active');
+      },
+      
+      // Update all tables
+      updateTables: function() {
+        this.updateContractsTable();
+        this.updateLargestContractsTable();
+        this.updateOfficesTable();
+      }
+    };
+
+    // Dashboard manager
+    const dashboardManager = {
+      // Initialize the dashboard
+      initDashboard: function() {
+        // Hide loading indicator and error messages
+        elements.loadingIndicator.style.display = 'none';
+        elements.errorMessage.style.display = 'none';
+        elements.noDataMessage.style.display = 'none';
+        
+        // Show dashboard
+        elements.dashboard.style.display = 'flex';
+        elements.statusBox.style.display = 'flex';
+        
+        // Initialize charts
+        chartManager.initCharts();
+        
+        // Initialize table sorting
+        tableManager.initTableSorting();
+        
+        // Refresh dashboard with data
+        this.refreshDashboard();
+      },
+      
+      // Refresh the dashboard with filtered data
+      refreshDashboard: function() {
+        // Update stats
+        this.updateStats();
+        
+        // Update charts
+        chartManager.updateCharts();
+        
+        // Update tables
+        tableManager.updateTables();
+        
+        // Update filter tags
+        filterManager.updateFilterTags();
+      },
+      
+      // Update stats
+      updateStats: function() {
+        const data = app.filteredData;
+        
+        // Total contracts
+        elements.totalContracts.textContent = data.length.toLocaleString();
+        
+        // Total value
+        const totalValue = data.reduce((sum, contract) => sum + contract.value, 0);
+        elements.totalValue.textContent = utils.formatMoney(totalValue);
+        
+        // Average contract value
+        const avgValue = data.length > 0 ? totalValue / data.length : 0;
+        elements.avgValue.textContent = utils.formatMoney(avgValue);
+        
+        // Unique vendors
+        const uniqueVendors = new Set(data.map(contract => contract.vendor).filter(Boolean));
+        elements.uniqueVendors.textContent = uniqueVendors.size.toLocaleString();
+      }
+    };
+
+    // File upload handler
+    const fileHandler = {
+      // Handle file upload
+      handleFileUpload: function() {
+        const file = elements.csvFile.files[0];
+        
+        if (!file) {
+          this.showError('Please select a CSV file to upload.');
+          return;
+        }
+        
+        // Check file type
+        if (file.type !== 'text/csv' && !file.name.endsWith('.csv')) {
+          this.showError('Please upload a valid CSV file.');
+          return;
+        }
+        
+        // Show loading indicator
+        elements.loadingIndicator.style.display = 'flex';
+        
+        // Hide error messages
+        elements.errorMessage.style.display = 'none';
+        
+        // Read file
+        const reader = new FileReader();
+        
+        reader.onload = (event) => {
+          try {
+            // Parse CSV
+            const csvText = event.target.result;
+            const csvData = utils.parseCSV(csvText);
+            
+            // Process data
+            const processedData = dataProcessor.processData(csvData);
+            
+            // Store processed data
+            app.data = processedData;
+            app.filteredData = [...processedData];
+            
+            // Analyze data
+            const analysis = dataProcessor.analyzeData(processedData);
+            app.agencies = analysis.agencies;
+            app.offices = analysis.offices;
+            app.vendors = analysis.vendors;
+            app.naicsCodes = analysis.naicsCodes;
+            app.pscCodes = analysis.pscCodes;
+            
+            // Populate filter dropdowns
+            this.populateFilterDropdowns();
+            
+            // Initialize dashboard
+            dashboardManager.initDashboard();
+          } catch (error) {
+            console.error('Error processing CSV file:', error);
+            this.showError('Error processing CSV file: ' + error.message);
+          } finally {
+            // Hide loading indicator
+            elements.loadingIndicator.style.display = 'none';
+          }
+        };
+        
+        reader.onerror = () => {
+          this.showError('Error reading the file.');
+          elements.loadingIndicator.style.display = 'none';
+        };
+        
+        reader.readAsText(file);
+      },
+      
+      // Show error message
+      showError: function(message) {
+        elements.errorMessage.textContent = message;
+        elements.errorMessage.style.display = 'block';
+      },
+      
+      // Populate filter dropdowns
+      populateFilterDropdowns: function() {
+        // Agency filter
+        this.populateDropdown(
+          elements.agencyFilter,
+          Object.values(app.agencies),
+          'name',
+          (item) => `${utils.truncateText(item.name, 30)} (${item.count})`
+        );
+        
+        // Office filter
+        this.populateDropdown(
+          elements.officeFilter,
+          Object.values(app.offices),
+          'name',
+          (item) => `${utils.truncateText(item.name, 30)} (${item.count})`
+        );
+        
+        // NAICS filter
+        this.populateDropdown(
+          elements.naicsFilter,
+          Object.values(app.naicsCodes),
+          'code',
+          (item) => `${item.code} - ${utils.truncateText(item.description, 25)} (${item.count})`
+        );
+        
+        // PSC filter
+        this.populateDropdown(
+          elements.pscFilter,
+          Object.values(app.pscCodes),
+          'code',
+          (item) => `${item.code} - ${utils.truncateText(item.description, 25)} (${item.count})`
+        );
+        
+        // Vendor filter
+        this.populateDropdown(
+          elements.vendorFilter,
+          Object.values(app.vendors),
+          'name',
+          (item) => `${utils.truncateText(item.name, 30)} (${item.count})`
+        );
+      },
+      
+      // Populate dropdown with data
+      populateDropdown: function(selectElement, items, valueField, labelFormatter) {
+        // Clear existing options (except first one)
+        while (selectElement.options.length > 1) {
+          selectElement.remove(1);
+        }
+        
+        // Sort items by count in descending order
+        const sortedItems = [...items].sort((a, b) => b.count - a.count);
+        
+        // Take top 100 for performance
+        const limitedItems = sortedItems.slice(0, 100);
+        
+        // Add options
+        limitedItems.forEach(item => {
+          const option = document.createElement('option');
+          option.value = item[valueField];
+          option.textContent = labelFormatter(item);
+          selectElement.appendChild(option);
+        });
+      }
+    };
+
+    // Set up event listeners
+    function setupEventListeners() {
+      // File upload
+      elements.csvFile.addEventListener('change', () => {
+        if (elements.csvFile.files.length > 0) {
+          const filename = elements.csvFile.files[0].name;
+          // elements.uploadBtn.innerHTML = `<i class="fas fa-upload"></i><span class="btn-text">Upload ${utils.truncateText(filename,10)}</span>`;
+          const uploadBtnTextSpan = elements.uploadBtn.querySelector('.btn-text');
+          if(uploadBtnTextSpan) {
+            uploadBtnTextSpan.textContent = ` ${utils.truncateText(filename,10)}`;
+          }
+          fileHandler.handleFileUpload();
+        }
+      });
+      
+      // Filter triggers
+      elements.searchInput.addEventListener('input', () => {
+        clearTimeout(elements.searchInput.timer);
+        elements.searchInput.timer = setTimeout(() => {
+          app.filters.search = elements.searchInput.value;
+          filterManager.applyFilters();
+          dashboardManager.refreshDashboard();
+        }, 300);
+      });
+      
+      elements.agencyFilter.addEventListener('change', () => {
+        app.filters.agency = elements.agencyFilter.value;
+        filterManager.applySelectionFilter('agency', elements.agencyFilter.value, elements.agencyChartContainer);
+      });
+      
+      elements.vendorFilter.addEventListener('change', () => {
+        app.filters.vendor = elements.vendorFilter.value;
+        filterManager.applySelectionFilter('vendor', elements.vendorFilter.value, elements.vendorChartContainer);
+      });
+      
+      // Advanced filters
+      elements.moreFiltersBtn.addEventListener('click', () => {
+        elements.advancedFiltersPanel.classList.toggle('active');
+      });
+      
+      elements.closeFilters.addEventListener('click', () => {
+        elements.advancedFiltersPanel.classList.remove('active');
+      });
+      
+      elements.mobileFilterBtn.addEventListener('click', () => {
+        elements.advancedFiltersPanel.classList.toggle('active');
+      });
+      
+      elements.valueFilter.addEventListener('change', () => {
+        const rangeStr = elements.valueFilter.value;
+        if (rangeStr) {
+          const range = utils.parseValueRange(rangeStr);
+          if (range) {
+            app.filters.valueRange = range;
+          } else {
+            delete app.filters.valueRange;
+          }
+        } else {
+          delete app.filters.valueRange;
+        }
+        
+        filterManager.applyFilters();
+        dashboardManager.refreshDashboard();
+      });
+      
+      elements.startDate.addEventListener('change', () => {
+        app.filters.startDate = elements.startDate.value;
+        filterManager.applyFilters();
+        dashboardManager.refreshDashboard();
+      });
+      
+      elements.endDate.addEventListener('change', () => {
+        app.filters.endDate = elements.endDate.value;
+        filterManager.applyFilters();
+        dashboardManager.refreshDashboard();
+      });
+      
+      elements.officeFilter.addEventListener('change', () => {
+        app.filters.office = elements.officeFilter.value;
+        filterManager.applySelectionFilter('office', elements.officeFilter.value, null);
+      });
+      
+      elements.naicsFilter.addEventListener('change', () => {
+        app.filters.naics = elements.naicsFilter.value;
+        filterManager.applySelectionFilter('naics', elements.naicsFilter.value, elements.naicsBubbleChartContainer);
+      });
+      
+      elements.pscFilter.addEventListener('change', () => {
+        app.filters.psc = elements.pscFilter.value;
+        filterManager.applySelectionFilter('psc', elements.pscFilter.value, null);
+      });
+      
+      // Reset filters
+      elements.resetFilters.addEventListener('click', () => {
+        filterManager.resetFilters();
+        elements.advancedFiltersPanel.classList.remove('active');
+      });
+      
+      // Theme toggle
+      elements.themeToggle.addEventListener('click', () => {
+        toggleTheme();
+      });
+      
+      // Tab switching
+      elements.tabButtons.forEach(button => {
+        button.addEventListener('click', () => {
+          // Remove active class from all tabs
+          elements.tabButtons.forEach(btn => btn.classList.remove('active'));
+          elements.tabContents.forEach(content => content.classList.remove('active'));
+          
+          // Add active class to clicked tab
+          button.classList.add('active');
+          const tabId = button.getAttribute('data-tab') + 'Tab';
+          document.getElementById(tabId).classList.add('active');
+        });
+      });
+      
+      // Modal actions
+      elements.closeModal.addEventListener('click', () => {
+        tableManager.hideContractDetails();
+      });
+      
+      elements.closeModalBtn.addEventListener('click', () => {
+        tableManager.hideContractDetails();
+      });
+      
+      elements.contractModal.addEventListener('click', (event) => {
+        if (event.target === elements.contractModal) {
+          tableManager.hideContractDetails();
+        }
+      });
+      
+      // Resize handler for visualizations
+      window.addEventListener('resize', () => {
+        clearTimeout(window.resizeTimer);
+        window.resizeTimer = setTimeout(() => {
+          if (elements.dashboard.style.display !== 'none') {
+            chartManager.updateSankeyChart();
+            
+            // Resize Chart.js charts
+            Object.values(app.charts).forEach(chart => {
+              if (chart instanceof Chart) {
+                chart.resize();
+              }
+            });
+          }
+        }, 250);
+      });
+      
+      // Prevent form submission when pressing Enter
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' && (
+          event.target === elements.searchInput ||
+          event.target === elements.valueFilter ||
+          event.target === elements.startDate ||
+          event.target === elements.endDate ||
+          event.target === elements.agencyFilter ||
+          event.target === elements.officeFilter ||
+          event.target === elements.naicsFilter ||
+          event.target === elements.pscFilter ||
+          event.target === elements.vendorFilter
+        )) {
+          event.preventDefault();
+          filterManager.applyFilters();
+          dashboardManager.refreshDashboard();
+        }
+      });
+    }
+    
+    // Theme toggling
+    function toggleTheme() {
+      const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+      const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+      
+      document.documentElement.setAttribute('data-theme', newTheme);
+      
+      // Update theme toggle icon
+      const icon = elements.themeToggle.querySelector('i');
+      if (icon) {
+        if (newTheme === 'dark') {
+          icon.className = 'fas fa-sun';
+        } else {
+          icon.className = 'fas fa-moon';
+        }
+      }
+      
+      // Store theme preference in localStorage
+      localStorage.setItem('theme', newTheme);
+      
+      // Update charts to match new theme
+      if (app.charts && Object.keys(app.charts).length > 0) { // Check if charts exist
+        Object.values(app.charts).forEach(chart => {
+          if (chart instanceof Chart) {
+            chart.options.color = getComputedStyle(document.documentElement).getPropertyValue('--text-secondary');
+            // Update scales colors if they exist
+            if (chart.options.scales) {
+                Object.values(chart.options.scales).forEach(scale => {
+                    if (scale.ticks) scale.ticks.color = getComputedStyle(document.documentElement).getPropertyValue('--text-secondary');
+                    if (scale.title && scale.title.text) scale.title.color = getComputedStyle(document.documentElement).getPropertyValue('--text-secondary');
+                    if (scale.grid) scale.grid.color = getComputedStyle(document.documentElement).getPropertyValue('--border');
+
+                });
+            }
+            chart.update();
+          }
+        });
+         // Redraw Sankey diagram
+        if (elements.dashboard.style.display !== 'none') { // Only if dashboard is visible
+            chartManager.updateSankeyChart();
+        }
+      }
+    }
+
+    // Load saved theme
+    function loadSavedTheme() {
+      const savedTheme = localStorage.getItem('theme');
+      
+      if (savedTheme) {
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        
+        // Update theme toggle icon
+        const icon = elements.themeToggle.querySelector('i');
+        if (icon) {
+          if (savedTheme === 'dark') {
+            icon.className = 'fas fa-sun';
+          } else {
+            icon.className = 'fas fa-moon';
+          }
+        }
+      }
+    }
+
+    // Initialize application
+    function init() {
+      loadSavedTheme();
+      setupEventListeners();
+    }
+
+    // Run initialization
+    init();
+  </script>
+</body>
+</html>
