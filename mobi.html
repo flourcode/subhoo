@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FedViz - Federal Contract Intelligence</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-sankey/0.12.3/d3-sankey.min.js"></script>
+  <style>
+    :root {
+      /* Colors */
+      --primary: #0070f3;
+      --primary-dark: #0060df;
+      --primary-light: #3291ff;
+      --secondary: #7f7f7f;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --text-primary: #111827;
+      --text-secondary: #6b7280;
+      --text-tertiary: #9ca3af;
+      --bg-primary: #ffffff;
+      --bg-secondary: #f9fafb;    
+      --bg-tertiary: #f3f4f6;    
+      --border: #e5e7eb;
+      --app-bg: #f9fafb; 
+      
+      /* Spacing Scale */
+      --space-1: 0.25rem;
+      --space-2: 0.5rem;
+      --space-3: 0.75rem;
+      --space-4: 1rem;
+      --space-5: 1.25rem;
+      --space-6: 1.5rem;
+      --space-8: 2rem;
+      
+      /* Typography Scale */
+      --font-xs: 0.75rem;   
+      --font-sm: 0.875rem;  
+      --font-base: 1rem;    
+      --font-lg: 1.125rem;  
+      --font-xl: 1.25rem;   
+      --font-2xl: 1.5rem;   
+      --font-3xl: 1.875rem; 
+      
+      /* Radiuses and Shadows */
+      --radius-sm: 0.25rem;
+      --radius: 0.375rem;
+      --radius-md: 0.5rem;
+      --radius-lg: 0.75rem;
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      
+      /* Transitions */
+      --transition: all 0.2s ease-in-out;
+    }
+
+    [data-theme="dark"] {
+      --primary: #3291ff;
+      --primary-dark: #0070f3;
+      --primary-light: #84c0ff;
+      --text-primary: #f9fafb;
+      --text-secondary: #e5e7eb;
+      --text-tertiary: #9ca3af;
+      --bg-primary: #1e293b;
+      --bg-secondary: #111827;
+      --bg-tertiary: #374151;
+      --border: #374151;
+      --app-bg: #0f172a; 
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: var(--app-bg); color: var(--text-primary);
+      line-height: 1.5; font-size: var(--font-base);
+      -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
+    }
+    .app-container {
+      min-height: 100vh; display: flex; flex-direction: column;
+      max-width: 1400px; margin: 0 auto; padding: var(--space-4);
+    }
+    .app-header {
+      background-color: var(--bg-primary); box-shadow: var(--shadow);
+      padding: var(--space-3); position: sticky; top: 0; z-index: 50;
+      border-radius: var(--radius-lg); margin-bottom: var(--space-4);
+    }
+    .header-top {
+      display: flex; flex-direction: column; align-items: stretch;
+      gap: var(--space-3); margin-bottom: var(--space-3);
+    }
+     .logo-container {
+      display: flex; flex-direction: column; 
+      align-items: flex-start; 
+      align-self: flex-start; 
+    }
+    .logo-main-line {
+      display: flex; align-items: center; 
+      gap: var(--space-2); 
+    }
+    .logo-main-line > i {
+      font-size: var(--font-3xl); 
+      color: var(--primary);
+    }
+    .logo-main-line > span {
+      font-size: var(--font-3xl); 
+      font-weight: 700; color: var(--primary);
+    }
+    .logo-subtitle {
+      font-size: var(--font-sm);   
+      color: var(--text-secondary); 
+      margin-top: var(--space-1);  
+    }
+    .search-bar { position: relative; width: 100%; }
+    .search-input {
+      width: 100%; padding: var(--space-2) var(--space-4) var(--space-2) var(--space-6);
+      border: 1px solid var(--border); border-radius: var(--radius-lg);
+      background-color: var(--bg-primary); color: var(--text-primary);
+      font-size: var(--font-sm); transition: var(--transition);
+    }
+    .search-icon {
+      position: absolute; left: var(--space-3); top: 50%;
+      transform: translateY(-50%); color: var(--text-tertiary); pointer-events: none;
+    }
+    .search-input:focus {
+      outline: none; border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(0, 112, 243, 0.2);
+    }
+    .header-actions {
+      display: flex; align-items: center; gap: var(--space-2);
+      justify-content: flex-end; 
+    }
+    .header-actions .btn { padding: var(--space-2); }
+    .header-actions .btn .btn-text { display: none; }
+    
+    /* --- NEW: Styles for example CSV buttons --- */
+    .example-csv-loader {
+        display: flex;
+        flex-direction: column; /* Stack label and buttons on mobile */
+        gap: var(--space-2);
+        margin-top: var(--space-3);
+        padding-top: var(--space-3);
+        border-top: 1px solid var(--border);
+    }
+    .example-csv-loader-label {
+        font-size: var(--font-sm);
+        color: var(--text-secondary);
+        font-weight: 500;
+        margin-bottom: var(--space-1); /* Space between label and button group */
+    }
+    .example-csv-buttons {
+        display: flex;
+        flex-wrap: wrap; /* Allow buttons to wrap on smaller screens if needed */
+        gap: var(--space-2);
+    }
+    .example-csv-buttons .btn {
+        flex-grow: 1; /* Allow buttons to grow a bit */
+    }
+    .example-csv-buttons .btn .btn-text {
+        display: inline-block; /* Ensure text is visible */
+    }
+    /* --- END NEW --- */
+
+    .filter-controls { display: flex; flex-direction: column; gap: var(--space-3); }
+    .filter-bar { display: flex; flex-direction: column; gap: var(--space-3); }
+    .filter-group {
+      display: flex; flex-direction: column; width: 100%; gap: var(--space-1);
+    }
+    .filter-label { font-size: var(--font-xs); color: var(--text-secondary); }
+    .filter-select {
+      width: 100%; padding: var(--space-2); border: 1px solid var(--border);
+      border-radius: var(--radius); background-color: var(--bg-primary);
+      color: var(--text-primary); font-size: var(--font-sm); appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none'%3E%3Cpath d='M2.5 4.5L6 8L9.5 4.5' stroke='%236B7280' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 0.5rem center;
+      padding-right: 2rem;
+    }
+    .filter-select:focus { outline: none; border-color: var(--primary); }
+    .filter-actions {
+      display: flex; gap: var(--space-2); justify-content: flex-end;
+      margin-top: var(--space-2);
+    }
+    .status-section {
+      background-color: var(--bg-primary); border-radius: var(--radius-lg);
+      padding: var(--space-3); display: flex; flex-direction: column;
+      gap: var(--space-2); margin-bottom: var(--space-4);
+    }
+    .status-title { font-size: var(--font-lg); font-weight: 600; }
+    .active-filters { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+    .filter-tag {
+      display: flex; align-items: center; gap: var(--space-1);
+      padding: var(--space-1) var(--space-2); background-color: var(--bg-tertiary);
+      border-radius: var(--radius-sm); font-size: var(--font-xs);
+    }
+    .filter-tag-remove {
+      background: none; border: none; color: var(--text-secondary);
+      cursor: pointer; display: flex; align-items: center;
+    }
+    .filter-tag-remove:hover { color: var(--danger); }
+    .loading-state {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: var(--space-8); text-align: center; background-color: var(--bg-primary);
+      border-radius: var(--radius-lg); margin-bottom: var(--space-4);
+    }
+    .loading-spinner {
+      width: 40px; height: 40px; border: 3px solid var(--bg-tertiary);
+      border-top: 3px solid var(--primary); border-radius: 50%;
+      animation: spin 1s linear infinite; margin-bottom: var(--space-4);
+    }
+    @keyframes spin { 0% {transform:rotate(0deg);} 100% {transform:rotate(360deg);} }
+    .error-message {
+      color: var(--danger); padding: var(--space-3) var(--space-4);
+      border-radius: var(--radius-lg); margin-bottom: var(--space-4);
+    }
+    [data-theme="light"] .error-message { background-color: rgba(239,68,68,0.1); }
+    [data-theme="dark"] .error-message { background-color: rgba(239,68,68,0.2); }
+    .empty-state {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: var(--space-8); text-align: center; color: var(--text-secondary);
+      background-color: var(--bg-primary); border-radius: var(--radius-lg);
+    }
+    .empty-state i { font-size: 3rem; margin-bottom: var(--space-4); }
+    .empty-state h2 { margin-bottom: var(--space-2); font-weight: 600; }
+    .btn {
+      padding: var(--space-2) var(--space-3); border-radius: var(--radius);
+      font-weight: 500; cursor: pointer; transition: var(--transition);
+      font-size: var(--font-sm); display: inline-flex; align-items: center;
+      justify-content: center; gap: var(--space-2); white-space: nowrap;
+    }
+    .btn .btn-text { display: none; }
+    .btn-primary { background-color: var(--primary); color: white; border: none; }
+    .btn-primary:hover { background-color: var(--primary-dark); }
+    .btn-secondary {
+      background-color: var(--bg-tertiary); color: var(--text-primary);
+      border: 1px solid var(--border);
+    }
+    .btn-secondary:hover { background-color: var(--bg-secondary); }
+    .btn-sm { padding: var(--space-1) var(--space-2); font-size: var(--font-xs); }
+    .btn-sm .btn-text { display: inline-block; }
+    .btn-icon {
+      padding: var(--space-1); border-radius: 50%; display: flex;
+      align-items: center; justify-content: center; background: none;
+      border: none; color: var(--text-secondary); cursor: pointer; transition: var(--transition);
+    }
+    .btn-icon:hover { background-color: var(--bg-tertiary); color: var(--text-primary); }
+    .theme-toggle {
+      background: none; border: none; color: var(--text-secondary); cursor: pointer;
+      width: 32px; height: 32px; border-radius: 50%; display: flex;
+      align-items: center; justify-content: center; transition: var(--transition);
+    }
+    .theme-toggle:hover { color: var(--primary); background-color: var(--bg-tertiary); }
+    .file-input-wrapper { position: relative; }
+    .file-input-wrapper .btn .btn-text { display: none; }
+    .file-input {
+      position: absolute; width: 0.1px; height: 0.1px; opacity: 0;
+      overflow: hidden; z-index: -1;
+    }
+    .file-input + .btn { cursor: pointer; }
+    .filters-panel {
+      background-color: var(--bg-primary); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); box-shadow: var(--shadow-md);
+      margin: 0 0 var(--space-3) 0; padding: var(--space-3); display: none;
+    }
+    .filters-panel.active { display: block; }
+    .panel-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: var(--space-3);
+    }
+    .panel-header h3 { font-size: var(--font-lg); font-weight: 600; }
+    .filters-grid { display: grid; grid-template-columns: 1fr; gap: var(--space-3); }
+    .date-range-picker { display: flex; align-items: center; gap: var(--space-2); }
+    .filter-date {
+      flex: 1; min-width: 0; padding: var(--space-2); border: 1px solid var(--border);
+      border-radius: var(--radius); background-color: var(--bg-primary);
+      color: var(--text-primary); font-size: var(--font-sm);
+    }
+    .date-separator { color: var(--text-secondary); font-size: var(--font-sm); }
+    #dashboard { display: flex; flex-direction: column; gap: var(--space-4); }
+    .stats-section { margin-bottom: var(--space-4); }
+    .stats-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-3); }
+    .stat-card {
+      background-color: var(--bg-primary); border-radius: var(--radius-lg);
+      padding: var(--space-3) var(--space-2); box-shadow: var(--shadow);
+      display: flex; flex-direction: column; text-align: center;
+    }
+    .stat-label { font-size: var(--font-xs); color: var(--text-secondary); }
+    .stat-value {
+      font-size: var(--font-3xl); font-weight: 700; color: var(--text-primary);
+      margin-top: var(--space-1); line-height: 1.2;
+    }
+    .card {
+      background-color: var(--bg-primary); border-radius: var(--radius-lg);
+      overflow: hidden; box-shadow: var(--shadow);
+    }
+    .card-header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: var(--space-3); border-bottom: 1px solid var(--border);
+    }
+    .card-title { font-size: var(--font-sm); font-weight: 600; }
+    .primary-viz { margin-bottom: var(--space-4); }
+    .sankey-chart-container {
+      height: 300px; position: relative; padding: var(--space-3);
+    }
+    .sankey-controls { display: flex; gap: var(--space-1); }
+    .charts-grid {
+      display: grid; grid-template-columns: 1fr; gap: var(--space-4);
+      margin-bottom: var(--space-4);
+    }
+    .chart-card {
+      background-color: var(--bg-primary); border-radius: var(--radius-lg);
+      box-shadow: var(--shadow); overflow: hidden;
+    }
+    .chart-container { height: 200px; position: relative; padding: var(--space-3); }
+    .bubble-chart-container { height: 220px; position: relative; padding: var(--space-3); }
+    .selection-indicator {
+      position: absolute; top: 5px; right: 5px; width: 10px; height: 10px;
+      border-radius: 50%; background-color: var(--primary); display: none;
+    }
+    .tables-section {
+      background-color: var(--bg-primary); border-radius: var(--radius-lg);
+      box-shadow: var(--shadow); overflow: hidden; margin-bottom: var(--space-4);
+    }
+    .tabs {
+      display: flex; border-bottom: 1px solid var(--border);
+      background-color: var(--bg-primary); overflow-x: auto; white-space: nowrap;
+    }
+    .tab-btn {
+      padding: var(--space-3) var(--space-4); background: none; border: none;
+      cursor: pointer; font-weight: 500; color: var(--text-secondary);
+      position: relative; transition: var(--transition);
+    }
+    .tab-btn:hover { color: var(--primary); }
+    .tab-btn.active { color: var(--primary); }
+    .tab-btn.active::after {
+      content: ''; position: absolute; bottom: 0; left: 0; width: 100%;
+      height: 2px; background-color: var(--primary);
+    }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    .table-container { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .data-table { width: 100%; border-collapse: collapse; }
+    .data-table th, .data-table td {
+      padding: var(--space-3); text-align: left;
+      border-bottom: 1px solid var(--border); font-size: var(--font-sm);
+    }
+    .data-table th {
+      position: sticky; top: 0; background-color: var(--bg-primary);
+      font-weight: 600; color: var(--text-secondary); cursor: pointer;
+      user-select: none; z-index: 1;
+    }
+    .data-table th:hover { background-color: var(--bg-tertiary); }
+    .data-table th.sort-asc::after { content:"▲";display:inline-block;margin-left:5px;font-size:10px; }
+    .data-table th.sort-desc::after { content:"▼";display:inline-block;margin-left:5px;font-size:10px; }
+    .data-table tr:hover td { background-color: var(--bg-tertiary); }
+    .data-table td.table-date-cell { white-space: nowrap; }
+    .agency-badge, .office-badge, .vendor-badge {
+      display: inline-flex; align-items: center; gap: var(--space-2); font-weight: 500;
+    }
+    .agency-icon, .office-icon, .vendor-icon {
+      width: 1.5rem; height: 1.5rem; color: white; display: flex;
+      align-items: center; justify-content: center; font-size: var(--font-xs);
+      font-weight: 600; flex-shrink: 0; 
+    }
+    .agency-icon { border-radius: 50%; }
+    .office-icon, .vendor-icon { border-radius: var(--radius-sm); }
+    .badge {
+      padding: var(--space-1) var(--space-2); border-radius: var(--radius-sm);
+      font-size: var(--font-xs); font-weight: 500; display: inline-block;
+    }
+    .badge-primary { background-color:rgba(0,112,243,0.1); color:var(--primary); }
+    .money { font-family: 'Inter', monospace; font-weight: 500; }
+    .action-btn {
+      padding: var(--space-1) var(--space-2); background-color: var(--primary);
+      color: white; border: none; border-radius: var(--radius-sm);
+      font-size: var(--font-xs); font-weight: 500; cursor: pointer; transition: var(--transition);
+    }
+    .action-btn .btn-text { display: inline-block; }
+    .action-btn:hover { background-color: var(--primary-dark); }
+    .chart-tooltip {
+      position: absolute; padding: var(--space-2) var(--space-3);
+      background: var(--bg-primary); color: var(--text-primary);
+      border: 1px solid var(--border); border-radius: var(--radius);
+      pointer-events: none; font-size: var(--font-xs); box-shadow: var(--shadow);
+      z-index: 10; opacity: 0; transition: opacity 0.2s;
+    }
+    .modal-backdrop {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background-color: rgba(0,0,0,0.5); display: flex; align-items: center;
+      justify-content: center; z-index: 100; opacity: 0; visibility: hidden;
+      transition: opacity 0.2s, visibility 0.2s;
+    }
+    .modal-backdrop.active { opacity: 1; visibility: visible; }
+    .modal {
+      background-color: var(--bg-primary); border-radius: var(--radius-lg);
+      width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto;
+      box-shadow: var(--shadow-lg); transform: translateY(-20px); transition: transform 0.2s;
+    }
+    .modal-backdrop.active .modal { transform: translateY(0); }
+    .modal-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: var(--space-4); border-bottom: 1px solid var(--border);
+    }
+    .modal-title { font-size: var(--font-lg); font-weight: 600; }
+    .modal-close {
+      background: none; border: none; cursor: pointer; font-size: var(--font-xl);
+      color: var(--text-secondary); transition: var(--transition);
+    }
+    .modal-close:hover { color: var(--danger); }
+    .modal-body { padding: var(--space-4); }
+    .modal-footer {
+      padding: var(--space-4); border-top: 1px solid var(--border);
+      display: flex; justify-content: flex-end; gap: var(--space-2);
+    }
+    .modal-footer .btn .btn-text { display: inline-block; }
+    .mobile-action-btn {
+      position: fixed; bottom: var(--space-4); right: var(--space-4);
+      width: 56px; height: 56px; border-radius: 50%; background-color: var(--primary);
+      color: white; border: none; box-shadow: var(--shadow-lg); display: flex;
+      align-items: center; justify-content: center; font-size: var(--font-lg);
+      cursor: pointer; z-index: 40; transition: var(--transition);
+    }
+    .mobile-action-btn:hover { background-color: var(--primary-dark); transform: scale(1.05); }
+
+    @media (min-width: 768px) {
+      .app-container { padding: var(--space-6); }
+      .header-top {
+        flex-direction: row; align-items: center; justify-content: space-between;
+        gap: var(--space-3);
+      }
+      .logo-container { align-self: unset; }
+      .search-bar { width: auto; flex-grow: 1; margin: 0; }
+      .header-actions .btn .btn-text { display: inline-block; }
+      .file-input-wrapper .btn .btn-text { display: inline-block; }
+      
+      /* --- NEW: Styles for example CSV buttons on larger screens --- */
+      .example-csv-loader {
+        flex-direction: row; /* Align label and buttons in a row */
+        align-items: center; /* Vertically align label and buttons */
+      }
+      .example-csv-loader-label {
+        margin-bottom: 0; /* Remove bottom margin when in a row */
+        margin-right: var(--space-2); /* Add right margin to separate from buttons */
+      }
+      .example-csv-buttons .btn {
+        flex-grow: 0; /* Don't allow buttons to grow excessively */
+      }
+      /* --- END NEW --- */
+
+      .filter-bar {
+        flex-direction: row; overflow-x: visible; flex-wrap: wrap;
+        padding-bottom: 0; padding-top: 0; gap: var(--space-2);
+      }
+      .filter-group { flex: 1; width: auto; min-width: 120px; }
+      .filter-actions { margin-top: var(--space-2); }
+      .stats-row { grid-template-columns: repeat(4, 1fr); }
+      .charts-grid { grid-template-columns: repeat(2, 1fr); }
+      .filters-grid { grid-template-columns: repeat(2, 1fr); }
+      .sankey-chart-container { height: 400px; }
+      .mobile-action-btn { display: none; }
+      .btn .btn-text { display: inline-block; }
+    }
+    @media (min-width: 1024px) {
+      .charts-grid { grid-template-columns: repeat(4, 1fr); }
+      .filters-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <header class="app-header">
+      <div class="header-top">
+        <div class="logo-container">
+          <div class="logo-main-line">
+            <i class="fas fa-chart-line"></i>
+            <span>FedViz</span>
+          </div>
+          <span class="logo-subtitle">Your Federal Contract Intelligence</span>
+        </div>
+        
+        <div class="search-bar">
+          <i class="fas fa-search search-icon"></i>
+          <input type="text" id="searchInput" placeholder="Search contracts..." class="search-input">
+        </div>
+        
+        <div class="header-actions">
+          <div class="file-input-wrapper">
+            <input type="file" id="csvFile" accept=".csv" class="file-input">
+            <label for="csvFile" class="btn btn-primary">
+              <i class="fas fa-upload"></i>
+              <span class="btn-text">Upload</span>
+            </label>
+          </div>
+          
+          <button class="theme-toggle" id="themeToggle">
+            <i class="fas fa-moon"></i>
+          </button>
+        </div>
+      </div>
+      
+      <!-- --- NEW: Example CSV Loader Section --- -->
+      <div class="example-csv-loader">
+        <span class="example-csv-loader-label">Or load an example:</span>
+        <div class="example-csv-buttons">
+            <button id="loadExample1" class="btn btn-secondary"><span class="btn-text">Example 1</span></button>
+            <button id="loadExample2" class="btn btn-secondary"><span class="btn-text">Example 2</span></button>
+            <button id="loadExample3" class="btn btn-secondary"><span class="btn-text">Example 3</span></button>
+        </div>
+      </div>
+      <!-- --- END NEW --- -->
+
+      <div class="filter-controls">
+        <div class="filter-bar">
+          <div class="filter-group">
+            <span class="filter-label">Agency:</span>
+            <select id="agencyFilter" class="filter-select">
+              <option value="">All Agencies</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <span class="filter-label">Vendor:</span>
+            <select id="vendorFilter" class="filter-select">
+              <option value="">All Vendors</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <span class="filter-label">Value:</span>
+            <select id="valueFilter" class="filter-select">
+              <option value="">Any Value</option>
+              <option value="0-100000">Under $100K</option>
+              <option value="100000-500000">$100K - $500K</option>
+              <option value="500000-1000000">$500K - $1M</option>
+              <option value="1000000-5000000">$1M - $5M</option>
+              <option value="5000000-10000000">$5M - $10M</option>
+              <option value="10000000-999999999999">Over $10M</option>
+            </select>
+          </div>
+        </div>
+        <div class="filter-actions">
+          <button id="resetFilters" class="btn btn-secondary">
+            <i class="fas fa-undo"></i>
+            <span class="btn-text">Reset</span>
+          </button>
+          <button id="moreFiltersBtn" class="btn btn-secondary">
+            <i class="fas fa-sliders-h"></i>
+            <span class="btn-text">More Filters</span>
+          </button>
+        </div>
+      </div>
+    </header> 
+
+    <section id="advancedFiltersPanel" class="filters-panel">
+      <div class="panel-header">
+        <h3>Advanced Filters</h3>
+        <button id="closeFilters" class="btn-icon"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="filters-grid">
+        <div class="filter-group">
+          <label for="dateRangeLabel">Date Range</label>
+          <div class="date-range-picker" id="dateRangeLabel">
+            <input type="date" id="startDate" class="filter-date">
+            <span class="date-separator">to</span>
+            <input type="date" id="endDate" class="filter-date">
+          </div>
+        </div>
+        <div class="filter-group">
+          <label for="officeFilter">Office</label>
+          <select id="officeFilter" class="filter-select"><option value="">Any Office</option></select>
+        </div>
+        <div class="filter-group">
+          <label for="naicsFilter">NAICS Code</label>
+          <select id="naicsFilter" class="filter-select"><option value="">Any NAICS</option></select>
+        </div>
+        <div class="filter-group">
+          <label for="pscFilter">PSC Code</label>
+          <select id="pscFilter" class="filter-select"><option value="">Any PSC</option></select>
+        </div>
+      </div>
+    </section>
+
+    <section id="statusBox" class="app-section status-section">
+      <div class="status-title">No data loaded</div>
+      <div id="activeFilters" class="active-filters"></div>
+    </section>
+    
+    <div id="loadingIndicator" class="loading-state" style="display: none;">
+      <div class="loading-spinner"></div>
+      <div>Loading and processing contract data...</div>
+    </div>
+    <div id="errorMessage" class="error-message" style="display: none;"></div>
+    <div id="noDataMessage" class="empty-state">
+      <i class="fas fa-file-upload"></i>
+      <h2>No Contract Data Loaded</h2>
+      <p>Upload a CSV file or select an example to visualize federal contract data.</p>
+    </div>
+
+    <main id="dashboard" style="display: none;">
+      <section class="app-section stats-section">
+        <div class="stats-row">
+          <div class="stat-card"><div class="stat-label">Total Contracts</div><div id="totalContracts" class="stat-value">0</div></div>
+          <div class="stat-card"><div class="stat-label">Total Value</div><div id="totalValue" class="stat-value">$0</div></div>
+          <div class="stat-card"><div class="stat-label">Avg. Contract</div><div id="avgValue" class="stat-value">$0</div></div>
+          <div class="stat-card"><div class="stat-label">Vendors</div><div id="uniqueVendors" class="stat-value">0</div></div>
+        </div>
+      </section>
+      <div class="card primary-viz">
+        <div class="card-header">
+          <div class="card-title">Contract Value Flow: Agency → Office → Vendor</div>
+          <div class="sankey-controls">
+            <button id="sankeyTop10" class="btn btn-sm btn-primary"><span class="btn-text">Top 10</span></button>
+            <button id="sankeyTop25" class="btn btn-sm btn-secondary"><span class="btn-text">Top 25</span></button>
+            <button id="sankeyAll" class="btn btn-sm btn-secondary"><span class="btn-text">All</span></button>
+          </div>
+        </div>
+        <div class="sankey-chart-container" id="sankeyChartContainer"><div id="sankeyTooltip" class="chart-tooltip"></div></div>
+      </div>
+      <div class="charts-grid">
+        <div class="chart-card"><div class="card-header"><div class="card-title">Contract Value by Month</div></div><div class="chart-container" id="valueTimeChartContainer"><canvas id="valueTimeChart"></canvas><div class="selection-indicator"></div></div></div>
+        <div class="chart-card"><div class="card-header"><div class="card-title">Top Agencies</div></div><div class="chart-container" id="agencyChartContainer"><canvas id="agencyChart"></canvas><div class="selection-indicator"></div></div></div>
+        <div class="chart-card"><div class="card-header"><div class="card-title">Top Vendors</div></div><div class="chart-container" id="vendorChartContainer"><canvas id="vendorChart"></canvas><div class="selection-indicator"></div></div></div>
+        <div class="chart-card"><div class="card-header"><div class="card-title">NAICS Distribution</div></div><div class="bubble-chart-container" id="naicsBubbleChartContainer"><canvas id="naicsBubbleChart"></canvas><div class="selection-indicator"></div></div></div>
+      </div>
+      <div class="tables-section">
+        <div class="tabs">
+          <button class="tab-btn active" data-tab="largest">Largest Contracts</button>
+          <button class="tab-btn" data-tab="recent">Recent Contracts</button>
+          <button class="tab-btn" data-tab="offices">Top Offices</button>
+        </div>
+        <div id="largestTab" class="tab-content active"><div class="table-container"><table id="largestContractsTable" class="data-table"><thead><tr><th data-sort="date">Date</th><th data-sort="id">Contract ID</th><th data-sort="agency">Agency</th><th data-sort="office">Office</th><th data-sort="vendor">Vendor</th><th data-sort="description">Description</th><th data-sort="value">Value</th><th>Actions</th></tr></thead><tbody></tbody></table></div></div>
+        <div id="recentTab" class="tab-content"><div class="table-container"><table id="contractsTable" class="data-table"><thead><tr><th data-sort="date">Date</th><th data-sort="id">Contract ID</th><th data-sort="agency">Agency</th><th data-sort="office">Office</th><th data-sort="vendor">Vendor</th><th data-sort="description">Description</th><th data-sort="value">Value</th><th>Actions</th></tr></thead><tbody></tbody></table></div></div>
+        <div id="officesTab" class="tab-content"><div class="table-container"><table id="officesTable" class="data-table"><thead><tr><th data-sort="agency">Agency</th><th data-sort="office">Office</th><th data-sort="contracts">Contracts</th><th data-sort="value">Total Value</th><th data-sort="naics">Top NAICS</th><th data-sort="vendor">Top Vendor</th></tr></thead><tbody></tbody></table></div></div>
+      </div>
+    </main>
+  </div>
+  <div id="contractModal" class="modal-backdrop">
+    <div class="modal">
+      <div class="modal-header"><h3 class="modal-title">Contract Details</h3><button id="closeModal" class="modal-close"><i class="fas fa-times"></i></button></div>
+      <div class="modal-body" id="contractModalBody"></div>
+      <div class="modal-footer"><button id="closeModalBtn" class="btn btn-secondary"><span class="btn-text">Close</span></button></div>
+    </div>
+  </div>
+  <button id="mobileFilterBtn" class="mobile-action-btn"><i class="fas fa-filter"></i></button>
+
+  <script>
+    // Main application data object
+    const app = {
+      data: [], filteredData: [], agencies: {}, offices: {}, vendors: {},
+      naicsCodes: {}, pscCodes: {}, charts: {}, filters: {},
+      selection: { type: null, value: null, container: null },
+      sankeyDisplayLimit: 10,
+      // --- NEW: S3 Base URL ---
+      s3BaseUrl: "https://subhoodata.s3.us-east-1.amazonaws.com/data/"
+    };
+
+    // DOM Elements (add new example buttons)
+    const elements = {
+      csvFile: document.getElementById('csvFile'),
+      uploadBtn: document.querySelector('label[for="csvFile"]'),
+      // --- NEW: Example CSV Buttons ---
+      loadExample1Btn: document.getElementById('loadExample1'),
+      loadExample2Btn: document.getElementById('loadExample2'),
+      loadExample3Btn: document.getElementById('loadExample3'),
+      // --- END NEW ---
+      valueFilter: document.getElementById('valueFilter'),
+      startDate: document.getElementById('startDate'), endDate: document.getElementById('endDate'),
+      agencyFilter: document.getElementById('agencyFilter'), officeFilter: document.getElementById('officeFilter'),
+      naicsFilter: document.getElementById('naicsFilter'), pscFilter: document.getElementById('pscFilter'),
+      vendorFilter: document.getElementById('vendorFilter'), activeFilters: document.getElementById('activeFilters'),
+      resetFilters: document.getElementById('resetFilters'), searchInput: document.getElementById('searchInput'),
+      moreFiltersBtn: document.getElementById('moreFiltersBtn'), closeFilters: document.getElementById('closeFilters'),
+      mobileFilterBtn: document.getElementById('mobileFilterBtn'), advancedFiltersPanel: document.getElementById('advancedFiltersPanel'),
+      themeToggle: document.getElementById('themeToggle'), loadingIndicator: document.getElementById('loadingIndicator'),
+      errorMessage: document.getElementById('errorMessage'), noDataMessage: document.getElementById('noDataMessage'),
+      dashboard: document.getElementById('dashboard'), statusBox: document.getElementById('statusBox'),
+      totalContracts: document.getElementById('totalContracts'), totalValue: document.getElementById('totalValue'),
+      avgValue: document.getElementById('avgValue'), uniqueVendors: document.getElementById('uniqueVendors'),
+      sankeyTop10: document.getElementById('sankeyTop10'), sankeyTop25: document.getElementById('sankeyTop25'), sankeyAll: document.getElementById('sankeyAll'),
+      sankeyChartContainer: document.getElementById('sankeyChartContainer'), sankeyTooltip: document.getElementById('sankeyTooltip'),
+      valueTimeChartContainer: document.getElementById('valueTimeChartContainer'), agencyChartContainer: document.getElementById('agencyChartContainer'),
+      naicsBubbleChartContainer: document.getElementById('naicsBubbleChartContainer'), vendorChartContainer: document.getElementById('vendorChartContainer'),
+      valueTimeChart: document.getElementById('valueTimeChart'), agencyChart: document.getElementById('agencyChart'),
+      naicsBubbleChart: document.getElementById('naicsBubbleChart'), vendorChart: document.getElementById('vendorChart'),
+      largestTab: document.getElementById('largestTab'), recentTab: document.getElementById('recentTab'), officesTab: document.getElementById('officesTab'),
+      contractsTable: document.getElementById('contractsTable').querySelector('tbody'),
+      largestContractsTable: document.getElementById('largestContractsTable').querySelector('tbody'),
+      officesTable: document.getElementById('officesTable').querySelector('tbody'),
+      tabButtons: document.querySelectorAll('.tab-btn'), tabContents: document.querySelectorAll('.tab-content'),
+      contractModal: document.getElementById('contractModal'), closeModal: document.getElementById('closeModal'),
+      closeModalBtn: document.getElementById('closeModalBtn'), contractModalBody: document.getElementById('contractModalBody')
+    };
+
+    // Utility functions (mostly unchanged, ensure parseDate handles your S3 date format if different)
+    const utils = {
+      formatMoney:function(v){if(!v&&v!==0)return'$0';const n=parseFloat(v);if(isNaN(n))return'$0';if(n>=1e9)return'$'+(n/1e9).toFixed(1)+'B';if(n>=1e6)return'$'+(n/1e6).toFixed(1)+'M';if(n>=1e3)return'$'+(n/1e3).toFixed(1)+'K';return'$'+n.toFixed(0)},
+      formatDate:function(d){if(!d)return'N/A';const dt=d instanceof Date?d:new Date(d);if(isNaN(dt.getTime())){const p=String(d).split('-');if(p.length===3){const m={'Jan':0,'Feb':1,'Mar':2,'Apr':3,'May':4,'Jun':5,'Jul':6,'Aug':7,'Sep':8,'Oct':9,'Nov':10,'Dec':11},dd=parseInt(p[0]),mm=m[p[1]];let y=parseInt(p[2]);if(y<100)y=y<50?2000+y:1900+y;if(!isNaN(dd)&&mm!==undefined&&!isNaN(y))return new Date(y,mm,dd).toLocaleDateString('en-US',{year:'2-digit',month:'short',day:'numeric'})}return String(d)}return dt.toLocaleDateString('en-US',{year:'2-digit',month:'short',day:'numeric'})},
+      parseMoney:function(v){if(!v)return 0;return parseFloat(String(v).replace(/[$,\s]/g,''))||0},
+      parseCSV:function(t){const l=t.split(/\r\n|\n/);if(l.length===0)return{h:[],d:[]};const pL=ln=>{const v=[];let c='',q=!1;for(let i=0;i<ln.length;i++){const r=ln[i],x=ln[i+1]||'';if(r==='"'){if(q&&x==='"'){c+='"';i++}else q=!q}else if(r===','&&!q){v.push(c.trim());c=''}else c+=r}v.push(c.trim());return v};const h=pL(l[0]),d=[];for(let i=1;i<l.length;i++){if(l[i].trim()){const v=pL(l[i]),r={};for(let j=0;j<Math.min(h.length,v.length);j++){if(h[j])r[h[j]]=v[j]||''}d.push(r)}}return{headers:h,data:d}},
+      parseDate:function(d){if(!d)return null;if(d instanceof Date && !isNaN(d))return d;const s=String(d);const p1=/^(\d{1,2})-(\w{3})-(\d{2})$/;const m1=s.match(p1);if(m1){const day=parseInt(m1[1]),ms={'Jan':0,'Feb':1,'Mar':2,'Apr':3,'May':4,'Jun':5,'Jul':6,'Aug':7,'Sep':8,'Oct':9,'Nov':10,'Dec':11},month=ms[m1[2]];let year=parseInt(m1[3]);if(year<100)year=year<50?2000+year:1900+year;if(!isNaN(day)&&month!==undefined&&!isNaN(year))return new Date(year,month,day)}const dt=new Date(s);return!isNaN(dt.getTime())?dt:null},
+      truncateText:function(t,m){if(!t||t.length<=m)return t||'';return t.substring(0,m)+'...'},
+      stringToColor:function(s){if(!s)return'#ccc';let h=0;for(let i=0;i<s.length;i++)h=s.charCodeAt(i)+((h<<5)-h);const c=['#4F6D7A','#56A3A6','#84B59F','#A6D3A0','#D1B280','#EDAE49','#D1495B','#9D5C63','#647AA3','#7D938A','#BFAE9F','#FAD4C0','#CE8147','#B0C592','#91A6FF'];return c[Math.abs(h)%c.length]},
+      getInitials:function(n){if(!n)return'?';const w=n.split(/\s+/);return w.length>1?(w[0].charAt(0)+w[1].charAt(0)).toUpperCase():n.charAt(0).toUpperCase()},
+      parseValueRange:function(r){if(!r)return null;const p=r.split('-');return p.length!==2?null:{min:parseFloat(p[0]),max:parseFloat(p[1])}}
+    };
+    
+    // Data processing functions (mostly unchanged)
+    const dataProcessor = {
+      processData:function(c){if(!c||!c.data||c.data.length===0)throw new Error('No valid data found in CSV file');const f=['Contract ID','Date Signed','Contracting Agency','Legal Business Name','Action Obligation ($)'];for(const e of f)if(!c.headers.includes(e))throw new Error(`Required field "${e}" not found in CSV file`);return c.data.map(r=>({id:r['Contract ID']||'',reference:r['Reference IDV']||'',modification:r['Modification Number']||'',date:r['Date Signed']||'',parsedDate:utils.parseDate(r['Date Signed']),type:r['Award/IDV Type']||'',value:utils.parseMoney(r['Action Obligation ($)']),agency:r['Contracting Agency']||'',office:r['Contracting Office Name']||'',psc:r['PSC']||'',pscDescription:r['PSC Description']||'',naics:r['NAICS']||'',naicsDescription:r['NAICS Description']||'',vendor:r['Legal Business Name']||'',parentVendor:r['Ultimate Parent Legal Business Name']||'',description:r['PSC Description']||''}))},
+      analyzeData:function(d){const a={},o={},v={},n={},p={};d.forEach(c=>{if(c.agency){if(!a[c.agency])a[c.agency]={name:c.agency,count:0,value:0,offices:new Set(),vendors:new Set()};a[c.agency].count++;a[c.agency].value+=c.value;if(c.office)a[c.agency].offices.add(c.office);if(c.vendor)a[c.agency].vendors.add(c.vendor)}if(c.office){if(!o[c.office])o[c.office]={name:c.office,agency:c.agency,count:0,value:0,vendors:new Set(),naicsCodes:{}};o[c.office].count++;o[c.office].value+=c.value;if(c.vendor)o[c.office].vendors.add(c.vendor);if(c.naics){if(!o[c.office].naicsCodes[c.naics])o[c.office].naicsCodes[c.naics]={code:c.naics,description:c.naicsDescription,count:0,value:0};o[c.office].naicsCodes[c.naics].count++;o[c.office].naicsCodes[c.naics].value+=c.value}}if(c.vendor){if(!v[c.vendor])v[c.vendor]={name:c.vendor,parent:c.parentVendor,count:0,value:0,agencies:new Set(),naicsCodes:{}};v[c.vendor].count++;v[c.vendor].value+=c.value;if(c.agency)v[c.vendor].agencies.add(c.agency);if(c.naics){if(!v[c.vendor].naicsCodes[c.naics])v[c.vendor].naicsCodes[c.naics]={code:c.naics,description:c.naicsDescription,count:0,value:0};v[c.vendor].naicsCodes[c.naics].count++;v[c.vendor].naicsCodes[c.naics].value+=c.value}}if(c.naics){if(!n[c.naics])n[c.naics]={code:c.naics,description:c.naicsDescription,count:0,value:0,vendors:new Set()};n[c.naics].count++;n[c.naics].value+=c.value;if(c.vendor)n[c.naics].vendors.add(c.vendor)}if(c.psc){if(!p[c.psc])p[c.psc]={code:c.psc,description:c.pscDescription,count:0,value:0};p[c.psc].count++;p[c.psc].value+=c.value}});return{agencies:a,offices:o,vendors:v,naicsCodes:n,pscCodes:p}},
+      generateSankeyData:function(d,l=10){const af={},of={},nm=new Map;d.forEach(c=>{if(c.agency&&c.office&&c.vendor&&c.value>0){const ak=`${c.agency}|${c.office}`;if(!af[ak])af[ak]={source:c.agency,target:c.office,value:0};af[ak].value+=c.value;const ok=`${c.office}|${c.vendor}`;if(!of[ok])of[ok]={source:c.office,target:c.vendor,value:0};of[ok].value+=c.value}});Object.values(af).forEach(f=>{if(!nm.has(f.source))nm.set(f.source,{name:f.source,type:'agency'});if(!nm.has(f.target))nm.set(f.target,{name:f.target,type:'office'})});Object.values(of).forEach(f=>{if(!nm.has(f.target))nm.set(f.target,{name:f.target,type:'vendor'})});const na=Array.from(nm.values());na.forEach((n,i)=>n.id=i);const nim=new Map;na.forEach((n,i)=>nim.set(n.name,i));const al=Object.values(af).map(f=>({source:nim.get(f.source),target:nim.get(f.target),value:f.value,type:'agency-office'})),ol=Object.values(of).map(f=>({source:nim.get(f.source),target:nim.get(f.target),value:f.value,type:'office-vendor'})),la=[...al,...ol].sort((a,b)=>b.value-a.value);const tl=[],in_=new Set,ml=l===0?la.length:Math.min(l,la.length);for(let i=0;i<ml;i++){tl.push(la[i]);in_.add(la[i].source);in_.add(la[i].target)}const fn=na.filter((n,i)=>in_.has(i)).map(n=>({...n})),fnim=new Map;fn.forEach((n,i)=>fnim.set(n.name,i));const fl=tl.map(k=>({source:fnim.get(na[k.source].name),target:fnim.get(na[k.target].name),value:k.value,type:k.type}));return{nodes:fn,links:fl}}
+    };
+
+    // Filter functions (updateFilterTags logic slightly adjusted for initial load)
+    const filterManager = {
+      applyFilters:function(){const f=app.filters;let l=[...app.data];if(f.valueRange)l=l.filter(c=>c.value>=f.valueRange.min&&c.value<=f.valueRange.max);if(f.startDate)l=l.filter(c=>c.parsedDate&&c.parsedDate>=new Date(f.startDate));if(f.endDate){const e=new Date(f.endDate);e.setHours(23,59,59,999);l=l.filter(c=>c.parsedDate&&c.parsedDate<=e)}if(f.agency)l=l.filter(c=>c.agency===f.agency);if(f.office)l=l.filter(c=>c.office===f.office);if(f.naics)l=l.filter(c=>c.naics===f.naics);if(f.psc)l=l.filter(c=>c.psc===f.psc);if(f.vendor)l=l.filter(c=>c.vendor===f.vendor);if(f.search){const s=f.search.toLowerCase();l=l.filter(c=>(c.id&&c.id.toLowerCase().includes(s))||(c.agency&&c.agency.toLowerCase().includes(s))||(c.office&&c.office.toLowerCase().includes(s))||(c.vendor&&c.vendor.toLowerCase().includes(s))||(c.description&&c.description.toLowerCase().includes(s))||(c.naicsDescription&&c.naicsDescription.toLowerCase().includes(s))||(c.pscDescription&&c.pscDescription.toLowerCase().includes(s)))}app.filteredData=l;return l},
+      applySelectionFilter:function(t,v,c){document.querySelectorAll('.selection-indicator').forEach(i=>i.style.display='none');if(app.selection.type===t&&app.selection.value===v){app.selection={type:null,value:null,container:null};delete app.filters[t]}else{delete app.filters.agency;delete app.filters.office;delete app.filters.naics;delete app.filters.vendor;if(t&&v){app.filters[t]=v;app.selection={type:t,value:v,container:c};if(c){const i=c.querySelector('.selection-indicator');if(i)i.style.display='block'}}}this.applyFilters();this.updateFilterTags();dashboardManager.refreshDashboard()},
+      updateFilterTags:function(){const f=app.filters,ac=elements.activeFilters;ac.innerHTML='';const t=[];if(f.valueRange)t.push({key:'valueRange',label:'Value',value:`${utils.formatMoney(f.valueRange.min)} - ${utils.formatMoney(f.valueRange.max)}`});if(f.startDate)t.push({key:'startDate',label:'From',value:new Date(f.startDate).toLocaleDateString()});if(f.endDate)t.push({key:'endDate',label:'To',value:new Date(f.endDate).toLocaleDateString()});if(f.agency)t.push({key:'agency',label:'Agency',value:f.agency});if(f.office)t.push({key:'office',label:'Office',value:f.office});if(f.naics)t.push({key:'naics',label:'NAICS',value:f.naics});if(f.psc)t.push({key:'psc',label:'PSC',value:f.psc});if(f.vendor)t.push({key:'vendor',label:'Vendor',value:f.vendor});if(f.search)t.push({key:'search',label:'Search',value:f.search});t.forEach(g=>{const e=document.createElement('div');e.className='filter-tag';e.innerHTML=`${g.label}: ${utils.truncateText(g.value,15)} <button class="filter-tag-remove" data-filter="${g.key}"><i class="fas fa-times"></i></button>`;ac.appendChild(e);e.querySelector('.filter-tag-remove').addEventListener('click',function(){const k=this.getAttribute('data-filter');if(k==='valueRange'){delete app.filters.valueRange;elements.valueFilter.value=''}else if(k==='startDate'){delete app.filters.startDate;elements.startDate.value=''}else if(k==='endDate'){delete app.filters.endDate;elements.endDate.value=''}else if(k==='agency'){delete app.filters.agency;elements.agencyFilter.value='';if(app.selection.type==='agency')app.selection={type:null,value:null,container:null}}else if(k==='office'){delete app.filters.office;elements.officeFilter.value='';if(app.selection.type==='office')app.selection={type:null,value:null,container:null}}else if(k==='naics'){delete app.filters.naics;elements.naicsFilter.value='';if(app.selection.type==='naics')app.selection={type:null,value:null,container:null}}else if(k==='psc'){delete app.filters.psc;elements.pscFilter.value='';if(app.selection.type==='psc')app.selection={type:null,value:null,container:null}}else if(k==='vendor'){delete app.filters.vendor;elements.vendorFilter.value='';if(app.selection.type==='vendor')app.selection={type:null,value:null,container:null}}else if(k==='search'){delete app.filters.search;elements.searchInput.value=''}document.querySelectorAll('.selection-indicator').forEach(i=>i.style.display='none');filterManager.applyFilters();dashboardManager.refreshDashboard()})});const st=document.querySelector('#statusBox .status-title');let tt='',ds='';if(app.filteredData.length>0){let md=null,xd=null;app.filteredData.forEach(c=>{if(c.parsedDate&&c.parsedDate instanceof Date&&!isNaN(c.parsedDate.getTime())){if(!md||c.parsedDate<md)md=c.parsedDate;if(!xd||c.parsedDate>xd)xd=c.parsedDate}});if(md&&xd){const fm=utils.formatDate(md),fx=utils.formatDate(maxDate);if(fm===fx){if(fm!=='N/A')ds=` (Date: ${fm})`}else{if(fm!=='N/A'&&fx!=='N/A')ds=` (${fm} - ${fx})`;else if(fm!=='N/A')ds=` (From: ${fm})`;else if(fx!=='N/A')ds=` (To: ${fx})`}}}if(st){if(app.data.length===0&&app.filteredData.length===0)tt='No data loaded';else if(app.filteredData.length===0&&app.data.length>0)tt='No contracts match current filters';else if(app.filteredData.length<app.data.length)tt=`Viewing ${app.filteredData.length.toLocaleString()} filtered contracts`;else tt=`Viewing all ${app.filteredData.length.toLocaleString()} contracts`;st.textContent=tt+ds}},
+      resetFilters:function(){app.filters={};app.selection={type:null,value:null,container:null};elements.valueFilter.value='';elements.startDate.value='';elements.endDate.value='';elements.agencyFilter.value='';elements.officeFilter.value='';elements.naicsFilter.value='';elements.pscFilter.value='';elements.vendorFilter.value='';elements.searchInput.value='';document.querySelectorAll('.selection-indicator').forEach(i=>i.style.display='none');app.filteredData=[...app.data];this.updateFilterTags();dashboardManager.refreshDashboard()}
+    };
+    
+    // Chart functions (mostly unchanged)
+    const chartManager = {
+      initCharts:function(){Object.values(app.charts).forEach(c=>{if(c instanceof Chart)c.destroy()});app.charts={};Chart.defaults.font.family="'Inter',sans-serif";Chart.defaults.font.size=11;Chart.defaults.color=getComputedStyle(document.documentElement).getPropertyValue('--text-secondary');this.initValueTimeChart();this.initAgencyChart();this.initNaicsBubbleChart();this.initVendorChart();this.initSankeyChart();this.addChartClickEvents()},
+      initValueTimeChart:function(){app.charts.valueTimeChart=new Chart(elements.valueTimeChart.getContext('2d'),{type:'line',data:{labels:[],datasets:[{label:'Contract Value',data:[],borderColor:getComputedStyle(document.documentElement).getPropertyValue('--primary'),backgroundColor:'rgba(0,112,243,0.1)',tension:0.4,fill:true,pointBackgroundColor:getComputedStyle(document.documentElement).getPropertyValue('--primary'),pointBorderColor:getComputedStyle(document.documentElement).getPropertyValue('--bg-primary'),pointBorderWidth:1,pointRadius:3,borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>utils.formatMoney(c.raw)}}},scales:{x:{grid:{display:false},ticks:{maxRotation:45,minRotation:45,font:{size:10}}},y:{beginAtZero:true,ticks:{callback:v=>utils.formatMoney(v),font:{size:10}}}}}})},
+      initAgencyChart:function(){app.charts.agencyChart=new Chart(elements.agencyChart.getContext('2d'),{type:'bar',data:{labels:[],datasets:[{label:'Contract Value',data:[],backgroundColor:[],borderWidth:0,borderRadius:4,barThickness:'flex',maxBarThickness:15}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>utils.formatMoney(c.raw)}}},scales:{x:{beginAtZero:true,ticks:{callback:v=>utils.formatMoney(v),font:{size:10}}},y:{grid:{display:false},ticks:{font:{size:10}}}}}})},
+      initNaicsBubbleChart:function(){app.charts.naicsBubbleChart=new Chart(elements.naicsBubbleChart.getContext('2d'),{type:'bubble',data:{datasets:[]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>{const d=c.dataset.data[c.dataIndex];return[c.dataset.label[c.dataIndex]||'',`Contracts: ${d.x.toLocaleString()}`,`Value: ${utils.formatMoney(d.y)}`]}}}},scales:{x:{type:'linear',position:'bottom',title:{display:true,text:'Contracts',font:{size:10}},ticks:{font:{size:10}}},y:{title:{display:true,text:'Value',font:{size:10}},ticks:{callback:v=>utils.formatMoney(v),font:{size:10}}}}}})},
+      initVendorChart:function(){app.charts.vendorChart=new Chart(elements.vendorChart.getContext('2d'),{type:'bar',data:{labels:[],datasets:[{label:'Contract Value',data:[],backgroundColor:[],borderWidth:0,borderRadius:4,barThickness:'flex',maxBarThickness:15}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>utils.formatMoney(c.raw)}}},scales:{x:{beginAtZero:true,ticks:{callback:v=>utils.formatMoney(v),font:{size:10}}},y:{grid:{display:false},ticks:{font:{size:10}}}}}})},
+      initSankeyChart:function(){const c=elements.sankeyChartContainer;if(c)c.querySelector('svg')?.remove();elements.sankeyTop10.addEventListener('click',()=>{app.sankeyDisplayLimit=10;elements.sankeyTop10.className='btn btn-sm btn-primary';elements.sankeyTop25.className='btn btn-sm btn-secondary';elements.sankeyAll.className='btn btn-sm btn-secondary';this.updateSankeyChart()});elements.sankeyTop25.addEventListener('click',()=>{app.sankeyDisplayLimit=25;elements.sankeyTop10.className='btn btn-sm btn-secondary';elements.sankeyTop25.className='btn btn-sm btn-primary';elements.sankeyAll.className='btn btn-sm btn-secondary';this.updateSankeyChart()});elements.sankeyAll.addEventListener('click',()=>{app.sankeyDisplayLimit=0;elements.sankeyTop10.className='btn btn-sm btn-secondary';elements.sankeyTop25.className='btn btn-sm btn-secondary';elements.sankeyAll.className='btn btn-sm btn-primary';this.updateSankeyChart()})},
+      updateSankeyChart:function(){const d=app.filteredData;if(!d||d.length===0)return;const sd=dataProcessor.generateSankeyData(d,app.sankeyDisplayLimit),c=elements.sankeyChartContainer;c.querySelector('svg')?.remove();const w=c.clientWidth,h=c.clientHeight,s=d3.select(c).append('svg').attr('width',w).attr('height',h),sk=d3.sankey().nodeWidth(15).nodePadding(10).extent([[20,10],[w-20,h-30]]);const{nodes:nd,links:lk}=sk({nodes:sd.nodes.map(n=>Object.assign({},n)),links:sd.links.map(n=>Object.assign({},n))});nd.forEach(n=>n.color=utils.stringToColor(n.name));lk.forEach(l=>l.color=nd[l.source.index].color);const li=s.append('g').selectAll('path').data(lk).join('path').attr('d',d3.sankeyLinkHorizontal()).attr('stroke-width',n=>Math.max(1,n.width)).style('stroke',n=>n.color).style('fill','none').style('stroke-opacity',.4).on('mouseover',function(e,n){d3.select(this).style('stroke-opacity',.7);const t=elements.sankeyTooltip;t.style.opacity=1;t.style.left=(e.pageX+10)+'px';t.style.top=(e.pageY-10)+'px';t.innerHTML=`<div style="font-weight:600;">${utils.truncateText(nd[n.source.index].name,25)} → ${utils.truncateText(nd[n.target.index].name,25)}</div><div>${utils.formatMoney(n.value)}</div>`}).on('mouseout',function(){d3.select(this).style('stroke-opacity',.4);elements.sankeyTooltip.style.opacity=0}).on('click',(e,n)=>{const sr=nd[n.source.index],tr=nd[n.target.index];if(sr.type==='agency'&&tr.type==='office'){filterManager.applySelectionFilter('agency',sr.name,null);elements.agencyFilter.value=sr.name}else if(sr.type==='office'&&tr.type==='vendor'){filterManager.applySelectionFilter('office',sr.name,null);elements.officeFilter.value=sr.name}});s.append('g').selectAll('rect').data(nd).join('rect').attr('x',n=>n.x0).attr('y',n=>n.y0).attr('height',n=>n.y1-n.y0).attr('width',n=>n.x1-n.x0).style('fill',n=>n.color).style('opacity',.8).on('mouseover',function(e,n){li.style('stroke-opacity',l=>l.source.index===n.index||l.target.index===n.index?.7:.1);const t=elements.sankeyTooltip;t.style.opacity=1;t.style.left=(e.pageX+10)+'px';t.style.top=(e.pageY-10)+'px';t.innerHTML=`<div style="font-weight:600;">${utils.truncateText(n.name,30)}</div><div>${n.type.charAt(0).toUpperCase()+n.type.slice(1)}</div><div>Total: ${utils.formatMoney(n.value)}</div>`}).on('mouseout',function(){li.style('stroke-opacity',.4);elements.sankeyTooltip.style.opacity=0}).on('click',(e,n)=>{if(n.type==='agency'){filterManager.applySelectionFilter('agency',n.name,null);elements.agencyFilter.value=n.name}else if(n.type==='office'){filterManager.applySelectionFilter('office',n.name,null);elements.officeFilter.value=n.name}else if(n.type==='vendor'){filterManager.applySelectionFilter('vendor',n.name,null);elements.vendorFilter.value=n.name}});s.append('g').selectAll('text').data(nd).join('text').attr('x',n=>n.x0<w/2?n.x1+6:n.x0-6).attr('y',n=>(n.y1+n.y0)/2).attr('dy','0.35em').attr('text-anchor',n=>n.x0<w/2?'start':'end').text(n=>utils.truncateText(n.name,20)).attr('font-size','9px').style('fill',getComputedStyle(document.documentElement).getPropertyValue('--text-primary'));if(c.offsetHeight===undefined){}},
+      addChartClickEvents:function(){elements.valueTimeChartContainer.addEventListener('click',e=>{const c=app.charts.valueTimeChart,a=c.getElementsAtEventForMode(e,'nearest',{intersect:true},!1);if(a.length>0){const l=c.data.labels[a[0].index],m=l.match(/(\w+)\s*'?(\d+)?/);if(m){const n=m[1],y=m[2]||(new Date).getFullYear().toString().substr(2),o={'Jan':0,'Feb':1,'Mar':2,'Apr':3,'May':4,'Jun':5,'Jul':6,'Aug':7,'Sep':8,'Oct':9,'Nov':10,'Dec':11};if(o[n]!==undefined){const f=parseInt('20'+y),s=new Date(f,o[n],1),d=new Date(f,o[n]+1,0),S=s.toISOString().split('T')[0],D=d.toISOString().split('T')[0];elements.startDate.value=S;elements.endDate.value=D;app.filters.startDate=S;app.filters.endDate=D;if(app.selection.type){delete app.filters[app.selection.type];app.selection={type:null,value:null,container:null};document.querySelectorAll('.selection-indicator').forEach(i=>i.style.display='none')}filterManager.applyFilters();filterManager.updateFilterTags();dashboardManager.refreshDashboard()}}}});elements.agencyChartContainer.addEventListener('click',e=>{const c=app.charts.agencyChart,a=c.getElementsAtEventForMode(e,'nearest',{intersect:true},!1);if(a.length>0){const l=c.data.labels[a[0].index],g=Object.keys(app.agencies).find(n=>n===l||l.includes(n));if(g){filterManager.applySelectionFilter('agency',g,elements.agencyChartContainer);elements.agencyFilter.value=g}}});elements.naicsBubbleChartContainer.addEventListener('click',e=>{const c=app.charts.naicsBubbleChart,a=c.getElementsAtEventForMode(e,'nearest',{intersect:true},!1);if(a.length>0){const l=c.data.datasets[a[0].datasetIndex].label[a[0].index],n=l.match(/^(\d+)/);if(n&&n[1]){const s=n[1];filterManager.applySelectionFilter('naics',s,elements.naicsBubbleChartContainer);elements.naicsFilter.value=s}}});elements.vendorChartContainer.addEventListener('click',e=>{const c=app.charts.vendorChart,a=c.getElementsAtEventForMode(e,'nearest',{intersect:true},!1);if(a.length>0){const l=c.data.labels[a[0].index],v=Object.keys(app.vendors).find(n=>n===l||l.includes(n)||n.includes(l));if(v){filterManager.applySelectionFilter('vendor',v,elements.vendorChartContainer);elements.vendorFilter.value=v}}})},
+      updateCharts:function(){this.updateValueTimeChart();this.updateAgencyChart();this.updateNaicsBubbleChart();this.updateVendorChart();this.updateSankeyChart()},
+      updateValueTimeChart:function(){const d=app.filteredData;if(!d||d.length===0)return;const v={};d.forEach(c=>{if(c.parsedDate){const m=`${c.parsedDate.getFullYear()}-${(c.parsedDate.getMonth()+1).toString().padStart(2,'0')}`;if(!v[m])v[m]=0;v[m]+=c.value}});const s=Object.keys(v).sort(),l=[],a=[];s.forEach(m=>{const[y,n]=m.split('-'),e=new Date(parseInt(y),parseInt(n)-1,1);l.push(e.toLocaleDateString('en-US',{month:'short',year:'2-digit'}));a.push(v[m])});const c=app.charts.valueTimeChart;c.data.labels=l;c.data.datasets[0].data=a;c.update()},
+      updateAgencyChart:function(){const d=app.filteredData;if(!d||d.length===0)return;const v={};d.forEach(c=>{if(c.agency){if(!v[c.agency])v[c.agency]=0;v[c.agency]+=c.value}});const a=Object.keys(v).map(g=>({name:g,value:v[g]})).sort((c,n)=>n.value-c.value).slice(0,8),c=app.charts.agencyChart;c.data.labels=a.map(g=>utils.truncateText(g.name,15));c.data.datasets[0].data=a.map(g=>g.value);c.data.datasets[0].backgroundColor=a.map(g=>utils.stringToColor(g.name));c.update()},
+      updateNaicsBubbleChart:function(){const d=app.filteredData;if(!d||d.length===0)return;const n={};d.forEach(c=>{if(c.naics){if(!n[c.naics])n[c.naics]={code:c.naics,description:c.naicsDescription||'',count:0,value:0};n[c.naics].count++;n[c.naics].value+=c.value}});const t=Object.values(n).sort((a,c)=>c.value-a.value).slice(0,15),c=app.charts.naicsBubbleChart;c.data.datasets=[{label:t.map(a=>`${a.code} - ${utils.truncateText(a.description,30)}`),data:t.map(a=>({x:a.count,y:a.value,r:Math.max(4,Math.sqrt(a.value)/200)})),backgroundColor:t.map(a=>utils.stringToColor(a.code)+'80'),borderColor:t.map(a=>utils.stringToColor(a.code)),borderWidth:1}];c.update()},
+      updateVendorChart:function(){const d=app.filteredData;if(!d||d.length===0)return;const v={};d.forEach(c=>{if(c.vendor){if(!v[c.vendor])v[c.vendor]=0;v[c.vendor]+=c.value}});const a=Object.keys(v).map(n=>({name:n,value:v[n]})).sort((c,n)=>n.value-c.value).slice(0,8),c=app.charts.vendorChart;c.data.labels=a.map(n=>utils.truncateText(n.name,12));c.data.datasets[0].data=a.map(n=>n.value);c.data.datasets[0].backgroundColor=a.map(n=>utils.stringToColor(n.name));c.update()}
+    };
+    
+    // Table functions (mostly unchanged)
+    const tableManager = {
+      initTableSorting:function(){document.querySelectorAll('th[data-sort]').forEach(h=>{h.addEventListener('click',function(){const t=this.closest('table'),b=t.querySelector('tbody'),r=Array.from(b.querySelectorAll('tr')),s=this.getAttribute('data-sort');let d='asc';if(this.classList.contains('sort-asc'))d='desc';t.querySelectorAll('th').forEach(e=>e.classList.remove('sort-asc','sort-desc'));this.classList.add(`sort-${d}`);const cf=(x,y)=>{const xc=x.querySelector(`td:nth-child(${Array.from(this.parentNode.children).indexOf(this)+1})`),yc=y.querySelector(`td:nth-child(${Array.from(this.parentNode.children).indexOf(this)+1})`);if(!xc||!yc)return 0;let xv=xc.textContent.trim(),yv=yc.textContent.trim();if(s==='value'){xv=utils.parseMoney(xv);yv=utils.parseMoney(yv)}else if(s==='date'){xv=new Date(xv).getTime()||0;yv=new Date(yv).getTime()||0}else if(s==='contracts'){xv=parseInt(xv.replace(/,/g,''))||0;yv=parseInt(yv.replace(/,/g,''))||0}return d==='asc'?(xv>yv?1:-1):(xv<yv?1:-1)};r.sort(cf).forEach(e=>b.appendChild(e))})})},
+      updateContractsTable:function(){const d=app.filteredData,t=elements.contractsTable;t.innerHTML='';[...d].sort((a,b)=>{if(!a.parsedDate&&!b.parsedDate)return 0;if(!a.parsedDate)return 1;if(!b.parsedDate)return-1;return b.parsedDate-a.parsedDate}).slice(0,10).forEach(c=>this.addContractRow(c,t))},
+      updateLargestContractsTable:function(){const d=app.filteredData,t=elements.largestContractsTable;t.innerHTML='';[...d].sort((a,b)=>b.value-a.value).slice(0,10).forEach(c=>this.addContractRow(c,t))},
+      addContractRow:function(c,t){const r=document.createElement('tr'),ai=utils.getInitials(c.agency),ac=utils.stringToColor(c.agency),oi=utils.getInitials(c.office),oc=utils.stringToColor(c.office),vi=utils.getInitials(c.vendor),vc=utils.stringToColor(c.vendor);r.innerHTML=`<td class="table-date-cell">${utils.formatDate(c.date)}</td><td>${c.id}</td><td><div class="agency-badge"><div class="agency-icon" style="background-color:${ac}">${ai}</div> ${utils.truncateText(c.agency,15)}</div></td><td><div class="office-badge"><div class="office-icon" style="background-color:${oc}">${oi}</div> ${utils.truncateText(c.office,15)}</div></td><td><div class="vendor-badge"><div class="vendor-icon" style="background-color:${vc}">${vi}</div> ${utils.truncateText(c.vendor,15)}</div></td><td>${utils.truncateText(c.description,30)}</td><td class="money">${utils.formatMoney(c.value)}</td><td><button class="action-btn view-contract" data-id="${c.id}"><span class="btn-text">Details</span></button></td>`;t.appendChild(r);r.querySelector('.view-contract').addEventListener('click',function(){tableManager.showContractDetails(this.getAttribute('data-id'))})},
+      updateOfficesTable:function(){const d=app.filteredData,t=elements.officesTable;t.innerHTML='';const o={};d.forEach(c=>{if(c.office){if(!o[c.office])o[c.office]={name:c.office,agency:c.agency,count:0,value:0,naicsCodes:{},vendors:{}};o[c.office].count++;o[c.office].value+=c.value;if(c.naics){if(!o[c.office].naicsCodes[c.naics])o[c.office].naicsCodes[c.naics]={code:c.naics,description:c.naicsDescription,count:0,value:0};o[c.office].naicsCodes[c.naics].count++;o[c.office].naicsCodes[c.naics].value+=c.value}if(c.vendor){if(!o[c.office].vendors[c.vendor])o[c.office].vendors[c.vendor]={name:c.vendor,count:0,value:0};o[c.office].vendors[c.vendor].count++;o[c.office].vendors[c.vendor].value+=c.value}}});Object.values(o).sort((a,b)=>b.value-a.value).slice(0,10).forEach(f=>{const n=Object.values(f.naicsCodes).sort((a,b)=>b.value-a.value)[0]||{code:'N/A',description:'N/A'},v=Object.values(f.vendors).sort((a,b)=>b.value-a.value)[0]||{name:'N/A'},ai=utils.getInitials(f.agency),ac=utils.stringToColor(f.agency),oi=utils.getInitials(f.name),oc=utils.stringToColor(f.name),vi=utils.getInitials(v.name),vc=utils.stringToColor(v.name),r=document.createElement('tr');r.innerHTML=`<td><div class="agency-badge"><div class="agency-icon" style="background-color:${ac}">${ai}</div> ${utils.truncateText(f.agency,15)}</div></td><td><div class="office-badge"><div class="office-icon" style="background-color:${oc}">${oi}</div> ${utils.truncateText(f.name,15)}</div></td><td>${f.count.toLocaleString()}</td><td class="money">${utils.formatMoney(f.value)}</td><td><span class="badge badge-primary" title="${n.description}">${n.code}</span></td><td><div class="vendor-badge"><div class="vendor-icon" style="background-color:${vc}">${vi}</div> ${utils.truncateText(v.name,15)}</div></td>`;t.appendChild(r);r.addEventListener('click',function(){filterManager.applySelectionFilter('office',f.name,null);elements.officeFilter.value=f.name})})},
+      showContractDetails:function(i){const c=app.data.find(d=>d.id===i);if(!c)return;const ai=utils.getInitials(c.agency),ac=utils.stringToColor(c.agency),oi=utils.getInitials(c.office),oc=utils.stringToColor(c.office),vi=utils.getInitials(c.vendor),vc=utils.stringToColor(c.vendor);elements.contractModalBody.innerHTML=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;"><div><h4 style="margin-bottom:0.75rem;font-size:1rem;">Contract Information</h4><p><strong>Contract ID:</strong> ${c.id}</p><p><strong>Reference IDV:</strong> ${c.reference||'N/A'}</p><p><strong>Date Signed:</strong> ${utils.formatDate(c.date)}</p><p><strong>Contract Type:</strong> ${c.type||'N/A'}</p><p><strong>Value:</strong> ${utils.formatMoney(c.value)}</p></div><div><h4 style="margin-bottom:0.75rem;font-size:1rem;">Parties</h4><div style="display:flex;align-items:center;margin-bottom:0.5rem;"><div class="agency-icon" style="background-color:${ac};margin-right:0.5rem;">${ai}</div><strong>Agency:</strong> ${c.agency}</div><div style="display:flex;align-items:center;margin-bottom:0.5rem;margin-top:0.5rem;"><div class="office-icon" style="background-color:${oc};margin-right:0.5rem;">${oi}</div><strong>Office:</strong> ${c.office||'N/A'}</div><div style="display:flex;align-items:center;margin-bottom:0.5rem;margin-top:0.5rem;"><div class="vendor-icon" style="background-color:${vc};margin-right:0.5rem;">${vi}</div><strong>Vendor:</strong> ${c.vendor}</div><p><strong>Parent Company:</strong> ${c.parentVendor||'N/A'}</p></div></div><div style="margin-top:1rem;"><h4 style="margin-bottom:0.75rem;font-size:1rem;">Description</h4><p>${c.description||'No description available.'}</p></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1rem;"><div><h4 style="margin-bottom:0.75rem;font-size:1rem;">NAICS</h4><p><strong>Code:</strong> ${c.naics||'N/A'}</p><p><strong>Description:</strong> ${c.naicsDescription||'N/A'}</p></div><div><h4 style="margin-bottom:0.75rem;font-size:1rem;">PSC</h4><p><strong>Code:</strong> ${c.psc||'N/A'}</p><p><strong>Description:</strong> ${c.pscDescription||'N/A'}</p></div></div><div style="margin-top:1rem;display:flex;gap:0.5rem;flex-wrap:wrap;"><button id="filterByAgency" class="btn btn-secondary"><i class="fas fa-filter"></i> <span class="btn-text">By Agency</span></button><button id="filterByOffice" class="btn btn-secondary"><i class="fas fa-filter"></i> <span class="btn-text">By Office</span></button><button id="filterByVendor" class="btn btn-secondary"><i class="fas fa-filter"></i> <span class="btn-text">By Vendor</span></button></div>`;elements.contractModal.classList.add('active');document.getElementById('filterByAgency').addEventListener('click',()=>{filterManager.applySelectionFilter('agency',c.agency,null);elements.agencyFilter.value=c.agency;this.hideContractDetails()});document.getElementById('filterByOffice').addEventListener('click',()=>{filterManager.applySelectionFilter('office',c.office,null);elements.officeFilter.value=c.office;this.hideContractDetails()});document.getElementById('filterByVendor').addEventListener('click',()=>{filterManager.applySelectionFilter('vendor',c.vendor,null);elements.vendorFilter.value=c.vendor;this.hideContractDetails()})},
+      hideContractDetails:function(){elements.contractModal.classList.remove('active')},
+      updateTables:function(){this.updateContractsTable();this.updateLargestContractsTable();this.updateOfficesTable()}
+    };
+    
+    // Dashboard manager (mostly unchanged)
+    const dashboardManager = {
+      initDashboard:function(){elements.loadingIndicator.style.display='none';elements.errorMessage.style.display='none';elements.noDataMessage.style.display='none';elements.dashboard.style.display='flex';elements.statusBox.style.display='flex';chartManager.initCharts();tableManager.initTableSorting();this.refreshDashboard()},
+      refreshDashboard:function(){this.updateStats();chartManager.updateCharts();tableManager.updateTables();filterManager.updateFilterTags()},
+      updateStats:function(){const d=app.filteredData;elements.totalContracts.textContent=d.length.toLocaleString();elements.totalValue.textContent=utils.formatMoney(d.reduce((s,c)=>s+c.value,0));elements.avgValue.textContent=utils.formatMoney(d.length>0?d.reduce((s,c)=>s+c.value,0)/d.length:0);elements.uniqueVendors.textContent=new Set(d.map(c=>c.vendor).filter(Boolean)).size.toLocaleString()}
+    };
+
+    // --- MODIFIED: File Handling Logic ---
+    const fileHandler = {
+      // Helper function to process CSV text and update dashboard
+      processAndDisplayCsv: function(csvText, fileNameForDisplay = "Uploaded Data") {
+        try {
+          const csvData = utils.parseCSV(csvText);
+          const processedData = dataProcessor.processData(csvData);
+          app.data = processedData;
+          app.filteredData = [...processedData];
+          
+          const analysis = dataProcessor.analyzeData(processedData);
+          app.agencies = analysis.agencies;
+          app.offices = analysis.offices;
+          app.vendors = analysis.vendors;
+          app.naicsCodes = analysis.naicsCodes;
+          app.pscCodes = analysis.pscCodes;
+          
+          this.populateFilterDropdowns();
+          dashboardManager.initDashboard(); // This will refresh stats, charts, tables
+          
+          // Update the manual upload button text to a generic one after loading any file
+          const uploadBtnTextSpan = elements.uploadBtn.querySelector('.btn-text');
+          if(uploadBtnTextSpan) uploadBtnTextSpan.textContent = 'Upload';
+
+        } catch (error) {
+          console.error('Error processing CSV data:', error);
+          this.showError(`Error processing ${fileNameForDisplay}: ${error.message}`);
+        } finally {
+          elements.loadingIndicator.style.display = 'none';
+        }
+      },
+
+      // Load CSV from a URL
+      loadCsvFromUrl: async function(csvUrl, fileNameForDisplay) {
+        elements.loadingIndicator.style.display = 'flex';
+        elements.errorMessage.style.display = 'none';
+        elements.noDataMessage.style.display = 'none'; // Hide no data message
+        elements.dashboard.style.display = 'none'; // Hide dashboard while loading new data
+
+        try {
+          const response = await fetch(csvUrl);
+          if (!response.ok) {
+            throw new Error(`Network response was not ok: ${response.status} ${response.statusText}`);
+          }
+          const csvText = await response.text();
+          this.processAndDisplayCsv(csvText, fileNameForDisplay);
+        } catch (error) {
+          console.error(`Error fetching CSV from ${csvUrl}:`, error);
+          this.showError(`Failed to load ${fileNameForDisplay}: ${error.message}. Check if the S3 bucket CORS policy allows this origin.`);
+          elements.loadingIndicator.style.display = 'none';
+          // If dashboard was hidden and error occurs, show no data message again
+          if(app.data.length === 0) elements.noDataMessage.style.display = 'flex';
+        }
+      },
+
+      // Handle manual file upload
+      handleFileUpload: function() {
+        const file = elements.csvFile.files[0];
+        if (!file) {
+          this.showError('Please select a CSV file to upload.');
+          return;
+        }
+        if (file.type !== 'text/csv' && !file.name.endsWith('.csv')) {
+          this.showError('Please upload a valid CSV file.');
+          return;
+        }
+        
+        elements.loadingIndicator.style.display = 'flex';
+        elements.errorMessage.style.display = 'none';
+        elements.noDataMessage.style.display = 'none';
+        elements.dashboard.style.display = 'none';
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          this.processAndDisplayCsv(event.target.result, file.name);
+          // Update button text specifically for manual upload
+          const uploadBtnTextSpan = elements.uploadBtn.querySelector('.btn-text');
+          if(uploadBtnTextSpan) uploadBtnTextSpan.textContent = ` ${utils.truncateText(file.name,10)}`;
+        };
+        reader.onerror = () => {
+          this.showError('Error reading the file.');
+          elements.loadingIndicator.style.display = 'none';
+           if(app.data.length === 0) elements.noDataMessage.style.display = 'flex';
+        };
+        reader.readAsText(file);
+      },
+      
+      showError: function(m){elements.errorMessage.textContent=m;elements.errorMessage.style.display='block'},
+      populateFilterDropdowns:function(){const p=(e,i,v,f)=>{while(e.options.length>1)e.remove(1);[...i].sort((a,b)=>b.count-a.count).slice(0,100).forEach(d=>{const o=document.createElement('option');o.value=d[v];o.textContent=f(d);e.appendChild(o)})};p(elements.agencyFilter,Object.values(app.agencies),'name',i=>`${utils.truncateText(i.name,30)} (${i.count})`);p(elements.officeFilter,Object.values(app.offices),'name',i=>`${utils.truncateText(i.name,30)} (${i.count})`);p(elements.naicsFilter,Object.values(app.naicsCodes),'code',i=>`${i.code} - ${utils.truncateText(i.description,25)} (${i.count})`);p(elements.pscFilter,Object.values(app.pscCodes),'code',i=>`${i.code} - ${utils.truncateText(i.description,25)} (${i.count})`);p(elements.vendorFilter,Object.values(app.vendors),'name',i=>`${utils.truncateText(i.name,30)} (${i.count})`)}
+    };
+    // --- END MODIFIED ---
+
+    // Event listeners setup
+    function setupEventListeners() {
+      elements.csvFile.addEventListener('change', () => fileHandler.handleFileUpload());
+      
+      // --- NEW: Event listeners for example CSV buttons ---
+      if(elements.loadExample1Btn) elements.loadExample1Btn.addEventListener('click', () => fileHandler.loadCsvFromUrl(app.s3BaseUrl + 'example1.csv', 'Example 1'));
+      if(elements.loadExample2Btn) elements.loadExample2Btn.addEventListener('click', () => fileHandler.loadCsvFromUrl(app.s3BaseUrl + 'example2.csv', 'Example 2'));
+      if(elements.loadExample3Btn) elements.loadExample3Btn.addEventListener('click', () => fileHandler.loadCsvFromUrl(app.s3BaseUrl + 'example3.csv', 'Example 3'));
+      // --- END NEW ---
+
+      elements.searchInput.addEventListener('input',()=>{clearTimeout(elements.searchInput.timer);elements.searchInput.timer=setTimeout(()=>{app.filters.search=elements.searchInput.value;filterManager.applyFilters();dashboardManager.refreshDashboard()},300)});
+      elements.agencyFilter.addEventListener('change',()=>{app.filters.agency=elements.agencyFilter.value;filterManager.applySelectionFilter('agency',elements.agencyFilter.value,elements.agencyChartContainer)});
+      elements.vendorFilter.addEventListener('change',()=>{app.filters.vendor=elements.vendorFilter.value;filterManager.applySelectionFilter('vendor',elements.vendorFilter.value,elements.vendorChartContainer)});
+      elements.moreFiltersBtn.addEventListener('click',()=>{elements.advancedFiltersPanel.classList.toggle('active')});
+      elements.closeFilters.addEventListener('click',()=>{elements.advancedFiltersPanel.classList.remove('active')});
+      elements.mobileFilterBtn.addEventListener('click',()=>{elements.advancedFiltersPanel.classList.toggle('active')});
+      elements.valueFilter.addEventListener('change',()=>{const r=elements.valueFilter.value;if(r){const v=utils.parseValueRange(r);if(v)app.filters.valueRange=v;else delete app.filters.valueRange}else delete app.filters.valueRange;filterManager.applyFilters();dashboardManager.refreshDashboard()});
+      elements.startDate.addEventListener('change',()=>{app.filters.startDate=elements.startDate.value;filterManager.applyFilters();dashboardManager.refreshDashboard()});
+      elements.endDate.addEventListener('change',()=>{app.filters.endDate=elements.endDate.value;filterManager.applyFilters();dashboardManager.refreshDashboard()});
+      elements.officeFilter.addEventListener('change',()=>{app.filters.office=elements.officeFilter.value;filterManager.applySelectionFilter('office',elements.officeFilter.value,null)});
+      elements.naicsFilter.addEventListener('change',()=>{app.filters.naics=elements.naicsFilter.value;filterManager.applySelectionFilter('naics',elements.naicsFilter.value,elements.naicsBubbleChartContainer)});
+      elements.pscFilter.addEventListener('change',()=>{app.filters.psc=elements.pscFilter.value;filterManager.applySelectionFilter('psc',elements.pscFilter.value,null)});
+      elements.resetFilters.addEventListener('click',()=>{filterManager.resetFilters();elements.advancedFiltersPanel.classList.remove('active')});
+      elements.themeToggle.addEventListener('click',()=>{toggleTheme()});
+      elements.tabButtons.forEach(b=>{b.addEventListener('click',()=>{elements.tabButtons.forEach(n=>n.classList.remove('active'));elements.tabContents.forEach(c=>c.classList.remove('active'));b.classList.add('active');document.getElementById(b.getAttribute('data-tab')+'Tab').classList.add('active')})});
+      elements.closeModal.addEventListener('click',()=>{tableManager.hideContractDetails()});
+      elements.closeModalBtn.addEventListener('click',()=>{tableManager.hideContractDetails()});
+      elements.contractModal.addEventListener('click',e=>{if(e.target===elements.contractModal)tableManager.hideContractDetails()});
+      window.addEventListener('resize',()=>{clearTimeout(window.resizeTimer);window.resizeTimer=setTimeout(()=>{if(elements.dashboard.style.display!=='none'){chartManager.updateSankeyChart();Object.values(app.charts).forEach(c=>{if(c instanceof Chart)c.resize()})}},250)});
+      document.addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.target===elements.searchInput||e.target===elements.valueFilter||e.target===elements.startDate||e.target===elements.endDate||e.target===elements.agencyFilter||e.target===elements.officeFilter||e.target===elements.naicsFilter||e.target===elements.pscFilter||e.target===elements.vendorFilter)){e.preventDefault();filterManager.applyFilters();dashboardManager.refreshDashboard()}});
+    }
+    
+    // Theme toggling (mostly unchanged)
+    function toggleTheme(){const c=document.documentElement.getAttribute('data-theme')||'light',n=c==='light'?'dark':'light';document.documentElement.setAttribute('data-theme',n);const i=elements.themeToggle.querySelector('i');if(i)i.className=n==='dark'?'fas fa-sun':'fas fa-moon';localStorage.setItem('theme',n);if(app.charts&&Object.keys(app.charts).length>0){Object.values(app.charts).forEach(h=>{if(h instanceof Chart){h.options.color=getComputedStyle(document.documentElement).getPropertyValue('--text-secondary');if(h.options.scales){Object.values(h.options.scales).forEach(s=>{if(s.ticks)s.ticks.color=getComputedStyle(document.documentElement).getPropertyValue('--text-secondary');if(s.title&&s.title.text)s.title.color=getComputedStyle(document.documentElement).getPropertyValue('--text-secondary');if(s.grid)s.grid.color=getComputedStyle(document.documentElement).getPropertyValue('--border')})}h.update()}});if(elements.dashboard.style.display!=='none')chartManager.updateSankeyChart()}}
+
+    // Load saved theme (mostly unchanged)
+    function loadSavedTheme(){const s=localStorage.getItem('theme');let e=document.documentElement.getAttribute('data-theme')||'light';if(s){document.documentElement.setAttribute('data-theme',s);e=s}const i=elements.themeToggle.querySelector('i');if(i)i.className=e==='dark'?'fas fa-sun':'fas fa-moon'}
+
+    // Initialize application
+    function init() {
+      loadSavedTheme();
+      setupEventListeners();
+      // --- NEW: Autoload default CSV ---
+      fileHandler.loadCsvFromUrl(app.s3BaseUrl + 'da10.csv', 'Default Data (da10.csv)');
+      // --- END NEW ---
+    }
+
+    init();
+  </script>
+</body>
+</html>
